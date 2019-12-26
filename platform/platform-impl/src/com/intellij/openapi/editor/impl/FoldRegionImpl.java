@@ -126,23 +126,23 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
     }
     super.changedUpdateImpl(e);
     if (isValid()) {
-      alignToSurrogateBoundaries();
+      alignToValidBoundaries();
     }
   }
 
   @Override
   protected void onReTarget(int startOffset, int endOffset, int destOffset) {
-    alignToSurrogateBoundaries();
+    alignToValidBoundaries();
   }
 
-  private void alignToSurrogateBoundaries() {
+  private void alignToValidBoundaries() {
     Document document = getDocument();
     int start = intervalStart();
     int end = intervalEnd();
-    if (DocumentUtil.isInsideSurrogatePair(document, start)) {
+    if (DocumentUtil.isInsideCharacterPair(document, start)) {
       setIntervalStart(start - 1);
     }
-    if (DocumentUtil.isInsideSurrogatePair(document, end)) {
+    if (DocumentUtil.isInsideCharacterPair(document, end)) {
       setIntervalEnd(end - 1);
     }
   }

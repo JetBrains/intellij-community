@@ -126,8 +126,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
-    return myEditor.getSettings().isUseSoftWraps() && !myEditor.isOneLineMode() &&
-           (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR());
+    return myEditor.getSettings().isUseSoftWraps() && !myEditor.isOneLineMode();
   }
 
   /**
@@ -588,7 +587,8 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
                      || foldRegion != null, "Soft wrap before line break");
       LOG.assertTrue(softWrapOffset != DocumentUtil.getLineStartOffset(softWrapOffset, document) ||
                      foldingModel.isOffsetCollapsed(softWrapOffset - 1), "Soft wrap after line break");
-      LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(document, softWrapOffset), "Soft wrap inside a surrogate pair");
+      LOG.assertTrue(!DocumentUtil.isInsideCharacterPair(document, softWrapOffset),
+                     "Soft wrap inside a surrogate pair or inside a line break");
       lastSoftWrapOffset = softWrapOffset;
     }
   }

@@ -557,8 +557,8 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (!isFoldingEnabled() ||
         startOffset >= endOffset ||
         neverExpands && group != null ||
-        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), startOffset) ||
-        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), endOffset) ||
+        DocumentUtil.isInsideCharacterPair(myEditor.getDocument(), startOffset) ||
+        DocumentUtil.isInsideCharacterPair(myEditor.getDocument(), endOffset) ||
         !myFoldTree.checkIfValidToCreate(startOffset, endOffset)) {
       return null;
     }
@@ -618,15 +618,16 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   @TestOnly
   void validateState() {
-    if (myEditor.getDocument().isInBulkUpdate()) return;
+    Document document = myEditor.getDocument();
+    if (document.isInBulkUpdate()) return;
 
     FoldRegion[] allFoldRegions = getAllFoldRegions();
     boolean[] invisibleRegions = new boolean[allFoldRegions.length];
     for (int i = 0; i < allFoldRegions.length; i++) {
       FoldRegion r1 = allFoldRegions[i];
       LOG.assertTrue(r1.isValid() &&
-                     !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), r1.getStartOffset()) &&
-                     !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), r1.getEndOffset()),
+                     !DocumentUtil.isInsideCharacterPair(document, r1.getStartOffset()) &&
+                     !DocumentUtil.isInsideCharacterPair(document, r1.getEndOffset()),
                      "Invalid region");
       for (int j = i + 1; j < allFoldRegions.length; j++) {
         FoldRegion r2 = allFoldRegions[j];

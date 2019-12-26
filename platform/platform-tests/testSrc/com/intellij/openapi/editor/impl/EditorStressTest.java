@@ -29,6 +29,7 @@ public class EditorStressTest extends AbstractEditorTest {
 
   public void testRandomActions() {
     List<? extends Action> actions = Arrays.asList(new AddText("a"),
+                                                     new AddText("\r"),
                                                      new AddText("\n"),
                                                      new AddText("\t"),
                                                      new AddText(HIGH_SURROGATE),
@@ -48,6 +49,7 @@ public class EditorStressTest extends AbstractEditorTest {
     int i = 0;
     try {
       initText("");
+      ((DocumentImpl)getEditor().getDocument()).setAcceptSlashR(true);
       configureSoftWraps(10);
       EditorImpl editor = (EditorImpl)getEditor();
       for (i = 0; i < ITERATIONS; i++) {

@@ -131,6 +131,16 @@ public final class DocumentUtil {
     return offset + (isSurrogatePair(document, offset) ? 2 : 1);
   }
 
+  /**
+   * Tells whether given offset lies between surrogate pair characters or between characters of Windows-style line break (\r\n).
+   */
+  public static boolean isInsideCharacterPair(@NotNull Document document, int offset) {
+    if (offset <= 0 || offset >= document.getTextLength()) return false;
+    CharSequence text = document.getImmutableCharSequence();
+    char prev = text.charAt(offset - 1);
+    return prev == '\r' ? text.charAt(offset) == '\n' : Character.isHighSurrogate(prev) && Character.isLowSurrogate(text.charAt(offset));
+  }
+
   public static boolean isLineEmpty(@NotNull Document document, final int line) {
     final CharSequence chars = document.getCharsSequence();
     int start = document.getLineStartOffset(line);

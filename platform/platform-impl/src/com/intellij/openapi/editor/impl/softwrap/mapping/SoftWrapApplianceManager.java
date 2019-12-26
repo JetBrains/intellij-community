@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapEngine;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
@@ -197,9 +196,6 @@ public class SoftWrapApplianceManager implements Dumpable {
   }
 
   private void recalculateSoftWraps(@NotNull IncrementalCacheUpdateEvent event) {
-    if (myEditor.getDocument() instanceof DocumentImpl && ((DocumentImpl)myEditor.getDocument()).acceptsSlashR()) {
-      LOG.error("Soft wrapping is not supported for documents with non-standard line endings. File: " + myEditor.getVirtualFile());
-    }
     if (myInProgress) {
       LOG.error("Detected race condition at soft wraps recalculation", new Throwable(),
                 AttachmentFactory.createContext(myEditor.dumpState(), event));
