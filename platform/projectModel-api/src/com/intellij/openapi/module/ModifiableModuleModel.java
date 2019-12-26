@@ -2,6 +2,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -15,6 +16,7 @@ import java.util.Map;
  *
  * @see ModuleManager#getModifiableModel()
  */
+@ApiStatus.NonExtendable
 public interface ModifiableModuleModel {
   /**
    * Returns the list of all modules in the project. Same as {@link ModuleManager#getModules()}.

@@ -17,6 +17,7 @@ import java.nio.file.Path;
 /**
  * Provides project management.
  */
+@ApiStatus.NonExtendable
 public abstract class ProjectManager {
   public static final Topic<ProjectManagerListener> TOPIC = new Topic<>("Project open and close events", ProjectManagerListener.class);
 

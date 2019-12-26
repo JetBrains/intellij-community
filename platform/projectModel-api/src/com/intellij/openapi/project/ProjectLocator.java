@@ -9,6 +9,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.NonExtendable
 public abstract class ProjectLocator {
   // called very often by StubUpdatingIndex
   private static ProjectLocator ourInstance = CachedSingletonsRegistry.markCachedField(ProjectLocator.class);

@@ -33,6 +33,7 @@ import java.util.List;
 /**
  * Provides services for working with the modules of a project.
  */
+@ApiStatus.NonExtendable
 public abstract class ModuleManager extends SimpleModificationTracker {
   /**
    * Returns the module manager instance for the current project.
