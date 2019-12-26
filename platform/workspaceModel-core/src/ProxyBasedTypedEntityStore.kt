@@ -35,7 +35,7 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
                                             internal open val entitiesByPersistentIdHash: Map<Int, Set<EntityData>>,
                                             internal open val entityById: Map<Long, EntityData>,
                                             internal open val referrers: Map<Long, List<Long>>,
-                                            internal open val persistentIdReferrers: Map<Long, List<Long>>,
+                                            internal open val persistentIdReferrers: Map<Int, List<Long>>,
                                             internal val metaDataRegistry: EntityMetaDataRegistry) : TypedEntityStorage {
   companion object {
     private val proxyClassConstructors = ConcurrentFactoryMap.createMap<Class<out TypedEntity>, Constructor<out ProxyBasedEntity>> {
@@ -146,7 +146,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
                                              override val entitiesByPersistentIdHash: MutableMap<Int, MutableSet<EntityData>>,
                                              override val entityById: MutableMap<Long, EntityData>,
                                              override val referrers: MutableMap<Long, MutableList<Long>>,
-                                             override val persistentIdReferrers: MutableMap<Long, MutableList<Long>>,
+                                             override val persistentIdReferrers: MutableMap<Int, MutableList<Long>>,
                                              metaDataRegistry: EntityMetaDataRegistry)
   : ProxyBasedEntityStorage(entitiesByType, entitiesBySource, entitiesByPersistentIdHash, entityById, referrers, persistentIdReferrers, metaDataRegistry),
     TypedEntityStorageBuilder, TypedEntityStorageDiffBuilder {
@@ -213,7 +213,6 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     if (handleReferrers) {
       addReferences(entityData)
     }
-    // TODO Handle the case then dependency added before lib creation
     addPersistentIdReferrers(entityData)
   }
 
@@ -298,23 +297,14 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
   private fun addPersistentIdReferrers(data: EntityData) {
     data.collectPersistentIdReferences { persistentIdReference ->
-      val entityDataToTypedEntity = entitiesByPersistentIdHash[persistentIdReference.hashCode()]?.asSequence()
-                                      ?.associateWith { createEntityInstance(it) }
-                                    ?: emptyMap()
-      entityDataToTypedEntity.forEach { entity ->
-        val typedEntity = entity.value
-        val entityData = entity.key
-        if (typedEntity is TypedEntityWithPersistentId && typedEntity.persistentId() == persistentIdReference) {
-          val refs = persistentIdReferrers.getOrPut(entityData.id) { mutableListOf() }
-          // TODO Slow check
-          if (refs.contains(data.id)) {
-            // TODO Add edit without reference handling
-            return@forEach
-            //error("Id ${data.id} was already in references with target id ${entityData.id}")
-          }
-          refs.add(data.id)
-        }
+      val refs = persistentIdReferrers.getOrPut(persistentIdReference.hashCode()) { mutableListOf() }
+      // TODO Slow check
+      if (refs.contains(data.id)) {
+        // TODO Add edit without reference handling
+        //error("Id ${data.id} was already in references with target id ${entityData.id}")
+        return@collectPersistentIdReferences
       }
+      refs.add(data.id)
     }
   }
 
@@ -322,7 +312,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     if(!TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)
        || !TypedEntityWithPersistentId::class.java.isAssignableFrom(newData.unmodifiableEntityType)
        || oldData.persistentId() == newData.persistentId()) return
-    persistentIdReferrers[newData.id]?.forEach { id ->
+    persistentIdReferrers[oldData.persistentId().hashCode()]?.forEach { id ->
       val refOldData = entityById[id]
       if (refOldData == null) return
 
@@ -341,21 +331,12 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
   private fun removePersistentIdReferences(data: EntityData) {
     data.collectPersistentIdReferences { persistentIdReference ->
-      val entityDataToTypedEntity = entitiesByPersistentIdHash[persistentIdReference.hashCode()]?.asSequence()
-                                      ?.associateWith { createEntityInstance(it) }
-                                    ?: emptyMap()
-      entityDataToTypedEntity.forEach { entity ->
-        val typedEntity = entity.value
-        val entityDataId = entity.key.id
-        if (typedEntity is TypedEntityWithPersistentId && typedEntity.persistentId() == persistentIdReference) {
-          val refs = persistentIdReferrers[entityDataId] ?: error("Unable to find reference target id $entityDataId")
-          if (!refs.remove(data.id)) {
-            error("Id ${data.id} was not in references with target id $entityDataId")
-          }
-
-          if (refs.isEmpty()) persistentIdReferrers.remove(entityDataId)
-        }
+      val hashCode = persistentIdReference.hashCode()
+      val refs = persistentIdReferrers[hashCode] ?: error("Unable to find reference target by hash $hashCode")
+      if (!refs.remove(data.id)) {
+        error("Id ${data.id} was not in references with target by hash $hashCode")
       }
+      if (refs.isEmpty()) persistentIdReferrers.remove(hashCode)
     }
   }
 

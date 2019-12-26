@@ -111,24 +111,21 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
                                    private val storagePlace: JpsProjectStoragePlace) {
   internal val serializerToFileFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsFileSerializerFactory<*>>()
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
-  internal val fileSerializersByUrl = MultiMap.createObjectLinkedOpenHashSet<String, JpsFileEntitiesSerializer<*>>()
+  internal val fileSerializersByUrl = MultiMap.create<String, JpsFileEntitiesSerializer<*>>()
   internal val fileIdToFileName = TIntObjectHashMap<String>()
 
   init {
-    // Order is important e.g. we can't load a module with library dependency and afterward the library itself
-    val allFileSerializers = mutableListOf<JpsFileEntitiesSerializer<*>>()
-    allFileSerializers.addAll(entityTypeSerializers)
     for (factory in directorySerializersFactories) {
-      createDirectorySerializers(factory).onEach { allFileSerializers.add(it) }.associateWithTo(serializerToDirectoryFactory) { factory }
+      createDirectorySerializers(factory).associateWithTo(serializerToDirectoryFactory) { factory }
     }
     for (factory in fileSerializerFactories) {
       val fileList = factory.loadFileList(reader)
       fileList
         .map { factory.createSerializer(createFileInDirectorySource(it.parent!!, it.file!!.name), it) }
-        .onEach { allFileSerializers.add(it) }
         .associateWithTo(serializerToFileFactory) { factory }
     }
 
+    val allFileSerializers = entityTypeSerializers + serializerToDirectoryFactory.keys + serializerToFileFactory.keys
     allFileSerializers.forEach {
       fileSerializersByUrl.putValue(it.fileUrl.url, it)
     }
