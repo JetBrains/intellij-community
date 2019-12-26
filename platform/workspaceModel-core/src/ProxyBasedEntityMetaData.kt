@@ -42,6 +42,7 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
     }
   }
 
+  // TODO :: Try to unify this methods
   fun collectPersistentIdReferences(values: MutableMap<String, Any?>, collector: (PersistentEntityId<*>) -> Unit) {
     for ((name, value) in values) {
       if (value == null) continue
