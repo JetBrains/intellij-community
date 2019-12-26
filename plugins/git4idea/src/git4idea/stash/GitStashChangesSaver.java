@@ -18,6 +18,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -40,7 +41,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
                               @NotNull Git git,
                               @NotNull ProgressIndicator progressIndicator,
                               @NotNull String stashMessage) {
-    super(project, git, progressIndicator, stashMessage);
+    super(project, git, progressIndicator, GitVcsSettings.SaveChangesPolicy.STASH, stashMessage);
     myRepositoryManager = GitUtil.getRepositoryManager(project);
   }
 
@@ -96,17 +97,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @Override
   public boolean wereChangesSaved() {
     return !myStashedRoots.isEmpty();
-  }
-
-  @Override
-  public String getSaverName() {
-    return "stash";
-  }
-
-  @NotNull
-  @Override
-  public String getOperationName() {
-    return "stash";
   }
 
   @Override

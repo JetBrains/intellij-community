@@ -28,11 +28,36 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
   /**
-   * The way the local changes are saved before update if user has selected auto-stash
+   * The way the local changes are saved before update
    */
   public enum SaveChangesPolicy {
-    STASH,
-    SHELVE,
+    STASH("stash", "stash", "stashed"),
+    SHELVE("shelf", "shelve", "shelved");
+
+    @NotNull private final String myName;
+    @NotNull private final String myVerb;
+    private final String myVerbInPast;
+
+    SaveChangesPolicy(@NotNull String name, @NotNull String verb, String verbInPast) {
+      myName = name;
+      myVerb = verb;
+      myVerbInPast = verbInPast;
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    public String getVerb() {
+      return myVerb;
+    }
+
+    @NotNull
+    public String getVerbInPast() {
+      return myVerbInPast;
+    }
   }
 
   public GitVcsSettings() {

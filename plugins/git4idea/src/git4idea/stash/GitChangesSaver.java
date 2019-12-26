@@ -46,6 +46,7 @@ public abstract class GitChangesSaver {
   @NotNull protected final Git myGit;
   @NotNull protected final ProgressIndicator myProgressIndicator;
   @NotNull protected final String myStashMessage;
+  @NotNull private final GitVcsSettings.SaveChangesPolicy mySaveMethod;
 
   protected GitConflictResolver.Params myParams;
 
@@ -65,11 +66,15 @@ public abstract class GitChangesSaver {
     return new GitStashChangesSaver(project, git, progressIndicator, stashMessage);
   }
 
-  protected GitChangesSaver(@NotNull Project project, @NotNull Git git,
-                            @NotNull ProgressIndicator indicator, @NotNull String stashMessage) {
+  protected GitChangesSaver(@NotNull Project project,
+                            @NotNull Git git,
+                            @NotNull ProgressIndicator indicator,
+                            @NotNull GitVcsSettings.SaveChangesPolicy saveMethod,
+                            @NotNull String stashMessage) {
     myProject = project;
     myGit = git;
     myProgressIndicator = indicator;
+    mySaveMethod = saveMethod;
     myStashMessage = stashMessage;
   }
 
@@ -89,7 +94,7 @@ public abstract class GitChangesSaver {
       LOG.info("Update is incomplete, changes are not restored");
       VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were not restored",
                                                                 "Before update your uncommitted changes were saved to <a href='saver'>" +
-                                                                getSaverName() +
+                                                                getSaveMethod().getName() +
                                                                 "</a>.<br/>" +
                                                                 "Update is not complete, you have unresolved merges in your working tree<br/>" +
                                                                 "Resolve conflicts, complete update and restore changes manually.",
@@ -118,16 +123,10 @@ public abstract class GitChangesSaver {
    */
   public abstract boolean wereChangesSaved();
 
-  /**
-   * @return name of the save capability provider - stash or shelf.
-   */
-  public abstract String getSaverName();
-
-  /**
-   * @return the name of the saving operation: stash or shelve.
-   */
   @NotNull
-  public abstract String getOperationName();
+  public GitVcsSettings.SaveChangesPolicy getSaveMethod() {
+    return mySaveMethod;
+  }
 
   /**
    * Show the saved local changes in the proper viewer.

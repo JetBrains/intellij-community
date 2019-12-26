@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.VcsShelveChangesSaver;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
+import git4idea.config.GitVcsSettings;
 import git4idea.rollback.GitRollbackEnvironment;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,8 +32,11 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   private final VcsShelveChangesSaver myVcsShelveChangesSaver;
   private final ShelvedChangesViewManager myShelveViewManager;
 
-  public GitShelveChangesSaver(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator indicator, String stashMessage) {
-    super(project, git, indicator, stashMessage);
+  public GitShelveChangesSaver(@NotNull Project project,
+                               @NotNull Git git,
+                               @NotNull ProgressIndicator indicator,
+                               @NotNull String stashMessage) {
+    super(project, git, indicator, GitVcsSettings.SaveChangesPolicy.SHELVE, stashMessage);
     myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
     myVcsShelveChangesSaver = new VcsShelveChangesSaver(project, indicator, stashMessage) {
       @Override
@@ -57,17 +61,6 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   @Override
   public boolean wereChangesSaved() {
     return myVcsShelveChangesSaver.getShelvedLists() != null && !myVcsShelveChangesSaver.getShelvedLists().isEmpty();
-  }
-
-  @Override
-  public String getSaverName() {
-    return "shelf";
-  }
-
-  @NotNull
-  @Override
-  public String getOperationName() {
-    return "shelve";
   }
 
   @Override

@@ -117,7 +117,7 @@ public class GitPreservingProcess {
       @NotNull
       @Override
       public String getLeftPanelTitle(@NotNull VirtualFile file) {
-        return "Uncommitted changes from stash";
+        return "Uncommitted changes from the " + saveMethod.getName();
       }
 
       @NotNull
@@ -147,8 +147,8 @@ public class GitPreservingProcess {
       LOG.info("Couldn't save local changes", e);
       VcsNotifier.getInstance(myProject).notifyError(
         "Couldn't save uncommitted changes.",
-        String.format("Tried to save uncommitted changes in stash before %s, but failed with an error.<br/>%s",
-                      myOperationTitle, join(e.getMessages())));
+        String.format("Tried to save uncommitted changes in %s before %s, but failed with an error.<br/>%s",
+                      mySaver.getSaveMethod().getName(), myOperationTitle, join(e.getMessages())));
       return false;
     }
   }

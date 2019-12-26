@@ -253,13 +253,8 @@ public class GitRebaseUtils {
   @NotNull
   static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
     return saver != null && saver.wereChangesSaved() ?
-           "<br/>Local changes were " + toPast(saver.getOperationName()) + " before rebase." :
+           "<br/>Local changes were " + saver.getSaveMethod().getVerbInPast() + " before rebase." :
            "";
-  }
-
-  @NotNull
-  private static String toPast(@NotNull String word) {
-    return word.endsWith("e") ? word + "d" : word + "ed";
   }
 
   @NotNull

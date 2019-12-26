@@ -109,7 +109,7 @@ public class GitRebaseProcess {
     myProgressManager = ProgressManager.getInstance();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
-    VIEW_STASH_ACTION = NotificationAction.createSimple("View " + capitalize(mySaver.getSaverName()) + "...",
+    VIEW_STASH_ACTION = NotificationAction.createSimple("View " + capitalize(mySaver.getSaveMethod().getName()) + "...",
                                                         () -> mySaver.showSavedChanges());
   }
 
@@ -239,7 +239,7 @@ public class GitRebaseProcess {
           retryWhenDirty = true; // try same repository again
         }
         else {
-          LOG.warn("Couldn't " + mySaver.getOperationName() + " root " + repository.getRoot() + ": " + saveError);
+          LOG.warn("Couldn't " + mySaver.getSaveMethod().getVerb() + " root " + repository.getRoot() + ": " + saveError);
           showFatalError(saveError, repository, somethingRebased, alreadyRebased.keySet(), allSkippedCommits);
           GitRebaseStatus.Type type = somethingRebased ? GitRebaseStatus.Type.SUSPENDED : GitRebaseStatus.Type.ERROR;
           return new GitRebaseStatus(type, skippedCommits);
@@ -338,7 +338,7 @@ public class GitRebaseProcess {
     }
     catch (VcsException e) {
       LOG.warn(e);
-      return "Couldn't " + mySaver.getSaverName() + " local uncommitted changes:<br/>" + e.getMessage();
+      return "Couldn't " + mySaver.getSaveMethod().getVerb() + " local uncommitted changes:<br/>" + e.getMessage();
     }
   }
 
