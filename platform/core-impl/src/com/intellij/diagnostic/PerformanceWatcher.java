@@ -48,17 +48,13 @@ public final class PerformanceWatcher implements Disposable {
   static final String DUMP_PREFIX = "threadDump-";
   private static final String DURATION_FILE_NAME = ".duration";
   private ScheduledFuture<?> myThread;
-  private volatile SamplingTask myDumpTask;
   private final File myLogDir = new File(PathManager.getLogPath());
-  private List<StackTraceElement> myStacktraceCommonPart;
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
   private volatile long myLastSampling = System.nanoTime();
 
-  private long myFreezeStart;
   private int myActiveEvents;
-  private boolean myFreezeDuringStartup;
 
   private static final long ourIdeStart = System.currentTimeMillis();
 
@@ -236,47 +232,12 @@ public final class PerformanceWatcher implements Disposable {
     return Registry.intValue("performance.watcher.dump.duration.s") * 1000;
   }
 
-  @NotNull
-  private String getFreezeFolderName(long freezeStartMs) {
-    return THREAD_DUMPS_PREFIX + (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") + formatTime(freezeStartMs) + "-" + buildName();
-  }
-
   private static String buildName() {
     return ApplicationInfo.getInstance().getBuild().asString();
   }
 
   private static String formatTime(long timeMs) {
     return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(timeMs));
-  }
-
-  private void stopDumping() {
-    SamplingTask task = myDumpTask;
-    if (task != null) {
-      task.stop();
-    }
-  }
-
-  private void edtResponds(long currentMillis) {
-    stopDumping();
-
-    if (myFreezeStart != 0) {
-      long durationMs = currentMillis - myFreezeStart;
-      int unresponsiveDuration = (int)durationMs / 1000;
-      File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
-      File reportDir = null;
-      if (dir.exists()) {
-        cleanup(dir);
-        reportDir = new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec");
-        if (!dir.renameTo(reportDir)) {
-          reportDir = null;
-        }
-      }
-      LOG.warn("UI was frozen for " + durationMs + "ms, details saved to " + reportDir);
-      getPublisher().uiFreezeFinished(durationMs, reportDir);
-      myFreezeStart = 0;
-
-      myStacktraceCommonPart = null;
-    }
   }
 
   private static void cleanup(File dir) {
@@ -311,21 +272,13 @@ public final class PerformanceWatcher implements Disposable {
     }
   }
 
-  private String getFreezePlaceSuffix() {
-    if (myStacktraceCommonPart != null && !myStacktraceCommonPart.isEmpty()) {
-      final StackTraceElement element = myStacktraceCommonPart.get(0);
-      return "-" + StringUtil.getShortName(element.getClassName()) + "." + element.getMethodName();
-    }
-    return "";
-  }
-
   @Nullable
   public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
-    return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos(), false);
+    return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos(), null);
   }
 
   @Nullable
-  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, boolean notify) {
+  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, @Nullable FreezeCheckerTask task) {
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
@@ -349,19 +302,8 @@ public final class PerformanceWatcher implements Disposable {
     ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(threadInfos);
     try {
       FileUtil.writeToFile(file, threadDump.getRawDump());
-      if (notify) {
-        if (myFreezeStart != 0) {
-          FileUtil.writeToFile(new File(dir, DURATION_FILE_NAME), String.valueOf((now - myFreezeStart) / 1000));
-        }
-        StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
-        if (edtStack != null) {
-          if (myStacktraceCommonPart == null) {
-            myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
-          }
-          else {
-            myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
-          }
-        }
+      if (task != null) {
+        FileUtil.writeToFile(new File(dir, DURATION_FILE_NAME), String.valueOf((now - task.myFreezeStart) / 1000));
 
         getPublisher().dumpedThreads(file, threadDump);
       }
@@ -443,12 +385,14 @@ public final class PerformanceWatcher implements Disposable {
   private class FreezeCheckerTask {
     private final AtomicReference<CheckerState> myState = new AtomicReference<>(CheckerState.CHECKING);
     private final Future<?> myFuture;
+    private final long myFreezeStart;
+    private String myFreezeFolder;
+    private boolean myFreezeDuringStartup;
+    private volatile SamplingTask myDumpTask;
 
     FreezeCheckerTask(long start) {
-      myFuture =
-        !myExecutor.isShutdown() ?
-        myExecutor.schedule(() -> edtFrozenPrecise(start), getUnresponsiveInterval(), TimeUnit.MILLISECONDS) :
-        null;
+      myFuture = !myExecutor.isShutdown() ? myExecutor.schedule(this::edtFrozen, getUnresponsiveInterval(), TimeUnit.MILLISECONDS) : null;
+      myFreezeStart = start;
     }
 
     void stop() {
@@ -466,13 +410,13 @@ public final class PerformanceWatcher implements Disposable {
       }
     }
 
-    private void edtFrozenPrecise(long start) {
+    private void edtFrozen() {
+      myFreezeFolder =
+        THREAD_DUMPS_PREFIX + (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") + formatTime(myFreezeStart) + "-" + buildName();
       if (myState.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
-        myFreezeStart = start;
         //TODO always true for some reason
         //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
         getPublisher().uiFreezeStarted();
-        stopDumping();
         myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
           @Override
           protected void dumpedThreads(ThreadInfo[] infos) {
@@ -480,11 +424,59 @@ public final class PerformanceWatcher implements Disposable {
               stop();
             }
             else {
-              dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos, true);
+              dumpThreads(myFreezeFolder + "/", false, infos, FreezeCheckerTask.this);
             }
           }
         };
       }
+    }
+
+    private void edtResponds(long currentMillis) {
+      stopDumping();
+
+      long durationMs = currentMillis - myFreezeStart;
+      File dir = new File(myLogDir, myFreezeFolder);
+      File reportDir = null;
+      if (dir.exists()) {
+        cleanup(dir);
+        reportDir = new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + TimeUnit.MILLISECONDS.toSeconds(durationMs) + "sec");
+        if (!dir.renameTo(reportDir)) {
+          reportDir = null;
+        }
+      }
+      LOG.warn("UI was frozen for " + durationMs + "ms, details saved to " + reportDir);
+      getPublisher().uiFreezeFinished(durationMs, reportDir);
+    }
+
+    private void stopDumping() {
+      SamplingTask task = myDumpTask;
+      if (task != null) {
+        task.stop();
+      }
+    }
+
+    private String getFreezePlaceSuffix() {
+      List<StackTraceElement> stacktraceCommonPart = null;
+      for (ThreadInfo[] info : myDumpTask.getThreadInfos()) {
+        ThreadInfo edt = ContainerUtil.find(info, ThreadDumper::isEDT);
+        if (edt != null) {
+          StackTraceElement[] edtStack = edt.getStackTrace();
+          if (edtStack != null) {
+            if (stacktraceCommonPart == null) {
+              stacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+            }
+            else {
+              stacktraceCommonPart = getStacktraceCommonPart(stacktraceCommonPart, edtStack);
+            }
+          }
+        }
+      }
+
+      if (!ContainerUtil.isEmpty(stacktraceCommonPart)) {
+        StackTraceElement element = stacktraceCommonPart.get(0);
+        return "-" + StringUtil.getShortName(element.getClassName()) + "." + element.getMethodName();
+      }
+      return "";
     }
   }
 }
