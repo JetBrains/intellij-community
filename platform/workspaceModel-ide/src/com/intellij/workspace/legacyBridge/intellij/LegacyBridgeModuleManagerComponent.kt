@@ -3,9 +3,11 @@ package com.intellij.workspace.legacyBridge.intellij
 import com.intellij.ProjectTopics
 import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.configurationStore.ModuleStoreBase
+import com.intellij.configurationStore.saveComponentManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
@@ -13,12 +15,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.*
+import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl.Companion.createFromPaths
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
 import com.intellij.workspace.api.*
@@ -51,7 +55,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   private val modulesMap: ConcurrentMap<ModuleId, LegacyBridgeModule> = ConcurrentHashMap()
-  private val unloadedModules = UnloadedModulesListStorage.getInstance(project)
+  private val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
   private val newModuleInstances = mutableMapOf<ModuleId, LegacyBridgeModule>()
 
   @ApiStatus.Internal
@@ -76,7 +80,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         override fun projectComponentsInitialized(listenedProject: Project) {
           if (project !== listenedProject) return
 
-          val unloadedNames = unloadedModules.unloadedModuleNames.toSet()
+          val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
 
           val entities = entityStore.current.entities(ModuleEntity::class.java)
             .filter { !unloadedNames.contains(it.name) }
@@ -126,7 +130,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                 is EntityChange.Added -> Unit // Add events are handled after adding new modules
               }.let {  } // exhaustive when
 
-              val unloadedModulesSetOriginal = unloadedModules.unloadedModuleNames.toSet()
+
+              loadStateOfUnloadedModules(changes)
+              val unloadedModulesSetOriginal = unloadedModules.keys.toList()
               val unloadedModulesSet = unloadedModulesSetOriginal.toMutableSet()
               val oldModuleNames = mutableMapOf<Module, String>()
 
@@ -148,7 +154,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                     addModule(alreadyCreatedModule)
                     alreadyCreatedModule
                   } else {
-                    if (unloadedModulesSet.contains(change.entity.name)) {
+                    if (change.entity.name in unloadedModules.keys) {
                       // Skip unloaded modules if it was not added via API
                       continue@nextChange
                     }
@@ -209,6 +215,12 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                 setUnloadedModules(unloadedModulesSet.toList())
               }
 
+              if (unloadedModulesSet.isNotEmpty()) {
+                val loadedModules = modules.map { it.name }.toMutableList()
+                loadedModules.removeAll(unloadedModulesSet)
+                AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
+              }
+
               for (module in modulesToCheck) {
                 val newModuleLibraries = LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries
                 if (newModuleLibraries.isNotEmpty()) {
@@ -230,6 +242,38 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         }
       })
     }
+  }
+
+  private fun loadStateOfUnloadedModules(changes: List<EntityChange<ModuleEntity>>) {
+    val moduleEntitiesToLoad = changes.filterIsInstance<EntityChange.Added<ModuleEntity>>().map { it.entity }.toMutableList()
+    if (moduleEntitiesToLoad.isEmpty()) return
+    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
+
+    val modulePathsToLoad = mutableSetOf<ModulePath>()
+    val iterator = moduleEntitiesToLoad.listIterator()
+    val unloadedModulePaths: MutableList<ModulePath> = mutableListOf()
+    while (iterator.hasNext()) {
+      val element = getModulePath(iterator.next())
+      if (element.moduleName in unloadedModuleNames) {
+        unloadedModulePaths += element
+        iterator.remove()
+        continue
+      }
+      else {
+        modulePathsToLoad += element
+      }
+    }
+
+    val unloaded = createFromPaths(unloadedModulePaths, project).toMutableList()
+
+    if (unloaded.isNotEmpty()) {
+      val changeUnloaded = AutomaticModuleUnloader.getInstance(project).processNewModules(modulePathsToLoad, unloaded)
+      unloaded.addAll(changeUnloaded.toUnloadDescriptions)
+      unloadedModulePaths += changeUnloaded.toUnload
+    }
+
+    unloadedModules.clear()
+    unloaded.associateByTo(unloadedModules) { it.name }
   }
 
   internal fun addModule(moduleEntity: ModuleEntity): LegacyBridgeModule {
@@ -360,11 +404,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   override fun getModuleDependentModules(module: Module): MutableList<Module> =
     ModuleRootManager.getInstance(module).dependencies.toMutableList()
 
-  override fun getUnloadedModuleDescriptions(): MutableCollection<UnloadedModuleDescription> {
-    val names = unloadedModules.unloadedModuleNames.toSet()
-    val entities = entityStore.current.entities(ModuleEntity::class.java).filter { names.contains(it.name) }.toList()
-    return entities.map { getUnloadedModuleDescription(it) }.toMutableList()
-  }
+  override fun getUnloadedModuleDescriptions(): Collection<UnloadedModuleDescription> = unloadedModules.values
 
   override fun getFailedModulePaths(): Collection<ModulePath> = emptyList()
 
@@ -407,7 +447,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? {
-    if (!unloadedModules.unloadedModuleNames.contains(moduleName)) return null
+    if (moduleName !in unloadedModules) return null
 
     // TODO Optimize?
     val moduleEntity = entityStore.current.entities(ModuleEntity::class.java).filter { it.name == moduleName }.firstOrNull()
@@ -434,7 +474,12 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   override fun setUnloadedModules(unloadedModuleNames: List<String>) {
-    unloadedModules.unloadedModuleNames = unloadedModuleNames
+    if (unloadedModules.keys == unloadedModuleNames.toSet()) {
+      //optimization
+      return
+    }
+
+    UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = unloadedModuleNames
 
     if (unloadedModuleNames.isNotEmpty()) {
       val loadedModules = modules.map { it.name }.toMutableList()
@@ -446,26 +491,36 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
     val modulesToUnload = mutableSetOf<ModuleId>()
     for (module in modules) {
-      if (names.contains(module.name)) {
+      if (module.name in names) {
         modulesToUnload.add((module as LegacyBridgeModule).moduleEntityId)
       }
     }
 
     val moduleEntities = entityStore.current.entities(ModuleEntity::class.java).toList()
-    val moduleEntitiesToLoad = moduleEntities.filter { findModuleByName(it.name) == null && !names.contains(it.name) }
+    val moduleEntitiesToLoad = moduleEntities.filter { findModuleByName(it.name) == null && it.name !in names }
 
     if (moduleEntitiesToLoad.isEmpty() && modulesToUnload.isEmpty()) return
 
-    ApplicationManager.getApplication().runWriteAction {
+    unloadedModules.keys.removeAll { it !in names }
+    runWriteAction {
       ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(
         {
-          modulesToUnload.forEach { moduleId ->
+          for (moduleId in modulesToUnload) {
             fireBeforeModuleRemoved(moduleId)
 
-            // we need to save module configuration before unloading, otherwise its settings will be lost
-            // copied from original ModuleManagerImpl
-            // TODO Uncomment after implementing save
-            // saveComponentManager(module)
+            val module = findModuleByName(moduleId.name)
+            if (module != null) {
+              val description = LoadedModuleDescriptionImpl(module)
+              val modulePath = getModulePath(module, entityStore)
+              val pointerManager = VirtualFilePointerManager.getInstance()
+              val contentRoots = ModuleRootManager.getInstance(module).contentRootUrls.map {
+                url -> pointerManager.create(url, this, null)
+              }
+              val unloadedModuleDescription = UnloadedModuleDescriptionImpl(modulePath, description.dependencyModuleNames, contentRoots)
+              unloadedModules[moduleId.name] = unloadedModuleDescription
+              // we need to save module configuration before unloading, otherwise its settings will be lost
+              saveComponentManager(module)
+            }
 
             removeModuleAndFireEvent(moduleId)
           }
@@ -478,10 +533,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   override fun removeUnloadedModules(unloadedModules: MutableCollection<out UnloadedModuleDescription>) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
-    val unloadedModulesSet = unloadedModules.map { it.name }.toSet()
-    val newUnloadedModules = this.unloadedModules.unloadedModuleNames.filter { !unloadedModulesSet.contains(it) }
+    unloadedModules.forEach { this.unloadedModules.remove(it.name) }
 
-    setUnloadedModules(newUnloadedModules)
+    UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
   }
 
   private fun getUnloadedModuleDescription(moduleEntity: ModuleEntity): UnloadedModuleDescriptionImpl {
@@ -563,6 +617,11 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
       return moduleEntity.groupPath?.path?.toTypedArray()
     }
+
+    internal fun getModulePath(module: Module, entityStore: TypedEntityStore): ModulePath = ModulePath(
+      path = module.moduleFilePath,
+      group = getModuleGroupPath(module, entityStore)?.joinToString(separator = ModuleManagerImpl.MODULE_GROUP_SEPARATOR)
+    )
 
     internal fun hasModuleGroups(entityStore: TypedEntityStore) =
       entityStore.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
