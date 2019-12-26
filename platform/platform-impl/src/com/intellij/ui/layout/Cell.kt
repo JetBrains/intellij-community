@@ -285,6 +285,7 @@ abstract class Cell : BaseBuilder {
     else {
       component.renderer = SimpleListCellRenderer.create("") { it.toString() }
     }
+    component.selectedItem = modelBinding.get()
     val builder = component(growPolicy = growPolicy)
     return builder.withBinding(
       { component -> component.selectedItem as T? },
