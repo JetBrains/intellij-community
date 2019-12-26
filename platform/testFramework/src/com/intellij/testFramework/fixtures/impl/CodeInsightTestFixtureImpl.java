@@ -1887,7 +1887,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
     SearchEverywhereContributor<Object> contributor = createMockContributor(contextForSorting, searchEverywhere);
     final ArrayList<Object> results = new ArrayList<>();
-    invokeAndWait(() -> contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results)));
+    contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
     return results;
   }
 
@@ -1895,17 +1895,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public List<Crumb> getBreadcrumbsAtCaret() {
     return myEditorTestFixture.getBreadcrumbsAtCaret();
-  }
-
-  private static void invokeAndWait(Runnable task) {
-    try {
-      Application application = ApplicationManager.getApplication();
-      Future<?> future = application.executeOnPooledThread(task);
-      future.get();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private SearchEverywhereContributor<Object> createMockContributor(@Nullable PsiElement contextForSorting, boolean everywhere) {
