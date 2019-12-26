@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
  *
  * Contributed instances of this class define .
  */
-//TODO: suggest "predefined" configurations (e.g one per every configured SFTP connection)
+//todo[remoteServers]: suggest "predefined" configurations (e.g one per every configured SFTP connection)
 abstract class RemoteTargetType<C : TargetEnvironmentConfiguration>(id: String) : ContributedTypeBase<C>(id) {
   /**
    * Return true if the new configuration of given type may be set up by the user iteratively with the help of [createStepsForNewWizard]
