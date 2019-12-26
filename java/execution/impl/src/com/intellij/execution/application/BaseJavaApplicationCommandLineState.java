@@ -116,12 +116,13 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
       }
     }
 
-    TargetedCommandLine targetedCommandLine = createTargetedCommandLine(request, runner.getTargetConfiguration());
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, runner.getTargetConfiguration());
+    TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     TargetEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
     Process process = remoteEnvironment.createProcess(targetedCommandLine, indicator);
 
-    Map<String, String> content = targetedCommandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+    Map<String, String> content = targetedCommandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
     }
@@ -130,7 +131,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
 
     OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation,
                                                                         targetedCommandLine.getCharset(),
-                                                                        targetedCommandLine.getFilesToDeleteOnTermination());
+                                                                        targetedCommandLineBuilder.getFilesToDeleteOnTermination());
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
@@ -157,10 +158,10 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
 
   @NotNull
   @Override
-  protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                          @Nullable TargetEnvironmentConfiguration configuration)
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                                 @Nullable TargetEnvironmentConfiguration configuration)
     throws ExecutionException {
-    TargetedCommandLine line = super.createTargetedCommandLine(request, configuration);
+    TargetedCommandLineBuilder line = super.createTargetedCommandLine(request, configuration);
     File inputFile = InputRedirectAware.getInputFile(myConfiguration);
     if (inputFile != null) {
       line.setInputFile(request.createUpload(inputFile.getAbsolutePath()));

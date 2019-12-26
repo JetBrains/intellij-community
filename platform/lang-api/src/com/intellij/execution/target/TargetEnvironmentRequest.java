@@ -25,7 +25,7 @@ public interface TargetEnvironmentRequest {
   /**
    * Creates the requirement to upload the local path up to the target environment.
    * <p>
-   * Returned value may be used in {@link TargetedCommandLine}
+   * Returned value may be used in {@link TargetedCommandLineBuilder}
    * where it will be replaced to the corresponding path at the target machine.
    */
   @NotNull
@@ -34,7 +34,7 @@ public interface TargetEnvironmentRequest {
   /**
    * Creates the requirement to open a port on the target environment.
    * <p>
-   * Returned value may be used in {@link TargetedCommandLine}
+   * Returned value may be used in {@link TargetedCommandLineBuilder}
    * where it will be replaced to the passed port.
    * <p>
    * As soon as target will be prepared, the value will also contain the port on local machine

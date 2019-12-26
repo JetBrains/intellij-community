@@ -14,7 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -139,19 +139,19 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull
   @Override
-  protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                          @Nullable TargetEnvironmentConfiguration configuration)
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                                 @Nullable TargetEnvironmentConfiguration configuration)
     throws ExecutionException {
-    TargetedCommandLine commandLine = super.createTargetedCommandLine(request, configuration);
+    TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request, configuration);
     File inputFile = InputRedirectAware.getInputFile(getConfiguration());
     if (inputFile != null) {
-      commandLine.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
+      commandLineBuilder.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
     }
-    Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+    Map<String, String> content = commandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
     }
-    return commandLine;
+    return commandLineBuilder;
   }
 
   @NotNull

@@ -28,7 +28,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -186,8 +186,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
       @NotNull
       @Override
-      protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                              @Nullable TargetEnvironmentConfiguration configuration)
+      protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                                     @Nullable TargetEnvironmentConfiguration configuration)
         throws ExecutionException {
         return getJavaParameters().toCommandLine(request, configuration);
       }
@@ -250,8 +250,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
       @NotNull
       @Override
-      protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                              @Nullable TargetEnvironmentConfiguration configuration)
+      protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                                     @Nullable TargetEnvironmentConfiguration configuration)
         throws ExecutionException {
         return getJavaParameters().toCommandLine(request, configuration);
       }

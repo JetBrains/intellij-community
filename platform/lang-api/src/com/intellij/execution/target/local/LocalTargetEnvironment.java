@@ -34,7 +34,7 @@ public class LocalTargetEnvironment implements TargetEnvironment {
   }
 
   @NotNull
-  public GeneralCommandLine createGeneralCommandLine(TargetedCommandLine commandLine) throws CantRunException {
+  public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
       GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.prepareCommandLine(this));
       if (myRequest instanceof LocalTargetEnvironmentRequest) {

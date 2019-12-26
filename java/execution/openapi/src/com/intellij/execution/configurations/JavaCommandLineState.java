@@ -6,7 +6,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,8 +45,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   @NotNull
-  protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                          @Nullable TargetEnvironmentConfiguration configuration) throws ExecutionException {
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                                 @Nullable TargetEnvironmentConfiguration configuration) throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
@@ -58,9 +58,9 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
     TargetEnvironmentRequest request = runner.createRequest();
-    TargetedCommandLine targetedCommandLine = createTargetedCommandLine(request, runner.getTargetConfiguration());
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, runner.getTargetConfiguration());
     return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
-      .createGeneralCommandLine(targetedCommandLine)
+      .createGeneralCommandLine(targetedCommandLineBuilder.build())
       .withRedirectErrorStream(redirectErrorStream);
   }
 

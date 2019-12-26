@@ -11,7 +11,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
@@ -158,11 +158,11 @@ public class JdkUtil {
 
   @ApiStatus.Internal
   @NotNull
-  public static TargetedCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
-                                                        @NotNull TargetEnvironmentRequest request,
-                                                        @Nullable TargetEnvironmentConfiguration targetConfiguration)
+  public static TargetedCommandLineBuilder setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
+                                                               @NotNull TargetEnvironmentRequest request,
+                                                               @Nullable TargetEnvironmentConfiguration targetConfiguration)
     throws CantRunException {
-    TargetedCommandLine commandLine = new TargetedCommandLine();
+    TargetedCommandLineBuilder commandLine = new TargetedCommandLineBuilder();
     JavaLanguageRuntimeConfiguration javaConfiguration = targetConfiguration != null
                                                          ? targetConfiguration.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class)
                                                          : null;
@@ -193,10 +193,10 @@ public class JdkUtil {
     LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
     TargetEnvironmentRequest request = runner.createRequest();
     return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
-      .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null));
+      .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null).build());
   }
 
-  private static void setupCommandLine(@NotNull TargetedCommandLine commandLine,
+  private static void setupCommandLine(@NotNull TargetedCommandLineBuilder commandLine,
                                        @NotNull TargetEnvironmentRequest request,
                                        @NotNull SimpleJavaParameters javaParameters,
                                        @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration) throws CantRunException {
@@ -271,12 +271,12 @@ public class JdkUtil {
 
   private static void setupCommandLine(@NotNull GeneralCommandLine commandLine, @NotNull SimpleJavaParameters javaParameters)
     throws CantRunException {
-    TargetedCommandLine targetedCommandLine = new TargetedCommandLine();
+    TargetedCommandLineBuilder targetedCommandLineBuilder = new TargetedCommandLineBuilder();
     LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
     TargetEnvironmentRequest request = runner.createRequest();
-    setupCommandLine(targetedCommandLine, request, javaParameters, null);
+    setupCommandLine(targetedCommandLineBuilder, request, javaParameters, null);
     LocalTargetEnvironment environment = runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator());
-    GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(targetedCommandLine);
+    GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(targetedCommandLineBuilder.build());
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
     commandLine.getParametersList().addAll(generalCommandLine.getParametersList().getList());
     commandLine.getEnvironment().putAll(generalCommandLine.getEnvironment());
@@ -294,7 +294,7 @@ public class JdkUtil {
     return vmParameters.hasParameter("-p") || vmParameters.hasParameter("--module-path");
   }
 
-  private static void setArgFileParams(@NotNull TargetedCommandLine commandLine,
+  private static void setArgFileParams(@NotNull TargetedCommandLineBuilder commandLine,
                                        @NotNull TargetEnvironmentRequest request,
                                        @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                        @NotNull SimpleJavaParameters javaParameters,
@@ -384,7 +384,7 @@ public class JdkUtil {
     }
   }
 
-  private static void setCommandLineWrapperParams(@NotNull TargetedCommandLine commandLine,
+  private static void setCommandLineWrapperParams(@NotNull TargetedCommandLineBuilder commandLine,
                                                   @NotNull TargetEnvironmentRequest request,
                                                   @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                   @NotNull SimpleJavaParameters javaParameters,
@@ -505,7 +505,7 @@ public class JdkUtil {
     });
   }
 
-  private static void setClasspathJarParams(@NotNull TargetedCommandLine commandLine,
+  private static void setClasspathJarParams(@NotNull TargetedCommandLineBuilder commandLine,
                                             @NotNull TargetEnvironmentRequest request,
                                             @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                             @NotNull SimpleJavaParameters javaParameters,
@@ -605,7 +605,7 @@ public class JdkUtil {
     throw new CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
-  private static void appendParamsEncodingClasspath(@NotNull TargetedCommandLine commandLine,
+  private static void appendParamsEncodingClasspath(@NotNull TargetedCommandLineBuilder commandLine,
                                                     @NotNull TargetEnvironmentRequest request,
                                                     @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                     @NotNull SimpleJavaParameters javaParameters,
@@ -627,7 +627,7 @@ public class JdkUtil {
     }
   }
 
-  private static void appendVmParameters(@NotNull TargetedCommandLine commandLine,
+  private static void appendVmParameters(@NotNull TargetedCommandLineBuilder commandLine,
                                          @NotNull TargetEnvironmentRequest request,
                                          @NotNull ParametersList vmParameters) {
     for (String vmParameter : vmParameters.getList()) {
@@ -635,7 +635,7 @@ public class JdkUtil {
     }
   }
 
-  private static void appendVmParameter(@NotNull TargetedCommandLine commandLine,
+  private static void appendVmParameter(@NotNull TargetedCommandLineBuilder commandLine,
                                         @NotNull TargetEnvironmentRequest request,
                                         @NotNull String vmParameter) {
     if (SystemProperties.getBooleanProperty("remote.servers.ignore.vm.parameter", false)) {
@@ -654,7 +654,7 @@ public class JdkUtil {
     }
   }
 
-  private static void appendVmAgentParameter(@NotNull TargetedCommandLine commandLine,
+  private static void appendVmAgentParameter(@NotNull TargetedCommandLineBuilder commandLine,
                                              @NotNull TargetEnvironmentRequest request,
                                              @NotNull String vmParameter, 
                                              @NotNull String prefix) {
@@ -690,7 +690,7 @@ public class JdkUtil {
   }
 
   private static void appendEncoding(@NotNull SimpleJavaParameters javaParameters,
-                                     @NotNull TargetedCommandLine commandLine,
+                                     @NotNull TargetedCommandLineBuilder commandLine,
                                      @NotNull ParametersList parametersList) {
     // for correct handling of process's input and output, values of file.encoding and charset of CommandLine object should be in sync
     String encoding = parametersList.getPropertyValue("file.encoding");

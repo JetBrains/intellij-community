@@ -4,15 +4,15 @@ package com.intellij.execution.target;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.value.TargetValue;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
-import java.io.File;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -21,16 +21,30 @@ import java.util.concurrent.TimeoutException;
  * <p>
  * Exe-path, working-directory and other properties are initialized in a lazy way,
  * that allows to create a command line before creating a target where it should be run.
+ *
+ * @see TargetedCommandLineBuilder
  */
-public class TargetedCommandLine extends UserDataHolderBase {
-  private TargetValue<String> myExePath = TargetValue.empty();
-  private TargetValue<String> myWorkingDirectory = TargetValue.empty();
-  private TargetValue<String> myInputFilePath = TargetValue.empty();
-  private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
+public class TargetedCommandLine {
+  @NotNull private final TargetValue<String> myExePath;
+  @NotNull private final TargetValue<String> myWorkingDirectory;
+  @NotNull private final TargetValue<String> myInputFilePath;
+  @NotNull private final Charset myCharset;
+  @NotNull private final List<TargetValue<String>> myParameters;
+  @NotNull private final Map<String, TargetValue<String>> myEnvironment;
 
-  private final List<TargetValue<String>> myParameters = new ArrayList<>();
-  private final Map<String, TargetValue<String>> myEnvironment = new HashMap<>();
-  private final Set<File> myFilesToDeleteOnTermination = new HashSet<>();
+  public TargetedCommandLine(@NotNull TargetValue<String> exePath,
+                             @NotNull TargetValue<String> workingDirectory,
+                             @NotNull TargetValue<String> inputFilePath,
+                             @NotNull Charset charset,
+                             @NotNull List<TargetValue<String>> parameters,
+                             @NotNull Map<String, TargetValue<String>> environment) {
+    myExePath = exePath;
+    myWorkingDirectory = workingDirectory;
+    myInputFilePath = inputFilePath;
+    myCharset = charset;
+    myParameters = parameters;
+    myEnvironment = environment;
+  }
 
   /**
    * {@link GeneralCommandLine#getPreparedCommandLine()}
@@ -45,52 +59,6 @@ public class TargetedCommandLine extends UserDataHolderBase {
       parameters.add(resolvePromise(parameter.getTargetValue(), "parameter"));
     }
     return CommandLineUtil.toCommandLine(command, parameters, target.getRemotePlatform().getPlatform());
-  }
-
-  public void setCharset(@NotNull Charset charset) {
-    myCharset = charset;
-  }
-
-  public void setExePath(@NotNull TargetValue<String> exePath) {
-    myExePath = exePath;
-  }
-
-  public void setExePath(@NotNull String exePath) {
-    myExePath = TargetValue.fixed(exePath);
-  }
-
-  public void setWorkingDirectory(@NotNull TargetValue<String> workingDirectory) {
-    myWorkingDirectory = workingDirectory;
-  }
-
-  public void addParameter(@NotNull TargetValue<String> parameter) {
-    myParameters.add(parameter);
-  }
-
-  public void addParameter(@NotNull String parameter) {
-    myParameters.add(TargetValue.fixed(parameter));
-  }
-
-  public void addParameters(@NotNull List<String> parametersList) {
-    for (String parameter : parametersList) {
-      addParameter(parameter);
-    }
-  }
-
-  public void addEnvironmentVariable(String name, TargetValue<String> value) {
-    myEnvironment.put(name, value);
-  }
-
-  public void addEnvironmentVariable(String name, String value) {
-    myEnvironment.put(name, TargetValue.fixed(value));
-  }
-
-  public void addFileToDeleteOnTermination(@NotNull File file) {
-    myFilesToDeleteOnTermination.add(file);
-  }
-
-  public void setInputFile(@NotNull TargetValue<String> inputFilePath) {
-    myInputFilePath = inputFilePath;
   }
 
   @Nullable
@@ -115,11 +83,6 @@ public class TargetedCommandLine extends UserDataHolderBase {
   @NotNull
   public Charset getCharset() {
     return myCharset;
-  }
-
-  @NotNull
-  public Set<File> getFilesToDeleteOnTermination() {
-    return myFilesToDeleteOnTermination;
   }
 
   @Nullable
