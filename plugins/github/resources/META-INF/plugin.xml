@@ -38,7 +38,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
 
-    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GHAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                          instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
@@ -90,7 +90,7 @@
     <action id="Github.View.Pull.Request" class="org.jetbrains.plugins.github.GithubViewPullRequestsAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
-    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserActionGroup">
+    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
@@ -108,7 +108,7 @@
       <action id="Github.PullRequest.Timeline.Show"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRShowTimelineAction"/>
       <action id="Github.PullRequest.Branch.Create"
-              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreateBranchAction"/>
       <reference id="Github.Open.In.Browser"/>
       <action id="Github.PullRequest.List.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh"/>

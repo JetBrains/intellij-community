@@ -32,16 +32,16 @@ import java.util.concurrent.CompletionException
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-internal class GithubPullRequestDataProviderImpl(private val project: Project,
-                                                 private val progressManager: ProgressManager,
-                                                 private val git: Git,
-                                                 private val requestExecutor: GithubApiRequestExecutor,
-                                                 private val gitRemote: GitRemoteUrlCoordinates,
-                                                 private val repository: GHRepositoryCoordinates,
-                                                 override val number: Long)
-  : GithubPullRequestDataProvider {
+internal class GHPRDataProviderImpl(private val project: Project,
+                                    private val progressManager: ProgressManager,
+                                    private val git: Git,
+                                    private val requestExecutor: GithubApiRequestExecutor,
+                                    private val gitRemote: GitRemoteUrlCoordinates,
+                                    private val repository: GHRepositoryCoordinates,
+                                    override val number: Long)
+  : GHPRDataProvider {
 
-  private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)
+  private val requestsChangesEventDispatcher = EventDispatcher.create(GHPRDataProvider.RequestsChangedListener::class.java)
 
   private var lastKnownBaseSha: String? = null
   private var lastKnownHeadSha: String? = null
@@ -182,12 +182,12 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
         GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { backingValue.value } }
     }
 
-  override fun addRequestsChangesListener(listener: GithubPullRequestDataProvider.RequestsChangedListener) =
+  override fun addRequestsChangesListener(listener: GHPRDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.addListener(listener)
 
-  override fun addRequestsChangesListener(disposable: Disposable, listener: GithubPullRequestDataProvider.RequestsChangedListener) =
+  override fun addRequestsChangesListener(disposable: Disposable, listener: GHPRDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.addListener(listener, disposable)
 
-  override fun removeRequestsChangesListener(listener: GithubPullRequestDataProvider.RequestsChangedListener) =
+  override fun removeRequestsChangesListener(listener: GHPRDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.removeListener(listener)
 }

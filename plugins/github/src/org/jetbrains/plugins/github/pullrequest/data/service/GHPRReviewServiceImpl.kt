@@ -9,13 +9,13 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
 
 class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                             private val messageBus: MessageBus,
-                            private val securityService: GithubPullRequestsSecurityService,
+                            private val securityService: GHPRSecurityService,
                             private val requestExecutor: GithubApiRequestExecutor,
                             private val repository: GHRepositoryCoordinates) : GHPRReviewService {
   override fun canComment() = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
@@ -27,7 +27,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     return progressManager.submitIOTask(progressIndicator) {
       val comment = requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.Comments.createReply(repository, pullRequest, replyToCommentId, body))
-      messageBus.syncPublisher(GHPullRequestsDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
       comment
     }
   }
@@ -41,7 +41,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     return progressManager.submitIOTask(progressIndicator) {
       val comment = requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.Comments.create(repository, pullRequest, commitSha, fileName, diffLine, body))
-      messageBus.syncPublisher(GHPullRequestsDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
       comment
     }
   }

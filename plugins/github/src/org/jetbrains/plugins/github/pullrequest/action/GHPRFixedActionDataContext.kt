@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 
 class GHPRFixedActionDataContext internal constructor(private val delegate: GHPRActionDataContext,
-                                                      dataProvider: GithubPullRequestDataProvider,
+                                                      dataProvider: GHPRDataProvider,
                                                       details: GHPullRequestShort? = null)
   : GHPRActionDataContext {
 

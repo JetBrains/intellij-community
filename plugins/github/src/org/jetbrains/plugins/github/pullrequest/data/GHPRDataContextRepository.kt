@@ -20,8 +20,8 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PullRequestEditedListener
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PullRequestEditedListener
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
@@ -30,12 +30,12 @@ import org.jetbrains.plugins.github.util.GithubUrlUtil
 import java.io.IOException
 
 @Service
-internal class GHPullRequestsDataContextRepository(private val project: Project) {
+internal class GHPRDataContextRepository(private val project: Project) {
   @CalledInBackground
   @Throws(IOException::class)
   fun getContext(indicator: ProgressIndicator,
                  account: GithubAccount, requestExecutor: GithubApiRequestExecutor,
-                 gitRemoteCoordinates: GitRemoteUrlCoordinates): GHPullRequestsDataContext {
+                 gitRemoteCoordinates: GitRemoteUrlCoordinates): GHPRDataContext {
     val fullPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(gitRemoteCoordinates.url)
                    ?: throw IllegalArgumentException(
                      "Invalid GitHub Repository URL - ${gitRemoteCoordinates.url} is not a GitHub repository")
@@ -59,8 +59,9 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
       override fun createListener(descriptor: ListenerDescriptor) = throw UnsupportedOperationException()
     })
 
-    val securityService = GithubPullRequestsSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, repoWithPermissions)
-    val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor, repositoryCoordinates)
+    val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, repoWithPermissions)
+    val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
+                                              repositoryCoordinates)
     val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
                                                 repositoryCoordinates)
 
@@ -69,9 +70,9 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
     val listLoader = GHPRListLoaderImpl(ProgressManager.getInstance(), requestExecutor, account.server, repoWithPermissions.path, listModel,
                                         searchHolder)
 
-    val dataLoader = GithubPullRequestsDataLoaderImpl {
-      GithubPullRequestDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), requestExecutor, gitRemoteCoordinates,
-                                        repositoryCoordinates, it)
+    val dataLoader = GHPRDataLoaderImpl {
+      GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), requestExecutor, gitRemoteCoordinates,
+                           repositoryCoordinates, it)
     }
     requestExecutor.addListener(dataLoader) {
       dataLoader.invalidateAllData()
@@ -101,18 +102,18 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
         }
       }
     })
-    val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
-    val metadataService = GithubPullRequestsMetadataServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, account.server,
-                                                                repoWithPermissions.path, repoWithPermissions.owner)
-    val stateService = GithubPullRequestsStateServiceImpl(ProgressManager.getInstance(), messageBus,
-                                                          requestExecutor, account.server, repoWithPermissions.path)
+    val busyStateTracker = GHPRBusyStateTrackerImpl()
+    val metadataService = GHPRMetadataServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, account.server,
+                                                  repoWithPermissions.path, repoWithPermissions.owner)
+    val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), messageBus,
+                                            requestExecutor, account.server, repoWithPermissions.path)
 
-    return GHPullRequestsDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
-                                     requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
-                                     busyStateTracker, metadataService, stateService, reviewService, commentService)
+    return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
+                           requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
+                           busyStateTracker, metadataService, stateService, reviewService, commentService)
   }
 
   companion object {
-    fun getInstance(project: Project) = project.service<GHPullRequestsDataContextRepository>()
+    fun getInstance(project: Project) = project.service<GHPRDataContextRepository>()
   }
 }

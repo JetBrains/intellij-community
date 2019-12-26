@@ -7,9 +7,9 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 
-class GithubPullRequestsSecurityServiceImpl(private val sharedProjectSettings: GithubSharedProjectSettings,
-                                            override val currentUser: GHUser,
-                                            private val repo: GHRepositoryPermission) : GithubPullRequestsSecurityService {
+class GHPRSecurityServiceImpl(private val sharedProjectSettings: GithubSharedProjectSettings,
+                              override val currentUser: GHUser,
+                              private val repo: GHRepositoryPermission) : GHPRSecurityService {
   override fun isCurrentUser(user: GithubUser) = user.nodeId == currentUser.id
   override fun currentUserCanEditPullRequestsMetadata() = currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
 

@@ -12,8 +12,8 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.util.GithubGitHelper
 
 
-class GithubOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
-  : GithubOpenInBrowserActionGroup(), UpToDateLineNumberListener {
+class GHOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
+  : GHOpenInBrowserActionGroup(), UpToDateLineNumberListener {
   private var myLineNumber = -1
 
   override fun getData(dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {

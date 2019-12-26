@@ -8,16 +8,16 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 
-internal class GithubPullRequestsDataLoaderImpl(private val dataProviderFactory: (Long) -> GithubPullRequestDataProvider)
-  : GithubPullRequestsDataLoader {
+internal class GHPRDataLoaderImpl(private val dataProviderFactory: (Long) -> GHPRDataProvider)
+  : GHPRDataLoader {
 
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
-    .removalListener<Long, GithubPullRequestDataProvider> {
+    .removalListener<Long, GHPRDataProvider> {
       runInEdt { invalidationEventDispatcher.multicaster.providerChanged(it.key) }
     }
     .maximumSize(5)
-    .build<Long, GithubPullRequestDataProvider>()
+    .build<Long, GHPRDataProvider>()
 
   private val invalidationEventDispatcher = EventDispatcher.create(DataInvalidatedListener::class.java)
 
@@ -27,7 +27,7 @@ internal class GithubPullRequestsDataLoaderImpl(private val dataProviderFactory:
   }
 
   @CalledInAwt
-  override fun getDataProvider(number: Long): GithubPullRequestDataProvider {
+  override fun getDataProvider(number: Long): GHPRDataProvider {
     if (isDisposed) throw IllegalStateException("Already disposed")
 
     return cache.get(number) {
@@ -36,7 +36,7 @@ internal class GithubPullRequestsDataLoaderImpl(private val dataProviderFactory:
   }
 
   @CalledInAwt
-  override fun findDataProvider(number: Long): GithubPullRequestDataProvider? = cache.getIfPresent(number)
+  override fun findDataProvider(number: Long): GHPRDataProvider? = cache.getIfPresent(number)
 
   override fun addInvalidationListener(disposable: Disposable, listener: (Long) -> Unit) =
     invalidationEventDispatcher.addListener(object : DataInvalidatedListener {

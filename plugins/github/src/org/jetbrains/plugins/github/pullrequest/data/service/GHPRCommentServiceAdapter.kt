@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GithubIssueCommentWithHtml
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import java.util.concurrent.CompletableFuture
 
 interface GHPRCommentServiceAdapter {
@@ -18,7 +18,7 @@ interface GHPRCommentServiceAdapter {
 
   companion object {
     @CalledInAny
-    fun create(commentService: GHPRCommentService, dataProvider: GithubPullRequestDataProvider): GHPRCommentServiceAdapter {
+    fun create(commentService: GHPRCommentService, dataProvider: GHPRDataProvider): GHPRCommentServiceAdapter {
       return object : GHPRCommentServiceAdapter {
 
         override fun canComment() = commentService.canComment()

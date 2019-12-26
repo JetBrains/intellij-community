@@ -10,7 +10,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
-interface GithubPullRequestDataProvider : GHPRTimelineLoaderHolder {
+interface GHPRDataProvider : GHPRTimelineLoaderHolder {
   val number: Long
 
   val detailsRequest: CompletableFuture<GHPullRequest>

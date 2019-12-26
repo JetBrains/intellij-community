@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import java.util.concurrent.CompletableFuture
 
-interface GithubPullRequestsStateService {
+interface GHPRStateService {
   @CalledInAny
   fun close(progressIndicator: ProgressIndicator, pullRequest: Long): CompletableFuture<Unit>
 

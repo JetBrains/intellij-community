@@ -4,12 +4,12 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
 
-internal interface GithubPullRequestsDataLoader : Disposable {
+internal interface GHPRDataLoader : Disposable {
   @CalledInAwt
-  fun getDataProvider(number: Long): GithubPullRequestDataProvider
+  fun getDataProvider(number: Long): GHPRDataProvider
 
   @CalledInAwt
-  fun findDataProvider(number: Long): GithubPullRequestDataProvider?
+  fun findDataProvider(number: Long): GHPRDataProvider?
 
   @CalledInAwt
   fun invalidateAllData()

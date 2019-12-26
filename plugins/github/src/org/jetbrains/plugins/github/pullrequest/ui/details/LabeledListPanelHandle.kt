@@ -11,8 +11,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
+import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.ui.WrapLayout
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
@@ -26,8 +26,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal abstract class LabeledListPanelHandle<T>(private val model: SingleValueModel<GHPullRequest?>,
-                                                  private val securityService: GithubPullRequestsSecurityService,
-                                                  private val busyStateTracker: GithubPullRequestsBusyStateTracker,
+                                                  private val securityService: GHPRSecurityService,
+                                                  private val busyStateTracker: GHPRBusyStateTracker,
                                                   emptyText: String, notEmptyText: String)
   : Disposable {
 

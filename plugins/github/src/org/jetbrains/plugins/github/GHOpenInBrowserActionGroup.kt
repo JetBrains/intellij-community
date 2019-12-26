@@ -26,12 +26,12 @@ import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 
-open class GithubOpenInBrowserActionGroup
+open class GHOpenInBrowserActionGroup
   : ActionGroup("Open on GitHub", "Open corresponding link in browser", AllIcons.Vcs.Vendors.Github), DumbAware {
 
   override fun update(e: AnActionEvent) {
@@ -69,8 +69,8 @@ open class GithubOpenInBrowserActionGroup
   }
 
   private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
-    val pullRequest = dataContext.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST) ?: return null
-    val context = dataContext.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT) ?: return null
+    val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST) ?: return null
+    val context = dataContext.getData(GHPRActionKeys.ACTION_DATA_CONTEXT) ?: return null
 
     return setOf(context.repositoryCoordinates) to Data.URL(project, pullRequest.url)
   }

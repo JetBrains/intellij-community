@@ -15,18 +15,18 @@ import git4idea.branch.GitBranchWorker
 import git4idea.commands.Git
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 
-class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Branch...",
-                                                            "Checkout synthetic pull request branch",
-                                                            null) {
+class GHPRCreateBranchAction : DumbAwareAction("Create New Local Branch...",
+                                               "Checkout synthetic pull request branch",
+                                               null) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    val selection = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
+    val selection = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
     e.presentation.isEnabled = project != null && !project.isDefault && selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val context = e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)
+    val context = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
     val repository = context.gitRepositoryCoordinates.repository
     val repositoryList = listOf(repository)
     val dataProvider = context.pullRequestDataProvider ?: return

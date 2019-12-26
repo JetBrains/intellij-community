@@ -13,7 +13,7 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 
@@ -22,10 +22,10 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
                                 private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                 private val currentUser: GHUser)
   : GHPRChangesDiffHelper {
-  private var dataProvider: GithubPullRequestDataProvider? = null
+  private var dataProvider: GHPRDataProvider? = null
   private var changesProvider: GHPRChangesProvider? = null
 
-  override fun setUp(dataProvider: GithubPullRequestDataProvider, changesProvider: GHPRChangesProvider) {
+  override fun setUp(dataProvider: GHPRDataProvider, changesProvider: GHPRChangesProvider) {
     this.dataProvider = dataProvider
     this.changesProvider = changesProvider
   }

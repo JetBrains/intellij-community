@@ -14,21 +14,21 @@ import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQu
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import javax.swing.ListModel
 
-internal class GHPullRequestsDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordinates,
-                                         val repositoryCoordinates: GHRepositoryCoordinates,
-                                         val account: GithubAccount,
-                                         val requestExecutor: GithubApiRequestExecutor,
-                                         val messageBus: MessageBus,
-                                         val listModel: ListModel<GHPullRequestShort>,
-                                         val searchHolder: GithubPullRequestSearchQueryHolder,
-                                         val listLoader: GHPRListLoader,
-                                         val dataLoader: GithubPullRequestsDataLoader,
-                                         val securityService: GithubPullRequestsSecurityService,
-                                         val busyStateTracker: GithubPullRequestsBusyStateTracker, //TODO: move to ui
-                                         val metadataService: GithubPullRequestsMetadataService,
-                                         val stateService: GithubPullRequestsStateService,
-                                         val reviewService: GHPRReviewService,
-                                         val commentService: GHPRCommentService) : Disposable {
+internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordinates,
+                               val repositoryCoordinates: GHRepositoryCoordinates,
+                               val account: GithubAccount,
+                               val requestExecutor: GithubApiRequestExecutor,
+                               val messageBus: MessageBus,
+                               val listModel: ListModel<GHPullRequestShort>,
+                               val searchHolder: GithubPullRequestSearchQueryHolder,
+                               val listLoader: GHPRListLoader,
+                               val dataLoader: GHPRDataLoader,
+                               val securityService: GHPRSecurityService,
+                               val busyStateTracker: GHPRBusyStateTracker, //TODO: move to ui
+                               val metadataService: GHPRMetadataService,
+                               val stateService: GHPRStateService,
+                               val reviewService: GHPRReviewService,
+                               val commentService: GHPRCommentService) : Disposable {
 
   override fun dispose() {
     Disposer.dispose(messageBus)

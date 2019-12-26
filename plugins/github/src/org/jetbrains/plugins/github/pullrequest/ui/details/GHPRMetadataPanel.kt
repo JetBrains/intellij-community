@@ -19,9 +19,9 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
+import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRMetadataService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
 import javax.swing.JLabel
@@ -30,9 +30,9 @@ import javax.swing.SwingConstants
 
 internal class GHPRMetadataPanel(private val project: Project,
                                  private val model: SingleValueModel<GHPullRequest?>,
-                                 private val securityService: GithubPullRequestsSecurityService,
-                                 private val busyStateTracker: GithubPullRequestsBusyStateTracker,
-                                 private val metadataService: GithubPullRequestsMetadataService,
+                                 private val securityService: GHPRSecurityService,
+                                 private val busyStateTracker: GHPRBusyStateTracker,
+                                 private val metadataService: GHPRMetadataService,
                                  private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), Disposable {
 

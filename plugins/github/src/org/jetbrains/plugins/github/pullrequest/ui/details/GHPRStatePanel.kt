@@ -20,10 +20,10 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableS
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
+import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.errorOnEdt
@@ -36,10 +36,10 @@ import javax.swing.*
 object GHPRStatePanel {
   fun create(project: Project,
              model: SingleValueModel<out GHPullRequestShort>,
-             dataProvider: GithubPullRequestDataProvider,
-             securityService: GithubPullRequestsSecurityService,
-             busyStateTracker: GithubPullRequestsBusyStateTracker,
-             stateService: GithubPullRequestsStateService,
+             dataProvider: GHPRDataProvider,
+             securityService: GHPRSecurityService,
+             busyStateTracker: GHPRBusyStateTracker,
+             stateService: GHPRStateService,
              parentDisposable: Disposable): JComponent {
 
     val stateLabel = JLabel().apply {
@@ -65,10 +65,10 @@ object GHPRStatePanel {
 
   private fun createButtons(project: Project,
                             model: SingleValueModel<out GHPullRequestShort?>,
-                            dataProvider: GithubPullRequestDataProvider,
-                            securityService: GithubPullRequestsSecurityService,
-                            busyStateTracker: GithubPullRequestsBusyStateTracker,
-                            stateService: GithubPullRequestsStateService,
+                            dataProvider: GHPRDataProvider,
+                            securityService: GHPRSecurityService,
+                            busyStateTracker: GHPRBusyStateTracker,
+                            stateService: GHPRStateService,
                             parentDisposable: Disposable): JComponent {
     val closeButton = JButton()
     val reopenButton = JButton()
@@ -91,7 +91,7 @@ object GHPRStatePanel {
   }
 
   private class Controller(private val model: SingleValueModel<out GHPullRequestShort?>,
-                           private val securityService: GithubPullRequestsSecurityService,
+                           private val securityService: GHPRSecurityService,
                            private val stateLabel: JLabel,
                            private val accessDeniedLabel: JLabel) {
 
@@ -152,10 +152,10 @@ object GHPRStatePanel {
 
   private class ButtonsController(private val project: Project,
                                   private val model: SingleValueModel<out GHPullRequestShort?>,
-                                  private val dataProvider: GithubPullRequestDataProvider,
-                                  private val securityService: GithubPullRequestsSecurityService,
-                                  private val busyStateTracker: GithubPullRequestsBusyStateTracker,
-                                  private val stateService: GithubPullRequestsStateService,
+                                  private val dataProvider: GHPRDataProvider,
+                                  private val securityService: GHPRSecurityService,
+                                  private val busyStateTracker: GHPRBusyStateTracker,
+                                  private val stateService: GHPRStateService,
                                   parentDisposable: Disposable,
                                   private val closeButton: JButton,
                                   private val reopenButton: JButton,

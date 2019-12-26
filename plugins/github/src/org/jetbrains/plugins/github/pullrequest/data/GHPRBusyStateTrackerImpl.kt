@@ -8,7 +8,7 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 
-class GithubPullRequestsBusyStateTrackerImpl : GithubPullRequestsBusyStateTracker {
+class GHPRBusyStateTrackerImpl : GHPRBusyStateTracker {
   private val busySet = ContainerUtil.newConcurrentSet<Long>()
   private val busyChangeEventDispatcher = EventDispatcher.create(GithubPullRequestBusyStateListener::class.java)
 

@@ -14,20 +14,20 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 
-class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager: ProgressManager,
-                                                                 private val messageBus: MessageBus,
-                                                                 private val requestExecutor: GithubApiRequestExecutor,
-                                                                 private val serverPath: GithubServerPath,
-                                                                 private val repoPath: GHRepositoryPath,
-                                                                 private val repoOwner: GHRepositoryOwnerName)
-  : GithubPullRequestsMetadataService {
+class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressManager,
+                                                   private val messageBus: MessageBus,
+                                                   private val requestExecutor: GithubApiRequestExecutor,
+                                                   private val serverPath: GithubServerPath,
+                                                   private val repoPath: GHRepositoryPath,
+                                                   private val repoOwner: GHRepositoryOwnerName)
+  : GHPRMetadataService {
 
   init {
     requestExecutor.addListener(this) {

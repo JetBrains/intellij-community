@@ -8,11 +8,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 
 class GHPRReloadListAction : RefreshAction("Refresh List", null, AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
-    val context = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)
+    val context = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
     e.presentation.isEnabled = context != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).resetAllData()
+    e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).resetAllData()
   }
 }

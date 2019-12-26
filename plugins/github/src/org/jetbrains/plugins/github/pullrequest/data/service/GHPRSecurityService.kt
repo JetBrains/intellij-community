@@ -5,7 +5,7 @@ import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.GithubUser
 
-interface GithubPullRequestsSecurityService {
+interface GHPRSecurityService {
   val currentUser: GHUser
 
   fun isCurrentUser(user: GithubUser): Boolean

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewServiceAdapter {
@@ -34,7 +34,7 @@ interface GHPRReviewServiceAdapter {
 
   companion object {
     @CalledInAny
-    fun create(reviewService: GHPRReviewService, dataProvider: GithubPullRequestDataProvider): GHPRReviewServiceAdapter {
+    fun create(reviewService: GHPRReviewService, dataProvider: GHPRDataProvider): GHPRReviewServiceAdapter {
       return object : GHPRReviewServiceAdapter {
 
         override fun loadReviewThreads(): CompletableFuture<List<GHPullRequestReviewThread>> {
@@ -60,7 +60,7 @@ interface GHPRReviewServiceAdapter {
         }
 
         override fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit) {
-          dataProvider.addRequestsChangesListener(disposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
+          dataProvider.addRequestsChangesListener(disposable, object : GHPRDataProvider.RequestsChangedListener {
             override fun reviewThreadsRequestChanged() {
               listener()
             }

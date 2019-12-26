@@ -33,12 +33,12 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
-import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
@@ -83,14 +83,14 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         if (pr != null) detailsModel.value = pr
       }
     }
-    dataProvider.addRequestsChangesListener(disposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
+    dataProvider.addRequestsChangesListener(disposable, object : GHPRDataProvider.RequestsChangedListener {
       override fun detailsRequestChanged() = handleDetails()
     })
     handleDetails()
 
     val mainPanel = Wrapper().also {
       DataManager.registerDataProvider(it, DataProvider { dataId ->
-        if (GithubPullRequestKeys.ACTION_DATA_CONTEXT.`is`(dataId))
+        if (GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId))
           GHPRFixedActionDataContext(context, dataProvider, context.pullRequestDetails)
         else null
       })

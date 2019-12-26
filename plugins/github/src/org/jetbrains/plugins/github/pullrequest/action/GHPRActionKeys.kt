@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.openapi.actionSystem.DataKey
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 
-object GithubPullRequestKeys {
+object GHPRActionKeys {
   @JvmStatic
   val ACTION_DATA_CONTEXT = DataKey.create<GHPRActionDataContext>("org.jetbrains.plugins.github.pullrequest.datacontext")
 

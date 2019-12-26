@@ -9,15 +9,15 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.util.submitIOTask
 
-class GithubPullRequestsStateServiceImpl internal constructor(private val progressManager: ProgressManager,
-                                                              private val messageBus: MessageBus,
-                                                              private val requestExecutor: GithubApiRequestExecutor,
-                                                              private val serverPath: GithubServerPath,
-                                                              private val repoPath: GHRepositoryPath)
-  : GithubPullRequestsStateService {
+class GHPRStateServiceImpl internal constructor(private val progressManager: ProgressManager,
+                                                private val messageBus: MessageBus,
+                                                private val requestExecutor: GithubApiRequestExecutor,
+                                                private val serverPath: GithubServerPath,
+                                                private val repoPath: GHRepositoryPath)
+  : GHPRStateService {
 
   override fun close(progressIndicator: ProgressIndicator, pullRequest: Long) =
     progressManager.submitIOTask(progressIndicator) {

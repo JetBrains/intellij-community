@@ -8,11 +8,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 
 class GHPRReloadDetailsAction : RefreshAction("Refresh Pull Request Details", null, AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
-    val selection = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
+    val selection = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
     e.presentation.isEnabled = selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider?.reloadDetails()
+    e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider?.reloadDetails()
   }
 }

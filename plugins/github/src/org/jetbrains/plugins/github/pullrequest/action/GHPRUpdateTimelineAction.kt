@@ -8,12 +8,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 
 class GHPRUpdateTimelineAction : RefreshAction("Refresh Timeline", "Check for new timeline events", AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
-    val context = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)
+    val context = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
     e.presentation.isEnabled = context?.pullRequestDataProvider?.timelineLoader != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val dataProvider = e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider
+    val dataProvider = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider
     if (dataProvider?.timelineLoader?.loadMore(true) != null)
       dataProvider.reloadReviewThreads()
   }

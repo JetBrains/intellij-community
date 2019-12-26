@@ -3,11 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionHolder
 
-class GHPRListSelectionActionDataContext internal constructor(private val dataContext: GHPullRequestsDataContext,
+class GHPRListSelectionActionDataContext internal constructor(private val dataContext: GHPRDataContext,
                                                               private val selectionHolder: GithubPullRequestsListSelectionHolder,
                                                               override val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GHPRActionDataContext {
@@ -39,6 +39,6 @@ class GHPRListSelectionActionDataContext internal constructor(private val dataCo
   override val pullRequestDetails: GHPullRequestShort?
     get() = pullRequest?.let { dataContext.listLoader.findData(it) }
 
-  override val pullRequestDataProvider: GithubPullRequestDataProvider?
+  override val pullRequestDataProvider: GHPRDataProvider?
     get() = pullRequest?.let { dataContext.dataLoader.getDataProvider(it) }
 }

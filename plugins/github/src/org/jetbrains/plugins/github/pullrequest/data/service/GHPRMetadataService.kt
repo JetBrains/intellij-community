@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
-interface GithubPullRequestsMetadataService : Disposable {
+interface GHPRMetadataService : Disposable {
   val collaboratorsWithPushAccess: CompletableFuture<List<GHUser>>
   val teams: CompletableFuture<List<GHTeam>>
   val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>

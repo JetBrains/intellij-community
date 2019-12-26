@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEventDispatcherLoadingModel
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
@@ -16,12 +16,12 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
   var zipChanges by Delegates.observable(zipChanges) { _, _, _ ->
     update()
   }
-  private val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {
+  private val requestChangesListener = object : GHPRDataProvider.RequestsChangedListener {
     override fun commitsRequestChanged() {
       update()
     }
   }
-  var dataProvider by Delegates.observable<GithubPullRequestDataProvider?>(null) { _, oldValue, newValue ->
+  var dataProvider by Delegates.observable<GHPRDataProvider?>(null) { _, oldValue, newValue ->
     oldValue?.removeRequestsChangesListener(requestChangesListener)
     newValue?.addRequestsChangesListener(requestChangesListener)
     update()

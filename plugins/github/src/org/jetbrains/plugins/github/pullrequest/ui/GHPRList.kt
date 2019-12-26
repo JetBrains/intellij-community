@@ -21,7 +21,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Component
@@ -30,9 +30,9 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteManager,
-                                      avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                      model: ListModel<GHPullRequestShort>)
+internal class GHPRList(private val copyPasteManager: CopyPasteManager,
+                        avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                        model: ListModel<GHPullRequestShort>)
   : JBList<GHPullRequestShort>(model), CopyProvider, DataProvider, Disposable {
 
   private val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, this)
@@ -66,7 +66,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
 
   override fun getData(dataId: String): Any? = when {
     PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
-    GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> selectedValue
+    GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> selectedValue
     else -> null
   }
 

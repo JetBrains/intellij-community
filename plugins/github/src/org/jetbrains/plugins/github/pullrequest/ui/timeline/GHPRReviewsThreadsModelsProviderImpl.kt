@@ -3,10 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.util.handleOnEdt
 
-class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GithubPullRequestDataProvider,
+class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GHPRDataProvider,
                                            private val parentDisposable: Disposable)
   : GHPRReviewsThreadsModelsProvider {
 
@@ -16,7 +16,7 @@ class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GithubPullR
   private var threadsUpdateRequired = false
 
   init {
-    dataProvider.addRequestsChangesListener(parentDisposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
+    dataProvider.addRequestsChangesListener(parentDisposable, object : GHPRDataProvider.RequestsChangedListener {
       override fun reviewThreadsRequestChanged() {
         if (threadsModelsByReview.isNotEmpty()) requestUpdateReviewsThreads()
       }
