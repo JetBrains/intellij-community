@@ -2,7 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
@@ -23,13 +23,16 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean DONT_WARN_ON_TERNARY = true;
+  public boolean DONT_WARN_ON_CHAINED_ID = true;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "inspection.simplifiable.if.statement.option.dont.warn.on.ternary"), this,
-                                          "DONT_WARN_ON_TERNARY");
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message(
+      "inspection.simplifiable.if.statement.option.dont.warn.on.ternary"), "DONT_WARN_ON_TERNARY");
+    panel.addCheckbox(InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), "DONT_WARN_ON_CHAINED_ID");
+    return panel;
   }
 
   @NotNull
@@ -42,11 +45,10 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
         if (model == null) return;
         String operator = getTargetOperator(model);
         if (operator.isEmpty()) return;
-        boolean infoLevel = operator.equals("?:") && 
-                            (DONT_WARN_ON_TERNARY ||
-                             ControlFlowUtils.isElseIf(ifStatement) ||
-                             model.getThenExpression() instanceof PsiConditionalExpression ||
-                             model.getElseExpression() instanceof PsiConditionalExpression);
+        boolean infoLevel = operator.equals("?:") && (DONT_WARN_ON_TERNARY ||
+                                                      model.getThenExpression() instanceof PsiConditionalExpression ||
+                                                      model.getElseExpression() instanceof PsiConditionalExpression) ||
+                            DONT_WARN_ON_CHAINED_ID && ControlFlowUtils.isElseIf(ifStatement);
         if (!isOnTheFly && infoLevel) return;
         holder.registerProblem(ifStatement.getFirstChild(),
                                InspectionGadgetsBundle.message("inspection.simplifiable.if.statement.message", operator),
