@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,12 +28,8 @@ public class AddEmptyRecordHeaderFix extends LocalQuickFixAndIntentionActionOnPs
     if (record == null || !record.isRecord() || record.getRecordHeader() != null) return;
     PsiTypeParameterList typeParameterList = record.getTypeParameterList();
     if (typeParameterList == null) return;
-    record.addAfter(createEmptyRecordHeader(project), typeParameterList);
-  }
-
-  private static PsiRecordHeader createEmptyRecordHeader(Project project) {
-    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText(JavaLanguage.INSTANCE, "record __DUMMY(){}");
-    return file.getClasses()[0].getRecordHeader();
+    PsiRecordHeader recordHeader = JavaPsiFacade.getElementFactory(project).createRecordHeaderFromText("", record);
+    record.addAfter(recordHeader, typeParameterList);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
