@@ -1163,8 +1163,7 @@
 
     <!-- Build view -->
     <projectService serviceInterface="com.intellij.build.BuildContentManager"
-                    serviceImplementation="com.intellij.build.BuildContentManagerImpl"
-                    testServiceImplementation="com.intellij.build.internal.DummyBuildContentManager"/>
+                    serviceImplementation="com.intellij.build.BuildContentManagerImpl"/>
     <projectService serviceInterface="com.intellij.build.BuildViewManager"
                     serviceImplementation="com.intellij.build.BuildViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummyBuildViewManager"/>
