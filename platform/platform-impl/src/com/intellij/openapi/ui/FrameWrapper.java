@@ -454,7 +454,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     private void updateTitle() {
-      ProjectFrameHelper.updateTitle(this, myFrameTitle, myFileTitle, myFile);
+      ProjectFrameHelper.updateTitle(this, myFrameTitle, myFileTitle, myFile, null);
     }
 
     @Override

@@ -3,9 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -20,7 +18,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.TitleInfoProvider
+import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
@@ -39,11 +38,10 @@ import kotlin.math.min
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClippingTitle()
-  private val productTitle = DefaultPartTitle(" - ")
-  private val productVersion = DefaultPartTitle(" ")
-  private val superUserSuffix = DefaultPartTitle(" ")
 
-  protected val components = listOf(projectTitle, classTitle, productTitle, productVersion, superUserSuffix)
+  private var simplePaths: List<TitlePart>? = null
+  private var basePaths: Set<TitlePart> = setOf(projectTitle, classTitle)
+  protected var components = basePaths
 
   private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
   private val UPDATER_TIMEOUT = 70
@@ -104,8 +102,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   private fun updateTitlePaths() {
     projectTitle.active = Registry.get("ide.borderless.title.project.path").asBoolean() || multipleSameNamed
     classTitle.active = Registry.get("ide.borderless.title.classpath").asBoolean() || classPathNeeded
-    productTitle.active = Registry.get("ide.borderless.title.product").asBoolean()
-    productVersion.active = Registry.get("ide.borderless.title.version").asBoolean()
   }
 
   open fun getView(): JComponent {
@@ -133,13 +129,14 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   var classPathNeeded = false
     set(value) {
-      if(field == value) return
+      if (field == value) return
       field = value
 
       updateTitlePaths()
       update()
     }
 
+  private var simpleExtensions: List<TitleInfoProvider>? = null
 
   protected open fun installListeners() {
     project ?: return
@@ -155,9 +152,13 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
       Registry.get("ide.borderless.title.project.path").addListener(registryListener, disp)
       Registry.get("ide.borderless.title.classpath").addListener(registryListener, disp)
-      Registry.get("ide.borderless.title.product").addListener(registryListener, disp)
-      Registry.get("ide.borderless.title.version").addListener(registryListener, disp)
 
+      simpleExtensions = getProviders(it)
+      simpleExtensions?.forEach { _ -> update() }
+      simplePaths = simpleExtensions?.map { ex -> ex.borderlessTitlePart }
+
+      val listOf = setOf(projectTitle, classTitle)
+      components = simplePaths?.let{ listOf.union(it) } ?: listOf
       updateTitlePaths()
 
       it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
@@ -229,12 +230,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   protected fun updateProjectName() {
-    productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName
-    productVersion.longText = ApplicationInfo.getInstance().fullVersion ?: ""
-
-    superUserSuffix.longText = ProjectFrameHelper.getSuperUserSuffix() ?: ""
-
-
     project?.let {
       val short = it.name
       val long = FrameTitleBuilder.getInstance().getProjectTitle(it) ?: short
@@ -260,8 +255,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     isClipped = true
 
-    val testSimple = testSimple(listOf<TitlePart>(productTitle, productVersion, superUserSuffix), width - (projectTitle.longWidth + classTitle.longWidth))
-
+    val testSimple = simplePaths?.let { testSimple(it, width - (projectTitle.longWidth + classTitle.longWidth)) }
 
     val listOf = listOf(
       Pattern(projectTitle.longWidth + classTitle.shortWidth) {
@@ -294,7 +288,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   private fun testSimple(simplePaths: List<TitlePart>, simpleWidth: Int): String? {
     isClipped = simplePaths.sumBy { it.longWidth } > simpleWidth
-
 
     for (i in simplePaths.size - 1 downTo 0) {
       var beforeWidth = 0
