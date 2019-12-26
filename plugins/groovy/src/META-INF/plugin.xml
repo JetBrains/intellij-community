@@ -298,8 +298,10 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Groovy" language="Groovy" extensions="groovy;gy;gdsl"
+    <fileType name="Groovy" language="Groovy" extensions="groovy;gy"
               implementationClass="org.jetbrains.plugins.groovy.GroovyFileType" fieldName="GROOVY_FILE_TYPE"/>
+    <fileType name="gdsl" extensions="gdsl"
+              implementationClass="org.jetbrains.plugins.groovy.GdslFileType" fieldName="INSTANCE"/>
 
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory"/>
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory"/>
@@ -681,7 +683,6 @@
     <renameInputValidator implementation="org.jetbrains.plugins.groovy.GroovyRenameInputValidator"/>
     <lang.namesValidator implementationClass="org.jetbrains.plugins.groovy.lang.GroovyNamesValidator" language="Groovy"/>
 
-    <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex"/>
 
