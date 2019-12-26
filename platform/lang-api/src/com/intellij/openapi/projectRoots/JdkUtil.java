@@ -53,6 +53,8 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -303,13 +305,13 @@ public class JdkUtil {
     try {
       Platform platform = request.getTargetPlatform().getPlatform();
       String pathSeparator = String.valueOf(platform.pathSeparator);
-      Collection<Promise<TargetValue<String>>> promises = new ArrayList<>();
+      Collection<Promise<String>> promises = new ArrayList<>();
       TargetValue<String> classPathParameter;
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
         List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
         classPathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
-        promises.add(classPathParameter.promise());
+        promises.add(classPathParameter.getTargetValue());
       }
       else {
         classPathParameter = null;
@@ -320,7 +322,7 @@ public class JdkUtil {
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
         List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
         modulePathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
-        promises.add(modulePathParameter.promise());
+        promises.add(modulePathParameter.getTargetValue());
       }
       else {
         modulePathParameter = null;
@@ -329,7 +331,7 @@ public class JdkUtil {
       List<TargetValue<String>> mainClassParameters = dynamicParameters ? getMainClassParams(javaParameters, request)
                                                                         : Collections.emptyList();
 
-      promises.addAll(ContainerUtil.map(mainClassParameters, TargetValue::promise));
+      promises.addAll(ContainerUtil.map(mainClassParameters, TargetValue::getTargetValue));
 
       File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
       commandLine.addFileToDeleteOnTermination(argFile);
@@ -342,26 +344,30 @@ public class JdkUtil {
         else {
           appendVmParameters(commandLine, request, vmParameters);
         }
-        if (classPathParameter != null) {
-          fileArgs.add("-classpath");
-          fileArgs.add(classPathParameter.getTargetValue());
-        }
-        if (modulePathParameter != null) {
-          fileArgs.add("-p");
-          fileArgs.add(modulePathParameter.getTargetValue());
-        }
-
-        for (TargetValue<String> mainClassParameter : mainClassParameters) {
-          fileArgs.add(mainClassParameter.getTargetValue());
-        }
-        if (dynamicParameters) {
-          fileArgs.addAll(javaParameters.getProgramParametersList().getList());
-        }
         try {
+          if (classPathParameter != null) {
+            fileArgs.add("-classpath");
+            fileArgs.add(classPathParameter.getTargetValue().blockingGet(0));
+          }
+          if (modulePathParameter != null) {
+            fileArgs.add("-p");
+            fileArgs.add(modulePathParameter.getTargetValue().blockingGet(0));
+          }
+
+          for (TargetValue<String> mainClassParameter : mainClassParameters) {
+            fileArgs.add(mainClassParameter.getTargetValue().blockingGet(0));
+          }
+          if (dynamicParameters) {
+            fileArgs.addAll(javaParameters.getProgramParametersList().getList());
+          }
+
           CommandLineWrapperUtil.writeArgumentsFile(argFile, fileArgs, platform.lineSeparator, cs);
         }
         catch (IOException e) {
           //todo[remoteServers]: interrupt preparing environment
+        }
+        catch (ExecutionException | TimeoutException e) {
+          LOG.error("Couldn't resolve target value", e);
         }
       });
 
@@ -371,7 +377,7 @@ public class JdkUtil {
       appendEncoding(javaParameters, commandLine, vmParameters);
       TargetValue<String> argFileParameter = request.createUpload(argFile.getAbsolutePath());
       commandLine.addParameter(TargetValue.map(argFileParameter, s -> "@" + s));
-      addCommandLineContentOnResolve(commandLineContent, argFileParameter);
+      addCommandLineContentOnResolve(commandLineContent, argFile, argFileParameter);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -424,12 +430,7 @@ public class JdkUtil {
       commandLine.addFileToDeleteOnTermination(classpathFile);
 
       Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::promise)).onSuccess(__ -> {
-        List<String> pathList = new ArrayList<>();
-        for (TargetValue<String> parameter : classPathParameters) {
-          pathList.add(parameter.getTargetValue());
-        }
-
+      Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(pathList -> {
         try {
           CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, lineSeparator, cs);
         }
@@ -470,20 +471,20 @@ public class JdkUtil {
 
       TargetValue<String> classPathParameter = request.createUpload(classpathFile.getAbsolutePath());
       commandLine.addParameter(classPathParameter);
-      addCommandLineContentOnResolve(commandLineContent, classPathParameter);
+      addCommandLineContentOnResolve(commandLineContent, classpathFile, classPathParameter);
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
         TargetValue<String> vmParamsParameter = request.createUpload(vmParamsFile.getAbsolutePath());
         commandLine.addParameter(vmParamsParameter);
-        addCommandLineContentOnResolve(commandLineContent, vmParamsParameter);
+        addCommandLineContentOnResolve(commandLineContent, vmParamsFile, vmParamsParameter);
       }
 
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params");
         TargetValue<String> appParamsParameter = request.createUpload(appParamsFile.getAbsolutePath());
         commandLine.addParameter(appParamsParameter);
-        addCommandLineContentOnResolve(commandLineContent, appParamsParameter);
+        addCommandLineContentOnResolve(commandLineContent, appParamsFile, appParamsParameter);
       }
     }
     catch (IOException e) {
@@ -491,10 +492,12 @@ public class JdkUtil {
     }
   }
 
-  private static void addCommandLineContentOnResolve(@NotNull Map<String, String> commandLineContent, @NotNull TargetValue<String> value) {
-    value.promise().onSuccess(resolved -> {
+  private static void addCommandLineContentOnResolve(@NotNull Map<String, String> commandLineContent,
+                                                     @NotNull File localFile,
+                                                     @NotNull TargetValue<String> value) {
+    value.getTargetValue().onSuccess(resolved -> {
       try {
-        commandLineContent.put(value.getTargetValue(), FileUtil.loadFile(new File(resolved.getLocalValue())));
+        commandLineContent.put(resolved, FileUtil.loadFile(localFile));
       }
       catch (IOException e) {
         LOG.error("Cannot add command line content for value " + resolved, e);
@@ -558,24 +561,32 @@ public class JdkUtil {
       commandLine.addParameter(jarFileValue);
 
       Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::promise)).onSuccess(__ -> {
+      Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(targetClassPathParameters -> {
         try {
           boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
           StringBuilder classPath = new StringBuilder();
           for (TargetValue<String> parameter : classPathParameters) {
             if (classPath.length() > 0) classPath.append(' ');
-            File file = new File(parameter.getTargetValue());
+            String localValue = parameter.getLocalValue().blockingGet(0);
+            String targetValue = parameter.getTargetValue().blockingGet(0);
+            if (targetValue == null || localValue == null) {
+              throw new ExecutionException("Couldn't resolve target value", null);
+            }
+            File file = new File(targetValue);
             String url = (notEscape ? file.toURL() : file.toURI().toURL()).toString();
-            classPath.append(!StringUtil.endsWithChar(url, '/') && new File(parameter.getLocalValue()).isDirectory() ? url + "/" : url);
+            classPath.append(!StringUtil.endsWithChar(url, '/') && new File(localValue).isDirectory() ? url + "/" : url);
           }
           CommandLineWrapperUtil.fillClasspathJarFile(manifest, classPath.toString(), classpathJarFile);
 
-          jarFileValue.promise().onSuccess(value -> {
-            commandLineContent.put(value.getTargetValue(), jarFileContentPrefix + classPath.toString());
+          jarFileValue.getTargetValue().onSuccess(value -> {
+            commandLineContent.put(value, jarFileContentPrefix + classPath.toString());
           });
         }
-        catch (IOException e) {
+        catch (IOException | ExecutionException e) {
           //todo[remoteServers]: interrupt preparing environment
+        }
+        catch (TimeoutException e) {
+          LOG.error("Couldn't resolve target value", e);
         }
       });
 

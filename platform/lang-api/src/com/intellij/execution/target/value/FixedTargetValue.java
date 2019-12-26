@@ -6,24 +6,19 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 class FixedTargetValue<T> implements TargetValue<T> {
-  private final T myValue;
+  private final Promise<T> myPromise;
 
   FixedTargetValue(@NotNull T value) {
-    myValue = value;
+    myPromise = Promises.resolvedPromise(value);
   }
 
   @Override
-  public T getTargetValue() {
-    return myValue;
+  public Promise<T> getTargetValue() {
+    return myPromise;
   }
 
   @Override
-  public T getLocalValue() {
-    return myValue;
-  }
-
-  @Override
-  public Promise<TargetValue<T>> promise() {
-    return Promises.resolvedPromise(this);
+  public Promise<T> getLocalValue() {
+    return myPromise;
   }
 }

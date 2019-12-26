@@ -3,40 +3,30 @@ package com.intellij.execution.target.value;
 
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 public class DeferredLocalTargetValue<T> implements TargetValue<T> {
-  private final AsyncPromise<TargetValue<T>> myPromise = new AsyncPromise<>();
-  private final T myTargetValue;
-
-  private T myResolvedValue;
+  private final AsyncPromise<T> myLocalPromise = new AsyncPromise<>();
+  private final Promise<T> myTargetValue;
 
   public DeferredLocalTargetValue(T targetValue) {
-    myTargetValue = targetValue;
+    myTargetValue = Promises.resolvedPromise(targetValue);
   }
 
   public void resolve(T valueToResolve) {
-    if (myPromise.isDone()) {
-      throw new IllegalStateException("Local value is already resolved to '" + myResolvedValue + "'");
+    if (myLocalPromise.isDone()) {
+      throw new IllegalStateException("Local value is already resolved to '" + myLocalPromise.get() + "'");
     }
-    myResolvedValue = valueToResolve;
-    myPromise.setResult(this);
+    myLocalPromise.setResult(valueToResolve);
   }
 
   @Override
-  public T getLocalValue() {
-    if (!myPromise.isDone()) {
-      throw new IllegalStateException("Target value '" + myTargetValue + "' has not been resolved yet");
-    }
-    return myResolvedValue;
+  public Promise<T> getLocalValue() {
+    return myLocalPromise;
   }
 
   @Override
-  public T getTargetValue() {
+  public Promise<T> getTargetValue() {
     return myTargetValue;
-  }
-
-  @Override
-  public Promise<TargetValue<T>> promise() {
-    return myPromise;
   }
 }

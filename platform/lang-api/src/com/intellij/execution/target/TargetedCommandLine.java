@@ -4,16 +4,17 @@ package com.intellij.execution.target;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.value.TargetValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Command line that can be executed on any {@link TargetEnvironment}.
@@ -34,13 +35,16 @@ public class TargetedCommandLine extends UserDataHolderBase {
   /**
    * {@link GeneralCommandLine#getPreparedCommandLine()}
    */
-  public List<String> prepareCommandLine(@NotNull TargetEnvironment target) {
-    String command = getExePath();
+  public List<String> prepareCommandLine(@NotNull TargetEnvironment target) throws com.intellij.execution.ExecutionException {
+    String command = resolvePromise(myExePath.getTargetValue(), "exe path");
     if (command == null) {
-      // todo[remoteServers]: handle this properly
-      throw new RuntimeException("Cannot find command");
+      throw new com.intellij.execution.ExecutionException("Resolved value for exe path is null");
     }
-    return CommandLineUtil.toCommandLine(command, getParameters(), target.getRemotePlatform().getPlatform());
+    List<String> parameters = new ArrayList<>();
+    for (TargetValue<String> parameter : myParameters) {
+      parameters.add(resolvePromise(parameter.getTargetValue(), "parameter"));
+    }
+    return CommandLineUtil.toCommandLine(command, parameters, target.getRemotePlatform().getPlatform());
   }
 
   public void setCharset(@NotNull Charset charset) {
@@ -89,26 +93,23 @@ public class TargetedCommandLine extends UserDataHolderBase {
     myInputFilePath = inputFilePath;
   }
 
-  public String getExePath() {
-    return myExePath.getTargetValue();
+  @Nullable
+  public String getWorkingDirectory() throws com.intellij.execution.ExecutionException {
+    return resolvePromise(myWorkingDirectory.getTargetValue(), "working directory");
   }
 
   @Nullable
-  public String getWorkingDirectory() {
-    return myWorkingDirectory.getTargetValue();
-  }
-
-  @Nullable
-  public String getInputFilePath() {
-    return myInputFilePath.getTargetValue();
+  public String getInputFilePath() throws com.intellij.execution.ExecutionException {
+    return resolvePromise(myInputFilePath.getTargetValue(), "input file path");
   }
 
   @NotNull
-  public Map<String, String> getEnvironmentVariables() {
-    return ContainerUtil.map2MapNotNull(myEnvironment.entrySet(), e -> {
-      String value = e.getValue().getTargetValue();
-      return value != null ? Pair.create(e.getKey(), value) : null;
-    });
+  public Map<String, String> getEnvironmentVariables() throws com.intellij.execution.ExecutionException {
+    Map<String, String> result = new LinkedHashMap<>();
+    for (Map.Entry<String, TargetValue<String>> e : myEnvironment.entrySet()) {
+      result.put(e.getKey(), resolvePromise(e.getValue().getTargetValue(), "environment variable " + e.getKey()));
+    }
+    return result;
   }
 
   @NotNull
@@ -121,8 +122,14 @@ public class TargetedCommandLine extends UserDataHolderBase {
     return myFilesToDeleteOnTermination;
   }
 
-  @NotNull
-  private List<String> getParameters() {
-    return ContainerUtil.mapNotNull(myParameters, TargetValue::getTargetValue);
+  @Nullable
+  private static String resolvePromise(@NotNull Promise<String> promise, @NotNull String debugName)
+    throws com.intellij.execution.ExecutionException {
+    try {
+      return promise.blockingGet(0);
+    }
+    catch (ExecutionException | TimeoutException e) {
+      throw new com.intellij.execution.ExecutionException("Couldn't resolve promise for " + debugName, e);
+    }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.local;
 
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.TargetEnvironment;
@@ -28,28 +29,32 @@ public class LocalTargetEnvironment implements TargetEnvironment {
 
   @NotNull
   @Override
-  public Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator) throws
-                                                                                                                  ExecutionException {
+  public Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator) throws ExecutionException {
     return createGeneralCommandLine(commandLine).createProcess();
   }
 
   @NotNull
-  public GeneralCommandLine createGeneralCommandLine(TargetedCommandLine commandLine) {
-    GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.prepareCommandLine(this));
-    if (myRequest instanceof LocalTargetEnvironmentRequest) {
-      generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)myRequest).getParentEnvironmentType());
+  public GeneralCommandLine createGeneralCommandLine(TargetedCommandLine commandLine) throws CantRunException {
+    try {
+      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.prepareCommandLine(this));
+      if (myRequest instanceof LocalTargetEnvironmentRequest) {
+        generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)myRequest).getParentEnvironmentType());
+      }
+      String inputFilePath = commandLine.getInputFilePath();
+      if (inputFilePath != null) {
+        generalCommandLine.withInput(new File(inputFilePath));
+      }
+      generalCommandLine.withCharset(commandLine.getCharset());
+      String workingDirectory = commandLine.getWorkingDirectory();
+      if (workingDirectory != null) {
+        generalCommandLine.withWorkDirectory(workingDirectory);
+      }
+      generalCommandLine.withEnvironment(commandLine.getEnvironmentVariables());
+      return generalCommandLine;
     }
-    String inputFilePath = commandLine.getInputFilePath();
-    if (inputFilePath != null) {
-      generalCommandLine.withInput(new File(inputFilePath));
+    catch (ExecutionException e) {
+      throw new CantRunException(e.getMessage(), e);
     }
-    generalCommandLine.withCharset(commandLine.getCharset());
-    String workingDirectory = commandLine.getWorkingDirectory();
-    if (workingDirectory != null) {
-      generalCommandLine.withWorkDirectory(workingDirectory);
-    }
-    generalCommandLine.withEnvironment(commandLine.getEnvironmentVariables());
-    return generalCommandLine;
   }
 }
 
