@@ -5,9 +5,11 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,25 +39,55 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
 
   @NotNull
   private static <Psi extends PsiElement> List<Psi> getAccessorsAugments(@NotNull PsiElement element, PsiExtensibleClass aClass) {
+    PsiRecordHeader header = aClass.getRecordHeader();
+    if (header == null) return Collections.emptyList();
     PsiRecordComponent[] components = aClass.getRecordComponents();
     PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     ArrayList<Psi> methods = new ArrayList<>(components.length);
+    List<PsiMethod> ownMethods = aClass.getOwnMethods();
     for (PsiRecordComponent component : components) {
-      if (!shouldGenerateMethod(aClass, component)) continue;
+      if (!shouldGenerateMethod(component, ownMethods)) continue;
       PsiMethod recordMethod = createRecordMethod(component, factory);
       if (recordMethod == null) continue;
       LightMethod method = new LightRecordMethod(element.getManager(), recordMethod, aClass, component);
       //noinspection unchecked
       methods.add((Psi)method);
     }
+    PsiMethod constructor = getCanonicalConstructor(aClass, ownMethods, header);
+    if (constructor != null) {
+      //noinspection unchecked
+      methods.add((Psi)constructor);
+    }
     return methods;
   }
 
-  private static boolean shouldGenerateMethod(PsiExtensibleClass aClass, PsiRecordComponent component) {
+  @Nullable
+  private static PsiMethod getCanonicalConstructor(PsiExtensibleClass aClass,
+                                                   List<PsiMethod> ownMethods,
+                                                   @NotNull PsiRecordHeader recordHeader) {
+    String className = aClass.getName();
+    if (className == null) return null;
+    PsiRecordComponent[] recordComponents = recordHeader.getRecordComponents();
+    for (PsiMethod method : ownMethods) {
+      if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isCanonicalConstructor(method)) return null;
+    }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(recordHeader.getProject());
+    StringBuilder sb = new StringBuilder();
+    sb.append("public ").append(className).append(recordHeader.getText()).append("{ ");
+    for (PsiRecordComponent component : recordComponents) {
+      String name = component.getName();
+      if (name == null) return null;
+      sb.append("this.").append(name).append("=").append(name).append(";");
+    }
+    sb.append(" }");
+    PsiMethod nonPhysical = factory.createMethodFromText(sb.toString(), recordHeader.getContainingClass());
+    return new LightRecordCanonicalConstructor(nonPhysical, aClass);
+  }
+
+  private static boolean shouldGenerateMethod(PsiRecordComponent component, List<PsiMethod> ownMethods) {
     String componentName = component.getName();
     if (componentName == null) return false;
-    List<PsiMethod> methods = aClass.getOwnMethods();
-    for (PsiMethod method : methods) {
+    for (PsiMethod method : ownMethods) {
       // Return type is not checked to avoid unnecessary warning about clashing signatures in case of different return types
       if (componentName.equals(method.getName())) return false;
     }

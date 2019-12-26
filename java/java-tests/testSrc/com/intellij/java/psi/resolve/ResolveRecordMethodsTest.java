@@ -3,7 +3,9 @@ package com.intellij.java.psi.resolve;
 
 import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LightResolveTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +71,18 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     assertEquals(parameters[0], parameter);
   }
 
+  public void testCanonicalConstructor() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PsiClass);
+    PsiMethod[] constructors = ((PsiClass)target).getConstructors();
+    assertEquals(1, constructors.length);
+    PsiMethod constructor = constructors[0];
+    assertTrue(constructor instanceof LightRecordCanonicalConstructor);
+    int offset = getEditor().getCaretModel().getOffset();
+    PsiNewExpression expr = PsiTreeUtil.findElementOfClassAtOffset(getFile(), offset, PsiNewExpression.class, false);
+    assertEquals(constructor, expr.resolveConstructor());
+  }
+
   private static void assertNavigatesToFirstRecordComponent(PsiClass record, PsiElement target) {
     PsiRecordComponent[] components = record.getRecordComponents();
     assertSize(1, components);
@@ -80,6 +94,7 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     assertTrue(target instanceof PsiMethod);
     assertFalse(target instanceof LightRecordMethod);
     PsiClass aClass = ((PsiMethod)target).getContainingClass();
-    assertEquals(2, aClass.getMethods().length);
+    PsiMethod[] methods = aClass.getMethods();
+    assertEquals(3, methods.length);
   }
 }
