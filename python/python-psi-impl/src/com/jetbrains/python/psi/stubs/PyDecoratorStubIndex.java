@@ -15,10 +15,15 @@
  */
 package com.jetbrains.python.psi.stubs;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyDecorator;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * Python Decorator stub index.
@@ -30,6 +35,10 @@ public class PyDecoratorStubIndex extends StringStubIndexExtension<PyDecorator> 
    * Key to search for python decorators
    */
   public static final StubIndexKey<String, PyDecorator> KEY = StubIndexKey.createIndexKey("Python.Decorator");
+
+  public static Collection<PyDecorator> find(String name, Project project) {
+    return StubIndex.getElements(KEY, name, project, ProjectScope.getAllScope(project), PyDecorator.class);
+  }
 
   @NotNull
   @Override
