@@ -2,7 +2,6 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -11,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -151,9 +149,8 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
         jdk = IdeaTestUtil.getMockJdk17();
       }
 
-      MockJdkWrapper wrappedJdk = new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk);
-      registerJdk(wrappedJdk, module.getProject());
-      model.setSdk(wrappedJdk);
+      registerJdk(jdk, module.getProject());
+      model.setSdk(jdk);
 
       if (myLanguageLevel != null) {
         model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);

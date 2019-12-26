@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
   protected static final int DEFAULT_ADDRESS = 3456;
+  protected static final String TEST_JDK_NAME = "JDK";
   protected DebuggerSession myDebuggerSession;
   private final AtomicInteger myRestart = new AtomicInteger();
   private static final int MAX_RESTARTS = 3;
@@ -91,7 +92,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   @Override
   protected void initApplication() throws Exception {
     super.initApplication();
-    JavaTestUtil.setupTestJDK(getTestRootDisposable());
+    JavaTestUtil.setupInternalJdkAsTestJDK(getTestRootDisposable(), TEST_JDK_NAME);
     DebuggerSettings.getInstance().setTransport(DebuggerSettings.SOCKET_TRANSPORT);
     DebuggerSettings.getInstance().SKIP_CONSTRUCTORS = false;
     DebuggerSettings.getInstance().SKIP_GETTERS      = false;

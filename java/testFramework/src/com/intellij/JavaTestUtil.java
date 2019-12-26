@@ -2,8 +2,8 @@
 package com.intellij;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 /**
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.TestOnly;
  * @author Konstantin Bulenkov
  */
 public class JavaTestUtil {
-  private static final String TEST_JDK_NAME = "JDK";
 
   public static String getJavaTestDataPath() {
     return PathManagerEx.getTestDataPath();
@@ -31,28 +31,34 @@ public class JavaTestUtil {
   }
 
   @TestOnly
-  public static void setupTestJDK(@NotNull Disposable parentDisposable) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+  public static Sdk setupInternalJdkAsTestJDK(@NotNull Disposable parentDisposable, @Nullable String testJdkName) {
+    Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    if (testJdkName == null) {
+      testJdkName = internalJdk.getName();
+    }
+    String finalJdkName = testJdkName;
+    return WriteAction.compute(() -> {
       ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
 
-      Sdk jdk = jdkTable.findJdk(TEST_JDK_NAME);
-      if (jdk != null) {
-        jdkTable.removeJdk(jdk);
+      Sdk oldJdk = jdkTable.findJdk(finalJdkName);
+      if (oldJdk != null) {
+        jdkTable.removeJdk(oldJdk);
       }
 
-      jdkTable.addJdk(getTestJdk(), parentDisposable);
-    });
-  }
-
-  public static Sdk getTestJdk() {
-    try {
-      ProjectJdkImpl jdk = (ProjectJdkImpl)JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().clone();
-      jdk.setName(TEST_JDK_NAME);
+      Sdk jdk = internalJdk;
+      if (!internalJdk.getName().equals(finalJdkName)) {
+        try {
+          ProjectJdkImpl copy = (ProjectJdkImpl)internalJdk.clone();
+          copy.setName(finalJdkName);
+          jdk = copy;
+        }
+        catch (CloneNotSupportedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      jdkTable.addJdk(jdk, parentDisposable);
       return jdk;
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
   public static LanguageLevel getMaxRegisteredLanguageLevel() {
