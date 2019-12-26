@@ -109,6 +109,7 @@
                         preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"/>
 
     <statusBarWidgetProvider implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator$Provider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier"/>
 
     <changesGroupingPolicy key="directory" id="directory"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
@@ -191,5 +192,10 @@
     <listener class="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyAppLevelProjectManagerListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
+
+  <projectListeners>
+    <listener class="com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier$IncomingChangesListener"
+              topic="com.intellij.openapi.vcs.changes.committed.CommittedChangesListener"/>
+  </projectListeners>
 </idea-plugin>
 

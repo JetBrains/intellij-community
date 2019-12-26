@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -27,6 +26,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 import static com.intellij.icons.AllIcons.Ide.IncomingChangesOn;
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -103,7 +103,12 @@ public class IncomingChangesIndicator implements StatusBarWidget, StatusBarWidge
     connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
       @Override
       public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
-        ApplicationManager.getApplication().invokeLater(() -> refreshIndicator());
+        getApplication().invokeLater(() -> refreshIndicator());
+      }
+
+      @Override
+      public void changesCleared() {
+        getApplication().invokeLater(() -> refreshIndicator());
       }
     });
     final VcsListener listener = new VcsListener() {

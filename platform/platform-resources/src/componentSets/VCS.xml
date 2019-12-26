@@ -49,10 +49,6 @@
       <implementation-class>com.intellij.openapi.vcs.changes.committed.CommittedChangesCache</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier</implementation-class>
-      <headless-implementation-class/>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
     </component>
   </project-components>
