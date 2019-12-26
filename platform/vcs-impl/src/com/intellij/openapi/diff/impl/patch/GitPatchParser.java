@@ -103,8 +103,8 @@ public class GitPatchParser {
   private static void applyPatchInfo(@NotNull FilePatch patch, @NotNull GitPatchParser.PatchInfo patchInfo) {
     if (patch instanceof TextFilePatch) ((TextFilePatch)patch).setFileStatus(patchInfo.myFileStatus);
 
-    if (patch.getBeforeName() == null && !patch.isNewFile()) patch.setBeforeName(patchInfo.myBeforeName);
-    if (patch.getAfterName() == null && !patch.isDeletedFile()) patch.setAfterName(patchInfo.myAfterName);
+    if (patch.getBeforeName() == null) patch.setBeforeName(patchInfo.myBeforeName);
+    if (patch.getAfterName() == null) patch.setAfterName(patchInfo.myAfterName);
     //remember sha-1 as version ids or set null if no info
     patch.setBeforeVersionId(patchInfo.myBeforeIndex);
     patch.setAfterVersionId(patchInfo.myAfterIndex);
