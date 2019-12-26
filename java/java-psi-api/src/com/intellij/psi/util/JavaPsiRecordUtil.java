@@ -85,7 +85,7 @@ public class JavaPsiRecordUtil {
   /**
    * @param recordClass record class
    * @return first explicitly declared canonical or compact constructor; 
-   * null if no canonical and compact constructor declared or the supplied class is not a record
+   * null if the supplied class is not a record. Returns a synthetic constructor if it's not explicitly defined.
    */
   @Nullable
   public static PsiMethod findCanonicalConstructor(@NotNull PsiClass recordClass) {

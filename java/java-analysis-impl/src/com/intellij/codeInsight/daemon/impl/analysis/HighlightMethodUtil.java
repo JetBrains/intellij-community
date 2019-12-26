@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -50,6 +51,7 @@ import java.awt.*;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class HighlightMethodUtil {
@@ -1935,24 +1937,26 @@ public class HighlightMethodUtil {
     return checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.accessor"));
   }
 
-  public static HighlightInfo checkRecordConstructorDeclaration(PsiMethod method) {
-    if (!method.isConstructor()) return null;
+  @NotNull
+  public static List<HighlightInfo> checkRecordConstructorDeclaration(PsiMethod method) {
+    if (!method.isConstructor()) return Collections.emptyList();
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
+    if (aClass == null) return Collections.emptyList();
     PsiIdentifier identifier = method.getNameIdentifier();
-    if (identifier == null) return null;
+    if (identifier == null) return Collections.emptyList();
     if (!aClass.isRecord()) {
       if (JavaPsiRecordUtil.isCompactConstructor(method)) {
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
           identifier).descriptionAndTooltip(JavaErrorMessages.message("compact.constructor.in.regular.class")).create();
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddParameterListFix(method));
-        return info;
+        return Collections.singletonList(info);
       }
-      return null;
+      return Collections.emptyList();
     }
     if (JavaPsiRecordUtil.isCanonicalConstructor(method)) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       PsiRecordComponent[] components = aClass.getRecordComponents();
+      List<HighlightInfo> problems = new ArrayList<>();
       assert parameters.length == components.length;
       for (int i = 0; i < parameters.length; i++) {
         PsiType componentType = components[i].getType();
@@ -1963,29 +1967,43 @@ public class HighlightMethodUtil {
         if (parameterType instanceof PsiEllipsisType) {
           parameterType = ((PsiEllipsisType)parameterType).toArrayType();
         }
+        String componentName = components[i].getName();
+        String parameterName = parameters[i].getName();
         if (!parameterType.equals(componentType)) {
           String message =
-            JavaErrorMessages.message("record.canonical.constructor.wrong.parameter.type", components[i].getName(),
+            JavaErrorMessages.message("record.canonical.constructor.wrong.parameter.type", componentName,
                                       componentType.getPresentableText(), parameterType.getPresentableText());
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
             Objects.requireNonNull(parameters[i].getTypeElement())).descriptionAndTooltip(message).create();
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodParameterTypeFix(method, i, componentType, false));
-          return info;
+          problems.add(info);
+        }
+        if (componentName != null && !parameterName.equals(componentName)) {
+          String message = JavaErrorMessages.message("record.canonical.constructor.wrong.parameter.name", componentName, parameterName);
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
+            Objects.requireNonNull(parameters[i].getNameIdentifier())).descriptionAndTooltip(message).create();
+          if (Arrays.stream(parameters).map(PsiParameter::getName).noneMatch(Predicate.isEqual(componentName))) {
+            QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameElementFix(parameters[i], componentName));
+          }
+          problems.add(info);
         }
       }
-      return checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.canonical.constructor"));
+      ContainerUtil
+        .addIfNotNull(problems, checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.canonical.constructor")));
+      return problems;
     } else if (JavaPsiRecordUtil.isCompactConstructor(method)) {
-      return checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.compact.constructor"));
+      return Collections
+        .singletonList(checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.compact.constructor")));
     }
     else {
       // Non-canonical constructor
       PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
       if (call == null || JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
         String message = JavaErrorMessages.message("record.no.constructor.call.in.non.canonical");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
-          .descriptionAndTooltip(message).create();
+        return Collections.singletonList(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
+                                           .descriptionAndTooltip(message).create());
       }
-      return null;
+      return Collections.emptyList();
     }
   }
 

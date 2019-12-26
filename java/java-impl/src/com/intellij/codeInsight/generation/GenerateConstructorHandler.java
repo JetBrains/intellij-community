@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -67,12 +68,15 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       return null;
     }
 
-    if (aClass.isRecord() && JavaPsiRecordUtil.findCanonicalConstructor(aClass) == null) {
-      RecordConstructorChooserDialog dialog = new RecordConstructorChooserDialog(aClass);
-      if (!dialog.showAndGet()) return null;
-      ClassMember member = dialog.getClassMember();
-      if (member != null) {
-        return new ClassMember[]{member};
+    if (aClass.isRecord()) {
+      PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+      if (constructor instanceof LightRecordCanonicalConstructor) {
+        RecordConstructorChooserDialog dialog = new RecordConstructorChooserDialog(aClass);
+        if (!dialog.showAndGet()) return null;
+        ClassMember member = dialog.getClassMember();
+        if (member != null) {
+          return new ClassMember[]{member};
+        }
       }
     }
 

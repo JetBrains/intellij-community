@@ -15,6 +15,12 @@ record TypeMismatch<T>(T t) {
     this.t = null;
   }
 }
+record NameMismatch(int x, int y) {
+  public NameMismatch(int <error descr="Canonical constructor parameter names must match record component names. Expected: 'x', found: '_x'">_x</error>, int <error descr="Canonical constructor parameter names must match record component names. Expected: 'y', found: '_y'">_y</error>) {
+    x = _x;
+    y = _y;
+  }
+}
 // Current spec draft allows this
 record VarArgMismatch(int... x) {
   public VarArgMismatch(int[] x) {
