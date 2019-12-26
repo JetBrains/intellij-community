@@ -10,7 +10,6 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
   private final PsiReferenceExpression myReferenceExpression;
 
   private final PsiField myField;
@@ -22,7 +21,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     myReferenceExpression = ref;
     myInvokedOnReference = myReferenceExpression != null;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
     myOccurrencesNumber = getNumberOfOccurrences(myField);
     init();
   }
@@ -106,5 +105,9 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   @Override
   protected String getHelpId() {
     return HelpID.INLINE_FIELD;
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("inline.field.title");
   }
 }

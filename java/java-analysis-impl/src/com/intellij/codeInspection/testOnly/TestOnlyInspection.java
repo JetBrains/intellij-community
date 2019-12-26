@@ -32,7 +32,7 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GENERAL_GROUP_NAME;
+    return getGENERAL_GROUP_NAME();
   }
 
   @Override

@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnusedSymbolLocalInspectionBase extends AbstractBaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
-  @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
   @NonNls public static final String UNUSED_PARAMETERS_SHORT_NAME = "UnusedParameters";
   @NonNls public static final String UNUSED_ID = "unused";
 

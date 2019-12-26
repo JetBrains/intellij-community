@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 public class MoveInnerImpl {
   private static final Logger LOG = Logger.getInstance(MoveInnerImpl.class);
 
-  public static final String REFACTORING_NAME = RefactoringBundle.message("move.inner.to.upper.level.title");
-
   public static void doMove(final Project project, PsiElement[] elements, final MoveCallback moveCallback, @Nullable PsiElement targetContainer) {
     if (elements.length != 1) return;
     final PsiClass aClass = (PsiClass) elements[0];
@@ -87,5 +85,9 @@ public class MoveInnerImpl {
     // should not happen
     LOG.assertTrue(false);
     return null;
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("move.inner.to.upper.level.title");
   }
 }

@@ -38,7 +38,6 @@ import java.util.Objects;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
-  public static final String FAMILY_NAME = QuickFixBundle.message("simplify.boolean.expression.family");
 
   private final boolean mySubExpressionValue;
 
@@ -100,7 +99,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getFamilyName() {
-    return FAMILY_NAME;
+    return getFAMILY_NAME();
   }
 
   @Override
@@ -624,5 +623,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (operand == null) return null;
     String text = operand.getText();
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
+  }
+
+  public static String getFAMILY_NAME() {
+    return QuickFixBundle.message("simplify.boolean.expression.family");
   }
 }

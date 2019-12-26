@@ -17,8 +17,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TypeCookDialog extends RefactoringDialog {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("generify.title");
-
   private final PsiElement[] myElements;
   private final JLabel myClassNameLabel = new JLabel();
   private final JCheckBox myCbDropCasts = new JCheckBox();
@@ -32,7 +30,7 @@ public class TypeCookDialog extends RefactoringDialog {
   public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
 
     init();
 
@@ -192,5 +190,9 @@ public class TypeCookDialog extends RefactoringDialog {
         return cookToWildcards;
       }
     };
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("generify.title");
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.refactoring.turnRefsToSuper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -35,7 +34,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     mySubClass = subClass;
     mySuperClasses = superClasses;
 
-    setTitle(TurnRefsToSuperHandler.REFACTORING_NAME);
+    setTitle(TurnRefsToSuperHandler.getREFACTORING_NAME());
     init();
   }
 

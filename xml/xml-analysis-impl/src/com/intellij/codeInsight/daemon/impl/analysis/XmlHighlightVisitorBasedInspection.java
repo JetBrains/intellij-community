@@ -79,7 +79,7 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return InspectionProfileEntry.GENERAL_GROUP_NAME;
+    return getGENERAL_GROUP_NAME();
   }
 
   @NotNull

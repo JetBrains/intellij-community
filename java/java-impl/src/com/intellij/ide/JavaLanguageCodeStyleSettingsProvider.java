@@ -225,59 +225,59 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",
                                 ApplicationBundle.message("checkbox.align.parameter.descriptions"),
-                                ALIGNMENT_GROUP);
+                                getALIGNMENT_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_EXCEPTION_COMMENTS",
                                 ApplicationBundle.message("checkbox.align.thrown.exception.descriptions"),
-                                ALIGNMENT_GROUP);
+                                getALIGNMENT_GROUP());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_DESCRIPTION",
                                 ApplicationBundle.message("checkbox.after.description"),
-                                BLANK_LINES_GROUP);
+                                getBLANK_LINES_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_PARM_COMMENTS",
                                 ApplicationBundle.message("checkbox.after.parameter.descriptions"),
-                                BLANK_LINES_GROUP);
+                                getBLANK_LINES_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_RETURN",
                                 ApplicationBundle.message("checkbox.after.return.tag"),
-                                BLANK_LINES_GROUP);
+                                getBLANK_LINES_GROUP());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_INVALID_TAGS",
                                 ApplicationBundle.message("checkbox.keep.invalid.tags"),
-                                INVALID_TAGS_GROUP);
+                                getINVALID_TAGS_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_PARAMETER",
                                 ApplicationBundle.message("checkbox.keep.empty.param.tags"),
-                                INVALID_TAGS_GROUP);
+                                getINVALID_TAGS_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_RETURN",
                                 ApplicationBundle.message("checkbox.keep.empty.return.tags"),
-                                INVALID_TAGS_GROUP);
+                                getINVALID_TAGS_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_EXCEPTION",
                                 ApplicationBundle.message("checkbox.keep.empty.throws.tags"),
-                                INVALID_TAGS_GROUP);
+                                getINVALID_TAGS_GROUP());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_LEADING_ASTERISKS_ARE_ENABLED",
                                 ApplicationBundle.message("checkbox.enable.leading.asterisks"),
-                                OTHER_GROUP);
+                                getOTHER_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_USE_THROWS_NOT_EXCEPTION",
                                 ApplicationBundle.message("checkbox.use.throws.rather.than.exception"),
-                                OTHER_GROUP);
+                                getOTHER_GROUP());
       consumer.showStandardOptions("WRAP_COMMENTS");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_P_AT_EMPTY_LINES",
                                 ApplicationBundle.message("checkbox.generate.p.on.empty.lines"),
-                                OTHER_GROUP);
+                                getOTHER_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_LINES",
                                 ApplicationBundle.message("checkbox.keep.empty.lines"),
-                                OTHER_GROUP);
+                                getOTHER_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_DO_NOT_WRAP_ONE_LINE_COMMENTS",
                                 ApplicationBundle.message("checkbox.do.not.wrap.one.line.comments"),
-                                OTHER_GROUP);
+                                getOTHER_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_PRESERVE_LINE_FEEDS",
                                 ApplicationBundle.message("checkbox.preserve.line.feeds"),
-                                OTHER_GROUP);
+                                getOTHER_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_PARAM_DESCRIPTION_ON_NEW_LINE",
                                 ApplicationBundle.message("checkbox.param.description.on.new.line"),
-                                OTHER_GROUP);
+                                getOTHER_GROUP());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_INDENT_ON_CONTINUATION",
                                 ApplicationBundle.message("checkbox.param.indent.on.continuation"),
-                                OTHER_GROUP);
+                                getOTHER_GROUP());
 
 
     }

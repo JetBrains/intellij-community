@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MakeStaticHandler implements RefactoringActionHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("make.method.static.title");
   private static final Logger LOG = Logger.getInstance(MakeStaticHandler.class);
 
   @Override
@@ -52,7 +51,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
     if(!(element instanceof PsiTypeParameterListOwner)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MAKE_METHOD_STATIC);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MAKE_METHOD_STATIC);
       return;
     }
     if(LOG.isDebugEnabled()) {
@@ -71,7 +70,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     String error = validateTarget(member);
     if (error != null) {
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, error, REFACTORING_NAME, HelpID.MAKE_METHOD_STATIC);
+      CommonRefactoringUtil.showErrorHint(project, editor, error, getREFACTORING_NAME(), HelpID.MAKE_METHOD_STATIC);
       return;
     }
 
@@ -145,5 +144,9 @@ public class MakeStaticHandler implements RefactoringActionHandler {
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("inner.classes.cannot.have.static.members"));
     }
     return null;
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("make.method.static.title");
   }
 }

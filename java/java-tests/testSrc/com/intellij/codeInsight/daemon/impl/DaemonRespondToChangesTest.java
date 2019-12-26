@@ -1533,7 +1533,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByExistingFile(use.getVirtualFile());
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME, UnusedDeclarationInspectionBase.SHORT_NAME);
+    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME,
+                                                                           UnusedDeclarationInspectionBase.getDISPLAY_NAME(), UnusedDeclarationInspectionBase.SHORT_NAME);
     UnusedDeclarationInspectionBase myDeadCodeInspection = new UnusedDeclarationInspectionBase(true);
     enableInspectionTool(myDeadCodeInspection);
     assert profile.isToolEnabled(myDeadCodeKey, myFile);

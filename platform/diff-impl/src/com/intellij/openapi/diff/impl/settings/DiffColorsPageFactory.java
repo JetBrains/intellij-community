@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAndFontDescriptorsProvider, DisplayPrioritySortable {
-  public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
-
   @Override
   @NotNull
   public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
@@ -43,7 +41,7 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
     descriptionPanel.addDescriptionPanel(new ColorAndFontDescriptionPanel(), it -> it instanceof ColorAndFontDescription);
     descriptionPanel.addDescriptionPanel(new DiffColorDescriptionPanel(options), it -> it instanceof TextAttributesDescription);
 
-    final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, DIFF_GROUP, descriptionPanel);
+    final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, getDIFF_GROUP(), descriptionPanel);
     final DiffPreviewPanel previewPanel = new DiffPreviewPanel();
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
@@ -54,7 +52,7 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
       }
     });
 
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, DIFF_GROUP, null, null);
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, getDIFF_GROUP(), null, null);
   }
 
   @NotNull
@@ -78,17 +76,21 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
   @Override
   @NotNull
   public String getPanelDisplayName() {
-    return DIFF_GROUP;
+    return getDIFF_GROUP();
   }
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return DIFF_GROUP;
+    return getDIFF_GROUP();
   }
 
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.COMMON_SETTINGS;
+  }
+
+  public static String getDIFF_GROUP() {
+    return ApplicationBundle.message("title.diff");
   }
 }

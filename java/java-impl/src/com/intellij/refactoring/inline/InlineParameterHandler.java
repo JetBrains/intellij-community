@@ -48,7 +48,6 @@ import java.util.*;
  * @author yole
  */
 public class InlineParameterHandler extends JavaInlineActionHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.parameter.refactoring");
   private static final String REFACTORING_ID = "refactoring.inline.parameter";
 
   @Override
@@ -209,7 +208,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       String question = RefactoringBundle.message("inline.parameter.confirmation", psiParameter.getName(),
                                                   constantExpression.getText()) + " " + occurencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
-        REFACTORING_NAME,
+        getREFACTORING_NAME(),
         question,
         HelpID.INLINE_VARIABLE,
         "OptionPane.questionIcon",
@@ -227,7 +226,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
       SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
-    }, REFACTORING_NAME, null);
+    }, getREFACTORING_NAME(), null);
   }
 
   @Nullable
@@ -290,6 +289,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return REFACTORING_NAME + "...";
+    return getREFACTORING_NAME() + "...";
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("inline.parameter.refactoring");
   }
 }

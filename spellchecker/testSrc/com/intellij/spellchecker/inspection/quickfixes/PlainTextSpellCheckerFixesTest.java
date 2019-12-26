@@ -46,30 +46,30 @@ public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTes
   }
 
   public void testNoTypoChangeTo() {
-    doNoQuickFixTest(ChangeTo.FIX_NAME);
+    doNoQuickFixTest(ChangeTo.getFIX_NAME());
   }
 
   public void testEmptyChangeTo() {
-    doNoQuickFixTest(ChangeTo.FIX_NAME);
+    doNoQuickFixTest(ChangeTo.getFIX_NAME());
   }
 
   public void testEmptyRenameTo() {
-    doNoQuickFixTest(RenameTo.FIX_NAME);
+    doNoQuickFixTest(RenameTo.getFIX_NAME());
   }
 
   public void testEmptySaveTo() {
-    doNoQuickFixTest(SaveTo.FIX_NAME);
+    doNoQuickFixTest(SaveTo.getFIX_NAME());
   }
 
   public void testNoTypoSaveTo() {
-    doNoQuickFixTest(SaveTo.FIX_NAME);
+    doNoQuickFixTest(SaveTo.getFIX_NAME());
   }
 
   public void testNoTypoRenameTo() {
-    doNoQuickFixTest(RenameTo.FIX_NAME);
+    doNoQuickFixTest(RenameTo.getFIX_NAME());
   }
 
   public void testSimpleWordRenameTo() {
-    doNoQuickFixTest(RenameTo.FIX_NAME);
+    doNoQuickFixTest(RenameTo.getFIX_NAME());
   }
 }

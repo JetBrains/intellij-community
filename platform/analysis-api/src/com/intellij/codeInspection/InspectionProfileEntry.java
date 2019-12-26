@@ -40,8 +40,6 @@ import java.util.*;
 
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
-  public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
-
   private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
 
   private static Set<String> ourBlackList;
@@ -255,7 +253,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public String[] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
     if (groupDisplayName.isEmpty()) {
-      groupDisplayName = GENERAL_GROUP_NAME;
+      groupDisplayName = getGENERAL_GROUP_NAME();
     }
     return new String[]{groupDisplayName};
   }
@@ -488,5 +486,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     }
 
     return null;
+  }
+
+  public static String getGENERAL_GROUP_NAME() {
+    return InspectionsBundle.message("inspection.general.tools.group.name");
   }
 }

@@ -1899,7 +1899,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           catch (PrepareFailedException e) {
             if (myShowErrorDialogs) {
               CommonRefactoringUtil
-                .showErrorHint(myProject, myEditor, e.getMessage(), ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+                .showErrorHint(myProject, myEditor, e.getMessage(), ExtractMethodHandler.getREFACTORING_NAME(), HelpID.EXTRACT_METHOD);
               ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
             }
             return false;

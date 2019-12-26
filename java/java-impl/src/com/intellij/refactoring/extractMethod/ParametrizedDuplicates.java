@@ -41,8 +41,6 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-import static com.intellij.refactoring.extractMethod.ExtractMethodHandler.REFACTORING_NAME;
-
 /**
  * @author Pavel.Dolgov
  */
@@ -365,7 +363,8 @@ public class ParametrizedDuplicates {
       createParameterDeclarations(originalProcessor, expressionsMapping, predefinedNames);
     putMatchParameters(parameterDeclarations);
 
-    JavaDuplicatesExtractMethodProcessor parametrizedProcessor = new JavaDuplicatesExtractMethodProcessor(myElements, REFACTORING_NAME);
+    JavaDuplicatesExtractMethodProcessor parametrizedProcessor =
+      new JavaDuplicatesExtractMethodProcessor(myElements, ExtractMethodHandler.getREFACTORING_NAME());
     if (!parametrizedProcessor.prepare(false)) {
       return false;
     }

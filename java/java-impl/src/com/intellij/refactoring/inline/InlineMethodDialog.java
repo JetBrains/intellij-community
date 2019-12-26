@@ -12,8 +12,6 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
-
   private final PsiJavaCodeReferenceElement myReferenceElement;
   private final Editor myEditor;
   private final boolean myAllowInlineThisOnly;
@@ -29,7 +27,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     myInvokedOnReference = ref != null;
     myOccurrencesNumber = getNumberOfOccurrences(method);
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
     init();
   }
 
@@ -118,5 +116,9 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   @Override
   protected void saveSearchInTextOccurrences(boolean searchInTextOccurrences) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD = searchInTextOccurrences;
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("inline.method.title");
   }
 }

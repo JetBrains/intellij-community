@@ -14,9 +14,6 @@ import com.intellij.refactoring.inline.InlineOptionsDialog;
 * @author Max Medvedev
 */
 class InlineGroovyFieldDialog extends InlineOptionsDialog {
-
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
-
   private final PsiField myField;
 
   InlineGroovyFieldDialog(Project project, PsiField field, boolean invokedOnReference) {
@@ -24,7 +21,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
     myField = field;
     myInvokedOnReference = invokedOnReference;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
 
     init();
   }
@@ -70,5 +67,9 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
   @Override
   protected String getHelpId() {
     return HelpID.INLINE_FIELD;
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("inline.field.title");
   }
 }

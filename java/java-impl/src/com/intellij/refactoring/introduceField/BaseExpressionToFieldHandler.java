@@ -174,7 +174,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
-    if (!Comparing.strEqual(IntroduceConstantHandler.REFACTORING_NAME, getRefactoringName()) &&
+    if (!Comparing.strEqual(IntroduceConstantHandler.getREFACTORING_NAME(), getRefactoringName()) &&
         IntroduceFieldHandler.isInSuperOrThis(selectedExpr) &&
         isStaticFinalInitializer(selectedExpr) != null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));

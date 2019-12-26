@@ -29,7 +29,7 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
   private final String[] mySuggestedNames;
 
   public GrInplaceConstantIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(IntroduceConstantHandler.REFACTORING_NAME, choice, context);
+    super(IntroduceConstantHandler.getREFACTORING_NAME(), choice, context);
 
     myContext = context;
 

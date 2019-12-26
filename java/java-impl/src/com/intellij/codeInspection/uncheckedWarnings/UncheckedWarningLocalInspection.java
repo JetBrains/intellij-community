@@ -36,7 +36,6 @@ import java.util.function.Supplier;
 
 public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
-  public static final String DISPLAY_NAME = InspectionsBundle.message("unchecked.warning");
   @NonNls private static final String ID = "unchecked";
   private static final Logger LOG = Logger.getInstance(UncheckedWarningLocalInspection.class);
   public boolean IGNORE_UNCHECKED_ASSIGNMENT;

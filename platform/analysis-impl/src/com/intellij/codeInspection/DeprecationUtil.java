@@ -17,10 +17,18 @@ package com.intellij.codeInspection;
 
 public class DeprecationUtil {
   public static final String DEPRECATION_SHORT_NAME = "Deprecation";
-  public static final String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
+
   public static final String DEPRECATION_ID = "deprecation";
 
   public static final String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
-  public static final String FOR_REMOVAL_DISPLAY_NAME = InspectionsBundle.message("inspection.marked.for.removal.display.name");
+
   public static final String FOR_REMOVAL_ID = "removal";
+
+  public static String getDEPRECATION_DISPLAY_NAME() {
+    return InspectionsBundle.message("inspection.deprecated.display.name");
+  }
+
+  public static String getFOR_REMOVAL_DISPLAY_NAME() {
+    return InspectionsBundle.message("inspection.marked.for.removal.display.name");
+  }
 }

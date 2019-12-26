@@ -18,11 +18,10 @@ import java.util.List;
  * @author Sergey Malenkov
  */
 public final class OpenFilesScope extends NamedScope {
-  public static final String NAME = IdeBundle.message("scope.open.files");
   public static final OpenFilesScope INSTANCE = new OpenFilesScope();
 
   private OpenFilesScope() {
-    super(NAME, AllIcons.FileTypes.Any_type, new FilteredPackageSet(NAME) {
+    super(getNAME(), AllIcons.FileTypes.Any_type, new FilteredPackageSet(getNAME()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         FileEditorManager manager = project.isDisposed() ? null : FileEditorManager.getInstance(project);
@@ -37,5 +36,9 @@ public final class OpenFilesScope extends NamedScope {
     public List<NamedScope> getCustomScopes() {
       return Collections.singletonList(INSTANCE);
     }
+  }
+
+  public static String getNAME() {
+    return IdeBundle.message("scope.open.files");
   }
 }

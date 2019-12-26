@@ -18,11 +18,10 @@ import java.util.List;
  * @author Sergey Malenkov
  */
 public final class ProblemsScope extends NamedScope {
-  public static final String NAME = IdeBundle.message("predefined.scope.problems.name");
   public static final ProblemsScope INSTANCE = new ProblemsScope();
 
   private ProblemsScope() {
-    super(NAME, AllIcons.Scope.Problems, new FilteredPackageSet(NAME) {
+    super(getNAME(), AllIcons.Scope.Problems, new FilteredPackageSet(getNAME()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         WolfTheProblemSolver solver = project.isDisposed() ? null : WolfTheProblemSolver.getInstance(project);
@@ -37,5 +36,9 @@ public final class ProblemsScope extends NamedScope {
     public List<NamedScope> getCustomScopes() {
       return Collections.singletonList(INSTANCE);
     }
+  }
+
+  public static String getNAME() {
+    return IdeBundle.message("predefined.scope.problems.name");
   }
 }

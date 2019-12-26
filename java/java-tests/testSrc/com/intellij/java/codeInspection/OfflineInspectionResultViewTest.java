@@ -44,7 +44,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
 
-    HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME, UnusedDeclarationInspectionBase.SHORT_NAME);
+    HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.getDISPLAY_NAME(), UnusedDeclarationInspectionBase.SHORT_NAME);
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("test") {
       @Override

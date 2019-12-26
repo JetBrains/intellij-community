@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.constant.title");
   protected InplaceIntroduceConstantPopup myInplaceIntroduceConstantPopup;
 
   public IntroduceConstantHandler() {
@@ -66,7 +65,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, getHelpID(), project, getElementProcessor(project, editor));
+    ElementToWorkOn.processElementToWorkOn(editor, file, getREFACTORING_NAME(), getHelpID(), project, getElementProcessor(project, editor));
   }
 
   @Override
@@ -74,7 +73,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), getHelpID());
       return false;
     }
     final LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, true){
@@ -123,7 +122,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =
           RefactoringBundle.getCannotRefactorMessage("Selected expression is used for write");
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), getHelpID());
         highlightError(project, editor, occurrence);
         return null;
       }
@@ -134,7 +133,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       if (errorElement != null) {
         String message =
           RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), getHelpID());
         highlightError(project, editor, errorElement);
         return null;
       }
@@ -144,14 +143,14 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       if (initializer == null) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("variable.does.not.have.an.initializer", localVariable.getName()));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), getHelpID());
         return null;
       }
       final PsiElement errorElement = isStaticFinalInitializer(initializer);
       if (errorElement != null) {
         String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("initializer.for.variable.cannot.be.a.constant.initializer", localVariable.getName()));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), getHelpID());
         highlightError(project, editor, errorElement);
         return null;
       }
@@ -200,7 +199,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
   @Override
   protected String getRefactoringName() {
-    return REFACTORING_NAME;
+    return getREFACTORING_NAME();
   }
 
   @Override
@@ -251,4 +250,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return true;
   }
 
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("introduce.constant.title");
+  }
 }

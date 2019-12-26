@@ -45,7 +45,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
   private boolean TEST_ENTRY_POINTS = true;
 
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
   public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
@@ -700,5 +699,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public List<EntryPoint> getExtensions() {
     return myExtensions;
+  }
+
+  public static String getDISPLAY_NAME() {
+    return InspectionsBundle.message("inspection.dead.code.display.name");
   }
 }

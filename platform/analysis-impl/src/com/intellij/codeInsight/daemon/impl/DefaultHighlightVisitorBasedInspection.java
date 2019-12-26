@@ -122,7 +122,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GENERAL_GROUP_NAME;
+    return getGENERAL_GROUP_NAME();
   }
 
   private static class MyPsiElementVisitor extends PsiElementVisitor {

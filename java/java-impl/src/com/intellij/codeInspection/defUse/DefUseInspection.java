@@ -31,7 +31,6 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
   public boolean REPORT_REDUNDANT_INITIALIZER = true;
 
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.unused.assignment.display.name");
   public static final String SHORT_NAME = "UnusedAssignment";
 
   @Override

@@ -45,8 +45,6 @@ import org.jetbrains.annotations.NotNull;
 public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(ExtractInterfaceHandler.class);
 
-  public static final String REFACTORING_NAME = RefactoringBundle.message("extract.interface.title");
-
   private Project myProject;
   private PsiClass myClass;
   private String myInterfaceName;
@@ -67,7 +65,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INTERFACE);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.EXTRACT_INTERFACE);
         return;
       }
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
@@ -98,7 +96,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
 
     PsiClass anInterface = WriteCommandAction
       .writeCommandAction(project)
-      .withName(REFACTORING_NAME)
+      .withName(getREFACTORING_NAME())
       .compute(() -> {
         myInterfaceName = dialog.getExtractedSuperName();
         mySelectedMembers = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
@@ -146,5 +144,9 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass;
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("extract.interface.title");
   }
 }

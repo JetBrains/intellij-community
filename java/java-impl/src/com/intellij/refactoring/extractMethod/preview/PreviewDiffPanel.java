@@ -53,8 +53,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.refactoring.extractMethod.ExtractMethodHandler.REFACTORING_NAME;
-
 /**
  * @author Pavel.Dolgov
  */
@@ -96,15 +94,16 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     if (pattern.length == 0) {
       // todo suggest re-running the refactoring
       CommonRefactoringUtil.showErrorHint(myProject, null, RefactoringBundle.message("refactoring.extract.method.preview.failed"),
-                                          REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+                                          ExtractMethodHandler.getREFACTORING_NAME(), HelpID.EXTRACT_METHOD);
       return;
     }
-    JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(pattern, REFACTORING_NAME);
+    JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(pattern,
+                                                                                              ExtractMethodHandler.getREFACTORING_NAME());
     if (!processor.prepareFromSnapshot(mySnapshot, true)) {
       return;
     }
 
-    WriteCommandAction.runWriteCommandAction(myProject, REFACTORING_NAME, null,
+    WriteCommandAction.runWriteCommandAction(myProject, ExtractMethodHandler.getREFACTORING_NAME(), null,
                                              () -> doExtractImpl(processor, enabledNodes), pattern[0].getContainingFile());
   }
 
@@ -143,7 +142,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     ExtractMethodSnapshot copySnapshot = ReadAction.compute(() -> new ExtractMethodSnapshot(mySnapshot, pattern, patternCopy));
 
     ExtractMethodProcessor copyProcessor = ReadAction.compute(() -> {
-      JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(patternCopy, REFACTORING_NAME);
+      JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(patternCopy,
+                                                                                                ExtractMethodHandler.getREFACTORING_NAME());
       return processor.prepareFromSnapshot(copySnapshot, true) ? processor : null;
     });
     if (copyProcessor == null) return;

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated
 public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
-
-  public static final String CONFIGURABLE_DISPLAY_NAME = ApplicationBundle.message("title.xml");
-
   @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
@@ -49,11 +46,15 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    return CONFIGURABLE_DISPLAY_NAME;
+    return getCONFIGURABLE_DISPLAY_NAME();
   }
 
   @Override
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
     return new XmlCodeStyleSettings(settings);
+  }
+
+  public static String getCONFIGURABLE_DISPLAY_NAME() {
+    return ApplicationBundle.message("title.xml");
   }
 }

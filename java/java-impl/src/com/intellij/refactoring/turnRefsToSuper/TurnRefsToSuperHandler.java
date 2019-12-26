@@ -36,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class TurnRefsToSuperHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("use.interface.where.possible.title");
-
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     return !PsiUtil.isModuleFile(file);
@@ -51,7 +49,7 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler, Context
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.TURN_REFS_TO_SUPER);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.TURN_REFS_TO_SUPER);
         return;
       }
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
@@ -71,10 +69,14 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler, Context
     if (basesList.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("interface.does.not.have.base.interfaces", subClass.getQualifiedName()));
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.TURN_REFS_TO_SUPER);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.TURN_REFS_TO_SUPER);
       return;
     }
 
     new TurnRefsToSuperDialog(project, subClass, basesList).show();
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("use.interface.where.possible.title");
   }
 }

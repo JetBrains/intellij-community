@@ -36,22 +36,20 @@ import java.util.Collection;
 public class SelectTagDialog extends DialogWrapper {
   private final Collection<JList> myLists = new ArrayList<>();
   private final JPanel myPanel;
-  public static final String EXISTING_REVISIONS = CvsBundle.message("label.existing.revisions");
-  public static final String EXISTING_TAGS = CvsBundle.message("label.existing.tags");
 
   public SelectTagDialog(Collection<String> tags, Collection<String> revisions) {
     super(true);
     myPanel = new JPanel(new GridLayout(1, 0, 4, 8));
 
     if (tags.isEmpty()){
-      createList(CvsBundle.message("dialog.title.select.revision"), revisions, EXISTING_REVISIONS);
+      createList(CvsBundle.message("dialog.title.select.revision"), revisions, getEXISTING_REVISIONS());
     }
     else if (revisions.isEmpty()){
-      createList(CvsBundle.message("operation.name.select.tag"), tags, EXISTING_TAGS);
+      createList(CvsBundle.message("operation.name.select.tag"), tags, getEXISTING_TAGS());
     }
     else{
-      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, EXISTING_REVISIONS);
-      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), tags, EXISTING_TAGS);
+      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, getEXISTING_REVISIONS());
+      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), tags, getEXISTING_TAGS());
     }
 
     setOkEnabled();
@@ -133,5 +131,13 @@ public class SelectTagDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  public static String getEXISTING_REVISIONS() {
+    return CvsBundle.message("label.existing.revisions");
+  }
+
+  public static String getEXISTING_TAGS() {
+    return CvsBundle.message("label.existing.tags");
   }
 }

@@ -52,11 +52,6 @@ public class GitMergeUtil {
   static final int THEIRS_REVISION_NUM = 3; // remote file content: "Theirs"
 
   /**
-   * The item representing default strategy
-   */
-  public static final String DEFAULT_STRATEGY = GitBundle.getString("merge.default.strategy");
-
-  /**
    * A private constructor for utility class
    */
   private GitMergeUtil() {
@@ -76,11 +71,11 @@ public class GitMergeUtil {
     }
     switch (branchCount) {
       case 0:
-        return new String[]{DEFAULT_STRATEGY};
+        return new String[]{getDEFAULT_STRATEGY()};
       case 1:
-        return new String[]{DEFAULT_STRATEGY, "resolve", "recursive", "octopus", "ours", "subtree"};
+        return new String[]{getDEFAULT_STRATEGY(), "resolve", "recursive", "octopus", "ours", "subtree"};
       default:
-        return new String[]{DEFAULT_STRATEGY, "octopus", "ours"};
+        return new String[]{getDEFAULT_STRATEGY(), "octopus", "ours"};
     }
   }
 
@@ -97,7 +92,7 @@ public class GitMergeUtil {
         for (String s : getMergeStrategies(elements.size())) {
           strategy.addItem(s);
         }
-        strategy.setSelectedItem(DEFAULT_STRATEGY);
+        strategy.setSelectedItem(getDEFAULT_STRATEGY());
       }
 
       @Override
@@ -447,5 +442,9 @@ public class GitMergeUtil {
 
   public static boolean isReverseRoot(@NotNull GitRepository repository) {
     return repository.getState().equals(GitRepository.State.REBASING);
+  }
+
+  public static String getDEFAULT_STRATEGY() {
+    return GitBundle.getString("merge.default.strategy");
   }
 }

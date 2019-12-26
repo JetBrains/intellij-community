@@ -21,9 +21,6 @@ import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
-
-  public static final String FIX_NAME = SpellCheckerBundle.message("change.to");
-
   public ChangeTo(String wordWithTypo) {
     super(wordWithTypo);
   }
@@ -31,7 +28,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return FIX_NAME;
+    return getFIX_NAME();
   }
 
   @Override
@@ -76,5 +73,9 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
   private static int getDocumentOffset(int offset, int documentLength) {
     return offset >=0 && offset <= documentLength ? offset : documentLength;
+  }
+
+  public static String getFIX_NAME() {
+    return SpellCheckerBundle.message("change.to");
   }
 }

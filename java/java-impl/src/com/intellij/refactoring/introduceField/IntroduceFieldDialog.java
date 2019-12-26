@@ -236,10 +236,10 @@ class IntroduceFieldDialog extends DialogWrapper {
     }
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-              IntroduceFieldHandler.REFACTORING_NAME,
-              errorString,
-              HelpID.INTRODUCE_FIELD,
-              myProject
+	IntroduceFieldHandler.getREFACTORING_NAME(),
+	errorString,
+	HelpID.INTRODUCE_FIELD,
+	myProject
       );
       return;
     }
@@ -247,11 +247,11 @@ class IntroduceFieldDialog extends DialogWrapper {
     PsiField oldField = myParentClass.findFieldByName(fieldName, true);
     if (oldField != null) {
       int answer = Messages.showYesNoDialog(
-              myProject,
-              RefactoringBundle.message("field.exists", fieldName,
+	myProject,
+	RefactoringBundle.message("field.exists", fieldName,
                                    oldField.getContainingClass().getQualifiedName()),
-              IntroduceFieldHandler.REFACTORING_NAME,
-              Messages.getWarningIcon()
+	IntroduceFieldHandler.getREFACTORING_NAME(),
+	Messages.getWarningIcon()
       );
       if (answer != Messages.YES) {
         return;

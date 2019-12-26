@@ -30,9 +30,6 @@ import org.jetbrains.idea.svn.dialogs.CopiesPanel;
 import javax.swing.*;
 
 public class WorkingCopiesContent implements ChangesViewContentProvider {
-
-  public static final String TAB_NAME = SvnBundle.message("dialog.show.svn.map.title");
-
   @NotNull private final Project myProject;
 
   public WorkingCopiesContent(@NotNull Project project) {
@@ -55,7 +52,7 @@ public class WorkingCopiesContent implements ChangesViewContentProvider {
       if (window != null) {
         window.show(null);
         final ContentManager cm = window.getContentManager();
-        final Content content = cm.findContent(TAB_NAME);
+        final Content content = cm.findContent(getTAB_NAME());
         if (content != null) {
           cm.setSelectedContent(content, true);
         }
@@ -70,5 +67,9 @@ public class WorkingCopiesContent implements ChangesViewContentProvider {
     public Boolean fun(@NotNull Project project) {
       return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);
     }
+  }
+
+  public static String getTAB_NAME() {
+    return SvnBundle.message("dialog.show.svn.map.title");
   }
 }

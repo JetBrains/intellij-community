@@ -50,8 +50,6 @@ import java.util.List;
  * @see PyMoveSymbolProcessor
  */
 public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
-  public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
-
   private final List<SmartPsiElementPointer<PsiNamedElement>> myElements;
   private final LinkedHashSet<PsiFile> mySourceFiles;
   private final String myDestination;
@@ -76,7 +74,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
 
       @Override
       public String getProcessedElementsHeader() {
-        return REFACTORING_NAME;
+        return getREFACTORING_NAME();
       }
     };
   }
@@ -141,13 +139,13 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       for (PsiFile file : optimizeImportsTargets) {
         PyClassRefactoringUtil.optimizeImports(file);
       }
-    }), REFACTORING_NAME, null);
+    }), getREFACTORING_NAME(), null);
   }
 
   @NotNull
   @Override
   protected String getCommandName() {
-    return REFACTORING_NAME;
+    return getREFACTORING_NAME();
   }
 
   private static class MyUsageInfo extends UsageInfo {
@@ -156,6 +154,10 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       super(usageInfo.getSmartPointer(), usageInfo.getPsiFileRange(), usageInfo.isDynamicUsage(), usageInfo.isNonCodeUsage);
       myMovedElement = element;
     }
+  }
+
+  public static String getREFACTORING_NAME() {
+    return PyBundle.message("refactoring.move.module.members");
   }
 }
 

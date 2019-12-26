@@ -31,13 +31,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public static class Holder {
-    public static final String DISPLAY_NAME = ApplicationBundle.message("title.html");
+    public static String getDISPLAY_NAME() {
+      return ApplicationBundle.message("title.html");
+    }
   }
 
   @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, Holder.DISPLAY_NAME) {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, Holder.getDISPLAY_NAME()) {
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new HtmlCodeStyleMainPanel(settings, originalSettings);
@@ -52,7 +54,7 @@ public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    return Holder.DISPLAY_NAME;
+    return Holder.getDISPLAY_NAME();
   }
 
   @Nullable

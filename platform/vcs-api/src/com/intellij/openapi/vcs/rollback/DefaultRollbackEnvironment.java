@@ -26,12 +26,9 @@ import java.util.List;
  * @author yole
  */
 public abstract class DefaultRollbackEnvironment implements RollbackEnvironment {
-
-  public static final String ROLLBACK_OPERATION_NAME = VcsBundle.message("changes.action.rollback.text");
-
   @Override
   public String getRollbackOperationName() {
-    return ROLLBACK_OPERATION_NAME;
+    return getROLLBACK_OPERATION_NAME();
   }
 
   @Override
@@ -42,5 +39,9 @@ public abstract class DefaultRollbackEnvironment implements RollbackEnvironment 
 
   @Override
   public void rollbackIfUnchanged(final VirtualFile file) {
+  }
+
+  public static String getROLLBACK_OPERATION_NAME() {
+    return VcsBundle.message("changes.action.rollback.text");
   }
 }

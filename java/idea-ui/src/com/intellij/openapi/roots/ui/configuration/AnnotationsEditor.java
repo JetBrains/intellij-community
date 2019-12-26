@@ -42,8 +42,6 @@ import java.util.List;
 public class AnnotationsEditor extends ModuleElementsEditor {
   private JTable myTable;
 
-  public static final String NAME = ProjectBundle.message("project.roots.external.annotations.tab.title");
-
   public AnnotationsEditor(final ModuleConfigurationState state) {
     super(state);
   }
@@ -55,7 +53,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
   @Override
   public String getDisplayName() {
-    return NAME;
+    return getNAME();
   }
 
   @Override
@@ -187,5 +185,9 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     public void addTableItem(TableItem item) {
       addRow(new Object[] {item});
     }
+  }
+
+  public static String getNAME() {
+    return ProjectBundle.message("project.roots.external.annotations.tab.title");
   }
 }

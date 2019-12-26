@@ -55,7 +55,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
 
         PsiElement[] elementsInCopy = IntroduceParameterHandler.getElementsInCopy(project, file, elements);
         MyExtractMethodProcessor processor =
-          new MyExtractMethodProcessor(project, editor, elementsInCopy, null, IntroduceFunctionalVariableAction.REFACTORING_NAME, null,
+          new MyExtractMethodProcessor(project, editor, elementsInCopy, null, IntroduceFunctionalVariableAction.getREFACTORING_NAME(), null,
                                        HelpID.INTRODUCE_VARIABLE);
         processor.setShowErrorDialogs(false);
         try {
@@ -113,8 +113,8 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     if (!elements[0].isValid()) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elements[0])) return;
     MyExtractMethodProcessor physicalProcessor =
-      new MyExtractMethodProcessor(project, editor, elements, 
-                                   null, IntroduceFunctionalVariableAction.REFACTORING_NAME, null, HelpID.INTRODUCE_VARIABLE);
+      new MyExtractMethodProcessor(project, editor, elements,
+                                   null, IntroduceFunctionalVariableAction.getREFACTORING_NAME(), null, HelpID.INTRODUCE_VARIABLE);
     try {
       physicalProcessor.prepare();
     }
@@ -127,7 +127,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     CommandProcessor.getInstance().executeCommand(project, () -> {
       PsiMethodCallExpression expression = WriteAction.compute(() -> createReplacement(project, type, physicalProcessor));
       invokeImpl(project, expression.getMethodExpression().getQualifierExpression(), editor);
-    }, IntroduceFunctionalVariableAction.REFACTORING_NAME, null);
+    }, IntroduceFunctionalVariableAction.getREFACTORING_NAME(), null);
   }
 
   private static PsiMethodCallExpression createReplacement(Project project,
@@ -184,13 +184,13 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
   @Override
   protected void showErrorMessage(Project project, Editor editor, String message) {
     CommonRefactoringUtil
-      .showErrorHint(project, editor, message, IntroduceFunctionalVariableAction.REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE);
+      .showErrorHint(project, editor, message, IntroduceFunctionalVariableAction.getREFACTORING_NAME(), HelpID.INTRODUCE_VARIABLE);
   }
 
   private void showErrorMessage(@NotNull Project project, Editor editor) {
     final String message = RefactoringBundle
       .getCannotRefactorMessage(
-        RefactoringBundle.message("is.not.supported.in.the.current.context", IntroduceFunctionalVariableAction.REFACTORING_NAME));
+        RefactoringBundle.message("is.not.supported.in.the.current.context", IntroduceFunctionalVariableAction.getREFACTORING_NAME()));
     showErrorMessage(project, editor, message);
   }
 
@@ -229,7 +229,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
       setDataFromInputVariables();
       return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, null, getTypeParameterList(),
                                      getThrownExceptions(), isStatic(), isCanBeStatic(), false,
-                                     IntroduceFunctionalVariableAction.REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE, null, myElements, null) {
+                                     IntroduceFunctionalVariableAction.getREFACTORING_NAME(), HelpID.INTRODUCE_VARIABLE, null, myElements, null) {
         @Override
         protected JComponent createNorthPanel() {
           if (!myInputVariables.hasInstanceFields()) {

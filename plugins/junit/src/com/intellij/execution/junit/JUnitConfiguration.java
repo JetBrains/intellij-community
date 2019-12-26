@@ -46,7 +46,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
-  public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
@@ -758,7 +757,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
           if (moduleName.length() > 0) {
             return ExecutionBundle.message("default.junit.config.name.all.in.module", moduleName);
           }
-          return DEFAULT_PACKAGE_NAME;
+          return getDEFAULT_PACKAGE_NAME();
         }
         if (moduleName.length() > 0) {
           return ExecutionBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
@@ -867,4 +866,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
   }
 
+  public static String getDEFAULT_PACKAGE_NAME() {
+    return ExecutionBundle.message("default.package.presentable.name");
+  }
 }

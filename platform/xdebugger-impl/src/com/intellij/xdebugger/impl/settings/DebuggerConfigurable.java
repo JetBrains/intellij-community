@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
-  public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
-
   static final Configurable[] EMPTY_CONFIGURABLES = new Configurable[0];
   private static final DebuggerSettingsCategory[] MERGED_CATEGORIES = {DebuggerSettingsCategory.STEPPING, DebuggerSettingsCategory.HOTSWAP};
 
@@ -30,7 +28,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
   @Override
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return getDISPLAY_NAME();
   }
 
   @Override
@@ -190,5 +188,9 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       case HOTSWAP: return "reference.idesettings.debugger.hotswap";
       default: return null;
     }
+  }
+
+  public static String getDISPLAY_NAME() {
+    return XDebuggerBundle.message("debugger.configurable.display.name");
   }
 }

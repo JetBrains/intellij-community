@@ -26,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ShelfProjectConfigurable implements SearchableConfigurable {
-
-  public static final String DISPLAY_NAME = VcsBundle.message("shelf.tab");
   public static final String HELP_ID = "project.propVCSSupport.Shelf";
 
   @NotNull private final Project myProject;
@@ -68,12 +66,16 @@ public class ShelfProjectConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return getDISPLAY_NAME();
   }
 
   @Nullable
   @Override
   public String getHelpTopic() {
     return HELP_ID;
+  }
+
+  public static String getDISPLAY_NAME() {
+    return VcsBundle.message("shelf.tab");
   }
 }

@@ -36,7 +36,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return ModuleTypeManager.getInstance().findByID(JAVA_MODULE);
   }
 
-  public static final String MODULE_NAME = ProjectBundle.message("module.type.java.name");
   public static final String JAVA_GROUP = "Java";
   public static final String BUILD_TOOLS_GROUP = "Build Tools";
   private static final String JAVA_MODULE = ModuleTypeId.JAVA_MODULE;
@@ -58,7 +57,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @NotNull
   @Override
   public String getName() {
-    return MODULE_NAME;
+    return getMODULE_NAME();
   }
 
   @NotNull
@@ -94,5 +93,9 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     if (ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES).isEmpty()) return true;
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(module.getProject());
     return ReadAction.compute(() -> psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithLibrariesScope())) != null;
+  }
+
+  public static String getMODULE_NAME() {
+    return ProjectBundle.message("module.type.java.name");
   }
 }

@@ -180,7 +180,7 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters("--no-ff");
     }
     String strategy = (String)myStrategy.getSelectedItem();
-    if (!GitMergeUtil.DEFAULT_STRATEGY.equals(strategy)) {
+    if (!GitMergeUtil.getDEFAULT_STRATEGY().equals(strategy)) {
       h.addParameters("--strategy", strategy);
     }
     h.addParameters("-v");

@@ -17,11 +17,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Sergey Malenkov
  */
 public final class ProjectFilesScope extends NamedScope {
-  public static final String NAME = IdeBundle.message("predefined.scope.project.files.name");
   public static final ProjectFilesScope INSTANCE = new ProjectFilesScope();
 
   public ProjectFilesScope() {
-    super(NAME, AllIcons.Nodes.Folder, new FilteredPackageSet(NAME) {
+    super(getNAME(), AllIcons.Nodes.Folder, new FilteredPackageSet(getNAME()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         ProjectFileIndex fileIndex = getFileIndex(project);
@@ -35,5 +34,9 @@ public final class ProjectFilesScope extends NamedScope {
   @Nullable
   static ProjectFileIndex getFileIndex(@NotNull Project project) {
     return !project.isInitialized() ? null : ProjectRootManager.getInstance(project).getFileIndex();
+  }
+
+  public static String getNAME() {
+    return IdeBundle.message("predefined.scope.project.files.name");
   }
 }

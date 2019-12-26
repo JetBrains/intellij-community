@@ -14,7 +14,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveDialogBase;
@@ -79,7 +78,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     myTargetContainer = targetContainer;
     myOuterClass = myInnerClass.getContainingClass();
     myProcessor = processor;
-    setTitle(MoveInnerImpl.REFACTORING_NAME);
+    setTitle(MoveInnerImpl.getREFACTORING_NAME());
     init();
     myPackageNameLabel.setLabelFor(myPackageNameField.getChildComponent());
     myClassNameLabel.setLabelFor(myClassNameField);
@@ -304,7 +303,7 @@ public class MoveInnerDialog extends MoveDialogBase {
 
     if (message != null) {
       CommonRefactoringUtil.showErrorMessage(
-        MoveInnerImpl.REFACTORING_NAME,
+        MoveInnerImpl.getREFACTORING_NAME(),
         message,
         HelpID.MOVE_INNER_UPPER,
         myProject);

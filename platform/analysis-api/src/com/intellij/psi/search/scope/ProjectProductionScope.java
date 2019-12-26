@@ -17,11 +17,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Sergey Malenkov
  */
 public final class ProjectProductionScope extends NamedScope {
-  public static final String NAME = IdeBundle.message("predefined.scope.production.name");
   public static final ProjectProductionScope INSTANCE = new ProjectProductionScope();
 
   private ProjectProductionScope() {
-    super(NAME, IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Production), new FilteredPackageSet(NAME) {
+    super(getNAME(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Production), new FilteredPackageSet(getNAME()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         ProjectFileIndex index = ProjectFilesScope.getFileIndex(project);
@@ -31,5 +30,9 @@ public final class ProjectProductionScope extends NamedScope {
                && !TestSourcesFilter.isTestSources(file, project);
       }
     });
+  }
+
+  public static String getNAME() {
+    return IdeBundle.message("predefined.scope.production.name");
   }
 }

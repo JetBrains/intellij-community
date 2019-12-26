@@ -32,14 +32,11 @@ import java.lang.reflect.Field;
  * @author Rustam Vishnyakov
  */
 public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-
-  public static final String CONFIGURABLE_DISPLAY_NAME = ApplicationBundle.message("title.xml");
-
   @Override
   @NotNull
   public CodeStyleConfigurable createConfigurable(@NotNull final CodeStyleSettings baseSettings,
                                                   @NotNull final CodeStyleSettings modelSettings) {
-    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, CONFIGURABLE_DISPLAY_NAME){
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, getCONFIGURABLE_DISPLAY_NAME()){
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
@@ -122,5 +119,9 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
         });
     }
     return super.getAccessor(codeStyleObject, field);
+  }
+
+  public static String getCONFIGURABLE_DISPLAY_NAME() {
+    return ApplicationBundle.message("title.xml");
   }
 }

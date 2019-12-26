@@ -34,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
-
-  public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
   private static final MyOccurrenceFilter MY_OCCURRENCE_FILTER = new MyOccurrenceFilter();
   private InplaceIntroduceFieldPopup myInplaceIntroduceFieldPopup;
 
@@ -45,14 +43,14 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   @Override
   protected String getRefactoringName() {
-    return REFACTORING_NAME;
+    return getREFACTORING_NAME();
   }
 
   @Override
   protected boolean validClass(PsiClass parentClass, Editor editor) {
     if (parentClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.field.in.interface"));
-      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, REFACTORING_NAME, getHelpID());
+      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getREFACTORING_NAME(), getHelpID());
       return false;
     }
     else {
@@ -70,7 +68,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_FIELD, project, getElementProcessor(project, editor));
+    ElementToWorkOn.processElementToWorkOn(editor, file, getREFACTORING_NAME(), HelpID.INTRODUCE_FIELD, project, getElementProcessor(project, editor));
   }
 
   @Override
@@ -189,7 +187,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), getHelpID());
       return false;
     }
     LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, false){
@@ -219,5 +217,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     public boolean isOK(@NotNull PsiExpression occurrence) {
       return !isInSuperOrThis(occurrence);
     }
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("introduce.field.title");
   }
 }

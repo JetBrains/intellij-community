@@ -117,7 +117,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
   public static final Key<Runnable> STRUCTURAL_SEARCH_ERROR_CALLBACK = Key.create("STRUCTURAL_SEARCH_ERROR_CALLBACK");
   private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
-  public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
   Editor myEditor;
@@ -356,10 +355,10 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
   private Configuration createConfiguration(Configuration template) {
     if (myReplace) {
-      return (template == null) ? new ReplaceConfiguration(USER_DEFINED, USER_DEFINED) : new ReplaceConfiguration(template);
+      return (template == null) ? new ReplaceConfiguration(getUSER_DEFINED(), getUSER_DEFINED()) : new ReplaceConfiguration(template);
     }
     else {
-      return (template == null) ? new SearchConfiguration(USER_DEFINED, USER_DEFINED) : new SearchConfiguration(template);
+      return (template == null) ? new SearchConfiguration(getUSER_DEFINED(), getUSER_DEFINED()) : new SearchConfiguration(template);
     }
   }
 
@@ -1325,5 +1324,9 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
         reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
       }
     }
+  }
+
+  public static String getUSER_DEFINED() {
+    return SSRBundle.message("new.template.defaultname");
   }
 }

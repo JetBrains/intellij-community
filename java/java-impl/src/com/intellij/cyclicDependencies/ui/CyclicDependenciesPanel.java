@@ -52,7 +52,6 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   private final CyclicDependenciesBuilder myBuilder;
   private Content myContent;
   private final DependenciesPanel.DependencyPanelSettings mySettings = new DependenciesPanel.DependencyPanelSettings();
-  public static final String DEFAULT_PACKAGE_ABBREVIATION = AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
 
   public CyclicDependenciesPanel(@NotNull Project project, @NotNull CyclicDependenciesBuilder builder) {
     super(new BorderLayout());
@@ -160,7 +159,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private static PackageDependenciesNode hideEmptyMiddlePackages(PackageDependenciesNode node, StringBuffer result){
     if (node.getChildCount() == 0 || node.getChildCount() > 1 || node.getChildCount() == 1 && node.getChildAt(0) instanceof FileNode){
-      result.append(result.length() != 0 ? "." : "").append(node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString());//toString()
+      result.append(result.length() != 0 ? "." : "").append(node.toString().equals(getDEFAULT_PACKAGE_ABBREVIATION()) ? "" : node.toString());//toString()
     } else {
       if (node.getChildCount() == 1){
         PackageDependenciesNode child = (PackageDependenciesNode)node.getChildAt(0);
@@ -172,7 +171,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
           if (child instanceof PackageNode){
             node.removeAllChildren();
             result.append(result.length() != 0 ? "." : "")
-              .append(node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString());
+              .append(node.toString().equals(getDEFAULT_PACKAGE_ABBREVIATION()) ? "" : node.toString());
             node = hideEmptyMiddlePackages(child, result);
             ((PackageNode)node).setPackageName(result.toString());//toString()
           }
@@ -502,5 +501,9 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
       }
       return (PackageDependenciesNode)((DefaultMutableTreeNode)lastPathComponent).getUserObject();
     }
+  }
+
+  public static String getDEFAULT_PACKAGE_ABBREVIATION() {
+    return AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
   }
 }

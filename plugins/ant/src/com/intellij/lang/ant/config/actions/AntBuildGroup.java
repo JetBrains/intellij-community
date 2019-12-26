@@ -47,7 +47,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     if (model.getDefaultTargetName() != null) {
       DefaultActionGroup subgroup = new DefaultActionGroup();
       subgroup.add(getOrCreateAction(
-        buildFile, TargetAction.DEFAULT_TARGET_NAME, Collections.singletonList(TargetAction.DEFAULT_TARGET_NAME), null, model.getDefaultTargetActionId())
+        buildFile, TargetAction.getDEFAULT_TARGET_NAME(), Collections.singletonList(TargetAction.getDEFAULT_TARGET_NAME()), null, model.getDefaultTargetActionId())
       );
       group.add(subgroup);
     }

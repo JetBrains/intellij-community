@@ -58,7 +58,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
                         List<PsiClass> superClasses,
                         GrMemberInfoStorage storage,
                         GrPullUpHandler handler) {
-    super(project, typeDefinition, superClasses, storage, GrPullUpHandler.REFACTORING_NAME);
+    super(project, typeDefinition, superClasses, storage, GrPullUpHandler.getREFACTORING_NAME());
 
     myCallback = handler;
 

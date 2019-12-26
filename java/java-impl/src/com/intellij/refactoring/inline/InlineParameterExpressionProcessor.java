@@ -85,7 +85,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   @NotNull
   @Override
   protected String getCommandName() {
-    return InlineParameterHandler.REFACTORING_NAME;
+    return InlineParameterHandler.getREFACTORING_NAME();
   }
 
 

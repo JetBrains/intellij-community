@@ -40,7 +40,6 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   public boolean REPORT_CLASSES;
   public boolean REPORT_METHODS;
   public boolean REPORT_FIELDS = true;
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.can.be.final.display.name");
   @NonNls public static final String SHORT_NAME = "CanBeFinal";
 
   private class OptionsPanel extends JPanel {

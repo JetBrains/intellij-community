@@ -45,7 +45,7 @@ public class InlineParameterDialog extends RefactoringDialog {
     myInitializer = initializer;
     init();
     myCreateLocalCheckbox.setSelected(createLocal);
-    setTitle(InlineParameterHandler.REFACTORING_NAME);
+    setTitle(InlineParameterHandler.getREFACTORING_NAME());
   }
 
   @Override

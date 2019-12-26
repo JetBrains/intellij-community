@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Dennis.Ushakov
  */
 public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("extract.superclass.title");
-
-
   @Override
   protected void doRefactorImpl(@NotNull final Project project,
                                 @NotNull final PyClass classUnderRefactoring,
@@ -70,11 +67,15 @@ public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
 
   @Override
   protected String getTitle() {
-    return REFACTORING_NAME;
+    return getREFACTORING_NAME();
   }
 
   @Override
   protected String getHelpId() {
     return "refactoring.extractSuperclass";
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("extract.superclass.title");
   }
 }

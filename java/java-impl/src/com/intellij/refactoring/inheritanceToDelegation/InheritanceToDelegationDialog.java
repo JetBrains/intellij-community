@@ -57,7 +57,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     mySuperClasses = superClasses;
     myBasesToMemberInfos = basesToMemberInfos;
 
-    setTitle(InheritanceToDelegationHandler.REFACTORING_NAME);
+    setTitle(InheritanceToDelegationHandler.getREFACTORING_NAME());
     init();
   }
 
