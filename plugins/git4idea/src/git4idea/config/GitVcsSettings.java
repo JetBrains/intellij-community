@@ -31,17 +31,19 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
    * The way the local changes are saved before update
    */
   public enum SaveChangesPolicy {
-    STASH("stash", "stash", "stashed"),
-    SHELVE("shelf", "shelve", "shelved");
+    STASH("stash", "stash", "stashed", "unstash"),
+    SHELVE("shelf", "shelve", "shelved", "unshelve");
 
     @NotNull private final String myName;
     @NotNull private final String myVerb;
-    private final String myVerbInPast;
+    @NotNull private final String myVerbInPast;
+    @NotNull private final String myOppositeVerb;
 
-    SaveChangesPolicy(@NotNull String name, @NotNull String verb, String verbInPast) {
+    SaveChangesPolicy(@NotNull String name, @NotNull String verb, @NotNull String verbInPast, @NotNull String oppositeVerb) {
       myName = name;
       myVerb = verb;
       myVerbInPast = verbInPast;
+      myOppositeVerb = oppositeVerb;
     }
 
     @NotNull
@@ -57,6 +59,11 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     @NotNull
     public String getVerbInPast() {
       return myVerbInPast;
+    }
+
+    @NotNull
+    public String getOppositeVerb() {
+      return myOppositeVerb;
     }
   }
 

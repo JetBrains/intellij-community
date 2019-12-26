@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import git4idea.DialogManager;
+import git4idea.config.GitVcsSettings;
 import git4idea.ui.ChangesBrowserWithRollback;
 import git4idea.util.GitSimplePathsBrowser;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +66,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   @NotNull private final JComponent myFileBrowser;
   @NotNull private final String myOperationTitle;
+  @NotNull private final GitVcsSettings.SaveChangesPolicy mySaveMethod;
   @Nullable private final String myForceButton;
 
   /**
@@ -91,11 +93,14 @@ public class GitSmartOperationDialog extends DialogWrapper {
     myFileBrowser = fileBrowser;
     myOperationTitle = operationTitle;
     myForceButton = forceButton;
+    mySaveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
     String capitalizedOperation = capitalize(myOperationTitle);
     setTitle("Git " + capitalizedOperation + " Problem");
 
     setOKButtonText("Smart " + capitalizedOperation);
-    getOKAction().putValue(Action.SHORT_DESCRIPTION, "Stash local changes, " + operationTitle + ", unstash");
+    String description = String.format("%s local changes, %s, %s",
+                                       capitalize(mySaveMethod.getVerb()), operationTitle, mySaveMethod.getOppositeVerb());
+    getOKAction().putValue(Action.SHORT_DESCRIPTION, description);
     setCancelButtonText("Don't " + capitalizedOperation);
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
@@ -112,9 +117,11 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   @Override
   protected JComponent createNorthPanel() {
-    JBLabel description = new JBLabel("<html>Your local changes to the following files would be overwritten by " + myOperationTitle +
-                                      ".<br/>" + ApplicationNamesInfo.getInstance().getFullProductName() + " can stash the changes, "
-                                      + myOperationTitle + " and unstash them after that.</html>");
+    String labelText = String.format("<html>Your local changes to the following files would be overwritten by %s.<br/>" +
+                                     "%s can %s the changes, %s and %s them after that.</html>",
+                                     myOperationTitle, ApplicationNamesInfo.getInstance().getFullProductName(), mySaveMethod.getVerb(),
+                                     myOperationTitle, mySaveMethod.getOppositeVerb());
+    JBLabel description = new JBLabel(labelText);
     description.setBorder(JBUI.Borders.emptyBottom(10));
     return description;
   }
