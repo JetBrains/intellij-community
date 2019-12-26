@@ -360,9 +360,6 @@ public class DfaExpressionFactory {
     @NotNull
     @Override
     public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
-      if (myVariable.getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
-        return factory.getNull();
-      }
       if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
         PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
         return factory.getObjectType(type, DfaPsiUtil.getElementNullability(type, myVariable));

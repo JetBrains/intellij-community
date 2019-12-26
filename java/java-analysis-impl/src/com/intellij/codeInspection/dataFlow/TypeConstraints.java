@@ -303,7 +303,8 @@ public class TypeConstraints {
 
     @Override
     public boolean canBeInstantiated() {
-      return !myClass.hasModifierProperty(PsiModifier.ABSTRACT);
+      return !myClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+             !CommonClassNames.JAVA_LANG_VOID.equals(myClass.getQualifiedName());
     }
 
     @Override

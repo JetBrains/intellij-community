@@ -233,7 +233,7 @@ public interface TypeConstraint {
      */
     @NotNull
     default TypeConstraint instanceOf() {
-      if (isFinal()) return this;
+      if (isFinal()) return canBeInstantiated() ? this : TypeConstraints.BOTTOM;
       return new Constrained(Collections.singleton(this), Collections.emptySet());
     }
 
