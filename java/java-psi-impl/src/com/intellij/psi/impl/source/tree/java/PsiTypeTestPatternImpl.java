@@ -20,7 +20,7 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
       if (child instanceof PsiTypeElement) return (PsiTypeElement)child;
       if (child instanceof PsiPatternVariable) return ((PsiPatternVariable)child).getTypeElement();
     }
-    throw new IllegalStateException(this.toString());
+    throw new IllegalStateException(this.getText());
   }
 
   @Nullable
