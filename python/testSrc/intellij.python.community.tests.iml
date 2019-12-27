@@ -33,5 +33,8 @@
     <orderEntry type="module" module-name="intellij.python.commonTests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.pycharm.community" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.reStructuredText" scope="RUNTIME" />
   </component>
 </module>
