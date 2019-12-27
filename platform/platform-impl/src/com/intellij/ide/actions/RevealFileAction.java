@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -38,8 +39,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
-
-import static com.intellij.openapi.util.text.StringUtil.defaultIfEmpty;
 
 /**
  * This helpful action opens a file or directory in a system file manager.
@@ -246,37 +245,37 @@ public class RevealFileAction extends DumbAwareAction {
       SystemInfo.isMac ? "Finder" :
       SystemInfo.isWindows ? "Explorer" :
       readDesktopEntryKey("Name").orElse("File Manager");
-  }
-  private static Optional<String> readDesktopEntryKey(String key) {
-    if (SystemInfo.hasXdgMime()) {
-      String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-      if (appName != null && appName.endsWith(".desktop")) {
-        return Stream.of(getXdgDataDirectories().split(":"))
-          .map(dir -> new File(dir, "applications/" + appName))
-          .filter(File::exists)
-          .findFirst()
-          .map(file -> readDesktopEntryKey(file, key));
+
+    private static Optional<String> readDesktopEntryKey(String key) {
+      if (SystemInfo.hasXdgMime()) {
+        String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
+        if (appName != null && appName.endsWith(".desktop")) {
+          return Stream.of(getXdgDataDirectories().split(":"))
+            .map(dir -> new File(dir, "applications/" + appName))
+            .filter(File::exists)
+            .findFirst()
+            .map(file -> readDesktopEntryKey(file, key));
+        }
       }
+
+      return Optional.empty();
     }
 
-    return Optional.empty();
-  }
-
-  private static String getXdgDataDirectories() {
-    String dataHome = System.getenv("XDG_DATA_HOME");
-    String dataDirs = System.getenv("XDG_DATA_DIRS");
-    return defaultIfEmpty(dataHome, SystemProperties.getUserHome() + "/.local/share") + ':' + defaultIfEmpty(dataDirs, "/usr/local/share:/usr/share");
-  }
-
-  private static String readDesktopEntryKey(File file, String key) {
-    LOG.debug("looking for '" + key + "' in " + file);
-    String prefix = key + '=';
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-      return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
+    private static String getXdgDataDirectories() {
+      return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
+             StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
     }
-    catch (IOException | UncheckedIOException e) {
-      LOG.info("Cannot read: " + file, e);
-      return null;
+
+    private static String readDesktopEntryKey(File file, String key) {
+      LOG.debug("looking for '" + key + "' in " + file);
+      String prefix = key + '=';
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+        return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
+      }
+      catch (IOException | UncheckedIOException e) {
+        LOG.info("Cannot read: " + file, e);
+        return null;
+      }
     }
   }
 }

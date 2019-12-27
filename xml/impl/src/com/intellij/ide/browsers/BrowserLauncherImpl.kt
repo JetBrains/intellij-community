@@ -89,8 +89,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
             showError(ExecUtil.readFirstLine(process.errorStream, null), browser, project, null, launchTask)
           }
         }
-        catch (ignored: InterruptedException) {
-        }
+        catch (ignored: InterruptedException) { }
       }
       // 10 seconds is enough to start
       JobScheduler.getScheduler().schedule({ future.cancel(true) }, 10, TimeUnit.SECONDS)
