@@ -1340,6 +1340,11 @@ public class PluginManagerConfigurable
     });
   }
 
+  public static void showPluginConfigurable(@Nullable Project project, @NotNull IdeaPluginDescriptor... descriptors) {
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
+  }
+
   private enum SortBySearchOption {
     Downloads, Name, Rating, Relevance, Updated
   }

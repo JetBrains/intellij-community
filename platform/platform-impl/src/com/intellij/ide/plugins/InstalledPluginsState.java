@@ -41,6 +41,13 @@ public final class InstalledPluginsState {
     }
   }
 
+  @NotNull
+  public Collection<PluginId> getUpdatedPlugins() {
+    synchronized (myLock) {
+      return Collections.unmodifiableCollection(myUpdatedPlugins);
+    }
+  }
+
   public boolean hasNewerVersion(@NotNull PluginId id) {
     synchronized (myLock) {
       return !wasUpdated(id) && myOutdatedPlugins.contains(id.getIdString());

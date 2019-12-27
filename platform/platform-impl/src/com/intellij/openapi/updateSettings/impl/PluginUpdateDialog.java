@@ -300,11 +300,10 @@ public class PluginUpdateDialog extends DialogWrapper {
   }
 
   private static Set<String> myIgnoredPluginsWithVersions;
-  private static final String DISABLED_UPDATE = "plugin_disabled_updates.txt";
 
   @NotNull
   private static File getDisabledUpdateFile() {
-    return new File(PathManager.getConfigPath(), DISABLED_UPDATE);
+    return new File(PathManager.getConfigPath(), "plugin_disabled_updates.txt");
   }
 
   @NotNull
@@ -327,7 +326,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     return myIgnoredPluginsWithVersions;
   }
 
-  private static void ignorePlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
+  static void ignorePlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
     Set<String> ignoredPlugins = getIgnoredPlugins();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
