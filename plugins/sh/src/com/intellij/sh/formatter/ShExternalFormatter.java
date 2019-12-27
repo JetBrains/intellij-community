@@ -80,20 +80,20 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       Notification notification =
-        new Notification(ShBundle.message("shell.script.title"), "", ShBundle.message("would.you.like.to.install.a.shell.script.formatter"),
+        new Notification(ShBundle.message("sh.title.case"), "", ShBundle.message("sh.fmt.install.question"),
                          NotificationType.INFORMATION);
       notification.addAction(
-        NotificationAction.createSimple(ShBundle.message("install.formatter"), () -> {
+        NotificationAction.createSimple(ShBundle.message("sh.fmt.install"), () -> {
           notification.expire();
           ShShfmtFormatterUtil.download(project, settings, () -> Notifications.Bus
-            .notify(new Notification(ShBundle.message("shell.script.title"), "",
-                                     ShBundle.message("shell.script.formatter.was.successfully.installed"),
+            .notify(new Notification(ShBundle.message("sh.title.case"), "",
+                                     ShBundle.message("sh.fmt.success.install"),
                                      NotificationType.INFORMATION)), () -> Notifications.Bus
             .notify(
-              new Notification(ShBundle.message("shell.script.title"), "", ShBundle.message("can.t.download.sh.shfmt"),
+              new Notification(ShBundle.message("sh.title.case"), "", ShBundle.message("sh.fmt.cannot.download"),
                                NotificationType.ERROR)));
         }));
-      notification.addAction(NotificationAction.createSimple(ShBundle.message("no.thanks"), () -> {
+      notification.addAction(NotificationAction.createSimple(ShBundle.message("sh.fmt.no.thanks"), () -> {
         notification.expire();
         ShSettings.setShfmtPath(ShSettings.I_DO_MIND);
       }));
@@ -161,7 +161,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
                   FileDocumentManager.getInstance().saveDocument(document);
                 });
                 file.putUserData(UndoConstants.FORCE_RECORD_UNDO, null);
-              }, ShBundle.message("reformat.code.with", getId()), null, document);
+              }, ShBundle.message("sh.fmt.reformat.code.with", getId()), null, document);
             });
           }
           else {

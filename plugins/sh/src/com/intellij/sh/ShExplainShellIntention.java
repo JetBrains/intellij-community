@@ -42,7 +42,7 @@ public class ShExplainShellIntention extends BaseIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return ShBundle.message("explain.shell");
+    return ShBundle.message("sh.explain.inspection.text");
   }
 
   @Override
@@ -91,7 +91,8 @@ public class ShExplainShellIntention extends BaseIntentionAction {
       List<ShCompositeElement> commands = ContainerUtil.filter(parents, e -> (e instanceof ShCommand || e instanceof ShCommandsList) && strings.add(e.getText()));
 
       if (commands.isEmpty()) {
-        CommonRefactoringUtil.showErrorHint(project, editor, ShBundle.message("nothing.to.explain"), ShBundle.message("nothing.to.explain"), "");
+        CommonRefactoringUtil.showErrorHint(project, editor, ShBundle.message("sh.explain.nothing.to.explain"), ShBundle.message(
+          "sh.explain.nothing.to.explain"), "");
       }
       else {
         IntroduceTargetChooser.showChooser(editor, commands, new Pass<PsiElement>() {
@@ -99,7 +100,7 @@ public class ShExplainShellIntention extends BaseIntentionAction {
           public void pass(@NotNull PsiElement psiElement) {
             explain(psiElement.getText());
           }
-        }, PsiElement::getText, ShBundle.message("command.to.explain"));
+        }, PsiElement::getText, ShBundle.message("sh.explain.command.to.explain"));
       }
       ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
     }

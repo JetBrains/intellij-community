@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShContextType extends TemplateContextType {
   public ShContextType() {
-    super("SHELL_SCRIPT", ShBundle.message("shell.script.title"));
+    super("SHELL_SCRIPT", ShBundle.message("sh.title.case"));
   }
 
   @Override

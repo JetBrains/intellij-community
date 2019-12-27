@@ -30,7 +30,7 @@ public class ShQuickFixIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return ShBundle.message("shell.script");
+    return ShBundle.message("sh.shell.script");
   }
 
   @Override

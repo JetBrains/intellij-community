@@ -84,7 +84,7 @@ class ShShellcheckUtil {
     DownloadableFileDescription description = service.createFileDescription(url, downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
 
-    Task.Backgroundable task = new Task.Backgroundable(project, ShBundle.message("download.shellcheck")) {
+    Task.Backgroundable task = new Task.Backgroundable(project, ShBundle.message("sh.shellcheck.download.label.text")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

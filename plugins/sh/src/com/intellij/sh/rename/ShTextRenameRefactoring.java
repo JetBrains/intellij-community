@@ -80,7 +80,7 @@ class ShTextRenameRefactoring {
       }
     }
     createCaretRangeMarker();
-    WriteCommandAction.writeCommandAction(myProject).withName(ShBundle.message("rename.occurence", myOccurrenceText)).run(() -> startTemplate(builder));
+    WriteCommandAction.writeCommandAction(myProject).withName(ShBundle.message("sh.rename.occurence", myOccurrenceText)).run(() -> startTemplate(builder));
     ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   }
 

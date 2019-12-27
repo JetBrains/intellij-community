@@ -25,7 +25,7 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
   @NotNull
   @Override
   public String getText() {
-    return ShBundle.message("rename.all.occurrences");
+    return ShBundle.message("sh.rename.all.occurrences");
   }
 
   @Override

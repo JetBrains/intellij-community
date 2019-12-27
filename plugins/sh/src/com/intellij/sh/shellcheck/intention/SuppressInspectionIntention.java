@@ -28,13 +28,13 @@ public class SuppressInspectionIntention implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return ShBundle.message("suppress.0", myMessage);
+    return ShBundle.message("sh.suppress.inspection", myMessage);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return ShBundle.message("shell.script");
+    return ShBundle.message("sh.shell.script");
   }
 
   @Override

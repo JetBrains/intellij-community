@@ -48,7 +48,7 @@ public class ShParserUtil extends GeneratedParserUtilBase {
   }
 
   static boolean differentBracketsWarning(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
-    b.error(ShBundle.message("expected.similar.close.bracket"));
+    b.error(ShBundle.message("sh.parser.expected.similar.close.bracket"));
     return true;
   }
 

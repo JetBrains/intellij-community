@@ -41,7 +41,7 @@ public class ShellcheckOptionsPanel {
     myDisabledInspections = disabledInspections;
     myProject = ProjectUtil.guessCurrentProject(getPanel());
 
-    myShellcheckSelector.addBrowseFolderListener(ShBundle.message("choose.path.to.the.shellcheck"), "", myProject,
+    myShellcheckSelector.addBrowseFolderListener(ShBundle.message("sh.shellcheck.path.label"), "", myProject,
                                                  FileChooserDescriptorFactory.createSingleFileDescriptor());
     myShellcheckSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -63,7 +63,7 @@ public class ShellcheckOptionsPanel {
   }
 
   private void createUIComponents() {
-    myShellcheckDownloadLink = new ActionLink(ShBundle.message("download.shellcheck"), new AnAction() {
+    myShellcheckDownloadLink = new ActionLink(ShBundle.message("sh.shellcheck.download.label.text"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         ShShellcheckUtil.download(event.getProject(),

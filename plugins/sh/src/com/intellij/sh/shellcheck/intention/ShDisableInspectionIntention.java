@@ -32,13 +32,13 @@ public class ShDisableInspectionIntention implements IntentionAction, LowPriorit
   @NotNull
   @Override
   public String getText() {
-    return ShBundle.message("disable.inspection.0", myMessage);
+    return ShBundle.message("sh.disable.inspection.text", myMessage);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return ShBundle.message("shell.script");
+    return ShBundle.message("sh.shell.script");
   }
 
   @Override

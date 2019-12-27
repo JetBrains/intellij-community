@@ -60,7 +60,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myRightPanel);
 
     Project project = ProjectUtil.guessCurrentProject(getPanel());
-    myShfmtPathSelector.addBrowseFolderListener(ShBundle.message("choose.path.to.the.shfmt.formatter"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myShfmtPathSelector.addBrowseFolderListener(ShBundle.message("sh.code.style.choose.path"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
     myShfmtPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
@@ -71,11 +71,11 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myWarningLabel.setIcon(AllIcons.General.Warning);
     myErrorLabel.setForeground(JBColor.RED);
 
-    myBinaryOpsStartLine.setText(ShBundle.message("binary.ops.like.and.may.start.a.line"));
-    mySwitchCasesIndented.setText(ShBundle.message("switch.cases.will.be.indented"));
-    myRedirectFollowedBySpace.setText(ShBundle.message("redirect.operators.will.be.followed.by.a.space"));
-    myKeepColumnAlignmentPadding.setText(ShBundle.message("keep.column.alignment.padding"));
-    myMinifyProgram.setText(ShBundle.message("minify.program.to.reduce.its.size"));
+    myBinaryOpsStartLine.setText(ShBundle.message("sh.code.style.binary.ops.like.and.may.start.a.line"));
+    mySwitchCasesIndented.setText(ShBundle.message("sh.code.style.switch.cases.will.be.indented"));
+    myRedirectFollowedBySpace.setText(ShBundle.message("sh.code.style.redirect.operators.will.be.followed.by.a.space"));
+    myKeepColumnAlignmentPadding.setText(ShBundle.message("sh.code.style.keep.column.alignment.padding"));
+    myMinifyProgram.setText(ShBundle.message("sh.code.style.minify.program.to.reduce.its.size"));
 
     addPanelToWatch(myPanel);
   }
@@ -83,7 +83,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
   private void createUIComponents() {
     myIndentField = new IntegerField(null, CodeStyleConstraints.MIN_INDENT_SIZE, CodeStyleConstraints.MAX_INDENT_SIZE);
     myTabField = new IntegerField(null, CodeStyleConstraints.MIN_TAB_SIZE, CodeStyleConstraints.MAX_TAB_SIZE);
-    myShfmtDownloadLink = new ActionLink(ShBundle.message("download.shfmt.formatter"), new AnAction() {
+    myShfmtDownloadLink = new ActionLink(ShBundle.message("sh.code.style.download.link"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         CodeStyleSettings settings = getSettings();
