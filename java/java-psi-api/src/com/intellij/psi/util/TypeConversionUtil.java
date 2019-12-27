@@ -853,6 +853,12 @@ public class TypeConversionUtil {
              && rText.endsWith(lText)
              && rText.charAt(rText.length() - lText.length() - 1) == '.';
     }
+
+    final PsiClass leftClass = PsiUtil.resolveClassInType(left);
+    if (leftClass instanceof PsiTypeParameter) {
+      return true;
+    }
+
     return isClassAssignable(leftResult, rightResult, allowUncheckedConversion, left.getResolveScope(), capture);
   }
 
