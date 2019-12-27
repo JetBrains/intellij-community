@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -57,7 +58,7 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
     val factory = JavaPsiFacade.getElementFactory(method.project)
     val containingType = factory.createType(containingClass, result.substitutor)
 
-    val fixes = generateFixes(results)
+    val fixes = (buildCastFixes(results) + buildFixes()).toArray(LocalQuickFix.EMPTY_ARRAY)
     val message = getInapplicableMethodMessage(result, containingType, arguments)
     sink.registerProblem(highlightElement, ProblemHighlightType.GENERIC_ERROR, message, *fixes)
   }
@@ -116,11 +117,11 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
     return false
   }
 
-  protected open fun generateFixes(results: Collection<GroovyMethodResult>): Array<LocalQuickFix> {
-    return results.flatMap(::generateFixes).toTypedArray()
+  private fun buildCastFixes(results: Collection<GroovyMethodResult>): List<LocalQuickFix> {
+    return results.flatMap(::buildCastFixes)
   }
 
-  private fun generateFixes(result: GroovyMethodResult): List<LocalQuickFix> {
+  private fun buildCastFixes(result: GroovyMethodResult): List<LocalQuickFix> {
     val candidate = result.candidate ?: return emptyList()
     val mapping = candidate.argumentMapping ?: return emptyList()
     val applicabilities = candidate.argumentMapping?.highlightingApplicabilities(result.substitutor) ?: return emptyList()
@@ -146,4 +147,6 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
     }
     return ParameterCastFix(argument.expression, position, expectedType)
   }
+
+  protected open fun buildFixes(): List<LocalQuickFix> = emptyList()
 }
