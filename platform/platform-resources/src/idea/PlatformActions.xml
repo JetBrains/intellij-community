@@ -1344,7 +1344,7 @@
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"  text="Activate Next Window"/>
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow" text="Activate Previous Window"/>
 
-    <action id="CopyReferencePopup" class="com.intellij.ide.actions.CopyReferencePopup" text="Copy Path...">
+    <action id="CopyReferencePopup" class="com.intellij.ide.actions.CopyReferencePopup">
       <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
     </action>
