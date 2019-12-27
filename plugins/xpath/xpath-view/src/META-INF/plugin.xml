@@ -69,15 +69,15 @@
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
 <!--    <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />-->
 
-    <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check Node Test" groupName="XPath" enabledByDefault="true" level="WARNING"
+    <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check node test" groupName="XPath" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.xpath.validation.inspections.CheckNodeTest"/>
-    <localInspection language="XPath" shortName="ImplicitTypeConversion" displayName="Implicit Type Conversion" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="ImplicitTypeConversion" displayName="Implicit type conversion" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion"/>
-    <localInspection language="XPath" shortName="RedundantTypeConversion" displayName="Redundant Type Conversion" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="RedundantTypeConversion" displayName="Redundant type conversion" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion"/>
     <localInspection language="XPath" shortName="IndexZeroUsage" displayName="Use of index 0 in XPath predicates" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.IndexZeroPredicate"/>
-    <localInspection language="XPath" shortName="HardwiredNamespacePrefix" displayName="Hardwired Namespace Prefix" groupName="XPath" enabledByDefault="true"
+    <localInspection language="XPath" shortName="HardwiredNamespacePrefix" displayName="Hardwired namespace prefix" groupName="XPath" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.validation.inspections.HardwiredNamespacePrefix"/>
 
     <quoteHandler fileType="XPath" className="org.intellij.lang.xpath.XPathQuoteHandler" />
@@ -103,13 +103,13 @@
 
     <extendWordSelectionHandler implementation="org.intellij.lang.xpath.XPathStringLiteralSelectioner"/>
 
-    <localInspection shortName="XsltUnusedDeclaration" displayName="Unused Variable/Parameter" groupName="XSLT" enabledByDefault="true"
+    <localInspection shortName="XsltUnusedDeclaration" displayName="Unused variable/parameter" groupName="XSLT" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection"/>
-    <localInspection shortName="XsltTemplateInvocation" displayName="Template Invocation Problems" groupName="XSLT" enabledByDefault="true"
+    <localInspection shortName="XsltTemplateInvocation" displayName="Template invocation problems" groupName="XSLT" enabledByDefault="true"
                      level="ERROR" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection"/>
-    <localInspection shortName="XsltDeclarations" displayName="Declaration Problems" groupName="XSLT" enabledByDefault="true" level="ERROR"
+    <localInspection shortName="XsltDeclarations" displayName="Declaration problems" groupName="XSLT" enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection"/>
-    <localInspection shortName="XsltVariableShadowing" displayName="Variable Shadowing" groupName="XSLT" enabledByDefault="true"
+    <localInspection shortName="XsltVariableShadowing" displayName="Variable shadowing" groupName="XSLT" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection"/>
 
     <intentionAction>
