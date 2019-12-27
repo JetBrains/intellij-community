@@ -26,6 +26,7 @@ import org.jetbrains.uast.util.UastExpressionUtils;
 
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * @author max
@@ -107,31 +108,20 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   static boolean isPassedToAnnotatedParam(@NotNull UExpression expression,
-                                          final String annFqn,
                                           @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UExpression parent = getTopLevelExpression(expression);
-    UCallExpression callExpression;
-    if (parent instanceof UCallExpression) {
-      callExpression = (UCallExpression)parent;
-    }
-    else if (parent instanceof UQualifiedReferenceExpression) {
-      UExpression selector = ((UQualifiedReferenceExpression)parent).getSelector();
-      if (selector instanceof UCallExpression) {
-        callExpression = (UCallExpression)selector;
-      }
-      else {
-        return false;
-      }
-    }
-    else {
-      return false;
-    }
+    UCallExpression callExpression = UastUtils.getUCallExpression(parent);
+    if (callExpression == null) return false;
 
-    int idx = callExpression.getValueArguments().indexOf(expression);
-    if (idx == -1) return false;
+    List<UExpression> arguments = callExpression.getValueArguments();
+    OptionalInt idx = IntStream.range(0, arguments.size())
+      .filter(i -> expression.equals(UastUtils.skipParenthesizedExprDown(arguments.get(i))))
+      .findFirst();
+
+    if (!idx.isPresent()) return false;
 
     PsiMethod method = callExpression.resolve();
-    return method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, null, nonNlsTargets);
+    return method != null && isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, AnnotationUtil.NON_NLS, null, nonNlsTargets);
     
   }
 

@@ -580,7 +580,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return false;
     }
 
-    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, nonNlsTargets)) {
       return false;
     }
 
