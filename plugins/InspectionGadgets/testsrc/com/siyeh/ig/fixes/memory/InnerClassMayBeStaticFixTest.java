@@ -35,4 +35,5 @@ public class InnerClassMayBeStaticFixTest extends IGQuickFixesTestCase {
   public void testSimple() { doTest(); }
   public void testAnonymousInside() { doTest(); }
   public void testPreserveGenericSignature() { doTest(); }
+  public void testRecursiveType() { doTest(); }
 }
