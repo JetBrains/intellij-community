@@ -7,8 +7,11 @@ package com.intellij.internal.statistic.beans
  * @param eventIdIndex - event id index in the signature of factory method, starts at 0
  * @param additionalDataFields - an array of event data fields, that the factory method adds to FeatureUsageData.
  * You can describe validation rules for each field as "&lt;fieldName&gt;:&lt;validationRule&gt;". For example, "count:regexp#integer"
+ * If you can't describe validation rule, you can pass value index in the signature of factory method,
+ * starts at 0 ("&lt;fieldName&gt;::&lt;valueIndex&gt;"). For example, "count::4"
  *
  * @see newBooleanMetric
+ * @see newMetric
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CONSTRUCTOR)

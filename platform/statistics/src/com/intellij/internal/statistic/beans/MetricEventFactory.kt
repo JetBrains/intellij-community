@@ -35,7 +35,7 @@ fun newMetric(@NonNls eventId: String, data: FeatureUsageData?): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value::1"])
 fun newMetric(@NonNls eventId: String, value: String): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -45,7 +45,7 @@ fun newMetric(@NonNls eventId: String, value: String): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value::1"])
 fun newMetric(@NonNls eventId: String, value: String, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -56,7 +56,7 @@ fun newMetric(@NonNls eventId: String, value: String, data: FeatureUsageData?): 
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value::1"])
 fun newMetric(@NonNls eventId: String, value: Enum<*>?): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -66,7 +66,7 @@ fun newMetric(@NonNls eventId: String, value: Enum<*>?): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value::1"])
 fun newMetric(@NonNls eventId: String, value: Enum<*>?, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   val newValue = value?.name?.toLowerCase(Locale.ENGLISH) ?: "unknown"

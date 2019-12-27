@@ -200,7 +200,7 @@ class FeatureUsageData {
     return this
   }
 
-  @FeatureUsageDataBuilder(additionalDataFields = ["value"])
+  @FeatureUsageDataBuilder(additionalDataFields = ["value::0"])
   fun addValue(value: Any): FeatureUsageData {
     if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
       return addDataInternal("value", value)
