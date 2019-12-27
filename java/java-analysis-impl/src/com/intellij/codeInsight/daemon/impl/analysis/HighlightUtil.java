@@ -3206,7 +3206,8 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     },
     TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
-    RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records");
+    RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records"),
+    PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof");
 
     private final LanguageLevel level;
     private final String key;

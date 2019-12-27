@@ -1796,6 +1796,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitVariable(PsiVariable variable) {
     super.visitVariable(variable);
+    if (variable instanceof PsiPatternVariable) {
+      myHolder.add(checkFeature(((PsiPatternVariable)variable).getNameIdentifier(), Feature.PATTERNS));
+    }
     try {
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVarTypeApplicability(variable));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));

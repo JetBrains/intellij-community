@@ -11,7 +11,11 @@ public interface PsiPatternVariable extends PsiVariable {
   @NotNull
   @Override
   PsiTypeElement getTypeElement();
-  
+
+  @NotNull
+  @Override
+  PsiIdentifier getNameIdentifier();
+
   @Nullable
   PsiPattern getPattern();
 }
