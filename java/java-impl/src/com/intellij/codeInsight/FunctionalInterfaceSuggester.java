@@ -248,10 +248,10 @@ public class FunctionalInterfaceSuggester {
 
                 for (int i = 0; i < targetMethodParameters.length; i++) {
                   left[i + offset] = parameters[i + offset].getType();
-                  right[i + offset] = targetMethodParameters[i].getType();
+                  right[i + offset] = result.getSubstitutor().substitute(targetMethodParameters[i].getType());
                 }
 
-                left[parameters.length] = method.isConstructor() ? qualifierType : method.getReturnType();
+                left[parameters.length] = method.isConstructor() ? qualifierType : result.getSubstitutor().substitute(method.getReturnType());
                 right[parameters.length] = returnType;
 
                 final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(project)
