@@ -81,19 +81,9 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                                                               final boolean staticProblem,
                                                               final boolean accessible,
                                                               final boolean varargs) {
-              PsiSubstitutor subst = substitutor;
               final PsiExpressionList argumentList = getArgumentList();
               final PsiType[] typeParameters = reference.getTypeParameters();
-
-              if (typeParameters.length > 0) {
-                final PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
-                final int until = Math.min(methodTypeParameters.length, typeParameters.length);
-                for (int i = 0; i < until; i++) {
-                  subst = subst.put(methodTypeParameters[i], typeParameters[i]);
-                }
-              }
-
-              return new MethodCandidateInfo(method, subst, !accessible, staticProblem, argumentList, myCurrentFileContext,
+              return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
                                              argumentList != null ? argumentList.getExpressionTypes() : null,
                                              method.hasTypeParameters() && typeParameters.length > 0 ? typeParameters : null,
                                              getLanguageLevel()) {
