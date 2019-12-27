@@ -656,7 +656,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     else if (initializer instanceof PsiReferenceExpression) {
       PsiVariable initialVariable = ObjectUtils.tryCast(((PsiReferenceExpression)initializer).resolve(), PsiVariable.class);
-      if ((initialVariable instanceof PsiLocalVariable || initialVariable instanceof PsiParameter)
+      if ((PsiUtil.isJvmLocalVariable(initialVariable))
         && !VariableAccessUtils.variableIsAssigned(initialVariable, statement.getBody())) {
         origin = myFactory.getVarFactory().createVariableValue(initialVariable);
       }
@@ -754,7 +754,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement target = expression.resolve();
-        if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(target)) {
           variables.add((PsiVariable)target);
         }
         if (target instanceof PsiMember && !((PsiMember)target).hasModifierProperty(PsiModifier.STATIC)) {
@@ -1518,12 +1518,28 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     startElement(expression);
     PsiExpression operand = expression.getOperand();
-    PsiTypeElement checkType = expression.getCheckType();
-    if (checkType != null) {
+    PsiPattern pattern = expression.getPattern();
+    if (pattern instanceof PsiTypeTestPattern) {
+      PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
       operand.accept(this);
       PsiType type = checkType.getType();
+      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+      if (variable != null) {
+        addInstruction(new DupInstruction());
+      }
       addInstruction(new PushValueInstruction(DfTypes.typedObject(type, Nullability.NOT_NULL)));
       addInstruction(new InstanceofInstruction(expression, operand, type));
+      if (variable != null) {
+        new CFGBuilder(this)
+          .ifConditionIs(true)
+            .assignTo(variable)
+            .pop()
+            .push(DfTypes.TRUE)
+          .elseBranch()
+            .pop()
+            .push(DfTypes.FALSE)
+          .end();
+      }
     }
     else {
       pushUnknown();
