@@ -46,6 +46,13 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return isExplicitCall(this) ? myExplicitCallReference : null;
   }
 
+  @Nullable
+  @Override
+  public GroovyMethodCallReference getCallReference() {
+    GroovyMethodCallReference explicitCallReference = getExplicitCallReference();
+    return explicitCallReference == null ? getImplicitCallReference() : explicitCallReference;
+  }
+
   @Override
   @NotNull
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
