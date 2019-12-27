@@ -440,7 +440,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return true;
     }
     if (myDialogRequested) {
-      //here should be an assert that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
+      //here should be an assertion that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
       return false;
     }
     UIEventLogger.logUIEvent(UIEventId.DumbModeDialogRequested, new FeatureUsageData().addProject(myProject));
@@ -483,7 +483,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
       }
     };
-    task.setCancelText(createCancelButtonText(actionNames));
     ProgressManager.getInstance().run(task);
     myDialogIndicator = null;
     myDialogRequested = false;
@@ -499,23 +498,23 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return "Action";
     }
     else if (actionNames.size() == 1) {
-      return "'" + actionNames.get(0) + "' Action";
+      return StringUtil.trimEnd(actionNames.get(0), "...");
     }
     else {
-      return "Actions: " + StringUtil.join(actionNames, ", ");
-    }
-  }
-
-  @NotNull
-  private static String createCancelButtonText(@NotNull List<String> actionNames) {
-    if (actionNames.isEmpty()) {
-      return "Discard action";
-    }
-    else if (actionNames.size() == 1) {
-      return "Discard '" + actionNames.get(0) + "'";
-    }
-    else {
-      return "Discard actions";
+      StringBuilder result = new StringBuilder();
+      boolean isFirst = true;
+      for (String actionName : actionNames) {
+        if (actionName != null) {
+          if (isFirst) {
+            isFirst = false;
+          }
+          else {
+            result.append(", ");
+          }
+          result.append(StringUtil.trimEnd(actionName, "..."));
+        }
+      }
+      return result.toString();
     }
   }
 
