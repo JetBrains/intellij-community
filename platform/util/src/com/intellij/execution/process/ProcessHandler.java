@@ -67,8 +67,8 @@ public abstract class ProcessHandler extends UserDataHolderBase {
    * <p>This is an internal implementation of {@link #destroyProcess}. All sub-classes must implement this method and perform the
    * destruction in this method. This method is called from {@link #destroyProcess} and it can be in any thread including the
    * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
-   * background thread and return without waiting for it. Once the destruction is completed, you must call {@link #notifyProcessTerminated}
-   * to move the process handler's state to terminated.
+   * background thread and return without waiting for it. If the performed destruction led to process termination,
+   * {@link #notifyProcessTerminated(int)} must be called in any thread (not necessary from this method).
    */
   protected abstract void destroyProcessImpl();
 
@@ -78,8 +78,8 @@ public abstract class ProcessHandler extends UserDataHolderBase {
    * <p>This is an internal implementation of {@link #detachProcess}. All sub-classes must implement this method and perform the
    * detaching in this method. This method is called from {@link #detachProcess} and it can be in any thread including the
    * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
-   * background thread and return without waiting for it. Once the detaching is completed, you must call {@link #notifyProcessDetached}
-   * to move the process handler's state to terminated.
+   * background thread and return without waiting for it. If the performed detaching is completed,
+   * {@link #notifyProcessTerminated(int)} must be called in any thread (not necessary from this method).
    */
   protected abstract void detachProcessImpl();
 
@@ -110,7 +110,8 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   /**
-   * Destroys a process asynchronously.
+   * Destroys the process if {@link #isStartNotified()} returns {@code true},
+   * or postpones the action until {@link #startNotify()} is called.
    *
    * <p>It changes the process handler's state and {@link #isProcessTerminating} becomes true. This method may return without waiting for
    * the process termination. Upon the completion of the process termination, {@link #isProcessTerminated} becomes true.
@@ -125,7 +126,8 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   /**
-   * Detaches a process asynchronously.
+   * Detaches the process if {@link #isStartNotified()} returns {@code true},
+   * or postpones the action until {@link #startNotify()} is called.
    *
    * <p>It changes the process handler's state and {@link #isProcessTerminating} becomes true. This method may return without waiting for
    * detaching the process. Upon the completion of the detaching, {@link #isProcessTerminated} becomes true.
