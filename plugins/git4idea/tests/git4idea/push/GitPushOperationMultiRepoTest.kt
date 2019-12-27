@@ -49,11 +49,10 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     cd(community)
     makeCommit("com.txt")
 
-    val spec1 = makePushSpec(ultimate, "master", "origin/master")
-    val spec2 = makePushSpec(community, "master", "origin/master")
-    val map = HashMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>()
-    map.put(ultimate, spec1)
-    map.put(community, spec2)
+    val map = hashMapOf(
+      ultimate to makePushSpec(ultimate, "master", "origin/master"),
+      community to makePushSpec(community, "master", "origin/master")
+    )
 
     refresh()
     updateChangeListManager()
