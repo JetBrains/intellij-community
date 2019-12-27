@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +31,19 @@ class LightEditTabs extends JBEditorTabs {
     addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+        ObjectUtils.consumeIfNotNull(oldSelection, tabInfo -> tabInfo.setTabColor(getUnselectedTabColor()));
+        ObjectUtils.consumeIfNotNull(newSelection, tabInfo -> tabInfo.setTabColor(getSelectedTabColor()));
         onSelectionChange(newSelection);
       }
     });
+  }
+
+  private static Color getSelectedTabColor() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+  }
+
+  private static Color getUnselectedTabColor() {
+    return null;
   }
 
   void addEditorTab(@NotNull LightEditorInfo editorInfo) {
@@ -42,8 +53,7 @@ class LightEditTabs extends JBEditorTabs {
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
     TabInfo tabInfo = new TabInfo(new EditorContainer(editorInfo.getEditor()))
       .setText(editorInfo.getFile().getPresentableName())
-      .setIcon(getFileTypeIcon(editorInfo))
-      .setTabColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+      .setIcon(getFileTypeIcon(editorInfo));
 
     tabInfo.setObject(editorInfo);
 
