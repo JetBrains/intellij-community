@@ -239,7 +239,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     return createEntityInstance(newData) as T
   }
 
-  private fun replaceEntity(id: Long, newData: EntityData, newInstance: TypedEntity?, oldIdHash: Int?, handleReferrers: Boolean) {
+  private fun replaceEntity(id: Long, newData: EntityData, newInstance: TypedEntity?, oldIdHash: Int?, handleReferrers: Boolean,
+                            updatePersistentIdReference: Boolean = true) {
     if (id != newData.id) {
       error("new and old IDs must be equal. Trying to replace entity #$id with #${newData.id}")
     }
@@ -270,7 +271,9 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
 
     addPersistentIdReferrers(newData)
-    updatePersistentIdReferrers(oldData, newData)
+    // Update persistentId reference in store only for originally replaced element. If method called
+    // recursively only first call should update reference.
+    updatePersistentIdInDependentEntities(oldData, newData, updatePersistentIdReference)
   }
 
   private fun addReferences(data: EntityData) {
@@ -302,14 +305,22 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
   }
 
-  private fun updatePersistentIdReferrers(oldData: EntityData, newData: EntityData) {
-    // Update collection if anything changed
-    val oldDependencies = mutableSetOf<Int>()
-    val newDependencies = mutableSetOf<Int>()
-    oldData.collectPersistentIdReferences { oldDependencies += it.hashCode() }
-    newData.collectPersistentIdReferences { newDependencies += it.hashCode() }
-    oldDependencies.removeAll(newDependencies)
-    oldDependencies.forEach { persistentIdReferrers[it]?.remove(oldData.id) }
+  private fun updatePersistentIdInDependentEntities(oldData: EntityData, newData: EntityData, updatePersistentIdReference: Boolean) {
+    if (updatePersistentIdReference) {
+      // Update collection if anything changed
+      val oldDependencies = mutableSetOf<Int>()
+      val newDependencies = mutableSetOf<Int>()
+      oldData.collectPersistentIdReferences { oldDependencies += it.hashCode() }
+      newData.collectPersistentIdReferences { newDependencies += it.hashCode() }
+      oldDependencies.removeAll(newDependencies)
+      if (oldDependencies.isNotEmpty()) {
+        oldDependencies.forEach {
+          val refs = persistentIdReferrers[it] ?: error("Unable to find reference target by hash $it")
+          refs.remove(oldData.id)
+          if (refs.isEmpty()) persistentIdReferrers.remove(it)
+        }
+      }
+    }
 
     // Update persistentId in dependent entities
     if(!TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)
@@ -326,13 +337,12 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       newImpl.allowModifications {
         newImpl.data.replaceAllPersistentIdReferences(oldData.persistentId(), newData.persistentId())
       }
-      // Referrers are updated in proxy method invocation
-      replaceEntity(refOldData.id, refNewData, newInstance, oldIdHash, handleReferrers = false)
+      replaceEntity(refOldData.id, refNewData, newInstance, oldIdHash, handleReferrers = false, updatePersistentIdReference = false)
       updateChangeLog { it.add(ChangeEntry.ReplaceEntity(refOldData.id, refNewData)) }
     }
   }
 
-  private fun removePersistentIdReferences(data: EntityData) {
+  private fun removePersistentIdFromDependency(data: EntityData) {
     // If removed entity which is a dependency for others we don't remove the record from the collection,
     // customers code should do it manually
     data.collectPersistentIdReferences { persistentIdReference ->
@@ -371,7 +381,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       entitiesByPersistentIdHash.removeValue(persistentId.hashCode(), data)
     }
     removeReferences(data)
-    removePersistentIdReferences(data)
+    removePersistentIdFromDependency(data)
   }
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
