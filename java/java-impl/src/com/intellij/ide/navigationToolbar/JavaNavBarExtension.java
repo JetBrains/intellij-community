@@ -13,8 +13,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageViewShortNameLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -25,14 +25,8 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 public class JavaNavBarExtension extends AbstractNavBarModelExtension {
   @Override
   public String getPresentableText(final Object object) {
-    if (object instanceof PsiClass) {
-      if (object instanceof PsiAnonymousClass) {
-        return ClassPresentationUtil.getNameForClass((PsiClass)object, false);
-      }
-      return ((PsiClass) object).getName();
-    }
-    if (object instanceof PsiMethod) {
-      return ((PsiMethod) object).getName();
+    if (object instanceof PsiMember) {
+      return ElementDescriptionUtil.getElementDescription((PsiElement)object, UsageViewShortNameLocation.INSTANCE);
     }
     else if (object instanceof PsiPackage) {
       final String name = ((PsiPackage)object).getName();
