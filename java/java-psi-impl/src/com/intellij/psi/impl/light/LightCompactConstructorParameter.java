@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,16 @@ public class LightCompactConstructorParameter extends LightParameter implements 
                                           @NotNull PsiRecordComponent component) {
     super(name, type, declarationScope);
     myRecordComponent = component;
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return getDeclarationScope();
+  }
+
+  @Override
+  public PsiFile getContainingFile() {
+    return getDeclarationScope().getContainingFile();
   }
 
   @Override
