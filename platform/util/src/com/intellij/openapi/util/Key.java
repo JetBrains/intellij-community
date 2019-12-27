@@ -27,7 +27,7 @@ public class Key<T> {
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
 
-  public Key(@NotNull String name) {
+  public Key(@NonNls @NotNull String name) {
     myName = name;
     allKeys.put(myIndex, this);
   }
