@@ -44,6 +44,7 @@ public class MarkdownUtil {
 
   /**
    * Removes images in the markdown text.
+   *
    * @param lines List of String in markdown format
    */
   public static void removeImages(@NotNull List<String> lines) {
@@ -131,21 +132,22 @@ public class MarkdownUtil {
     return null;
   }
 
-  public static void replaceCodeBlock(@NotNull List<String> lines) {
-    new CodeBlockProcessor(lines).process();
+  public static void replaceCodeBlockAndLineBreaks(@NotNull List<String> lines) {
+    new CodeBlockAndLineBreakProcessor(lines).process();
   }
 
-  private static class CodeBlockProcessor {
+  private static class CodeBlockAndLineBreakProcessor {
 
     private static final String START_TAGS = "<pre><code>";
     private static final String END_TAGS = "</code></pre>";
+    private static final String BREAK_TAG = "<br>";
 
     private final List<String> myLines;
 
     private boolean myGlobalCodeBlockStarted = false;
     private boolean myCodeBlockStarted = false;
 
-    private CodeBlockProcessor(@NotNull List<String> lines) {
+    private CodeBlockAndLineBreakProcessor(@NotNull List<String> lines) {
       myLines = lines;
     }
 
@@ -158,16 +160,17 @@ public class MarkdownUtil {
           String out = myGlobalCodeBlockStarted ? START_TAGS : END_TAGS;
           myLines.set(i, out);
         }
-        else {
-          if (!myGlobalCodeBlockStarted) {
-            handleLocalCodeBlock(i, line);
-          }
+        else if (!myGlobalCodeBlockStarted && !myCodeBlockStarted && line.isEmpty()) {
+          myLines.set(i, BREAK_TAG);
+        }
+        else if (!myGlobalCodeBlockStarted) {
+          handleIndentedCodeBlock(i, line);
         }
       }
       finishCodeBlock(myLines.size() - 1);
     }
 
-    private void handleLocalCodeBlock(int ind, @NotNull String line) {
+    private void handleIndentedCodeBlock(int ind, @NotNull String line) {
       boolean codeBlock = false;
       if (line.startsWith("    ") || line.startsWith("\t")) {
         codeBlock = true;
@@ -244,8 +247,8 @@ public class MarkdownUtil {
         myLastListItemLineInd = ind;
       }
       else if (myFirstListItem != null &&
-          !line.isEmpty() &&
-          !StringUtil.isEmptyOrSpaces(line)) {
+               !line.isEmpty() &&
+               !StringUtil.isEmptyOrSpaces(line)) {
         if (ind - 1 >= 0
             && StringUtil.isEmptyOrSpaces(myLines.get(ind - 1))
             && !Character.isWhitespace(line.charAt(0))) {
@@ -321,5 +324,4 @@ public class MarkdownUtil {
       return myBody;
     }
   }
-
 }

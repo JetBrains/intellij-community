@@ -51,24 +51,24 @@ public class MarkdownUtilTest {
   public void testRemoveImageEdgeCase() {
     List<String> markdown = Arrays.asList("[![logo](http://localhost/logo.png)]");
     MarkdownUtil.removeImages(markdown);
-    Assert.assertEquals(Arrays.asList("[]"),markdown);
+    Assert.assertEquals(Arrays.asList("[]"), markdown);
   }
 
   @Test
-  public void testReplaceCodeBlocks() {
+  public void testReplaceCodeBlockAndLineBreaks() {
     List<String> markdown = Arrays.asList(" Create the app:",
                                           "",
                                           "    $ npm install -g express",
                                           "    $ express /tmp/foo && cd /tmp/foo");
-    MarkdownUtil.replaceCodeBlock(markdown);
+    MarkdownUtil.replaceCodeBlockAndLineBreaks(markdown);
     Assert.assertEquals(Arrays.asList(" Create the app:",
-                                      "",
+                                      "<br>",
                                       "<pre><code>    $ npm install -g express",
                                       "    $ express /tmp/foo && cd /tmp/foo</code></pre>"), markdown);
   }
 
   @Test
-  public void testReplaceCodeBlocks2() {
+  public void testReplaceCodeBlockAndLineBreaks2() {
     List<String> markdown = Arrays.asList(
       "   text",
       "    code block",
@@ -80,7 +80,7 @@ public class MarkdownUtilTest {
       "\t$ code continues",
       "code done"
     );
-    MarkdownUtil.replaceCodeBlock(markdown);
+    MarkdownUtil.replaceCodeBlockAndLineBreaks(markdown);
     Assert.assertEquals(
       Arrays.asList(
         "   text",
@@ -178,5 +178,4 @@ public class MarkdownUtilTest {
       markdown
     );
   }
-
 }
