@@ -95,7 +95,6 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
   }
 
   private fun getProjectDirectory(file: VirtualFile): VirtualFile? {
-    if (!canOpenProject(file)) return null
     if (!file.isDirectory) return file.parent
     return file
   }
