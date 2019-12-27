@@ -8,7 +8,6 @@ import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
@@ -29,8 +28,7 @@ abstract class ConstructorCallHighlighter(reference: GroovyCallReference, sink: 
     }
   }
 
-  override fun buildFix(argument: Argument, expectedType: PsiType): ParameterCastFix? {
-    if (argument !is ExpressionArgument) return null
+  override fun buildCastFix(argument: ExpressionArgument, expectedType: PsiType): ParameterCastFix? {
     val arguments = reference.arguments ?: return null
     val list = argumentList ?: return null
     if (argument !in arguments) return null

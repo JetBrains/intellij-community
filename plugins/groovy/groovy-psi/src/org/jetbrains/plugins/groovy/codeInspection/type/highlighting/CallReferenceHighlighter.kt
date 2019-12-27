@@ -13,8 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.*
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 
@@ -29,8 +29,6 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
   }
 
   protected abstract val highlightElement: PsiElement
-
-  protected open fun buildFix(argument: Argument, expectedType: PsiType): LocalQuickFix? = null
 
   private fun highlightCannotApplyError(invokedText: String, typesString: String) {
     sink.registerError(highlightElement, GroovyBundle.message("cannot.apply.method.or.closure", invokedText, typesString))
@@ -133,10 +131,12 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
       .ignoreArguments(notApplicableArguments)
       .build().inferSubst()
 
-    return notApplicableArguments.mapNotNull { argument ->
+    return notApplicableArguments.filterIsInstance<ExpressionArgument>().mapNotNull { argument ->
       val fixType = substitutor.substitute(mapping.expectedType(argument))
-      if (fixType != null) buildFix(argument, fixType)
+      if (fixType != null) buildCastFix(argument, fixType)
       else null
     }
   }
+
+  protected open fun buildCastFix(argument: ExpressionArgument, expectedType: PsiType): LocalQuickFix? = null
 }
