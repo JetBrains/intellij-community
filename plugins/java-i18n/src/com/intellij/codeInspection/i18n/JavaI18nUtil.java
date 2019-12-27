@@ -108,15 +108,30 @@ public class JavaI18nUtil extends I18nUtil {
 
   static boolean isPassedToAnnotatedParam(@NotNull UExpression expression,
                                           final String annFqn,
-                                          @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef,
                                           @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UExpression parent = getTopLevelExpression(expression);
-    if (!(parent instanceof UCallExpression)) return false;
-    int idx = (((UCallExpression)parent).getValueArguments()).indexOf(expression);
+    UCallExpression callExpression;
+    if (parent instanceof UCallExpression) {
+      callExpression = (UCallExpression)parent;
+    }
+    else if (parent instanceof UQualifiedReferenceExpression) {
+      UExpression selector = ((UQualifiedReferenceExpression)parent).getSelector();
+      if (selector instanceof UCallExpression) {
+        callExpression = (UCallExpression)selector;
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
+
+    int idx = callExpression.getValueArguments().indexOf(expression);
     if (idx == -1) return false;
 
-    PsiMethod method = ((UCallExpression)parent).resolve();
-    return method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, resourceBundleRef, nonNlsTargets);
+    PsiMethod method = callExpression.resolve();
+    return method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, null, nonNlsTargets);
     
   }
 
