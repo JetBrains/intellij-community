@@ -15,15 +15,10 @@
  */
 package com.intellij.util.io
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
-import java.io.File
 import java.util.ArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
@@ -105,7 +100,6 @@ class CompressedAppendableFileTest : TestCase() {
       val flusher = {
         startLatch.await()
         while (proceedLatch.count != 0L) {
-          appendableFile.dropCaches()
           UIUtil.pump()
         }
       }
