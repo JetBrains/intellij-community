@@ -85,17 +85,15 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   @NotNull
   @Override
   public SuppressIntentionAction[] getSuppressActions(PsiElement element) {
-    HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
-    assert key != null : "No key for '" + getShortName() + "' / " + getClass();
-    SuppressIntentionAction[] defaultSuppressors = SuppressManager.getInstance().createSuppressActions(key);
+    SuppressQuickFix[] suppressActions = getBatchSuppressActions(element);
 
     if (myCachedNonNlsPattern == null) {
-      return defaultSuppressors;
+      return ContainerUtil.map2Array(suppressActions,  SuppressIntentionAction.class, SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction);
     }
     else {
-      List<SuppressIntentionAction> suppressors = new ArrayList<>(defaultSuppressors.length + 1);
+      List<SuppressIntentionAction> suppressors = new ArrayList<>(suppressActions.length + 1);
       suppressors.add(new SuppressByCommentOutAction(nonNlsCommentPattern));
-      ContainerUtil.addAll(suppressors, defaultSuppressors);
+      suppressors.addAll(ContainerUtil.map(suppressActions,  SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction));
       return suppressors.toArray(SuppressIntentionAction.EMPTY_ARRAY);
     }
   }
