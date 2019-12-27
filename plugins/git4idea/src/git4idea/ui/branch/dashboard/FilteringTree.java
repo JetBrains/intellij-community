@@ -122,7 +122,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       protected void onSearchFieldUpdated(String pattern) {
         TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
         getSearchModel().refilter();
-        updateExpandedPathsOnSpeedSearchUpdateComplete();
+        onSpeedSearchUpdateComplete();
         myTree.getSelectionModel().setSelectionPaths(paths);
       }
 
@@ -211,7 +211,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     return false;
   }
 
-  protected void updateExpandedPathsOnSpeedSearchUpdateComplete() {
+  protected void onSpeedSearchUpdateComplete() {
   }
 
   @Nullable
@@ -294,6 +294,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     public void setSpeedSearch(@NotNull SpeedSearchSupply supply) {
       mySpeedSearch = supply;
       updateStructure();
+    }
+
+    protected SpeedSearchSupply getSpeedSearchSupply() {
+      return mySpeedSearch;
     }
 
     public void addNodeListener(@NotNull Listener<U> listener) {

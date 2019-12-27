@@ -10,9 +10,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
+import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.tree.WideSelectionTreeUI
 import git4idea.repo.GitRepositoryManager
@@ -175,9 +177,25 @@ internal class FilteringBranchesTree(project: Project,
     TreeUtil.restoreExpandedPaths(component, expandedPaths.toList())
   }
 
-  override fun updateExpandedPathsOnSpeedSearchUpdateComplete() {
+  override fun onSpeedSearchUpdateComplete() {
     restorePreviouslyExpandedPaths()
+    updateSpeedSearchBackground()
   }
+
+  private fun updateSpeedSearchBackground() {
+    val speedSearch = searchModel.speedSearchSupply as? SpeedSearch ?: return
+    val textEditor = component.searchField?.textEditor ?: return
+    if (isEmptyModel()) {
+      textEditor.isOpaque = true
+      speedSearch.noHits()
+    }
+    else {
+      textEditor.isOpaque = false
+      textEditor.background = UIUtil.getTextFieldBackground()
+    }
+  }
+
+  private fun isEmptyModel() = searchModel.isLeaf(localBranchesNode) && searchModel.isLeaf(remoteBranchesNode)
 
   override fun getNodeClass() = BranchTreeNode::class.java
 
