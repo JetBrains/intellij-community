@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.SmartList
+import com.intellij.util.containers.minimalElements
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.canBeApplicable
@@ -50,33 +51,6 @@ fun List<GroovyMethodResult>.correctStaticScope(): List<GroovyMethodResult> {
   }
 }
 
-fun chooseOverloads(candidates: List<GroovyMethodResult>): List<GroovyMethodResult> {
-  if (candidates.size <= 1) return candidates
-
-  val results = SmartList<GroovyMethodResult>()
-
-  var minResult: GroovyMethodResult? = null
-  for (candidate in candidates) {
-    if (minResult == null) {
-      minResult = candidate
-      results += candidate
-    }
-    else {
-      val comparisonResult = compare(minResult, candidate)
-      if (comparisonResult > 0) {
-        minResult = candidate
-        results.clear()
-        results += candidate
-      }
-      else if (comparisonResult == 0) {
-        results += candidate
-      }
-    }
-  }
-
-  return results
-}
-
 private val overloadResolverEp = ExtensionPointName.create<GroovyOverloadResolver>("org.intellij.groovy.overloadResolver")
 
 private fun compare(left: GroovyMethodResult, right: GroovyMethodResult): Int {
@@ -87,6 +61,12 @@ private fun compare(left: GroovyMethodResult, right: GroovyMethodResult): Int {
     }
   }
   return 0
+}
+
+private val resultOverloadComparator: Comparator<GroovyMethodResult> = Comparator(::compare)
+
+fun chooseOverloads(candidates: List<GroovyMethodResult>): List<GroovyMethodResult> {
+  return SmartList(candidates.minimalElements(resultOverloadComparator))
 }
 
 /**
