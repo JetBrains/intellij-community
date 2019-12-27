@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.intentions
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.CreateConstructorFromGroovyUsageRequest
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 
@@ -20,10 +19,8 @@ class GrNewExpressionHighlighter(
   sink: HighlightSink
 ) : ConstructorCallHighlighter(reference, sink) {
 
-  override val argumentList: GrArgumentList? get() = newExpression.argumentList
-
   override val highlightElement: PsiElement
-    get() = requireNotNull(argumentList ?: newExpression.referenceElement) {
+    get() = requireNotNull(newExpression.argumentList ?: newExpression.referenceElement) {
       "reference of new expression should exist if it is a constructor call"
     }
 

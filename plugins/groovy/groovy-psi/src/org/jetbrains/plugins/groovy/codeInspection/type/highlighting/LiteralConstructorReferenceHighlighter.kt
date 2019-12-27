@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference
 import org.jetbrains.plugins.groovy.lang.typing.GrCollectionConstructorConverter.Companion.hasCollectionApplicableConstructor
 
@@ -15,7 +14,6 @@ class LiteralConstructorReferenceHighlighter(
   override val highlightElement: PsiElement,
   sink: HighlightSink
 ) : ConstructorCallHighlighter(reference, sink) {
-  override val argumentList: GrArgumentList? = null
 
   override fun shouldHighlightInapplicable(): Boolean {
     val clazz = (reference as GroovyConstructorReference).resolveClass()?.element as? PsiClass

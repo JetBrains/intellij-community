@@ -9,16 +9,13 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.reque
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 
 class GrConstructorInvocationHighlighter(
   private val invocation: GrConstructorInvocation,
   sink: HighlightSink
 ) : ConstructorCallHighlighter(invocation.constructorReference, sink) {
 
-  override val argumentList: GrArgumentList get() = invocation.argumentList
-
-  override val highlightElement: PsiElement get() = argumentList
+  override val highlightElement: PsiElement get() = invocation.argumentList
 
   override fun generateFixes(results: Collection<GroovyMethodResult>): Array<LocalQuickFix> {
     val fixes = super.generateFixes(results)

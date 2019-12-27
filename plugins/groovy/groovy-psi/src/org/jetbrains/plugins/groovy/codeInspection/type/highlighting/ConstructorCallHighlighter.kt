@@ -6,15 +6,12 @@ import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 
 abstract class ConstructorCallHighlighter(reference: GroovyCallReference, sink: HighlightSink) : CallReferenceHighlighter(reference, sink) {
-
-  protected abstract val argumentList: GrArgumentList?
 
   override fun getInapplicableMethodMessage(result: GroovyMethodResult, containingType: PsiType, arguments: Arguments): String {
     val method = result.element
