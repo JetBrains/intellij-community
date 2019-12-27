@@ -21,7 +21,7 @@ import java.util.Collections;
 @ApiStatus.OverrideOnly
 public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V, FileContent> {
 
-  public static final ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME =
+  public static final ExtensionPointName<FileBasedIndexExtension<?, ?>> EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.fileBasedIndex");
 
   private static final int DEFAULT_CACHE_SIZE = 1024;
