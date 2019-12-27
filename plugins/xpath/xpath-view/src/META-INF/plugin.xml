@@ -103,13 +103,13 @@
 
     <extendWordSelectionHandler implementation="org.intellij.lang.xpath.XPathStringLiteralSelectioner"/>
 
-    <localInspection shortName="XsltUnusedDeclaration" displayName="Unused variable/parameter" groupName="XSLT" enabledByDefault="true"
+    <localInspection language="XML" shortName="XsltUnusedDeclaration" displayName="Unused variable/parameter" groupName="XSLT" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection"/>
-    <localInspection shortName="XsltTemplateInvocation" displayName="Template invocation problems" groupName="XSLT" enabledByDefault="true"
+    <localInspection language="XML" shortName="XsltTemplateInvocation" displayName="Template invocation problems" groupName="XSLT" enabledByDefault="true"
                      level="ERROR" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection"/>
-    <localInspection shortName="XsltDeclarations" displayName="Declaration problems" groupName="XSLT" enabledByDefault="true" level="ERROR"
+    <localInspection language="XML" shortName="XsltDeclarations" displayName="Declaration problems" groupName="XSLT" enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection"/>
-    <localInspection shortName="XsltVariableShadowing" displayName="Variable shadowing" groupName="XSLT" enabledByDefault="true"
+    <localInspection language="XML" shortName="XsltVariableShadowing" displayName="Variable shadowing" groupName="XSLT" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection"/>
 
     <intentionAction>
