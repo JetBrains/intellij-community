@@ -161,48 +161,18 @@ internal class LegacyBridgeModifiableModuleModel(
 
     moduleManager.setNewModuleInstances(myModulesToAdd.values.toList())
 
-    //val changedModuleIdsMap = mutableMapOf<ModuleId, ModuleId>()
     for (entry in myNewNameToModule.entries) {
       val entity = storage.resolve(entry.value.moduleEntityId) ?:
         error("Unable to resolve module by id: ${entry.value.moduleEntityId}")
       diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
         name = entry.key
-        //changedModuleIdsMap[entry.value.moduleEntityId] = this.persistentId()
       }
     }
-    //updateModuleDependencyIfNeeded(changedModuleIdsMap)
 
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
     }
   }
-
-  //private fun updateModuleDependencyIfNeeded(changedModulesIdMap: Map<ModuleId, ModuleId>) {
-  //  if (changedModulesIdMap.isEmpty()) return
-  //
-  //  // Walkthrough the whole modules and update dependencies for them
-  //  entityStoreOnDiff.current.entities(ModuleEntity::class.java).forEach { moduleEntity ->
-  //    var containsOldDependency = false
-  //    val newDependencies = moduleEntity.dependencies.map {
-  //      when(it) {
-  //        is ModuleDependencyItem.Exportable.ModuleDependency -> {
-  //          val newModuleId = changedModulesIdMap[it.module]
-  //          if (newModuleId != null) {
-  //            containsOldDependency = true
-  //            it.copy(module = newModuleId)
-  //          } else it
-  //        }
-  //        else -> it
-  //      }
-  //    }
-  //
-  //    if (containsOldDependency) {
-  //      diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-  //        dependencies = newDependencies
-  //      }
-  //    }
-  //  }
-  //}
 
   override fun renameModule(module: Module, newName: String) {
     module as LegacyBridgeModule
