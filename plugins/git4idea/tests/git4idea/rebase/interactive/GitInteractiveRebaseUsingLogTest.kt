@@ -142,6 +142,10 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
         return entries
       }
     }
+
+    refresh()
+    updateChangeListManager()
+
     val params = GitRebaseParams.editCommits(repo.vcs.version, commit.parents.first().asString(), editorHandler, false)
     GitRebaseUtils.rebase(repo.project, listOf(repo), params, EmptyProgressIndicator())
     return entriesGeneratedUsingGit
