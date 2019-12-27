@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class CollectionInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key,Value> {
+  @NotNull
   private final Collection<Key> mySeq;
 
   public CollectionInputDataDiffBuilder(int inputId, @Nullable Collection<Key> seq) {
@@ -40,6 +41,7 @@ public class CollectionInputDataDiffBuilder<Key, Value> extends InputDataDiffBui
     return differentiateWithKeySeq(mySeq, newData, myInputId, addProcessor, removeProcessor);
   }
 
+  @NotNull
   public Collection<Key> getSeq() {
     return mySeq;
   }
