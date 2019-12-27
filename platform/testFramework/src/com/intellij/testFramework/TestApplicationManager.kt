@@ -243,6 +243,7 @@ fun tearDownProjectAndApp(project: Project, appManager: TestApplicationManager? 
   l.run { LegacyBridgeTestFrameworkUtils.dropCachesOnTeardown(project) }
 
   l.run { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, !isLightProject) }
+  l.run { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
 
   l.run { (appManager ?: TestApplicationManager.getInstanceIfCreated())?.setDataProvider(null) }
   l.run { UiInterceptors.clear() }
@@ -346,6 +347,5 @@ fun waitForProjectLeakingThreads(project: Project, timeout: Long = 10, timeUnit:
     project.stopServicePreloading()
   }
 
-  NonBlockingReadActionImpl.cancelAllTasks()
   (project.serviceIfCreated<GeneratedSourceFileChangeTracker>() as GeneratedSourceFileChangeTrackerImpl?)?.cancelAllAndWait(timeout, timeUnit)
 }

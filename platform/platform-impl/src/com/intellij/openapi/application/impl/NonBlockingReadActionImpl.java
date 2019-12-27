@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
 import com.intellij.openapi.application.constraints.Expiration;
@@ -16,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -95,17 +97,28 @@ public class NonBlockingReadActionImpl<T>
 
   @Override
   public NonBlockingReadAction<T> inSmartMode(@NotNull Project project) {
-    return withConstraint(new InSmartMode(project), project);
+    return withConstraint(new InSmartMode(project), earlyDisposable(project));
   }
 
   @Override
   public NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project) {
-    return withConstraint(new WithDocumentsCommitted(project, ModalityState.any()), project);
+    return withConstraint(new WithDocumentsCommitted(project, ModalityState.any()), earlyDisposable(project));
   }
 
   @Override
   public NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition) {
     return cancelIf(expireCondition);
+  }
+
+  @NotNull
+  @Override
+  public NonBlockingReadActionImpl<T> expireWith(@NotNull Disposable parentDisposable) {
+    return super.expireWith(earlyDisposable(parentDisposable));
+  }
+
+  private static Disposable earlyDisposable(Disposable disposable) {
+    // account for shared project in tests
+    return disposable instanceof ProjectEx ? ((ProjectEx)disposable).getEarlyDisposable() : disposable;
   }
 
   @Override
@@ -319,6 +332,7 @@ public class NonBlockingReadActionImpl<T>
     }
 
     private void reportCoalescingConflict(NonBlockingReadActionImpl<?>.Submission current) {
+      ourTasks.remove(this); // the next line will throw in tests and leave this submission hanging forever
       LOG.error("Same coalesceBy arguments are already used by " + current.getComputationOrigin() + " so they can cancel each other. " +
                 "Please make them more unique.");
     }
@@ -504,16 +518,6 @@ public class NonBlockingReadActionImpl<T>
     @Override
     public String toString() {
       return "Submission{" + myComputation + ", " + getState() + "}";
-    }
-  }
-
-  @TestOnly
-  public static void cancelAllTasks() {
-    while (!ourTasks.isEmpty()) {
-      for (CancellablePromise<?> task : ourTasks) {
-        task.cancel();
-      }
-      WriteAction.run(() -> {}); // let background threads complete
     }
   }
 

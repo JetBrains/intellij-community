@@ -459,6 +459,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       return;
     }
 
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
     UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
     if (globalInstance != null) {
       globalInstance.dropHistoryInTests();
@@ -476,8 +478,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
-
-    NonBlockingReadActionImpl.cancelAllTasks();
 
     FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
     if (fileBasedIndex != null) {
