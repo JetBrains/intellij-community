@@ -230,7 +230,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
     if (chain != null) {
       Object qualifier = chain.getQualifier().getObject();
-      if (qualifier instanceof PsiLocalVariable || qualifier instanceof PsiParameter) {
+      if (qualifier instanceof PsiVariable && PsiUtil.isJvmLocalVariable((PsiVariable)qualifier)) {
         return MyResult.variable;
       }
       if (qualifier instanceof PsiField) {

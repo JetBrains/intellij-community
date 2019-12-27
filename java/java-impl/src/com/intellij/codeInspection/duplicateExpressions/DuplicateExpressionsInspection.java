@@ -187,7 +187,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
         super.visitReferenceElement(reference);
 
         PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(resolved)) {
           variables.add((PsiVariable)resolved);
         }
         else if (resolved instanceof PsiVariable && !((PsiVariable)resolved).hasModifierProperty(PsiModifier.FINAL)) {

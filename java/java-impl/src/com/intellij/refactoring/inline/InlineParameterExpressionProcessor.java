@@ -106,7 +106,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       if (i != parameterIndex && arguments[i] instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)arguments[i];
         final PsiElement element = referenceExpression.resolve();
-        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(element)) {
           final PsiParameter param = myMethod.getParameterList().getParameters()[i];
           final PsiExpression paramRef =
             JavaPsiFacade.getElementFactory(myMethod.getProject()).createExpressionFromText(param.getName(), myMethod);

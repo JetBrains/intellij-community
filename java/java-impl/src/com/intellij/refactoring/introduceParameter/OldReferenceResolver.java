@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -305,7 +306,7 @@ public class OldReferenceResolver {
   private static PsiElement getClassContainingResolve(final JavaResolveResult result) {
     final PsiElement elem = result.getElement();
     if (elem != null) {
-      if (elem instanceof PsiLocalVariable || elem instanceof PsiParameter) {
+      if (PsiUtil.isJvmLocalVariable(elem)) {
         return PsiTreeUtil.getParentOfType(elem, PsiClass.class);
       }
       else {

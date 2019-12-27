@@ -146,6 +146,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
               return false;
             }
             PsiVariable psi = ObjectUtils.tryCast(var.getPsiVariable(), PsiVariable.class);
+            if (psi instanceof PsiPatternVariable) return true;
             if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
               PsiElement block = PsiUtil.getVariableCodeBlock(psi, null);
               return block == null || !HighlightControlFlowUtil.isEffectivelyFinal(psi, block, null);

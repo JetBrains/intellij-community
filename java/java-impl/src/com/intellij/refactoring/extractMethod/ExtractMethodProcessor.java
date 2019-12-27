@@ -1721,6 +1721,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (variableName == null) return Nullability.UNKNOWN;
 
     PsiElement methodOrLambdaBody = null;
+    if (variable instanceof PsiPatternVariable) {
+      return Nullability.NOT_NULL;
+    }
     if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
       final PsiParameterListOwner methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
       if (methodOrLambda != null) {

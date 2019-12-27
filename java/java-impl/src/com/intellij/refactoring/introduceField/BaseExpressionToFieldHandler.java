@@ -942,7 +942,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       final PsiElement psiElement = expression.resolve();
-      if ((psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) &&
+      if ((PsiUtil.isJvmLocalVariable(psiElement)) &&
           !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
         myElementReference = expression;
       }

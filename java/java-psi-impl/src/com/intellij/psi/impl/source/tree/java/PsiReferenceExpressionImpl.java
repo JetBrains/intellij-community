@@ -505,7 +505,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
-        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(element)) {
           myVarNames.add(element.getName());
         }
         return !(element instanceof PsiField) || !myVarNames.contains(element.getName());

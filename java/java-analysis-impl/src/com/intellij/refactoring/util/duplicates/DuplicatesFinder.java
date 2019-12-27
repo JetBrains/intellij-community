@@ -516,7 +516,7 @@ public class DuplicatesFinder {
       return match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
     }
     if (resolveResult1 instanceof PsiVariable && myEffectivelyLocal.contains((PsiVariable)resolveResult1)) {
-      return (resolveResult2 instanceof PsiLocalVariable || resolveResult2 instanceof PsiParameter) &&
+      return PsiUtil.isJvmLocalVariable(resolveResult2) &&
              match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
     }
     PsiElement qualifier2 = candidate.getQualifier();

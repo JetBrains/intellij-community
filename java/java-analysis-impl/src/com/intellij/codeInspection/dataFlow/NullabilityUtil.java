@@ -185,6 +185,9 @@ public class NullabilityUtil {
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       PsiElement target = (ref).resolve();
+      if (target instanceof PsiPatternVariable) {
+        return Nullability.NOT_NULL; // currently all pattern variables are not-null
+      }
       if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
         PsiElement block = PsiUtil.getVariableCodeBlock((PsiVariable)target, null);
         // Do not trust the declared nullability of local variable/parameter if it's reassigned as nullability designates
