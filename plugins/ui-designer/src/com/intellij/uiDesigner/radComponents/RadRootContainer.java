@@ -15,6 +15,8 @@ import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
+import com.intellij.uiDesigner.propertyInspector.LookAndFeelPropertyManager;
+import com.intellij.uiDesigner.propertyInspector.properties.LookAndFeelProperty;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +34,10 @@ import java.util.Locale;
  * @author Vladimir Kondratyev
  */
 public final class RadRootContainer extends RadContainer implements IRootContainer {
+
+  //NecroRayder
+  private String myLookAndFeel = null;
+
   private String myClassToBind;
   private String myMainComponentBinding;
   private Locale myStringDescriptorLocale;
@@ -71,6 +77,88 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     myClassToBind = classToBind;
   }
 
+  //NecroRayder
+  public String getLookAndFeel(){ return myLookAndFeel; }
+
+  //NecroRayder
+  public void setLookAndFeel(String lookAndFeel) {
+
+    LookAndFeel tmp = UIManager.getLookAndFeel();
+
+    myLookAndFeel = lookAndFeel;
+
+    if (myLookAndFeel == null || myLookAndFeel.isEmpty())
+      myLookAndFeel = LookAndFeelProperty.getDefaultLookAndFeel().getClass().getName();
+
+    try {
+
+      if (LookAndFeelPropertyManager.isStandardLaf(myLookAndFeel)) {
+
+        //System.out.println("Standard Look and Feel: " + myLookAndFeel);
+
+        UIManager.setLookAndFeel(myLookAndFeel);
+        SwingUtilities.updateComponentTreeUI(getDelegee().getComponent(0));
+        UIManager.setLookAndFeel(tmp);
+
+      } else {
+
+        //System.out.println("No Standard Look and Feel: " + myLookAndFeel);
+
+        //TODO:I have tried a lot times but I can't make it works.
+        /*
+         *  @Author NecroRayder
+         *  @GitHub https://github.com/NecroRayder
+         *
+         *  This part is needed for load external look and feel.
+         *  In order to do that it's necessary to put the className
+         *  and the relativePath of the desired look and feel jar
+         *  inside the style.xml file located in the .idea folder.
+         *  It stores all default look and feel and it's possible to
+         *  put custom look and feel.
+         *
+         *  I think the problem is to find the right classLoader. No one works,
+         *  every time an error like:
+         *   - UIDefaults.getUI() failed: no ComponentUI class for:... ;
+         *   - NullPointerException: Colors cannot be null.
+         *  is raised.
+         *  I have tried to do another project for doing this and it works...
+         *  It needs only the ClassLoader to be set with:
+         *   UIManager.getDefaults().put("ClassLoader", loader);
+         *  with a loader that loads external look and feel jars.
+         *
+         *  Custom loaded jar AbsolutePaths and URLs can be retrieved from:
+         *      LookAndFeelPropertyManager.LookAndFeelStruct lafStruct =
+         *      LookAndFeelPropertyManager.getLookAndFeelFromClassName(myLookAndFeel);
+         *  with:
+         *      lafStruct.getAbsolutePath();
+         *  or:
+         *      lafStruct.getURL();
+         *  Or an array of loaded jar Urls with:
+         *      LookAndFeelPropertyManager.getURLs();
+         **/
+
+      }
+
+    } catch (Exception e){
+      e.printStackTrace();
+    }
+
+  }
+
+  //NecroRayder
+  public void refreshLookAndFeel(){
+    setLookAndFeel(getLookAndFeel());
+  }
+
+  public void setOnlyLookAndFeel(String lookAndFeel){
+
+    myLookAndFeel = lookAndFeel;
+
+    if (myLookAndFeel == null || myLookAndFeel.isEmpty())
+      myLookAndFeel = LookAndFeelProperty.getDefaultLookAndFeel().getClass().getName();
+
+  }
+
   public String getMainComponentBinding(){
     return myMainComponentBinding;
   }
@@ -87,6 +175,11 @@ public final class RadRootContainer extends RadContainer implements IRootContain
       final String classToBind = getClassToBind();
       if (classToBind != null){
         writer.addAttribute("bind-to-class", classToBind);
+      }
+      //NecroRayder
+      final String lookAndFeel = getLookAndFeel();
+      if (lookAndFeel != null){
+        writer.addAttribute("look-and-feel", lookAndFeel);
       }
       final String mainComponentBinding = getMainComponentBinding();
       if (mainComponentBinding != null) {
@@ -275,7 +368,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   public void removeInspectionSuppression(final LwInspectionSuppression suppression) {
     for(LwInspectionSuppression existing: myInspectionSuppressions) {
       if (existing.getInspectionId().equals(suppression.getInspectionId()) &&
-        Comparing.equal(existing.getComponentId(), suppression.getComponentId())) {
+          Comparing.equal(existing.getComponentId(), suppression.getComponentId())) {
         myInspectionSuppressions.remove(existing);
         break;
       }
