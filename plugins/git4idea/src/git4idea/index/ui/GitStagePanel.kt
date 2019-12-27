@@ -8,8 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
+import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.i18n.GitBundle
 import git4idea.index.GitStageTracker
@@ -24,6 +27,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   private val project = tracker.project
 
   private val tree: GitStageTree
+  private val commitPanel: GitCommitPanel
   private val progressStripe: ProgressStripe
 
   private val state: GitStageTracker.State
@@ -31,6 +35,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
 
   init {
     tree = MyChangesTree(project)
+    commitPanel = MyGitCommitPanel()
 
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
@@ -43,8 +48,12 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
 
     val scrolledTree = ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP)
     progressStripe = ProgressStripe(scrolledTree, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+    val treeMessageSplitter = OnePixelSplitter(true, "git.stage.tree.message.splitter", 0.7f)
+    treeMessageSplitter.firstComponent = progressStripe
+    treeMessageSplitter.secondComponent = commitPanel
+
     add(toolbar.component, BorderLayout.NORTH)
-    add(progressStripe, BorderLayout.CENTER)
+    add(treeMessageSplitter, BorderLayout.CENTER)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     if (tracker.isRefreshInProgress) {
@@ -56,8 +65,18 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     Disposer.register(disposableParent, this)
   }
 
+  private fun performCommit(amend: Boolean) {
+    val rootsToCommit = state.stagedRoots
+    if (rootsToCommit.isEmpty()) return
+
+    if (commitPanel.commitMessage.text.isBlank() && !showEmptyCommitMessageConfirmation()) return
+
+    git4idea.index.performCommit(project, rootsToCommit, commitPanel.commitMessage.text, amend)
+  }
+
   fun update() {
     tree.update()
+    commitPanel.commitButton.isEnabled = state.hasStagedRoots()
   }
 
   override fun getData(dataId: String): Any? {
@@ -71,6 +90,16 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   inner class MyChangesTree(project: Project) : GitStageTree(project) {
     override val state
       get() = this@GitStagePanel.state
+  }
+
+  inner class MyGitCommitPanel : GitCommitPanel(project, this) {
+    override fun isFocused(): Boolean {
+      return IdeFocusManager.getInstance(project).getFocusedDescendantFor(this@GitStagePanel) != null
+    }
+
+    override fun performCommit() {
+      performCommit(isAmend)
+    }
   }
 
   inner class MyGitStageTrackerListener : GitStageTrackerListener {

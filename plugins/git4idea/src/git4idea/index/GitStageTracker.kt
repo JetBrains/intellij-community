@@ -99,6 +99,16 @@ class GitStageTracker(val project: Project) : Disposable {
   data class State(val gitState: Map<VirtualFile, List<GitFileStatus>>) {
     private val roots: Collection<VirtualFile>
       get() = gitState.keys
+    val stagedRoots: Set<VirtualFile>
+      get() {
+        return gitState.filterValues {
+          it.any { line -> line.getStagedStatus() != null }
+        }.keys
+      }
+
+    fun hasStagedRoots(): Boolean {
+      return gitState.values.flatten().any { it.getStagedStatus() != null }
+    }
 
     fun updatedWith(newState: State, roots: Collection<VirtualFile> = this.roots.union(newState.roots)): State {
       val gitState = hashMapOf<VirtualFile, List<GitFileStatus>>()
