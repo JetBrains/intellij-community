@@ -278,6 +278,41 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
     assertRangeText 'in', 'FileInputStream', 'FileInputStream', 'catch'
   }
 
+  void testRecordComponents() {
+    myFixture.configureByText 'A.java', '''
+      record A(String s) {
+        void test() {
+          <caret>s();
+          s();
+          String a = s;
+        }
+      }'''.stripIndent()
+    ctrlShiftF7()
+    assertRangesAndTexts "17:18 s", "42:43 s", "51:52 s", "71:72 s"
+  }
+
+  void testCompactConstructorParameters() {
+    myFixture.configureByText 'A.java', '''
+      record A(String s) {
+        A {
+          <caret>s;
+        }
+      }'''.stripIndent()
+    ctrlShiftF7()
+    assertRangesAndTexts "17:18 s", "32:33 s"
+  }
+
+  /**
+   * @param expected sorted by startOffset
+   */
+  private void assertRangesAndTexts(String... expected) {
+    def highlighters = myFixture.editor.markupModel.allHighlighters
+    def actual = highlighters
+      .sort { it.startOffset }
+      .collect { "$it.startOffset:$it.endOffset ${myFixture.file.text.substring(it.startOffset, it.endOffset)}".toString() }
+    assertSameElements(actual, expected)
+  }
+
   private void configureFile() {
     def testName = getTestName(false)
     def file = myFixture.copyFileToProject "/codeInsight/highlightUsagesHandler/${testName}.java", "${testName}.java"
