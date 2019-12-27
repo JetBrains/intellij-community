@@ -8,6 +8,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.IntroduceFunctionalParameterHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
@@ -123,9 +124,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
 
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
-    if (!(elementToRename instanceof PsiLocalVariable) &&
-        !(elementToRename instanceof PsiParameter) &&
-        !(elementToRename instanceof PsiLabeledStatement)) {
+    if (!PsiUtil.isJvmLocalVariable(elementToRename) && !(elementToRename instanceof PsiLabeledStatement)) {
       return false;
     }
     SearchScope useScope = PsiSearchHelper.getInstance(elementToRename.getProject()).getUseScope(elementToRename);
