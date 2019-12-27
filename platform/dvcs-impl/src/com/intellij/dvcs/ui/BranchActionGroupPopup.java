@@ -230,8 +230,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     if (myKey != null) {
       setHeaderComponent(mySpeedSearchPatternField);
       mySpeedSearchPatternField.getTextEditor().setFocusable(true);
-      IdeFocusManager.getInstance(myProject)
-        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySpeedSearchPatternField, true));
+      IdeFocusManager.getGlobalInstance().requestFocus(mySpeedSearchPatternField, true);
     }
     super.afterShow();
     myShown = true;
