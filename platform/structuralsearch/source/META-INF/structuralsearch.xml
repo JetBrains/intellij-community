@@ -7,7 +7,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name" groupName="General"
+    <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
