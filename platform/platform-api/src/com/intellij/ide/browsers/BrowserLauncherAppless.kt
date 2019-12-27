@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.Patches
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.GeneralSettings
@@ -14,10 +15,8 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import java.awt.Desktop
@@ -46,8 +45,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
   }
 
-  protected open fun openWithExplicitBrowser(url: String, settings: GeneralSettings, project: Project?) {
-    browseUsingPath(url, settings.browserPath, project = project)
+  protected open fun openWithExplicitBrowser(url: String, browserPath: String?, project: Project?) {
+    browseUsingPath(url, browserPath, project = project)
   }
 
   private fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
@@ -92,7 +91,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       openWithDefaultBrowser(url, project)
     }
     else {
-      openWithExplicitBrowser(url, settings, project = project)
+      openWithExplicitBrowser(url, settings.browserPath, project = project)
     }
   }
 
@@ -122,7 +121,10 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       showError(IdeBundle.message("browser.default.not.supported"), project = project)
       return
     }
-    doLaunch(url, command, null, project)
+
+    if (url.startsWith("jar:")) return
+
+    doLaunch(GeneralCommandLine(command).withParameters(url), project)
   }
 
   protected open fun signUrl(url: String): String = url
@@ -144,6 +146,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
                                project: Project?,
                                openInNewWindow: Boolean,
                                additionalParameters: Array<String>): Boolean {
+    if (url != null && url.startsWith("jar:")) return false
+
     val byName = browserPath == null && browser != null
     val effectivePath = if (byName) PathUtil.toSystemDependentName(browser!!.path) else browserPath
     val launchTask: (() -> Unit)? = if (byName) { -> browseUsingPath(url, null, browser!!, project, openInNewWindow, additionalParameters) } else null
@@ -154,24 +158,12 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return false
     }
 
-    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow), browser, project, additionalParameters, launchTask)
-  }
-
-  private fun doLaunch(url: String?,
-                       command: List<String>,
-                       browser: WebBrowser?,
-                       project: Project?,
-                       additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY,
-                       launchTask: (() -> Unit)? = null): Boolean {
-    if (url != null && url.startsWith("jar:")) {
-      return false
-    }
-
-    val commandWithUrl = command.toMutableList()
+    val commandWithUrl = BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow).toMutableList()
     if (url != null) {
       if (browser != null) browser.addOpenUrlParameter(commandWithUrl, url)
-      else commandWithUrl.add(url)
+      else commandWithUrl += url
     }
+
     val commandLine = GeneralCommandLine(commandWithUrl)
 
     val browserSpecificSettings = browser?.specificSettings
@@ -179,23 +171,33 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       commandLine.environment.putAll(browserSpecificSettings.environmentVariables)
     }
 
-    addArgs(commandLine, browserSpecificSettings, additionalParameters)
+    val specific = browserSpecificSettings?.additionalParameters ?: emptyList()
+    if (specific.size + additionalParameters.size > 0) {
+      if (isOpenCommandUsed(commandLine)) {
+        commandLine.addParameter("--args")
+      }
+      commandLine.addParameters(specific)
+      commandLine.addParameters(*additionalParameters)
+    }
 
-    return try {
-      checkCreatedProcess(browser, project, commandLine, commandLine.createProcess(), launchTask)
+    return doLaunch(commandLine, project, browser, launchTask)
+  }
+
+  private fun doLaunch(command: GeneralCommandLine, project: Project?, browser: WebBrowser? = null, launchTask: (() -> Unit)? = null) =
+    try {
+      LOG.debug { command.commandLineString }
+      checkCreatedProcess(command, project, browser, launchTask)
       true
     }
     catch (e: ExecutionException) {
       showError(e.message, browser, project, null, null)
       false
     }
-  }
 
-  protected open fun checkCreatedProcess(browser: WebBrowser?,
-                                         project: Project?,
-                                         commandLine: GeneralCommandLine,
-                                         process: Process,
-                                         launchTask: (() -> Unit)?) { }
+  @Throws(ExecutionException::class)
+  protected open fun checkCreatedProcess(command: GeneralCommandLine, project: Project?, browser: WebBrowser?, launchTask: (() -> Unit)?) {
+    CapturingProcessHandler.Silent(command).runProcess(10000, false).checkSuccess(LOG)
+  }
 
   protected open fun showError(error: String?,
                                browser: WebBrowser? = null,
@@ -222,22 +224,3 @@ private val defaultBrowserCommand: List<String>?
     SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
     else -> null
   }
-
-private fun addArgs(command: GeneralCommandLine, settings: BrowserSpecificSettings?, additional: Array<String>) {
-  val specific = settings?.additionalParameters ?: emptyList<String>()
-  if (specific.size + additional.size > 0) {
-    if (BrowserLauncherAppless.isOpenCommandUsed(command)) {
-      if (BrowserUtil.isOpenCommandSupportArgs()) {
-        command.addParameter("--args")
-      }
-      else {
-        LOG.warn("'open' command doesn't allow passing command-line arguments, so they will be ignored: " +
-                 StringUtil.join(specific, ", ") + " " + additional.contentToString())
-        return
-      }
-    }
-
-    command.addParameters(specific)
-    command.addParameters(*additional)
-  }
-}

@@ -102,10 +102,6 @@ public class BrowserUtil {
     }
   }
 
-  public static boolean isOpenCommandSupportArgs() {
-    return SystemInfo.isMacOSSnowLeopard;
-  }
-
   @NotNull
   public static String getDefaultAlternativeBrowserPath() {
     if (SystemInfo.isWindows) {

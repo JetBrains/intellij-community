@@ -2,9 +2,9 @@
 package com.intellij.ide.browsers
 
 import com.intellij.concurrency.JobScheduler
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -48,7 +48,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
     return url
   }
 
-  override fun openWithExplicitBrowser(url: String, settings: GeneralSettings, project: Project?) {
+  override fun openWithExplicitBrowser(url: String, browserPath: String?, project: Project?) {
     val browserManager = WebBrowserManager.getInstance()
     if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
       browserManager.firstActiveBrowser?.let {
@@ -56,14 +56,14 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
         return
       }
     }
-    else if (SystemInfo.isMac && "open" == settings.browserPath) {
+    else if (SystemInfo.isMac && "open" == browserPath) {
       browserManager.firstActiveBrowser?.let {
         browseUsingPath(url, null, it, project)
         return
       }
     }
 
-    super.openWithExplicitBrowser(url, settings, project)
+    super.openWithExplicitBrowser(url, browserPath, project)
   }
 
   override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, launchTask: (() -> Unit)?) {
@@ -79,8 +79,10 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
     }, project?.disposed)
   }
 
-  override fun checkCreatedProcess(browser: WebBrowser?, project: Project?, commandLine: GeneralCommandLine, process: Process, launchTask: (() -> Unit)?) {
-    if (isOpenCommandUsed(commandLine)) {
+  @Throws(ExecutionException::class)
+  override fun checkCreatedProcess(command: GeneralCommandLine, project: Project?, browser: WebBrowser?, launchTask: (() -> Unit)?) {
+    if (isOpenCommandUsed(command)) {
+      val process = command.createProcess()
       val future = ApplicationManager.getApplication().executeOnPooledThread {
         try {
           if (process.waitFor() == 1) {
@@ -92,6 +94,9 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
       }
       // 10 seconds is enough to start
       JobScheduler.getScheduler().schedule({ future.cancel(true) }, 10, TimeUnit.SECONDS)
+    }
+    else {
+      super.checkCreatedProcess(command, project, browser, launchTask)
     }
   }
 }
