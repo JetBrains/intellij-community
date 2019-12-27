@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
@@ -125,6 +126,7 @@ internal class FilteringBranchesTree(project: Project,
   : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, rootNode) {
 
   private val expandedPaths = SmartHashSet<TreePath>()
+  private var treeState: TreeState? = null
 
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
@@ -194,25 +196,25 @@ internal class FilteringBranchesTree(project: Project,
 
   override fun rebuildTree(initial: Boolean): Boolean {
     val rebuilded = buildTreeNodesIfNeeded()
-    expandedPaths.addAll(TreeUtil.collectExpandedPaths(tree))
+    if (!initial) {
+       treeState = TreeState.createOn(tree, root)
+    }
     searchModel.updateStructure()
     if (initial) {
       TreeUtil.expand(tree, 2)
     }
     else {
-      restorePreviouslyExpandedPaths()
+      treeState?.applyTo(tree)
     }
 
     return rebuilded
   }
 
   fun refreshTree() {
-    expandedPaths.addAll(TreeUtil.collectExpandedPaths(tree))
-    val selectionPaths = tree.selectionModel.selectionPaths
+    treeState = TreeState.createOn(tree, root)
     refreshTreeNodesFromModel()
     searchModel.updateStructure()
-    restorePreviouslyExpandedPaths()
-    tree.selectionModel.selectionPaths = selectionPaths
+    treeState?.applyTo(tree)
   }
 
   private fun buildTreeNodesIfNeeded(): Boolean {
