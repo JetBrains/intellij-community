@@ -76,12 +76,21 @@ public class ProcessOutput {
    * @param logger where to put error information
    * @return true iff exit code is zero
    */
-  public boolean checkSuccess(@NotNull final Logger logger) {
-    if (getExitCode() != 0 || isTimeout()) {
-      logger.info(getStderr() + (isTimeout()? "\nTimed out" : "\nExit code " + getExitCode()));
-      return false;
+  public boolean checkSuccess(@NotNull Logger logger) {
+    int ec = getExitCode();
+    if (ec == 0 && !isTimeout()) {
+      return true;
     }
-    return true;
+
+    logger.info(isTimeout() ? "Timed out" : "Exit code " + ec);
+
+    String output = getStderr();
+    if (output.isEmpty()) output = getStdout();
+    if (!output.isEmpty()) {
+      logger.info(output);
+    }
+
+    return false;
   }
 
   public void setExitCode(int exitCode) {
