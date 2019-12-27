@@ -70,7 +70,7 @@ public class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandl
       }
     }
 
-    public boolean isReferenceToRecordComponent(String name, PsiReferenceExpression referenceExpression) {
+    private boolean isReferenceToRecordComponent(String name, PsiReferenceExpression referenceExpression) {
       if (!name.equals(referenceExpression.getReferenceName())) return false;
       LightRecordMember recordMember = tryCast(referenceExpression.resolve(), LightRecordMember.class);
       if (recordMember == null) return false;
