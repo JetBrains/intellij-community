@@ -4,10 +4,25 @@ package com.intellij.codeInsight;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomDeclarationSearcher;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PsiDeclaredTarget;
+import com.intellij.pom.references.PomService;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTreeUtilKt;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class TargetElementUtilBase {
 
@@ -59,5 +74,71 @@ public final class TargetElementUtilBase {
   private static TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
     TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx ? (TargetElementEvaluatorEx)result : null;
+  }
+
+  @Nullable
+  static TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
+    TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
+    return result instanceof TargetElementEvaluatorEx2 ? (TargetElementEvaluatorEx2)result : null;
+  }
+
+  @ApiStatus.Internal
+  static PsiElement getNamedElement(@Nullable PsiElement element) {
+    if (element == null) return null;
+
+    TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());
+    if (evaluator != null) {
+      PsiElement result = evaluator.getNamedElement(element);
+      if (result != null) return result;
+    }
+
+    PsiElement parent;
+    if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
+      // A bit hacky: depends on the named element's text offset being overridden correctly
+      if (!(parent instanceof PsiFile) && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
+        if (evaluator == null || evaluator.isAcceptableNamedParent(parent)) {
+          return parent;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  public static PsiElement getNamedElement(@Nullable PsiElement element, int offsetInElement) {
+    if (element == null) return null;
+
+    PsiUtilCore.ensureValid(element);
+
+    final List<PomTarget> targets = new ArrayList<>();
+    final Consumer<PomTarget> consumer = target -> {
+      if (target instanceof PsiDeclaredTarget) {
+        final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+        final PsiElement navigationElement = declaredTarget.getNavigationElement();
+        final TextRange range = declaredTarget.getNameIdentifierRange();
+        if (range != null && !range.shiftRight(navigationElement.getTextRange().getStartOffset())
+          .contains(element.getTextRange().getStartOffset() + offsetInElement)) {
+          return;
+        }
+      }
+      targets.add(target);
+    };
+
+    PsiElement parent = element;
+
+    int offset = offsetInElement;
+    while (parent != null && !(parent instanceof PsiFileSystemItem)) {
+      for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
+        searcher.findDeclarationsAt(parent, offset, consumer);
+        if (!targets.isEmpty()) {
+          final PomTarget target = targets.get(0);
+          return target == null ? null : PomService.convertToPsi(element.getProject(), target);
+        }
+      }
+      offset += parent.getStartOffsetInParent();
+      parent = parent.getParent();
+    }
+
+    return getNamedElement(element);
   }
 }
