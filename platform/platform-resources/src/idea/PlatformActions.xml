@@ -505,7 +505,7 @@
 
     <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
 
-    <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime" text="Log icons load time"/>
+    <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime" text="Log Icons Load Time"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
@@ -570,8 +570,8 @@
 
       <!-- Edit -->
       <group id="EditMenu" popup="true">
-        <action id="$Undo" class="com.intellij.ide.actions.UndoAction" icon="AllIcons.Actions.Undo" text="Undo"/>
-        <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="AllIcons.Actions.Redo" text="Redo"/>
+        <action id="$Undo" class="com.intellij.ide.actions.UndoAction" icon="AllIcons.Actions.Undo"/>
+        <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="AllIcons.Actions.Redo"/>
         <separator/>
         <group id="CutCopyPasteGroup">
           <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="AllIcons.Actions.Menu_cut"/>
