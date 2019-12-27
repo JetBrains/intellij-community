@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
@@ -29,23 +30,26 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     LafManager lafMan = LafManager.getInstance();
     UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
+    UIManager.LookAndFeelInfo currentLaf = lafMan.getCurrentLookAndFeel();
+
     for (UIManager.LookAndFeelInfo lf : lfs) {
-      group.add(new LafChangeAction(lf));
+      group.add(new LafChangeAction(lf, currentLaf == lf));
     }
   }
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    LafManager lafMan = LafManager.getInstance();
-
-    popup.addListSelectionListener(event -> {
-      JList list = (JList)event.getSource();
-      Object item = list.getSelectedValue();
-      if (item instanceof AnActionHolder) {
-        LafChangeAction action = (LafChangeAction)((AnActionHolder)item).getAction();
-        switchLafAndUpdateUI(lafMan, action.myLookAndFeelInfo, false);
-      }
-    });
+    if (Registry.is("ide.instant.theme.switch")) {
+      LafManager lafMan = LafManager.getInstance();
+      popup.addListSelectionListener(event -> {
+        JList list = (JList)event.getSource();
+        Object item = list.getSelectedValue();
+        if (item instanceof AnActionHolder) {
+          LafChangeAction action = (LafChangeAction)((AnActionHolder)item).getAction();
+          switchLafAndUpdateUI(lafMan, action.myLookAndFeelInfo, false);
+        }
+      });
+    }
 
     super.showPopup(e, popup);
   }
@@ -106,12 +110,21 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   private static class LafChangeAction extends DumbAwareAction {
     private final UIManager.LookAndFeelInfo myLookAndFeelInfo;
 
-    private LafChangeAction(UIManager.LookAndFeelInfo lf) {
-      super(lf.getName());
+    private LafChangeAction(UIManager.LookAndFeelInfo lf, boolean currentLaf) {
+      super(lf.getName(), null, getIcon(currentLaf));
       myLookAndFeelInfo = lf;
     }
 
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {}
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (!Registry.is("ide.instant.theme.switch")) {
+        switchLafAndUpdateUI(LafManager.getInstance(), myLookAndFeelInfo, false);
+      }
+    }
+
+    @Nullable
+    private static Icon getIcon(boolean currentLaf) {
+      return Registry.is("ide.instant.theme.switch") ? null : currentLaf ? AllIcons.Actions.Forward : ourNotCurrentAction;
+    }
   }
 }
