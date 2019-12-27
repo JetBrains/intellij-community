@@ -54,6 +54,30 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
     doTest();
   }
   public void testAnnotationArgument() { doTest(); }
+  public void testAssertionStmt() { doTest(); }
+  public void testExceptionCtor() { doTest(); }
+  public void testSpecifiedExceptionCtor() {
+    boolean old = myTool.ignoreForExceptionConstructors;
+    try {
+      myTool.ignoreForSpecifiedExceptionConstructors = "java.io.IOException";
+      myTool.ignoreForExceptionConstructors = false;
+      doTest();
+    }
+    finally {
+      myTool.ignoreForSpecifiedExceptionConstructors = "";
+      myTool.ignoreForExceptionConstructors = old;
+    }
+  }
+
+  public void testEnumConstantIgnored() {
+    boolean oldState = myTool.setIgnoreForEnumConstants(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForEnumConstants(oldState);
+    }
+  }
 
   @Override
   protected String getTestDataPath() {

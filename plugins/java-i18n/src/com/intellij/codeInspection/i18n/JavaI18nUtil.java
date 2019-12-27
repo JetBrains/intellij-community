@@ -22,6 +22,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.util.UastExpressionUtils;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -105,6 +106,20 @@ public class JavaI18nUtil extends I18nUtil {
     return false;
   }
 
+  static boolean isPassedToAnnotatedParam(@NotNull UExpression expression,
+                                          final String annFqn,
+                                          @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef,
+                                          @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
+    UExpression parent = getTopLevelExpression(expression);
+    if (!(parent instanceof UCallExpression)) return false;
+    int idx = (((UCallExpression)parent).getValueArguments()).indexOf(expression);
+    if (idx == -1) return false;
+
+    PsiMethod method = ((UCallExpression)parent).resolve();
+    return method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, resourceBundleRef, nonNlsTargets);
+    
+  }
+
   @NotNull
   static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
     while (expression.getParent() instanceof PsiExpression) {
@@ -115,6 +130,23 @@ public class JavaI18nUtil extends I18nUtil {
       }
       expression = parent;
       if (expression instanceof PsiAssignmentExpression) break;
+    }
+    return expression;
+  }
+
+  @NotNull
+  static UExpression getTopLevelExpression(@NotNull UExpression expression) {
+    while (expression.getUastParent() instanceof UExpression) {
+      final UExpression parent = (UExpression)expression.getUastParent();
+      if (parent instanceof UBlockExpression || parent instanceof UReturnExpression) {
+        break;
+      }
+      if (parent instanceof UIfExpression &&
+          ((UIfExpression)parent).getCondition() == expression) {
+        break;
+      }
+      expression = parent;
+      if (UastExpressionUtils.isAssignment(expression)) break;
     }
     return expression;
   }

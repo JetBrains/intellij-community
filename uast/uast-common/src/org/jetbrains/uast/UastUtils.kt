@@ -18,11 +18,11 @@
 
 package org.jetbrains.uast
 
-import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
@@ -168,6 +168,23 @@ fun UReferenceExpression?.getQualifiedName(): String? = (this?.resolve() as? Psi
  */
 fun UExpression.evaluateString(): String? = evaluate() as? String
 
+fun UExpression.skipParenthesizedExprDown(): UExpression? {
+  var expression = this
+  while (expression is UParenthesizedExpression) {
+    expression = expression.expression
+  }
+  return expression
+}
+
+fun skipParenthesizedExprUp(elem: UElement?): UElement? {
+  var parent = elem
+  while (parent is UParenthesizedExpression) {
+    parent = parent.uastParent
+  }
+  return parent
+}
+
+
 /**
  * Get a physical [File] for this file, or null if there is no such file on disk.
  */
@@ -233,3 +250,12 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
     else -> false
   }
 
+fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
+  val annotation : UAnnotation = getParentOfType(UAnnotation::class.java, true)!!
+  val fqn = annotation.qualifiedName ?: return null
+  val psiClass = JavaPsiFacade.getInstance(sourcePsi!!.project).findClass(fqn, sourcePsi!!.resolveScope)
+  if (psiClass != null && psiClass.isAnnotationType) {
+    return ArrayUtil.getFirstElement(psiClass.findMethodsByName(this.name ?: "value", false))
+  }
+  return null
+}
