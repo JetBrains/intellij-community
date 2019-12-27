@@ -12,6 +12,8 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
@@ -62,6 +64,10 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
   @Nullable
   @Override
   public ShellcheckResponse doAnnotate(@NotNull CollectedInfo fileInfo) {
+    // Temporary solution to avoid execution under read action in dumb mode. Should be removed after IDEA-229905 will be fixed
+    Application application = ApplicationManager.getApplication();
+    if (application != null && application.isReadAccessAllowed()) return null;
+
     String shellcheckExecutable = ShSettings.getShellcheckPath();
     if (!ShShellcheckUtil.isExecutionValidPath(shellcheckExecutable)) return null;
 
