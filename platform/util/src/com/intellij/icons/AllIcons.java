@@ -1181,9 +1181,9 @@ public class AllIcons {
       /** 4x14 */ public static final Icon Bottom = load("/ide/shadow/bottom.svg");
       /** 18x22 */ public static final Icon BottomLeft = load("/ide/shadow/bottomLeft.svg");
       /** 18x22 */ public static final Icon BottomRight = load("/ide/shadow/bottomRight.svg");
-      /** 11x4 */ public static final Icon Left = load("/ide/shadow/left.svg");
-      /** 11x4 */ public static final Icon Right = load("/ide/shadow/right.svg");
-      /** 4x7 */ public static final Icon Top = load("/ide/shadow/top.svg");
+      /** 10x4 */ public static final Icon Left = load("/ide/shadow/left.svg");
+      /** 10x4 */ public static final Icon Right = load("/ide/shadow/right.svg");
+      /** 4x6 */ public static final Icon Top = load("/ide/shadow/top.svg");
       /** 18x14 */ public static final Icon TopLeft = load("/ide/shadow/topLeft.svg");
       /** 18x14 */ public static final Icon TopRight = load("/ide/shadow/topRight.svg");
 
