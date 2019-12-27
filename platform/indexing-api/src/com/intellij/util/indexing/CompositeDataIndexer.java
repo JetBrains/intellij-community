@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 
 public interface CompositeDataIndexer<K, V, SubIndexerType, SubIndexerVersion> extends DataIndexer<K, V, FileContent> {
@@ -40,8 +42,10 @@ public interface CompositeDataIndexer<K, V, SubIndexerType, SubIndexerVersion> e
   @Override
   default Map<K, V> map(@NotNull FileContent inputData) {
     SubIndexerType subIndexerType = calculateSubIndexer(inputData);
-    if (subIndexerType == null) return Collections.emptyMap();
-    return map(inputData, subIndexerType);
+    if (subIndexerType == null && !InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) {
+      return Collections.emptyMap();
+    }
+    return map(inputData, ObjectUtils.notNull(subIndexerType));
   }
 
   @NotNull
