@@ -16,6 +16,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,7 +195,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param newName   the new file name
    * @throws IOException if file failed to be renamed
    */
-  public void rename(Object requestor, @NotNull String newName) throws IOException {
+  public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
     if (!getFileSystem().isValidName(newName)) {
@@ -295,7 +296,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the file if found any, {@code null} otherwise
    */
   @Nullable
-  public VirtualFile findChild(@NotNull String name) {
+  public VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
     if (children == null) return null;
     for (VirtualFile child : children) {
@@ -307,7 +308,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   @NotNull
-  public VirtualFile findOrCreateChildData(Object requestor, @NotNull String name) throws IOException {
+  public VirtualFile findOrCreateChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     final VirtualFile child = findChild(name);
     if (child != null) return child;
     return createChildData(requestor, name);
@@ -335,7 +336,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the file if found any, {@code null} otherwise
    */
   @Nullable
-  public VirtualFile findFileByRelativePath(@NotNull String relPath) {
+  public VirtualFile findFileByRelativePath(@NotNull @NonNls String relPath) {
     VirtualFile child = this;
 
     int off = CharArrayUtil.shiftForward(relPath, 0, "/");
@@ -375,7 +376,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if directory failed to be created
    */
   @NotNull
-  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
     }
@@ -406,7 +407,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if file failed to be created
    */
   @NotNull
-  public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+  public VirtualFile createChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("file.create.wrong.parent.error"));
     }
@@ -465,7 +466,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   @NotNull
-  public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
+  public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull @NonNls String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
     }
@@ -673,7 +674,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return whether file name equals to this name
    *         result depends on the filesystem specifics
    */
-  protected boolean nameEquals(@NotNull String name) {
+  protected boolean nameEquals(@NotNull @NonNls String name) {
     return Comparing.equal(getNameSequence(), name);
   }
 

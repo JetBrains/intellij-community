@@ -47,13 +47,13 @@ public interface ConfigurationType extends PossiblyDumbAware {
    * The ID is used to store run configuration settings in a project or workspace file and
    * must not change between plugin versions.
    */
-  @NotNull
+  @NotNull @NonNls
   String getId();
 
   /**
    * The name of the run configuration group in a configuration file. The same rules as for id. Useful when id cannot be changed.
    */
-  @NotNull
+  @NotNull @NonNls
   default String getTag() {
     return getId();
   }

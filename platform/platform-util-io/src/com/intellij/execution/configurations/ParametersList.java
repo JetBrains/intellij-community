@@ -16,6 +16,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,16 +48,16 @@ public final class ParametersList implements Cloneable {
   private final List<ParamsGroup> myGroups = new SmartList<>();
   private final NotNullLazyValue<Map<String, String>> myMacroMap = NotNullLazyValue.createValue(ParametersList::computeMacroMap);
 
-  public boolean hasParameter(@NotNull String parameter) {
+  public boolean hasParameter(@NotNull @NonNls String parameter) {
     return myParameters.contains(parameter);
   }
 
-  public boolean hasProperty(@NotNull String propertyName) {
+  public boolean hasProperty(@NotNull @NonNls String propertyName) {
     return getPropertyValue(propertyName) != null;
   }
 
   @Nullable
-  public String getPropertyValue(@NotNull String propertyName) {
+  public String getPropertyValue(@NotNull @NonNls String propertyName) {
     String exact = "-D" + propertyName;
     String prefix = "-D" + propertyName + "=";
     int index = indexOfParameter(o -> o.equals(exact) || o.startsWith(prefix));
@@ -71,7 +72,7 @@ public final class ParametersList implements Cloneable {
   }
 
   @NotNull
-  public Map<String, String> getProperties(String valueIfMissing) {
+  public Map<String, String> getProperties(@NonNls String valueIfMissing) {
     Map<String, String> result = new LinkedHashMap<>();
     JBIterable<Matcher> matchers = JBIterable.from(myParameters).map(PROPERTY_PATTERN::matcher).filter(Matcher::matches);
     for (Matcher matcher : matchers) {
@@ -108,29 +109,29 @@ public final class ParametersList implements Cloneable {
     myGroups.clear();
   }
 
-  public void prepend(@NotNull String parameter) {
+  public void prepend(@NotNull @NonNls String parameter) {
     addAt(0, parameter);
   }
 
-  public void prependAll(@NotNull String... parameter) {
+  public void prependAll(@NotNull @NonNls String... parameter) {
     addAll(parameter);
     Collections.rotate(myParameters, parameter.length);
   }
 
-  public void addParametersString(@Nullable String parameters) {
+  public void addParametersString(@Nullable @NonNls String parameters) {
     if (StringUtil.isEmptyOrSpaces(parameters)) return;
     for (String param : parse(parameters)) {
       add(param);
     }
   }
 
-  public void add(@Nullable String parameter) {
+  public void add(@Nullable @NonNls String parameter) {
     if (parameter == null) return;
     myParameters.add(expandMacros(parameter));
   }
 
   @NotNull
-  public ParamsGroup addParamsGroup(@NotNull String groupId) {
+  public ParamsGroup addParamsGroup(@NotNull @NonNls String groupId) {
     return addParamsGroup(new ParamsGroup(groupId));
   }
 
@@ -147,7 +148,7 @@ public final class ParametersList implements Cloneable {
   }
 
   @NotNull
-  public ParamsGroup addParamsGroupAt(int index, @NotNull String groupId) {
+  public ParamsGroup addParamsGroupAt(int index, @NotNull @NonNls String groupId) {
     ParamsGroup group = new ParamsGroup(groupId);
     myGroups.add(index, group);
     return group;
@@ -173,7 +174,7 @@ public final class ParametersList implements Cloneable {
   }
 
   @Nullable
-  public ParamsGroup getParamsGroup(@NotNull String name) {
+  public ParamsGroup getParamsGroup(@NotNull @NonNls String name) {
     for (ParamsGroup group : myGroups) {
       if (name.equals(group.getId())) return group;
     }
@@ -185,21 +186,21 @@ public final class ParametersList implements Cloneable {
     return myGroups.remove(index);
   }
 
-  public void addAt(int index, @NotNull String parameter) {
+  public void addAt(int index, @NotNull @NonNls String parameter) {
     myParameters.add(index, expandMacros(parameter));
   }
 
   /**
    * Keeps the {@code <propertyName>} property if defined; or defines it with {@code System.getProperty()} as a value if present.
    */
-  public void defineSystemProperty(@NotNull String propertyName) {
+  public void defineSystemProperty(@NotNull @NonNls String propertyName) {
     defineProperty(propertyName, System.getProperty(propertyName));
   }
 
   /**
    * Keeps the {@code <propertyName>} property if defined; otherwise appends the new one ignoring null values.
    */
-  public void defineProperty(@NotNull String propertyName, @Nullable String propertyValue) {
+  public void defineProperty(@NotNull @NonNls String propertyName, @Nullable @NonNls String propertyValue) {
     if (propertyValue == null) return;
     String exact = "-D" + propertyName;
     String prefix = "-D" + propertyName + "=";
@@ -212,7 +213,7 @@ public final class ParametersList implements Cloneable {
   /**
    * Adds {@code -D<propertyName>} to the list; replaces the value of the last property if defined.
    */
-  public void addProperty(@NotNull String propertyName) {
+  public void addProperty(@NotNull @NonNls String propertyName) {
     String exact = "-D" + propertyName;
     String prefix = "-D" + propertyName + "=";
     replaceOrAddAt(exact, myParameters.size(), o -> o.equals(exact) || o.startsWith(prefix));
@@ -222,7 +223,7 @@ public final class ParametersList implements Cloneable {
    * Adds {@code -D<propertyName>=<propertyValue>} to the list ignoring null values;
    * replaces the value of the last property if defined.
    */
-  public void addProperty(@NotNull String propertyName, @Nullable String propertyValue) {
+  public void addProperty(@NotNull @NonNls String propertyName, @Nullable @NonNls String propertyValue) {
     if (propertyValue == null) return;
     String exact = "-D" + propertyName;
     String prefix = "-D" + propertyName + "=";
@@ -234,7 +235,7 @@ public final class ParametersList implements Cloneable {
    * Adds {@code -D<propertyName>=<propertyValue>} to the list ignoring null, empty and spaces-only values;
    * replaces the value of the last property if defined.
    */
-  public void addNotEmptyProperty(@NotNull String propertyName, @Nullable String propertyValue) {
+  public void addNotEmptyProperty(@NotNull @NonNls String propertyName, @Nullable @NonNls String propertyValue) {
     if (StringUtil.isEmptyOrSpaces(propertyValue)) return;
     addProperty(propertyName, propertyValue);
   }
@@ -243,7 +244,7 @@ public final class ParametersList implements Cloneable {
    * Replaces the last parameter that starts with the {@code <parameterPrefix>} with {@code <replacement>};
    * otherwise appends {@code <replacement>} to the list.
    */
-  public void replaceOrAppend(@NotNull String parameterPrefix, @NotNull String replacement) {
+  public void replaceOrAppend(@NotNull @NonNls String parameterPrefix, @NotNull @NonNls String replacement) {
     replaceOrAddAt(expandMacros(replacement), myParameters.size(), o -> o.startsWith(parameterPrefix));
   }
 
@@ -251,7 +252,7 @@ public final class ParametersList implements Cloneable {
    * Replaces the last parameter that starts with the {@code <parameterPrefix>} with {@code <replacement>};
    * otherwise prepends this list with {@code <replacement>}.
    */
-  public void replaceOrPrepend(@NotNull String parameterPrefix, @NotNull String replacement) {
+  public void replaceOrPrepend(@NotNull @NonNls String parameterPrefix, @NotNull @NonNls String replacement) {
     replaceOrAddAt(expandMacros(replacement), 0, o -> o.startsWith(parameterPrefix));
   }
 
@@ -271,11 +272,11 @@ public final class ParametersList implements Cloneable {
     }
   }
 
-  private int indexOfParameter(@NotNull Condition<? super String> condition) {
+  private int indexOfParameter(@NotNull @NonNls Condition<? super String> condition) {
     return ContainerUtil.lastIndexOf(myParameters, condition);
   }
 
-  public void set(int ind, @NotNull String value) {
+  public void set(int ind, @NotNull @NonNls String value) {
     myParameters.set(ind, value);
   }
 
@@ -288,16 +289,16 @@ public final class ParametersList implements Cloneable {
     return myParameters.size() > 0 ? myParameters.get(myParameters.size() - 1) : null;
   }
 
-  public void add(@NotNull String name, @NotNull String value) {
+  public void add(@NotNull @NonNls String name, @NotNull @NonNls String value) {
     myParameters.add(name); // do not expand macros in parameter name
     add(value);
   }
 
-  public void addAll(@NotNull String... parameters) {
+  public void addAll(@NotNull @NonNls String... parameters) {
     addAll(Arrays.asList(parameters));
   }
 
-  public void addAll(@NotNull List<String> parameters) {
+  public void addAll(@NotNull @NonNls List<String> parameters) {
     // Don't use myParameters.addAll(parameters) , it does not call expandMacros(parameter)
     for (String parameter : parameters) {
       add(parameter);
@@ -323,7 +324,7 @@ public final class ParametersList implements Cloneable {
    * @see ParametersListUtil#join(List)
    */
   @NotNull
-  public static String join(@NotNull List<String> parameters) {
+  public static String join(@NotNull @NonNls List<String> parameters) {
     return ParametersListUtil.join(parameters);
   }
 
@@ -331,7 +332,7 @@ public final class ParametersList implements Cloneable {
    * @see ParametersListUtil#join(List)
    */
   @NotNull
-  public static String join(@NotNull String... parameters) {
+  public static String join(@NotNull @NonNls String... parameters) {
     return ParametersListUtil.join(parameters);
   }
 
@@ -339,12 +340,12 @@ public final class ParametersList implements Cloneable {
    * @see ParametersListUtil#parseToArray(String)
    */
   @NotNull
-  public static String[] parse(@NotNull String string) {
+  public static String[] parse(@NotNull @NonNls String string) {
     return ParametersListUtil.parseToArray(string);
   }
 
   @NotNull
-  public String expandMacros(@NotNull String text) {
+  public String expandMacros(@NotNull @NonNls String text) {
     int start = text.indexOf("${");
     if (start < 0) return text;
     Map<String, String> macroMap = myMacroMap.getValue();
@@ -369,7 +370,7 @@ public final class ParametersList implements Cloneable {
   private static Map<String, String> ourTestMacros;
 
   @TestOnly
-  public static void setTestMacros(@Nullable Map<String, String> testMacros) {
+  public static void setTestMacros(@Nullable @NonNls Map<String, String> testMacros) {
     ourTestMacros = testMacros;
   }
 

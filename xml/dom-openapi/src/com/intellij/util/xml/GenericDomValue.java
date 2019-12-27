@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public interface GenericDomValue<T> extends DomElement, MutableGenericValue<T>{
 
   @Override
   @TagValue
-  void setStringValue(String value);
+  void setStringValue(@NonNls String value);
 
   @Override
   void setValue(T value);
