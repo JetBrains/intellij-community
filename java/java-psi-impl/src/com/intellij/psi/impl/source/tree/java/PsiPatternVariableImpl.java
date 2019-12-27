@@ -6,8 +6,11 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +41,12 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Nullable
+  @Override
+  public PsiPattern getPattern() {
+    return ObjectUtils.tryCast(getParent(), PsiPattern.class);
   }
 
   @Override
@@ -85,6 +94,11 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     return identifier.getText();
   }
 
+  @Override
+  public int getTextOffset() {
+    return getNameIdentifier().getTextOffset();
+  }
+
   @Nullable
   @Override
   public PsiModifierList getModifierList() {
@@ -94,6 +108,28 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    PsiPattern pattern = getPattern();
+    if (pattern != null) {
+      PsiElement parent = pattern.getParent();
+      while (parent instanceof PsiInstanceOfExpression || parent instanceof PsiParenthesizedExpression ||
+             parent instanceof PsiConditionalExpression ||
+             parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType().equals(EXCL) ||
+             parent instanceof PsiPolyadicExpression && 
+             (((PsiPolyadicExpression)parent).getOperationTokenType().equals(ANDAND) || 
+              ((PsiPolyadicExpression)parent).getOperationTokenType().equals(OROR))) {
+        parent = parent.getParent();
+      }
+      if (parent instanceof PsiIfStatement || parent instanceof PsiConditionalLoopStatement) {
+        return new LocalSearchScope(parent.getParent());
+      }
+      return new LocalSearchScope(parent);
+    }
+    return super.getUseScope();
   }
 
   @Override

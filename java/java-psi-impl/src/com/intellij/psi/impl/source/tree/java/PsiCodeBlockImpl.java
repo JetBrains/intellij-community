@@ -12,6 +12,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -113,8 +114,8 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       PsiScopesUtil.walkChildrenScopes(this, new PsiScopeProcessor() {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-          if (element instanceof PsiLocalVariable) {
-            final PsiLocalVariable variable = (PsiLocalVariable)element;
+          if (element instanceof PsiLocalVariable || element instanceof PsiPatternVariable) {
+            final PsiVariable variable = (PsiVariable)element;
             final String name = variable.getName();
             if (!localsSet.add(name)) {
               conflict.set(Boolean.TRUE);
@@ -133,7 +134,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
           }
           return !conflict.get();
         }
-      }, ResolveState.initial(), this, this);
+      }, PatternResolveState.WHEN_BOTH.putInto(ResolveState.initial()), this, this);
 
       myClassesSet = set1 = classesSet.isEmpty() ? Collections.emptySet() : classesSet;
       myVariablesSet = set2 = localsSet.isEmpty() ? Collections.emptySet() : localsSet;

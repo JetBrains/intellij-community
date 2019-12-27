@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -139,6 +140,14 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
   @Override
   public String toString() {
     return "PsiBinaryExpression:" + getText();
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return PsiPolyadicExpressionImpl.processDeclarations(this, processor, state, lastParent, place);
   }
 
   @NotNull

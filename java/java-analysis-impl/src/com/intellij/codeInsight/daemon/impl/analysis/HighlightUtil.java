@@ -38,6 +38,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -602,7 +603,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (variable instanceof ExternallyDefinedPsiElement) return null;
     PsiVariable oldVariable = null;
     PsiElement declarationScope = null;
-    if (variable instanceof PsiLocalVariable ||
+    if (variable instanceof PsiLocalVariable || variable instanceof PsiPatternVariable ||
         variable instanceof PsiParameter &&
         ((declarationScope = ((PsiParameter)variable).getDeclarationScope()) instanceof PsiCatchSection ||
          declarationScope instanceof PsiForeachStatement ||
@@ -611,7 +612,8 @@ public class HighlightUtil extends HighlightUtilBase {
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         @Override
         protected boolean check(final PsiVariable var, final ResolveState state) {
-          return (var instanceof PsiLocalVariable || var instanceof PsiParameter) && super.check(var, state);
+          return (var instanceof PsiLocalVariable || var instanceof PsiParameter || var instanceof PsiPatternVariable) && 
+                 super.check(var, state);
         }
       };
       PsiIdentifier identifier = variable.getNameIdentifier();
@@ -626,6 +628,9 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       else if (declarationScope instanceof PsiLambdaExpression) {
         oldVariable = checkSameNames(variable);
+      }
+      else if (variable instanceof PsiPatternVariable) {
+        oldVariable = checkSamePatternVariableInBranches((PsiPatternVariable)variable);
       }
     }
     else if (variable instanceof PsiField) {
@@ -664,6 +669,54 @@ public class HighlightUtil extends HighlightUtilBase {
       return highlightInfo;
     }
     return null;
+  }
+
+  private static PsiPatternVariable checkSamePatternVariableInBranches(PsiPatternVariable variable) {
+    PsiPattern pattern = variable.getPattern();
+    if (pattern == null) return null;
+    PatternResolveState hint = PatternResolveState.WHEN_TRUE;
+    VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
+      @Override
+      protected boolean check(final PsiVariable var, final ResolveState state) {
+        return var instanceof PsiPatternVariable && super.check(var, state);
+      }
+    };
+    PsiElement lastParent = pattern;
+    for (PsiElement parent = lastParent.getParent(); parent != null; lastParent = parent, parent = parent.getParent()) {
+      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiParenthesizedExpression) continue;
+      if (parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType().equals(JavaTokenType.EXCL)) {
+        hint = hint.invert();
+        continue;
+      }
+      if (parent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+          PatternResolveState targetHint = PatternResolveState.fromBoolean(tokenType.equals(JavaTokenType.OROR));
+          if (hint == targetHint) {
+            for (PsiExpression operand : ((PsiPolyadicExpression)parent).getOperands()) {
+              if (operand == lastParent) break;
+              operand.processDeclarations(proc, hint.putInto(ResolveState.initial()), null, pattern);
+            }
+          }
+          continue;
+        }
+      }
+      if (parent instanceof PsiConditionalExpression) {
+        PsiConditionalExpression conditional = (PsiConditionalExpression)parent;
+        PsiExpression thenExpression = conditional.getThenExpression();
+        if (lastParent == thenExpression) {
+          conditional.getCondition().processDeclarations(proc, PatternResolveState.WHEN_FALSE.putInto(ResolveState.initial()), null, pattern);
+        }
+        else if (lastParent == conditional.getElseExpression()) {
+          conditional.getCondition().processDeclarations(proc, PatternResolveState.WHEN_TRUE.putInto(ResolveState.initial()), null, pattern);
+          if (thenExpression != null) {
+            thenExpression.processDeclarations(proc, hint.putInto(ResolveState.initial()), null, pattern);
+          }
+        }
+      }
+      break;
+    }
+    return proc.size() > 0 ? (PsiPatternVariable)proc.getResult(0) : null;
   }
 
   private static PsiVariable checkSameNames(@NotNull PsiVariable variable) {
