@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.vcs.CachingCommittedChangesProvider
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.RepositoryLocation
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -89,8 +89,11 @@ class IncomingChangesViewProvider(private val project: Project) : ChangesViewCon
 
   class VisibilityPredicate : NotNullFunction<Project, Boolean> {
     override fun `fun`(project: Project): Boolean =
-      ProjectLevelVcsManager.getInstance(project).allActiveVcss
-        .map { it.committedChangesProvider }
-        .any { it is CachingCommittedChangesProvider<*, *> && it.supportsIncomingChanges() }
+      ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isIncomingChangesAvailable(it) }
+  }
+
+  companion object {
+    fun isIncomingChangesAvailable(vcs: AbstractVcs): Boolean =
+      vcs.cachingCommittedChangesProvider?.supportsIncomingChanges() == true
   }
 }

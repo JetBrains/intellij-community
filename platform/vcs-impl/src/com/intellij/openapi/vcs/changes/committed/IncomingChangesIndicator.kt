@@ -1,168 +1,91 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.committed;
+package com.intellij.openapi.vcs.changes.committed
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.wm.*;
-import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IconLoader.getDisabledIcon
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN
+import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache.COMMITTED_TOPIC
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.INCOMING
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
+import com.intellij.openapi.wm.StatusBarWidgetProvider
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.Consumer
+import java.awt.event.MouseEvent
+import javax.swing.Icon
+import kotlin.properties.Delegates.observable
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.List;
+private val LOG = logger<IncomingChangesIndicator>()
 
-import static com.intellij.icons.AllIcons.Ide.IncomingChangesOn;
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.util.ObjectUtils.notNull;
+class IncomingChangesIndicatorProvider : StatusBarWidgetProvider {
+  override fun getWidget(project: Project): StatusBarWidget = IncomingChangesIndicator(project)
+}
 
-public class IncomingChangesIndicator implements StatusBarWidget, StatusBarWidget.IconPresentation {
-  private static final Logger LOG = Logger.getInstance(IncomingChangesIndicator.class);
+private class IncomingChangesIndicator(private val project: Project) : StatusBarWidget, StatusBarWidget.IconPresentation {
+  private var statusBar: StatusBar? = null
+  private var isIncomingChangesAvailable = false
 
-  private static final Icon INCOMING_ICON = IncomingChangesOn;
-  private static final Icon DISABLED_INCOMING_ICON = notNull(IconLoader.getDisabledIcon(IncomingChangesOn), IncomingChangesOn);
-
-  @NotNull private final Project myProject;
-  private StatusBar myStatusBar;
-  private int myIncomingChangesCount;
-  private boolean myIsIncomingChangesAvailable;
-
-  public IncomingChangesIndicator(@NotNull Project project) {
-    myProject = project;
+  private var incomingChangesCount: Int by observable(0) { _, _, newValue ->
+    LOG.debug("Refreshing indicator: $newValue changes")
+    statusBar?.updateWidget(ID())
   }
 
-  private void setIncomingChangesCount(int incomingChangesCount) {
-    LOG.debug("Refreshing indicator: " + incomingChangesCount + " changes");
+  override fun ID(): String = "IncomingChanges"
 
-    myIncomingChangesCount = incomingChangesCount;
-    if (myStatusBar != null) myStatusBar.updateWidget(ID());
+  override fun getPresentation(): WidgetPresentation = this
+
+  override fun getIcon(): Icon? {
+    if (!isIncomingChangesAvailable) return null // hide widget
+
+    return if (incomingChangesCount > 0) AllIcons.Ide.IncomingChangesOn else getDisabledIcon(AllIcons.Ide.IncomingChangesOn)
   }
 
-  @Override
-  @NotNull
-  public String ID() {
-    return "IncomingChanges";
+  override fun getTooltipText(): String? {
+    if (!isIncomingChangesAvailable) return null
+
+    return if (incomingChangesCount > 0) message("incoming.changes.indicator.tooltip", incomingChangesCount)
+    else "No incoming changelists available"
   }
 
-  @Override
-  public WidgetPresentation getPresentation() {
-    return this;
-  }
-
-  @Nullable
-  @Override
-  public Icon getIcon() {
-    if (!myIsIncomingChangesAvailable) return null; // hide widget
-
-    return myIncomingChangesCount > 0 ? INCOMING_ICON : DISABLED_INCOMING_ICON;
-  }
-
-  @Nullable
-  @Override
-  public String getTooltipText() {
-    if (!myIsIncomingChangesAvailable) return null;
-
-    return myIncomingChangesCount > 0
-           ? message("incoming.changes.indicator.tooltip", myIncomingChangesCount)
-           : "No incoming changelists available";
-  }
-
-  @Override
-  public Consumer<MouseEvent> getClickConsumer() {
-    return mouseEvent -> {
-      if (myStatusBar != null) {
-        DataContext dataContext = DataManager.getInstance().getDataContext((Component)myStatusBar);
-        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        if (project != null) {
-          ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-          changesView.show(() -> ChangesViewContentManager.getInstance(project).selectContent("Incoming"));
-        }
-      }
-    };
-  }
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-    myStatusBar = statusBar;
-
-    final MessageBusConnection connection = myProject.getMessageBus().connect(this);
-    connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
-      @Override
-      public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
-        getApplication().invokeLater(() -> refreshIndicator());
-      }
-
-      @Override
-      public void changesCleared() {
-        getApplication().invokeLater(() -> refreshIndicator());
-      }
-    });
-    final VcsListener listener = new VcsListener() {
-      @Override
-      public void directoryMappingChanged() {
-        if (myProject.isDisposed()) return;
-        UIUtil.invokeLaterIfNeeded(() -> updateIndicatorVisibility());
-      }
-    };
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, listener);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, listener);
-  }
-
-  @Override
-  public void dispose() {
-    myStatusBar = null;
-  }
-
-  private void updateIndicatorVisibility() {
-    if (myStatusBar == null) return;
-
-    if (needIndicator()) {
-      myIsIncomingChangesAvailable = true;
-      refreshIndicator();
+  override fun getClickConsumer(): Consumer<MouseEvent> =
+    Consumer {
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+      toolWindow?.show { ChangesViewContentManager.getInstance(project).selectContent(INCOMING) }
     }
-    else {
-      myIsIncomingChangesAvailable = false;
-      setIncomingChangesCount(0);
+
+  override fun install(statusBar: StatusBar) {
+    this.statusBar = statusBar
+
+    project.messageBus.connect(this).apply {
+      subscribe(COMMITTED_TOPIC, object : CommittedChangesListener {
+        override fun incomingChangesUpdated(receivedChanges: List<CommittedChangeList>?) = refresh()
+        override fun changesCleared() = refresh()
+      })
+      subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { refresh() })
+      subscribe(VCS_CONFIGURATION_CHANGED_IN_PLUGIN, VcsListener { refresh() })
     }
   }
 
-  private boolean needIndicator() {
-    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
-    for (AbstractVcs vcs : vcss) {
-      CachingCommittedChangesProvider provider = vcs.getCachingCommittedChangesProvider();
-      if (provider != null && provider.supportsIncomingChanges()) {
-        return true;
-      }
+  override fun dispose() {
+    statusBar = null
+  }
+
+  private fun refresh() =
+    runInEdt {
+      if (project.isDisposed || statusBar == null) return@runInEdt
+
+      isIncomingChangesAvailable = IncomingChangesViewProvider.VisibilityPredicate().`fun`(project)
+      incomingChangesCount = if (isIncomingChangesAvailable) getCachedIncomingChangesCount() else 0
     }
-    return false;
-  }
 
-  private void refreshIndicator() {
-    if (myStatusBar == null) return;
-
-    final List<CommittedChangeList> list = CommittedChangesCache.getInstance(myProject).getCachedIncomingChanges();
-    setIncomingChangesCount(list == null || list.isEmpty() ? 0 : list.size());
-  }
-
-  public static class Provider implements StatusBarWidgetProvider {
-    @NotNull
-    @Override
-    public StatusBarWidget getWidget(@NotNull Project project) {
-      return new IncomingChangesIndicator(project);
-    }
-  }
+  private fun getCachedIncomingChangesCount() = CommittedChangesCache.getInstance(project).cachedIncomingChanges?.size ?: 0
 }

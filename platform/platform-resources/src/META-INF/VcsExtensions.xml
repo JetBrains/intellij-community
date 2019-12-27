@@ -108,7 +108,7 @@
     <changesViewContent tabName="Local Changes" className="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentProvider"
                         preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"/>
 
-    <statusBarWidgetProvider implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator$Provider"/>
+    <statusBarWidgetProvider implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier"/>
 
     <changesGroupingPolicy key="directory" id="directory"
