@@ -138,5 +138,12 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
     }
   }
 
-  protected open fun buildCastFix(argument: ExpressionArgument, expectedType: PsiType): LocalQuickFix? = null
+  protected open fun buildCastFix(argument: ExpressionArgument, expectedType: PsiType): LocalQuickFix? {
+    val arguments = reference.arguments ?: return null
+    val position = arguments.indexOf(argument)
+    if (position < 0) {
+      return null
+    }
+    return ParameterCastFix(argument.expression, position, expectedType)
+  }
 }
