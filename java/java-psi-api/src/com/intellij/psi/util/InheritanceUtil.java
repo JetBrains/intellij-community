@@ -81,12 +81,12 @@ public class InheritanceUtil {
   }
 
   @Contract("null, _ -> false")
-  public static boolean isInheritor(@Nullable PsiClass psiClass, @NotNull final String baseClassName) {
+  public static boolean isInheritor(@Nullable PsiClass psiClass, @NotNull @NonNls String baseClassName) {
     return isInheritor(psiClass, false, baseClassName);
   }
 
   @Contract("null, _, _ -> false")
-  public static boolean isInheritor(@Nullable PsiClass psiClass, final boolean strict, @NotNull final String baseClassName) {
+  public static boolean isInheritor(@Nullable PsiClass psiClass, final boolean strict, @NotNull @NonNls String baseClassName) {
     if (psiClass == null) {
       return false;
     }
