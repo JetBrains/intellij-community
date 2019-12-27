@@ -16,7 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
-  private static final Color SEPARATOR_COLOR = new JBColor(Gray.xC9, Gray.x55);
+  private static final Color SEPARATOR_COLOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
 
   private final JProgressBar myProgressBar;
   private String initialLabelText;
@@ -199,7 +199,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       label = new JLabel(StringUtil.isNotEmpty(initialLabelText) ? initialLabelText : "");
 
       comment = new JLabel(myCommentText);
-      comment.setForeground(Gray.x78);
+      comment.setForeground(UIUtil.getContextHelpForeground());
       if (SystemInfo.isMac) {
         Font font = comment.getFont();
         float size = font.getSize2D();

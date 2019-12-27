@@ -112,6 +112,7 @@ class ProgressDialog implements Disposable {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
+    myText2Label.setForeground(UIUtil.getContextHelpForeground());
     myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUIScale.scale(450), -1));
 
     myCancelButton.addActionListener(__ -> doCancelAction());
