@@ -1972,6 +1972,8 @@
     <commandLineInspectionProjectConfigurator implementation="com.intellij.codeInspection.JavaCommandLineInspectionProjectConfigurator"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
+
+    <appStarter implementation="com.intellij.internal.DumpIndexStarter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

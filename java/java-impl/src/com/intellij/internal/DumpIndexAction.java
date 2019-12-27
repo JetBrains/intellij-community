@@ -22,6 +22,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.JavaSimplePropertyIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
@@ -35,6 +38,7 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.hash.HashBasedIndexGenerator;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import gnu.trove.THashSet;
@@ -58,6 +62,36 @@ public class DumpIndexAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent event) {
     Project project = event.getProject();
     if (project == null) return;
+
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    descriptor.withTitle("Select Index Dump Directory");
+    VirtualFile file = FileChooser.chooseFile(descriptor, project, null);
+    if (file != null) {
+      ProgressManager.getInstance().run(new Task.Modal(project, "Exporting Indexes..." , true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          File out = VfsUtilCore.virtualToIoFile(file);
+          FileUtil.delete(out);
+          exportIndices(project, out.toPath(), indicator);
+        }
+      });
+    }
+  }
+
+  public static void exportIndices(@NotNull Project project, @NotNull Path out, @NotNull ProgressIndicator indicator) {
+    List<IndexChunk> chunks = ReadAction.compute(() -> buildChunks(project));
+    exportIndices(project, chunks, out, indicator);
+  }
+
+  public static void exportSingleIndexChunk(@NotNull Project project,
+                                            @NotNull IndexChunk chunk,
+                                            @NotNull Path out,
+                                            @NotNull ProgressIndicator indicator) {
+    exportIndices(project, Collections.singletonList(chunk), out, indicator);
+  }
+
+  @NotNull
+  private static List<IndexChunk> buildChunks(Project project) {
     Collection<IndexChunk> projectChunks = Arrays
             .stream(ModuleManager.getInstance(project).getModules())
             .flatMap(m -> IndexChunk.generate(m))
@@ -65,8 +99,9 @@ public class DumpIndexAction extends AnAction {
             .values();
 
     Set<VirtualFile>
-            additionalRoots = IndexableSetContributor.EP_NAME.extensions().flatMap(contributor -> Stream.concat(IndexableSetContributor.getRootsToIndex(contributor).stream(),
-            IndexableSetContributor.getProjectRootsToIndex(contributor, project).stream())).collect(
+            additionalRoots = IndexableSetContributor.EP_NAME.extensions().flatMap(contributor -> Stream
+      .concat(IndexableSetContributor.getRootsToIndex(contributor).stream(),
+              IndexableSetContributor.getProjectRootsToIndex(contributor, project).stream())).collect(
             Collectors.toSet());
 
     Set<VirtualFile> synthRoots = new THashSet<>();
@@ -81,41 +116,35 @@ public class DumpIndexAction extends AnAction {
       }
     }
 
-    List<IndexChunk> chunks = Stream.concat(projectChunks.stream(),
+    return Stream.concat(projectChunks.stream(),
             Stream.of(new IndexChunk(additionalRoots, "ADDITIONAL"),
                     new IndexChunk(synthRoots, "SYNTH"))).collect(Collectors.toList());
-
-    //IndexChunk chunk = chunks.stream().reduce((c1, c2) -> IndexChunk.mergeUnsafe(c1, c2)).get();
-
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.withTitle("Select Index Dump Directory");
-    VirtualFile file = FileChooser.chooseFile(descriptor, project, null);
-    if (file != null) {
-      ProgressManager.getInstance().run(new Task.Modal(project, "Exporting Indexes..." , true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          File out = VfsUtilCore.virtualToIoFile(file);
-          FileUtil.delete(out);
-          exportIndices(chunks, out, indicator, project);
-        }
-      });
-    }
   }
 
-  public static void exportIndices(@NotNull List<IndexChunk> chunks,
-                                   @NotNull File out,
-                                   @NotNull ProgressIndicator indicator,
-                                   @NotNull Project project) {
+  private static void exportIndices(@NotNull Project project,
+                                    @NotNull List<IndexChunk> chunks,
+                                    @NotNull Path out,
+                                    @NotNull ProgressIndicator indicator) {
     indicator.setIndeterminate(false);
     AtomicInteger idx = new AtomicInteger();
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(chunks, indicator, chunk -> {
-      indicator.setText("Indexing '" + chunk.getName() + "' chunk");
-      File chunkOut = new File(out, chunk.getName());
+      indicator.setText("Indexing chunk " + chunk.getName());
+      Path chunkRoot = out.resolve(chunk.getName());
       ReadAction.run(() -> {
-        Stream<HashBasedIndexGenerator<?, ?>> fbIndexes = getExportableIndices(true).map(ex -> new HashBasedIndexGenerator(ex, chunkOut));
-        Stream<HashBasedIndexGenerator<?, ?>> stubIndex = Stream.of(new StubHashBasedIndexGenerator(chunkOut));
-        List<HashBasedIndexGenerator<?, ?>> indexes = Stream.concat(fbIndexes, stubIndex).collect(Collectors.toList());
-        HashBasedIndexGenerator.generate(chunk.getRoots(),indexes, project, chunkOut);
+        List<HashBasedIndexGenerator<?, ?>> fileBasedGenerators = getExportableIndices(true)
+          .map(extension -> getGenerator(chunkRoot, extension))
+          .collect(Collectors.toList());
+
+        StubHashBasedIndexGenerator stubGenerator = new StubHashBasedIndexGenerator(chunkRoot);
+
+        List<HashBasedIndexGenerator<?, ?>> allGenerators = new ArrayList<>(fileBasedGenerators);
+        allGenerators.add(stubGenerator);
+
+        generate(chunk, project, allGenerators, chunkRoot);
+
+        printStatistics(chunk, fileBasedGenerators, stubGenerator);
+        deleteEmptyIndices(fileBasedGenerators, chunkRoot.resolve("empty-indices.txt"));
+        deleteEmptyIndices(stubGenerator.getStubGenerators(), chunkRoot.resolve("empty-stub-indices.txt"));
       });
       indicator.setFraction(((double) idx.incrementAndGet()) / chunks.size());
       return true;
@@ -123,16 +152,47 @@ public class DumpIndexAction extends AnAction {
       throw new AssertionError();
     }
 
+    zipIndexOut(out, indicator);
+  }
+
+  @NotNull
+  private static <K, V> HashBasedIndexGenerator<K, V> getGenerator(Path chunkRoot, FileBasedIndexExtension<K, V> extension) {
+    return new HashBasedIndexGenerator<>(extension, chunkRoot);
+  }
+
+  private static void deleteEmptyIndices(@NotNull List<HashBasedIndexGenerator<?, ?>> generators,
+                                         @NotNull Path dumpEmptyIndicesNamesFile) {
+    Set<String> emptyIndices = new HashSet<>();
+    for (HashBasedIndexGenerator<?, ?> generator : generators) {
+      if (generator.isEmpty()) {
+        emptyIndices.add(generator.getExtension().getName().getName());
+        Path indexRoot = generator.getIndexRoot();
+        PathKt.delete(indexRoot);
+      }
+    }
+    if (!emptyIndices.isEmpty()) {
+      String emptyIndicesText = String.join("\n", emptyIndices);
+      try {
+        PathKt.write(dumpEmptyIndicesNamesFile, emptyIndicesText);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  private static void zipIndexOut(@NotNull Path out, @NotNull ProgressIndicator indicator) {
     indicator.setIndeterminate(true);
     indicator.setText("Zipping index pack");
 
-    File zipFile = new File(out.getAbsolutePath() + ".zip");
-    FileUtil.delete(zipFile);
+    File zipFile = new File(out.toFile().getAbsolutePath() + ".zip");
+    if (zipFile.exists()) {
+      FileUtil.delete(zipFile);
+    }
     try (JBZipFile file = new JBZipFile(zipFile)) {
-      Path outPath = out.toPath();
-      Files.walk(outPath).forEach(p -> {
+      Files.walk(out).forEach(p -> {
         if (Files.isDirectory(p)) return;
-        String relativePath = outPath.relativize(p).toString();
+        String relativePath = out.relativize(p).toString();
         try {
           JBZipEntry entry = file.getOrCreateEntry(relativePath);
           entry.setMethod(ZipEntry.STORED);
@@ -148,8 +208,90 @@ public class DumpIndexAction extends AnAction {
     }
   }
 
+  private static void generate(@NotNull IndexChunk chunk,
+                               @NotNull Project project,
+                               @NotNull Collection<HashBasedIndexGenerator<?, ?>> generators,
+                               @NotNull Path chunkOut) {
+    try {
+      ContentHashesUtil.HashEnumerator hashEnumerator = new ContentHashesUtil.HashEnumerator(chunkOut.resolve("hashes"));
+      try {
+        for (HashBasedIndexGenerator<?, ?> generator : generators) {
+          generator.openIndex();
+        }
+
+        for (VirtualFile root : chunk.getRoots()) {
+          VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Boolean>() {
+            @Override
+            public boolean visitFile(@NotNull VirtualFile file) {
+
+              if (!file.isDirectory() && !SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
+                for (HashBasedIndexGenerator<?, ?> generator : generators) {
+                  generator.indexFile(file, project, hashEnumerator);
+                }
+              }
+
+              return true;
+            }
+          });
+        }
+      }
+      finally {
+        hashEnumerator.close();
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    finally {
+      try {
+        for (HashBasedIndexGenerator<?, ?> generator : generators) {
+          generator.closeIndex();
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private static void printStatistics(@NotNull IndexChunk chunk,
+                                      @NotNull List<HashBasedIndexGenerator<?, ?>> fileBasedGenerators,
+                                      @NotNull StubHashBasedIndexGenerator stubGenerator) {
+    StringBuilder stats = new StringBuilder();
+    stats.append("Statistics for index chunk ").append(chunk.getName()).append("\n");
+
+    stats.append("File based indices (").append(fileBasedGenerators.size()).append(")");
+    for (HashBasedIndexGenerator<?, ?> generator : fileBasedGenerators) {
+      appendGeneratorStatistics(stats, generator);
+    }
+
+    Collection<HashBasedIndexGenerator<?, ?>> stubGenerators = stubGenerator.getStubGenerators();
+    stats.append("Stub indices (").append(stubGenerators.size()).append(")");
+    for (HashBasedIndexGenerator<?, ?> generator : stubGenerators) {
+      appendGeneratorStatistics(stats, generator);
+    }
+
+    System.out.println(stats.toString());
+  }
+
+  private static void appendGeneratorStatistics(@NotNull StringBuilder stringBuilder,
+                                                @NotNull HashBasedIndexGenerator<?, ?> generator) {
+    stringBuilder
+      .append("    ")
+      .append("Generator for ")
+      .append(generator.getExtension().getName().getName())
+      .append(" indexed ")
+      .append(generator.getIndexedFilesNumber())
+      .append(" files");
+
+    if (generator.isEmpty()) {
+      stringBuilder.append( "(empty result)");
+    }
+    stringBuilder.append("\n");
+  }
+
   @NotNull
-  private static Stream<FileBasedIndexExtension> getExportableIndices(boolean all) {
+  private static Stream<FileBasedIndexExtension<?, ?>> getExportableIndices(boolean all) {
     if (all) {
       return FileBasedIndexExtension
               .EXTENSION_POINT_NAME
@@ -159,7 +301,7 @@ public class DumpIndexAction extends AnAction {
     }
 
     //kt
-    Stream<FileBasedIndexExtension> ktIndices =
+    Stream<FileBasedIndexExtension<?, ?>> ktIndices =
             FileBasedIndexExtension
                     .EXTENSION_POINT_NAME
                     .extensions()
@@ -171,14 +313,14 @@ public class DumpIndexAction extends AnAction {
             ID.findByName("DomFileIndex"),
             ID.findByName("xmlProperties"));
     //xml
-    Stream<FileBasedIndexExtension> xmlIndices =
+    Stream<FileBasedIndexExtension<?, ?>> xmlIndices =
             FileBasedIndexExtension
                     .EXTENSION_POINT_NAME
                     .extensions()
                     .filter(id -> xmlIndexIds.contains(id.getName()));
 
     //base
-    Stream<FileBasedIndexExtension> coreIndices =
+    Stream<FileBasedIndexExtension<?, ?>> coreIndices =
             FileBasedIndexExtension
                     .EXTENSION_POINT_NAME
                     .extensions()
@@ -188,7 +330,7 @@ public class DumpIndexAction extends AnAction {
                             ex.getName().getName().equals("HashFragmentIndex"));
 
     //java
-    Stream<FileBasedIndexExtension> javaIndices =
+    Stream<FileBasedIndexExtension<?, ?>> javaIndices =
             FileBasedIndexExtension
                     .EXTENSION_POINT_NAME
                     .extensions()
@@ -202,11 +344,11 @@ public class DumpIndexAction extends AnAction {
     return Stream.concat(Stream.concat(Stream.concat(coreIndices, javaIndices), xmlIndices), ktIndices);
   }
 
-  private static final class IndexChunk {
+  public static final class IndexChunk {
     private final Set<VirtualFile> myRoots;
     private final String myName;
 
-    IndexChunk(Set<VirtualFile> roots, String name) {
+    public IndexChunk(Set<VirtualFile> roots, String name) {
       myRoots = roots;
       myName = name;
     }
