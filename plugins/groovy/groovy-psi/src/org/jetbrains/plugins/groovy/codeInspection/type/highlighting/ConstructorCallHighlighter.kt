@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type.highlighting
 
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.codeInspection.assignment.ParameterCastFix
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
@@ -28,13 +28,13 @@ abstract class ConstructorCallHighlighter(reference: GroovyCallReference, sink: 
     }
   }
 
-  override fun buildCastFix(argument: ExpressionArgument, expectedType: PsiType): ParameterCastFix? {
+  override fun buildCastFix(argument: ExpressionArgument, expectedType: PsiType): LocalQuickFix? {
     val arguments = reference.arguments ?: return null
-    val list = argumentList ?: return null
-    if (argument !in arguments) return null
-
-    val position = list.getExpressionArgumentIndex(argument.expression)
-    return ParameterCastFix(position, expectedType)
+    val position = arguments.indexOf(argument)
+    if (position < 0) {
+      return null
+    }
+    return ParameterCastFix(argument.expression, position, expectedType)
   }
 
   fun highlight(): Boolean = highlightMethodApplicability()
