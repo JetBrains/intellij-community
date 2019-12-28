@@ -5,6 +5,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -13,6 +14,7 @@ import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -37,28 +39,80 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         if (declaration == null) return;
         PsiElement context = declaration;
         PsiElement parent = context.getParent();
-        if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement) {
-          context = parent.getParent();
-          parent = context.getParent();
+        if (parent instanceof PsiCodeBlock) {
+          if (processSiblings(identifier, cast, context, parent)) return;
+          if (parent.getParent() instanceof PsiBlockStatement) {
+            context = parent.getParent();
+            parent = context.getParent();
+          }
         }
+        processParent(identifier, cast, context, parent);
+      }
+
+      private void processParent(PsiIdentifier identifier, PsiTypeCastExpression cast, PsiElement context, PsiElement parent) {
         if (parent instanceof PsiIfStatement) {
           PsiIfStatement ifStatement = (PsiIfStatement)parent;
-          boolean whenTrue;
           if (ifStatement.getThenBranch() == context) {
-            whenTrue = true;
+            processCondition(ifStatement.getCondition(), true, cast, identifier);
           }
           else if (ifStatement.getElseBranch() == context) {
-            whenTrue = false;
-          }
-          else {
-            return;
-          }
-          PsiInstanceOfExpression instanceOf = findInstanceOf(ifStatement.getCondition(), cast, whenTrue);
-          if (instanceOf != null) {
-            holder.registerProblem(identifier, "Variable can be replaced with pattern variable",
-                                   new PatternVariableCanBeUsedFix(instanceOf));
+            processCondition(ifStatement.getCondition(), false, cast, identifier);
           }
         }
+        if (parent instanceof PsiForStatement || parent instanceof PsiWhileStatement) {
+          processCondition(((PsiConditionalLoopStatement)parent).getCondition(), true, cast, identifier);
+        }
+      }
+
+      private boolean processCondition(PsiExpression condition, boolean whenTrue, PsiTypeCastExpression cast, PsiIdentifier identifier) {
+        PsiInstanceOfExpression instanceOf = findInstanceOf(condition, cast, whenTrue);
+        if (instanceOf != null) {
+          String name = identifier.getText();
+          holder.registerProblem(identifier, "Variable '" + name + "' can be replaced with pattern variable",
+                                 new PatternVariableCanBeUsedFix(name, instanceOf));
+          return true;
+        }
+        return false;
+      }
+
+      private boolean processSiblings(PsiIdentifier identifier, PsiTypeCastExpression cast, PsiElement context, PsiElement parent) {
+        for (PsiElement stmt = context.getPrevSibling(); stmt != null; stmt = stmt.getPrevSibling()) {
+          if (stmt instanceof PsiIfStatement) {
+            PsiIfStatement ifStatement = (PsiIfStatement)stmt;
+            PsiStatement thenBranch = ifStatement.getThenBranch();
+            PsiStatement elseBranch = ifStatement.getElseBranch();
+            boolean thenCompletes = canCompleteNormally(parent, thenBranch);
+            boolean elseCompletes = canCompleteNormally(parent, elseBranch);
+            if (thenCompletes != elseCompletes && processCondition(ifStatement.getCondition(), thenCompletes, cast, identifier)) {
+              return true;
+            }
+          }
+          if (stmt instanceof PsiWhileStatement || stmt instanceof PsiDoWhileStatement || stmt instanceof PsiForStatement) {
+            PsiConditionalLoopStatement loop = (PsiConditionalLoopStatement)stmt;
+            if (PsiTreeUtil.processElements(
+              loop, e -> !(e instanceof PsiBreakStatement) || ((PsiBreakStatement)e).findExitedStatement() != loop)) {
+              if (processCondition(loop.getCondition(), false, cast, identifier)) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      private boolean canCompleteNormally(@NotNull PsiElement parent, @Nullable PsiStatement statement) {
+        if (statement == null) return true;
+        ControlFlow flow;
+        try {
+          flow = ControlFlowFactory.getInstance(holder.getProject()).getControlFlow(
+            parent, new LocalsControlFlowPolicy(parent), false, false);
+        }
+        catch (AnalysisCanceledException e) {
+          return true;
+        }
+        int startOffset = flow.getStartOffset(statement);
+        int endOffset = flow.getEndOffset(statement);
+        return startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(flow, startOffset, endOffset);
       }
 
       private PsiInstanceOfExpression findInstanceOf(PsiExpression condition, PsiTypeCastExpression cast, boolean whenTrue) {
@@ -103,9 +157,18 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
 
   private static class PatternVariableCanBeUsedFix implements LocalQuickFix {
     private final SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
+    private final String myName;
 
-    public PatternVariableCanBeUsedFix(@NotNull PsiInstanceOfExpression instanceOf) {
+    public PatternVariableCanBeUsedFix(@NotNull String name, @NotNull PsiInstanceOfExpression instanceOf) {
+      myName = name;
       myInstanceOfPointer = SmartPointerManager.createPointer(instanceOf);
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return "Replace '" + myName + "' with pattern variable";
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
