@@ -106,7 +106,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
         return;
       }
       if (containingClass.isRecord() &&
-          (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isCanonicalConstructor(method))) {
+          (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method))) {
         // compact and canonical constructors in record must be public, according to spec
         return;
       }

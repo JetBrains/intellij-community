@@ -68,7 +68,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     String className = aClass.getName();
     if (className == null) return null;
     for (PsiMethod method : ownMethods) {
-      if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isCanonicalConstructor(method)) return null;
+      if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) return null;
     }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(recordHeader.getProject());
     String sb = "public " + className + recordHeader.getText() + "{}";

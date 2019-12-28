@@ -1280,7 +1280,7 @@ public class HighlightMethodUtil {
       PsiMethod ctor = ObjectUtils.tryCast(codeBlock.getParent(), PsiMethod.class);
       if (ctor != null && ctor.isConstructor()) {
         if (JavaPsiRecordUtil.isCompactConstructor(ctor) ||
-            JavaPsiRecordUtil.isCanonicalConstructor(ctor)) {
+            JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) {
           String message = JavaErrorMessages.message("record.constructor.call.in.canonical");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message).create();
         }
@@ -1953,7 +1953,7 @@ public class HighlightMethodUtil {
       }
       return Collections.emptyList();
     }
-    if (JavaPsiRecordUtil.isCanonicalConstructor(method)) {
+    if (JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       PsiRecordComponent[] components = aClass.getRecordComponents();
       List<HighlightInfo> problems = new ArrayList<>();

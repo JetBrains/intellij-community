@@ -56,10 +56,11 @@ public class JavaPsiRecordUtil {
 
   /**
    * @param method method to check
-   * @return true if given method is a canonical (non-compact) constructor for a record class
+   * @return true if given method is an explicit canonical (non-compact) constructor for a record class
    */
-  public static boolean isCanonicalConstructor(@NotNull PsiMethod method) {
+  public static boolean isExplicitCanonicalConstructor(@NotNull PsiMethod method) {
     if (!method.isConstructor() || isCompactConstructor(method)) return false;
+    if (method instanceof SyntheticElement) return false;
     PsiClass aClass = method.getContainingClass();
     if (aClass == null || !aClass.isRecord()) return false;
     return hasCanonicalSignature(method, aClass.getRecordComponents());

@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
@@ -16,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class LightRecordCanonicalConstructor extends LightMethod {
+public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement {
   public LightRecordCanonicalConstructor(@NotNull PsiMethod method,
                                          @NotNull PsiClass containingClass) {
     super(method.getManager(), method, containingClass);

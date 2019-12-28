@@ -929,6 +929,6 @@ public class ExceptionUtil {
   public static boolean canDeclareThrownExceptions(@NotNull PsiMethod method) {
     return JavaPsiRecordUtil.getRecordComponentForAccessor(method) == null &&
            !JavaPsiRecordUtil.isCompactConstructor(method) &&
-           !JavaPsiRecordUtil.isCanonicalConstructor(method);
+           !JavaPsiRecordUtil.isExplicitCanonicalConstructor(method);
   }
 }
