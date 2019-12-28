@@ -13,6 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Pattern;
@@ -119,6 +120,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
       if (AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) return;
       if (!method.isVarArgs()) return;
+      if (JavaPsiRecordUtil.isCompactConstructor(method)) return;
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiParameter psiParameter = parameters[parameters.length - 1];
@@ -136,6 +138,8 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       if (header == null) return;
       PsiRecordComponent lastComponent = ArrayUtil.getLastElement(header.getRecordComponents());
       if (lastComponent == null || !lastComponent.isVarArgs()) return;
+      PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+      if (constructor != null && JavaPsiRecordUtil.isExplicitCanonicalConstructor(constructor)) return;
       final PsiType type = lastComponent.getType();
       LOG.assertTrue(type instanceof PsiEllipsisType, "type: " + type.getCanonicalText() + "; param: " + lastComponent);
 
