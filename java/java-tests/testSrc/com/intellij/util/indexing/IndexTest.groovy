@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.java.index.StringIndex
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -15,6 +19,8 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
+import com.intellij.openapi.fileTypes.ExactFileNameMatcher
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.module.StdModuleTypes
@@ -49,9 +55,12 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
+import com.intellij.psi.stubs.ObjectStubBase
+import com.intellij.psi.stubs.ObjectStubTree
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
+import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -72,6 +81,8 @@ import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.GroovyLanguage
 
 import java.util.concurrent.CountDownLatch
 
@@ -1251,6 +1262,38 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertFalse(findWordInDumbMode("Foo", virtualFile, false))
   }
 
+  void "test change file type association from groovy to java"() {
+    def file = myFixture.addFileToProject("Foo.groovy", "class Foo { void m() {" +
+                                                        " String x = 'qwerty';" +
+                                                        "}}")
+    def virtualFile = file.virtualFile
+
+    def idIndexData = getIdIndexData(virtualFile)
+    assertTrue(idIndexData.containsKey(new IdIndexEntry("Foo", false)))
+    assertTrue(idIndexData.containsKey(new IdIndexEntry("qwerty", false)))
+    assertEquals(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_CODE, idIndexData.get(new IdIndexEntry("qwerty", false)))
+    assertEquals(GroovyFileType.GROOVY_FILE_TYPE, FileTypeIndex.getIndexedFileType(virtualFile, getProject()))
+    def stub = StubTreeLoader.getInstance().readFromVFile(getProject(), virtualFile)
+    assertStubLanguage(GroovyLanguage.INSTANCE, stub)
+    assertEquals(GroovyLanguage.INSTANCE, file.getLanguage())
+    assert findClass("Foo")
+    def matcher = new ExactFileNameMatcher("Foo.groovy")
+    try {
+      FileTypeManager.getInstance().associate(JavaFileType.INSTANCE, matcher)
+
+      assertEquals(JavaFileType.INSTANCE, FileTypeIndex.getIndexedFileType(virtualFile, getProject()))
+      stub = StubTreeLoader.getInstance().readFromVFile(getProject(), virtualFile)
+      assertStubLanguage(JavaLanguage.INSTANCE, stub)
+      idIndexData = getIdIndexData(virtualFile)
+      assertTrue(idIndexData.containsKey(new IdIndexEntry("Foo", false)))
+      assertFalse(idIndexData.containsKey(new IdIndexEntry("qwerty", false)))
+      def javaFooClass = findClass("Foo")
+      assertEquals(JavaLanguage.INSTANCE, javaFooClass.getLanguage())
+    } finally {
+      FileTypeManager.getInstance().removeAssociation(JavaFileType.INSTANCE, matcher)
+    }
+  }
+
   private boolean findWordInDumbMode(String word, VirtualFile file, boolean inDumbMode) {
     assertTrue(DumbService.isDumb(getProject()) == inDumbMode)
     assertTrue(FileBasedIndex.isIndexAccessDuringDumbModeEnabled())
@@ -1268,5 +1311,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       runnable.run()
     }
     return found
+  }
+
+  private static assertStubLanguage(@NotNull Language expectedLanguage, @NotNull ObjectStubTree stub) {
+    def parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(expectedLanguage)
+    assertEquals(parserDefinition.getFileNodeType(), stub.getPlainList().get(0).getType())
+  }
+
+  @NotNull
+  private Map<IdIndexEntry, Integer> getIdIndexData(@NotNull VirtualFile file) {
+    FileBasedIndex.getInstance().getFileData(IdIndex.NAME, file, getProject())
   }
 }
