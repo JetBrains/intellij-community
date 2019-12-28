@@ -197,6 +197,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    if (lastParent == null) return true;
     ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
     if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
     PsiExpression condition = getCondition();

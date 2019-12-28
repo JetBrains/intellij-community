@@ -27,6 +27,9 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   public void testInstanceOfControlFlow() {
     doTest();
   }
+  public void testInstanceOfInSwitch() {
+    doTest();
+  }
   public void testReassignPatternVariable() {
     doTest();
   }

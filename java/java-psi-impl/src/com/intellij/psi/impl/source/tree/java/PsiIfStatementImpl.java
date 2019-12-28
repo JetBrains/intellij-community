@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -209,6 +210,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
       PsiStatement thenBranch = getThenBranch();
       PsiStatement elseBranch = getElseBranch();
       if (lastParent == null) {
+        if (state.get(PatternResolveState.KEY) == PatternResolveState.WHEN_NONE) return true;
         PsiScopeProcessor conditionProcessor;
         if (state.get(PatternResolveState.KEY) == PatternResolveState.WHEN_BOTH) {
           conditionProcessor = processor;
@@ -216,6 +218,10 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         else {
           conditionProcessor = (element, s) -> {
             LOG.assertTrue(element instanceof PsiPatternVariable);
+            final NameHint hint = processor.getHint(NameHint.KEY);
+            if (hint != null && !((PsiPatternVariable)element).getName().equals(hint.getName(s))) {
+              return true;
+            }
             ControlFlow flow;
             try {
               flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(

@@ -6,7 +6,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public enum PatternResolveState {
-  WHEN_TRUE, WHEN_FALSE, WHEN_BOTH;
+  WHEN_TRUE, WHEN_FALSE, WHEN_BOTH, WHEN_NONE;
 
   public static final Key<PatternResolveState> KEY = Key.create("JavaPatternDeclarationHint");
 
@@ -20,10 +20,8 @@ public enum PatternResolveState {
         return WHEN_FALSE;
       case WHEN_FALSE:
         return WHEN_TRUE;
-      case WHEN_BOTH:
-        return WHEN_BOTH;
       default:
-        throw new IllegalStateException("Unexpected value: " + this);
+        return this;
     }
   }
   

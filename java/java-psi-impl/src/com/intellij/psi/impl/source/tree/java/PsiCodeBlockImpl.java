@@ -239,14 +239,41 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
       final String name = hint.getName(state);
       if ((elementClassHint == null || elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) && classesSet.contains(name)) {
-        return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+        return walkChildren(processor, state, lastParent, place);
       }
       if ((elementClassHint == null || elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) && variablesSet.contains(name)) {
-        return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+        return walkChildren(processor, state, lastParent, place);
       }
     }
     else {
+      return walkChildren(processor, state, lastParent, place);
+    }
+    return true;
+  }
+
+  private boolean walkChildren(@NotNull PsiScopeProcessor processor,
+                               @NotNull ResolveState state,
+                               PsiElement lastParent,
+                               @NotNull PsiElement place) {
+    if (!(getParent() instanceof PsiSwitchBlock)) {
       return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+    }
+    PsiElement child = null;
+    if (lastParent != null && lastParent.getParent() == this) {
+      child = lastParent.getPrevSibling();
+      if (child == null) return true; // first element
+    }
+
+    if (child == null) {
+      child = ((PsiElement)this).getLastChild();
+    }
+
+    while (child != null) {
+      if (child instanceof PsiSwitchLabelStatementBase) {
+        state = PatternResolveState.WHEN_NONE.putInto(state);
+      }
+      if (!child.processDeclarations(processor, state, null, place)) return false;
+      child = child.getPrevSibling();
     }
     return true;
   }

@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -137,10 +138,15 @@ public class PsiWhileStatementImpl extends PsiLoopStatementImpl implements PsiWh
                                                     @NotNull ResolveState state,
                                                     @NotNull PsiElement place,
                                                     @NotNull PsiConditionalLoopStatement loop) {
+    if (state.get(PatternResolveState.KEY) == PatternResolveState.WHEN_NONE) return true;
     PsiExpression condition = loop.getCondition();
     if (condition == null) return true;
     PsiScopeProcessor conditionProcessor = (element, s) -> {
       assert element instanceof PsiPatternVariable;
+      final NameHint hint = processor.getHint(NameHint.KEY);
+      if (hint != null && !((PsiPatternVariable)element).getName().equals(hint.getName(s))) {
+        return true;
+      }
       PatternResolveState resolveState = PatternResolveState.stateAtParent((PsiPatternVariable)element, condition);
       if (resolveState == PatternResolveState.WHEN_TRUE ||
           !PsiTreeUtil

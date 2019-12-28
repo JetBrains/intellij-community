@@ -10,6 +10,10 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiPatternVariable extends PsiVariable {
   @NotNull
   @Override
+  String getName();
+
+  @NotNull
+  @Override
   PsiTypeElement getTypeElement();
 
   @NotNull
