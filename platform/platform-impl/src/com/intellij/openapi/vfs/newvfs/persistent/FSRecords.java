@@ -1603,13 +1603,11 @@ public class FSRecords {
   private static int contents;
   private static int reuses;
 
-  private static final MessageDigest ourDigest = ContentHashesUtil.createHashDigest();
-
   private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert WE_HAVE_CONTENT_HASHES;
 
     long started = DUMP_STATISTICS ? System.nanoTime():0;
-    byte[] digest = calculateContentHash(ourDigest, bytes, offset, length);
+    byte[] digest = ContentHashesUtil.calculateContentHash(bytes, offset, length);
     long done = DUMP_STATISTICS ? System.nanoTime() - started : 0;
     time += done;
 
@@ -1636,14 +1634,6 @@ public class FSRecords {
 
       return -page;
     }
-  }
-
-  public static byte[] calculateContentHash(MessageDigest digest, byte[] bytes, int offset, int length) {
-    digest.reset();
-    digest.update(String.valueOf(length).getBytes(ContentHashesUtil.HASHER_CHARSET));
-    digest.update("\0".getBytes(ContentHashesUtil.HASHER_CHARSET));
-    digest.update(bytes, offset, length);
-    return digest.digest();
   }
 
   private static class AttributeOutputStream extends DataOutputStream {

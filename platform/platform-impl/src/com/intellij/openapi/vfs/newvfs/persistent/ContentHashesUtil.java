@@ -20,7 +20,7 @@ public class ContentHashesUtil {
     @NotNull
     @Override
     public MessageDigest create() {
-      return createHashDigest();
+      return DigestUtil.sha1();
     }
 
     @Override
@@ -29,14 +29,18 @@ public class ContentHashesUtil {
     }
   };
 
-  @NotNull
-  static MessageDigest createHashDigest() {
-    return DigestUtil.sha1();
-  }
-
   public static final int SIGNATURE_LENGTH = 20;
 
   public static final Charset HASHER_CHARSET = StandardCharsets.UTF_8;
+
+  public static byte[] calculateContentHash(byte[] bytes, int offset, int length) {
+    MessageDigest digest = HASHER_CACHE.getValue();
+    digest.reset();
+    digest.update(String.valueOf(length).getBytes(HASHER_CHARSET));
+    digest.update("\0".getBytes(HASHER_CHARSET));
+    digest.update(bytes, offset, length);
+    return digest.digest();
+  }
 
   public static class HashEnumerator extends PersistentBTreeEnumerator<byte[]> {
     public HashEnumerator(@NotNull Path contentsHashesFile) throws IOException {
