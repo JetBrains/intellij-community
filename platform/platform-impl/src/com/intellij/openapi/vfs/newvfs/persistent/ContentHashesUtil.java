@@ -44,7 +44,15 @@ public class ContentHashesUtil {
     }
 
     public HashEnumerator(@NotNull Path contentsHashesFile, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
-      super(contentsHashesFile, new ContentHashesDescriptor(), 64 * 1024, storageLockContext);
+      this(contentsHashesFile, new ContentHashesDescriptor(), 64 * 1024, storageLockContext);
+    }
+
+    private HashEnumerator(@NotNull Path file,
+                           @NotNull KeyDescriptor<byte[]> dataDescriptor,
+                           int initialSize,
+                           @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+      super(file, dataDescriptor, initialSize, lockContext);
+      LOG.assertTrue(dataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy);
     }
 
     @Override
@@ -57,27 +65,14 @@ public class ContentHashesUtil {
       return super.getLargestId() / SIGNATURE_LENGTH;
     }
 
-    private final ThreadLocal<Boolean> myProcessingKeyAtIndex = new ThreadLocal<>();
-
     @Override
     protected boolean isKeyAtIndex(byte[] value, int idx) throws IOException {
-      myProcessingKeyAtIndex.set(Boolean.TRUE);
-      try {
-        return super.isKeyAtIndex(value, addrToIndex(indexToAddr(idx)* SIGNATURE_LENGTH));
-      } finally {
-        myProcessingKeyAtIndex.set(null);
-      }
+      return super.isKeyAtIndex(value, addrToIndex(indexToAddr(idx) * SIGNATURE_LENGTH));
     }
 
     @Override
     public byte[] valueOf(int idx) throws IOException {
-      if (myProcessingKeyAtIndex.get() == Boolean.TRUE) return super.valueOf(idx);
-      return super.valueOf(addrToIndex(indexToAddr(idx)* SIGNATURE_LENGTH));
-    }
-
-    @Override
-    public int tryEnumerate(byte[] value) throws IOException {
-      return super.tryEnumerate(value);
+      return super.valueOf(addrToIndex(indexToAddr(idx) * SIGNATURE_LENGTH));
     }
   }
 
