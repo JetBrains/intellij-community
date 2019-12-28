@@ -16,13 +16,7 @@ import org.toml.lang.psi.TomlLiteral
 val TomlLiteral.kind: TomlLiteralKind?
     get() {
         val child = node.findChildByType(TOML_LITERALS) ?: return null
-        return when (child.elementType) {
-            BOOLEAN -> TomlLiteralKind.Boolean(child)
-            NUMBER -> TomlLiteralKind.Number(child)
-            DATE_TIME -> TomlLiteralKind.DateTime(child)
-            in TOML_STRING_LITERALS -> TomlLiteralKind.String(child)
-            else -> error("Unknown literal: $child (`$text`)")
-        }
+        return TomlLiteralKind.fromAstNode(child) ?: error("Unknown literal: $child (`$text`)")
     }
 
 sealed class TomlLiteralKind(val node: ASTNode) {
@@ -36,6 +30,18 @@ sealed class TomlLiteralKind(val node: ASTNode) {
             }
 
         val offsets: LiteralOffsets by lazy { offsetsForTomlText(node) }
+    }
+
+    companion object {
+        fun fromAstNode(node: ASTNode): TomlLiteralKind? {
+            return when (node.elementType) {
+                BOOLEAN -> Boolean(node)
+                NUMBER -> Number(node)
+                DATE_TIME -> DateTime(node)
+                in TOML_STRING_LITERALS -> String(node)
+                else -> null
+            }
+        }
     }
 }
 

@@ -36,5 +36,6 @@
         <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
         <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
         <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
+        <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
     </extensions>
 </idea-plugin>
