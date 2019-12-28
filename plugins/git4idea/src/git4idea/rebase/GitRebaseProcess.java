@@ -65,6 +65,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.capitalize;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.*;
@@ -79,9 +80,12 @@ public class GitRebaseProcess {
 
   private static final Logger LOG = Logger.getInstance(GitRebaseProcess.class);
 
-  private final NotificationAction ABORT_ACTION = NotificationAction.createSimpleExpiring("Abort", () -> abort());
-  private final NotificationAction CONTINUE_ACTION = NotificationAction.createSimpleExpiring("Continue", () -> retry(GitRebaseUtils.CONTINUE_PROGRESS_TITLE));
-  private final NotificationAction RETRY_ACTION = NotificationAction.createSimpleExpiring("Retry", () -> retry("Retry Rebase Process..."));
+  private final NotificationAction ABORT_ACTION =
+    NotificationAction.createSimpleExpiring("Abort", () -> abort());
+  private final NotificationAction CONTINUE_ACTION =
+    NotificationAction.createSimpleExpiring("Continue", () -> retry(GitRebaseUtils.CONTINUE_PROGRESS_TITLE));
+  private final NotificationAction RETRY_ACTION =
+    NotificationAction.createSimpleExpiring("Retry", () -> retry("Retry Rebase Process" + ELLIPSIS));
   private final NotificationAction VIEW_STASH_ACTION;
 
   @NotNull private final Project myProject;
