@@ -78,18 +78,13 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     try {
       return ReadAction.compute(() -> FileBasedIndex.getInstance()
-        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-          final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
-
-          @Override
-          public boolean process(@NotNull final VirtualFile file, final Integer value) {
-            ProgressIndicatorProvider.checkCanceled();
-            final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0) {
-              if (!fileProcessor.process(file)) return false;
-            }
-            return true;
+        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, (file, value) -> {
+          ProgressIndicatorProvider.checkCanceled();
+          final int mask = value.intValue();
+          if ((mask & occurrenceMask) != 0) {
+            if (!fileProcessor.process(file)) return false;
           }
+          return true;
         }, scope));
     }
     catch (IndexNotReadyException e) {
