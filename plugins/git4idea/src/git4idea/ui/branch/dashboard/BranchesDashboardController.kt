@@ -58,7 +58,6 @@ internal class BranchesDashboardController(private val project: Project,
       if (showOnlyMy) {
         updateBranchesIsMyState()
       }
-      ui.updateBranchesTree(false)
       ui.stopLoadingBranches()
     }
     return changed
