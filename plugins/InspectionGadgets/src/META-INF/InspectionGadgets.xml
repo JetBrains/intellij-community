@@ -2804,6 +2804,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="PatternVariableCanBeUsed" enabledByDefault="true" level="WARNING"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.pattern.variable.can.be.used.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids14"
+                     implementationClass="com.intellij.codeInspection.PatternVariableCanBeUsedInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"

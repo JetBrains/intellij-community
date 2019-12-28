@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -68,7 +69,8 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         PsiInstanceOfExpression instanceOf = findInstanceOf(condition, cast, whenTrue);
         if (instanceOf != null) {
           String name = identifier.getText();
-          holder.registerProblem(identifier, "Variable '" + name + "' can be replaced with pattern variable",
+          holder.registerProblem(identifier,
+                                 InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.message", name),
                                  new PatternVariableCanBeUsedFix(name, instanceOf));
           return true;
         }
@@ -96,6 +98,7 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
               }
             }
           }
+          if (stmt instanceof PsiSwitchLabelStatementBase) break;
         }
         return false;
       }
@@ -168,14 +171,14 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return "Replace '" + myName + "' with pattern variable";
+      return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.fix.name", myName);
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with pattern variable";
+      return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.fix.family.name");
     }
 
     @Override
