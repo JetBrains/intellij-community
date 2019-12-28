@@ -20,7 +20,7 @@ class GitVcsOptions : BaseState() {
 
   // The policy that specifies how files are saved before update or rebase
   @get:OptionTag("SAVE_CHANGES_POLICY")
-  var saveChangesPolicy by enum(GitVcsSettings.SaveChangesPolicy.SHELVE)
+  var saveChangesPolicy by enum(GitSaveChangesPolicy.SHELVE)
 
   @get:OptionTag("UPDATE_TYPE")
   @com.intellij.configurationStore.Property(description = "Update method")

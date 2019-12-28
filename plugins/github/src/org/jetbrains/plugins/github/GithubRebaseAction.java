@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRemote;
@@ -221,7 +222,7 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
     private void rebaseCurrentBranch(@NotNull ProgressIndicator indicator, String onto) {
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
         List<VirtualFile> rootsToSave = Collections.singletonList(myRepository.getRoot());
-        GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
+        GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
         GitPreservingProcess process = new GitPreservingProcess(myProject, myGit, rootsToSave, "Rebasing", onto,
                                                                 saveMethod, indicator,
                                                                 () -> doRebaseCurrentBranch(indicator, onto));

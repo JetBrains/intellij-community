@@ -15,6 +15,7 @@ import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +144,7 @@ public class GitRebaseSpec {
   @NotNull
   private static GitChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     Git git = Git.getInstance();
-    GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
+    GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
     return GitChangesSaver.getSaver(project, git, indicator, VcsBundle.message("stash.changes.message", "rebase"), saveMethod);
   }
 

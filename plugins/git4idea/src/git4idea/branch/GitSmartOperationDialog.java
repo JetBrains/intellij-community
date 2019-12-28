@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import git4idea.DialogManager;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.ui.ChangesBrowserWithRollback;
 import git4idea.util.GitSimplePathsBrowser;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   @NotNull private final JComponent myFileBrowser;
   @NotNull private final String myOperationTitle;
-  @NotNull private final GitVcsSettings.SaveChangesPolicy mySaveMethod;
+  @NotNull private final GitSaveChangesPolicy mySaveMethod;
   @Nullable private final String myForceButton;
 
   /**

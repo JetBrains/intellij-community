@@ -113,7 +113,7 @@ public class GitRebaseProcess {
     myProgressManager = ProgressManager.getInstance();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
-    VIEW_STASH_ACTION = NotificationAction.createSimple("View " + capitalize(mySaver.getSaveMethod().getName()) + "...",
+    VIEW_STASH_ACTION = NotificationAction.createSimple("View " + capitalize(mySaver.getSaveMethod().getStorageName()) + ELLIPSIS,
                                                         () -> mySaver.showSavedChanges());
   }
 

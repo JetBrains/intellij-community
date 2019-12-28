@@ -26,7 +26,7 @@ import git4idea.commands.GitHandler
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
-import git4idea.config.GitVcsSettings.SaveChangesPolicy
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -104,7 +104,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     return createRepository(project, rootDir)
   }
 
-  protected open fun getDefaultSaveChangesPolicy() : SaveChangesPolicy = SaveChangesPolicy.SHELVE
+  protected open fun getDefaultSaveChangesPolicy() : GitSaveChangesPolicy = GitSaveChangesPolicy.SHELVE
 
   private fun overrideDefaultSaveChangesPolicy() {
     settings.saveChangesPolicy = getDefaultSaveChangesPolicy()

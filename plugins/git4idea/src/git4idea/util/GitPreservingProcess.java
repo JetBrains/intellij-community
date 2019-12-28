@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ public class GitPreservingProcess {
                               @NotNull Collection<? extends VirtualFile> rootsToSave,
                               @NotNull String operationTitle,
                               @NotNull String destinationName,
-                              @NotNull GitVcsSettings.SaveChangesPolicy saveMethod,
+                              @NotNull GitSaveChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {
     myProject = project;
@@ -103,7 +104,7 @@ public class GitPreservingProcess {
    * Configures the saver: i.e. notifications and texts for the GitConflictResolver used inside.
    */
   @NotNull
-  private GitChangesSaver configureSaver(@NotNull GitVcsSettings.SaveChangesPolicy saveMethod) {
+  private GitChangesSaver configureSaver(@NotNull GitSaveChangesPolicy saveMethod) {
     GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
       @NotNull
@@ -117,7 +118,7 @@ public class GitPreservingProcess {
       @NotNull
       @Override
       public String getLeftPanelTitle(@NotNull VirtualFile file) {
-        return "Uncommitted changes from the " + saveMethod.getName();
+        return "Uncommitted changes from the " + saveMethod.getStorageName();
       }
 
       @NotNull
@@ -148,7 +149,7 @@ public class GitPreservingProcess {
       VcsNotifier.getInstance(myProject).notifyError(
         "Couldn't save uncommitted changes.",
         String.format("Tried to save uncommitted changes in %s before %s, but failed with an error.<br/>%s",
-                      mySaver.getSaveMethod().getName(), myOperationTitle, join(e.getMessages())));
+                      mySaver.getSaveMethod().getStorageName(), myOperationTitle, join(e.getMessages())));
       return false;
     }
   }
@@ -163,7 +164,7 @@ public class GitPreservingProcess {
   }
 
   /**
-   * @deprecated Use {@link #GitPreservingProcess(Project, Git, Collection, String, String, GitVcsSettings.SaveChangesPolicy,
+   * @deprecated Use {@link #GitPreservingProcess(Project, Git, Collection, String, String, GitSaveChangesPolicy,
    * ProgressIndicator, Runnable)}
    */
   @Deprecated

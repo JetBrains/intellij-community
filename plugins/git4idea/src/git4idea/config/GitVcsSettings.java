@@ -27,46 +27,6 @@ import java.util.Objects;
 public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions> implements DvcsSyncSettings, DvcsCompareSettings {
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
-  /**
-   * The way the local changes are saved before update
-   */
-  public enum SaveChangesPolicy {
-    STASH("stash", "stash", "stashed", "unstash"),
-    SHELVE("shelf", "shelve", "shelved", "unshelve");
-
-    @NotNull private final String myName;
-    @NotNull private final String myVerb;
-    @NotNull private final String myVerbInPast;
-    @NotNull private final String myOppositeVerb;
-
-    SaveChangesPolicy(@NotNull String name, @NotNull String verb, @NotNull String verbInPast, @NotNull String oppositeVerb) {
-      myName = name;
-      myVerb = verb;
-      myVerbInPast = verbInPast;
-      myOppositeVerb = oppositeVerb;
-    }
-
-    @NotNull
-    public String getName() {
-      return myName;
-    }
-
-    @NotNull
-    public String getVerb() {
-      return myVerb;
-    }
-
-    @NotNull
-    public String getVerbInPast() {
-      return myVerbInPast;
-    }
-
-    @NotNull
-    public String getOppositeVerb() {
-      return myOppositeVerb;
-    }
-  }
-
   public GitVcsSettings() {
     super(new GitVcsOptions());
   }
@@ -89,11 +49,11 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   @NotNull
-  public SaveChangesPolicy getSaveChangesPolicy() {
+  public GitSaveChangesPolicy getSaveChangesPolicy() {
     return getState().getSaveChangesPolicy();
   }
 
-  public void setSaveChangesPolicy(SaveChangesPolicy value) {
+  public void setSaveChangesPolicy(GitSaveChangesPolicy value) {
     getState().setSaveChangesPolicy(value);
   }
 
@@ -343,7 +303,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   /**
-   * @deprecated Use {@link SaveChangesPolicy}
+   * @deprecated Use {@link GitSaveChangesPolicy}
    */
   @Deprecated
   public enum UpdateChangesPolicy {
@@ -351,13 +311,13 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     SHELVE;
 
     @NotNull
-    private static UpdateChangesPolicy from(SaveChangesPolicy policy) {
-      return policy == SaveChangesPolicy.STASH ? STASH : SHELVE;
+    private static UpdateChangesPolicy from(GitSaveChangesPolicy policy) {
+      return policy == GitSaveChangesPolicy.STASH ? STASH : SHELVE;
     }
 
     @NotNull
-    public SaveChangesPolicy convert() {
-      return this == STASH ? SaveChangesPolicy.STASH : SaveChangesPolicy.SHELVE;
+    public GitSaveChangesPolicy convert() {
+      return this == STASH ? GitSaveChangesPolicy.STASH : GitSaveChangesPolicy.SHELVE;
     }
   }
 
