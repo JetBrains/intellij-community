@@ -19,3 +19,8 @@ task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
   from zipTree(configurations.kotlinPlugin.singleFile)
   into "${project.buildDir}/kotlin"
 }
+
+task deployKotlinPlugin(dependsOn: setupKotlinPlugin, type: Sync) {
+  from file("${project.buildDir}/kotlin")
+  into "${System.getProperty("idea.config.path")}/plugins/"
+}
