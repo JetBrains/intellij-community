@@ -25,27 +25,13 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
   private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier) {
     errorNotifier.showError(getPrettyErrorMessage(exception), ErrorNotifier.FixOption.Standard("Install") {
       errorNotifier.executeTask("Starting system installer", false) {
-        val cmd = GeneralCommandLine("/usr/bin/git", "version")
-        try {
-          val output = ExecUtil.execAndGetOutput(cmd)
-          LOG.info("Called system /usr/bin/git installer. output: ${output.dumpToString()}")
-          errorNotifier.hideProgress()
-
-          if (!output.checkSuccess(LOG)) {
-            LOG.warn(output.stderr)
-            showCouldntStartInstallerError(errorNotifier)
-          }
-        }
-        catch (e: Exception) {
-          LOG.warn(e)
-          showCouldntStartInstallerError(errorNotifier)
-        }
+        execXCodeSelectInstall(errorNotifier)
       }
     })
   }
 
   private fun showCouldntStartInstallerError(errorNotifier: ErrorNotifier) {
-    errorNotifier.showError("Couldn't start installer", getLinkToConfigure(project))
+    errorNotifier.showError("Couldn't Install Command Line Tools", getLinkToConfigure(project))
   }
 
   private fun showXCodeLicenseError(errorNotifier: ErrorNotifier) {
@@ -91,13 +77,13 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
       val output = ExecUtil.execAndGetOutput(cmd)
       if (!output.checkSuccess(LOG)) {
         LOG.warn(output.stderr)
-        errorNotifier.showError("Couldn't Install Command Line Tools")
+        showCouldntStartInstallerError(errorNotifier)
       }
       errorNotifier.hideProgress()
     }
     catch (e: Exception) {
       LOG.warn(e)
-      errorNotifier.showError("Couldn't Install Command Line Tools")
+      showCouldntStartInstallerError(errorNotifier)
     }
   }
 }
