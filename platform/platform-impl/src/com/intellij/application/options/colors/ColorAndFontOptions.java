@@ -76,7 +76,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
    * Use {code {@link #getSCOPES_GROUP()}} instead
    */
   @Deprecated
-  public static final String SCOPES_GROUP = getSCOPES_GROUP();
+  public static final String SCOPES_GROUP = "By Scope";
 
   private boolean mySomeSchemesDeleted = false;
   private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;

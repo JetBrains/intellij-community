@@ -49,22 +49,25 @@ public class Messages {
    * Use {code {@link #getOK_BUTTON()}} instead
    */
   @Deprecated
-  public static final String OK_BUTTON = getOK_BUTTON();
+  public static final String OK_BUTTON = "OK";
+
   /**
    * Use {code {@link #getYES_BUTTON()}} instead
    */
   @Deprecated
-  public static final String YES_BUTTON = getYES_BUTTON();
+  public static final String YES_BUTTON = "&Yes";
+
   /**
    * Use {code {@link #getNO_BUTTON()}} instead
    */
   @Deprecated
-  public static final String NO_BUTTON = getNO_BUTTON();
+  public static final String NO_BUTTON = "&No";
+
   /**
    * Use {code {@link #getCANCEL_BUTTON()}} instead
    */
   @Deprecated
-  public static final String CANCEL_BUTTON = getCANCEL_BUTTON();
+  public static final String CANCEL_BUTTON = "Cancel";
 
   public static String getOK_BUTTON() { return CommonBundle.getOkButtonText(); }
   public static String getYES_BUTTON() { return CommonBundle.getYesButtonText(); }

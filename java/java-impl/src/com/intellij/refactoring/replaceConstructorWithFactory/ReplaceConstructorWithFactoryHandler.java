@@ -37,7 +37,7 @@ public class ReplaceConstructorWithFactoryHandler
    * Use {code {@link #getREFACTORING_NAME()}} instead
    */
   @Deprecated
-  public static final String REFACTORING_NAME = getREFACTORING_NAME();
+  public static final String REFACTORING_NAME = "Replace Constructor With Factory Method";
   private Project myProject;
 
   @Override

@@ -19,7 +19,7 @@ public class XDebuggerUIConstants {
    * Use {code {@link #getCOLLECTING_DATA_MESSAGE()}} instead
    */
   @Deprecated
-  public static final String COLLECTING_DATA_MESSAGE = getCOLLECTING_DATA_MESSAGE();
+  public static final String COLLECTING_DATA_MESSAGE = "Collecting data…";
 
   public static final Icon ERROR_MESSAGE_ICON = AllIcons.General.Error;
   public static final Icon INFORMATION_MESSAGE_ICON = AllIcons.General.Information;

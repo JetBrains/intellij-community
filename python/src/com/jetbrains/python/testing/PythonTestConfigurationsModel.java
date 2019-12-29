@@ -28,7 +28,7 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
    * Use {code {@link #getPYTHONS_UNITTEST_NAME()}} instead
    */
   @Deprecated
-  public static final String PYTHONS_UNITTEST_NAME = getPYTHONS_UNITTEST_NAME();
+  public static final String PYTHONS_UNITTEST_NAME = "Unittests";
 
   private String myTestRunner;
   private final Module myModule;

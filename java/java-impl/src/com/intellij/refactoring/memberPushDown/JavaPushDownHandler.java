@@ -47,7 +47,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
    * Use {code {@link #getREFACTORING_NAME()}} instead
    */
   @Deprecated
-  public static final String REFACTORING_NAME = getREFACTORING_NAME();
+  public static final String REFACTORING_NAME = "Push Members Down";
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {

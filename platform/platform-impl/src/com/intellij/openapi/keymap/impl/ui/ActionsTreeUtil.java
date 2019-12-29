@@ -41,7 +41,7 @@ public class ActionsTreeUtil {
    * Use {code {@link #getMAIN_MENU_TITLE()}} instead
    */
   @Deprecated
-  public static final String MAIN_MENU_TITLE = KeyMapBundle.message("main.menu.action.title");
+  public static final String MAIN_MENU_TITLE = "Main menu";
 
   @NonNls
   private static final String EDITOR_PREFIX = "Editor";

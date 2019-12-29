@@ -32,7 +32,7 @@ public class MoveMembersImpl {
    * Use {code {@link #getREFACTORING_NAME()}} instead
    */
   @Deprecated
-  public static final String REFACTORING_NAME = getREFACTORING_NAME();
+  public static final String REFACTORING_NAME = "Move Static Members";
 
   /**
    * element should be either not anonymous PsiClass whose members should be moved

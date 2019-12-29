@@ -24,7 +24,7 @@ public abstract class StatusText {
    * Use {code {@link #getDEFAULT_EMPTY_TEXT()}} instead
    */
   @Deprecated
-  public static final String DEFAULT_EMPTY_TEXT = getDEFAULT_EMPTY_TEXT();
+  public static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
 
   private static final int Y_GAP = 2;
 

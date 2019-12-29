@@ -46,7 +46,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
    * Use {code {@link #getNAME()}} instead
    */
   @Deprecated
-  public static final String NAME = getNAME();
+  public static final String NAME = "Dependencies";
 
   private ClasspathPanelImpl myPanel;
   private ClasspathFormatPanel myClasspathFormatPanel;

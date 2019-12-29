@@ -20,7 +20,7 @@ public final class TestsScope extends NamedScope {
    * Use {code {@link #getNAME()}} instead
    */
   @Deprecated
-  public static final String NAME = getNAME();
+  public static final String NAME = "Tests";
   public static final TestsScope INSTANCE = new TestsScope();
 
   private TestsScope() {

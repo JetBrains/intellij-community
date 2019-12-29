@@ -36,7 +36,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
    * Use {code {@link #getREFACTORING_NAME()}} instead
    */
   @Deprecated
-  public static final String REFACTORING_NAME = getREFACTORING_NAME();
+  public static final String REFACTORING_NAME = "Pull Members Up";
 
   private PsiClass mySubclass;
   private Project myProject;

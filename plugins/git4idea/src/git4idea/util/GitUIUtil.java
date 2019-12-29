@@ -34,7 +34,7 @@ public class GitUIUtil {
    * @deprecated Use {@link #getNO_CURRENT_BRANCH()} instead
    */
   @Deprecated
-  public static final String NO_CURRENT_BRANCH = getNO_CURRENT_BRANCH();
+  public static final String NO_CURRENT_BRANCH = "<no active branch>";
 
   /**
    * A private constructor for utility class
