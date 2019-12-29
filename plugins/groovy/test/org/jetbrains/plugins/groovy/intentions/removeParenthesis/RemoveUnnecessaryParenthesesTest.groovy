@@ -9,9 +9,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 
 @CompileStatic
 class RemoveUnnecessaryParenthesesTest extends LightJavaCodeInsightFixtureTestCase {
-
-  private static final String INTENTION_NAME = GroovyIntentionsBundle.message("remove.parentheses.from.method.call.intention.name")
-
   final String basePath = TestUtils.testDataPath + "intentions/removeParenth/"
 
   void testRemoveUnnecessaryParenthesis() {
@@ -20,7 +17,7 @@ class RemoveUnnecessaryParenthesesTest extends LightJavaCodeInsightFixtureTestCa
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".groovy")
-    myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions(INTENTION_NAME)))
+    myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions(getINTENTION_NAME())))
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
@@ -79,7 +76,7 @@ class RemoveUnnecessaryParenthesesTest extends LightJavaCodeInsightFixtureTestCa
 
   private void doTest(String before, String after = null) {
     myFixture.configureByText "_.groovy", before
-    def actions = myFixture.filterAvailableIntentions(INTENTION_NAME)
+    def actions = myFixture.filterAvailableIntentions(getINTENTION_NAME())
     if (after == null) {
       assert actions.isEmpty()
     }
@@ -88,5 +85,9 @@ class RemoveUnnecessaryParenthesesTest extends LightJavaCodeInsightFixtureTestCa
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
       myFixture.checkResult after
     }
+  }
+
+  private static String getINTENTION_NAME() {
+    return GroovyIntentionsBundle.message("remove.parentheses.from.method.call.intention.name")
   }
 }
