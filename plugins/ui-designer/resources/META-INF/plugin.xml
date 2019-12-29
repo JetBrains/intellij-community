@@ -70,7 +70,7 @@
     <localInspection language="TEXT" shortName="NoScrollPane" bundle="messages.UIDesignerBundle" key="inspection.no.scroll.pane"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.NoScrollPaneInspection"/>
-    <localInspection shortName="BoundFieldAssignment" bundle="messages.UIDesignerBundle" key="inspection.bound.field.title"
+    <localInspection language="JAVA" shortName="BoundFieldAssignment" bundle="messages.UIDesignerBundle" key="inspection.bound.field.title"
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.BoundFieldAssignmentInspection"/>
 
