@@ -57,7 +57,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
   private fun showInvalidActiveDeveloperPathError(errorNotifier: ErrorNotifier) {
     val fixPathOption = ErrorNotifier.FixOption.Standard("Fix Path") {
       errorNotifier.executeTask("Requesting XCode Command Line Developer Tools" + StringUtil.ELLIPSIS, false) {
-        sudoXCodeSelectInstall(errorNotifier)
+        execXCodeSelectInstall(errorNotifier)
       }
     }
     errorNotifier.showError("Invalid path to Command Line Tools", fixPathOption)
@@ -85,7 +85,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
     return (message != null && messageIndicator(message))
   }
 
-  private fun sudoXCodeSelectInstall(errorNotifier: ErrorNotifier) {
+  private fun execXCodeSelectInstall(errorNotifier: ErrorNotifier) {
     try {
       val cmd = GeneralCommandLine("xcode-select", "--install")
       val output = ExecUtil.execAndGetOutput(cmd)
