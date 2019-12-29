@@ -67,7 +67,6 @@ public class RecentLocationsAction extends DumbAwareAction {
                                                                   SHORTCUT_FOREGROUND_COLOR.getGreen(),
                                                                   SHORTCUT_FOREGROUND_COLOR.getBlue());
   }
-  static final String EMPTY_FILE_TEXT = IdeBundle.message("recent.locations.popup.empty.file.text");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -371,5 +370,9 @@ public class RecentLocationsAction extends DumbAwareAction {
 
     navigationRef.set(true);
     popup.closeOk(null);
+  }
+
+  static String getEMPTY_FILE_TEXT() {
+    return IdeBundle.message("recent.locations.popup.empty.file.text");
   }
 }

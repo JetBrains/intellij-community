@@ -481,7 +481,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return ConvertToInstanceMethodHandler.REFACTORING_NAME;
+    return ConvertToInstanceMethodHandler.getREFACTORING_NAME();
   }
 
   @Nullable

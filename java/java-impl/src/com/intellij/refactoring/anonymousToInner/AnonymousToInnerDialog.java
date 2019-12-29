@@ -44,7 +44,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myAnonClass = anonClass;
     myShowCanBeStatic = showCanBeStatic;
 
-    setTitle(AnonymousToInnerHandler.REFACTORING_NAME);
+    setTitle(AnonymousToInnerHandler.getREFACTORING_NAME());
 
     for (VariableInfo info : variableInfos) {
       myVariableToInfoMap.put(info.variable, info);
@@ -154,7 +154,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-        AnonymousToInnerHandler.REFACTORING_NAME,
+        AnonymousToInnerHandler.getREFACTORING_NAME(),
         errorString,
         HelpID.ANONYMOUS_TO_INNER,
         myProject);

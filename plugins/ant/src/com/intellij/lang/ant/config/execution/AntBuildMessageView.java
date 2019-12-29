@@ -64,7 +64,6 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private static final Key<AntBuildMessageView> KEY = Key.create("BuildMessageView.KEY");
-  private static final String BUILD_CONTENT_NAME = AntBundle.message("ant.build.tab.content.title");
 
   public static final int PRIORITY_ERR = org.apache.tools.ant.Project.MSG_ERR;
   public static final int PRIORITY_WARN = org.apache.tools.ant.Project.MSG_WARN;
@@ -272,7 +271,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     final AntBuildMessageView messageView = new AntBuildMessageView(project, buildFile, targets, additionalProperties);
     String contentName = buildFile.getPresentableName();
-    contentName = BUILD_CONTENT_NAME + " (" + contentName + ")";
+    contentName = getBUILD_CONTENT_NAME() + " (" + contentName + ")";
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(messageView.getComponent(), contentName, true);
     content.putUserData(KEY, messageView);
@@ -967,5 +966,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   void setBuildCommandLine(String commandLine) {
     myPlainTextView.setBuildCommandLine(commandLine);
+  }
+
+  static String getBUILD_CONTENT_NAME() {
+    return AntBundle.message("ant.build.tab.content.title");
   }
 }

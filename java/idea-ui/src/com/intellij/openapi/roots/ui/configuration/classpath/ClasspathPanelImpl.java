@@ -175,7 +175,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
-    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
+    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.getEXPORT_COLUMN_NAME());
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
     myEntryTable.getTableHeader().getColumnModel().getColumn(ClasspathTableModel.ITEM_COLUMN).setPreferredWidth(10000); // consume all available space
 

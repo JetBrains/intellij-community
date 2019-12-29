@@ -40,14 +40,10 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   private JLabel resultSchemaFileNameText;
   private JTextField resultSchemaFileName;
 
-  static final String LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES = XmlBundle.message("local.elements.global.complex.types.option.name");
-  static final String LOCAL_ELEMENTS_TYPES = XmlBundle.message("local.elements.types.option.name");
-  static final String GLOBAL_ELEMENTS_LOCAL_TYPES = XmlBundle.message("global.elements.local.types.option.name");
-
   private static final List<String> designTypes = Arrays.asList(
-    LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES,
-    LOCAL_ELEMENTS_TYPES,
-    GLOBAL_ELEMENTS_LOCAL_TYPES
+    getLOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES(),
+    getLOCAL_ELEMENTS_TYPES(),
+    getGLOBAL_ELEMENTS_LOCAL_TYPES()
   );
 
   static final String STRING_TYPE = "string";
@@ -217,5 +213,17 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   @NotNull
   protected String getHelpId() {
     return "webservices.GenerateSchemaFromInstanceDocument";
+  }
+
+  static String getLOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES() {
+    return XmlBundle.message("local.elements.global.complex.types.option.name");
+  }
+
+  static String getLOCAL_ELEMENTS_TYPES() {
+    return XmlBundle.message("local.elements.types.option.name");
+  }
+
+  static String getGLOBAL_ELEMENTS_LOCAL_TYPES() {
+    return XmlBundle.message("global.elements.local.types.option.name");
   }
 }

@@ -64,7 +64,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private final Project myProject;
   private final MyTableModel myTableModel;
   private JBTable myTable;
-  static final String REFACTORING_NAME = RefactoringBundle.message("changeClassSignature.refactoring.name");
   private final boolean myHideDefaultValueColumn;
 
   public ChangeClassSignatureDialog(@NotNull PsiClass aClass, boolean hideDefaultValueColumn) {
@@ -90,7 +89,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
                                     boolean hideDefaultValueColumn) {
     super(aClass.getProject(), true);
     myHideDefaultValueColumn = hideDefaultValueColumn;
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
     myClass = aClass;
     myProject = myClass.getProject();
     myOriginalParameters = myClass.getTypeParameters();
@@ -384,5 +383,9 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
         return "bound";
       }
     };
+  }
+
+  static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("changeClassSignature.refactoring.name");
   }
 }

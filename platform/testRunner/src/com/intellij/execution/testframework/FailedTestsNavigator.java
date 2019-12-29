@@ -28,8 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FailedTestsNavigator implements OccurenceNavigator {
-  private static final String NEXT_NAME = ExecutionBundle.message("next.faled.test.action.name");
-  private static final String PREVIOUS_NAME = ExecutionBundle.message("prev.faled.test.action.name");
   private TestFrameworkRunningModel myModel;
 
   @Override
@@ -71,13 +69,13 @@ public class FailedTestsNavigator implements OccurenceNavigator {
   @NotNull
   @Override
   public String getNextOccurenceActionName() {
-    return NEXT_NAME;
+    return getNEXT_NAME();
   }
 
   @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
-    return PREVIOUS_NAME;
+    return getPREVIOUS_NAME();
   }
 
   private FailedTestInfo getNextOccurenceInfo() {
@@ -183,5 +181,13 @@ public class FailedTestsNavigator implements OccurenceNavigator {
     protected int getBoundIndex() {
       return 0;
     }
+  }
+
+  static String getNEXT_NAME() {
+    return ExecutionBundle.message("next.faled.test.action.name");
+  }
+
+  static String getPREVIOUS_NAME() {
+    return ExecutionBundle.message("prev.faled.test.action.name");
   }
 }

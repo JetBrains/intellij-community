@@ -38,8 +38,7 @@ import java.util.List;
 * @author nik
 */
 class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implements ItemRemovable {
-  static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
-  private static final ColumnInfo<ClasspathTableItem<?>, Boolean> EXPORT_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, Boolean>(EXPORT_COLUMN_NAME) {
+  private static final ColumnInfo<ClasspathTableItem<?>, Boolean> EXPORT_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, Boolean>(getEXPORT_COLUMN_NAME()) {
     @Nullable
     @Override
     public Boolean valueOf(ClasspathTableItem<?> item) {
@@ -186,5 +185,9 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
 
   private static String getSCOPE_COLUMN_NAME() {
     return ProjectBundle.message("modules.order.export.scope.column");
+  }
+
+  static String getEXPORT_COLUMN_NAME() {
+    return ProjectBundle.message("modules.order.export.export.column");
   }
 }
