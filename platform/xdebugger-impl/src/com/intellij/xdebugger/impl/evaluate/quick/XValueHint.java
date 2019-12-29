@@ -167,7 +167,7 @@ public class XValueHint extends AbstractValueHint {
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
       if (myCurrentHint == null && showEvaluating.get()) {
         SimpleColoredComponent component = HintUtil.createInformationComponent();
-        component.append(XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE);
+        component.append(XDebuggerUIConstants.getEVALUATING_EXPRESSION_MESSAGE());
         showHint(component);
       }
     }, 200, TimeUnit.MILLISECONDS);

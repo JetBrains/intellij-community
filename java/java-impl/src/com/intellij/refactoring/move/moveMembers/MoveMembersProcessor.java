@@ -58,7 +58,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   private final boolean myOpenInEditor;
   private String myNewVisibility; // "null" means "as is"
-  private String myCommandName = MoveMembersImpl.REFACTORING_NAME;
+  private String myCommandName = MoveMembersImpl.getREFACTORING_NAME();
   private MoveMembersOptions myOptions;
 
   public MoveMembersProcessor(Project project, MoveMembersOptions options) {
@@ -99,7 +99,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private void setCommandName(final PsiMember[] members) {
     StringBuilder commandName = new StringBuilder();
-    commandName.append(MoveHandler.REFACTORING_NAME);
+    commandName.append(MoveHandler.getREFACTORING_NAME());
     commandName.append(" ");
     boolean first = true;
     for (PsiMember member : members) {
@@ -348,7 +348,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   public void doRun() {
     if (myMembersToMove.isEmpty()){
       String message = RefactoringBundle.message("no.members.selected");
-      CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, myProject);
+      CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.getREFACTORING_NAME(), message, HelpID.MOVE_MEMBERS, myProject);
       return;
     }
     super.doRun();

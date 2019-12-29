@@ -678,7 +678,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     // make sure the task is associated with default changelist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    LocalChangeList defaultList = changeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultList = changeListManager.findChangeList(LocalChangeList.getDEFAULT_NAME());
     if (defaultList != null && defaultTask != null) {
       ChangeListInfo listInfo = new ChangeListInfo(defaultList);
       if (!defaultTask.getChangeLists().contains(listInfo)) {

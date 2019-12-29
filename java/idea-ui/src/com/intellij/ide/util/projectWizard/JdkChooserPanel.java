@@ -212,7 +212,7 @@ public class JdkChooserPanel extends JPanel {
           }
           updateListModel(allJdks, knownJdks);
           myLoadingDecorator.stopLoading();
-          myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          myList.getEmptyText().setText(StatusText.getDEFAULT_EMPTY_TEXT());
         }, ModalityState.any());
       });
     } else {

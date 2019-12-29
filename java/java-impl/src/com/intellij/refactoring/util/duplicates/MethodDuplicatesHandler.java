@@ -56,7 +56,11 @@ import java.util.*;
  * @author dsl
  */
 public class MethodDuplicatesHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("replace.method.code.duplicates.title");
+  /**
+   * Use {code {@link #getREFACTORING_NAME()}} instead
+   */
+  @Deprecated
+  public static final String REFACTORING_NAME = getREFACTORING_NAME();
   private static final Logger LOG = Logger.getInstance(MethodDuplicatesHandler.class);
 
   @Override
@@ -80,7 +84,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final AnalysisScope scope = new AnalysisScope(file);
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg =
-      new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
+      new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", getREFACTORING_NAME()),
                                    RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
                                    AnalysisUIOptions.getInstance(project), false);
     if (dlg.showAndGet()) {
@@ -202,7 +206,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
         final Runnable nothingFoundRunnable = () -> {
           final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
                                                            ApplicationNamesInfo.getInstance().getProductName());
-          Messages.showInfoMessage(project, message, REFACTORING_NAME);
+          Messages.showInfoMessage(project, message, getREFACTORING_NAME());
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           nothingFoundRunnable.run();
@@ -220,7 +224,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     if (progressIndicator != null && progressIndicator.isCanceled()) return;
 
     final Runnable replaceRunnable = () -> {
-      LocalHistoryAction a = LocalHistory.getInstance().startAction(REFACTORING_NAME);
+      LocalHistoryAction a = LocalHistory.getInstance().startAction(getREFACTORING_NAME());
       try {
         for (final PsiMember member : methods) {
           final List<Match> matches = duplicates.get(member);
@@ -233,7 +237,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                                             member instanceof PsiMethod ? new MethodDuplicatesMatchProvider((PsiMethod)member, matches)
                                                                                         : new ConstantMatchProvider(member, project, matches);
                                                           DuplicatesImpl.invoke(project, matchProvider, true);
-                                                        }), REFACTORING_NAME, REFACTORING_NAME);
+                                                        }), getREFACTORING_NAME(), getREFACTORING_NAME());
 
           WindowManager.getInstance().getStatusBar(project).setInfo("");
         }
@@ -302,11 +306,15 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   }
 
   private static void showErrorMessage(String message, Project project, Editor editor) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.METHOD_DUPLICATES);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.METHOD_DUPLICATES);
   }
 
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     throw new UnsupportedOperationException();
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("replace.method.code.duplicates.title");
   }
 }

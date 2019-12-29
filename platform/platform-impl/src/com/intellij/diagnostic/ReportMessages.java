@@ -23,7 +23,15 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 
 public class ReportMessages {
+  /**
+   * Use {code {@link #getCALLEE_TYPE()}} instead
+   */
+  @Deprecated
+  public static final String ERROR_REPORT = getERROR_REPORT();
 
-  public static final String ERROR_REPORT = DiagnosticBundle.message("error.report.title");
-  public static final NotificationGroup GROUP = new NotificationGroup(ERROR_REPORT, NotificationDisplayType.BALLOON, false);
+  public static String getERROR_REPORT() {
+    return DiagnosticBundle.message("error.report.title");
+  }
+
+  public static final NotificationGroup GROUP = new NotificationGroup(getERROR_REPORT(), NotificationDisplayType.BALLOON, false);
 }

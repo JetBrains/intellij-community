@@ -232,7 +232,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public void reloadModel(boolean userForcedRefresh) {
     fireUpdateStarted();
     myUpdating.set(true);
-    myTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+    myTable.getEmptyText().setText(StatusText.getDEFAULT_EMPTY_TEXT());
     JBLoadingPanel loadingPanel = getLoadingPanel();
     loadingPanel.startLoading();
 

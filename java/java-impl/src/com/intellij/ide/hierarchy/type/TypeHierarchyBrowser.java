@@ -47,7 +47,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     actionGroup.add(new ChangeScopeAction() {
       @Override
       protected boolean isEnabled() {
-        return !Comparing.strEqual(getCurrentViewType(), SUPERTYPES_HIERARCHY_TYPE);
+        return !Comparing.strEqual(getCurrentViewType(), getSUPERTYPES_HIERARCHY_TYPE());
       }
     });
   }
@@ -87,13 +87,13 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
-    if (SUPERTYPES_HIERARCHY_TYPE.equals(typeName)) {
+    if (getSUPERTYPES_HIERARCHY_TYPE().equals(typeName)) {
       return new SupertypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
     }
-    else if (SUBTYPES_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getSUBTYPES_HIERARCHY_TYPE().equals(typeName)) {
       return new SubtypesHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
-    else if (TYPE_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getTYPE_HIERARCHY_TYPE().equals(typeName)) {
       return new TypeHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
     else {

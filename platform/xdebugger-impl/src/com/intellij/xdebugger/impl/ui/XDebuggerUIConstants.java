@@ -15,9 +15,11 @@ import java.awt.*;
  * @author nik
  */
 public class XDebuggerUIConstants {
-  public static final String COLLECTING_DATA_MESSAGE = XDebuggerBundle.message("xdebugger.building.tree.node.message");
-  public static final String EVALUATING_EXPRESSION_MESSAGE = XDebuggerBundle.message("xdebugger.evaluating.expression.node.message");
-  public static final String MODIFYING_VALUE_MESSAGE = XDebuggerBundle.message("xdebugger.modifiyng.value.node.message");
+  /**
+   * Use {code {@link #getCOLLECTING_DATA_MESSAGE()}} instead
+   */
+  @Deprecated
+  public static final String COLLECTING_DATA_MESSAGE = getCOLLECTING_DATA_MESSAGE();
 
   public static final Icon ERROR_MESSAGE_ICON = AllIcons.General.Error;
   public static final Icon INFORMATION_MESSAGE_ICON = AllIcons.General.Information;
@@ -46,5 +48,17 @@ public class XDebuggerUIConstants {
   }
 
   private XDebuggerUIConstants() {
+  }
+
+  public static String getCOLLECTING_DATA_MESSAGE() {
+    return XDebuggerBundle.message("xdebugger.building.tree.node.message");
+  }
+
+  public static String getEVALUATING_EXPRESSION_MESSAGE() {
+    return XDebuggerBundle.message("xdebugger.evaluating.expression.node.message");
+  }
+
+  public static String getMODIFYING_VALUE_MESSAGE() {
+    return XDebuggerBundle.message("xdebugger.modifiyng.value.node.message");
   }
 }

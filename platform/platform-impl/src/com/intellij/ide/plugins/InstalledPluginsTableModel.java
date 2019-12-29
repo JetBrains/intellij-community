@@ -249,7 +249,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
                       "<html>The enabled plugin" + beginS + " depend" + middleS + " on the following plugin" + endS + ":<br>" + listOfDependencies + "</html>"
                       : "<html>The following plugin" + beginS + " depend" + middleS + " on the disabled plugin" + endS + ":<br>" + listOfDependencies + "</html>";
     if (Messages.showOkCancelDialog(message, newEnabledState ? "Enable required plugins" : "Disable dependent plugins",
-                                    newEnabledState ? "Enable" :  "Disable" , Messages.CANCEL_BUTTON, Messages.getQuestionIcon()) == Messages.OK) {
+                                    newEnabledState ? "Enable" :  "Disable" , Messages.getCANCEL_BUTTON(), Messages.getQuestionIcon()) == Messages.OK) {
       for (PluginId pluginId : deps) {
         myEnabled.put(pluginId, newEnabledState);
       }

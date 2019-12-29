@@ -105,7 +105,7 @@ fun ChangeListManager.assertNoChanges() {
 
 fun ChangeListManager.assertOnlyDefaultChangelist() {
   HeavyPlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
-  HeavyPlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.DEFAULT_NAME, defaultChangeList.name)
+  HeavyPlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.getDEFAULT_NAME(), defaultChangeList.name)
 }
 
 fun ChangeListManager.waitScheduledChangelistDeletions() {

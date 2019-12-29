@@ -64,16 +64,16 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   private int myModificationStamp = 0;
 
   public CustomActionsSchema() {
-    myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE);
-    myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR);
-    myIdToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP);
+    myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMAIN_MENU_TITLE());
+    myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMAIN_TOOLBAR());
+    myIdToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.getEDITOR_POPUP());
     myIdToName.put(IdeActions.GROUP_EDITOR_GUTTER, "Editor Gutter Popup Menu");
-    myIdToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP);
-    myIdToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP);
+    myIdToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEDITOR_TAB_POPUP());
+    myIdToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.getPROJECT_VIEW_POPUP());
     myIdToName.put(IdeActions.GROUP_SCOPE_VIEW_POPUP, "Scope View Popup Menu");
-    myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP);
-    myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP);
-    myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
+    myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.getFAVORITES_POPUP());
+    myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.getCOMMANDER_POPUP());
+    myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.getJ2EE_POPUP());
     myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar Popup Menu");
     myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
 

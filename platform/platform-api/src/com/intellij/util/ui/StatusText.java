@@ -20,7 +20,11 @@ import java.util.List;
 
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
-  public static final String DEFAULT_EMPTY_TEXT = UIBundle.message("message.nothingToShow");
+  /**
+   * Use {code {@link #getDEFAULT_EMPTY_TEXT()}} instead
+   */
+  @Deprecated
+  public static final String DEFAULT_EMPTY_TEXT = getDEFAULT_EMPTY_TEXT();
 
   private static final int Y_GAP = 2;
 
@@ -83,7 +87,7 @@ public abstract class StatusText {
 
     myComponent.setOpaque(false);
     myComponent.setFont(UIUtil.getLabelFont());
-    setText(DEFAULT_EMPTY_TEXT, DEFAULT_ATTRIBUTES);
+    setText(getDEFAULT_EMPTY_TEXT(), DEFAULT_ATTRIBUTES);
     myIsDefaultText = true;
 
     mySecondaryComponent.setOpaque(false);
@@ -333,5 +337,9 @@ public abstract class StatusText {
 
   public boolean isVerticalFlow() {
     return myVerticalFlow;
+  }
+
+  public static String getDEFAULT_EMPTY_TEXT() {
+    return UIBundle.message("message.nothingToShow");
   }
 }

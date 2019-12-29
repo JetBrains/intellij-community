@@ -194,7 +194,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       }
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
-                                                                      MethodDuplicatesHandler.REFACTORING_NAME, true, project);
+                                                                      MethodDuplicatesHandler.getREFACTORING_NAME(), true, project);
   }
 
   private static String getUniqueMethodName(PsiClass targetClass,

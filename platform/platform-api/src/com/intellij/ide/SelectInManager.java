@@ -15,12 +15,11 @@ import java.util.Objects;
 public final class SelectInManager  {
   private final Project myProject;
   private final SimpleSmartExtensionPoint<SelectInTarget> myTargets;
-  @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
-  @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");
-  @NonNls public static final String COMMANDER = IdeBundle.message("select.in.commander");
-  @NonNls public static final String FAVORITES = IdeBundle.message("select.in.favorites");
-  @NonNls public static final String NAV_BAR = IdeBundle.message("select.in.nav.bar");
-  @NonNls public static final String SCOPE = IdeBundle.message("select.in.scope");
+  /**
+   * Use {code {@link #getPROJECT()}} instead
+   */
+  @Deprecated
+  @NonNls public static final String PROJECT = getPROJECT();
 
   public SelectInManager(@NotNull Project project) {
     myProject = project;
@@ -78,5 +77,29 @@ public final class SelectInManager  {
     public int compare(final SelectInTarget o1, final SelectInTarget o2) {
       return Float.compare(o1.getWeight(), o2.getWeight());
     }
+  }
+
+  public static String getPROJECT() {
+    return IdeBundle.message("select.in.project");
+  }
+
+  public static String getPACKAGES() {
+    return IdeBundle.message("select.in.packages");
+  }
+
+  public static String getCOMMANDER() {
+    return IdeBundle.message("select.in.commander");
+  }
+
+  public static String getFAVORITES() {
+    return IdeBundle.message("select.in.favorites");
+  }
+
+  public static String getNAV_BAR() {
+    return IdeBundle.message("select.in.nav.bar");
+  }
+
+  public static String getSCOPE() {
+    return IdeBundle.message("select.in.scope");
   }
 }

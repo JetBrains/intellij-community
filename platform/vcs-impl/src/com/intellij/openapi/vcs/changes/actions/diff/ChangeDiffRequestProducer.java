@@ -56,11 +56,6 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
   public static final Key<Change> TAG_KEY = Key.create("DiffRequestPresentable.Tag");
 
-  public static final String YOUR_VERSION = DiffBundle.message("merge.version.title.our");
-  public static final String SERVER_VERSION = DiffBundle.message("merge.version.title.their");
-  public static final String BASE_VERSION = DiffBundle.message("merge.version.title.base");
-  public static final String MERGED_VERSION = DiffBundle.message("merge.version.title.merged");
-
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;
   @NotNull private final Map<Key, Object> myChangeContext;
@@ -299,11 +294,11 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
 
       ContentRevision bRev = change.getBeforeRevision();
       ContentRevision aRev = change.getAfterRevision();
-      String beforeRevisionTitle = getRevisionTitle(bRev, YOUR_VERSION);
-      String afterRevisionTitle = getRevisionTitle(aRev, SERVER_VERSION);
+      String beforeRevisionTitle = getRevisionTitle(bRev, getYOUR_VERSION());
+      String afterRevisionTitle = getRevisionTitle(aRev, getSERVER_VERSION());
 
       String title = DiffRequestFactory.getInstance().getTitle(file);
-      List<String> titles = Arrays.asList(beforeRevisionTitle, BASE_VERSION, afterRevisionTitle);
+      List<String> titles = Arrays.asList(beforeRevisionTitle, getBASE_VERSION(), afterRevisionTitle);
 
       DiffContentFactory contentFactory = DiffContentFactory.getInstance();
       List<DiffContent> contents = Arrays.asList(contentFactory.createFromBytes(project, mergeData.CURRENT, file),
@@ -343,9 +338,9 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     DiffContent content2 = createContent(project, aRev, context, indicator);
 
     final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
-    String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, BASE_VERSION);
+    String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, getBASE_VERSION());
     final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
-    String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, YOUR_VERSION);
+    String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, getYOUR_VERSION());
 
     SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
 
@@ -456,5 +451,21 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   @Override
   public int hashCode() {
     return hashCode(myChange);
+  }
+
+  public static String getYOUR_VERSION() {
+    return DiffBundle.message("merge.version.title.our");
+  }
+
+  public static String getSERVER_VERSION() {
+    return DiffBundle.message("merge.version.title.their");
+  }
+
+  public static String getBASE_VERSION() {
+    return DiffBundle.message("merge.version.title.base");
+  }
+
+  public static String getMERGED_VERSION() {
+    return DiffBundle.message("merge.version.title.merged");
   }
 }

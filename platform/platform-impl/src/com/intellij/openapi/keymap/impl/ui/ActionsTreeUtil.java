@@ -37,15 +37,11 @@ import java.util.*;
 public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
+  /**
+   * Use {code {@link #getMAIN_MENU_TITLE()}} instead
+   */
+  @Deprecated
   public static final String MAIN_MENU_TITLE = KeyMapBundle.message("main.menu.action.title");
-  public static final String MAIN_TOOLBAR = KeyMapBundle.message("main.toolbar.title");
-  public static final String EDITOR_POPUP = KeyMapBundle.message("editor.popup.menu.title");
-
-  public static final String EDITOR_TAB_POPUP = KeyMapBundle.message("editor.tab.popup.menu.title");
-  public static final String FAVORITES_POPUP = KeyMapBundle.message("favorites.popup.title");
-  public static final String PROJECT_VIEW_POPUP = KeyMapBundle.message("project.view.popup.menu.title");
-  public static final String COMMANDER_POPUP = KeyMapBundle.message("commender.view.popup.menu.title");
-  public static final String J2EE_POPUP = KeyMapBundle.message("j2ee.view.popup.menu.title");
 
   @NonNls
   private static final String EDITOR_PREFIX = "Editor";
@@ -133,7 +129,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createMainMenuGroup(Condition<? super AnAction> filtered) {
-    Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
+    Group group = new Group(getMAIN_MENU_TITLE(), IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
     return group;
@@ -650,5 +646,37 @@ public class ActionsTreeUtil {
       if (newAction != null) return newAction;
     }
     return action;
+  }
+
+  public static String getMAIN_MENU_TITLE() {
+    return KeyMapBundle.message("main.menu.action.title");
+  }
+
+  public static String getMAIN_TOOLBAR() {
+    return KeyMapBundle.message("main.toolbar.title");
+  }
+
+  public static String getEDITOR_POPUP() {
+    return KeyMapBundle.message("editor.popup.menu.title");
+  }
+
+  public static String getEDITOR_TAB_POPUP() {
+    return KeyMapBundle.message("editor.tab.popup.menu.title");
+  }
+
+  public static String getFAVORITES_POPUP() {
+    return KeyMapBundle.message("favorites.popup.title");
+  }
+
+  public static String getPROJECT_VIEW_POPUP() {
+    return KeyMapBundle.message("project.view.popup.menu.title");
+  }
+
+  public static String getCOMMANDER_POPUP() {
+    return KeyMapBundle.message("commender.view.popup.menu.title");
+  }
+
+  public static String getJ2EE_POPUP() {
+    return KeyMapBundle.message("j2ee.view.popup.menu.title");
   }
 }

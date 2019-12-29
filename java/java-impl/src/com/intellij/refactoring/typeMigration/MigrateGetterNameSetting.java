@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 class MigrateGetterNameSetting {
   private static final String CODE_ALWAYS_YES = "Always Migrate Method Names";
   private static final String CODE_ALWAYS_NO = "Never Migrate Method Names";
-  private static final String[] CODES = new String[]{CODE_ALWAYS_YES, Messages.YES_BUTTON, CODE_ALWAYS_NO, Messages.NO_BUTTON};
+  private static final String[] CODES = new String[]{CODE_ALWAYS_YES, Messages.getYES_BUTTON(), CODE_ALWAYS_NO, Messages.getNO_BUTTON()};
 
   private final AtomicReference<Boolean> myGlobalValue = new AtomicReference<>();
 

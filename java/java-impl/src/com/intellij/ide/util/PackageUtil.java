@@ -347,7 +347,7 @@ public class PackageUtil {
                                ProjectBundle.message("module.source.roots.not.configured.error", module.getName()),
                                ProjectBundle.message("module.source.roots.not.configured.title"));
 
-      ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(module.getName(), CommonContentEntriesEditor.NAME);
+      ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(module.getName(), CommonContentEntriesEditor.getNAME());
 
       sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
       if (sourceRoots.isEmpty()) {

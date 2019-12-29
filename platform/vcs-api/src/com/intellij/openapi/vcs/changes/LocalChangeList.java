@@ -15,8 +15,6 @@ import java.util.Collection;
  * @author max
  */
 public abstract class LocalChangeList implements Cloneable, ChangeList {
-
-  @NonNls public static final String DEFAULT_NAME = VcsBundle.message("changes.default.changelist.name");
   @NonNls public static final String OLD_DEFAULT_NAME = "Default";
 
   public static LocalChangeList createEmptyChangeList(Project project, @NotNull String name) {
@@ -55,7 +53,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public abstract LocalChangeList copy();
 
   public boolean hasDefaultName() {
-    return DEFAULT_NAME.equals(getName()) || OLD_DEFAULT_NAME.equals(getName());
+    return getDEFAULT_NAME().equals(getName()) || OLD_DEFAULT_NAME.equals(getName());
   }
 
   public boolean isBlank() {
@@ -79,4 +77,8 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
    */
   @Deprecated
   public abstract void setReadOnly(boolean isReadOnly);
+
+  public static String getDEFAULT_NAME() {
+    return VcsBundle.message("changes.default.changelist.name");
+  }
 }

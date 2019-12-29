@@ -32,7 +32,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("pull.members.up.title");
+  /**
+   * Use {code {@link #getREFACTORING_NAME()}} instead
+   */
+  @Deprecated
+  public static final String REFACTORING_NAME = getREFACTORING_NAME();
 
   private PsiClass mySubclass;
   private Project myProject;
@@ -49,7 +53,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     List<PsiElement> elements = getElements(editor, file, false);
     if (elements.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MEMBERS_PULL_UP);
     }
     else {
       invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
@@ -87,8 +91,9 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass == null) {
       String message =
-        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
+                                                                             getREFACTORING_NAME()));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -101,7 +106,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
       }
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -159,5 +164,9 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
   public boolean isEnabledOnElements(PsiElement[] elements) {
     // todo: multiple selection etc
     return elements.length == 1 && elements[0] instanceof PsiClass;
+  }
+
+  public static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("pull.members.up.title");
   }
 }

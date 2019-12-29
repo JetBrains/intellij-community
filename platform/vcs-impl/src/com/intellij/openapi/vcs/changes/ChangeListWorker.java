@@ -128,7 +128,7 @@ public class ChangeListWorker {
     if (myDefault != null) return;
 
     if (myLists.isEmpty()) {
-      putNewListData(new ListData(null, LocalChangeList.DEFAULT_NAME));
+      putNewListData(new ListData(null, LocalChangeList.getDEFAULT_NAME()));
     }
 
     myDefault = myLists.iterator().next();

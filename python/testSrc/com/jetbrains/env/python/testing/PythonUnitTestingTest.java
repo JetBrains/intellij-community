@@ -243,7 +243,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+        PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME(),
         PyUnitTestConfiguration.class));
   }
 
@@ -664,7 +664,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // PY-24407
   @Test
   public void testWorkingDirectoryDependsOnRelativeImport() {
-    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME(),
                                                                            PyUnitTestConfiguration.class) {
       @NotNull
       @Override
@@ -829,14 +829,15 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerOnDirectory() {
     runPythonTest(
-      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                                     PyUnitTestConfiguration.class));
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(
+        PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME(),
+        PyUnitTestConfiguration.class));
   }
 
 
   @Test
   public void testConfigurationProducer() {
-    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class));
+    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME(), PyUnitTestConfiguration.class));
   }
 
   /**
@@ -845,7 +846,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerObeysDefaultDir() {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME(),
                                                                  PyUnitTestConfiguration.class) {
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 

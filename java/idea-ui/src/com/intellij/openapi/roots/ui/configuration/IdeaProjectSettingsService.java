@@ -76,7 +76,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
 
   @Override
   public void openModuleLibrarySettings(final Module module) {
-    ModulesConfigurator.showDialog(myProject, module.getName(), ClasspathEditor.NAME);
+    ModulesConfigurator.showDialog(myProject, module.getName(), ClasspathEditor.getNAME());
   }
 
   @Override
@@ -86,7 +86,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
 
   @Override
   public void openContentEntriesSettings(final Module module) {
-    ModulesConfigurator.showDialog(myProject, module.getName(), CommonContentEntriesEditor.NAME);
+    ModulesConfigurator.showDialog(myProject, module.getName(), CommonContentEntriesEditor.getNAME());
   }
 
   @Override

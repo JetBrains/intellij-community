@@ -70,7 +70,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
     AppUIUtil.invokeOnEdt(Runnable {
       if (showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: "Unknown error", project,
                          okText = IdeBundle.message("button.fix"),
-                         noText = Messages.OK_BUTTON)) {
+                         noText = Messages.getOK_BUTTON())) {
         val browserSettings = BrowserSettings()
         if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser?.let { Runnable { browserSettings.selectBrowser(it) } })) {
           launchTask?.invoke()

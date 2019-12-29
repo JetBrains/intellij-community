@@ -80,7 +80,7 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
     doHierarchyTest(() -> {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
       final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
-      return new MethodHierarchyTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+      return new MethodHierarchyTreeStructure(getProject(), method, HierarchyBrowserBaseEx.getSCOPE_PROJECT());
     }, fileNames);
   }
 

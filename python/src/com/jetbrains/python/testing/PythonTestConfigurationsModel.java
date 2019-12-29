@@ -24,7 +24,11 @@ import java.util.List;
 
 
 public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
-  public static final String PYTHONS_UNITTEST_NAME = PyBundle.message("runcfg.unittest.display_name");
+  /**
+   * Use {code {@link #getPYTHONS_UNITTEST_NAME()}} instead
+   */
+  @Deprecated
+  public static final String PYTHONS_UNITTEST_NAME = getPYTHONS_UNITTEST_NAME();
 
   private String myTestRunner;
   private final Module myModule;
@@ -45,5 +49,9 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
 
   public Object getTestRunner() {
     return myTestRunner;
+  }
+
+  public static String getPYTHONS_UNITTEST_NAME() {
+    return PyBundle.message("runcfg.unittest.display_name");
   }
 }

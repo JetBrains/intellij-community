@@ -76,7 +76,8 @@ class AnalyzeModuleDependencyAction extends AnAction {
         List<OrderEntry> usedEntries = usedScopes.stream().map(additionalScopes::get).filter(Objects::nonNull).distinct().collect(Collectors.toList());
         if (usedEntries.isEmpty()) {
           String message = "No code dependencies were found." + generateSkipImportsWarning() + " Would you like to remove the dependency?";
-          if (Messages.showOkCancelDialog(myProject, message, getTemplateText(), CommonBundle.message("button.remove"), Messages.CANCEL_BUTTON,
+          if (Messages.showOkCancelDialog(myProject, message, getTemplateText(), CommonBundle.message("button.remove"),
+                                          Messages.getCANCEL_BUTTON(),
                                           Messages.getWarningIcon()) == Messages.OK) {
             myPanel.getRootModel().removeOrderEntry(selectedEntry);
           }
@@ -95,7 +96,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
         String message = "No direct code dependencies were found." + generateSkipImportsWarning() + "\nHowever " + usedExportedEntriesText + " exported by '"
                          + StringUtil.decapitalize(selectedEntry.getPresentableName()) + "' " + (usedEntries.size() > 1 ? "are" : "is") + " used in code.\n" +
                          "Do you want to replace dependency on '" + selectedEntry.getPresentableName() + "' by " + replacementText + "?";
-        String[] options = {"Replace", "Show Dependencies", Messages.CANCEL_BUTTON};
+        String[] options = {"Replace", "Show Dependencies", Messages.getCANCEL_BUTTON()};
         switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
           case 0:
             InlineModuleDependencyAction.inlineEntry(myPanel, selectedEntry, usedEntries::contains);

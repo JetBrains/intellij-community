@@ -19,7 +19,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.StatusText.DEFAULT_EMPTY_TEXT
+import com.intellij.util.ui.StatusText.getDEFAULT_EMPTY_TEXT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -209,7 +209,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
   }
 
   fun stopLoadingBranches() {
-    tree.component.emptyText.text = DEFAULT_EMPTY_TEXT
+    tree.component.emptyText.text = getDEFAULT_EMPTY_TEXT()
     branchesTreePanel.isEnabled = true
     branchesProgressStripe.stopLoading()
   }

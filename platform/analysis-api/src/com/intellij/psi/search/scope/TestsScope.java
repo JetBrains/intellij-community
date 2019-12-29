@@ -16,11 +16,15 @@ import org.jetbrains.annotations.NotNull;
  * @author Sergey Malenkov
  */
 public final class TestsScope extends NamedScope {
-  public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
+  /**
+   * Use {code {@link #getNAME()}} instead
+   */
+  @Deprecated
+  public static final String NAME = getNAME();
   public static final TestsScope INSTANCE = new TestsScope();
 
   private TestsScope() {
-    super(NAME, IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Tests), new FilteredPackageSet(NAME) {
+    super(getNAME(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Tests), new FilteredPackageSet(getNAME()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return TestSourcesFilter.isTestSources(file, project);
@@ -31,5 +35,9 @@ public final class TestsScope extends NamedScope {
   @Override
   public String getDefaultColorName() {
     return "Green";
+  }
+
+  public static String getNAME() {
+    return IdeBundle.message("predefined.scope.tests.name");
   }
 }

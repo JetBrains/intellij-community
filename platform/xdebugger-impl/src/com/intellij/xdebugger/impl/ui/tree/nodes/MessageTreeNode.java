@@ -105,12 +105,12 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   }
 
   public static MessageTreeNode createLoadingMessage(XDebuggerTree tree, final XDebuggerTreeNode parent) {
-    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.COLLECTING_DATA_MESSAGE,
+    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.getCOLLECTING_DATA_MESSAGE(),
                                XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES, null);
   }
 
   public static MessageTreeNode createEvaluatingMessage(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent) {
-    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE,
+    return new MessageTreeNode(tree, parent, XDebuggerUIConstants.getEVALUATING_EXPRESSION_MESSAGE(),
                                XDebuggerUIConstants.EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES, null);
   }
 

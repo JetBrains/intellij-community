@@ -159,7 +159,7 @@ public class MessagesServiceImpl implements MessagesService {
     }
 
     InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
-                                         new String[]{OK_BUTTON, CANCEL_BUTTON},
+                                         new String[]{getOK_BUTTON(), getCANCEL_BUTTON()},
                                          0, comment);
 
     final JTextComponent field = dialog.getTextField();
@@ -185,7 +185,7 @@ public class MessagesServiceImpl implements MessagesService {
     }
 
     Messages.InputDialog dialog = new Messages.MultilineInputDialog(project, message, title, icon, initialValue, validator,
-                                                           new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
+                                                                    new String[]{getOK_BUTTON(), getCANCEL_BUTTON()}, 0);
     dialog.show();
     return dialog.getInputString();
   }

@@ -1369,8 +1369,8 @@ public final class Switcher extends AnAction implements DumbAware {
           myComponent.files.getEmptyText().setText("Press 'Enter' to search in Project");
         }
         else {
-          myComponent.files.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
-          myComponent.toolWindows.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          myComponent.files.getEmptyText().setText(StatusText.getDEFAULT_EMPTY_TEXT());
+          myComponent.toolWindows.getEmptyText().setText(StatusText.getDEFAULT_EMPTY_TEXT());
         }
         refreshSelection();
       }

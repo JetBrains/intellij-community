@@ -4,6 +4,7 @@ package com.intellij.ui.messages;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.Nls;
@@ -14,9 +15,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-
-import static com.intellij.openapi.ui.Messages.CANCEL_BUTTON;
-import static com.intellij.openapi.ui.Messages.OK_BUTTON;
 
 /**
  * It looks awful!
@@ -46,7 +44,7 @@ public class ChooseDialog extends MessageDialog {
                       @Nullable Icon icon,
                       String[] values,
                       String initialValue) {
-    super(project, parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, -1, icon, null, true);
+    super(project, parent, message, title, new String[]{Messages.getOK_BUTTON(), Messages.getCANCEL_BUTTON()}, 0, -1, icon, null, true);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }
@@ -56,7 +54,7 @@ public class ChooseDialog extends MessageDialog {
                       @Nullable Icon icon,
                       String[] values,
                       String initialValue) {
-    super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
+    super(message, title, new String[]{Messages.getOK_BUTTON(), Messages.getCANCEL_BUTTON()}, 0, icon);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }

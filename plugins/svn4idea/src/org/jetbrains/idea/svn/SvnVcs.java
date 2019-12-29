@@ -239,7 +239,7 @@ public class SvnVcs extends AbstractVcs {
     connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, lists -> {
       if (lists.isEmpty()) return;
       try {
-        ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.DEFAULT_NAME, true);
+        ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.getDEFAULT_NAME(), true);
 
         if (!myConfiguration.changeListsSynchronized()) {
           processChangeLists(lists);

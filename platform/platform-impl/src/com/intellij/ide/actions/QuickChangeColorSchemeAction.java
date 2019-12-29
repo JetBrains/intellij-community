@@ -83,7 +83,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
       if (/*applyAlways ||*/ Messages.showYesNoDialog(
           ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
           ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
-          Messages.YES_BUTTON, Messages.NO_BUTTON,
+          Messages.getYES_BUTTON(), Messages.getNO_BUTTON(),
           Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
 
         lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : new DarculaLookAndFeelInfo());
@@ -98,7 +98,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
           (/*applyAlways ||*/ Messages.showYesNoDialog(
             ApplicationBundle.message("color.scheme.theme.change.confirmation", "bright", productName),
             ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
-            Messages.YES_BUTTON, Messages.NO_BUTTON,
+            Messages.getYES_BUTTON(), Messages.getNO_BUTTON(),
             Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES)) {
 
         lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLaf());

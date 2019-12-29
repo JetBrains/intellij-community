@@ -18,7 +18,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.move.MoveCallback;
@@ -79,7 +78,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     myProject = project;
     mySourceClass = sourceClass;
     myMoveCallback = moveCallback;
-    setTitle(MoveMembersImpl.REFACTORING_NAME);
+    setTitle(MoveMembersImpl.getREFACTORING_NAME());
 
     mySourceClassName = mySourceClass.getQualifiedName();
 
@@ -227,10 +226,10 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     if (message != null) {
       if (message.length() != 0) {
         CommonRefactoringUtil.showErrorMessage(
-                MoveMembersImpl.REFACTORING_NAME,
-                message,
-                HelpID.MOVE_MEMBERS,
-                myProject);
+          MoveMembersImpl.getREFACTORING_NAME(),
+          message,
+          HelpID.MOVE_MEMBERS,
+          myProject);
       }
       return;
     }
@@ -285,7 +284,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
           }
           catch (IncorrectOperationException e) {
             CommonRefactoringUtil.showErrorMessage(
-              MoveMembersImpl.REFACTORING_NAME,
+              MoveMembersImpl.getREFACTORING_NAME(),
               e.getMessage(),
               HelpID.MOVE_MEMBERS,
               myProject);
@@ -349,10 +348,10 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     }
 
     int answer = Messages.showYesNoDialog(
-            myProject,
-            RefactoringBundle.message("class.0.does.not.exist", fqName),
-            MoveMembersImpl.REFACTORING_NAME,
-            Messages.getQuestionIcon()
+      myProject,
+      RefactoringBundle.message("class.0.does.not.exist", fqName),
+      MoveMembersImpl.getREFACTORING_NAME(),
+      Messages.getQuestionIcon()
     );
     if (answer != Messages.YES) return null;
     final Ref<IncorrectOperationException> eRef = new Ref<>();

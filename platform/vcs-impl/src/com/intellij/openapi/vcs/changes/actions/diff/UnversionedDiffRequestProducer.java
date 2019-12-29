@@ -78,7 +78,7 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
     DiffContent content2 = contentFactory.create(project, file);
 
     SimpleDiffRequest request = new SimpleDiffRequest(DiffRequestFactory.getInstance().getTitle(file), content1, content2,
-                                                      null, ChangeDiffRequestProducer.YOUR_VERSION);
+                                                      null, ChangeDiffRequestProducer.getYOUR_VERSION());
 
     DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_UNVERSIONED, file);
     return request;

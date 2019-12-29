@@ -62,13 +62,13 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
     final BaseOnThisMethodAction baseOnThisMethodAction = new BaseOnThisMethodAction();
     baseOnThisMethodAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).getShortcutSet(), tree1);
-    type2TreeMap.put(CALLEE_TYPE, tree1);
+    type2TreeMap.put(getCALLEE_TYPE(), tree1);
 
     final JTree tree2 = createTree(false);
     PopupHandler.installPopupHandler(tree2, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
     baseOnThisMethodAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).getShortcutSet(), tree2);
-    type2TreeMap.put(CALLER_TYPE, tree2);
+    type2TreeMap.put(getCALLER_TYPE(), tree2);
   }
 
   @Override
@@ -96,10 +96,10 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
-    if (CALLER_TYPE.equals(typeName)) {
+    if (getCALLER_TYPE().equals(typeName)) {
       return new CallerMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }
-    if (CALLEE_TYPE.equals(typeName)) {
+    if (getCALLEE_TYPE().equals(typeName)) {
       return new CalleeMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }
     else {

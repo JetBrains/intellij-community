@@ -24,7 +24,7 @@ class PyTestCreationModelTest : PyTestCase() {
   }
 
   fun testWithUnitTest() {
-    service.projectConfiguration = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME
+    service.projectConfiguration = PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME()
     val modelToTestClass = getModel()!!
     assertEquals("test_create_tst.py", modelToTestClass.fileName)
     assertEquals("TestSpam", modelToTestClass.className)

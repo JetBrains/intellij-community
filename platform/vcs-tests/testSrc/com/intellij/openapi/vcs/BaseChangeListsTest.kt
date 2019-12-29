@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 
 abstract class BaseChangeListsTest : LightPlatformTestCase() {
   companion object {
-    val DEFAULT = LocalChangeList.DEFAULT_NAME
+    val DEFAULT = LocalChangeList.getDEFAULT_NAME()
   }
 
   protected lateinit var vcs: MyMockVcs
@@ -104,10 +104,10 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   private fun resetChangelists() {
-    clm.addChangeList(LocalChangeList.DEFAULT_NAME, null)
-    clm.setDefaultChangeList(LocalChangeList.DEFAULT_NAME)
+    clm.addChangeList(LocalChangeList.getDEFAULT_NAME(), null)
+    clm.setDefaultChangeList(LocalChangeList.getDEFAULT_NAME())
     for (changeListName in clm.changeLists.map { it.name }) {
-      if (changeListName != LocalChangeList.DEFAULT_NAME) clm.removeChangeList(changeListName)
+      if (changeListName != LocalChangeList.getDEFAULT_NAME()) clm.removeChangeList(changeListName)
     }
     clm.waitUntilRefreshed()
   }

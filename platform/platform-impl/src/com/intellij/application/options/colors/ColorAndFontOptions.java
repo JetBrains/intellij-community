@@ -72,7 +72,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
 
-  public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
+  /**
+   * Use {code {@link #getSCOPES_GROUP()}} instead
+   */
+  @Deprecated
+  public static final String SCOPES_GROUP = getSCOPES_GROUP();
 
   private boolean mySomeSchemesDeleted = false;
   private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;
@@ -620,7 +624,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       PackageSet value = namedScope.getValue();
       String toolTip = holder.getDisplayName() + (value==null ? "" : ": "+ value.getText());
-      descriptions.add(new SchemeTextAttributesDescription(name, SCOPES_GROUP, textAttributesKey, scheme, holder.getIcon(), toolTip));
+      descriptions.add(new SchemeTextAttributesDescription(name, getSCOPES_GROUP(), textAttributesKey, scheme, holder.getIcon(), toolTip));
     }
   }
 
@@ -1488,5 +1492,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       options.disposeUIResources();
     }
     return page != null;
+  }
+
+  public static String getSCOPES_GROUP() {
+    return ApplicationBundle.message("title.scope.based");
   }
 }

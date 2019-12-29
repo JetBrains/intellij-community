@@ -137,7 +137,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       }
 
       MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
-    }), MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
+    }), MethodDuplicatesHandler.getREFACTORING_NAME(), true, myProject);
   }
 
   @NotNull

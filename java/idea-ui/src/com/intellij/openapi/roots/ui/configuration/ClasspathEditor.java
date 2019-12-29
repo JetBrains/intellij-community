@@ -42,7 +42,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
-  public static final String NAME = ProjectBundle.message("modules.classpath.title");
+  /**
+   * Use {code {@link #getNAME()}} instead
+   */
+  @Deprecated
+  public static final String NAME = getNAME();
 
   private ClasspathPanelImpl myPanel;
   private ClasspathFormatPanel myClasspathFormatPanel;
@@ -67,7 +71,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public String getDisplayName() {
-    return NAME;
+    return getNAME();
   }
 
   @Override
@@ -199,5 +203,9 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       canApply();
       ClasspathStorage.setStorageType(rootModel, getSelectedClasspathFormat());
     }
+  }
+
+  public static String getNAME() {
+    return ProjectBundle.message("modules.classpath.title");
   }
 }
