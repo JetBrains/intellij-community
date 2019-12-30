@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyDelStatementNavigator;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,10 +139,10 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           if (resolved != null && !PyUtil.inSameFile(node, resolved)) {
             return;
           }
-          registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
+          registerProblem(node, PyBundle.message("INSP.unbound.name.undefined", name));
         }
         else if (scope.isGlobal(name)) {
-          registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
+          registerProblem(node, PyBundle.message("INSP.unbound.name.undefined", name));
         }
         else if (isNonLocal) {
           registerProblem(node, PyBundle.message("INSP.unbound.local.variable", name));
