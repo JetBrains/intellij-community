@@ -111,7 +111,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
                                                 ViewSettings settings) throws InstantiationException {
     Object[] parameters = {project, value, settings};
     for (Constructor<? extends AbstractTreeNode> constructor : (Constructor<? extends AbstractTreeNode>[])nodeClass.getConstructors()) {
-      if (constructor.getParameterTypes().length != 3) continue;
+      if (constructor.getParameterCount() != 3) continue;
       try {
         return constructor.newInstance(parameters);
       }

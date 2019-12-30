@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +101,9 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
 
   @NotNull
   private Object[] getConstructorArguments(PicoContainer container, @NotNull Constructor<?> ctor) {
+    if (ctor.getParameterCount() == 0) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
     Class<?>[] parameterTypes = ctor.getParameterTypes();
     Object[] result = new Object[parameterTypes.length];
     Parameter[] currentParameters = parameters != null ? parameters : createDefaultParameters(parameterTypes);
@@ -190,14 +194,14 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
     List<Constructor<?>> matchingConstructors = new ArrayList<>();
     // filter out all constructors that will definitely not match
     for (Constructor<?> constructor : getConstructors()) {
-      if ((parameters == null || constructor.getParameterTypes().length == parameters.length) &&
+      if ((parameters == null || constructor.getParameterCount() == parameters.length) &&
           (allowNonPublicClasses || (constructor.getModifiers() & Modifier.PUBLIC) != 0)) {
         matchingConstructors.add(constructor);
       }
     }
     // optimize list of constructors moving the longest at the beginning
     if (parameters == null) {
-      matchingConstructors.sort((arg0, arg1) -> arg1.getParameterTypes().length - arg0.getParameterTypes().length);
+      matchingConstructors.sort((arg0, arg1) -> arg1.getParameterCount() - arg0.getParameterCount());
     }
     return matchingConstructors;
   }

@@ -319,8 +319,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static Method findMethod(final String methodName, final Object[] arguments, final Collection<Method> methods, Ref<? super Boolean> convertVarArgs) {
     main: for (Method method : methods) {
       if (!methodName.equals(method.getName())) continue;
+      if (method.getParameterCount() != arguments.length && !method.isVarArgs()) continue;
       final Class<?>[] parameterTypes = method.getParameterTypes();
-      if (!method.isVarArgs() && parameterTypes.length != arguments.length) continue;
       convertVarArgs.set(false);
       for (int i = 0, parameterTypesLength = parameterTypes.length; i < arguments.length; i++) {
         final Class<?> type = ReflectionUtil

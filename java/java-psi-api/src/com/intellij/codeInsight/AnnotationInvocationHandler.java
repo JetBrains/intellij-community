@@ -41,8 +41,7 @@ class AnnotationInvocationHandler implements InvocationHandler {
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) {
-    Class<?>[] paramTypes = method.getParameterTypes();
-    assert paramTypes.length == 0: Arrays.toString(paramTypes);
+    assert method.getParameterCount() == 0: Arrays.toString(method.getParameterTypes());
 
     String member = method.getName();
     if (member.equals("toString")) {

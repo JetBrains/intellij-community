@@ -242,7 +242,7 @@ public final class ReflectionUtil {
   @Nullable
   public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, @NotNull Class<?>... parameters) {
     for (final Method method : methods) {
-      if (name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) {
+      if (parameters.length == method.getParameterCount() && name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) {
         return makeAccessible(method);
       }
     }
@@ -460,6 +460,11 @@ public final class ReflectionUtil {
             constructor.setAccessible(true);
           }
           catch (Throwable ignored) {
+          }
+
+          if (constructor.getParameterCount() == 0) {
+            //noinspection unchecked
+            return (T) constructor.newInstance();
           }
 
           Class<?>[] parameterTypes = constructor.getParameterTypes();

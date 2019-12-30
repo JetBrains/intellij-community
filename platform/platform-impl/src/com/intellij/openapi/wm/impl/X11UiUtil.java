@@ -381,7 +381,7 @@ public class X11UiUtil {
 
   private static Method method(Class<?> aClass, String name, int parameters) throws Exception {
     for (Method method : aClass.getDeclaredMethods()) {
-      if (name.equals(method.getName()) && method.getParameterTypes().length == parameters) {
+      if (method.getParameterCount() == parameters && name.equals(method.getName())) {
         method.setAccessible(true);
         return method;
       }

@@ -46,10 +46,10 @@ public class RemoteUtil {
         Method m = null;
         main:
         for (Method candidate : key.first.getMethods()) {
+          if (candidate.getParameterCount() != method.getParameterCount()) continue;
           if (!candidate.getName().equals(method.getName())) continue;
           Class<?>[] cpts = candidate.getParameterTypes();
           Class<?>[] mpts = method.getParameterTypes();
-          if (cpts.length != mpts.length) continue;
           for (int i = 0; i < mpts.length; i++) {
             Class<?> mpt = mpts[i];
             Class<?> cpt = castArgumentClassToLocal(cpts[i]);
@@ -117,10 +117,10 @@ public class RemoteUtil {
   @Nullable
   private static Object[] fixArgs(@Nullable Object[] args, @NotNull Method method) {
     if (args == null) return null;
+    if (method.getParameterCount() != args.length) return args;
     Object[] result = new Object[args.length];
     try {
       Class<?>[] methodArgs = method.getParameterTypes();
-      if (methodArgs.length != args.length) return args;
       for (int i = 0; i < args.length; i++) {
         result[i] = fixArg(args[i], methodArgs[i]);
       }
