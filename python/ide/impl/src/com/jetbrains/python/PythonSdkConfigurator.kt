@@ -6,7 +6,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,23 +13,23 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.ui.AppUIUtil
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
-import java.nio.file.Files
-import java.nio.file.Paths
 
 /**
  * @author vlan
  */
-class PythonSdkConfigurator {
+class PythonSdkConfigurator : DirectoryProjectConfigurator {
   companion object {
     private val BALLOON_NOTIFICATIONS = NotificationGroup("Python interpreter configuring", NotificationDisplayType.BALLOON, true)
 
@@ -79,24 +78,18 @@ class PythonSdkConfigurator {
     }
   }
 
-  init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-      override fun projectOpened(project: Project) {
-        ProgressManager.getInstance().run(
-          object : Task.Backgroundable(project, "Configuring a Python Interpreter", true) {
-            override fun run(indicator: ProgressIndicator) = configureSdk(project, indicator)
-          }
-        )
+  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, newProject: Boolean) {
+    if (project.pythonSdk != null || newProject) return
+
+    ProgressManager.getInstance().run(
+      object : Task.Backgroundable(project, "Configuring a Python Interpreter", true) {
+        override fun run(indicator: ProgressIndicator) = configureSdk(project, indicator)
       }
-    })
+    )
   }
 
   private fun configureSdk(project: Project, indicator: ProgressIndicator) {
     indicator.isIndeterminate = true
-
-    if (project.isDefault ||
-        project.pythonSdk != null ||
-        project.basePath.let { it != null && Files.exists(Paths.get(it, Project.DIRECTORY_STORE_FOLDER)) }) return
 
     val context = UserDataHolderBase()
     val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: return
