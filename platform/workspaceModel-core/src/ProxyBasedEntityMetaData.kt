@@ -29,13 +29,13 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
           is EntityPropertyKind.List -> error("List of lists are not supported")
           // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> Unit
-          is EntityPropertyKind.Class -> (value as List<*>).forEach { itemKind.collectReferences(it, collector) }
+          is EntityPropertyKind.DataClass -> (value as List<*>).forEach { itemKind.collectReferences(it, collector) }
           is EntityPropertyKind.EntityValue -> (value as List<Long>).forEach { collector(it) }
           EntityPropertyKind.FileUrl, is EntityPropertyKind.PersistentId, is EntityPropertyKind.Primitive -> Unit
         }.let { } // exhaustive when
         // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> Unit
-        is EntityPropertyKind.Class -> kind.collectReferences(value, collector)
+        is EntityPropertyKind.DataClass -> kind.collectReferences(value, collector)
         is EntityPropertyKind.EntityValue -> collector(value as Long)
         EntityPropertyKind.FileUrl, is EntityPropertyKind.PersistentId, is EntityPropertyKind.Primitive -> Unit
       }.let { } // exhaustive when
@@ -60,7 +60,7 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
               }
             }
           }
-          is EntityPropertyKind.Class -> (value as List<*>).forEach { itemKind.collectPersistentIdReferences(it, collector) }
+          is EntityPropertyKind.DataClass -> (value as List<*>).forEach { itemKind.collectPersistentIdReferences(it, collector) }
           is EntityPropertyKind.PersistentId -> (value as List<PersistentEntityId<*>>).forEach { collector(it) }
           else -> Unit
         }.let { } // exhaustive when
@@ -70,7 +70,7 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
             if (subclassProperties.key.isInstance(value)) subclassProperties.value.collectPersistentIdReferences(value, collector)
           }
         }
-        is EntityPropertyKind.Class -> kind.collectPersistentIdReferences(value, collector)
+        is EntityPropertyKind.DataClass -> kind.collectPersistentIdReferences(value, collector)
         else -> Unit
       }.let { } // exhaustive when
     }
@@ -93,7 +93,7 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
               .map { subclassProperties -> subclassProperties.value.replaceAll(it, oldEntity, newEntity) }
               .first()
           }
-          is EntityPropertyKind.Class -> (value as List<*>).map { itemKind.replaceAll(it, oldEntity, newEntity) }
+          is EntityPropertyKind.DataClass -> (value as List<*>).map { itemKind.replaceAll(it, oldEntity, newEntity) }
           is EntityPropertyKind.PersistentId -> (value as List<PersistentEntityId<*>>).map { if (it == oldEntity) newEntity else it }
           else -> value
         }
@@ -102,7 +102,7 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
           .filter { subclassProperties -> subclassProperties.key.isInstance(value) }
           .map { subclassProperties -> subclassProperties.value.replaceAll(value, oldEntity, newEntity) }
           .first()
-        is EntityPropertyKind.Class -> kind.replaceAll(value, oldEntity, newEntity)
+        is EntityPropertyKind.DataClass -> kind.replaceAll(value, oldEntity, newEntity)
         else -> value
       }
 
@@ -116,11 +116,11 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
 }
 
 internal sealed class EntityPropertyKind {
-  internal class Primitive(val clazz: java.lang.Class<*>) : EntityPropertyKind()
-  internal class SealedKotlinDataClassHierarchy(val subclassesProperties: Map<KClass<*>, Class>) : EntityPropertyKind()
-  internal class Class(val aClass: java.lang.Class<*>, val properties: Map<String, EntityPropertyKind>,
-                       private val referenceIdAccessors: kotlin.collections.List<kotlin.collections.List<Method>>,
-                       private val referencePersistentIdAccessors: kotlin.collections.List<kotlin.collections.List<Method>>) : EntityPropertyKind() {
+  internal class Primitive(val clazz: Class<*>) : EntityPropertyKind()
+  internal class SealedKotlinDataClassHierarchy(val subclassesProperties: Map<KClass<*>, DataClass>) : EntityPropertyKind()
+  internal class DataClass(val aClass: Class<*>, val properties: Map<String, EntityPropertyKind>,
+                           private val referenceIdAccessors: kotlin.collections.List<kotlin.collections.List<Method>>,
+                           private val referencePersistentIdAccessors: kotlin.collections.List<kotlin.collections.List<Method>>) : EntityPropertyKind() {
 
     val hasReferences = referenceIdAccessors.isNotEmpty()
 
@@ -220,10 +220,10 @@ internal sealed class EntityPropertyKind {
     }
   }
 
-  internal class EntityValue(val clazz: java.lang.Class<out TypedEntity>) : EntityPropertyKind()
+  internal class EntityValue(val clazz: Class<out TypedEntity>) : EntityPropertyKind()
   internal class List(val itemKind: EntityPropertyKind) : EntityPropertyKind()
-  internal class EntityReference(val clazz: java.lang.Class<out TypedEntity>) : EntityPropertyKind()
-  internal class PersistentId(val clazz: java.lang.Class<*>) : EntityPropertyKind()
+  internal class EntityReference(val clazz: Class<out TypedEntity>) : EntityPropertyKind()
+  internal class PersistentId(val clazz: Class<*>) : EntityPropertyKind()
   internal object FileUrl : EntityPropertyKind()
 }
 
@@ -232,14 +232,14 @@ internal class EntityMetaDataRegistry {
   private val classMetaData = ConcurrentFactoryMap.createMap { clazz: Class<*> -> calculateDataClassMeta(clazz) }
 
   fun getEntityMetaData(clazz: Class<out TypedEntity>): EntityMetaData = entityMetaData[clazz]!!
-  fun getClassMetaData(clazz: Class<*>): EntityPropertyKind.Class = classMetaData[clazz]!!
+  fun getClassMetaData(clazz: Class<*>): EntityPropertyKind.DataClass = classMetaData[clazz]!!
 
-  private fun calculateDataClassMeta(clazz: Class<*>): EntityPropertyKind.Class {
+  private fun calculateDataClassMeta(clazz: Class<*>): EntityPropertyKind.DataClass {
     // TODO Assert it's a data class
     val propertiesMap = getPropertiesMap(clazz)
     val referenceIdAccessors = collectReferenceIdAccessors(clazz, propertiesMap)
     val referencePersistentIdAccessors = collectPersistentIdReferenceAccessors(clazz, propertiesMap)
-    return EntityPropertyKind.Class(clazz, propertiesMap, referenceIdAccessors, referencePersistentIdAccessors)
+    return EntityPropertyKind.DataClass(clazz, propertiesMap, referenceIdAccessors, referencePersistentIdAccessors)
   }
 
   private fun calculateMetaData(clazz: Class<out TypedEntity>): EntityMetaData {
@@ -257,7 +257,7 @@ internal class EntityMetaDataRegistry {
         is EntityPropertyKind.List -> {
           collect(kind.itemKind, currentAccessor, result)
         }
-        is EntityPropertyKind.Class -> {
+        is EntityPropertyKind.DataClass -> {
           for ((propertyName, propertyValue) in kind.properties) {
             collect(propertyValue, currentAccessor + listOf(kind.aClass.getMethod("get${propertyName.capitalize()}")), result)
           }
@@ -283,7 +283,7 @@ internal class EntityMetaDataRegistry {
         is EntityPropertyKind.PersistentId -> {
           result += currentAccessor
         }
-        is EntityPropertyKind.Class -> {
+        is EntityPropertyKind.DataClass -> {
           for ((propertyName, propertyValue) in kind.properties) {
             collect(propertyValue, currentAccessor + listOf(kind.aClass.getMethod("get${propertyName.capitalize()}")), result)
           }
@@ -350,11 +350,11 @@ internal class EntityMetaDataRegistry {
         collectSubclasses(type.kotlin)
 
         if (subclasses.isEmpty()) error("Empty subclasses list for sealed hierarchy inherited from ${type.kotlin}")
-        val result = mutableMapOf<KClass<*>, EntityPropertyKind.Class>()
+        val result = mutableMapOf<KClass<*>, EntityPropertyKind.DataClass>()
         for (subclass in subclasses) {
           if (!subclass.isData && subclass.objectInstance == null) error("Subclass $subclass must a data class or an object")
           val propertyKind = getPropertyKind(subclass.java, owner)
-          result[subclass] = propertyKind as EntityPropertyKind.Class
+          result[subclass] = propertyKind as EntityPropertyKind.DataClass
         }
 
         EntityPropertyKind.SealedKotlinDataClassHierarchy(result)
@@ -364,7 +364,7 @@ internal class EntityMetaDataRegistry {
     else -> throw IllegalArgumentException("Properties of type $type aren't allowed in entities")
   }
 
-  private fun checkClassRestrictions(metadata: EntityPropertyKind.Class, allowReferences: Boolean) {
+  private fun checkClassRestrictions(metadata: EntityPropertyKind.DataClass, allowReferences: Boolean) {
     fun checkKind(kind: EntityPropertyKind) {
       when (kind) {
         is EntityPropertyKind.Primitive, is EntityPropertyKind.PersistentId, EntityPropertyKind.FileUrl -> Unit
@@ -372,7 +372,7 @@ internal class EntityMetaDataRegistry {
           error("EntityReferences are unsupported in data classes: ${metadata.aClass.name}")
         }
         else Unit
-        is EntityPropertyKind.Class -> checkClassRestrictions(classMetaData[kind.aClass]!!, allowReferences)
+        is EntityPropertyKind.DataClass -> checkClassRestrictions(classMetaData[kind.aClass]!!, allowReferences)
         is EntityPropertyKind.List -> checkKind(kind.itemKind)
         is EntityPropertyKind.EntityValue -> error("Entities are unsupported in data classes: " + metadata.aClass.name)
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
@@ -394,7 +394,7 @@ internal class EntityMetaDataRegistry {
         kind.subclassesProperties.keys.sortedBy { it.jvmName }.forEach { putDataClassMetadata(metaDataRegistry.getClassMetaData(it.java), metaDataRegistry, visited) }
         this
       }
-      is EntityPropertyKind.Class -> putDataClassMetadata(kind, metaDataRegistry, visited)
+      is EntityPropertyKind.DataClass -> putDataClassMetadata(kind, metaDataRegistry, visited)
       is EntityPropertyKind.EntityValue -> putEntityMetadata(metaDataRegistry.getEntityMetaData(kind.clazz), metaDataRegistry, visited)
       EntityPropertyKind.FileUrl -> this
       is EntityPropertyKind.PersistentId -> putDataClassMetadata(metaDataRegistry.getClassMetaData(kind.clazz), metaDataRegistry, visited)
@@ -426,7 +426,7 @@ private fun Hasher.putEntityMetadata(metadata: EntityMetaData, metaDataRegistry:
   return this
 }
 
-private fun Hasher.putDataClassMetadata(metadata: EntityPropertyKind.Class, metaDataRegistry: EntityMetaDataRegistry, visited: MutableSet<Class<*>>): Hasher {
+private fun Hasher.putDataClassMetadata(metadata: EntityPropertyKind.DataClass, metaDataRegistry: EntityMetaDataRegistry, visited: MutableSet<Class<*>>): Hasher {
   putUnencodedChars("DATACLASS")
   putUnencodedChars(metadata.aClass.name)
 
@@ -443,7 +443,7 @@ private fun Hasher.putDataClassMetadata(metadata: EntityPropertyKind.Class, meta
   return this
 }
 
-internal fun EntityPropertyKind.Class.hash(metaDataRegistry: EntityMetaDataRegistry, hasher: () -> Hasher = { Hashing.murmur3_128().newHasher() }): ByteArray {
+internal fun EntityPropertyKind.DataClass.hash(metaDataRegistry: EntityMetaDataRegistry, hasher: () -> Hasher = { Hashing.murmur3_128().newHasher() }): ByteArray {
   val h = hasher()
   h.putDataClassMetadata(this, metaDataRegistry, mutableSetOf())
   return h.hash().asBytes()

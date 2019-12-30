@@ -127,7 +127,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
         Unit
       }
 
-      is EntityPropertyKind.Class -> {
+      is EntityPropertyKind.DataClass -> {
         if (classResolver.getRegistration(kind.aClass) == null) {
           recursiveDataClass(kind.aClass, metaDataRegistry)
         }

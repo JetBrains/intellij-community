@@ -270,10 +270,11 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       addReferences(newData)
     }
 
-    addPersistentIdReferrers(newData)
-    // Update persistentId reference in store only for originally replaced element. If method called
-    // recursively only first call should update reference.
-    updatePersistentIdInDependentEntities(oldData, newData, updatePersistentIdReference)
+    if (updatePersistentIdReference) {
+      removePersistentIdFromDependency(oldData)
+      addPersistentIdReferrers(newData)
+    }
+    updatePersistentIdInDependentEntities(oldData, newData)
   }
 
   private fun addReferences(data: EntityData) {
@@ -305,23 +306,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
   }
 
-  private fun updatePersistentIdInDependentEntities(oldData: EntityData, newData: EntityData, updatePersistentIdReference: Boolean) {
-    if (updatePersistentIdReference) {
-      // Update collection if anything changed
-      val oldDependencies = mutableSetOf<Int>()
-      val newDependencies = mutableSetOf<Int>()
-      oldData.collectPersistentIdReferences { oldDependencies += it.hashCode() }
-      newData.collectPersistentIdReferences { newDependencies += it.hashCode() }
-      oldDependencies.removeAll(newDependencies)
-      if (oldDependencies.isNotEmpty()) {
-        oldDependencies.forEach {
-          val refs = persistentIdReferrers[it] ?: error("Unable to find reference target by hash $it")
-          refs.remove(oldData.id)
-          if (refs.isEmpty()) persistentIdReferrers.remove(it)
-        }
-      }
-    }
-
+  private fun updatePersistentIdInDependentEntities(oldData: EntityData, newData: EntityData) {
     // Update persistentId in dependent entities
     if(!TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)
        || !TypedEntityWithPersistentId::class.java.isAssignableFrom(newData.unmodifiableEntityType)
@@ -337,6 +322,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       newImpl.allowModifications {
         newImpl.data.replaceAllPersistentIdReferences(oldData.persistentId(), newData.persistentId())
       }
+      // Update persistentId reference in store only for originally replaced element. If method called
+      // recursively only first call should update reference.
       replaceEntity(refOldData.id, refNewData, newInstance, oldIdHash, handleReferrers = false, updatePersistentIdReference = false)
       updateChangeLog { it.add(ChangeEntry.ReplaceEntity(refOldData.id, refNewData)) }
     }
@@ -653,7 +640,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           is EntityPropertyKind.List -> error("List of lists are not supported")
           // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value.hashCode()
-          is EntityPropertyKind.Class -> {
+          is EntityPropertyKind.DataClass -> {
             assertDataClassIsWithoutReferences(itemKind)
             value.hashCode()
           }
@@ -662,7 +649,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
         }
         // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value.hashCode()
-        is EntityPropertyKind.Class -> {
+        is EntityPropertyKind.DataClass -> {
           assertDataClassIsWithoutReferences(kind)
           value.hashCode()
         }
@@ -695,7 +682,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           is EntityPropertyKind.List -> error("List of lists are not supported")
           // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (v1 as List<Any?>) == (v2 as List<Any?>)
-          is EntityPropertyKind.Class -> {
+          is EntityPropertyKind.DataClass -> {
             assertDataClassIsWithoutReferences(itemKind)
             (v1 as List<Any?>) == (v2 as List<Any?>)
           }
@@ -710,7 +697,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
         // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> v1 == v2
-        is EntityPropertyKind.Class -> {
+        is EntityPropertyKind.DataClass -> {
           assertDataClassIsWithoutReferences(kind)
           v1 == v2
         }
@@ -724,7 +711,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     return true
   }
 
-  private fun assertDataClassIsWithoutReferences(classKind: EntityPropertyKind.Class) {
+  private fun assertDataClassIsWithoutReferences(classKind: EntityPropertyKind.DataClass) {
     if (classKind.hasReferences) {
       TODO("DataClasses with references are not supported here yet: ${classKind.aClass}")
     }
@@ -755,7 +742,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           is EntityPropertyKind.List -> error("List of lists are not supported")
           // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value
-          is EntityPropertyKind.Class -> {
+          is EntityPropertyKind.DataClass -> {
             assertDataClassIsWithoutReferences(itemKind)
             value
           }
@@ -764,7 +751,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
         }
         // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value
-        is EntityPropertyKind.Class -> {
+        is EntityPropertyKind.DataClass -> {
           assertDataClassIsWithoutReferences(kind)
           value
         }
@@ -1000,7 +987,7 @@ internal class EntityImpl(override val data: EntityData,
 
             Unit
           }
-          is EntityPropertyKind.Class -> {
+          is EntityPropertyKind.DataClass -> {
             val oldValues = data.properties[propertyName]
             data.properties[propertyName] = newValue
 
@@ -1024,7 +1011,7 @@ internal class EntityImpl(override val data: EntityData,
           is EntityPropertyKind.SealedKotlinDataClassHierarchy, is EntityPropertyKind.Primitive,
           is EntityPropertyKind.PersistentId, EntityPropertyKind.FileUrl -> data.properties[propertyName] = newValue
         }.let {  } // exhaustive when
-        is EntityPropertyKind.Class -> {
+        is EntityPropertyKind.DataClass -> {
           val oldValue = data.properties[propertyName]
           data.properties[propertyName] = newValue
 
