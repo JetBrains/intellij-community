@@ -75,9 +75,10 @@ private fun TypedEntityStorageBuilder.addChildChildEntity(parent1: ParentEntity,
     this.parent2 = parent2
   }
 
-private fun TypedEntityStorageBuilder.addChildWithOptionalEntity(parentEntity: ParentEntity?,
-                                                                 childProperty: String = "child") =
-  addEntity(ModifiableChildWithOptionalParentEntity::class.java, SampleEntitySource("test")) {
+internal fun TypedEntityStorageBuilder.addChildWithOptionalEntity(parentEntity: ParentEntity?,
+                                                                  childProperty: String = "child",
+                                                                  source: SampleEntitySource = SampleEntitySource("test")) =
+  addEntity(ModifiableChildWithOptionalParentEntity::class.java, source) {
     this.optionalParent = parentEntity
     this.childProperty = childProperty
   }

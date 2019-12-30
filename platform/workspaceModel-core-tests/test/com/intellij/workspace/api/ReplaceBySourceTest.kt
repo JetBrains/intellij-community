@@ -16,6 +16,17 @@ class ReplaceBySourceTest {
   }
 
   @Test
+  fun `modify entity with optional reference`() {
+    val builder = TypedEntityStorageBuilder.create()
+    builder.addChildWithOptionalEntity(null, "hello", SampleEntitySource("1"))
+    val replacement = TypedEntityStorageBuilder.create()
+    replacement.addChildWithOptionalEntity(null, "hello2", SampleEntitySource("1"))
+    builder.replaceBySource({it == SampleEntitySource("1")}, replacement)
+    builder.checkConsistency()
+    assertEquals("hello2", builder.entities(ChildWithOptionalParentEntity::class.java).single().childProperty)
+  }
+
+  @Test
   fun `remove entity`() {
     val builder = TypedEntityStorageBuilder.create()
     val source1 = SampleEntitySource("1")
