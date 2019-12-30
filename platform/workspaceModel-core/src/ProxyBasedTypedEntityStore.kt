@@ -673,7 +673,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     replaceMap[newData.id] = id
     copyEntityProperties(data, newData, replaceMap.inverse())
     addEntity(newData, null, handleReferrers = true)
-    updateChangeLog { it.add(ChangeEntry.AddEntity(data)) }
+    updateChangeLog { it.add(ChangeEntry.AddEntity(newData)) }
   }
 
   private fun copyEntityProperties(source: EntityData, dest: EntityData, replaceMap: Map<Long, Long>) {
