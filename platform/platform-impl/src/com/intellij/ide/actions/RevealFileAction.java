@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
@@ -11,13 +12,12 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -184,7 +184,7 @@ public class RevealFileAction extends DumbAwareAction {
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       LOG.debug("opening " + dir + " via Desktop API");
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProcessIOExecutorService.INSTANCE.execute(() -> {
         try {
           Desktop.getDesktop().open(new File(dir));
         }
@@ -215,7 +215,7 @@ public class RevealFileAction extends DumbAwareAction {
   private static void spawn(String... command) {
     LOG.debug(Arrays.toString(command));
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
       try {
         CapturingProcessHandler handler;
         if (SystemInfo.isWindows) {
