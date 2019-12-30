@@ -139,6 +139,7 @@
     <fileType name="PATCH" implementationClass="com.intellij.openapi.vcs.changes.patch.PatchFileType" extensions="patch;diff" />
     <virtualFileSystem key="vcs" implementationClass="com.intellij.openapi.vcs.vfs.VcsFileSystem"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
+    <fileDocumentManagerListener implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.vcs.VcsApplicationSettings"/>
     <applicationService serviceInterface="com.intellij.openapi.vcs.impl.CheckinHandlersManager"

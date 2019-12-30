@@ -1,9 +1,4 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.vcs.commit.VetoSavingCommittingDocumentsAdapter</implementation-class>
-    </component>
-  </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.openapi.vcs.annotate.AnnotationsPreloader</implementation-class>

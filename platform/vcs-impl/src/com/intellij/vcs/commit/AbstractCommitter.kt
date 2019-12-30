@@ -24,7 +24,7 @@ import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 private val LOG = logger<AbstractCommitter>()
 
 /**
- * @see VetoSavingCommittingDocumentsAdapter
+ * @see SaveCommittingDocumentsVetoer
  */
 private fun markCommittingDocuments(project: Project, changes: List<Change>): Collection<Document> {
   val result = mutableListOf<Document>()
@@ -42,7 +42,7 @@ private fun markCommittingDocuments(project: Project, changes: List<Change>): Co
 }
 
 /**
- * @see VetoSavingCommittingDocumentsAdapter
+ * @see SaveCommittingDocumentsVetoer
  */
 private fun unmarkCommittingDocuments(committingDocuments: Collection<Document>) = committingDocuments.forEach { document ->
   document.putUserData<Any>(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, null)
