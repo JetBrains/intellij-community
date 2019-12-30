@@ -641,7 +641,8 @@ public class JdkUtil {
   private static void appendVmParameter(@NotNull TargetedCommandLineBuilder commandLine,
                                         @NotNull TargetEnvironmentRequest request,
                                         @NotNull String vmParameter) {
-    if (SystemProperties.getBooleanProperty("remote.servers.ignore.vm.parameter", false)) {
+    if (request instanceof LocalTargetEnvironmentRequest ||
+      SystemProperties.getBooleanProperty("remote.servers.ignore.vm.parameter", false)) {
       commandLine.addParameter(vmParameter);
       return;
     }
@@ -659,7 +660,7 @@ public class JdkUtil {
 
   private static void appendVmAgentParameter(@NotNull TargetedCommandLineBuilder commandLine,
                                              @NotNull TargetEnvironmentRequest request,
-                                             @NotNull String vmParameter, 
+                                             @NotNull String vmParameter,
                                              @NotNull String prefix) {
     String value = StringUtil.trimStart(vmParameter, prefix);
     int equalsSign = value.indexOf('=');
