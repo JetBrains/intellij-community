@@ -118,7 +118,7 @@ public class NonBlockingReadActionImpl<T>
 
   private static Disposable earlyDisposable(Disposable disposable) {
     // account for shared project in tests
-    return disposable instanceof ProjectEx ? ((ProjectEx)disposable).getEarlyDisposable() : disposable;
+    return disposable instanceof ProjectEx && !((ProjectEx)disposable).isDisposed() ? ((ProjectEx)disposable).getEarlyDisposable() : disposable;
   }
 
   @Override
