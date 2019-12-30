@@ -380,12 +380,9 @@ public class RecursionManager {
     "org.jetbrains.plugins.groovy.intentions.style.inference.InferenceProcessKt.runInferenceProcess(",
 
     // IDEA-228814
-    // resolve & inference
     "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
     "com.intellij.psi.util.PsiUtil.getApplicabilityLevel(",
     "com.intellij.psi.ThreadLocalTypes.performWithTypes(",
-    "com.intellij.psi.impl.source.tree.java.MethodReferenceResolver.resolve(",
-    "com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil.isPolyExpression(",
 
     // IDEA-212671
     "com.intellij.xml.impl.schema.XmlNSDescriptorImpl.getRedefinedElementDescriptor(",
