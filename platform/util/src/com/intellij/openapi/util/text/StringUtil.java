@@ -662,7 +662,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String escapeCharCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder(s.length());
-    escapeStringCharacters(s.length(), s, "\'", buffer);
+    escapeStringCharacters(s.length(), s, "'", buffer);
     return buffer.toString();
   }
 
@@ -1456,6 +1456,7 @@ public class StringUtil extends StringUtilRt {
     return join((Iterable<? extends T>)items, f, separator);
   }
 
+  @NotNull
   @Contract(pure = true)
   public static String join(@NotNull Iterable<?> items, @NotNull String separator) {
     StringBuilder result = new StringBuilder();
@@ -1546,6 +1547,8 @@ public class StringUtil extends StringUtilRt {
     return builder.toString();
   }
 
+  @NotNull
+  @Contract(pure = true)
   public static Collector<CharSequence, ?, String> joining() {
     return Collectors.joining(", ");
   }
@@ -1614,7 +1617,7 @@ public class StringUtil extends StringUtilRt {
       if (count < multiplier) break;
       long remainder = count % multiplier;
       count /= multiplier;
-      if (remainder != 0 || unitValues.size() > 0) {
+      if (remainder != 0 || !unitValues.isEmpty()) {
         unitValues.insert(0, remainder);
         unitIndices.insert(0, i - 1);
       }
@@ -1681,6 +1684,8 @@ public class StringUtil extends StringUtilRt {
    * Formats given duration as a sum of time units with at most two units
    * (example: {@code formatDuration(123456, "") = "2m 3s"}).
    */
+  @NotNull
+  @Contract(pure = true)
   public static String formatDurationApproximate(long duration) {
     return formatDuration(duration, " ", 2);
   }
@@ -1688,6 +1693,8 @@ public class StringUtil extends StringUtilRt {
   /**
    * Appends English ordinal suffix to the given number.
    */
+  @NotNull
+  @Contract(pure = true)
   public static String formatOrdinal(long num) {
     return OrdinalFormat.formatEnglish(num);
   }
@@ -2168,7 +2175,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String escapeChars(@NotNull final String str, final char... character) {
+  public static String escapeChars(@NotNull final String str, @NotNull final char... character) {
     final StringBuilder buf = new StringBuilder(str);
     for (char c : character) {
       escapeChar(buf, c);
@@ -3029,6 +3036,7 @@ public class StringUtil extends StringUtilRt {
    * Collapses all white-space (including new lines) between non-white-space characters to a single space character.
    * Leading and trailing white space is removed.
    */
+  @NotNull
   public static String collapseWhiteSpace(@NotNull CharSequence s) {
     final StringBuilder result = new StringBuilder();
     boolean space = false;
@@ -3253,7 +3261,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String getShortName(@NotNull Class aClass) {
+  public static String getShortName(@NotNull Class<?> aClass) {
     return StringUtilRt.getShortName(aClass);
   }
 
@@ -3339,7 +3347,7 @@ public class StringUtil extends StringUtilRt {
    * @param s  the string to test.
    * @return   true if the string has an uppercase character, false if not.
    */
-  public static boolean hasUpperCaseChar(String s) {
+  public static boolean hasUpperCaseChar(@NotNull String s) {
       char[] chars = s.toCharArray();
       for (char c : chars) {
           if (Character.isUpperCase(c)) {
@@ -3354,7 +3362,7 @@ public class StringUtil extends StringUtilRt {
    * @param s  the string to test.
    * @return   true if the string has a lowercase character, false if not.
    */
-  public static boolean hasLowerCaseChar(String s) {
+  public static boolean hasLowerCaseChar(@NotNull String s) {
       char[] chars = s.toCharArray();
       for (char c : chars) {
           if (Character.isLowerCase(c)) {

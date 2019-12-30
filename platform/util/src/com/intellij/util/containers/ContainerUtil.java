@@ -544,11 +544,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return new ConcurrentHashMap<>();
   }
 
+  @NotNull
   @Contract(pure=true)
   public static <K, V> ConcurrentMap<K,V> newConcurrentMap(int initialCapacity) {
     return new ConcurrentHashMap<>(initialCapacity);
   }
 
+  @NotNull
   @Contract(pure=true)
   public static <K, V> ConcurrentMap<K,V> newConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
     return new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
@@ -2455,7 +2457,7 @@ public class ContainerUtil extends ContainerUtilRt {
   /*
    * Returns the index of the median of the three indexed longs.
    */
-  private static <T> int med3(@NotNull List<? extends T> x, Comparator<? super T> comparator, int a, int b, int c) {
+  private static <T> int med3(@NotNull List<? extends T> x, @NotNull Comparator<? super T> comparator, int a, int b, int c) {
     return comparator.compare(x.get(a), x.get(b)) < 0 ? comparator.compare(x.get(b), x.get(c)) < 0
                                                         ? b
                                                         : comparator.compare(x.get(a), x.get(c)) < 0 ? c : a
