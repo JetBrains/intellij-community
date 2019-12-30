@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
@@ -142,92 +143,104 @@ object DynamicPlugins {
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false, isUpdate: Boolean = false): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
+
+    // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
+    // We need to find the real plugin loaded into the current instance and unload its classloader.
+    val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl
+                                 ?: return false
+
     try {
-
-      application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, isUpdate)
-
-      // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
-      // We need to find the real plugin loaded into the current instance and unload its classloader.
-      val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl ?: return false
-
-      if (!pluginDescriptor.useIdeaClassLoader) {
-        IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
-      }
-
       application.runWriteAction {
-        (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
+        try {
+          application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, isUpdate)
 
-        val openProjects = ProjectManager.getInstance().openProjects
 
-        val unloadListeners = mutableListOf<Runnable>()
-        pluginDescriptor.extensions?.let { extensions ->
-          for (epName in extensions.keys) {
-            val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName)
-            if (appEp != null) {
-              appEp.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false, unloadListeners)
-            }
-            else {
-              for (openProject in openProjects) {
-                val projectEp = openProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-                projectEp?.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false, unloadListeners)
+          if (!pluginDescriptor.useIdeaClassLoader) {
+            IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
+          }
+
+          (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
+
+          val openProjects = ProjectManager.getInstance().openProjects
+
+          val unloadListeners = mutableListOf<Runnable>()
+          pluginDescriptor.extensions?.let { extensions ->
+            for (epName in extensions.keys) {
+              val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName)
+              if (appEp != null) {
+                appEp.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false, unloadListeners)
+              }
+              else {
+                for (openProject in openProjects) {
+                  val projectEp = openProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+                  projectEp?.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false, unloadListeners)
+                }
               }
             }
           }
-        }
-        for (unloadListener in unloadListeners) {
-          unloadListener.run()
-        }
-
-        pluginDescriptor.app.extensionPoints?.let {
-          for (point in it) {
-            val rootArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-            rootArea.unregisterExtensionPoint(point.name)
+          for (unloadListener in unloadListeners) {
+            unloadListener.run()
           }
-        }
-        pluginDescriptor.project.extensionPoints?.let {
-          for (point in it) {
-            val extensionPointName = point.name
-            for (openProject in openProjects) {
-              openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
+
+          pluginDescriptor.app.extensionPoints?.let {
+            for (point in it) {
+              val rootArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
+              rootArea.unregisterExtensionPoint(point.name)
             }
           }
-        }
-
-        val appServiceInstances = application.unloadServices(pluginDescriptor.app)
-        for (appServiceInstance in appServiceInstances) {
-          application.stateStore.unloadComponent(appServiceInstance)
-        }
-        (application.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
-
-        for (project in openProjects) {
-          val projectServiceInstances = (project as ProjectImpl).unloadServices(pluginDescriptor.project)
-          for (projectServiceInstance in projectServiceInstances) {
-            project.stateStore.unloadComponent(projectServiceInstance)
-          }
-
-          for (module in ModuleManager.getInstance(project).modules) {
-            val moduleServiceInstances = (module as PlatformComponentManagerImpl).unloadServices(pluginDescriptor.module)
-            for (moduleServiceInstance in moduleServiceInstances) {
-              module.stateStore.unloadComponent(moduleServiceInstance)
+          pluginDescriptor.project.extensionPoints?.let {
+            for (point in it) {
+              val extensionPointName = point.name
+              for (openProject in openProjects) {
+                openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
+              }
             }
           }
-          (CachedValuesManager.getManager(project) as CachedValuesManagerImpl).clearCachedValues()
-          (project.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
+
+          val appServiceInstances = application.unloadServices(pluginDescriptor.app)
+          for (appServiceInstance in appServiceInstances) {
+            application.stateStore.unloadComponent(appServiceInstance)
+          }
+          (application.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
+
+          for (project in openProjects) {
+            val projectServiceInstances = (project as ProjectImpl).unloadServices(pluginDescriptor.project)
+            for (projectServiceInstance in projectServiceInstances) {
+              project.stateStore.unloadComponent(projectServiceInstance)
+            }
+
+            for (module in ModuleManager.getInstance(project).modules) {
+              val moduleServiceInstances = (module as PlatformComponentManagerImpl).unloadServices(pluginDescriptor.module)
+              for (moduleServiceInstance in moduleServiceInstances) {
+                module.stateStore.unloadComponent(moduleServiceInstance)
+              }
+            }
+            (CachedValuesManager.getManager(project) as CachedValuesManagerImpl).clearCachedValues()
+            (project.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
+          }
+
+          jdomSerializer.clearSerializationCaches()
+          BeanBinding.clearSerializationCaches()
+          Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
+
+          if (disable) {
+            // Update list of disabled plugins
+            PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+          }
+          else {
+            PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+          }
+
+        }
+        finally {
+          val disposable = pluginDisposables.remove(pluginDescriptor)
+          if (disposable != null) {
+            Disposer.dispose(disposable)
+          }
+          application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(pluginDescriptor, isUpdate)
         }
       }
-
-      jdomSerializer.clearSerializationCaches()
-      BeanBinding.clearSerializationCaches()
-      Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
-
-      if (disable) {
-        // Update list of disabled plugins
-        PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
-      }
-      else {
-        PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
-      }
-
+    } finally {
       UIUtil.dispatchAllInvocationEvents()
 
       val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
@@ -236,16 +249,11 @@ object DynamicPlugins {
         val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
         val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
         MemoryDumpHelper.captureMemoryDump(snapshotPath)
-        GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING).notify(null)
+        GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath",
+                                 NotificationType.WARNING).notify(null)
       }
 
       return classLoaderUnloaded
-    } finally {
-      val disposable = pluginDisposables.remove(pluginDescriptor)
-      if (disposable != null) {
-        Disposer.dispose(disposable)
-      }
-      application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(pluginDescriptor, isUpdate)
     }
   }
 
@@ -254,12 +262,11 @@ object DynamicPlugins {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       PluginManagerCore.initClassLoader(pluginDescriptor)
     }
-
     val application = ApplicationManager.getApplication() as ApplicationImpl
-    application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
+    application.runWriteAction {
+      application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
 
-    try {
-      application.runWriteAction {
+      try {
         application.registerComponents(listOf(pluginDescriptor), true)
         for (openProject in ProjectManager.getInstance().openProjects) {
           (openProject as ProjectImpl).registerComponents(listOf(pluginDescriptor), true)
@@ -269,18 +276,19 @@ object DynamicPlugins {
           (CachedValuesManager.getManager(openProject) as CachedValuesManagerImpl).clearCachedValues()
         }
         (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
-      }
 
-      if (wasDisabled) {
-        // Update list of disabled plugins
-        (PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl)?.setLoader(pluginDescriptor.pluginClassLoader)
-        PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+        if (wasDisabled) {
+          // Update list of disabled plugins
+          (PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl)?.setLoader(pluginDescriptor.pluginClassLoader)
+          PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+        }
+        else {
+          PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+        }
       }
-      else {
-        PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+      finally {
+        application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
       }
-    } finally {
-      application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
     }
   }
 
