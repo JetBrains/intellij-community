@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.BundleBase;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -105,7 +106,8 @@ public final class ActionStub extends AnAction implements ActionStubBase {
       String overrideText = override.getValue();
       if (overrideText.isEmpty()) {
         if (resourceBundle == null) return;
-        overrideText = resourceBundle.getString("action." + getId() + "." + place + ".text");
+        String key = "action." + getId() + "." + place + ".text";
+        overrideText = BundleBase.message(resourceBundle, key);
       }
       targetAction.addTextOverride(place, overrideText);
     }

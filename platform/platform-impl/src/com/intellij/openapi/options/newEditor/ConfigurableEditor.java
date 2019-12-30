@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
@@ -317,7 +318,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     JBIterable<Configurable> it = JBIterable.of(configurable).append(
       JBIterable.of(configurable instanceof Configurable.Composite ? ((Configurable.Composite)configurable).getConfigurables() : null));
     ResourceBundle bundle = ConfigurableExtensionPointUtil.getBundle(key, it, null);
-    return bundle != null ? bundle.getString(key) : null;
+    return bundle != null ? BundleBase.message(bundle, key) : null;
   }
 
   static ConfigurationException apply(Configurable configurable) {
