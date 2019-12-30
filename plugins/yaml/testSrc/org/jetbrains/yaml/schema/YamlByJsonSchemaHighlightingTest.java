@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLLanguage;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -929,5 +930,18 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "    \"enum\": [\"a\", \"b\"]\n" +
            "  }\n" +
            "}", "<warning>r</warning>: true");
+  }
+
+  public void testTypeVariants() throws IOException {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/prometheus.schema.json"));
+    doTest(schema, "alerting:\n" +
+                   "  alertmanagers:\n" +
+                   "  - static_configs:\n" +
+                   "    - targets: <warning>1</warning>  \n" +
+                   "      # - alertmanager:9093  \n" +
+                   "\n" +
+                   "rule_files:\n" +
+                   "  # - \"first_rules.yml\"\n" +
+                   "  # - \"second_rules.yml\"");
   }
 }
