@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -126,9 +127,10 @@ public class _LastInSuiteTest extends TestCase {
     }
     IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
     assert corePlugin != null;
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+    WriteAction.computeAndWait(() -> {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
         .beforePluginUnload(corePlugin, false);
+      return true;
     });
   }
 
