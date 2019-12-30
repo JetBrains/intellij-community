@@ -6,6 +6,7 @@ import com.intellij.Patches
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.GeneralSettings
@@ -150,11 +151,11 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
     val byName = browserPath == null && browser != null
     val effectivePath = if (byName) PathUtil.toSystemDependentName(browser!!.path) else browserPath
-    val launchTask: (() -> Unit)? = if (byName) { -> browseUsingPath(url, null, browser!!, project, openInNewWindow, additionalParameters) } else null
+    val fix: (() -> Unit)? = if (byName) { -> browseUsingPath(url, null, browser!!, project, openInNewWindow, additionalParameters) } else null
 
     if (effectivePath.isNullOrBlank()) {
       val message = browser?.browserNotFoundMessage ?: IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath())
-      showError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask)
+      showError(message, browser, project, IdeBundle.message("title.browser.not.found"), fix)
       return false
     }
 
@@ -180,30 +181,26 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       commandLine.addParameters(*additionalParameters)
     }
 
-    return doLaunch(commandLine, project, browser, launchTask)
+    doLaunch(commandLine, project, browser, fix)
+    return true
   }
 
-  private fun doLaunch(command: GeneralCommandLine, project: Project?, browser: WebBrowser? = null, launchTask: (() -> Unit)? = null) =
-    try {
-      LOG.debug { command.commandLineString }
-      checkCreatedProcess(command, project, browser, launchTask)
-      true
+  private fun doLaunch(command: GeneralCommandLine, project: Project?, browser: WebBrowser? = null, fix: (() -> Unit)? = null) {
+    LOG.debug { command.commandLineString }
+    ProcessIOExecutorService.INSTANCE.execute {
+      try {
+        val output = CapturingProcessHandler.Silent(command).runProcess(10000, false)
+        if (!output.checkSuccess(LOG) && output.exitCode == 1) {
+          showError(output.stderrLines.firstOrNull(), browser, project, null, fix)
+        }
+      }
+      catch (e: ExecutionException) {
+        showError(e.message, browser, project, null, fix)
+      }
     }
-    catch (e: ExecutionException) {
-      showError(e.message, browser, project, null, null)
-      false
-    }
-
-  @Throws(ExecutionException::class)
-  protected open fun checkCreatedProcess(command: GeneralCommandLine, project: Project?, browser: WebBrowser?, launchTask: (() -> Unit)?) {
-    CapturingProcessHandler.Silent(command).runProcess(10000, false).checkSuccess(LOG)
   }
 
-  protected open fun showError(error: String?,
-                               browser: WebBrowser? = null,
-                               project: Project? = null,
-                               title: String? = null,
-                               launchTask: (() -> Unit)? = null) {
+  protected open fun showError(error: String?, browser: WebBrowser? = null, project: Project? = null, title: String? = null, fix: (() -> Unit)? = null) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error)
   }
