@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -28,7 +29,6 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -46,8 +46,8 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -249,22 +249,25 @@ public final class UpdateCheckerComponent implements Runnable {
       return;
     }
 
-    ShutDownTracker.getInstance().registerShutdownTask(() -> {
-      Collection<PluginId> plugins = InstalledPluginsState.getInstance().getUpdatedPlugins();
-      if (plugins.isEmpty()) {
-        return;
-      }
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appWillBeClosed(boolean isRestart) {
+        Collection<PluginId> plugins = InstalledPluginsState.getInstance().getUpdatedPlugins();
+        if (plugins.isEmpty()) {
+          return;
+        }
 
-      Set<String> list = getUpdatedPlugins();
-      for (PluginId plugin : plugins) {
-        list.add(plugin.getIdString());
-      }
+        Set<String> list = getUpdatedPlugins();
+        for (PluginId plugin : plugins) {
+          list.add(plugin.getIdString());
+        }
 
-      try {
-        FileUtil.writeToFile(getUpdatedPluginsFile(), StringUtil.join(list, LineSeparator.getSystemLineSeparator().getSeparatorString()));
-      }
-      catch (IOException e) {
-        LOG.warn(e);
+        try {
+          FileUtil.writeToFile(getUpdatedPluginsFile(), StringUtil.join(list, LineSeparator.getSystemLineSeparator().getSeparatorString()));
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
       }
     });
 
