@@ -479,6 +479,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/mlkit/intellij.android.mlkit.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/mlkit/intellij.android.mlkit.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/nav/editor/intellij.android.nav.editor.iml" filepath="$PROJECT_DIR$/../adt/idea/nav/editor/intellij.android.nav.editor.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/nav/editor/intellij.android.nav.editor.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/nav/editor/intellij.android.nav.editor.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/nav/safeargs/intellij.android.nav.safeargs.iml" filepath="$PROJECT_DIR$/../adt/idea/nav/safeargs/intellij.android.nav.safeargs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/nav/safeargs/intellij.android.nav.safeargs.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/nav/safeargs/intellij.android.nav.safeargs.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" filepath="$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/old-agp-tests/intellij.android.old-agp-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/old-agp-tests/intellij.android.old-agp-tests.iml" />
