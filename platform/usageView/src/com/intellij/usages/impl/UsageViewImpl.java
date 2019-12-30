@@ -943,10 +943,10 @@ public class UsageViewImpl implements UsageViewEx {
         excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
         restoreUsageExpandState(states);
         updateImmediately();
+        if (myCentralPanel != null) {
+          updateUsagesContextPanels();
+        }
       }}));
-    if (myCentralPanel != null) {
-      updateUsagesContextPanels();
-    }
   }
 
   private void captureUsagesExpandState(@NotNull TreePath pathFrom, @NotNull Collection<? super UsageState> states) {
