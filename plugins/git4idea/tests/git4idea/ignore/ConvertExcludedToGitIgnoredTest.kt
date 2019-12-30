@@ -9,7 +9,6 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
@@ -59,7 +58,6 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     /exc/
     """)
 
-    refreshChanges()
     assertFalse(changeListManager.isIgnoredFile(moduleContentRoot))
     assertTrue(changeListManager.isIgnoredFile(excluded))
   }
@@ -75,7 +73,6 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     /out/
     """)
 
-    refreshChanges()
     assertFalse(changeListManager.isIgnoredFile(moduleContentRoot))
     assertTrue(changeListManager.isIgnoredFile(output))
   }
@@ -91,7 +88,6 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     /projectOutput/
     """)
 
-    refreshChanges()
     assertTrue(changeListManager.isIgnoredFile(output))
   }
 
@@ -108,7 +104,6 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     /projectOutput/
     """)
 
-    refreshChanges()
     assertTrue(changeListManager.isIgnoredFile(output))
     assertTrue(changeListManager.isIgnoredFile(moduleOutput))
   }
@@ -127,7 +122,6 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     /target/
     """)
 
-    refreshChanges()
     assertTrue(changeListManager.isIgnoredFile(excluded))
     assertTrue(changeListManager.isIgnoredFile(moduleOutput))
   }
@@ -138,17 +132,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     PsiTestUtil.addModule(myProject, ModuleType.EMPTY, "inner", inner)
     PsiTestUtil.addExcludedRoot(myModule, inner)
 
-    refreshChanges()
     assertFalse(changeListManager.isIgnoredFile(inner))
-  }
-
-  private fun refreshChanges() {
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty()
-    changeListManager.ensureUpToDate()
-    val exception = changeListManager.updateException
-    if (exception != null) {
-      throw RuntimeException(exception)
-    }
   }
 
   private fun generateIgnoreFileAndWaitHoldersUpdate() {
