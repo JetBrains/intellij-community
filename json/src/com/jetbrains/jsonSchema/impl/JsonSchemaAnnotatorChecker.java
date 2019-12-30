@@ -227,7 +227,7 @@ class JsonSchemaAnnotatorChecker {
           result.myExcludingSchemas.stream().flatMap(Collection::stream)
             .anyMatch(s -> schema.equals(s))) return;
 
-      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(myProject, value, result, myOptions);
+      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(myProject, value, result, myOptions.withForcedStrict());
       if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate(), JsonErrorPriority.NOT_SCHEMA);
     }
 
@@ -300,7 +300,7 @@ class JsonSchemaAnnotatorChecker {
       set.add(name);
     }
 
-    if (object.shouldCheckIntegralRequirements()) {
+    if (object.shouldCheckIntegralRequirements() || myOptions.isForceStrict()) {
       final Set<String> required = schema.getRequired();
       if (required != null) {
         HashSet<String> requiredNames = new LinkedHashSet<>(required);
