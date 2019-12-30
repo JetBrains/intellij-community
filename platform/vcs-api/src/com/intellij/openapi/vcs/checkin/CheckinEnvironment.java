@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -26,7 +25,7 @@ import java.util.Set;
  *
  * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
-public interface CheckinEnvironment extends VcsProviderMarker {
+public interface CheckinEnvironment {
 
   @Nullable
   default RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {

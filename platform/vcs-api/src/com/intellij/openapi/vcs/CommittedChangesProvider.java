@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends VcsProviderMarker {
+public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> {
   @NotNull
   default U createDefaultSettings() {
     //noinspection unchecked
