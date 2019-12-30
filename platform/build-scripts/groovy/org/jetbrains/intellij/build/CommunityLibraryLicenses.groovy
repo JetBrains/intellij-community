@@ -464,6 +464,9 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Okio", libraryName: "okio", license: "Apache 2.0",
                        url: "https://github.com/square/okio"),
+    new LibraryLicense(name: "OWASP Java HTML Sanitizer", libraryName: "owasp-java-html-sanitizer", license: "Apache 2.0",
+                       url: "https://github.com/OWASP/java-html-sanitizer/",
+                       licenseUrl: "https://github.com/OWASP/java-html-sanitizer/blob/master/COPYING"),
     new LibraryLicense(name: "PEPK", libraryName: "pepk", license: "Apache 2.0", url: "http://source.android.com/"),
 
     new LibraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver", license: "Apache 2.0",
