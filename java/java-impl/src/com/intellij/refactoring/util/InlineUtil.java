@@ -444,25 +444,7 @@ public class InlineUtil {
   }
 
   public static boolean isChainingConstructor(PsiMethod constructor) {
-    return getChainedConstructor(constructor) != null;
-  }
-
-  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
-    PsiCodeBlock body = constructor.getBody();
-    if (body != null) {
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-        PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
-          if ("this".equals(methodExpr.getReferenceName())) {
-            PsiElement resolved = methodExpr.resolve();
-            return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor() ? (PsiMethod)resolved : null; //delegated via "this" call
-          }
-        }
-      }
-    }
-    return null;
+    return RefactoringUtil.getChainedConstructor(constructor) != null;
   }
 
   /**
