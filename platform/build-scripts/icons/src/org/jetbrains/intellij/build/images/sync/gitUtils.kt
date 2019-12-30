@@ -135,7 +135,7 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
   }
 }
 
-internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String): CommitInfo {
+internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String, force: Boolean = false): CommitInfo {
   execute(
     repo, GIT,
     "-c", "user.name=$user",
@@ -143,7 +143,7 @@ internal fun commitAndPush(repo: File, branch: String, message: String, user: St
     "commit", "-m", message,
     "--author=$user <$email>"
   )
-  push(repo, branch, user, email)
+  push(repo, branch, user, email, force)
   return commitInfo(repo) ?: error("Unable to read last commit")
 }
 
@@ -158,9 +158,11 @@ internal fun deleteBranch(repo: File, branch: String) {
   }
 }
 
-private fun push(repo: File, spec: String, user: String? = null, email: String? = null) =
+private fun push(repo: File, spec: String, user: String? = null, email: String? = null, force: Boolean = false) =
   retry(doRetry = { beforePushRetry(it, repo, spec, user, email) }) {
-    execute(repo, GIT, "push", "origin", spec, withTimer = true)
+    var args = arrayOf("origin", spec)
+    if (force) args += "--force"
+    execute(repo, GIT, "push", *args, withTimer = true)
   }
 
 private fun beforePushRetry(e: Throwable, repo: File, spec: String, user: String?, email: String?): Boolean {

@@ -17,6 +17,9 @@ import kotlin.streams.toList
 
 fun main() = generateMappings()
 
+/**
+ * Generate icon mappings for https://github.com/JetBrains/IntelliJIcons-web-site
+ */
 private fun generateMappings() {
   val exclusions = System.getProperty("mappings.json.exclude.paths")
                      ?.split(",")
@@ -61,7 +64,8 @@ private fun generateMappings() {
     val jsonFile = path.toRelativeString(repo)
     stageFiles(listOf(jsonFile), repo)
     commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update",
-                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com")
+                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com",
+                  force = true)
   }
 }
 
