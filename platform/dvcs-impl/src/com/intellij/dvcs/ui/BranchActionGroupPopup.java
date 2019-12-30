@@ -28,6 +28,7 @@ import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.jgoodies.forms.factories.Borders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,6 +229,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   @Override
   protected void afterShow() {
     if (myKey != null) {
+      mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
+      mySpeedSearchPatternField.getTextEditor().setBorder(Borders.EMPTY_BORDER);
       setHeaderComponent(mySpeedSearchPatternField);
       mySpeedSearchPatternField.getTextEditor().setFocusable(true);
       IdeFocusManager.getGlobalInstance().requestFocus(mySpeedSearchPatternField, true);
