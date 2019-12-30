@@ -110,7 +110,7 @@ public class JavaI18nUtil extends I18nUtil {
 
   static boolean isPassedToAnnotatedParam(@NotNull UExpression expression,
                                           @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    UExpression parent = getTopLevelExpression(expression);
+    UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     UCallExpression callExpression = UastUtils.getUCallExpression(parent);
     if (callExpression == null) return false;
 
