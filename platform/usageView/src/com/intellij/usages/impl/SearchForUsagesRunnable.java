@@ -205,21 +205,15 @@ class SearchForUsagesRunnable implements Runnable {
 
   @NotNull
   private static String detailedLargeFilesMessage(@NotNull Collection<? extends VirtualFile> largeFiles) {
-    String message = "";
+    String message;
     if (largeFiles.size() == 1) {
       final VirtualFile vFile = largeFiles.iterator().next();
-      message += "File " + presentableFileInfo(vFile) + " is ";
+      message = "File " + presentableFileInfo(vFile) + " is ";
     }
     else {
-      message += "Files<br> ";
-
-      int counter = 0;
-      for (VirtualFile vFile : largeFiles) {
-        message += presentableFileInfo(vFile) + "<br> ";
-        if (counter++ > 10) break;
-      }
-
-      message += "are ";
+      message = "Files<br> "
+      + StringUtil.join(ContainerUtil.getFirstItems(new ArrayList<>(largeFiles), 10), vFile -> presentableFileInfo(vFile), "<br> ")
+      + "<br> are ";
     }
 
     message += "too large and cannot be scanned";

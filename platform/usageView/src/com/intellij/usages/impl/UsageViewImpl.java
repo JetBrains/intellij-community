@@ -666,7 +666,7 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings));
     }
 
-    Collections.sort(list, Comparator.comparingInt(UsageGroupingRule::getRank));
+    list.sort(Comparator.comparingInt(UsageGroupingRule::getRank));
     return list.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
@@ -908,7 +908,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myPresentation.isDetachedMode() || myTree.isShowing();
   }
 
-  private boolean rulesChanged;
+  private boolean rulesChanged; // accessed in EDT only
   private void rulesChanged() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!shouldTreeReactNowToRuleChanges()) {
@@ -921,7 +921,7 @@ public class UsageViewImpl implements UsageViewEx {
       captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     }
     final List<Usage> allUsages = new ArrayList<>(myUsageNodes.keySet());
-    Collections.sort(allUsages, USAGE_COMPARATOR);
+    allUsages.sort(USAGE_COMPARATOR);
     final Set<Usage> excludedUsages = getExcludedUsages();
     reset();
     myBuilder.setGroupingRules(getActiveGroupingRules(myProject, getUsageViewSettings()));
@@ -1115,7 +1115,6 @@ public class UsageViewImpl implements UsageViewEx {
   /**
    * @return usage view which will be shown after re-run (either {@code this} if it knows how to re-run itself, or the new created one otherwise)
    */
-  @SuppressWarnings("WeakerAccess") // used in rider
   protected UsageView doReRun() {
     myChangesDetected = false;
     if (myRerunAction == null) {
@@ -1706,7 +1705,7 @@ public class UsageViewImpl implements UsageViewEx {
   @NotNull
   public List<Usage> getSortedUsages() {
     List<Usage> usages = new ArrayList<>(getUsages());
-    Collections.sort(usages, USAGE_COMPARATOR);
+    usages.sort(USAGE_COMPARATOR);
     return usages;
   }
 
@@ -1717,7 +1716,7 @@ public class UsageViewImpl implements UsageViewEx {
       usages.add(usage);
     }
 
-    Enumeration enumeration = node.children();
+    Enumeration<?> enumeration = node.children();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)enumeration.nextElement();
       collectUsages(child, usages);
@@ -1729,7 +1728,7 @@ public class UsageViewImpl implements UsageViewEx {
       nodes.add((Node)node);
     }
 
-    Enumeration enumeration = node.children();
+    Enumeration<?> enumeration = node.children();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)enumeration.nextElement();
       collectAllChildNodes(child, nodes);
