@@ -200,7 +200,10 @@ public class JdkUtil {
                                        @NotNull TargetEnvironmentRequest request,
                                        @NotNull SimpleJavaParameters javaParameters,
                                        @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration) throws CantRunException {
-    commandLine.setWorkingDirectory(request.createUpload(javaParameters.getWorkingDirectory()));
+    String workingDirectory = javaParameters.getWorkingDirectory();
+    if (workingDirectory != null) {
+      commandLine.setWorkingDirectory(request.createUpload(workingDirectory));
+    }
     javaParameters.getEnv().forEach((key, value) -> commandLine.addEnvironmentVariable(key, value));
 
     if (request instanceof LocalTargetEnvironmentRequest) {
