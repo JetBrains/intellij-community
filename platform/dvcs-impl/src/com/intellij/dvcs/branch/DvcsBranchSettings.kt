@@ -9,4 +9,12 @@ class DvcsBranchSettings : BaseState() {
   var favorites by property(BranchStorage())
   @get:Tag("excluded-from-favorite")
   var excludedFavorites by property(BranchStorage())
+  @get:Tag("branch-grouping")
+  var groupingKeyIds by stringSet()
+}
+
+fun DvcsBranchSettings.isGroupingEnabled(key: GroupingKey) = groupingKeyIds.contains(key.id)
+
+enum class GroupingKey(val id: String, val text: String? = null, val description: String? = null) {
+  GROUPING_BY_DIRECTORY("directory", "Group By Directory")
 }

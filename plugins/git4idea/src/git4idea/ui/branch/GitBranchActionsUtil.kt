@@ -1,10 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch
 
+import com.intellij.dvcs.branch.GroupingKey
+import com.intellij.dvcs.branch.isGroupingEnabled
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
@@ -13,9 +18,11 @@ import git4idea.GitVcs
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
+import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
+import javax.swing.Icon
 
 object L {
   val LOG: Logger = Logger.getInstance(L::class.java)
@@ -162,4 +169,24 @@ internal fun isTrackingInfosExist(branchNames: List<String>, repositories: List<
 
 internal fun hasRemotes(project: Project): Boolean {
   return GitUtil.getRepositories(project).any { repository -> !repository.remotes.isEmpty() }
+}
+
+internal abstract class BranchGroupingAction(private val key: GroupingKey,
+                                             icon: Icon? = null) : ToggleAction(key.text, key.description, icon), DumbAware {
+
+  abstract fun setSelected(key: GroupingKey, state: Boolean)
+
+  override fun isSelected(e: AnActionEvent) =
+    e.project?.let { GitVcsSettings.getInstance(it).favoriteBranchSettings.isGroupingEnabled(key) } ?: false
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val project = e.project ?: return
+    val branchSettings = GitVcsSettings.getInstance(project).favoriteBranchSettings
+
+    val keyId = key.id
+    if (state && branchSettings.groupingKeyIds.add(keyId) || !state && branchSettings.groupingKeyIds.remove(keyId)) {
+      branchSettings.intIncrementModificationCount()
+    }
+    setSelected(key, state)
+  }
 }
