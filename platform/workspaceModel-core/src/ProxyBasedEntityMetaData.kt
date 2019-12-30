@@ -184,73 +184,32 @@ internal sealed class EntityPropertyKind {
       }
     }
 
-    fun <T> replaceAll(instance: Any?,  oldElement: T, newElement: T) : Any?  {
-      val originToCloned = mutableMapOf<Any, MutableList<Any>>()
-      val callStackMap = LinkedHashMap<Any, Pair<Method, Any>>()
-      fun collect(getters: kotlin.collections.List<Method>, getterIndex: Int, value: Any) {
+    fun  replaceAll(instance: Any?,  oldElement: PersistentEntityId<*>, newElement: PersistentEntityId<*>) : Any?  {
+      fun collect(getters: kotlin.collections.List<Method>, getterIndex: Int, value: Any): Any {
         when {
-          // TODO Write a test on entities removal referenced from list
-          value is kotlin.collections.List<*> -> for (item in value) {
-            if (item != null) {
-              callStackMap[item] = getters[getterIndex - 1] to value
-              collect(getters, getterIndex, item)
-            }
-          }
+          value is kotlin.collections.List<*> -> return value.filterNotNull().map { collect(getters, getterIndex, it) }
           getterIndex >= getters.size -> {
-            val id = value as T?
-            if (id != null && id == oldElement) {
-              val fieldName = getters[getterIndex - 1].name.removePrefix("get").decapitalize()
-              val objectInstance = callStackMap[value]!!.second
-              originToCloned.computeIfAbsent(objectInstance) { mutableListOf() }
-                .add(objectInstance.copyWithPropertyReplace(fieldName, newElement as Any))
-            }
+            val id = value as PersistentEntityId<*>
+            return if (id == oldElement) newElement else value
           }
           else -> {
-            val nextValue = getters[getterIndex](value)
-            if (nextValue != null) {
-              callStackMap[nextValue] = getters[getterIndex] to value
-              collect(getters, getterIndex + 1, nextValue)
-            }
+            val getterMethod = getters[getterIndex]
+            val originPropertyValue = getterMethod(value)
+            if (originPropertyValue == null) return value
+            val propertyName = getterMethod.name.removePrefix("get").decapitalize()
+            val propertyValue = collect(getters, getterIndex + 1, originPropertyValue)
+            return if (propertyValue != originPropertyValue) value.copyWithPropertyReplace(propertyName, propertyValue) else value
           }
         }
       }
 
       if (instance == null) return null
+      var originInstance: Any = instance
       for (accessors in referencePersistentIdAccessors) {
-        collect(accessors, 0, instance)
+        val newInstance = collect(accessors, 0, originInstance)
+        if (newInstance != originInstance) originInstance = newInstance
       }
-
-      val handledLists = mutableSetOf<Any>()
-      if (originToCloned.isNotEmpty()) {
-        callStackMap.entries.reversed().forEach { entity ->
-          val originObj = entity.key
-          val clonedObj = originToCloned[originObj]
-          if (clonedObj == null || clonedObj.isEmpty()) return@forEach
-
-          val objectInstance = entity.value.second
-
-          val (propertyValue, ownerMetadata) = if (objectInstance is kotlin.collections.List<*> && handledLists !in objectInstance) {
-            val newList = mutableListOf<Any>()
-            objectInstance.forEach {
-              val clonedObjectsList = originToCloned[it]
-              if (clonedObjectsList.isNullOrEmpty()) newList += it!! else newList += clonedObjectsList.first()
-            }
-            handledLists += objectInstance
-            newList to callStackMap[objectInstance]
-          }
-          else clonedObj to entity.value
-
-          val method = ownerMetadata!!.first
-          val originInstance = ownerMetadata.second
-
-          val propertyName = method.name.removePrefix("get").decapitalize()
-          originToCloned.computeIfAbsent(originInstance) { mutableListOf() }
-            .add(originInstance.copyWithPropertyReplace(propertyName, propertyValue))
-        }
-      }
-
-      // For root instance there should be only one record in list (List only for the case there temporary root is collection)
-      return originToCloned[instance]?.first() ?: instance
+      return originInstance
     }
 
     private fun Any.copyWithPropertyReplace(propertyName : String, propertyValue: Any): Any {
