@@ -24,6 +24,19 @@ internal interface ModifiableNamedSampleEntity : ModifiableTypedEntity<NamedSamp
   override var next: SampleEntityId
 }
 
+internal data class ChildEntityId(val childName: String, override val parentId: SampleEntityId) : PersistentEntityId<ModifiableChildEntityWithPersistentId>() {
+  override val presentableName: String
+    get() = childName
+}
+
+internal interface ModifiableChildEntityWithPersistentId : ModifiableTypedEntity<ModifiableChildEntityWithPersistentId>, TypedEntityWithPersistentId {
+  var parent: NamedSampleEntity
+  var childName: String
+
+  @JvmDefault
+  override fun persistentId(): PersistentEntityId<*> = ChildEntityId(childName, parent.persistentId())
+}
+
 private fun TypedEntityStorageBuilder.addNamedEntity(name: String, next: SampleEntityId) =
   addEntity(ModifiableNamedSampleEntity::class.java, SampleEntitySource("test")) {
     this.name = name
@@ -72,5 +85,18 @@ class EntityWithPersistentIdInProxyBasedStorageTest {
     }
     builder.checkConsistency()
     assertEquals(baz, newFoo.next.resolve(builder))
+  }
+
+  @Test
+  fun `remove child entity with parent entity`() {
+    val builder = TypedEntityStorageBuilder.create()
+    val parent = builder.addNamedEntity("parent", SampleEntityId("no"))
+    builder.addEntity(ModifiableChildEntityWithPersistentId::class.java, SampleEntitySource("foo")) {
+      this.childName = "child"
+      this.parent = parent
+    }
+    builder.checkConsistency()
+    builder.removeEntity(parent)
+    assertEquals(emptyList<ModifiableChildEntityWithPersistentId>(), builder.entities(ModifiableChildEntityWithPersistentId::class.java).toList())
   }
 }

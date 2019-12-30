@@ -294,16 +294,6 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
   }
 
   private fun removeEntity(id: Long) {
-    val data = entityById.remove(id) ?: error("Unknown id $id")
-    entitiesByType[data.unmodifiableEntityType]?.removeIf { it.id == id }
-    entitiesBySource[data.entitySource]?.removeIf { it.id == id }
-    if (TypedEntityWithPersistentId::class.java.isAssignableFrom(data.unmodifiableEntityType)) {
-      //todo store hash in EntityData instead?
-      val persistentId = (createEntityInstance(data) as TypedEntityWithPersistentId).persistentId()
-      entitiesByPersistentIdHash.removeValue(persistentId.hashCode(), data)
-    }
-    removeReferences(data)
-
     val toRemove = referrers[id]
     while (true) {
       val idToRemove = toRemove?.firstOrNull() ?: break
@@ -313,6 +303,16 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     if (referrers.containsKey(id)) {
       error("Referrers still have reference target id $id even after entity removal")
     }
+
+    val data = entityById.remove(id) ?: error("Unknown id $id")
+    entitiesByType[data.unmodifiableEntityType]?.removeIf { it.id == id }
+    entitiesBySource[data.entitySource]?.removeIf { it.id == id }
+    if (TypedEntityWithPersistentId::class.java.isAssignableFrom(data.unmodifiableEntityType)) {
+      //todo store hash in EntityData instead?
+      val persistentId = (createEntityInstance(data) as TypedEntityWithPersistentId).persistentId()
+      entitiesByPersistentIdHash.removeValue(persistentId.hashCode(), data)
+    }
+    removeReferences(data)
   }
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
