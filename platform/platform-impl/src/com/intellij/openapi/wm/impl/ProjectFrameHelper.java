@@ -276,7 +276,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   public static @Nullable
   String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "Administrator" : "ROOT";
   }
 
   private List<TitleInfoProvider> myTitleInfoExtensions = null;

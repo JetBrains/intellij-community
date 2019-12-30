@@ -10,6 +10,8 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.TitleInfoProvider
+import java.util.*
+import kotlin.collections.HashSet
 
 abstract class SimpleTitleInfoProvider(val project: Project) : TitleInfoProvider {
   protected var enabled = false
@@ -68,7 +70,12 @@ abstract class SimpleTitleInfoProvider(val project: Project) : TitleInfoProvider
 
   protected open fun isEnabled(): Boolean {
     return getRegisterKey()?.let {
-      Registry.get(it).asBoolean()} ?: true
+      try {
+        Registry.get(it).asBoolean()
+      } catch (e: MissingResourceException) {
+        false
+      }
+    } ?: true
   }
 
   private fun updateNotify() {

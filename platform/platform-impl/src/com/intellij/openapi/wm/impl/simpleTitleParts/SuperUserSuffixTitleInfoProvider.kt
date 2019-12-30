@@ -2,12 +2,20 @@
 package com.intellij.openapi.wm.impl.simpleTitleParts
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 
 class SuperUserSuffixTitleInfoProvider (project: Project) : SimpleTitleInfoProvider(project) {
   override val defaultRegistryKey: String? = null
   override val borderlessRegistryKey: String? = null
-  override val value: String = ProjectFrameHelper.getSuperUserSuffix() ?: ""
-  override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" ")
+  override val value: String = prepareValue()
+  override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" - ")
+
+  private fun prepareValue(): String {
+    val vl = ProjectFrameHelper.getSuperUserSuffix()
+    return vl?.let {
+      if(IdeFrameDecorator.isCustomDecorationActive()) vl else "($vl)"
+    } ?: ""
+  }
 }
