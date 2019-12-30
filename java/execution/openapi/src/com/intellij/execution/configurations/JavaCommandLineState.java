@@ -55,11 +55,11 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   }
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
+    LocalTargetEnvironmentFactory factory = new LocalTargetEnvironmentFactory();
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
-    TargetEnvironmentRequest request = runner.createRequest();
-    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, runner.getTargetConfiguration());
-    return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
+    TargetEnvironmentRequest request = factory.createRequest();
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, factory.getTargetConfiguration());
+    return factory.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
       .createGeneralCommandLine(targetedCommandLineBuilder.build())
       .withRedirectErrorStream(redirectErrorStream);
   }

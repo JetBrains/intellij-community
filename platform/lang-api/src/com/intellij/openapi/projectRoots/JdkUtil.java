@@ -190,9 +190,9 @@ public class JdkUtil {
 
   @NotNull
   public static GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
-    LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
-    TargetEnvironmentRequest request = runner.createRequest();
-    return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
+    LocalTargetEnvironmentFactory environmentFactory = new LocalTargetEnvironmentFactory();
+    TargetEnvironmentRequest request = environmentFactory.createRequest();
+    return environmentFactory.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
       .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null).build());
   }
 
@@ -275,10 +275,10 @@ public class JdkUtil {
   private static void setupCommandLine(@NotNull GeneralCommandLine commandLine, @NotNull SimpleJavaParameters javaParameters)
     throws CantRunException {
     TargetedCommandLineBuilder targetedCommandLineBuilder = new TargetedCommandLineBuilder();
-    LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
-    TargetEnvironmentRequest request = runner.createRequest();
+    LocalTargetEnvironmentFactory environmentFactory = new LocalTargetEnvironmentFactory();
+    TargetEnvironmentRequest request = environmentFactory.createRequest();
     setupCommandLine(targetedCommandLineBuilder, request, javaParameters, null);
-    LocalTargetEnvironment environment = runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator());
+    LocalTargetEnvironment environment = environmentFactory.prepareRemoteEnvironment(request, new EmptyProgressIndicator());
     GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(targetedCommandLineBuilder.build());
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
     commandLine.getParametersList().addAll(generalCommandLine.getParametersList().getList());
