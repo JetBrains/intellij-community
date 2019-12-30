@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,6 +200,22 @@ public class JavaI18nUtil extends I18nUtil {
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, resourceBundleRef, null)) return true;
+    }
+
+    if (method.isConstructor()) {
+      PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+      if (constructorCall != null) {
+        PsiMethod delegation = constructorCall.resolveMethod();
+        if (delegation != null) {
+          int indexInDelegated = 0;
+          for (PsiExpression expression : constructorCall.getArgumentList().getExpressions()) {
+            if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(param)) {
+              if (isMethodParameterAnnotatedWith(delegation, indexInDelegated,processed, annFqn, resourceBundleRef,null)) return true;
+            }
+            indexInDelegated++;
+          }
+        }
+      }
     }
 
     return false;

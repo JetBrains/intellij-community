@@ -47,6 +47,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNonNlsEquals() { doTest(); }
   public void testParameterInNewAnonymousClass() { doTest(); }
   public void testConstructorCallOfNonNlsVariable() { doTest(); }
+  public void testConstructorChains() { doTest(); }
   public void testSwitchOnNonNlsString() { doTest(); }
   public void testNonNlsComment() {
     myTool.nonNlsCommentPattern = "MYNON-NLS";
