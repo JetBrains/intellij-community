@@ -23,7 +23,7 @@
     <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
-    <group id="ListActions" text="List Actions">
+    <group id="ListActions">
       <action id="List-selectFirstRow" class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
       <action id="List-selectFirstRowExtendSelection" class="com.intellij.ui.ListActions$ShiftHome"
               use-shortcut-of="EditorTextStartWithSelection"/>
@@ -51,7 +51,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="TableActions" text="Table Actions">
+    <group id="TableActions">
       <action id="Table-selectFirstRow" class="com.intellij.ui.TableActions$CtrlHome" use-shortcut-of="EditorTextStart"/>
       <action id="Table-selectFirstRowExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftHome"
               use-shortcut-of="EditorTextStartWithSelection"/>
@@ -79,7 +79,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="TreeActions" text="Tree Actions">
+    <group id="TreeActions">
       <action id="Tree-selectFirst" class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorTextStart"/>
       <action id="Tree-selectFirstExtendSelection" class="com.intellij.ui.TreeActions$ShiftHome"
               use-shortcut-of="EditorTextStartWithSelection"/>
@@ -105,7 +105,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="PopupMenuActions" text="Popup Menu Actions">
+    <group id="PopupMenuActions">
       <action id="PopupMenu-selectPrevious" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorUp"/>
       <action id="PopupMenu-selectNext" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorDown"/>
       <action id="PopupMenu-selectParent" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorLeft"/>
@@ -115,7 +115,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="NavBarActions" text="Navigation Bar Actions">
+    <group id="NavBarActions">
       <action id="NavBar-selectHome" class="com.intellij.ide.navigationToolbar.NavBarActions$Home" use-shortcut-of="EditorLineStart"/>
       <action id="NavBar-selectEnd" class="com.intellij.ide.navigationToolbar.NavBarActions$End" use-shortcut-of="EditorLineEnd"/>
       <action id="NavBar-selectUp" class="com.intellij.ide.navigationToolbar.NavBarActions$Up" use-shortcut-of="EditorUp"/>
@@ -128,7 +128,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="ScrollPaneActions" text="Scroll">
+    <group id="ScrollPaneActions">
       <action id="ScrollPane-scrollHome" class="com.intellij.ui.ScrollPaneActions$Home"/>
       <action id="ScrollPane-scrollEnd" class="com.intellij.ui.ScrollPaneActions$End"/>
       <action id="ScrollPane-unitScrollUp" class="com.intellij.ui.ScrollPaneActions$Up"/>
@@ -298,7 +298,7 @@
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction" icon="AllIcons.Actions.Refresh"/>
     <action id="ForceRefresh" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ForceRefresh"/>
 
-    <group id="Diff.KeymapGroup" text="Diff \&amp;\&amp; Merge">
+    <group id="Diff.KeymapGroup">
       <action id="Diff.ShowDiff" class="com.intellij.diff.actions.ShowDiffAction"
               icon="AllIcons.Actions.Diff"/> <!-- CommonShortcuts.getDiff() -->
       <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff"/>
@@ -404,7 +404,7 @@
           <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileTypeAction"/>
           <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
 
-          <group id="ChangeLineSeparators" text="Line Separators" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
+          <group id="ChangeLineSeparators" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
             <action id="ConvertToWindowsLineSeparators" class="com.intellij.codeStyle.ConvertToWindowsLineSeparatorsAction"/>
             <action id="ConvertToUnixLineSeparators" class="com.intellij.codeStyle.ConvertToUnixLineSeparatorsAction"/>
             <action id="ConvertToMacLineSeparators" class="com.intellij.codeStyle.ConvertToMacLineSeparatorsAction"/>
@@ -1103,7 +1103,7 @@
     <action id="ShowSearchHistory" class="com.intellij.find.actions.ShowSearchHistoryAction"/>
     <action id="HidpiInfo" class="com.intellij.internal.HidpiInfo"/>
 
-    <group id="TabsActions" text="Tabs">
+    <group id="TabsActions">
       <action id="GoToTab1" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab1Action"/>
       <action id="GoToTab2" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab2Action"/>
       <action id="GoToTab3" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab3Action"/>
@@ -1125,7 +1125,7 @@
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
-    <group id="TWViewModes" text="Tool Windows View Modes">
+    <group id="TWViewModes">
       <action id="DockPinnedMode" class="com.intellij.ide.actions.ToolWindowDockPinnedAction"/>
       <action id="DockUnpinnedMode" class="com.intellij.ide.actions.ToolWindowDockUnpinnedAction"/>
       <action id="UndockMode" class="com.intellij.ide.actions.ToolWindowUndockAction"/>
@@ -1133,7 +1133,7 @@
       <action id="WindowMode" class="com.intellij.ide.actions.ToolWindowWindowAction"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
-    <group id="TWViewModesLegacy" text="Tool Windows Legacy View Modes (deprecated)">
+    <group id="TWViewModesLegacy">
       <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
       <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>
       <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
@@ -1143,7 +1143,7 @@
     </group>
     <group id="ToolWindowContextMenu"/>
 
-    <group id="SearchEverywhereActions" text="Search Everywhere">
+    <group id="SearchEverywhereActions">
       <action id="SearchEverywhere.NextTab" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"/>
       <action id="SearchEverywhere.PrevTab" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"/>
       <action id="SearchEverywhere.CompleteCommand" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"/>
@@ -1154,7 +1154,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="Internal.HeapAnalysis" text="Heap Analysis" popup="true" internal="true">
+    <group id="Internal.HeapAnalysis" popup="true" internal="true">
       <action id="UserInvokedFullAnalysis" class="com.intellij.diagnostic.hprof.action.InternalUserInvokedFullAnalysisAction"
               internal="true"/>
       <action id="SilentHeapDumpSnapshot" class="com.intellij.diagnostic.hprof.action.InternalNonuserInvokedHeapDumpSnapshotAction"
@@ -1197,7 +1197,7 @@
       <add-to-group group-id="EditorToggleActions" relative-to-action="EditorToggleShowIndentLines" anchor="after"/>
     </action>
 
-    <group id="EditorBreadcrumbsSettings" text="Breadcrumbs" popup="true">
+    <group id="EditorBreadcrumbsSettings" popup="true">
       <add-to-group group-id="EditorGutterPopupMenu" relative-to-action="EditorGutterToggleGlobalIndentLines" anchor="after"/>
       <action id="EditorBreadcrumbsShowAbove" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowAbove"/>
       <action id="EditorBreadcrumbsShowBelow" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowBelow"/>
