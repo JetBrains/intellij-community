@@ -365,7 +365,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // this point. If it has happened it will be cleaned up when the suspender is closed on the background process thread.
       myCurrentSuspender = null;
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        () -> ApplicationManager.getApplication().invokeLater(this::updateFinished, myDumbStartModality, myProject.getDisposed()));
+        (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(this::updateFinished, myDumbStartModality, myProject.getDisposed()));
     }
   }
 
