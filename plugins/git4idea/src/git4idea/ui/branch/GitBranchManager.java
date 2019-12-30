@@ -29,7 +29,7 @@ import static git4idea.log.GitRefManager.ORIGIN_MASTER;
 public class GitBranchManager extends DvcsBranchManager {
 
   public GitBranchManager(@NotNull Project project, @NotNull GitVcsSettings settings) {
-    super(project, settings.getFavoriteBranchSettings(), GitBranchType.values());
+    super(project, settings.getBranchSettings(), GitBranchType.values());
   }
 
   @Nullable

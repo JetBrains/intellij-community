@@ -78,7 +78,7 @@ class GitVcsOptions : BaseState() {
   @get:OptionTag("ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS")
   var isAddSuffixToCherryPicksOfPublishedCommits by property(true)
 
-  @get:OptionTag("FAVORITE_BRANCH_SETTINGS")
+  @get:OptionTag("BRANCH_SETTINGS")
   @get:Property(surroundWithTag = false, flat = true)
-  var favoriteBranchSettings by property(DvcsBranchSettings())
+  var branchSettings by property(DvcsBranchSettings())
 }

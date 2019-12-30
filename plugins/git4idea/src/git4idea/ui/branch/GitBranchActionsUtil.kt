@@ -177,11 +177,11 @@ internal abstract class BranchGroupingAction(private val key: GroupingKey,
   abstract fun setSelected(key: GroupingKey, state: Boolean)
 
   override fun isSelected(e: AnActionEvent) =
-    e.project?.let { GitVcsSettings.getInstance(it).favoriteBranchSettings.isGroupingEnabled(key) } ?: false
+    e.project?.let { GitVcsSettings.getInstance(it).branchSettings.isGroupingEnabled(key) } ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
-    val branchSettings = GitVcsSettings.getInstance(project).favoriteBranchSettings
+    val branchSettings = GitVcsSettings.getInstance(project).branchSettings
 
     val keyId = key.id
     if (state && branchSettings.groupingKeyIds.add(keyId) || !state && branchSettings.groupingKeyIds.remove(keyId)) {
