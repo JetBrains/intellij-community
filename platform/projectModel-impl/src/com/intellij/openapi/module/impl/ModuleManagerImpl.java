@@ -75,6 +75,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
   protected final Project myProject;
   protected final MessageBus myMessageBus;
+  private final ProjectRootManagerEx myProjectRootManager;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
   private Set<ModulePath> myModulePathsToLoad;
@@ -89,6 +90,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   public ModuleManagerImpl(@NotNull Project project) {
     myProject = project;
     myMessageBus = project.getMessageBus();
+    myProjectRootManager = ProjectRootManagerEx.getInstanceEx(project);
   }
 
   @Override
@@ -117,6 +119,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   @Override
   public void dispose() {
     myModuleModel.disposeModel();
+    myProjectRootManager.assertListenersAreDisposed();
   }
 
   @Override
@@ -1021,7 +1024,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       removedModules.removeAll(newModules);
     }
 
-    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(() -> {
+    myProjectRootManager.makeRootsChange(() -> {
       for (Module removedModule : removedModules) {
         fireBeforeModuleRemoved(removedModule);
         cleanCachedStuff();
@@ -1084,7 +1087,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     myModuleModel.myModules.put(module.getName(), module);
     incModificationCount();
 
-    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
+    myProjectRootManager.makeRootsChange(
       () -> fireModulesRenamed(Collections.singletonList(module), Collections.singletonMap(module, oldName)), false, true);
   }
 

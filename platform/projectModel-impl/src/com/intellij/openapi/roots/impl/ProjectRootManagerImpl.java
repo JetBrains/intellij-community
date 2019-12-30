@@ -612,7 +612,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     Disposer.register(parent, () -> myJdkTableMultiListener.removeListener(jdkTableListener));
   }
 
-  void assertListenersAreDisposed() {
+  @Override
+  public void assertListenersAreDisposed() {
     synchronized (myRegisteredRootProviders) {
       if (!myRegisteredRootProviders.isEmpty()) {
         StringBuilder details = new StringBuilder();
