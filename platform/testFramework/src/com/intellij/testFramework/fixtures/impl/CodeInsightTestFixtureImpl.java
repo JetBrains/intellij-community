@@ -51,7 +51,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -134,7 +133,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
@@ -1416,7 +1414,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Module module = getModule();
       if (module != null) {
         for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
-          module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+          FacetManager.getInstance(module).facetConfigurationChanged(facet);
         }
       }
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

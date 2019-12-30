@@ -10,6 +10,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState;
+import org.junit.Assume;
 
 
 /**
@@ -110,16 +111,17 @@ public class FacetManagerTest extends FacetTestCase {
 
   @Nullable
   private Element write() {
-    FacetManagerState state = getFacetManager().getState();
+    FacetManagerState state = ((FacetManagerImpl)getFacetManager()).getState();
     return XmlSerializer.serialize(state);
   }
 
   private void read(@Nullable Element element) {
-    getFacetManager().loadState(element == null ? new FacetManagerState() : XmlSerializer.deserialize(element, FacetManagerState.class));
+    ((FacetManagerImpl)getFacetManager()).loadState(element == null ? new FacetManagerState() : XmlSerializer.deserialize(element, FacetManagerState.class));
   }
 
   public void testExternalization() {
-    final FacetManager manager = getFacetManager();
+    FacetManager manager = getFacetManager();
+    Assume.assumeTrue("Not applicable to workspace model", manager instanceof FacetManagerImpl);
     assertNull(write());
 
     addFacet();

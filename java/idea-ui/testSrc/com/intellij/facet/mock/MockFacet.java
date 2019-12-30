@@ -60,7 +60,7 @@ public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRoo
   }
 
   private void fireFacetChangedEvent() {
-    getModule().getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(this);
+    FacetManager.getInstance(getModule()).facetConfigurationChanged(this);
   }
 
   public void removeRoot(VirtualFile root) {

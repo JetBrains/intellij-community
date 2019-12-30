@@ -193,13 +193,24 @@ interface SdkEntity : TypedEntity {
   val homeUrl: VirtualFileUrl
 }
 
-interface FacetEntity : TypedEntity {
+interface FacetEntity : TypedEntityWithPersistentId, ReferableTypedEntity {
   val name: String
   val facetType: String
   val configurationXmlTag: String?
   val module: ModuleEntity
   val underlyingFacet: FacetEntity?
+
+  @JvmDefault
+  override fun persistentId(): FacetId = FacetId(name, facetType, module.persistentId())
 }
+
+data class FacetId(val name: String, val type: String, override val parentId: ModuleId) : PersistentEntityId<FacetEntity>() {
+  override val presentableName: String
+    get() = name
+}
+
+val FacetEntity.subFacets: Sequence<FacetEntity>
+  get() = referrers(FacetEntity::underlyingFacet)
 
 val ModuleEntity.facets: Sequence<FacetEntity>
   get() = referrers(FacetEntity::module)

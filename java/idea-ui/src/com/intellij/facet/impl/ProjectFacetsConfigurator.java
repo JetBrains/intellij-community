@@ -238,7 +238,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     for (Facet facet : myChangedFacets) {
       Module module = facet.getModule();
       if (!module.isDisposed()) {
-        module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+        FacetManager.getInstance(module).facetConfigurationChanged(facet);
       }
     }
     myChangedFacets.clear();

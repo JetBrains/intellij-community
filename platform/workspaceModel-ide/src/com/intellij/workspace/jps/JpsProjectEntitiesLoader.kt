@@ -42,7 +42,7 @@ object JpsProjectEntitiesLoader {
                           source: JpsFileEntitySource.FileInDirectory,
                           storagePlace: JpsProjectStoragePlace,
                           builder: TypedEntityStorageBuilder) {
-    val mainFactories = createProjectEntitiesSerializers(storagePlace, false, false)
+    val mainFactories = createProjectEntitiesSerializers(storagePlace, false, true)
     val reader = CachingJpsFileContentReader(storagePlace.baseDirectoryUrl)
     val moduleSerializerFactory = mainFactories.fileSerializerFactories.filterIsInstance<ModuleSerializersFactory>().single()
 

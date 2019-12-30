@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
+import com.intellij.facet.FacetManager
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.ModuleId
 import com.intellij.workspace.api.TypedEntityStorageDiffBuilder
 import com.intellij.workspace.api.TypedEntityStore
+import com.intellij.workspace.legacyBridge.facet.FacetManagerViaWorkspaceModel
 import java.io.File
 
 internal class LegacyBridgeModuleImpl(
@@ -36,6 +38,7 @@ internal class LegacyBridgeModuleImpl(
                            ?: error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
 
     registerComponent(ModuleRootManager::class.java, LegacyBridgeModuleRootComponent::class.java, pluginDescriptor, true)
+    registerComponent(FacetManager::class.java, FacetManagerViaWorkspaceModel::class.java, pluginDescriptor, true)
 
     registerService(LegacyBridgeFilePointerProvider::class.java, LegacyBridgeFilePointerProviderImpl::class.java, pluginDescriptor, false)
     registerService(IComponentStore::class.java, LegacyBridgeModuleStoreImpl::class.java, pluginDescriptor, true)

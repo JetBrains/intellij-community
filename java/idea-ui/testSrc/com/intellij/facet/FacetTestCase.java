@@ -38,12 +38,13 @@ public abstract class FacetTestCase extends JavaPsiTestCase {
     commit(model);
   }
 
-  protected FacetManagerImpl getFacetManager() {
-    return (FacetManagerImpl)FacetManager.getInstance(myModule);
+  protected FacetManager getFacetManager() {
+    return FacetManager.getInstance(myModule);
   }
 
   protected void commit(final ModifiableFacetModel model) {
     WriteAction.runAndWait(() -> model.commit());
+    ((FacetManagerBase) getFacetManager()).checkConsistency();
   }
 
   protected MockFacet createFacet() {

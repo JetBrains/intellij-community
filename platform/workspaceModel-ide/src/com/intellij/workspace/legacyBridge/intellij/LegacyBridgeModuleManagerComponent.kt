@@ -30,6 +30,7 @@ import com.intellij.workspace.bracket
 import com.intellij.workspace.executeOrQueueOnDispatchThread
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
+import com.intellij.workspace.legacyBridge.facet.FacetEntityChangeListener
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
@@ -241,6 +242,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
           }
         }
       })
+      myMessageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, FacetEntityChangeListener(project))
     }
   }
 
