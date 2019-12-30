@@ -1,12 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.diagnostic.EventsWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
@@ -25,50 +23,18 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
-  private static final boolean DEBUG = LOG.isDebugEnabled();
-
-  private static final Object LOCK = new Object();
 
   private LaterInvocator() { }
-
-  private static class RunnableInfo {
-    @NotNull private final Runnable runnable;
-    @NotNull private final ModalityState modalityState;
-    @NotNull private final Condition<?> expired;
-    @Nullable private final ActionCallback callback;
-    private final boolean onEdt;
-
-    @Async.Schedule
-    RunnableInfo(@NotNull Runnable runnable,
-                 @NotNull ModalityState modalityState,
-                 @NotNull Condition<?> expired,
-                 @Nullable ActionCallback callback,
-                 boolean edt) {
-      this.runnable = runnable;
-      this.modalityState = modalityState;
-      this.expired = expired;
-      this.callback = callback;
-      onEdt = edt;
-    }
-
-    void markDone() {
-      if (callback != null) callback.setDone();
-    }
-
-    @Override
-    @NonNls
-    public String toString() {
-      return "[runnable: " + runnable + "; state=" + modalityState + (expired.value(null) ? "; expired" : "")+"] ";
-    }
-  }
 
   // Application modal entities
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -76,15 +42,14 @@ public class LaterInvocator {
   // Per-project modal entities
   private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap();
   private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap();
-
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
-  private static final List<RunnableInfo> ourSkippedItems = new ArrayList<>(); //protected by LOCK
-  private static final ArrayDeque<RunnableInfo> ourQueue = new ArrayDeque<>(); //protected by LOCK
-  private static final ArrayDeque<RunnableInfo> ourLegacyQueue = new ArrayDeque<>(); //protected by LOCK
-  private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
-  private static final Executor ourWriteThreadExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Write Thread", 1);
-
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
+
+  private static final Executor ourWriteThreadExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Write Thread", 1);
+  private static final FlushQueue ourEdtQueue = new FlushQueue(SwingUtilities::invokeLater);
+  private static final FlushQueue ourWtQueue = new FlushQueue(r ->
+    ourWriteThreadExecutor.execute(() -> ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(r)));
+
 
   public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable) {
     if (!ourModalityStateMulticaster.getListeners().contains(listener)) {
@@ -141,12 +106,9 @@ public class LaterInvocator {
       }
       return;
     }
-    RunnableInfo runnableInfo = new RunnableInfo(runnable, modalityState, expired, callback, onEdt);
-    synchronized (LOCK) {
-      ArrayDeque<RunnableInfo> queue = onEdt ? ourLegacyQueue : ourQueue;
-      queue.add(runnableInfo);
-    }
-    requestFlush(onEdt);
+    FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired, callback);
+    getRunnableQueue(onEdt).push(runnableInfo);
+    requestFlush();
   }
 
   static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState, boolean onEdt) {
@@ -220,7 +182,7 @@ public class LaterInvocator {
     }
 
     reincludeSkippedItems();
-    requestFlushAll();
+    requestFlush();
   }
 
   public static void enterModal(Project project, Dialog dialog) {
@@ -255,7 +217,7 @@ public class LaterInvocator {
   public static void markTransparent(@NotNull ModalityState state) {
     ((ModalityStateEx)state).markTransparent();
     reincludeSkippedItems();
-    requestFlush(true);
+    requestFlush();
   }
 
   public static void leaveModal(Project project, Dialog dialog) {
@@ -284,7 +246,7 @@ public class LaterInvocator {
     }
 
     reincludeSkippedItems();
-    requestFlushAll();
+    requestFlush();
   }
 
   private static void removeModality(@NotNull Object modalEntity, int index) {
@@ -298,16 +260,6 @@ public class LaterInvocator {
     ModalityStateEx.unmarkTransparent(modalEntity);
   }
 
-  private static void reincludeSkippedItems() {
-    synchronized (LOCK) {
-      for (int i = ourSkippedItems.size() - 1; i >= 0; i--) {
-        RunnableInfo item = ourSkippedItems.get(i);
-        ArrayDeque<RunnableInfo> queue = item.onEdt ? ourLegacyQueue : ourQueue;
-        queue.addFirst(item);
-      }
-      ourSkippedItems.clear();
-    }
-  }
 
   public static void leaveModal(@NotNull Object modalEntity) {
     LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in event-dispatch thread");
@@ -323,7 +275,7 @@ public class LaterInvocator {
     removeModality(modalEntity, index);
 
     reincludeSkippedItems();
-    requestFlushAll();
+    requestFlush();
   }
 
   @TestOnly
@@ -333,7 +285,7 @@ public class LaterInvocator {
     }
     LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
     reincludeSkippedItems();
-    requestFlushAll();
+    requestFlush();
   }
 
   public static Object @NotNull [] getCurrentModalEntities() {
@@ -369,32 +321,27 @@ public class LaterInvocator {
     return ApplicationManager.getApplication().isDispatchThread();
   }
 
-  private static void requestFlush(boolean onEdt) {
-    int currentValue = FLUSHER_SCHEDULED.getAndUpdate(value -> value | (1 << (onEdt ? 0 : 1)) | (1 << 3));
-    submitFlush(currentValue);
+  private static FlushQueue getRunnableQueue(boolean onEdt) {
+    return onEdt ? ourEdtQueue : ourWtQueue;
   }
 
-  private static void requestFlushAll() {
-    int currentValue = FLUSHER_SCHEDULED.getAndUpdate(value -> value | 11);
-    submitFlush(currentValue);
-  }
+  static void requestFlush() {
+    if (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
+      int whichThread = THREAD_TO_FLUSH.getAndUpdate(operand -> operand ^ 1);
 
-  private static void continueFlush() {
-    int currentValue = FLUSHER_SCHEDULED.getAndUpdate(value -> (value & 3) > 0 ? value | (1 << 3) : value);
-    if ((currentValue & 3) > 0) {
-      submitFlush(currentValue);
-    }
-  }
-
-  private static void submitFlush(int currentValue) {
-    if (currentValue >> 3 == 0) {
-      if ((currentValue >> 2 & 1) == 0) {
-        SwingUtilities.invokeLater(ourFlushQueueRunnable);
+      FlushQueue firstQueue = getRunnableQueue(whichThread == 0);
+      if (firstQueue.mayHaveItems()) {
+        firstQueue.scheduleFlush();
+        return;
       }
-      else {
-        ourWriteThreadExecutor
-          .execute(() -> ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(ourFlushQueueRunnable));
+
+      FlushQueue secondQueue = getRunnableQueue(whichThread != 0);
+      if (secondQueue.mayHaveItems()) {
+        secondQueue.scheduleFlush();
+        return;
       }
+
+      FLUSHER_SCHEDULED.set(false);
     }
   }
 
@@ -402,8 +349,7 @@ public class LaterInvocator {
     LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
-    FLUSHER_SCHEDULED.getAndUpdate(value -> value | (1 << 2));
-    ourFlushQueueRunnable.run();
+    ourWtQueue.flushNow();
   }
 
   /**
@@ -414,159 +360,40 @@ public class LaterInvocator {
    * @see IdeEventQueue#peekEvent()
    */
   public static boolean ensureFlushRequested() {
-    if (getNextEvent(ourLegacyQueue, false) != null) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(ourFlushQueueRunnable);
+    if (ourEdtQueue.getNextEvent(false) != null) {
+      ourEdtQueue.scheduleFlush();
+      return true;
+    }
+    else if (ourWtQueue.getNextEvent(false) != null) {
+      ourWtQueue.scheduleFlush();
       return true;
     }
     return false;
   }
 
-  @Nullable
-  private static RunnableInfo getNextEvent(ArrayDeque<RunnableInfo> queue, boolean remove) {
-    synchronized (LOCK) {
-      ModalityState currentModality = getCurrentModalityState();
+  static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
 
-      while (!queue.isEmpty()) {
-        RunnableInfo info = queue.getFirst();
-
-        if (info.expired.value(null)) {
-          queue.removeFirst();
-          info.markDone();
-          continue;
-        }
-
-        if (!currentModality.dominates(info.modalityState)) {
-          if (remove) {
-            queue.removeFirst();
-          }
-          return info;
-        }
-        ourSkippedItems.add(queue.removeFirst());
-      }
-
-      return null;
-    }
-  }
-
-  // bits: 0 — need to update EDT, 1 — need to update WT, 2 — current queue to be flushed, 3 — is update queued
-  private static final AtomicInteger FLUSHER_SCHEDULED = new AtomicInteger(0);
-
-  private static class FlushQueue implements Runnable {
-    private RunnableInfo myLastInfo;
-
-    @Override
-    public void run() {
-      int whichThread = FLUSHER_SCHEDULED.getAndUpdate(current -> {
-        return (current & 7 & ~(1 << (current >> 2 & 1))) ^ 4;
-      }) >> 2 & 1;
-
-      ArrayDeque<RunnableInfo> queue = whichThread == 0 ? ourLegacyQueue : ourQueue;
-      if ((whichThread == 0) ^ (SwingUtilities.isEventDispatchThread())) {
-        LOG.error("Tasks for one thread are executed on another");
-      }
-
-      long startTime = System.currentTimeMillis();
-      while (true) {
-        if (!runNextEvent(queue)) {
-          break;
-        }
-        if (System.currentTimeMillis() - startTime > 5) {
-          requestFlush(whichThread == 0);
-          break;
-        }
-      }
-      continueFlush();
-    }
-
-    private boolean runNextEvent(ArrayDeque<RunnableInfo> queue) {
-      long startedAt = System.currentTimeMillis();
-      final RunnableInfo lastInfo = getNextEvent(queue, true);
-      myLastInfo = lastInfo;
-
-      if (lastInfo != null) {
-        EventsWatcher watcher = EventsWatcher.getInstance();
-        Runnable runnable = lastInfo.runnable;
-        if (watcher != null) {
-          watcher.runnableStarted(runnable);
-        }
-
-        try {
-          doRun(lastInfo);
-          lastInfo.markDone();
-        }
-        catch (ProcessCanceledException ignored) {
-
-        }
-        catch (Throwable t) {
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            ExceptionUtil.rethrow(t);
-          }
-          LOG.error(t);
-        }
-        finally {
-          if (!DEBUG) myLastInfo = null;
-          if (watcher != null) {
-            watcher.runnableFinished(runnable, startedAt);
-          }
-        }
-      }
-      return lastInfo != null;
-    }
-
-    // Extracted to have a capture point
-    private static void doRun(@Async.Execute RunnableInfo info) {
-      info.runnable.run();
-    }
-
-    @Override
-    public String toString() {
-      return "LaterInvocator.FlushQueue" + (myLastInfo == null ? "" : " lastInfo=" + myLastInfo);
-    }
-  }
+  private static final AtomicInteger THREAD_TO_FLUSH = new AtomicInteger(0);
 
   @TestOnly
-  public static Collection<RunnableInfo> getLaterInvocatorEdtQueue() {
-    synchronized (LOCK) {
-      // used by leak hunter as root, so we must not copy it here to another list
-      // to avoid walking over obsolete queue
-      return Collections.unmodifiableCollection(ourLegacyQueue);
-    }
+  public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorEdtQueue() {
+    return ourEdtQueue.getQueue();
   }
 
   @TestOnly
   @NotNull
-  public static Collection<RunnableInfo> getLaterInvocatorWtQueue() {
-    synchronized (LOCK) {
-      // used by leak hunter as root, so we must not copy it here to another list
-      // to avoid walking over obsolete queue
-      return Collections.unmodifiableCollection(ourQueue);
-    }
+  public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorWtQueue() {
+    return ourWtQueue.getQueue();
+  }
+
+  private static void reincludeSkippedItems() {
+    ourEdtQueue.reincludeSkippedItems();
+    ourWtQueue.reincludeSkippedItems();
   }
 
   public static void purgeExpiredItems() {
-    synchronized (LOCK) {
-      reincludeSkippedItems();
-
-      purgeExpiredItems(ourQueue);
-      purgeExpiredItems(ourLegacyQueue);
-    }
-  }
-
-  private static void purgeExpiredItems(ArrayDeque<RunnableInfo> queue) {
-    List<RunnableInfo> alive = new ArrayList<>(queue.size());
-    for (RunnableInfo info : queue) {
-      if (info.expired.value(null)) {
-        info.markDone();
-      }
-      else {
-        alive.add(info);
-      }
-    }
-    if (alive.size() < queue.size()) {
-      queue.clear();
-      queue.addAll(alive);
-    }
+    ourEdtQueue.purgeExpiredItems();
+    ourWtQueue.purgeExpiredItems();
   }
 
   @TestOnly
