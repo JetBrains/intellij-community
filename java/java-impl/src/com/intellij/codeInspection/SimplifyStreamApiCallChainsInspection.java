@@ -1217,8 +1217,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (body == null) return null;
         Collection<PsiReference> refs = ReferencesSearch.search(indexParameter, new LocalSearchScope(body)).findAll();
         if (!refs.isEmpty() &&
-            refs.stream()
-              .allMatch(ref -> limitedContainer.myContainer.extractGetExpressionFromIndex(tryCast(ref, PsiExpression.class)) != null)) {
+            refs.stream().map(ref -> limitedContainer.myContainer.extractGetExpressionFromIndex(tryCast(ref, PsiExpression.class)))
+              .allMatch(expression -> expression != null && !PsiUtil.isAccessedForWriting(expression))) {
           return limitedContainer;
         }
       }
