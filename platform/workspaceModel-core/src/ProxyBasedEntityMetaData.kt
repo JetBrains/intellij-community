@@ -56,21 +56,21 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
             (value as List<*>).forEach {
               itemKind.subclassesProperties.forEach { subclassProperties ->
-                if (subclassProperties.key.isInstance(it)) subclassProperties.value.collectReferences(it, collector)
+                if (subclassProperties.key.isInstance(it)) subclassProperties.value.collectPersistentIdReferences(it, collector)
               }
             }
           }
-          is EntityPropertyKind.Class -> (value as List<*>).forEach { itemKind.collectReferences(it, collector) }
+          is EntityPropertyKind.Class -> (value as List<*>).forEach { itemKind.collectPersistentIdReferences(it, collector) }
           is EntityPropertyKind.PersistentId -> (value as List<PersistentEntityId<*>>).forEach { collector(it) }
           else -> Unit
         }.let { } // exhaustive when
         is EntityPropertyKind.PersistentId -> collector((value as PersistentEntityId<*>))
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
           kind.subclassesProperties.forEach { subclassProperties ->
-            if (subclassProperties.key.isInstance(value)) subclassProperties.value.collectReferences(value, collector)
+            if (subclassProperties.key.isInstance(value)) subclassProperties.value.collectPersistentIdReferences(value, collector)
           }
         }
-        is EntityPropertyKind.Class -> kind.collectReferences(value, collector)
+        is EntityPropertyKind.Class -> kind.collectPersistentIdReferences(value, collector)
         else -> Unit
       }.let { } // exhaustive when
     }
@@ -119,11 +119,12 @@ internal sealed class EntityPropertyKind {
   internal class Primitive(val clazz: java.lang.Class<*>) : EntityPropertyKind()
   internal class SealedKotlinDataClassHierarchy(val subclassesProperties: Map<KClass<*>, Class>) : EntityPropertyKind()
   internal class Class(val aClass: java.lang.Class<*>, val properties: Map<String, EntityPropertyKind>,
-                       private val referenceAccessors: kotlin.collections.List<kotlin.collections.List<Method>>) : EntityPropertyKind() {
+                       private val referenceIdAccessors: kotlin.collections.List<kotlin.collections.List<Method>>,
+                       private val referencePersistentIdAccessors: kotlin.collections.List<kotlin.collections.List<Method>>) : EntityPropertyKind() {
 
-    val hasReferences = referenceAccessors.isNotEmpty()
+    val hasReferences = referenceIdAccessors.isNotEmpty()
 
-    fun <T> collectReferences(instance: Any?, collector: (T) -> Unit) {
+    fun collectReferences(instance: Any?, collector: (Long) -> Unit) {
       fun collect(getters: kotlin.collections.List<Method>, getterIndex: Int, value: Any) {
         when {
           // TODO Write a test on entities removal referenced from list
@@ -133,12 +134,8 @@ internal sealed class EntityPropertyKind {
             }
           }
           getterIndex >= getters.size -> {
-            // A workaround of type erasure, otherwise we should use inline function with reified type parameter
-            // For this method it's ok. It uses for getting soft and hard links here (PersistentId or Long)
-            try {
-              val id = value as? T
-              id?.let { collector(it) }
-            } catch(e: ClassCastException) { }
+            val id = value as Long?
+            id?.let { collector(it) }
           }
           else -> {
             val nextValue = getters[getterIndex](value)
@@ -151,7 +148,38 @@ internal sealed class EntityPropertyKind {
 
       if (instance == null) return
 
-      for (accessors in referenceAccessors) {
+      for (accessors in referenceIdAccessors) {
+        collect(accessors, 0, instance)
+      }
+    }
+
+    fun collectPersistentIdReferences(instance: Any?, collector: (PersistentEntityId<*>) -> Unit) {
+      fun collect(getters: kotlin.collections.List<Method>, getterIndex: Int, value: Any) {
+        when {
+          // TODO Write a test on entities removal referenced from list
+          value is kotlin.collections.List<*> -> for (item in value) {
+            if (item != null) {
+              collect(getters, getterIndex, item)
+            }
+          }
+          getterIndex >= getters.size -> {
+            // A workaround of type erasure, otherwise we should use inline function with reified type parameter
+            // In future, this and the method above can be generated
+            val persistentId = value as PersistentEntityId<*>?
+            persistentId?.let { collector(it) }
+          }
+          else -> {
+            val nextValue = getters[getterIndex](value)
+            if (nextValue != null) {
+              collect(getters, getterIndex + 1, nextValue)
+            }
+          }
+        }
+      }
+
+      if (instance == null) return
+
+      for (accessors in referencePersistentIdAccessors) {
         collect(accessors, 0, instance)
       }
     }
@@ -188,7 +216,7 @@ internal sealed class EntityPropertyKind {
       }
 
       if (instance == null) return null
-      for (accessors in referenceAccessors) {
+      for (accessors in referencePersistentIdAccessors) {
         collect(accessors, 0, instance)
       }
 
@@ -250,9 +278,9 @@ internal class EntityMetaDataRegistry {
   private fun calculateDataClassMeta(clazz: Class<*>): EntityPropertyKind.Class {
     // TODO Assert it's a data class
     val propertiesMap = getPropertiesMap(clazz)
-    val referenceAccessors = ArrayList<List<Method>>()
-    collectReferenceAccessors(clazz, propertiesMap, emptyList(), referenceAccessors)
-    return EntityPropertyKind.Class(clazz, propertiesMap, referenceAccessors)
+    val referenceIdAccessors = collectReferenceIdAccessors(clazz, propertiesMap)
+    val referencePersistentIdAccessors = collectPersistentIdReferenceAccessors(clazz, propertiesMap)
+    return EntityPropertyKind.Class(clazz, propertiesMap, referenceIdAccessors, referencePersistentIdAccessors)
   }
 
   private fun calculateMetaData(clazz: Class<out TypedEntity>): EntityMetaData {
@@ -260,14 +288,36 @@ internal class EntityMetaDataRegistry {
     return EntityMetaData(clazz, properties)
   }
 
-  private fun collectReferenceAccessors(clazz: Class<*>, propertiesMap: Map<String, EntityPropertyKind>, currentAccessor: List<Method>,
-                                        result: MutableList<List<Method>>) {
+  private fun collectReferenceIdAccessors(clazz: Class<*>, propertiesMap: Map<String, EntityPropertyKind>): List<List<Method>> {
 
     fun collect(kind: EntityPropertyKind, currentAccessor: List<Method>, result: MutableList<List<Method>>) {
       when (kind) {
         is EntityPropertyKind.EntityReference -> {
           result += currentAccessor + ProxyBasedEntityReferenceImpl::class.java.getMethod("getId")
         }
+        is EntityPropertyKind.List -> {
+          collect(kind.itemKind, currentAccessor, result)
+        }
+        is EntityPropertyKind.Class -> {
+          for ((propertyName, propertyValue) in kind.properties) {
+            collect(propertyValue, currentAccessor + listOf(kind.aClass.getMethod("get${propertyName.capitalize()}")), result)
+          }
+        }
+      }
+    }
+
+    val currentAccessor = emptyList<Method>()
+    val result = mutableListOf<List<Method>>()
+    propertiesMap.entries.forEach { (name, kind) ->
+      collect(kind, currentAccessor + listOf(clazz.getMethod("get${name.capitalize()}")), result)
+    }
+    return result
+  }
+
+  private fun collectPersistentIdReferenceAccessors(clazz: Class<*>, propertiesMap: Map<String, EntityPropertyKind>): List<List<Method>> {
+
+    fun collect(kind: EntityPropertyKind, currentAccessor: List<Method>, result: MutableList<List<Method>>) {
+      when (kind) {
         is EntityPropertyKind.List -> {
           collect(kind.itemKind, currentAccessor, result)
         }
@@ -282,9 +332,12 @@ internal class EntityMetaDataRegistry {
       }
     }
 
+    val currentAccessor = emptyList<Method>()
+    val result = mutableListOf<List<Method>>()
     propertiesMap.entries.forEach { (name, kind) ->
       collect(kind, currentAccessor + listOf(clazz.getMethod("get${name.capitalize()}")), result)
     }
+    return result
   }
 
   private fun getPropertiesMap(clazz: Class<*>): Map<String, EntityPropertyKind> {

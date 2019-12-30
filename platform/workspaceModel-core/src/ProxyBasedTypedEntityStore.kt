@@ -1006,13 +1006,13 @@ internal class EntityImpl(override val data: EntityData,
 
             if (oldValues != null) {
               for (oldValue in oldValues as List<*>) {
-                itemKind.collectReferences<Long>(oldValue) { referrers.listRemoveValue(it, id) }
+                itemKind.collectReferences(oldValue) { referrers.listRemoveValue(it, id) }
               }
             }
 
             if (newValue != null) {
               for (value in newValue as List<*>) {
-                itemKind.collectReferences<Long>(newValue) { referrers.listPutValue(it, id) }
+                itemKind.collectReferences(newValue) { referrers.listPutValue(it, id) }
               }
             }
 
@@ -1028,8 +1028,8 @@ internal class EntityImpl(override val data: EntityData,
           val oldValue = data.properties[propertyName]
           data.properties[propertyName] = newValue
 
-          propertyKind.collectReferences<Long>(oldValue) { referrers.listRemoveValue(it, id) }
-          propertyKind.collectReferences<Long>(newValue) { referrers.listPutValue(it, id) }
+          propertyKind.collectReferences(oldValue) { referrers.listRemoveValue(it, id) }
+          propertyKind.collectReferences(newValue) { referrers.listPutValue(it, id) }
         }
         else -> data.properties[propertyName] = newValue
       }
