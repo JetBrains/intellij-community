@@ -634,16 +634,24 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
                                @NotNull ExtensionPointListener<T>[] listeners) {
     List<Pair<T, PluginDescriptor>> extensionsList = null;
     for (ExtensionPointListener<T> listener : listeners) {
-      try {
-        if (listener instanceof ExtensionPointAdapter) {
+      if (listener instanceof ExtensionPointAdapter) {
+        try {
           ((ExtensionPointAdapter<T>)listener).extensionListChanged();
         }
-        else {
-          // initialize list of extensions lazily to avoid unnecessary calculations
-          if (extensionsList == null) {
-            extensionsList = extensions.create();
-          }
-          for (Pair<? extends T, PluginDescriptor> extension : extensionsList) {
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+      else {
+        // initialize list of extensions lazily to avoid unnecessary calculations
+        if (extensionsList == null) {
+          extensionsList = extensions.create();
+        }
+        for (Pair<? extends T, PluginDescriptor> extension : extensionsList) {
+          try {
             if (removeEvent) {
               listener.extensionRemoved(extension.first, extension.second);
             }
@@ -651,13 +659,13 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
               listener.extensionAdded(extension.first, extension.second);
             }
           }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
       }
     }
   }
@@ -709,7 +717,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Override
-  public void addExtensionPointListener(@NotNull ExtensionPointListChangeListener<T> listener,
+  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener<T> listener,
                                         boolean invokeForLoadedExtensions,
                                         @Nullable Disposable parentDisposable) {
     addExtensionPointListener(new ExtensionPointAdapter<T>() {

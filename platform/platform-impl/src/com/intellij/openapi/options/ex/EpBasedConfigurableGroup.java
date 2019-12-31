@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListChangeListener;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
@@ -94,7 +94,7 @@ class EpBasedConfigurableGroup
     if (myListeners.isEmpty()) {
       Project project = myProject;
       if (project == null) project = DefaultProjectFactory.getInstance().getDefaultProject();
-      ExtensionPointListChangeListener epListener = createListener();
+      ExtensionPointChangeListener epListener = createListener();
       Configurable.APPLICATION_CONFIGURABLE.addExtensionPointListener(epListener, this);
       Configurable.PROJECT_CONFIGURABLE.getPoint(project).addExtensionPointListener(epListener, false, this);
 
@@ -141,7 +141,7 @@ class EpBasedConfigurableGroup
   }
 
   @NotNull
-  private ExtensionPointListChangeListener<?> createListener() {
+  private ExtensionPointChangeListener<?> createListener() {
     return () -> {
       myValue.drop();
       ApplicationManager.getApplication().invokeLater(() -> {

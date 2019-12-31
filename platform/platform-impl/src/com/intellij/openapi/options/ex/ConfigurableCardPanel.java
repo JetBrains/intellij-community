@@ -84,7 +84,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     if (configurable != null && !myListeners.containsKey(wrapper)) {
       Disposable disposable = Disposer.newDisposable();
       Collection<BaseExtensionPointName<?>> dependencies = configurable.getDependencies();
-      ExtensionPointListChangeListener listener = () -> {
+      ExtensionPointChangeListener listener = () -> {
         ApplicationManager.getApplication().invokeLater(() -> {
           //dispose resources -> reset nested component
           wrapper.disposeUIResources();

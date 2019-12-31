@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
- * @see ExtensionPointListChangeListener
+ * @see ExtensionPointChangeListener
  */
 public abstract class ExtensionPointAdapter<T> implements ExtensionPointAndAreaListener<T> {
   @Override

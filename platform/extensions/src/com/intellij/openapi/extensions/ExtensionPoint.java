@@ -36,7 +36,7 @@ public interface ExtensionPoint<T> {
   void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
 
   /**
-   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)}
+   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
    * to register extension as first or to completely replace existing extensions in tests.
    */
   @TestOnly
@@ -122,7 +122,7 @@ public interface ExtensionPoint<T> {
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
   
-  void addExtensionPointListener(@NotNull ExtensionPointListChangeListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
+  void addExtensionPointListener(@NotNull ExtensionPointChangeListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 

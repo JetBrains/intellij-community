@@ -2,6 +2,6 @@
 package com.intellij.openapi.extensions;
 
 @FunctionalInterface
-public interface ExtensionPointListChangeListener<T> {
+public interface ExtensionPointChangeListener<T> {
   void extensionListChanged();
 }

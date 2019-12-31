@@ -12,7 +12,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.DumbService;
@@ -58,9 +60,17 @@ public class EditorHighlighterUpdater {
 
   private <T> void updateHighlightersOnExtensionsChange(@NotNull Disposable parentDisposable, @NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
     epName.addExtensionPointListener(
-      (e, pd) -> {checkUpdateHighlighters(e.getKey(), false);},
-      (e, pd) -> {checkUpdateHighlighters(e.getKey(), true);}, 
-      parentDisposable);
+      new ExtensionPointListener<KeyedLazyInstance<T>>() {
+        @Override
+        public void extensionAdded(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
+          checkUpdateHighlighters(extension.getKey(), false);
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
+          checkUpdateHighlighters(extension.getKey(), true);
+        }
+      }, parentDisposable);
   }
 
   private void checkUpdateHighlighters(String key, boolean updateSynchronously) {

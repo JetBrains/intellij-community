@@ -157,27 +157,12 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     getPointImpl(null).processWithPluginDescriptor(consumer);
   }
 
-  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @Nullable Disposable parentDisposable) {
+  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
+                                        @Nullable Disposable parentDisposable) {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 
-  public void addExtensionPointListener(@NotNull BiConsumer<? super T, PluginDescriptor> added,
-                                        @NotNull BiConsumer<? super T, PluginDescriptor> removed,
-                                        @Nullable Disposable parentDisposable) {
-    addExtensionPointListener(new ExtensionPointListener<T>() {
-      @Override
-      public void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
-        added.accept(extension, pluginDescriptor);
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
-        removed.accept(extension, pluginDescriptor);
-      }
-    }, parentDisposable);
-  }
-
-  public void addExtensionPointListener(@NotNull ExtensionPointListChangeListener<T> listener,
+  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener<T> listener,
                                         @Nullable Disposable parentDisposable) {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
