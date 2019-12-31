@@ -948,7 +948,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
     @Override
     protected String getOkActionName() {
-      return getADD_IN_CODE();
+      return getAddInCode();
     }
 
     @Override
@@ -961,7 +961,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     @NotNull
     protected Action[] createActions() {
       final Action okAction = getOKAction();
-      assignMnemonic(getADD_IN_CODE(), okAction);
+      assignMnemonic(getAddInCode(), okAction);
       final String externalName = ProjectBundle.message("external.annotations.external.option");
       return new Action[]{okAction, new AbstractAction(externalName) {
         {
@@ -1001,7 +1001,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       return true;
     }
 
-    private static String getADD_IN_CODE() {
+    private static String getAddInCode() {
       return ProjectBundle.message("external.annotations.in.code.option");
     }
 

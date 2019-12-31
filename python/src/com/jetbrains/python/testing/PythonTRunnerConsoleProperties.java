@@ -79,8 +79,8 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
         testsRoot.setDuration(System.currentTimeMillis() - myStarted);
       }
       if (testsRoot.isEmptySuite()) {
-        testsRoot.setPresentation(getEMPTY_SUITE());
-        testsRoot.setTestFailed(getEMPTY_SUITE(), null, false);
+        testsRoot.setPresentation(getEmptySuite());
+        testsRoot.setTestFailed(getEmptySuite(), null, false);
       }
       PySMTestProxyUtilsKt.calculateAndReturnMagnitude(testsRoot);
       super.onBeforeTestingFinished(testsRoot);
@@ -96,7 +96,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
       }
     }
 
-    private static String getEMPTY_SUITE() {
+    private static String getEmptySuite() {
       return PyBundle.message("runcfg.tests.empty_suite");
     }
   }

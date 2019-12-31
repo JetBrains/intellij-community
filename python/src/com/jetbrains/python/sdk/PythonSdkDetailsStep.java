@@ -57,7 +57,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   private static List<String> getAvailableOptions(boolean showAll) {
     final List<String> options = new ArrayList<>();
-    options.add(getADD());
+    options.add(getAdd());
     if (showAll) {
       options.add(getALL());
     }
@@ -73,7 +73,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private void optionSelected(final String selectedValue) {
     if (!getALL().equals(selectedValue) && myShowAll != null)
       Disposer.dispose(myShowAll.getDisposable());
-    if (getADD().equals(selectedValue)) {
+    if (getAdd().equals(selectedValue)) {
       PyAddSdkDialog.show(myProject, myModule, Arrays.asList(myExistingSdks), sdk -> mySdkAddedCallback.consume(sdk));
     }
     else if (myShowAll != null) {
@@ -92,7 +92,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     return doFinalStep(() -> optionSelected(selectedValue));
   }
 
-  private static String getADD() {
+  private static String getAdd() {
     return PyBundle.message("sdk.details.step.add");
   }
 

@@ -54,7 +54,7 @@ public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTes
   }
 
   public void testEmptyRenameTo() {
-    doNoQuickFixTest(RenameTo.getFIX_NAME());
+    doNoQuickFixTest(RenameTo.getFixName());
   }
 
   public void testEmptySaveTo() {
@@ -66,10 +66,10 @@ public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTes
   }
 
   public void testNoTypoRenameTo() {
-    doNoQuickFixTest(RenameTo.getFIX_NAME());
+    doNoQuickFixTest(RenameTo.getFixName());
   }
 
   public void testSimpleWordRenameTo() {
-    doNoQuickFixTest(RenameTo.getFIX_NAME());
+    doNoQuickFixTest(RenameTo.getFixName());
   }
 }

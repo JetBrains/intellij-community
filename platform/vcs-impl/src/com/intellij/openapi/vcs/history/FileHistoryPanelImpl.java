@@ -792,7 +792,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     private final IssueLinkRenderer myIssueLinkRenderer;
 
     public MessageColumnInfo(Project project) {
-      super(getCOMMIT_MESSAGE_TITLE());
+      super(getCommitMessageTitle());
       myRenderer = new BaseHistoryCellRenderer() {
         @Override
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -986,7 +986,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     }
   }
 
-  private static String getCOMMIT_MESSAGE_TITLE() {
+  private static String getCommitMessageTitle() {
     return VcsBundle.message("label.selected.revision.commit.message");
   }
 }

@@ -42,7 +42,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   }
 
   public UserColorLookup(final Function<? super Color, String> colorToStringConverter, int priority) {
-    super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(getCOLOR_STRING()).withInsertHandler(
+    super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(getColorString()).withInsertHandler(
       new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -81,7 +81,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
     return ColorMap.getColor(element.getText());
   }
 
-  private static String getCOLOR_STRING() {
+  private static String getColorString() {
     return XmlBundle.message("choose.color.in.color.lookup");
   }
 }

@@ -325,10 +325,10 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (name.length() > 0) {
       return name;
     }
-    return getDEFAULT_PACKAGE_NAME();
+    return getDefaultPackageName();
   }
 
-  public static String getDEFAULT_PACKAGE_NAME() {
+  public static String getDefaultPackageName() {
     return UsageViewBundle.message("default.package.presentable.name");
   }
 }

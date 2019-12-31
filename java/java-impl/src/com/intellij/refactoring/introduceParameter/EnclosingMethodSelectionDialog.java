@@ -27,7 +27,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
 
     myEnclosingMethods = enclosingMethods;
 
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
     init();
   }
 
@@ -99,7 +99,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     return null;
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringName() {
     return RefactoringBundle.message("introduce.parameter.title");
   }
 }

@@ -271,7 +271,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     final AntBuildMessageView messageView = new AntBuildMessageView(project, buildFile, targets, additionalProperties);
     String contentName = buildFile.getPresentableName();
-    contentName = getBUILD_CONTENT_NAME() + " (" + contentName + ")";
+    contentName = getBuildContentName() + " (" + contentName + ")";
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(messageView.getComponent(), contentName, true);
     content.putUserData(KEY, messageView);
@@ -968,7 +968,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     myPlainTextView.setBuildCommandLine(commandLine);
   }
 
-  static String getBUILD_CONTENT_NAME() {
+  static String getBuildContentName() {
     return AntBundle.message("ant.build.tab.content.title");
   }
 }

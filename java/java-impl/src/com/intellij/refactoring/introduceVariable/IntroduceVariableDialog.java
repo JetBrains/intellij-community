@@ -59,7 +59,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myValidator = validator;
     myFile = expression.getContainingFile();
 
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
     init();
   }
 
@@ -306,7 +306,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     return HelpID.INTRODUCE_VARIABLE;
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringName() {
     return RefactoringBundle.message("introduce.variable.title");
   }
 }

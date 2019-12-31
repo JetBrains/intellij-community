@@ -51,7 +51,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
     if(!(element instanceof PsiTypeParameterListOwner)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MAKE_METHOD_STATIC);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MAKE_METHOD_STATIC);
       return;
     }
     if(LOG.isDebugEnabled()) {
@@ -70,7 +70,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     String error = validateTarget(member);
     if (error != null) {
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, error, getREFACTORING_NAME(), HelpID.MAKE_METHOD_STATIC);
+      CommonRefactoringUtil.showErrorHint(project, editor, error, getRefactoringName(), HelpID.MAKE_METHOD_STATIC);
       return;
     }
 
@@ -146,7 +146,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     return null;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("make.method.static.title");
   }
 }

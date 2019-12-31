@@ -51,7 +51,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   private final Callback myCallback;
 
   ExtractSuperclassDialog(Project project, PsiClass sourceClass, List<MemberInfo> selectedMembers, Callback callback) {
-    super(project, sourceClass, selectedMembers, ExtractSuperclassHandler.getREFACTORING_NAME());
+    super(project, sourceClass, selectedMembers, ExtractSuperclassHandler.getRefactoringName());
     myCallback = callback;
     init();
   }

@@ -53,7 +53,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
                                                    boolean canShowPreserveSourceRoots,
                                                    final MoveCallback moveCallback) {
     super(directory.getProject(), false);
-    setTitle(MoveHandler.getREFACTORING_NAME());
+    setTitle(MoveHandler.getRefactoringName());
     myDirectory = directory;
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;

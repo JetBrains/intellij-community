@@ -288,7 +288,7 @@ public class MoveClassesOrPackagesUtil {
     if (!name.isEmpty()) {
       return name;
     }
-    return JavaFindUsagesProvider.getDEFAULT_PACKAGE_NAME();
+    return JavaFindUsagesProvider.getDefaultPackageName();
   }
 
   @Nullable

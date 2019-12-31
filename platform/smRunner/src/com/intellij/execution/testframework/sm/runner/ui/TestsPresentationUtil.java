@@ -38,7 +38,7 @@ import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcon
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
   private static class Holder {
-    private static String getNO_NAME_TEST() {
+    private static String getNoNameTest() {
       return SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.noname");
     }
   }
@@ -203,7 +203,7 @@ public class TestsPresentationUtil {
     final String name = testProxy.getName();
 
     if (name == null) {
-      return Holder.getNO_NAME_TEST();
+      return Holder.getNoNameTest();
     }
 
     String presentationCandidate = name;
@@ -242,7 +242,7 @@ public class TestsPresentationUtil {
     presentationCandidate = presentationCandidate.replaceAll("\\s+", " ");
 
     if (StringUtil.isEmpty(presentationCandidate)) {
-      return Holder.getNO_NAME_TEST();
+      return Holder.getNoNameTest();
     }
 
     return presentationCandidate;
@@ -255,7 +255,7 @@ public class TestsPresentationUtil {
       name = name.trim();
     }
     if (name == null || name.isEmpty()) {
-      name = Holder.getNO_NAME_TEST();
+      name = Holder.getNoNameTest();
     }
     return name;
   }

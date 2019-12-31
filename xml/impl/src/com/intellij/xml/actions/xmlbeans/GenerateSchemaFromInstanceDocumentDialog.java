@@ -41,7 +41,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   private JTextField resultSchemaFileName;
 
   private static final List<String> designTypes = Arrays.asList(
-    getLOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES(),
+    getLocalElementsGlobalComplexTypes(),
     getLOCAL_ELEMENTS_TYPES(),
     getGLOBAL_ELEMENTS_LOCAL_TYPES()
   );
@@ -215,7 +215,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     return "webservices.GenerateSchemaFromInstanceDocument";
   }
 
-  static String getLOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES() {
+  static String getLocalElementsGlobalComplexTypes() {
     return XmlBundle.message("local.elements.global.complex.types.option.name");
   }
 

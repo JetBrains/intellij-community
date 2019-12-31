@@ -56,7 +56,7 @@ public class JavadocEditor extends ModuleElementsEditor {
 
   @Override
   public String getDisplayName() {
-    return getNAME();
+    return getName();
   }
 
   @Override
@@ -208,7 +208,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     }
   }
 
-  private static String getNAME() {
+  private static String getName() {
     return ProjectBundle.message("module.javadoc.title");
   }
 }

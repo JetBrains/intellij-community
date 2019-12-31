@@ -24,7 +24,7 @@ public class DeprecationUtil {
 
   public static final String FOR_REMOVAL_ID = "removal";
 
-  public static String getDEPRECATION_DISPLAY_NAME() {
+  public static String getDeprecationDisplayName() {
     return InspectionsBundle.message("inspection.deprecated.display.name");
   }
 

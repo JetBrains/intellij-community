@@ -66,7 +66,7 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
     final JTree calleeTree = createHierarchyTree(group);
 
     type2TreeMap.put(getCALLER_TYPE(), callerTree);
-    type2TreeMap.put(getCALLEE_TYPE(), calleeTree);
+    type2TreeMap.put(getCalleeType(), calleeTree);
   }
 
   private JTree createHierarchyTree(ActionGroup group) {
@@ -86,7 +86,7 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
     if (getCALLER_TYPE().equals(typeName)) {
       return new PyCallerFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
-    else if (getCALLEE_TYPE().equals(typeName)) {
+    else if (getCalleeType().equals(typeName)) {
       return new PyCalleeFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
     else {

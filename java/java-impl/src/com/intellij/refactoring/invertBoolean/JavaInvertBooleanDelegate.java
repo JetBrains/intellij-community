@@ -69,7 +69,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         CommonRefactoringUtil.showErrorHint(project, editor,
                                             RefactoringBundle
                                               .getCannotRefactorMessage(RefactoringBundle.message("invert.boolean.wrong.type")),
-                                            InvertBooleanHandler.getREFACTORING_NAME(), InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
+                                            InvertBooleanHandler.getRefactoringName(), InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
         return null;
       }
 
@@ -86,7 +86,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         else if (declarationScope instanceof PsiForeachStatement) {
           CommonRefactoringUtil.showErrorHint(project, editor,
                                               RefactoringBundle.message("invert.boolean.foreach"),
-                                              InvertBooleanHandler.getREFACTORING_NAME(), InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
+                                              InvertBooleanHandler.getRefactoringName(), InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
           return null;
         }
       }
@@ -98,7 +98,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
       if (!PsiType.BOOLEAN.equals(returnType)) {
         CommonRefactoringUtil.showErrorHint(project, editor,
                                             RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invert.boolean.wrong.type")),
-                                            InvertBooleanHandler.getREFACTORING_NAME(),
+                                            InvertBooleanHandler.getRefactoringName(),
                                             InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
         return null;
       }

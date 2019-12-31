@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
   /**
-   * Use {code {@link #getCOULD_NOT_IMPLEMENT_MESSAGE()}} instead
+   * Use {code {@link #getCouldNotImplementMessage()}} instead
    */
   @Deprecated
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = "Could not implement";
@@ -76,7 +76,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
     super.fireBeforeContentsChange(requestor, file);
   }
 
-  public static String getCOULD_NOT_IMPLEMENT_MESSAGE() {
+  public static String getCouldNotImplementMessage() {
     return VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
   }
 }

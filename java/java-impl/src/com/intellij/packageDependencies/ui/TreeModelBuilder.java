@@ -229,7 +229,7 @@ public class TreeModelBuilder {
     myTotalFileCount++;
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(getSCANNING_PACKAGES_MESSAGE(), true, 0);
+      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), true, 0);
     }
   }
 
@@ -265,7 +265,7 @@ public class TreeModelBuilder {
   private PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(getSCANNING_PACKAGES_MESSAGE(), false, ((double)myScannedFileCount++) / myTotalFileCount);
+      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), false, ((double)myScannedFileCount++) / myTotalFileCount);
     }
 
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
@@ -459,7 +459,7 @@ public class TreeModelBuilder {
     }
   }
 
-  public static String getSCANNING_PACKAGES_MESSAGE() {
+  public static String getScanningPackagesMessage() {
     return AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   }
 

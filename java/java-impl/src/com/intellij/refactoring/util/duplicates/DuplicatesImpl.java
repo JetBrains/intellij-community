@@ -144,8 +144,8 @@ public class DuplicatesImpl {
     // call change signature when needed
     provider.prepareSignature(match);
 
-    WriteCommandAction.writeCommandAction(project).withName(MethodDuplicatesHandler.getREFACTORING_NAME())
-                      .withGroupId(MethodDuplicatesHandler.getREFACTORING_NAME()).run(() -> {
+    WriteCommandAction.writeCommandAction(project).withName(MethodDuplicatesHandler.getRefactoringName())
+                      .withGroupId(MethodDuplicatesHandler.getRefactoringName()).run(() -> {
       try {
         provider.processMatch(match);
       }

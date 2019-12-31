@@ -44,7 +44,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
 
   @Override
   public String getProcessedElementsHeader() {
-    return getHEADER();
+    return getHeader();
   }
 
   @NotNull
@@ -71,7 +71,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
     return "refactoring.python.push.down";
   }
 
-  private static String getHEADER() {
+  private static String getHeader() {
     return RefactoringBundle.message("push.down.members.elements.header", "");
   }
 }

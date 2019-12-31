@@ -88,7 +88,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;
     myManager = PsiManager.getInstance(myProject);
-    setTitle(MoveHandler.getREFACTORING_NAME());
+    setTitle(MoveHandler.getRefactoringName());
     mySearchTextOccurrencesEnabled = searchTextOccurrences;
 
     selectInitialCard();

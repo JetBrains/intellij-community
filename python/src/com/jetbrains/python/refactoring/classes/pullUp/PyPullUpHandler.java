@@ -63,7 +63,7 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
 
   @Override
   protected String getTitle() {
-    return getREFACTORING_NAME();
+    return getRefactoringName();
   }
 
   @Override
@@ -71,7 +71,7 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
     return "refactoring.pullMembersUp";
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return PyBundle.message("refactoring.pull.up.dialog.title");
   }
 }

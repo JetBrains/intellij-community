@@ -355,10 +355,10 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
   private Configuration createConfiguration(Configuration template) {
     if (myReplace) {
-      return (template == null) ? new ReplaceConfiguration(getUSER_DEFINED(), getUSER_DEFINED()) : new ReplaceConfiguration(template);
+      return (template == null) ? new ReplaceConfiguration(getUserDefined(), getUserDefined()) : new ReplaceConfiguration(template);
     }
     else {
-      return (template == null) ? new SearchConfiguration(getUSER_DEFINED(), getUSER_DEFINED()) : new SearchConfiguration(template);
+      return (template == null) ? new SearchConfiguration(getUserDefined(), getUserDefined()) : new SearchConfiguration(template);
     }
   }
 
@@ -1326,7 +1326,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     }
   }
 
-  public static String getUSER_DEFINED() {
+  public static String getUserDefined() {
     return SSRBundle.message("new.template.defaultname");
   }
 }

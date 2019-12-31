@@ -300,7 +300,7 @@ public class StackFrameItem {
 
     @Override
     public String getCaptionAboveOf() {
-      return getASYNC_STACKTRACE_MESSAGE();
+      return getAsyncStacktraceMessage();
     }
 
     @Override
@@ -320,7 +320,7 @@ public class StackFrameItem {
       return "<position unknown>";
     }
 
-    private static String getASYNC_STACKTRACE_MESSAGE() {
+    private static String getAsyncStacktraceMessage() {
       return DebuggerBundle.message("frame.panel.async.stacktrace");
     }
   }

@@ -78,7 +78,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     myTargetContainer = targetContainer;
     myOuterClass = myInnerClass.getContainingClass();
     myProcessor = processor;
-    setTitle(MoveInnerImpl.getREFACTORING_NAME());
+    setTitle(MoveInnerImpl.getRefactoringName());
     init();
     myPackageNameLabel.setLabelFor(myPackageNameField.getChildComponent());
     myClassNameLabel.setLabelFor(myClassNameField);
@@ -303,7 +303,7 @@ public class MoveInnerDialog extends MoveDialogBase {
 
     if (message != null) {
       CommonRefactoringUtil.showErrorMessage(
-        MoveInnerImpl.getREFACTORING_NAME(),
+        MoveInnerImpl.getRefactoringName(),
         message,
         HelpID.MOVE_INNER_UPPER,
         myProject);

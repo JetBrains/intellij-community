@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   /**
-   * Use {code {@link #getREFACTORING_NAME()}} instead
+   * Use {code {@link #getRefactoringName()}} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Push Members Down";
@@ -63,7 +63,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     if (elements.isEmpty()) {
       String message =
         !errorMessage.isNull() ? errorMessage.get() : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MEMBERS_PUSH_DOWN);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
     }
     else {
       invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
@@ -115,7 +115,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("refactoring.cannot.be.performed") +
-                                                           ": Class " + aClass.getName() + " is final", getREFACTORING_NAME(), HelpID.MEMBERS_PUSH_DOWN);
+                                                           ": Class " + aClass.getName() + " is final", getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
       return;
     }
 
@@ -142,7 +142,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("push.members.down.title");
   }
 }

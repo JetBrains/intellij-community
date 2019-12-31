@@ -35,7 +35,7 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
   @NotNull
   public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
-    final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, getVCS_GROUP());
+    final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, getVcsGroup());
     final VcsPreviewPanel previewPanel = new VcsPreviewPanel();
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
@@ -46,7 +46,7 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
       }
     });
 
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, getVCS_GROUP(), null, null);
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, getVcsGroup(), null, null);
   }
 
   @Override
@@ -82,13 +82,13 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
   @NotNull
   @Override
   public String getPanelDisplayName() {
-    return getVCS_GROUP();
+    return getVcsGroup();
   }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return getVCS_GROUP();
+    return getVcsGroup();
   }
 
   @Override
@@ -96,7 +96,7 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
     return DisplayPriority.COMMON_SETTINGS;
   }
 
-  public static String getVCS_GROUP() {
+  public static String getVcsGroup() {
     return ApplicationBundle.message("title.vcs");
   }
 }

@@ -99,7 +99,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private void setCommandName(final PsiMember[] members) {
     StringBuilder commandName = new StringBuilder();
-    commandName.append(MoveHandler.getREFACTORING_NAME());
+    commandName.append(MoveHandler.getRefactoringName());
     commandName.append(" ");
     boolean first = true;
     for (PsiMember member : members) {

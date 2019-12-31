@@ -43,7 +43,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     myIsInner = myContainingClass.getContainingClass() != null
                 && !myContainingClass.hasModifierProperty(PsiModifier.STATIC);
 
-    setTitle(ReplaceConstructorWithFactoryHandler.getREFACTORING_NAME());
+    setTitle(ReplaceConstructorWithFactoryHandler.getRefactoringName());
 
     myTfTargetClassName = JavaReferenceEditorUtil.createReferenceEditorWithBrowseButton(new ChooseClassAction(), "", project, true);
 
@@ -174,7 +174,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
       JavaPsiFacade.getInstance(manager.getProject()).findClass(targetClassName, GlobalSearchScope.allScope(project));
     if (targetClass == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.0.not.found", targetClassName));
-      CommonRefactoringUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.getREFACTORING_NAME(),
+      CommonRefactoringUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.getRefactoringName(),
                                              message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, project);
       return;
     }

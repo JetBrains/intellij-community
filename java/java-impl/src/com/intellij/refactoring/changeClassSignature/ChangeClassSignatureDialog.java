@@ -89,7 +89,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
                                     boolean hideDefaultValueColumn) {
     super(aClass.getProject(), true);
     myHideDefaultValueColumn = hideDefaultValueColumn;
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
     myClass = aClass;
     myProject = myClass.getProject();
     myOriginalParameters = myClass.getTypeParameters();
@@ -385,7 +385,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     };
   }
 
-  static String getREFACTORING_NAME() {
+  static String getRefactoringName() {
     return RefactoringBundle.message("changeClassSignature.refactoring.name");
   }
 }

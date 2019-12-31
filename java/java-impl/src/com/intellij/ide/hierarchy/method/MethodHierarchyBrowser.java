@@ -38,7 +38,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
     final BaseOnThisMethodAction action = new BaseOnThisMethodAction();
     action.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), tree);
 
-    trees.put(getMETHOD_TYPE(), tree);
+    trees.put(getMethodType(), tree);
   }
 
   @Override
@@ -63,7 +63,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
-    if (!getMETHOD_TYPE().equals(typeName)) {
+    if (!getMethodType().equals(typeName)) {
       LOG.error("unexpected type: " + typeName);
       return null;
     }

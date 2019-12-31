@@ -24,17 +24,17 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase {
   // PY-9419
   public void testConvertParenthesizedTupleToList() {
-    doIntentionTest(getCONVERT_TUPLE_TO_LIST());
+    doIntentionTest(getConvertTupleToList());
   }
 
   // PY-9419
   public void testConvertTupleWithoutParenthesesToList() {
-    doIntentionTest(getCONVERT_TUPLE_TO_LIST());
+    doIntentionTest(getConvertTupleToList());
   }
 
   // PY-9419
   public void testConvertTupleWithoutClosingParenthesisToList() {
-    doIntentionTest(getCONVERT_TUPLE_TO_LIST());
+    doIntentionTest(getConvertTupleToList());
   }
 
   // PY-9419
@@ -94,7 +94,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-16335
   public void testConvertLiteralPreservesFormattingAndComments() {
-    doIntentionTest(getCONVERT_TUPLE_TO_LIST());
+    doIntentionTest(getConvertTupleToList());
   }
 
   // PY-16553
@@ -119,7 +119,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-16553
   public void testConvertOneElementTupleToList() {
-    doIntentionTest(getCONVERT_TUPLE_TO_LIST());
+    doIntentionTest(getConvertTupleToList());
   }
 
   // PY-16553
@@ -129,7 +129,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-16553
   public void testConvertOneElementTupleWithCommentToList() {
-    doIntentionTest(getCONVERT_TUPLE_TO_LIST());
+    doIntentionTest(getConvertTupleToList());
   }
 
   // PY-19399
@@ -142,7 +142,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
     doNegativeTest(getCONVERT_LIST_TO_SET());
   }
 
-  private static String getCONVERT_TUPLE_TO_LIST() {
+  private static String getConvertTupleToList() {
     return PyBundle.message("INTN.convert.collection.literal.text", "tuple", "list");
   }
 

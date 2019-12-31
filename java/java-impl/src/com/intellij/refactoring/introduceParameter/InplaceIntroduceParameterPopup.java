@@ -51,7 +51,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
                                  final PsiExpression[] occurrences,
                                  final TIntArrayList parametersToRemove,
                                  final boolean mustBeFinal) {
-    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getREFACTORING_NAME()
+    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getRefactoringName()
     );
     myMethod = method;
     myMethodToSearchFor = methodToSearchFor;

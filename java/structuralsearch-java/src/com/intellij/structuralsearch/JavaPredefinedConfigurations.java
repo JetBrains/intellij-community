@@ -15,26 +15,26 @@ class JavaPredefinedConfigurations {
     return new Configuration[] {
       // Expression patterns
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.calls"), "'_Instance?.'MethodCall('_Parameter*)",
-                               getEXPRESSION_TYPE()),
+                               getExpressionType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.new.expressions"), "new 'Constructor('_Argument*)",
-                               getEXPRESSION_TYPE()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.lambdas"), "('_Parameter*) -> {}", getEXPRESSION_TYPE()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.field.selections"), "'_Instance?.'Field", getEXPRESSION_TYPE()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.array.access"), "'_Array['_Index]", getEXPRESSION_TYPE()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assignments"), "'_Inst = '_Expr", getEXPRESSION_TYPE()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.casts"), "('_Type)'_Expr", getEXPRESSION_TYPE()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.instanceof"), "'_Expr instanceof '_Type", getEXPRESSION_TYPE()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.literals"), "\"'_String\"", getEXPRESSION_TYPE()),
+                               getExpressionType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.lambdas"), "('_Parameter*) -> {}", getExpressionType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.field.selections"), "'_Instance?.'Field", getExpressionType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.array.access"), "'_Array['_Index]", getExpressionType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assignments"), "'_Inst = '_Expr", getExpressionType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.casts"), "('_Type)'_Expr", getExpressionType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.instanceof"), "'_Expr instanceof '_Type", getExpressionType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.literals"), "\"'_String\"", getExpressionType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.expressions.of.some.type"), "'_Expression:[exprtype( SomeType )]",
-                               getEXPRESSION_TYPE()),
+                               getExpressionType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.sample.method.invokation.with.constant.argument"), "Integer.parseInt('_a:[script( \"com.intellij.psi.util.PsiUtil.isConstantExpression(__context__)\" )])",
-                               getEXPRESSION_TYPE()),
+                               getExpressionType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.references"), "'_Qualifier::'Method",
-                               getEXPRESSION_TYPE()),
+                               getExpressionType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.concatenations"), "[exprtype( java\\.lang\\.String )]'_a + '_b{10,}",
-                               getEXPRESSION_TYPE()),
+                               getExpressionType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.deprecated.method.calls"), "'_Instance?.'MethodCall:[ref( deprecated methods )]('_Parameter*)",
-                               getEXPRESSION_TYPE()),
+                               getExpressionType()),
 
       // Operators
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.block.dcls"), "{\n  '_Type 'Var+ = '_Init?;\n  '_BlockStatements*;\n}",
@@ -372,7 +372,7 @@ class JavaPredefinedConfigurations {
     };
   }
 
-  private static String getEXPRESSION_TYPE() {
+  private static String getExpressionType() {
     return SSRBundle.message("expressions.category");
   }
 

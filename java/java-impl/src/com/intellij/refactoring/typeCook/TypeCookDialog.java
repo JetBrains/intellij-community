@@ -30,7 +30,7 @@ public class TypeCookDialog extends RefactoringDialog {
   public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
 
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
 
     init();
 
@@ -192,7 +192,7 @@ public class TypeCookDialog extends RefactoringDialog {
     };
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("generify.title");
   }
 }

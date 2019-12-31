@@ -56,7 +56,7 @@ public class IntroduceFunctionalParameterHandler extends IntroduceParameterHandl
   private static void showErrorMessage(@NotNull Project project, Editor editor) {
     final String message = RefactoringBundle
       .getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
-                                                          IntroduceFunctionalParameterAction.getREFACTORING_NAME()));
-    CommonRefactoringUtil.showErrorHint(project, editor, message, IntroduceFunctionalParameterAction.getREFACTORING_NAME(), HelpID.INTRODUCE_PARAMETER);
+                                                          IntroduceFunctionalParameterAction.getRefactoringName()));
+    CommonRefactoringUtil.showErrorHint(project, editor, message, IntroduceFunctionalParameterAction.getRefactoringName(), HelpID.INTRODUCE_PARAMETER);
   }
 }

@@ -79,11 +79,11 @@ class PyExtractSuperclassViewSwingImpl
     myFileChooserDescriptor.withTreeRootVisible(true);
     myTargetDirField = new TextFieldWithBrowseButton();
     myTargetDirField
-      .addBrowseFolderListener(getFILE_OR_DIRECTORY(), null, project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+      .addBrowseFolderListener(getFileOrDirectory(), null, project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     panel = new JPanel(new BorderLayout());
     final JLabel dirLabel = new JLabel();
-    dirLabel.setText(getFILE_OR_DIRECTORY()); //u18n
+    dirLabel.setText(getFileOrDirectory()); //u18n
 
     panel.add(dirLabel, BorderLayout.NORTH);
     panel.add(myTargetDirField, BorderLayout.CENTER);
@@ -127,7 +127,7 @@ class PyExtractSuperclassViewSwingImpl
     return "refactoring.extract.superclass.dialog";
   }
 
-  private static String getFILE_OR_DIRECTORY() {
+  private static String getFileOrDirectory() {
     return RefactoringBundle.message("extract.superclass.elements.header");
   }
 }

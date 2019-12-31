@@ -28,7 +28,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return getFIX_NAME();
+    return getFixName();
   }
 
   @Nullable
@@ -87,7 +87,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     }
   }
 
-  public static String getFIX_NAME() {
+  public static String getFixName() {
     return SpellCheckerBundle.message("rename.to");
   }
 }

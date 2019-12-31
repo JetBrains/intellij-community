@@ -57,7 +57,7 @@ import java.util.*;
  */
 public class MethodDuplicatesHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   /**
-   * Use {code {@link #getREFACTORING_NAME()}} instead
+   * Use {code {@link #getRefactoringName()}} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Replace Code Duplicates";
@@ -84,7 +84,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final AnalysisScope scope = new AnalysisScope(file);
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg =
-      new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", getREFACTORING_NAME()),
+      new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", getRefactoringName()),
                                    RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
                                    AnalysisUIOptions.getInstance(project), false);
     if (dlg.showAndGet()) {
@@ -206,7 +206,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
         final Runnable nothingFoundRunnable = () -> {
           final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
                                                            ApplicationNamesInfo.getInstance().getProductName());
-          Messages.showInfoMessage(project, message, getREFACTORING_NAME());
+          Messages.showInfoMessage(project, message, getRefactoringName());
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           nothingFoundRunnable.run();
@@ -224,7 +224,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     if (progressIndicator != null && progressIndicator.isCanceled()) return;
 
     final Runnable replaceRunnable = () -> {
-      LocalHistoryAction a = LocalHistory.getInstance().startAction(getREFACTORING_NAME());
+      LocalHistoryAction a = LocalHistory.getInstance().startAction(getRefactoringName());
       try {
         for (final PsiMember member : methods) {
           final List<Match> matches = duplicates.get(member);
@@ -237,7 +237,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                                             member instanceof PsiMethod ? new MethodDuplicatesMatchProvider((PsiMethod)member, matches)
                                                                                         : new ConstantMatchProvider(member, project, matches);
                                                           DuplicatesImpl.invoke(project, matchProvider, true);
-                                                        }), getREFACTORING_NAME(), getREFACTORING_NAME());
+                                                        }), getRefactoringName(), getRefactoringName());
 
           WindowManager.getInstance().getStatusBar(project).setInfo("");
         }
@@ -306,7 +306,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   }
 
   private static void showErrorMessage(String message, Project project, Editor editor) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.METHOD_DUPLICATES);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.METHOD_DUPLICATES);
   }
 
   @Override
@@ -314,7 +314,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     throw new UnsupportedOperationException();
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("replace.method.code.duplicates.title");
   }
 }

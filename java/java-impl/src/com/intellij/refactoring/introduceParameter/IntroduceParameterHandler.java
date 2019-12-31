@@ -83,7 +83,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ElementToWorkOn.processElementToWorkOn(editor, file, getREFACTORING_NAME(), HelpID.INTRODUCE_PARAMETER, project, new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
+    ElementToWorkOn.processElementToWorkOn(editor, file, getRefactoringName(), HelpID.INTRODUCE_PARAMETER, project, new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
       @Override
       public boolean accept(ElementToWorkOn el) {
         return true;
@@ -97,7 +97,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
         if (elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null) {
           if (!introduceStrategy(project, editor, file)) {
-            ElementToWorkOn.showNothingSelectedErrorMessage(editor, getREFACTORING_NAME(), HelpID.INTRODUCE_PARAMETER, project);
+            ElementToWorkOn.showNothingSelectedErrorMessage(editor, getRefactoringName(), HelpID.INTRODUCE_PARAMETER, project);
           }
           return;
         }
@@ -153,7 +153,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
     if (method == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
-                                                                                            getREFACTORING_NAME()));
+                                                                                            getRefactoringName()));
       showErrorMessage(project, message, editor);
       return false;
     }
@@ -296,7 +296,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   private static void showErrorMessage(Project project, String message, Editor editor) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.INTRODUCE_PARAMETER);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INTRODUCE_PARAMETER);
   }
 
 
@@ -705,7 +705,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     private final PsiMethod myTopEnclosingMethod;
 
     MyExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull PsiMethod topEnclosing) {
-      super(project, editor, elements, null, getREFACTORING_NAME(), null, null);
+      super(project, editor, elements, null, getRefactoringName(), null, null);
       myTopEnclosingMethod = topEnclosing;
     }
 
@@ -802,7 +802,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
   }
 
-  static String getREFACTORING_NAME() {
+  static String getRefactoringName() {
     return RefactoringBundle.message("introduce.parameter.title");
   }
 }

@@ -177,7 +177,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       EnumSet[] flags = new EnumSet[hintFlags.size()];
       for (int i = 0; i < flags.length; i++) flags[i] = hintFlags.get(i);
       if (hints.length < 1) {
-        hints = new String[]{getNO_PARAMS_MSG()};
+        hints = new String[]{getNoParamsMsg()};
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
       }
 
@@ -190,7 +190,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         for (String s : hints) signatureBuilder.append(s);
       }
       else {
-        signatureBuilder.append(XmlStringUtil.escapeString(getNO_PARAMS_MSG()));
+        signatureBuilder.append(XmlStringUtil.escapeString(getNoParamsMsg()));
       }
       context.setupUIComponentPresentation(
         signatureBuilder.toString(), -1, 0, false, false, false, context.getDefaultParameterColor()
@@ -388,7 +388,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return hintsList;
   }
 
-  private static String getNO_PARAMS_MSG() {
+  private static String getNoParamsMsg() {
     return CodeInsightBundle.message("parameter.info.no.parameters");
   }
 }

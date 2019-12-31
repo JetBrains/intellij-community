@@ -121,7 +121,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
-    throw new RuntimeException(VcsFileSystem.getCOULD_NOT_IMPLEMENT_MESSAGE());
+    throw new RuntimeException(VcsFileSystem.getCouldNotImplementMessage());
   }
 
   @Override

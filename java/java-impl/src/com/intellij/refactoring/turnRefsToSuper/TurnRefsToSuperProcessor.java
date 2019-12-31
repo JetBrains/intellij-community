@@ -76,7 +76,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && refUsages.get().length == 0) {
       String message = RefactoringBundle.message("no.usages.can.be.replaced", myClass.getQualifiedName(), mySuper.getQualifiedName());
-      Messages.showInfoMessage(myProject, message, TurnRefsToSuperHandler.getREFACTORING_NAME());
+      Messages.showInfoMessage(myProject, message, TurnRefsToSuperHandler.getRefactoringName());
       return false;
     }
 

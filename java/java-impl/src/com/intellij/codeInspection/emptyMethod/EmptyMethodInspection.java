@@ -289,7 +289,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getQUICK_FIX_NAME();
+      return getQuickFixName();
     }
 
     @Override
@@ -326,7 +326,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getQUICK_FIX_NAME();
+      return getQuickFixName();
     }
 
     @Override
@@ -370,7 +370,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getQUICK_FIX_NAME() {
+  private static String getQuickFixName() {
     return InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   }
 }

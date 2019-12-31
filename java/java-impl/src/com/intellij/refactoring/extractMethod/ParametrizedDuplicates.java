@@ -364,7 +364,7 @@ public class ParametrizedDuplicates {
     putMatchParameters(parameterDeclarations);
 
     JavaDuplicatesExtractMethodProcessor parametrizedProcessor =
-      new JavaDuplicatesExtractMethodProcessor(myElements, ExtractMethodHandler.getREFACTORING_NAME());
+      new JavaDuplicatesExtractMethodProcessor(myElements, ExtractMethodHandler.getRefactoringName());
     if (!parametrizedProcessor.prepare(false)) {
       return false;
     }

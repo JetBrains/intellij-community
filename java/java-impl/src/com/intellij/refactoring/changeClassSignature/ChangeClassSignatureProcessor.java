@@ -49,7 +49,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return ChangeClassSignatureDialog.getREFACTORING_NAME();
+    return ChangeClassSignatureDialog.getRefactoringName();
   }
 
   @Override

@@ -44,7 +44,7 @@ public class ChooseDialog extends MessageDialog {
                       @Nullable Icon icon,
                       String[] values,
                       String initialValue) {
-    super(project, parent, message, title, new String[]{Messages.getOK_BUTTON(), Messages.getCANCEL_BUTTON()}, 0, -1, icon, null, true);
+    super(project, parent, message, title, new String[]{Messages.getOkButton(), Messages.getCANCEL_BUTTON()}, 0, -1, icon, null, true);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }
@@ -54,7 +54,7 @@ public class ChooseDialog extends MessageDialog {
                       @Nullable Icon icon,
                       String[] values,
                       String initialValue) {
-    super(message, title, new String[]{Messages.getOK_BUTTON(), Messages.getCANCEL_BUTTON()}, 0, icon);
+    super(message, title, new String[]{Messages.getOkButton(), Messages.getCANCEL_BUTTON()}, 0, icon);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }

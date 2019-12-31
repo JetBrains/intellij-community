@@ -57,7 +57,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @NotNull
   @Override
   public String getName() {
-    return getMODULE_NAME();
+    return getModuleName();
   }
 
   @NotNull
@@ -95,7 +95,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return ReadAction.compute(() -> psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithLibrariesScope())) != null;
   }
 
-  public static String getMODULE_NAME() {
+  public static String getModuleName() {
     return ProjectBundle.message("module.type.java.name");
   }
 }

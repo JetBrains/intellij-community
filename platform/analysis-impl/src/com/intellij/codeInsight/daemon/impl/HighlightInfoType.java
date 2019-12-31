@@ -46,7 +46,7 @@ public interface HighlightInfoType {
 
   HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(
     HighlightDisplayKey.findOrRegister(
-      DeprecationUtil.DEPRECATION_SHORT_NAME, DeprecationUtil.getDEPRECATION_DISPLAY_NAME(), DeprecationUtil.DEPRECATION_ID),
+      DeprecationUtil.DEPRECATION_SHORT_NAME, DeprecationUtil.getDeprecationDisplayName(), DeprecationUtil.DEPRECATION_ID),
     CodeInsightColors.DEPRECATED_ATTRIBUTES);
 
   HighlightInfoType MARKED_FOR_REMOVAL = new HighlightInfoTypeSeverityByKey(

@@ -34,7 +34,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     mySubClass = subClass;
     mySuperClasses = superClasses;
 
-    setTitle(TurnRefsToSuperHandler.getREFACTORING_NAME());
+    setTitle(TurnRefsToSuperHandler.getRefactoringName());
     init();
   }
 

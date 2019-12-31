@@ -18,7 +18,7 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
     myVariable = variable;
     myInvokedOnReference = ref != null;
 
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
     myOccurrencesNumber = occurrencesCount;
     init();
   }
@@ -68,7 +68,7 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
     return false;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("inline.variable.title");
   }
 }

@@ -55,8 +55,8 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   public SmartIndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
     super(provider);
     myContinuationOption = createContinuationOption(
-      getCONTINUATION_INDENT_LABEL(),
-      options -> options.CONTINUATION_INDENT_SIZE,  (options, value) -> options.CONTINUATION_INDENT_SIZE = value,
+      getContinuationIndentLabel(),
+      options -> options.CONTINUATION_INDENT_SIZE, (options, value) -> options.CONTINUATION_INDENT_SIZE = value,
       DEFAULT_CONTINUATION_INDENT_SIZE);
     myContinuationOption.setSupported(true);
 
@@ -223,7 +223,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     myCbKeepIndentsOnEmptyLines.setVisible(visible);
   }
 
-  public static String getCONTINUATION_INDENT_LABEL() {
+  public static String getContinuationIndentLabel() {
     return ApplicationBundle.message("editbox.indent.continuation.indent");
   }
 }

@@ -41,7 +41,7 @@ public class CurrentRevision implements VcsFileRevision {
 
   @Override
   public String getCommitMessage() {
-    return "[" + getCURRENT() + "]";
+    return "[" + getCurrent() + "]";
   }
 
   @Override
@@ -93,7 +93,7 @@ public class CurrentRevision implements VcsFileRevision {
     return null;  // use initial url..
   }
 
-  public static String getCURRENT() {
+  public static String getCurrent() {
     return VcsBundle.message("vcs.revision.name.current");
   }
 }

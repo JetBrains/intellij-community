@@ -114,7 +114,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final ComboBox<Object> result = new ComboBox<Object>() {
       @Override
       public void setSelectedItem(Object item) {
-        if (getSHOW_ALL().equals(item)) {
+        if (getShowAll().equals(item)) {
           onShowAllSelected.run();
         }
         else if (!PySdkListCellRenderer.SEPARATOR.equals(item)) {
@@ -325,7 +325,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     }
 
     items.add(PySdkListCellRenderer.SEPARATOR);
-    items.add(getSHOW_ALL());
+    items.add(getShowAll());
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
     final Sdk selection = selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName());
@@ -360,7 +360,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     }
   }
 
-  private static String getSHOW_ALL() {
+  private static String getShowAll() {
     return PyBundle.message("active.sdk.dialog.show.all.item");
   }
 }

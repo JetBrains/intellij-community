@@ -94,16 +94,16 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     if (pattern.length == 0) {
       // todo suggest re-running the refactoring
       CommonRefactoringUtil.showErrorHint(myProject, null, RefactoringBundle.message("refactoring.extract.method.preview.failed"),
-                                          ExtractMethodHandler.getREFACTORING_NAME(), HelpID.EXTRACT_METHOD);
+                                          ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD);
       return;
     }
     JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(pattern,
-                                                                                              ExtractMethodHandler.getREFACTORING_NAME());
+                                                                                              ExtractMethodHandler.getRefactoringName());
     if (!processor.prepareFromSnapshot(mySnapshot, true)) {
       return;
     }
 
-    WriteCommandAction.runWriteCommandAction(myProject, ExtractMethodHandler.getREFACTORING_NAME(), null,
+    WriteCommandAction.runWriteCommandAction(myProject, ExtractMethodHandler.getRefactoringName(), null,
                                              () -> doExtractImpl(processor, enabledNodes), pattern[0].getContainingFile());
   }
 
@@ -143,7 +143,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     ExtractMethodProcessor copyProcessor = ReadAction.compute(() -> {
       JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(patternCopy,
-                                                                                                ExtractMethodHandler.getREFACTORING_NAME());
+                                                                                                ExtractMethodHandler.getRefactoringName());
       return processor.prepareFromSnapshot(copySnapshot, true) ? processor : null;
     });
     if (copyProcessor == null) return;

@@ -74,7 +74,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
 
       @Override
       public String getProcessedElementsHeader() {
-        return getREFACTORING_NAME();
+        return getRefactoringName();
       }
     };
   }
@@ -139,13 +139,13 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       for (PsiFile file : optimizeImportsTargets) {
         PyClassRefactoringUtil.optimizeImports(file);
       }
-    }), getREFACTORING_NAME(), null);
+    }), getRefactoringName(), null);
   }
 
   @NotNull
   @Override
   protected String getCommandName() {
-    return getREFACTORING_NAME();
+    return getRefactoringName();
   }
 
   private static class MyUsageInfo extends UsageInfo {
@@ -156,7 +156,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return PyBundle.message("refactoring.move.module.members");
   }
 }

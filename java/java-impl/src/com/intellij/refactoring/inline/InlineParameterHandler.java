@@ -208,7 +208,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       String question = RefactoringBundle.message("inline.parameter.confirmation", psiParameter.getName(),
                                                   constantExpression.getText()) + " " + occurencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
-        getREFACTORING_NAME(),
+        getRefactoringName(),
         question,
         HelpID.INLINE_VARIABLE,
         "OptionPane.questionIcon",
@@ -226,7 +226,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
       SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
-    }, getREFACTORING_NAME(), null);
+    }, getRefactoringName(), null);
   }
 
   @Nullable
@@ -289,10 +289,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return getREFACTORING_NAME() + "...";
+    return getRefactoringName() + "...";
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("inline.parameter.refactoring");
   }
 }

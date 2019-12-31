@@ -42,9 +42,9 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
   protected void addComponents() {
     super.addComponents();
 
-    myLabelIndent = new IntegerField(getLABEL_INDENT_LABEL(), MIN_INDENT_SIZE, MAX_INDENT_SIZE);
+    myLabelIndent = new IntegerField(getLabelIndentLabel(), MIN_INDENT_SIZE, MAX_INDENT_SIZE);
     myLabelIndent.setColumns(4);
-    add(myLabelIndentLabel = new JLabel(getLABEL_INDENT_LABEL()), myLabelIndent);
+    add(myLabelIndentLabel = new JLabel(getLabelIndentLabel()), myLabelIndent);
 
     myLabelIndentAbsolute = new JCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
     add(myLabelIndentAbsolute, true);
@@ -98,7 +98,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     myLabelIndentAbsolute.setEnabled(enabled);
   }
 
-  private static String getLABEL_INDENT_LABEL() {
+  private static String getLabelIndentLabel() {
     return ApplicationBundle.message("editbox.indent.label.indent");
   }
 }

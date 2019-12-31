@@ -87,7 +87,7 @@ public class MoveInnerImpl {
     return null;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("move.inner.to.upper.level.title");
   }
 }

@@ -67,7 +67,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
     myTypeSelectorManager = typeSelectorManager;
 
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
     init();
 
     myCentralPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
@@ -272,7 +272,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     return myNameField.getFocusableComponent();
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringName() {
     return RefactoringBundle.message("introduce.field.title");
   }
 }

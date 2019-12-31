@@ -244,7 +244,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     String className = parentNode.getAttributeValue("class_name");
     setQualifiedName(className);
     if(className == null) {
-      throw new InvalidDataException(getREAD_NO_CLASS_NAME());
+      throw new InvalidDataException(getReadNoClassName());
     }
   }
 
@@ -280,7 +280,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     getProperties().setCatchClassExclusionFilters(filters);
   }
 
-  protected static String getREAD_NO_CLASS_NAME() {
+  protected static String getReadNoClassName() {
     return DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   }
 }

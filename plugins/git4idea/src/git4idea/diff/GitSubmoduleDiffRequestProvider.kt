@@ -55,6 +55,6 @@ class GitSubmoduleDiffRequestProvider : ChangeDiffRequestProvider {
                              beforeContent,
                              afterContent,
                              getRevisionTitle(beforeRevision, getBASE_VERSION()),
-                             getRevisionTitle(afterRevision, getYOUR_VERSION()))
+                             getRevisionTitle(afterRevision, getYourVersion()))
   }
 }

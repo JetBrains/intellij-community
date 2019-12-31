@@ -43,13 +43,13 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.ENCAPSULATE_FIELDS);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
         return;
       }
       if (element instanceof PsiField) {
         if (((PsiField) element).getContainingClass() == null) {
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.field.should.be.declared.in.a.class"));
-          CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.ENCAPSULATE_FIELDS);
+          CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
           return;
         }
         invoke(project, new PsiElement[]{element}, dataContext);
@@ -99,7 +99,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
             String message = RefactoringBundle.getCannotRefactorMessage(
               RefactoringBundle.message("fields.to.be.refactored.should.belong.to.the.same.class"));
             Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-            CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.ENCAPSULATE_FIELDS);
+            CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
             return;
           }
         }
@@ -110,7 +110,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), field -> !(field instanceof PsiEnumConstant));
     if (fields.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, CommonDataKeys.EDITOR.getData(dataContext), "Class has no fields to encapsulate",
-                                          getREFACTORING_NAME(), HelpID.ENCAPSULATE_FIELDS);
+                                          getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
       return;
     }
 
@@ -118,7 +118,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("encapsulate.fields.refactoring.cannot.be.applied.to.interface"));
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.ENCAPSULATE_FIELDS);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
       return;
     }
 
@@ -136,7 +136,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
               new JavaEncapsulateFieldHelper());
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("encapsulate.fields.title");
   }
 }

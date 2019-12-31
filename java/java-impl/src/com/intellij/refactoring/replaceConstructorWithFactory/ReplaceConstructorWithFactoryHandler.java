@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceConstructorWithFactoryHandler
         implements RefactoringActionHandler {
   /**
-   * Use {code {@link #getREFACTORING_NAME()}} instead
+   * Use {code {@link #getRefactoringName()}} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Replace Constructor With Factory Method";
@@ -48,7 +48,7 @@ public class ReplaceConstructorWithFactoryHandler
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.constructor"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
         return;
       }
 
@@ -119,12 +119,12 @@ public class ReplaceConstructorWithFactoryHandler
     if (constructors.length > 0) {
       String message =
               RefactoringBundle.message("class.does.not.have.implicit.default.constructor", aClass.getQualifiedName()) ;
-      CommonRefactoringUtil.showErrorHint(myProject, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+      CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
       return;
     }
     final int answer = Messages.showYesNoDialog(myProject,
                                                 RefactoringBundle.message("would.you.like.to.replace.default.constructor.of.0.with.factory.method", aClass.getQualifiedName()),
-                                                getREFACTORING_NAME(), Messages.getQuestionIcon()
+                                                getRefactoringName(), Messages.getQuestionIcon()
     );
     if (answer != Messages.YES) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
@@ -133,21 +133,21 @@ public class ReplaceConstructorWithFactoryHandler
 
   private void showJspOrLocalClassMessage(Editor editor) {
     String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.local.and.jsp.classes"));
-    CommonRefactoringUtil.showErrorHint(myProject, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+    CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
   }
   private boolean checkAbstractClassOrInterfaceMessage(PsiClass aClass, Editor editor) {
     if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
     String message = RefactoringBundle.getCannotRefactorMessage(aClass.isInterface() ?
                                                                 RefactoringBundle.message("class.is.interface", aClass.getQualifiedName()) :
                                                                 RefactoringBundle.message("class.is.abstract", aClass.getQualifiedName()));
-    CommonRefactoringUtil.showErrorHint(myProject, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+    CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
     return false;
   }
 
   private void invoke(final PsiMethod method, Editor editor) {
     if (!method.isConstructor()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.is.not.a.constructor"));
-      CommonRefactoringUtil.showErrorHint(myProject, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+      CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
       return;
     }
 
@@ -163,7 +163,7 @@ public class ReplaceConstructorWithFactoryHandler
     new ReplaceConstructorWithFactoryDialog(myProject, method, method.getContainingClass()).show();
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("replace.constructor.with.factory.method.title");
   }
 }

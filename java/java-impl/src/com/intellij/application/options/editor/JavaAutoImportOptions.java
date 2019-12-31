@@ -42,7 +42,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   public JavaAutoImportOptions(Project project) {
     myProject = project;
 
-    mySmartPasteCombo.addItem(getINSERT_IMPORTS_ALWAYS());
+    mySmartPasteCombo.addItem(getInsertImportsAlways());
     mySmartPasteCombo.addItem(getINSERT_IMPORTS_ASK());
     mySmartPasteCombo.addItem(getINSERT_IMPORTS_NONE());
 
@@ -61,7 +61,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
     switch (codeInsightSettings.ADD_IMPORTS_ON_PASTE) {
       case CodeInsightSettings.YES:
-        mySmartPasteCombo.setSelectedItem(getINSERT_IMPORTS_ALWAYS());
+        mySmartPasteCombo.setSelectedItem(getInsertImportsAlways());
         break;
 
       case CodeInsightSettings.NO:
@@ -123,7 +123,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
   private int getSmartPasteValue() {
     Object selectedItem = mySmartPasteCombo.getSelectedItem();
-    if (getINSERT_IMPORTS_ALWAYS().equals(selectedItem)) {
+    if (getInsertImportsAlways().equals(selectedItem)) {
       return CodeInsightSettings.YES;
     }
     else if (getINSERT_IMPORTS_NONE().equals(selectedItem)) {
@@ -138,7 +138,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     return checkBox.isSelected() != value;
   }
 
-  private static String getINSERT_IMPORTS_ALWAYS() {
+  private static String getInsertImportsAlways() {
     return ApplicationBundle.message("combobox.insert.imports.all");
   }
 

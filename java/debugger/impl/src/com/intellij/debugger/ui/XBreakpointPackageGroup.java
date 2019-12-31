@@ -39,7 +39,7 @@ public class XBreakpointPackageGroup extends XBreakpointGroup {
   @Override
   public String getName() {
     String packageName = getPackageName();
-    return StringUtil.isEmpty(packageName) ? getDEFAULT_PACKAGE_NAME() : packageName;
+    return StringUtil.isEmpty(packageName) ? getDefaultPackageName() : packageName;
   }
 
   @NotNull
@@ -47,7 +47,7 @@ public class XBreakpointPackageGroup extends XBreakpointGroup {
     return myPackageName;
   }
 
-  private static String getDEFAULT_PACKAGE_NAME() {
+  private static String getDefaultPackageName() {
     return DebuggerBundle.message("default.package.name");
   }
 }

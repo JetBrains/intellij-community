@@ -73,7 +73,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private MyColorScheme mySelectedScheme;
 
   /**
-   * Use {code {@link #getSCOPES_GROUP()}} instead
+   * Use {code {@link #getScopesGroup()}} instead
    */
   @Deprecated
   public static final String SCOPES_GROUP = "By Scope";
@@ -624,7 +624,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       PackageSet value = namedScope.getValue();
       String toolTip = holder.getDisplayName() + (value==null ? "" : ": "+ value.getText());
-      descriptions.add(new SchemeTextAttributesDescription(name, getSCOPES_GROUP(), textAttributesKey, scheme, holder.getIcon(), toolTip));
+      descriptions.add(new SchemeTextAttributesDescription(name, getScopesGroup(), textAttributesKey, scheme, holder.getIcon(), toolTip));
     }
   }
 
@@ -1494,7 +1494,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return page != null;
   }
 
-  public static String getSCOPES_GROUP() {
+  public static String getScopesGroup() {
     return ApplicationBundle.message("title.scope.based");
   }
 }

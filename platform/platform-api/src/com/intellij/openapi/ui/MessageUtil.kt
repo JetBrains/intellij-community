@@ -11,7 +11,7 @@ fun showYesNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: Strin
 }
 
 fun showOkNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String, message: String, project: Project?,
-                   okText: String = Messages.getOK_BUTTON(), noText: String = Messages.getNO_BUTTON(), icon: Icon? = null): Boolean {
+                   okText: String = Messages.getOkButton(), noText: String = Messages.getNO_BUTTON(), icon: Icon? = null): Boolean {
   return Messages.showYesNoDialog(project, message, title, okText, noText, icon) == Messages.YES
 }
 

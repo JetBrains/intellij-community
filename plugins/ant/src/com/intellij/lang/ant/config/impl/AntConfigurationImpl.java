@@ -656,7 +656,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       String defaultTargetActionId = model.getDefaultTargetActionId();
       if (defaultTargetActionId != null) {
         final TargetAction action = new TargetAction(
-          buildFile, TargetAction.getDEFAULT_TARGET_NAME(), Collections.singletonList(TargetAction.getDEFAULT_TARGET_NAME()), null
+          buildFile, TargetAction.getDefaultTargetName(), Collections.singletonList(TargetAction.getDefaultTargetName()), null
         );
         actionList.add(new Pair<>(defaultTargetActionId, action));
       }
