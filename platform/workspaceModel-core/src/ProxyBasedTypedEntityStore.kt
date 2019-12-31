@@ -274,7 +274,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       removePersistentIdFromDependency(oldData)
       addPersistentIdReferrers(newData)
     }
-    updatePersistentIdInDependentEntities(oldData, newData)
+    updatePersistentIdInDependentEntities(oldData, newData, updatePersistentIdReference)
   }
 
   private fun addReferences(data: EntityData) {
@@ -306,12 +306,15 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
   }
 
-  private fun updatePersistentIdInDependentEntities(oldData: EntityData, newData: EntityData) {
+  private fun updatePersistentIdInDependentEntities(oldData: EntityData, newData: EntityData, updatePersistentIdReference: Boolean) {
     // Update persistentId in dependent entities
     if(!TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)
        || !TypedEntityWithPersistentId::class.java.isAssignableFrom(newData.unmodifiableEntityType)
        || oldData.persistentId() == newData.persistentId()) return
-    persistentIdReferrers[oldData.persistentId().hashCode()]?.forEach { id ->
+
+    val oldPersistentId = oldData.persistentId()
+    val newPersistentId = newData.persistentId()
+    persistentIdReferrers[oldPersistentId.hashCode()]?.forEach { id ->
       val refOldData = entityById[id]
       if (refOldData == null) return
 
@@ -320,12 +323,19 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       val newImpl = EntityImpl(refNewData, this)
       val newInstance = createProxy(refNewData.unmodifiableEntityType, newImpl)
       newImpl.allowModifications {
-        newImpl.data.replaceAllPersistentIdReferences(oldData.persistentId(), newData.persistentId())
+        newImpl.data.replaceAllPersistentIdReferences(oldPersistentId, newPersistentId)
       }
       // Update persistentId reference in store only for originally replaced element. If method called
       // recursively only first call should update reference.
       replaceEntity(refOldData.id, refNewData, newInstance, oldIdHash, handleReferrers = false, updatePersistentIdReference = false)
       updateChangeLog { it.add(ChangeEntry.ReplaceEntity(refOldData.id, refNewData)) }
+    }
+
+    if (updatePersistentIdReference) {
+      val oldRefs = persistentIdReferrers[oldPersistentId.hashCode()] ?: return
+      persistentIdReferrers.remove(oldPersistentId.hashCode())
+      val newRefs = persistentIdReferrers[newPersistentId.hashCode()] ?: return
+      newRefs.addAll(oldRefs)
     }
   }
 

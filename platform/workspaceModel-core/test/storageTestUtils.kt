@@ -68,4 +68,27 @@ fun TypedEntityStorage.checkConsistency() {
   }
 
   assertReferrersEqual(expectedReferrers, storage.referrers)
+
+  val expectedPersistentIdReferrers = storage.entityById.values.flatMap { data ->
+    val result = mutableListOf<Pair<Int, Long>>()
+    data.collectPersistentIdReferences { result.add(it.hashCode() to data.id) }
+    result
+  }.groupBy({ it.first }, { it.second })
+  storage.entityById.values.forEach { data ->
+    val entityType = data.unmodifiableEntityType
+    if (entityType is TypedEntityWithPersistentId) {
+      val expected = expectedPersistentIdReferrers[entityType.persistentId().hashCode()]?.toSet()
+      val actual = storage.persistentIdReferrers[entityType.persistentId().hashCode()]?.toSet()
+      assertEquals("Different persistent Id referrers to $data", expected, actual)
+    }
+  }
+
+  fun assertPersistentIdReferrersEqual(expected: Map<Int, List<Long>>, actual: Map<Int, Set<Long>>) {
+    assertEquals(expected.keys, actual.keys)
+    for (key in expected.keys) {
+      assertEquals(expected.getValue(key).toSet(), actual.getValue(key).toSet())
+    }
+  }
+
+  assertPersistentIdReferrersEqual(expectedPersistentIdReferrers, storage.persistentIdReferrers)
 }
