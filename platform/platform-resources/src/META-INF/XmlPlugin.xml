@@ -69,7 +69,9 @@
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="html.attributeValueProvider" interface="com.intellij.html.impl.providers.HtmlAttributeValueProvider"/>
+    <extensionPoint name="html.attributeValueProvider"
+                    interface="com.intellij.html.impl.providers.HtmlAttributeValueProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="xml.psiPolicy"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
