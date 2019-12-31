@@ -362,6 +362,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   private void doReassignTest(FileType fileType, String extension) {
     try {
+      myFileTypeManager.getRegisteredFileTypes();
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(fileType, "*." + extension));
 
       assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
