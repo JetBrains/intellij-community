@@ -2156,6 +2156,7 @@ public class AllIcons {
   }
 
   public final static class Webreferences {
+    /** 16x16 */ public static final Icon MessageQueue = load("/webreferences/messageQueue.svg");
     /** 16x16 */ public static final Icon Server = load("/webreferences/server.svg");
     /** 16x16 */ public static final Icon WebSocket = load("/webreferences/webSocket.svg");
 
