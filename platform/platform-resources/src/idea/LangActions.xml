@@ -8,8 +8,8 @@
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
-    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="Run..." description="Choose and run configuration" icon="AllIcons.Actions.Execute"/>
-    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Debug..." description="Choose and debug configuration" icon="AllIcons.Actions.StartDebugger"/>
+    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
+    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
 
     <group id="RunContextGroup" popup="false">
       <!-- A dynamic group filled with executor actions -->
@@ -35,7 +35,7 @@
       <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
-      <action id="GeneratePattern" class="com.intellij.codeInsight.generation.GenerateByPatternAction" text="Generate by Pattern..."/>
+      <action id="GeneratePattern" class="com.intellij.codeInsight.generation.GenerateByPatternAction"/>
       <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
@@ -344,9 +344,7 @@
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
-      <action id="Refactorings.QuickListPopupAction"
-              class = "com.intellij.refactoring.actions.RefactoringQuickListPopupAction"
-              text = "Refactor This..." description="Context aware popup with list of refactoring actions"/>
+    <action id="Refactorings.QuickListPopupAction" class="com.intellij.refactoring.actions.RefactoringQuickListPopupAction"/>
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
@@ -524,8 +522,7 @@
       <action id="RestoreDefaultExtensionScripts" class="com.intellij.ide.extensionResources.RestoreBundledExtensionsAction"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
-      <action id="ProjectViewEditSource" use-shortcut-of="EditSource" class="com.intellij.ide.actions.ProjectViewEditSourceAction"
-        text="Edit Source"/>
+      <action id="ProjectViewEditSource" use-shortcut-of="EditSource" class="com.intellij.ide.actions.ProjectViewEditSourceAction"/>
       <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -721,16 +718,9 @@
     <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
     </action>
-
-    <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type"
-            class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"
-            use-shortcut-of="TypeHierarchy"/>
-    <action id="MethodHierarchy.BaseOnThisMethod" text="Base on This Method"
-            class="com.intellij.ide.hierarchy.MethodHierarchyBrowserBase$BaseOnThisMethodAction"
-            use-shortcut-of="MethodHierarchy"/>
-    <action id="CallHierarchy.BaseOnThisMethod" text="Base on This Method"
-            class="com.intellij.ide.hierarchy.CallHierarchyBrowserBase$BaseOnThisMethodAction"
-            use-shortcut-of="CallHierarchy"/>
+    <action id="TypeHierarchyBase.BaseOnThisType" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction" use-shortcut-of="TypeHierarchy"/>
+    <action id="MethodHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.MethodHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="MethodHierarchy"/>
+    <action id="CallHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.CallHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="CallHierarchy"/>
     <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
     <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
@@ -833,8 +823,7 @@
 
       <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.General.Add"/>
       <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue"/>
-      <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy"
-              text="Duplicate Watch" use-shortcut-of="EditorDuplicate"/>
+      <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy" use-shortcut-of="EditorDuplicate"/>
       <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.General.Remove"
               use-shortcut-of="$Delete"/>
       <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MoveLineUp"/>
@@ -848,10 +837,8 @@
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
-      <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"
-              text="Remove All Breakpoints"/>
-      <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"
-              text="Remove All Breakpoints In The Current File"/>
+      <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
+      <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>
     </group>
 
     <group id="EditorPopupMenuDebug">
@@ -911,9 +898,7 @@
     </group>
 
     <group id="XDebugger.Frames.Tree.Popup">
-      <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction"
-              text="Copy Stack"
-              icon="AllIcons.Actions.Copy"/>
+      <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy"/>
     </group>
 
     <group id="XDebugger.Frames.TopToolbar">
@@ -996,10 +981,7 @@
       <add-to-group group-id="VcsGroups" anchor="first"/>
     </group>
 
-    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup"
-            text="Annotated Line Operations">
-      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
-    </action>
+    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup"/>
 
     <group id="Vcs.Operations.Popup">
       <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
@@ -1038,29 +1020,22 @@
       <separator/>
       <action id="ConsoleView.ClearAll" class="com.intellij.execution.actions.ClearConsoleAction"/>
     </group>
-
-    <action id="SendEOF" class="com.intellij.execution.actions.EOFAction" text="Send EOF"/>
+    
+    <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
 
     <group>
       <!--suppress PluginXmlCapitalization -->
-      <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction"
-              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="Diff.ShowDiff"/>
+      <action id="openAssertEqualsDiff" class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" use-shortcut-of="Diff.ShowDiff"/>
       <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>
     <group id="RunTestGroup">
       <separator/>
-      <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup"
-              text="Import Test Results" icon="AllIcons.Vcs.History" id="ImportTests"/>
-      <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction"
-              text="Import Test From File" id="ImportTestsFromFile" icon="AllIcons.ToolbarDecorator.Import"/>
+      <action id="ImportTests" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup" icon="AllIcons.Vcs.History"/>
+      <action id="ImportTestsFromFile" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction" icon="AllIcons.ToolbarDecorator.Import"/>
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
     </group>
-
-    <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights" text="Dump Lookup Element Weights to Log">
-      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
-    </action>
-
+    <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights"/>
     <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.EditColors"/>
 
     <!-- Arrangement rules -->
@@ -1166,65 +1141,42 @@
 
     <group id="RunDashboardContentToolbar">
       <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction"
-              text="Run" icon="AllIcons.Actions.Execute"
-              use-shortcut-of="RunClass"/>
+      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"/>
       <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction"
-              text="Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"/>
-      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"
-              text="Stop" icon="AllIcons.Actions.Suspend"
+      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"/>
+      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" icon="AllIcons.Actions.Suspend"
               use-shortcut-of="Stop"/>
     </group>
     <group id="RunDashboardPopup">
-      <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
-              text="Edit Configuration" icon="AllIcons.Actions.EditSource"
-              use-shortcut-of="EditSourceInNewWindow"/>
-      <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
-              text="Copy Configuration" icon="AllIcons.Actions.Copy"
-              use-shortcut-of="EditorDuplicate"/>
+      <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"/>
+      <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction" icon="AllIcons.Actions.Copy" use-shortcut-of="EditorDuplicate"/>
       <separator/>
-      <action id="RunDashboard.HideConfiguration" class="com.intellij.execution.dashboard.actions.HideConfigurationAction"
-              text="Hide Configuration"/>
-      <action id="RunDashboard.RestoreHiddenConfigurations"
-              class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"
-              text="Restore Hidden Configurations"/>
-      <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"
-              text="Remove Configuration Type from Services"/>
+      <action id="RunDashboard.HideConfiguration" class="com.intellij.execution.dashboard.actions.HideConfigurationAction"/>
+      <action id="RunDashboard.RestoreHiddenConfigurations" class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"/>
+      <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"/>
       <separator/>
-      <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
-              text="Clear Content" icon="AllIcons.Actions.Cancel"/>
-      <action id="RunDashboard.RestoreConfiguration" class="com.intellij.execution.dashboard.actions.RestoreConfigurationAction"
-              text="Restore Configuration" icon="AllIcons.Actions.Rollback"/>
+      <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction" icon="AllIcons.Actions.Cancel"/>
+      <action id="RunDashboard.RestoreConfiguration" class="com.intellij.execution.dashboard.actions.RestoreConfigurationAction" icon="AllIcons.Actions.Rollback"/>
       <separator/>
-      <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction"
-              text="Group Configurations" icon="AllIcons.Actions.GroupByPackage"/>
-      <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions"
-              text="Ungroup Configurations" icon="AllIcons.General.Remove"
-              use-shortcut-of="$Delete"/>
+      <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction" icon="AllIcons.Actions.GroupByPackage"/>
+      <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions" icon="AllIcons.General.Remove" use-shortcut-of="$Delete"/>
       <separator/>
     </group>
 
     <group id="ServiceViewTreeToolbar">
       <group id="ServiceView.GroupBy" popup="true" text="Group By" icon="AllIcons.Actions.GroupBy"
              class="com.intellij.ide.actions.NonEmptyActionGroup">
-        <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"
-                text="Service Type"/>
-        <action id="ServiceView.GroupByServiceGroups" class="com.intellij.execution.services.GroupByServiceGroupsAction"
-                text="Service Groups"/>
+      <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"/>
+      <action id="ServiceView.GroupByServiceGroups" class="com.intellij.execution.services.GroupByServiceGroupsAction"/>
         <separator/>
       </group>
       <group id="ServiceView.Filter" popup="true" text="Filter" icon="AllIcons.General.Filter"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       <group id="ServiceView.OpenInNewTabGroup" popup="true" text="Open in New Tab" icon="AllIcons.Actions.OpenNewTab"
              class="com.intellij.execution.services.OpenInNewTabActionGroup">
-        <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"
-                text="Open in New Tab">
-        </action>
-        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"
-                text="Open Each in New Tab"/>
-        <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
-                text="Open Each Type in New Tab"/>
+      <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
+      <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
+      <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
       </group>
       <separator/>
       <group id="ServiceView.AddService" popup="true" text="Add Service" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
@@ -1245,26 +1197,19 @@
       <reference id="$Delete"/>
       <separator/>
       <reference id="EditSource"/>
-      <action id="ServiceView.JumpToServices" class="com.intellij.execution.services.JumpToServicesAction"
-              text="Jump to Services" use-shortcut-of="ShowNavBar"/>
+      <action id="ServiceView.JumpToServices" class="com.intellij.execution.services.JumpToServicesAction" use-shortcut-of="ShowNavBar"/>
     </group>
-    <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction"
-            text="Show Services Tree" icon="AllIcons.Actions.ShowAsTree"/>
+      <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
     <group id="RunDashboard.GroupBy" popup="true" text="Configuration" class="com.intellij.ide.actions.NonEmptyActionGroup">
-      <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"
-              text="Type"/>
-      <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"
-              text="Status"/>
+      <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
+      <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"/>
       <add-to-group group-id="ServiceView.GroupBy"/>
     </group>
     <group id="RunDashboard.Filter" popup="true" text="Configuration Status"
            class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup">
       <add-to-group group-id="ServiceView.Filter"/>
     </group>
-    <action id="RunDashboard.AddType" text="Run Configuration Type"
-            class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction">
-      <add-to-group group-id="ServiceView.AddService"/>
-    </action>
+      <action id="RunDashboard.AddType" class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction"/>
     <reference id="RunDashboard.RestoreHiddenConfigurations">
       <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddType"/>
     </reference>
@@ -1272,12 +1217,7 @@
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
     </action>
-
-    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction"
-            text="Update Running Application">
-      <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
-      <add-to-group group-id="DebugReloadGroup" anchor="last"/>
-    </action>
+    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction"/>
 
     <group id="TouchBar">
       <group id="TouchBarDefault" text="Default">
@@ -1349,22 +1289,10 @@
         </group>
       </group>
     </group>
-
-    <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report">
-      <add-to-group group-id="Internal.Performance" anchor="last"/>
-    </action>
-    <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
-      <add-to-group group-id="Internal.Performance" anchor="last"/>
-    </action>
-
-    <action id="CompletionQualityStats" text="Completion Quality Statistics" class="com.intellij.internal.CompletionQualityStatsAction" internal="true">
-      <add-to-group group-id="Internal" anchor="last"/>
-    </action>
-
-    <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction"
-            text="Show Control Flow" internal="true">
-      <add-to-group group-id="Internal" anchor="last"/>
-    </action>
+    <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true"/>
+    <action id="RetypeFile" class="com.intellij.internal.retype.RetypeFileAction" internal="true"/>
+    <action id="CompletionQualityStats" class="com.intellij.internal.CompletionQualityStatsAction" internal="true"/>
+    <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction" internal="true"/>
     <group id="TodoMainGroup" text="TODO">
       <add-to-group group-id="Other.KeymapGroup"/>
       <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" popup="true">
