@@ -1555,17 +1555,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void addThrows(@Nullable PsiElement explicitCall, Collection<? extends PsiType> exceptions) {
-    List<PsiType> allExceptions = new ArrayList<>(exceptions);
-    allExceptions.add(myExceptionCache.get(JAVA_LANG_ERROR).getThrowable().getPsiType(myProject));
-    allExceptions.add(myExceptionCache.get(JAVA_LANG_RUNTIME_EXCEPTION).getThrowable().getPsiType(myProject));
-    List<PsiType> refs = PsiDisjunctionType.flattenAndRemoveDuplicates(allExceptions);
-    for (PsiType ref : refs) {
-      pushUnknown();
-      ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
-      addInstruction(cond);
-      throwException(ref, explicitCall);
-      cond.setOffset(myCurrentFlow.getInstructionCount());
+    StreamEx<TypeConstraint> allExceptions = StreamEx.of(JAVA_LANG_ERROR, JAVA_LANG_RUNTIME_EXCEPTION)
+      .map(fqn -> myExceptionCache.get(fqn).getThrowable());
+    if (!exceptions.isEmpty()) {
+      allExceptions = allExceptions.append(StreamEx.of(exceptions).map(TypeConstraints::instanceOf))
+        .map(TypeConstraint::tryNegate).nonNull()
+        .reduce(TypeConstraints.TOP, TypeConstraint::meet)
+        .notInstanceOfTypes()
+        .map(TypeConstraint.Exact::instanceOf);
     }
+    allExceptions.forEach(exc -> {
+        pushUnknown();
+        ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
+        addInstruction(cond);
+        throwException(new ExceptionTransfer(exc), explicitCall);
+        cond.setOffset(myCurrentFlow.getInstructionCount());
+      });
   }
 
   void throwException(@Nullable PsiType ref, @Nullable PsiElement anchor) {
