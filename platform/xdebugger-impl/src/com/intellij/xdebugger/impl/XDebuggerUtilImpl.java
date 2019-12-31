@@ -356,7 +356,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       if (Messages.showOkCancelDialog(message.toString(),
                                       XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),
                                       CommonBundle.message("button.remove"),
-                                      Messages.getCANCEL_BUTTON(),
+                                      Messages.getCancelButton(),
                                       Messages.getQuestionIcon(),
                                       new DialogWrapper.DoNotAskOption.Adapter() {
                                         @Override

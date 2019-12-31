@@ -159,7 +159,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private static PackageDependenciesNode hideEmptyMiddlePackages(PackageDependenciesNode node, StringBuffer result){
     if (node.getChildCount() == 0 || node.getChildCount() > 1 || node.getChildCount() == 1 && node.getChildAt(0) instanceof FileNode){
-      result.append(result.length() != 0 ? "." : "").append(node.toString().equals(getDEFAULT_PACKAGE_ABBREVIATION()) ? "" : node.toString());//toString()
+      result.append(result.length() != 0 ? "." : "").append(node.toString().equals(getDefaultPackageAbbreviation()) ? "" : node.toString());//toString()
     } else {
       if (node.getChildCount() == 1){
         PackageDependenciesNode child = (PackageDependenciesNode)node.getChildAt(0);
@@ -171,7 +171,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
           if (child instanceof PackageNode){
             node.removeAllChildren();
             result.append(result.length() != 0 ? "." : "")
-              .append(node.toString().equals(getDEFAULT_PACKAGE_ABBREVIATION()) ? "" : node.toString());
+              .append(node.toString().equals(getDefaultPackageAbbreviation()) ? "" : node.toString());
             node = hideEmptyMiddlePackages(child, result);
             ((PackageNode)node).setPackageName(result.toString());//toString()
           }
@@ -503,7 +503,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  public static String getDEFAULT_PACKAGE_ABBREVIATION() {
+  public static String getDefaultPackageAbbreviation() {
     return AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
   }
 }

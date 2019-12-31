@@ -81,10 +81,10 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     if (isDarkEditorTheme &&
         (UIUtil.isUnderIntelliJLaF() || theme != null && !theme.isDark())) {
       if (/*applyAlways ||*/ Messages.showYesNoDialog(
-          ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
-          ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
-          Messages.getYES_BUTTON(), Messages.getNO_BUTTON(),
-          Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
+        ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
+        ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
+        Messages.getYesButton(), Messages.getNoButton(),
+        Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
 
         lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : new DarculaLookAndFeelInfo());
         lafManager.updateUI();
@@ -98,7 +98,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
           (/*applyAlways ||*/ Messages.showYesNoDialog(
             ApplicationBundle.message("color.scheme.theme.change.confirmation", "bright", productName),
             ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
-            Messages.getYES_BUTTON(), Messages.getNO_BUTTON(),
+            Messages.getYesButton(), Messages.getNoButton(),
             Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES)) {
 
         lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLaf());

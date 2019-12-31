@@ -50,7 +50,7 @@ public class ReadWriteStatistics {
       myShownReadKBytes = myReadBytes / KB;
     }
 
-    showProgress(getPROGRESS_READING());
+    showProgress(getProgressReading());
   }
 
   public void send(long bytes) {
@@ -71,7 +71,7 @@ public class ReadWriteStatistics {
     }
     if (myShownReadKBytes > 0) {
       buffer.append(myShownReadKBytes);
-      buffer.append(getREAD_PROGRESS_MESSAGE());
+      buffer.append(getReadProgressMessage());
       if (myShownSentKBytes > 0) buffer.append("; ");
     }
 
@@ -84,7 +84,7 @@ public class ReadWriteStatistics {
     myProgress.setText(buffer.toString());
   }
 
-  private static String getREAD_PROGRESS_MESSAGE() {
+  private static String getReadProgressMessage() {
     return CvsBundle.message("progress.text.kb.read");
   }
 
@@ -96,7 +96,7 @@ public class ReadWriteStatistics {
     return CvsBundle.message("progress.text.sending.data.to.server");
   }
 
-  private static String getPROGRESS_READING() {
+  private static String getProgressReading() {
     return CvsBundle.message("progress.text.reading.data.from.server");
   }
 }

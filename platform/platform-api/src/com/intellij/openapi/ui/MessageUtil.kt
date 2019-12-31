@@ -6,12 +6,12 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-fun showYesNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String, message: String, project: Project?, yesText: String = Messages.getYES_BUTTON(), noText: String = Messages.getNO_BUTTON(), icon: Icon? = null): Boolean {
+fun showYesNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String, message: String, project: Project?, yesText: String = Messages.getYesButton(), noText: String = Messages.getNoButton(), icon: Icon? = null): Boolean {
   return Messages.showYesNoDialog(project, message, title, yesText, noText, icon) == Messages.YES
 }
 
 fun showOkNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String, message: String, project: Project?,
-                   okText: String = Messages.getOkButton(), noText: String = Messages.getNO_BUTTON(), icon: Icon? = null): Boolean {
+                   okText: String = Messages.getOkButton(), noText: String = Messages.getNoButton(), icon: Icon? = null): Boolean {
   return Messages.showYesNoDialog(project, message, title, okText, noText, icon) == Messages.YES
 }
 
@@ -19,7 +19,7 @@ fun showOkNoDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String
 fun showOkCancelDialog(@Nls(capitalization = Nls.Capitalization.Title) title: String,
                        @Nls(capitalization = Nls.Capitalization.Sentence) message: String,
                        okText: String,
-                       cancelText: String = Messages.getCANCEL_BUTTON(),
+                       cancelText: String = Messages.getCancelButton(),
                        icon: Icon? = null,
                        doNotAskOption: DialogWrapper.DoNotAskOption? = null,
                        project: Project? = null): Int {

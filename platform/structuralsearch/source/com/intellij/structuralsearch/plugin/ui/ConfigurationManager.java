@@ -252,7 +252,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
           SSRBundle.message("overwrite.message"),
           SSRBundle.message("overwrite.title", name),
           "Replace",
-          Messages.getCANCEL_BUTTON(),
+          Messages.getCancelButton(),
           Messages.getQuestionIcon()
         );
       if (answer == Messages.YES) {

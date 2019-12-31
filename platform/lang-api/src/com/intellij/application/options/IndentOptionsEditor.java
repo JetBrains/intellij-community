@@ -86,8 +86,8 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   }
 
   protected void addTabSizeField() {
-    myTabSizeField = createIndentTextField(getTAB_SIZE_LABEL(), MIN_TAB_SIZE, MAX_TAB_SIZE, DEFAULT_TAB_SIZE);
-    myTabSizeLabel = new JLabel(getTAB_SIZE_LABEL());
+    myTabSizeField = createIndentTextField(getTabSizeLabel(), MIN_TAB_SIZE, MAX_TAB_SIZE, DEFAULT_TAB_SIZE);
+    myTabSizeLabel = new JLabel(getTabSizeLabel());
     add(myTabSizeLabel, myTabSizeField);
   }
 
@@ -223,7 +223,7 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     return ApplicationBundle.message("editbox.indent.indent");
   }
 
-  private static String getTAB_SIZE_LABEL() {
+  private static String getTabSizeLabel() {
     return ApplicationBundle.message("editbox.indent.tab.size");
   }
 }

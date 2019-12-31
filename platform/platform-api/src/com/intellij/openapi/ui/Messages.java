@@ -52,27 +52,27 @@ public class Messages {
   public static final String OK_BUTTON = "OK";
 
   /**
-   * Use {code {@link #getYES_BUTTON()}} instead
+   * Use {code {@link #getYesButton()}} instead
    */
   @Deprecated
   public static final String YES_BUTTON = "&Yes";
 
   /**
-   * Use {code {@link #getNO_BUTTON()}} instead
+   * Use {code {@link #getNoButton()}} instead
    */
   @Deprecated
   public static final String NO_BUTTON = "&No";
 
   /**
-   * Use {code {@link #getCANCEL_BUTTON()}} instead
+   * Use {code {@link #getCancelButton()}} instead
    */
   @Deprecated
   public static final String CANCEL_BUTTON = "Cancel";
 
   public static String getOkButton() { return CommonBundle.getOkButtonText(); }
-  public static String getYES_BUTTON() { return CommonBundle.getYesButtonText(); }
-  public static String getNO_BUTTON() { return CommonBundle.getNoButtonText(); }
-  public static String getCANCEL_BUTTON() { return CommonBundle.getCancelButtonText(); }
+  public static String getYesButton() { return CommonBundle.getYesButtonText(); }
+  public static String getNoButton() { return CommonBundle.getNoButtonText(); }
+  public static String getCancelButton() { return CommonBundle.getCancelButtonText(); }
 
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
   private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
@@ -503,7 +503,7 @@ public class Messages {
     try {
       if (canShowMacSheetPanel()) {
         return MacMessages.getInstance()
-          .showYesNoDialog(title, message, getYES_BUTTON(), getNO_BUTTON(), WindowManager.getInstance().suggestParentWindow(project));
+          .showYesNoDialog(title, message, getYesButton(), getNoButton(), WindowManager.getInstance().suggestParentWindow(project));
       }
     }
     catch (MessageException ignored) {/*rollback the message and show a dialog*/}
@@ -511,7 +511,7 @@ public class Messages {
       LOG.error(reportThis);
     }
 
-    int result = showYesNoDialog(project, message, title, getYES_BUTTON(), getNO_BUTTON(), icon);
+    int result = showYesNoDialog(project, message, title, getYesButton(), getNoButton(), icon);
 
     LOG.assertTrue(result == YES || result == NO, result);
     return result;
@@ -529,7 +529,7 @@ public class Messages {
     try {
       if (canShowMacSheetPanel()) {
         return MacMessages.getInstance()
-          .showYesNoDialog(title, message, getYES_BUTTON(), getNO_BUTTON(), WindowManager.getInstance().suggestParentWindow(project), doNotAskOption);
+          .showYesNoDialog(title, message, getYesButton(), getNoButton(), WindowManager.getInstance().suggestParentWindow(project), doNotAskOption);
       }
     }
     catch (MessageException ignored) {/*rollback the message and show a dialog*/}
@@ -537,7 +537,7 @@ public class Messages {
       LOG.error(reportThis);
     }
 
-    int result = showYesNoDialog(project, message, title, getYES_BUTTON(), getNO_BUTTON(), icon, doNotAskOption);
+    int result = showYesNoDialog(project, message, title, getYesButton(), getNoButton(), icon, doNotAskOption);
 
     LOG.assertTrue(result == YES || result == NO, result);
     return result;
@@ -554,7 +554,7 @@ public class Messages {
                                     @Nullable Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
-        return MacMessages.getInstance().showYesNoDialog(title, message, getYES_BUTTON(), getNO_BUTTON(), SwingUtilities.getWindowAncestor(parent));
+        return MacMessages.getInstance().showYesNoDialog(title, message, getYesButton(), getNoButton(), SwingUtilities.getWindowAncestor(parent));
       }
     }
     catch (MessageException ignored) {/*rollback the message and show a dialog*/}
@@ -562,7 +562,7 @@ public class Messages {
       LOG.error(reportThis);
     }
 
-    int result = showDialog(parent, message, title, new String[]{getYES_BUTTON(), getNO_BUTTON()}, 0, icon) == 0 ? YES : NO;
+    int result = showDialog(parent, message, title, new String[]{getYesButton(), getNoButton()}, 0, icon) == 0 ? YES : NO;
     //noinspection ConstantConditions
     LOG.assertTrue(result == YES || result == NO, result);
     return result;
@@ -629,7 +629,7 @@ public class Messages {
                                     @Nullable Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
-        return MacMessages.getInstance().showYesNoDialog(title, message, getYES_BUTTON(), getNO_BUTTON(), null);
+        return MacMessages.getInstance().showYesNoDialog(title, message, getYesButton(), getNoButton(), null);
       }
     }
     catch (MessageException ignored) {/*rollback the message and show a dialog*/}
@@ -637,7 +637,7 @@ public class Messages {
       LOG.error(reportThis);
     }
 
-    int result = showYesNoDialog(message, title, getYES_BUTTON(), getNO_BUTTON(), icon);
+    int result = showYesNoDialog(message, title, getYesButton(), getNoButton(), icon);
     LOG.assertTrue(result == YES || result == NO, result);
     return result;
   }
@@ -695,7 +695,7 @@ public class Messages {
                                        String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        Icon icon) {
-    return showOkCancelDialog(project, message, title, getOkButton(), getCANCEL_BUTTON(), icon);
+    return showOkCancelDialog(project, message, title, getOkButton(), getCancelButton(), icon);
   }
 
   /**
@@ -733,7 +733,7 @@ public class Messages {
                                        String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        Icon icon) {
-    return showOkCancelDialog(parent, message, title, getOkButton(), getCANCEL_BUTTON(), icon);
+    return showOkCancelDialog(parent, message, title, getOkButton(), getCancelButton(), icon);
   }
 
   /**
@@ -745,7 +745,7 @@ public class Messages {
   @OkCancelResult
   @Deprecated
   public static int showOkCancelDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon) {
-    return showOkCancelDialog(message, title, getOkButton(), getCANCEL_BUTTON(), icon, null);
+    return showOkCancelDialog(message, title, getOkButton(), getCancelButton(), icon, null);
   }
 
   /**
@@ -799,7 +799,7 @@ public class Messages {
                                                final int defaultOptionIndex,
                                                final int focusedOptionIndex,
                                                Icon icon) {
-    return showCheckboxMessageDialog(message, title, new String[]{getOkButton(), getCANCEL_BUTTON()}, checkboxText, checked, defaultOptionIndex,
+    return showCheckboxMessageDialog(message, title, new String[]{getOkButton(), getCancelButton()}, checkboxText, checked, defaultOptionIndex,
                                      focusedOptionIndex, icon,
                                      (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
   }
@@ -971,7 +971,7 @@ public class Messages {
                                           String message,
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
                                           Icon icon) {
-    return showYesNoCancelDialog(project, message, title, getYES_BUTTON(), getNO_BUTTON(), getCANCEL_BUTTON(), icon);
+    return showYesNoCancelDialog(project, message, title, getYesButton(), getNoButton(), getCancelButton(), icon);
   }
 
   /**
@@ -1008,7 +1008,7 @@ public class Messages {
                                           String message,
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
                                           Icon icon) {
-    return showYesNoCancelDialog(parent, message, title, getYES_BUTTON(), getNO_BUTTON(), getCANCEL_BUTTON(), icon);
+    return showYesNoCancelDialog(parent, message, title, getYesButton(), getNoButton(), getCancelButton(), icon);
   }
 
 
@@ -1067,7 +1067,7 @@ public class Messages {
    */
   @YesNoCancelResult
   public static int showYesNoCancelDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon) {
-    return showYesNoCancelDialog(message, title, getYES_BUTTON(), getNO_BUTTON(), getCANCEL_BUTTON(), icon);
+    return showYesNoCancelDialog(message, title, getYesButton(), getNoButton(), getCancelButton(), icon);
   }
 
   /**
@@ -1385,7 +1385,7 @@ public class Messages {
                        @Nullable Icon icon,
                        @Nullable String initialValue,
                        @Nullable InputValidator validator) {
-      this(project, message, title, icon, initialValue, validator, new String[]{getOkButton(), getCANCEL_BUTTON()}, 0);
+      this(project, message, title, icon, initialValue, validator, new String[]{getOkButton(), getCancelButton()}, 0);
     }
 
     public InputDialog(@NotNull Component parent,
@@ -1394,7 +1394,7 @@ public class Messages {
                        @Nullable Icon icon,
                        @Nullable String initialValue,
                        @Nullable InputValidator validator) {
-      super(null, parent, message, title, new String[]{getOkButton(), getCANCEL_BUTTON()}, -1, 0, icon, null, true);
+      super(null, parent, message, title, new String[]{getOkButton(), getCancelButton()}, -1, 0, icon, null, true);
       myValidator = validator;
       myComment = null;
       myField.setText(initialValue);
@@ -1406,7 +1406,7 @@ public class Messages {
                        @Nullable Icon icon,
                        @Nullable String initialValue,
                        @Nullable InputValidator validator) {
-      super(null, null, message, title, new String[]{getOkButton(), getCANCEL_BUTTON()}, 0, -1, icon, null, true);
+      super(null, null, message, title, new String[]{getOkButton(), getCancelButton()}, 0, -1, icon, null, true);
       myValidator = validator;
       myComment = null;
       myField.setText(initialValue);

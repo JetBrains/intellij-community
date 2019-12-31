@@ -298,7 +298,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
       String afterRevisionTitle = getRevisionTitle(aRev, getServerVersion());
 
       String title = DiffRequestFactory.getInstance().getTitle(file);
-      List<String> titles = Arrays.asList(beforeRevisionTitle, getBASE_VERSION(), afterRevisionTitle);
+      List<String> titles = Arrays.asList(beforeRevisionTitle, getBaseVersion(), afterRevisionTitle);
 
       DiffContentFactory contentFactory = DiffContentFactory.getInstance();
       List<DiffContent> contents = Arrays.asList(contentFactory.createFromBytes(project, mergeData.CURRENT, file),
@@ -338,7 +338,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     DiffContent content2 = createContent(project, aRev, context, indicator);
 
     final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
-    String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, getBASE_VERSION());
+    String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, getBaseVersion());
     final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
     String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, getYourVersion());
 
@@ -461,11 +461,11 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     return DiffBundle.message("merge.version.title.their");
   }
 
-  public static String getBASE_VERSION() {
+  public static String getBaseVersion() {
     return DiffBundle.message("merge.version.title.base");
   }
 
-  public static String getMERGED_VERSION() {
+  public static String getMergedVersion() {
     return DiffBundle.message("merge.version.title.merged");
   }
 }

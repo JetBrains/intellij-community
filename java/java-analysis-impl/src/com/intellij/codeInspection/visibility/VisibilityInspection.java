@@ -248,11 +248,11 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
       else {
         if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-          message = getCAN_BE_PACKAGE_LOCAL();
+          message = getCanBePackageLocal();
           quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
         }
         else {
-          message = getCAN_BE_PROTECTED();
+          message = getCanBeProtected();
           quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
         }
       }
@@ -695,11 +695,11 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
   }
 
-  private static String getCAN_BE_PACKAGE_LOCAL() {
+  private static String getCanBePackageLocal() {
     return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
   }
 
-  private static String getCAN_BE_PROTECTED() {
+  private static String getCanBeProtected() {
     return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
   }
 }

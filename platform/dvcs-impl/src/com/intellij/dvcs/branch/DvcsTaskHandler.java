@@ -60,7 +60,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
                               "<html>The following repositories already have specified " + myBranchType + "<b>" + taskName + "</b>:<br>" +
                               StringUtil.join(problems, "<br>") + ".<br>" +
                               "Do you want to checkout existing " + myBranchType + "?", StringUtil.capitalize(myBranchType) + " Already Exists",
-                              new String[]{Messages.getYES_BUTTON(), Messages.getNO_BUTTON()}, 0,
+                              new String[]{Messages.getYesButton(), Messages.getNoButton()}, 0,
                               Messages.getWarningIcon()) == 0) {
         checkout(taskName, problems, null);
         map.addAll(problems);

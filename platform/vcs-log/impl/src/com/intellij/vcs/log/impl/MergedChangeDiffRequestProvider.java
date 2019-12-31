@@ -134,7 +134,7 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
       String leftTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE, leftRevision,
                                           ChangeDiffRequestProducer.getYourVersion());
       String centerTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_CENTER_CONTENT_TITLE, centerRevision,
-                                            ChangeDiffRequestProducer.getMERGED_VERSION());
+                                            ChangeDiffRequestProducer.getMergedVersion());
       String rightTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE, rightRevision,
                                            ChangeDiffRequestProducer.getServerVersion());
 

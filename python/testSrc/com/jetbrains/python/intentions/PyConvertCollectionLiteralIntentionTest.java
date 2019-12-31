@@ -79,17 +79,17 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-9419
   public void testConvertSetToTuple() {
-    doIntentionTest(getCONVERT_SET_TO_TUPLE());
+    doIntentionTest(getConvertSetToTuple());
   }
 
   // PY-9419
   public void testConvertSetWithoutClosingBraceToTuple() {
-    doIntentionTest(getCONVERT_SET_TO_TUPLE());
+    doIntentionTest(getConvertSetToTuple());
   }
 
   // PY-9419
   public void testConvertSetToList() {
-    doIntentionTest(getCONVERT_SET_TO_LIST());
+    doIntentionTest(getConvertSetToList());
   }
 
   // PY-16335
@@ -158,11 +158,11 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
     return PyBundle.message("INTN.convert.collection.literal.text", "list", "set");
   }
 
-  private static String getCONVERT_SET_TO_TUPLE() {
+  private static String getConvertSetToTuple() {
     return PyBundle.message("INTN.convert.collection.literal.text", "set", "tuple");
   }
 
-  private static String getCONVERT_SET_TO_LIST() {
+  private static String getConvertSetToList() {
     return PyBundle.message("INTN.convert.collection.literal.text", "set", "list");
   }
 }

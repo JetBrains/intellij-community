@@ -181,69 +181,69 @@ class JavaPredefinedConfigurations {
 
       // Generics
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.classes"), "class 'GenericClass<'_TypeParameter+> {} ",
-                               getGENERICS_TYPE()),
+                               getGenericsType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.methods"), "<'_TypeParameter+> '_Type '_Method('_ParameterType '_Parameter*);",
-                               getGENERICS_TYPE()),
+                               getGenericsType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.typed.symbol"), "'Symbol <'_GenericArgument+>",
-                               getGENERICS_TYPE()),
+                               getGenericsType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.casts"), "( '_Type <'_GenericArgument+> ) '_Expr",
-                               getGENERICS_TYPE()),
+                               getGenericsType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.type.var.substitutions.in.intanceof.with.generic.types"), "'_Expr instanceof '_Type <'Substitutions+> ",
-                               getGENERICS_TYPE()),
+                               getGenericsType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.variables.of.generic.types"), "'_Type <'_GenericArgument+>  'Var = '_Init?;",
-                               getGENERICS_TYPE()),
+                               getGenericsType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.diamond.operators"), "new 'Class<>('_Argument*)",
-                               getGENERICS_TYPE()),
+                               getGenericsType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.returns.bounded.wildcard"),
                                "[script( \"!Method.hasModifierProperty(com.intellij.psi.PsiModifier.ABSTRACT)\" )]'_Type<? extends '_Bound> 'Method('_ParameterType '_Parameter*);",
-                               getGENERICS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                               getGenericsType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.constructors"), "<'_TypeParameter+> 'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}",
-                               getGENERICS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                               getGenericsType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
 
       // Add comments and metadata
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"), "/* 'CommentContent */", getMETADATA_TYPE()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"), "/* 'CommentContent */", getMetadataType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.class"),
                                "/**\n" +
                                " * '_Comment\n" +
                                " * @'_Tag* '_TagValue*\n" +
                                " */\n" +
-                               "class '_Class {\n}", getMETADATA_TYPE()),
+                               "class '_Class {\n}", getMetadataType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),
                                "/**\n" +
                                " * '_Comment\n" +
                                " * @'_Tag* '_TagValue*\n" +
                                " */\n" +
                                "'_Type? '_Method('_ParameterType '_Parameter*);",
-                               getMETADATA_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                               getMetadataType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.fields"),
                                "/**\n" +
                                " * '_Comment\n" +
                                " * @'_Tag* '_TagValue*\n" +
                                " */\n" +
                                "'_Type+ 'Field+ = '_Init*;",
-                               getMETADATA_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.tags"), "/** @'Tag+ '_TagValue* */", getMETADATA_TYPE()),
+                               getMetadataType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.tags"), "/** @'Tag+ '_TagValue* */", getMetadataType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.xdoclet.metadata"), "/** @'Tag \n  '_Property+\n*/",
-                               getMETADATA_TYPE()),
+                               getMetadataType()),
 
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotations"), "@'_Annotation", getMETADATA_TYPE()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotations"), "@'_Annotation", getMetadataType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.class"),
                                "@'_Annotation\n" +
-                               "class 'Class {}", getMETADATA_TYPE()),
+                               "class 'Class {}", getMetadataType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.fields"),
                                "@'_Annotation+\n" +
                                "'_FieldType 'Field+ = '_Init?;\n",
-                               getMETADATA_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                               getMetadataType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.methods"),
                                "@'_Annotation+\n'_MethodType '_Method('_ParameterType '_Parameter*);",
-                               getMETADATA_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                               getMetadataType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.not.annotated.methods"),
                                "@'_Annotation{0,0}\n'_MethodType '_Method('_ParameterType '_Parameter*);",
-                               getMETADATA_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                               getMetadataType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotation.declarations"),
-                               "@interface 'Interface {}", getMETADATA_TYPE()),
+                               "@interface 'Interface {}", getMetadataType()),
 
       // J2EE templates
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.struts.1.1.actions"),"public class '_StrutsActionClass extends '_ParentClass*:Action {\n" +
@@ -251,7 +251,7 @@ class JavaPredefinedConfigurations {
                                                                                                       "                                 ActionForm '_form,\n" +
                                                                                                       "                                 HttpServletRequest '_request,\n" +
                                                                                                       "                                 HttpServletResponse '_response);\n" +
-                                                                                                      "}", getJ2EE_TYPE()),
+                                                                                                      "}", getJ2EEType()),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.entity.ejb"),"class 'EntityBean implements EntityBean {\n" +
                                                                                               "  EntityContext '_Context?;\n\n" +
                                                                                               "  public void setEntityContext(EntityContext '_Context2);\n\n" +
@@ -261,7 +261,7 @@ class JavaPredefinedConfigurations {
                                                                                               "  public void ejbPassivate();\n\n" +
                                                                                               "  public void ejbRemove();\n\n" +
                                                                                               "  public void ejbStore();\n" +
-                                                                                              "}", getJ2EE_TYPE()),
+                                                                                              "}", getJ2EEType()),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.session.ejb"),"class 'SessionBean implements SessionBean {\n" +
                                                                                                "  SessionContext '_Context?;\n\n" +
                                                                                                "  public void '_setSessionContext(SessionContext '_Context2);\n\n" +
@@ -269,22 +269,22 @@ class JavaPredefinedConfigurations {
                                                                                                "  public void ejbActivate();\n\n" +
                                                                                                "  public void ejbPassivate();\n\n" +
                                                                                                "  public void ejbRemove();\n" +
-                                                                                               "}", getJ2EE_TYPE()),
+                                                                                               "}", getJ2EEType()),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.ejb.interface"),"interface 'EjbInterface extends EJBObject {\n" +
                                                                                                  "  '_Type '_Method+('_ParameterType '_Param*);\n" +
-                                                                                                 "}", getJ2EE_TYPE()),
+                                                                                                 "}", getJ2EEType()),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.servlets"),"public class 'Servlet extends '_ParentClass:*HttpServlet {\n" +
                                                                                             "  public void '_InitServletMethod?:init ();\n" +
                                                                                             "  public void '_DestroyServletMethod?:destroy ();\n" +
                                                                                             "  void '_ServiceMethod?:*service (HttpServletRequest '_request, HttpServletResponse '_response);\n" +
                                                                                             "  void '_SpecificServiceMethod*:do.* (HttpServletRequest '_request2, HttpServletResponse '_response2); \n" +
-                                                                                            "}", getJ2EE_TYPE()),
+                                                                                            "}", getJ2EEType()),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.filters"),"public class 'Filter implements Filter {\n" +
                                                                                            "  public void '_DestroyFilterMethod?:*destroy ();\n" +
                                                                                            "  public void '_InitFilterMethod?:*init ();\n" +
                                                                                            "  public void '_FilteringMethod:*doFilter (ServletRequest '_request,\n" +
                                                                                            "    ServletResponse '_response,FilterChain '_chain);\n" +
-                                                                                           "}", getJ2EE_TYPE()),
+                                                                                           "}", getJ2EEType()),
 
       // Misc types
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.serializable.classes.and.their.serialization.implementation"),
@@ -295,15 +295,15 @@ class JavaPredefinedConfigurations {
                                "  private void '_SerializationReadHandler?:readObject (ObjectInputStream '_stream2) throws IOException, ClassNotFoundException;\n" +
                                "  Object '_SpecialSerializationReadHandler?:readResolve () throws ObjectStreamException;\n" +
                                "  Object '_SpecialSerializationWriteHandler?:writeReplace () throws ObjectStreamException;\n" +
-                               "}", getMISC_TYPE()),
+                               "}", getMiscType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.cloneable.implementations"),
                                "class '_Class implements '_Interface:*Cloneable {\n" +
                                "  Object 'CloningMethod:*clone ();\n" +
-                               "}", getMISC_TYPE()),
+                               "}", getMiscType()),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.]junit.test.cases"),
                                      "public class 'TestCase extends '_TestCaseClazz:*TestCase {\n" +
                                      "  public void '_testMethod+:test.* ();\n" +
-                                     "}", getMISC_TYPE()),
+                                     "}", getMiscType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.singletons"),
                                "class 'Class {\n" +
                                "  private 'Class('_ParameterType '_Parameter*) {\n" +
@@ -314,7 +314,7 @@ class JavaPredefinedConfigurations {
                                "    '_SomeStatement*;\n" +
                                "    return '_Instance;\n" +
                                "  }\n"+
-                               "}", getMISC_TYPE()),
+                               "}", getMiscType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.similar.methods.structure"),
                                "'_RetType '_Method('_ParameterType '_Parameter*) throws 'ExceptionType {\n" +
                                "  try {\n" +
@@ -323,10 +323,10 @@ class JavaPredefinedConfigurations {
                                "    '_CatchStatement*;\n" +
                                "    throw new 'ExceptionType('_ExceptionConstructorArgs*);\n" +
                                "  }\n" +
-                               "}", getMISC_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                               "}", getMiscType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.bean.info.classes"),
                                "class 'A implements '_:*java\\.beans\\.BeanInfo {\n" +
-                               "}", getMISC_TYPE()),
+                               "}", getMiscType()),
 
       // interesting types
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.symbol"), "'Symbol", getInterestingType()),
@@ -380,7 +380,7 @@ class JavaPredefinedConfigurations {
     return SSRBundle.message("interesting.category");
   }
 
-  private static String getJ2EE_TYPE() {
+  private static String getJ2EEType() {
     return SSRBundle.message("j2ee.category");
   }
 
@@ -392,15 +392,15 @@ class JavaPredefinedConfigurations {
     return SSRBundle.message("class.category");
   }
 
-  private static String getMETADATA_TYPE() {
+  private static String getMetadataType() {
     return SSRBundle.message("metadata.category");
   }
 
-  private static String getMISC_TYPE() {
+  private static String getMiscType() {
     return SSRBundle.message("misc.category");
   }
 
-  private static String getGENERICS_TYPE() {
+  private static String getGenericsType() {
     return SSRBundle.message("generics.category");
   }
 }

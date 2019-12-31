@@ -92,7 +92,7 @@ public class ExistingTemplatesComponent {
               SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
               SSRBundle.message("template.in.use.title", configurationName),
               CommonBundle.message("button.remove"),
-              Messages.getCANCEL_BUTTON(),
+              Messages.getCancelButton(),
               AllIcons.General.WarningDialog
             )) {
               return;

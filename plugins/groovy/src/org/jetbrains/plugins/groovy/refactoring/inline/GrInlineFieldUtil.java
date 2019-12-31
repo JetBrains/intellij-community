@@ -39,14 +39,14 @@ public class GrInlineFieldUtil {
     final Project project = field.getProject();
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-      String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", getINLINE_FIELD());
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getINLINE_FIELD(), HelpID.INLINE_FIELD);
+      String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", getInlineField());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getInlineField(), HelpID.INLINE_FIELD);
       return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
 
     if (field.getInitializerGroovy() == null) {
       String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.field");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getINLINE_FIELD(), HelpID.INLINE_FIELD);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getInlineField(), HelpID.INLINE_FIELD);
       return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
 
@@ -77,7 +77,7 @@ public class GrInlineFieldUtil {
     }
   }
 
-  public static String getINLINE_FIELD() {
+  public static String getInlineField() {
     return RefactoringBundle.message("inline.field.title");
   }
 }

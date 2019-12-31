@@ -72,7 +72,7 @@ public class VcsExecutablePathSelector {
                                              VcsBundle.getString("executable.project.override.reset.title"),
                                              VcsBundle.getString("executable.project.override.reset.globalize"),
                                              VcsBundle.getString("executable.project.override.reset.revert"),
-                                             Messages.getCANCEL_BUTTON(),
+                                             Messages.getCancelButton(),
                                              null)) {
         case Messages.NO:
           myPathSelector.setText(mySavedPath);

@@ -43,8 +43,8 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     myProject = project;
 
     mySmartPasteCombo.addItem(getInsertImportsAlways());
-    mySmartPasteCombo.addItem(getINSERT_IMPORTS_ASK());
-    mySmartPasteCombo.addItem(getINSERT_IMPORTS_NONE());
+    mySmartPasteCombo.addItem(getInsertImportsAsk());
+    mySmartPasteCombo.addItem(getInsertImportsNone());
 
     myExcludePackagesTable = new ExcludeTable(project);
     myExcludeFromImportAndCompletionPanel.add(myExcludePackagesTable.getComponent(), BorderLayout.CENTER);
@@ -65,11 +65,11 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
         break;
 
       case CodeInsightSettings.NO:
-        mySmartPasteCombo.setSelectedItem(getINSERT_IMPORTS_NONE());
+        mySmartPasteCombo.setSelectedItem(getInsertImportsNone());
         break;
 
       case CodeInsightSettings.ASK:
-        mySmartPasteCombo.setSelectedItem(getINSERT_IMPORTS_ASK());
+        mySmartPasteCombo.setSelectedItem(getInsertImportsAsk());
         break;
     }
 
@@ -126,7 +126,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     if (getInsertImportsAlways().equals(selectedItem)) {
       return CodeInsightSettings.YES;
     }
-    else if (getINSERT_IMPORTS_NONE().equals(selectedItem)) {
+    else if (getInsertImportsNone().equals(selectedItem)) {
       return CodeInsightSettings.NO;
     }
     else {
@@ -142,11 +142,11 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     return ApplicationBundle.message("combobox.insert.imports.all");
   }
 
-  private static String getINSERT_IMPORTS_ASK() {
+  private static String getInsertImportsAsk() {
     return ApplicationBundle.message("combobox.insert.imports.ask");
   }
 
-  private static String getINSERT_IMPORTS_NONE() {
+  private static String getInsertImportsNone() {
     return ApplicationBundle.message("combobox.insert.imports.none");
   }
 }
