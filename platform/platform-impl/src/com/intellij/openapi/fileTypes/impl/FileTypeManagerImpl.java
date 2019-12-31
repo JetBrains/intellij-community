@@ -275,6 +275,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       @Override
       public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         final FileType fileType = findFileTypeByName(extension.name);
+        if (fileType == null) return;
         unregisterFileType(fileType);
         if (fileType instanceof LanguageFileType) {
           final LanguageFileType languageFileType = (LanguageFileType)fileType;
