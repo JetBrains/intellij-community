@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1709,6 +1710,20 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testHasattrInConditionalExpression() {
     String[] inList = {"foo", "bar"};
     doTestHasattrContributor(inList, null);
+  }
+
+  // PY-39956
+  public void testDuplicatesFromProvider() {
+    final String testName = getTestName(true);
+
+    final VirtualFile skeletonsDir =
+      StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/" + PythonSdkUtil.SKELETON_DIR_NAME);
+
+    assertNotNull(skeletonsDir);
+    runWithAdditionalClassEntryInSdkRoots(
+      skeletonsDir,
+      () -> assertNull(doTestByText("from itertools import prod<caret>"))
+    );
   }
 
   private void doTestHasattrContributor(String[] inList, String[] notInList) {
