@@ -144,7 +144,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, getDescriptor(), order);
     addExtensionAdapter(adapter);
-    notifyListeners(false, extension, adapter.getPluginDescriptor(), myListeners);
+    notifyListeners(ExtensionEvent.ADDED, extension, adapter.getPluginDescriptor(), myListeners);
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, () -> {
@@ -157,7 +157,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
           list.remove(index);
           clearCache();
-          notifyListeners(true, adapter.myComponentInstance, adapter.getPluginDescriptor(), myListeners);
+          notifyListeners(ExtensionEvent.REMOVED, adapter.myComponentInstance, adapter.getPluginDescriptor(), myListeners);
         }
       });
     }
@@ -192,7 +192,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     clearCache();
 
-    notifyListeners(false, myAdapters.subList(firstIndex, index), myListeners);
+    notifyListeners(ExtensionEvent.ADDED, myAdapters.subList(firstIndex, index), myListeners);
   }
 
   private int findInsertionIndexForAnyOrder() {
@@ -452,7 +452,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         }
 
         if (isNotifyThatAdded) {
-          notifyListeners(false, extension, adapter.getPluginDescriptor(), listeners);
+          notifyListeners(ExtensionEvent.ADDED, extension, adapter.getPluginDescriptor(), listeners);
         }
 
         return extension;
@@ -516,10 +516,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     if (fireEvents && myListeners.length > 0) {
       if (oldList != null) {
-        notifyListeners(true, () -> ContainerUtil.map(oldList, extension ->
+        notifyListeners(ExtensionEvent.REMOVED, () -> ContainerUtil.map(oldList, extension ->
           Pair.create(extension, getDescriptor())), myListeners);
       }
-      notifyListeners(false, () -> ContainerUtil.map(list, extension ->
+      notifyListeners(ExtensionEvent.ADDED, () -> ContainerUtil.map(list, extension ->
         Pair.create(extension, getDescriptor())), myListeners);
     }
 
@@ -532,11 +532,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
           myExtensionsCacheAsArray = oldArray;
 
           if (fireEvents && myListeners.length > 0) {
-            notifyListeners(true, () -> ContainerUtil.map(list, extension ->
+            notifyListeners(ExtensionEvent.REMOVED, () -> ContainerUtil.map(list, extension ->
               Pair.create(extension, getDescriptor())), myListeners);
 
             if (oldList != null) {
-              notifyListeners(false, () -> ContainerUtil.map(oldList, extension ->
+              notifyListeners(ExtensionEvent.ADDED, () -> ContainerUtil.map(oldList, extension ->
                 Pair.create(extension, getDescriptor())), myListeners);
             }
           }
@@ -609,27 +609,27 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
     if (removedAdapters != null && !removedAdapters.isEmpty()) {
-      listenerCallbacks.add(() -> notifyListeners(true, removedAdapters, listeners));
+      listenerCallbacks.add(() -> notifyListeners(ExtensionEvent.REMOVED, removedAdapters, listeners));
     }
     return found;
   }
 
-  private void notifyListeners(boolean removeEvent,
+  private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull T extensionObject,
                                @NotNull PluginDescriptor pluginDescriptor,
                                @NotNull ExtensionPointListener<T>[] listeners) {
-    notifyListeners(removeEvent, () -> Collections.singletonList(Pair.create(extensionObject, pluginDescriptor)), listeners);
+    notifyListeners(event, () -> Collections.singletonList(Pair.create(extensionObject, pluginDescriptor)), listeners);
   }
 
-  private void notifyListeners(boolean removeEvent,
+  private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull List<? extends ExtensionComponentAdapter> adapters,
-                               ExtensionPointListener<T>[] listeners) {
-    notifyListeners(removeEvent, () -> ContainerUtil.mapNotNull(adapters, adapter ->
+                               @NotNull ExtensionPointListener<T>[] listeners) {
+    notifyListeners(event, () -> ContainerUtil.mapNotNull(adapters, adapter ->
       adapter.isInstanceCreated() ? Pair.create(adapter.createInstance(myComponentManager), adapter.getPluginDescriptor()) : null
     ), listeners);
   }
 
-  private void notifyListeners(boolean removeEvent,
+  private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull NotNullFactory<List<Pair<T, PluginDescriptor>>> extensions,
                                @NotNull ExtensionPointListener<T>[] listeners) {
     List<Pair<T, PluginDescriptor>> extensionsList = null;
@@ -652,11 +652,13 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         }
         for (Pair<? extends T, PluginDescriptor> extension : extensionsList) {
           try {
-            if (removeEvent) {
-              listener.extensionRemoved(extension.first, extension.second);
-            }
-            else {
-              listener.extensionAdded(extension.first, extension.second);
+            switch (event) {
+              case REMOVED:
+                listener.extensionRemoved(extension.first, extension.second);
+                break;
+              case ADDED:
+                listener.extensionAdded(extension.first, extension.second);
+                break;
             }
           }
           catch (ProcessCanceledException e) {
@@ -681,7 +683,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     boolean isAdded = addListener(listener);
     if (isAdded && invokeForLoadedExtensions) {
       //noinspection unchecked
-      notifyListeners(false, myAdapters, new ExtensionPointListener[]{listener});
+      notifyListeners(ExtensionEvent.ADDED, myAdapters, new ExtensionPointListener[]{listener});
     }
 
     if (parentDisposable != null) {
@@ -737,7 +739,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   public synchronized void reset() {
     List<ExtensionComponentAdapter> adapters = myAdapters;
     myAdapters = Collections.emptyList();
-    notifyListeners(true, adapters, myListeners);
+    notifyListeners(ExtensionEvent.REMOVED, adapters, myListeners);
     clearCache();
   }
 
@@ -836,7 +838,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     if (notifyListeners) {
       clearCache();
 
-      notifyListeners(false,
+      notifyListeners(ExtensionEvent.ADDED,
                       () -> ContainerUtil.map(myAdapters.subList(oldSize, myAdapters.size()),
                                               adapter -> Pair.create(processAdapter(adapter), pluginDescriptor)),
                       myListeners);
@@ -980,5 +982,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private static boolean isInsideClassInitializer(@NotNull StackTraceElement[] trace) {
     //noinspection SpellCheckingInspection
     return Arrays.stream(trace).anyMatch(s -> "<clinit>".equals(s.getMethodName()));
+  }
+
+  private enum ExtensionEvent {
+    ADDED, REMOVED
   }
 }
