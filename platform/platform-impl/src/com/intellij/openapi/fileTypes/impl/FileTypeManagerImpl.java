@@ -933,14 +933,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType type = getStdFileType(fileTypeName);
     // TODO: Abstract file types are not std one, so need to be restored specially,
     // currently there are 6 of them and restoration does not happen very often so just iteration is enough
-    if (type == PlainTextFileType.INSTANCE && !fileTypeName.equals(type.getName())) {
-      for (FileType fileType: mySchemeManager.getAllSchemes()) {
-        if (fileTypeName.equals(fileType.getName())) {
-          return fileType;
-        }
+    if (type != PlainTextFileType.INSTANCE || fileTypeName.equals(type.getName())) {
+      return type;
+    }
+    for (FileType fileType: mySchemeManager.getAllSchemes()) {
+      if (fileTypeName.equals(fileType.getName())) {
+        return fileType;
       }
     }
-    return type;
+    return null;
   }
 
   private static boolean isDetectable(@NotNull final VirtualFile file) {
