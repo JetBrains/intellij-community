@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
@@ -289,7 +290,11 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   // - DebuggerUtilsImpl.readBytesArray (getValues+boxing per element at least x8 memory usage and potential GC pressure): 14.3s
   // This should use COMPACT_STRINGS on newer java versions, thus String could be backed by a plain byte[], greatly reducing memory usage too
   @Nullable
-  static public byte[] fastReadBytesArray(Value that, ThreadReference thread) {
+  static public byte[] fastReadBytesArray(Value that, @Nullable ThreadReference thread) {
+    if (thread == null) {
+      return readBytesArray(that);
+    }
+
     try {
       final VirtualMachine vm = that.virtualMachine();
       final Type type = that.type();
@@ -309,4 +314,12 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     }
   }
 
+  @Nullable
+  static public byte[] fastReadBytesArray(Value that, @Nullable ThreadReferenceProxy thread) {
+    if (thread == null) {
+      return readBytesArray(that);
+    } else {
+      return fastReadBytesArray(that, thread.getThreadReference());
+    }
+  }
 }
