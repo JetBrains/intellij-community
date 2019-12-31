@@ -37,7 +37,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     static {
       DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.getLocalElementsGlobalComplexTypes(), "vb");
       DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.getLocalElementsTypes(), "ss");
-      DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.getGLOBAL_ELEMENTS_LOCAL_TYPES(), "rd");
+      DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.getGlobalElementsLocalTypes(), "rd");
     }
 
     private static final Map<String, String> CONTENT_TYPES = new HashMap<>();

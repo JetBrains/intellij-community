@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 
 abstract class BaseChangeListsTest : LightPlatformTestCase() {
   companion object {
-    val DEFAULT = LocalChangeList.getDEFAULT_NAME()
+    val DEFAULT = LocalChangeList.getDefaultName()
 
     fun createMockFileEditor(document: Document): FileEditor {
       val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
@@ -115,10 +115,10 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   private fun resetChangelists() {
-    clm.addChangeList(LocalChangeList.getDEFAULT_NAME(), null)
-    clm.setDefaultChangeList(LocalChangeList.getDEFAULT_NAME())
+    clm.addChangeList(LocalChangeList.getDefaultName(), null)
+    clm.setDefaultChangeList(LocalChangeList.getDefaultName())
     for (changeListName in clm.changeLists.map { it.name }) {
-      if (changeListName != LocalChangeList.getDEFAULT_NAME()) clm.removeChangeList(changeListName)
+      if (changeListName != LocalChangeList.getDefaultName()) clm.removeChangeList(changeListName)
     }
     clm.waitUntilRefreshed()
   }

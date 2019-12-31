@@ -45,11 +45,11 @@ public class SelectTagDialog extends DialogWrapper {
       createList(CvsBundle.message("dialog.title.select.revision"), revisions, getExistingRevisions());
     }
     else if (revisions.isEmpty()){
-      createList(CvsBundle.message("operation.name.select.tag"), tags, getEXISTING_TAGS());
+      createList(CvsBundle.message("operation.name.select.tag"), tags, getExistingTags());
     }
     else{
       createList(CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, getExistingRevisions());
-      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), tags, getEXISTING_TAGS());
+      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), tags, getExistingTags());
     }
 
     setOkEnabled();
@@ -137,7 +137,7 @@ public class SelectTagDialog extends DialogWrapper {
     return CvsBundle.message("label.existing.revisions");
   }
 
-  public static String getEXISTING_TAGS() {
+  public static String getExistingTags() {
     return CvsBundle.message("label.existing.tags");
   }
 }

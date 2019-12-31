@@ -295,7 +295,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
       ContentRevision bRev = change.getBeforeRevision();
       ContentRevision aRev = change.getAfterRevision();
       String beforeRevisionTitle = getRevisionTitle(bRev, getYourVersion());
-      String afterRevisionTitle = getRevisionTitle(aRev, getSERVER_VERSION());
+      String afterRevisionTitle = getRevisionTitle(aRev, getServerVersion());
 
       String title = DiffRequestFactory.getInstance().getTitle(file);
       List<String> titles = Arrays.asList(beforeRevisionTitle, getBASE_VERSION(), afterRevisionTitle);
@@ -457,7 +457,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     return DiffBundle.message("merge.version.title.our");
   }
 
-  public static String getSERVER_VERSION() {
+  public static String getServerVersion() {
     return DiffBundle.message("merge.version.title.their");
   }
 

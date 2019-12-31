@@ -63,10 +63,10 @@ public class GitResetDialog extends DialogWrapper {
     myProject = project;
     setTitle(GitBundle.getString("reset.title"));
     setOKButtonText(GitBundle.getString("reset.button"));
-    myResetTypeComboBox.addItem(getMIXED());
+    myResetTypeComboBox.addItem(getMixed());
     myResetTypeComboBox.addItem(getSoft());
     myResetTypeComboBox.addItem(getHARD());
-    myResetTypeComboBox.setSelectedItem(getMIXED());
+    myResetTypeComboBox.setSelectedItem(getMixed());
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranchLabel);
     myGitReferenceValidator = new GitReferenceValidator(myProject, myGitRootComboBox, myCommitTextField, myValidateButton,
                                                         () -> validateFields());
@@ -103,7 +103,7 @@ public class GitResetDialog extends DialogWrapper {
     else if (getHARD().equals(type)) {
       handler.addParameters("--hard");
     }
-    else if (getMIXED().equals(type)) {
+    else if (getMixed().equals(type)) {
       handler.addParameters("--mixed");
     }
     final String commit = myCommitTextField.getText().trim();
@@ -155,7 +155,7 @@ public class GitResetDialog extends DialogWrapper {
   /**
    * The --mixed reset type
    */
-  static String getMIXED() {
+  static String getMixed() {
     return GitBundle.getString("reset.type.mixed");
   }
 

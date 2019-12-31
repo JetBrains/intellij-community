@@ -91,7 +91,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     myClass = aClass;
     myHelper = helper;
 
-    String title = getREFACTORING_NAME();
+    String title = getRefactoringName();
     String qName = myClass.getQualifiedName();
     if (qName != null) {
       title += " - " + qName;
@@ -448,12 +448,12 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
     String errorString = validateData();
     if (errorString != null) { // were errors
-      CommonRefactoringUtil.showErrorMessage(getREFACTORING_NAME(), errorString, HelpID.ENCAPSULATE_FIELDS, myProject);
+      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), errorString, HelpID.ENCAPSULATE_FIELDS, myProject);
       return;
     }
 
     if (getCheckedRows().length == 0) {
-      CommonRefactoringUtil.showErrorMessage(getREFACTORING_NAME(), "Nothing found to encapsulate", HelpID.ENCAPSULATE_FIELDS, myProject);
+      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), "Nothing found to encapsulate", HelpID.ENCAPSULATE_FIELDS, myProject);
       return;
     }
 
@@ -687,7 +687,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringName() {
     return RefactoringBundle.message("encapsulate.fields.title");
   }
 }

@@ -58,7 +58,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   private final boolean myOpenInEditor;
   private String myNewVisibility; // "null" means "as is"
-  private String myCommandName = MoveMembersImpl.getREFACTORING_NAME();
+  private String myCommandName = MoveMembersImpl.getRefactoringName();
   private MoveMembersOptions myOptions;
 
   public MoveMembersProcessor(Project project, MoveMembersOptions options) {
@@ -348,7 +348,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   public void doRun() {
     if (myMembersToMove.isEmpty()){
       String message = RefactoringBundle.message("no.members.selected");
-      CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.getREFACTORING_NAME(), message, HelpID.MOVE_MEMBERS, myProject);
+      CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.getRefactoringName(), message, HelpID.MOVE_MEMBERS, myProject);
       return;
     }
     super.doRun();

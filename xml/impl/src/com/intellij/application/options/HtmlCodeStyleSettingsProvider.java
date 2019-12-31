@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public static class Holder {
-    public static String getDISPLAY_NAME() {
+    public static String getDisplayName() {
       return ApplicationBundle.message("title.html");
     }
   }
@@ -39,7 +39,7 @@ public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, Holder.getDISPLAY_NAME()) {
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, Holder.getDisplayName()) {
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new HtmlCodeStyleMainPanel(settings, originalSettings);
@@ -54,7 +54,7 @@ public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    return Holder.getDISPLAY_NAME();
+    return Holder.getDisplayName();
   }
 
   @Nullable

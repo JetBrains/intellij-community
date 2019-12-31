@@ -40,7 +40,7 @@ import java.util.*;
 public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static final Logger LOG = Logger.getInstance(JavaFindUsagesHandler.class);
   /**
-   * Use {code {@link #getACTION_STRING()}} instead
+   * Use {code {@link #getActionString()}} instead
    */
   @Deprecated
   protected static  final String ACTION_STRING = "to find usages of";
@@ -176,7 +176,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           if (doSearch) {
             final Set<PsiElement> elements = new THashSet<>();
             for (PsiMethod accessor : accessors) {
-              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, getACTION_STRING()));
+              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, getActionString()));
             }
             return PsiUtilCore.toPsiElementArray(elements);
           }
@@ -265,7 +265,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return super.findReferencesToHighlight(target, searchScope);
   }
 
-  protected static String getACTION_STRING() {
+  protected static String getActionString() {
     return FindBundle.message("find.super.method.warning.action.verb");
   }
 }

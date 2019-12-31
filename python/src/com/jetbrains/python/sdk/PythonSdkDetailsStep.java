@@ -59,7 +59,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     final List<String> options = new ArrayList<>();
     options.add(getAdd());
     if (showAll) {
-      options.add(getALL());
+      options.add(getAll());
     }
     return options;
   }
@@ -67,11 +67,11 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Nullable
   @Override
   public ListSeparator getSeparatorAbove(String value) {
-    return getALL().equals(value) ? new ListSeparator() : null;
+    return getAll().equals(value) ? new ListSeparator() : null;
   }
 
   private void optionSelected(final String selectedValue) {
-    if (!getALL().equals(selectedValue) && myShowAll != null)
+    if (!getAll().equals(selectedValue) && myShowAll != null)
       Disposer.dispose(myShowAll.getDisposable());
     if (getAdd().equals(selectedValue)) {
       PyAddSdkDialog.show(myProject, myModule, Arrays.asList(myExistingSdks), sdk -> mySdkAddedCallback.consume(sdk));
@@ -96,7 +96,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     return PyBundle.message("sdk.details.step.add");
   }
 
-  private static String getALL() {
+  private static String getAll() {
     return PyBundle.message("sdk.details.step.show.all");
   }
 }

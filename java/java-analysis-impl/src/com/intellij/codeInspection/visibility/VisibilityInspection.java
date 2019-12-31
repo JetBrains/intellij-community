@@ -243,7 +243,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       final String message;
       String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
       if (access.equals(PsiModifier.PRIVATE)) {
-        message = getCAN_BE_PRIVATE();
+        message = getCanBePrivate();
         quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
       }
       else {
@@ -691,7 +691,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getCAN_BE_PRIVATE() {
+  private static String getCanBePrivate() {
     return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
   }
 

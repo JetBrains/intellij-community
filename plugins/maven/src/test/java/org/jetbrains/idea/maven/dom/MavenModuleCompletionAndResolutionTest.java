@@ -514,7 +514,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(getCREATE_MODULE_WITH_PARENT_INTENTION());
+    IntentionAction i = getIntentionAtCaret(getCreateModuleWithParentIntention());
     assertNotNull(i);
     myFixture.launchAction(i);
 
@@ -556,7 +556,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>ppp/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(getCREATE_MODULE_WITH_PARENT_INTENTION());
+    IntentionAction i = getIntentionAtCaret(getCreateModuleWithParentIntention());
     assertNotNull(i);
     myFixture.launchAction(i);
 
@@ -602,7 +602,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                                 "  <module>../ppp/new<caret>Module</module>" +
                                 "</modules>"));
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    IntentionAction i = getIntentionAtCaret(parentPom, getCREATE_MODULE_WITH_PARENT_INTENTION());
+    IntentionAction i = getIntentionAtCaret(parentPom, getCreateModuleWithParentIntention());
     assertNotNull(i);
     myFixture.launchAction(i);
 
@@ -692,7 +692,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     return MavenDomBundle.message("fix.create.module");
   }
 
-  private static String getCREATE_MODULE_WITH_PARENT_INTENTION() {
+  private static String getCreateModuleWithParentIntention() {
     return MavenDomBundle.message("fix.create.module.with.parent");
   }
 }

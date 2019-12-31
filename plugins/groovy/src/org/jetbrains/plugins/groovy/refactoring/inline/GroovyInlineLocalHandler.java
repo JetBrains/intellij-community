@@ -149,7 +149,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
     if (initializer == null || writeInstr == null) {
       String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.local.var");
-      CommonRefactoringUtil.showErrorHint(variable.getProject(), editor, message, getINLINE_VARIABLE(), HelpID.INLINE_VARIABLE);
+      CommonRefactoringUtil.showErrorHint(variable.getProject(), editor, message, getInlineVariable(), HelpID.INLINE_VARIABLE);
       return null;
     }
 
@@ -160,7 +160,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
     final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName);
     RefactoringMessageDialog dialog =
-      new RefactoringMessageDialog(getINLINE_VARIABLE(), question, HelpID.INLINE_VARIABLE, "OptionPane.questionIcon", true, project);
+      new RefactoringMessageDialog(getInlineVariable(), question, HelpID.INLINE_VARIABLE, "OptionPane.questionIcon", true, project);
     if (dialog.showAndGet()) {
       return new InlineLocalVarSettings(initializer, writeInstructionNumber, flow);
     }
@@ -171,10 +171,10 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return getINLINE_VARIABLE();
+    return getInlineVariable();
   }
 
-  public static String getINLINE_VARIABLE() {
+  public static String getInlineVariable() {
     return RefactoringBundle.message("inline.variable.title");
   }
 }

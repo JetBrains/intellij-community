@@ -38,20 +38,20 @@ class JavaPredefinedConfigurations {
 
       // Operators
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.block.dcls"), "{\n  '_Type 'Var+ = '_Init?;\n  '_BlockStatements*;\n}",
-                               getOPERATOR_TYPE()),
+                               getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.trys"), "try {\n  '_TryStatement+;\n} catch('_ExceptionType '_Exception) {\n  '_CatchStatement*;\n}",
-                               getOPERATOR_TYPE()),
+                               getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.ifs"), "if ('_Condition) {\n  '_ThenStatement*;\n} else {\n  '_ElseStatement*;\n}",
-                               getOPERATOR_TYPE()),
+                               getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switches"), "switch('_Condition) {\n  '_Statement*;\n}",
-                               getOPERATOR_TYPE()),
+                               getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.foreaches"), "for ('_Type '_Variable : '_Expression) {\n  '_Statement*;\n}",
-                               getOPERATOR_TYPE()),
+                               getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"), "[!within( statement in if )]LOG.debug('_Argument*);",
-                               getOPERATOR_TYPE()),
-      createSearchTemplateInfo("statement in if", "if('_condition) { 'statement*; }", getOPERATOR_TYPE()),
+                               getOperatorType()),
+      createSearchTemplateInfo("statement in if", "if('_condition) { 'statement*; }", getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assert.without.description"), "assert '_condition : '_description{0};",
-                               getOPERATOR_TYPE()),
+                               getOperatorType()),
 
       // Class based
       createSearchTemplateInfo(
@@ -384,7 +384,7 @@ class JavaPredefinedConfigurations {
     return SSRBundle.message("j2ee.category");
   }
 
-  private static String getOPERATOR_TYPE() {
+  private static String getOperatorType() {
     return SSRBundle.message("operators.category");
   }
 

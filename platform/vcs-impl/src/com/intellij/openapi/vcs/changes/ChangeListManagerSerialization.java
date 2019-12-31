@@ -137,7 +137,7 @@ class ChangeListManagerSerialization {
   @NotNull
   private static LocalChangeListImpl readChangeList(@NotNull Element listNode, @NotNull Project project) {
     String id = listNode.getAttributeValue(ATT_ID);
-    String name = StringUtil.notNullize(listNode.getAttributeValue(ATT_NAME), LocalChangeList.getDEFAULT_NAME());
+    String name = StringUtil.notNullize(listNode.getAttributeValue(ATT_NAME), LocalChangeList.getDefaultName());
     String comment = StringUtil.notNullize(listNode.getAttributeValue(ATT_COMMENT));
     ChangeListData data = ChangeListData.readExternal(listNode);
     boolean isDefault = ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT));

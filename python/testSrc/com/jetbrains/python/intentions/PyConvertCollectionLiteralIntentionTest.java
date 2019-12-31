@@ -64,12 +64,12 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-9419
   public void testConvertListToTuple() {
-    doIntentionTest(getCONVERT_LIST_TO_TUPLE());
+    doIntentionTest(getConvertListToTuple());
   }
 
   // PY-9419
   public void testConvertListWithoutClosingBracketToTuple() {
-    doIntentionTest(getCONVERT_LIST_TO_TUPLE());
+    doIntentionTest(getConvertListToTuple());
   }
 
   // PY-9419
@@ -99,22 +99,22 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-16553
   public void testConvertOneElementListToTuple() {
-    doIntentionTest(getCONVERT_LIST_TO_TUPLE());
+    doIntentionTest(getConvertListToTuple());
   }
   
   // PY-16553
   public void testConvertOneElementIncompleteListToTuple() {
-    doIntentionTest(getCONVERT_LIST_TO_TUPLE());
+    doIntentionTest(getConvertListToTuple());
   }
 
   // PY-16553
   public void testConvertOneElementListWithCommentToTuple() {
-    doIntentionTest(getCONVERT_LIST_TO_TUPLE());
+    doIntentionTest(getConvertListToTuple());
   }
   
   // PY-16553
   public void testConvertOneElementListWithCommaAfterCommentToTuple() {
-    doIntentionTest(getCONVERT_LIST_TO_TUPLE());
+    doIntentionTest(getConvertListToTuple());
   }
 
   // PY-16553
@@ -150,7 +150,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
     return PyBundle.message("INTN.convert.collection.literal.text", "tuple", "set");
   }
 
-  private static String getCONVERT_LIST_TO_TUPLE() {
+  private static String getConvertListToTuple() {
     return PyBundle.message("INTN.convert.collection.literal.text", "list", "tuple");
   }
 

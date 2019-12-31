@@ -106,7 +106,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     return SpellcheckerIcons.Spellcheck;
   }
 
-  public static String getFIX_NAME() {
+  public static String getFixName() {
     return SpellCheckerBundle.message("save.0.to.1", "", DOTS);
   }
 }

@@ -60,7 +60,7 @@ public class ReadWriteStatistics {
       mySentFromLastUpdateBytes = 0;
       myShownSentKBytes = mySentBytes / KB;
     }
-    showProgress(getPROGRESS_SENDING());
+    showProgress(getProgressSending());
   }
 
   private void showProgress(String mesasge) {
@@ -92,7 +92,7 @@ public class ReadWriteStatistics {
     return CvsBundle.message("progress.text.kb.sent");
   }
 
-  private static String getPROGRESS_SENDING() {
+  private static String getProgressSending() {
     return CvsBundle.message("progress.text.sending.data.to.server");
   }
 

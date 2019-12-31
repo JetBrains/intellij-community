@@ -80,8 +80,8 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   }
 
   protected void addIndentField() {
-    myIndentField = createIndentTextField(getINDENT_LABEL(), MIN_INDENT_SIZE, MAX_INDENT_SIZE, DEFAULT_INDENT_SIZE);
-    myIndentLabel = new JLabel(getINDENT_LABEL());
+    myIndentField = createIndentTextField(getIndentLabel(), MIN_INDENT_SIZE, MAX_INDENT_SIZE, DEFAULT_INDENT_SIZE);
+    myIndentLabel = new JLabel(getIndentLabel());
     add(myIndentLabel, myIndentField);
   }
 
@@ -219,7 +219,7 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     myCbUseTab.setVisible(visible);
   }
 
-  private static String getINDENT_LABEL() {
+  private static String getIndentLabel() {
     return ApplicationBundle.message("editbox.indent.indent");
   }
 

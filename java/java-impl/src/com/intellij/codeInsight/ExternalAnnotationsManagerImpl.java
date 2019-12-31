@@ -941,7 +941,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     private final Project myProject;
 
     MyExternalPromptDialog(final Project project) {
-      super(project, getMESSAGE(), ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
+      super(project, getMessage(), ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
     }
@@ -992,7 +992,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     @Override
     protected JComponent createNorthPanel() {
       final JPanel northPanel = (JPanel)super.createNorthPanel();
-      northPanel.add(new JLabel(getMESSAGE()), BorderLayout.CENTER);
+      northPanel.add(new JLabel(getMessage()), BorderLayout.CENTER);
       return northPanel;
     }
 
@@ -1005,7 +1005,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       return ProjectBundle.message("external.annotations.in.code.option");
     }
 
-    private static String getMESSAGE() {
+    private static String getMessage() {
       return ProjectBundle.message("external.annotations.suggestion.message");
     }
   }

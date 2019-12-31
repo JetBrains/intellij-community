@@ -58,11 +58,11 @@ public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTes
   }
 
   public void testEmptySaveTo() {
-    doNoQuickFixTest(SaveTo.getFIX_NAME());
+    doNoQuickFixTest(SaveTo.getFixName());
   }
 
   public void testNoTypoSaveTo() {
-    doNoQuickFixTest(SaveTo.getFIX_NAME());
+    doNoQuickFixTest(SaveTo.getFixName());
   }
 
   public void testNoTypoRenameTo() {

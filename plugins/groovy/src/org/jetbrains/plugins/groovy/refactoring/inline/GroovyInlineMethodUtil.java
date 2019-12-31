@@ -57,7 +57,7 @@ public class GroovyInlineMethodUtil {
 
     final Project project = method.getProject();
     if (method.isConstructor()) {
-      String message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.constructors", getREFACTORING_NAME());
+      String message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.constructors", getRefactoringName());
       showErrorMessage(message, project, editor);
       return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
@@ -69,7 +69,7 @@ public class GroovyInlineMethodUtil {
       PsiElement element = reference.getElement();
 
       if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
-        String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", getREFACTORING_NAME());
+        String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", getRefactoringName());
         showErrorMessage(message, project, editor);
         return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
@@ -77,7 +77,7 @@ public class GroovyInlineMethodUtil {
       GrCallExpression call = (GrCallExpression)element.getParent();
 
       if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
-        String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", getREFACTORING_NAME());
+        String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", getRefactoringName());
         showErrorMessage(message, project, editor);
         return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
@@ -86,7 +86,7 @@ public class GroovyInlineMethodUtil {
       GroovyRefactoringUtil.highlightOccurrences(project, editor, new GrExpression[]{call});
       if (hasBadReturns(method) && !isTailMethodCall(call)) {
         String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow",
-                                                         getREFACTORING_NAME());
+                                                         getRefactoringName());
         showErrorMessage(message, project, editor);
         return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
@@ -94,7 +94,7 @@ public class GroovyInlineMethodUtil {
     else {
       if (hasBadReturns(method)) {
         String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow",
-                                                         getREFACTORING_NAME());
+                                                         getRefactoringName());
         showErrorMessage(message, project, editor);
         return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
@@ -102,8 +102,8 @@ public class GroovyInlineMethodUtil {
 
     if (method.getBlock() == null) {
       String message = method.hasModifierProperty(PsiModifier.ABSTRACT)
-                       ? GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getREFACTORING_NAME())
-                       : GroovyRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", getREFACTORING_NAME());
+                       ? GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getRefactoringName())
+                       : GroovyRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", getRefactoringName());
       showErrorMessage(message, project, editor);
       return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
@@ -230,7 +230,7 @@ public class GroovyInlineMethodUtil {
   }
 
   private static void showErrorMessage(String message, final Project project, Editor editor) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.INLINE_METHOD);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
   }
 
   static boolean isStaticMethod(@NotNull GrMethod method) {
@@ -603,7 +603,7 @@ public class GroovyInlineMethodUtil {
     return true;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return GroovyRefactoringBundle.message("inline.method.title");
   }
 }

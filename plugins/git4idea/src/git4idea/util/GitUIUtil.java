@@ -31,7 +31,7 @@ import java.util.List;
 public class GitUIUtil {
   /**
    * Text containing in the label when there is no current branch
-   * @deprecated Use {@link #getNO_CURRENT_BRANCH()} instead
+   * @deprecated Use {@link #getNoCurrentBranch()} instead
    */
   @Deprecated
   public static final String NO_CURRENT_BRANCH = "<no active branch>";
@@ -150,7 +150,7 @@ public class GitUIUtil {
           assert repo != null : "The repository must not be null";
           GitBranch current = repo.getCurrentBranch();
           if (current == null) {
-            currentBranchLabel.setText(getNO_CURRENT_BRANCH());
+            currentBranchLabel.setText(getNoCurrentBranch());
           }
           else {
             currentBranchLabel.setText(current.getName());
@@ -334,7 +334,7 @@ public class GitUIUtil {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
 
-  public static String getNO_CURRENT_BRANCH() {
+  public static String getNoCurrentBranch() {
     return GitBundle.getString("common.no.active.branch");
   }
 }

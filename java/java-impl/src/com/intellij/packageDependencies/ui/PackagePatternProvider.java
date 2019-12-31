@@ -44,7 +44,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
       if (TreeModelBuilder.getProductionName().equals(name)) {
         scope1 = PatternPackageSet.SCOPE_SOURCE;
       }
-      else if (TreeModelBuilder.getTEST_NAME().equals(name)) {
+      else if (TreeModelBuilder.getTestName().equals(name)) {
         scope1 = PatternPackageSet.SCOPE_TEST;
       }
       else if (TreeModelBuilder.getLIBRARY_NAME().equals(name)) {

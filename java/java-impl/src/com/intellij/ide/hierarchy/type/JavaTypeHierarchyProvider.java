@@ -76,7 +76,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
   public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
     final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)hierarchyBrowser;
     final String typeName =
-      browser.isInterface() ? TypeHierarchyBrowserBase.getSUBTYPES_HIERARCHY_TYPE() : TypeHierarchyBrowserBase.getTypeHierarchyType();
+      browser.isInterface() ? TypeHierarchyBrowserBase.getSubtypesHierarchyType() : TypeHierarchyBrowserBase.getTypeHierarchyType();
     browser.changeView(typeName);
   }
 }

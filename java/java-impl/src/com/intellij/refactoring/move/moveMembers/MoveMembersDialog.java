@@ -78,7 +78,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     myProject = project;
     mySourceClass = sourceClass;
     myMoveCallback = moveCallback;
-    setTitle(MoveMembersImpl.getREFACTORING_NAME());
+    setTitle(MoveMembersImpl.getRefactoringName());
 
     mySourceClassName = mySourceClass.getQualifiedName();
 
@@ -226,7 +226,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     if (message != null) {
       if (message.length() != 0) {
         CommonRefactoringUtil.showErrorMessage(
-          MoveMembersImpl.getREFACTORING_NAME(),
+          MoveMembersImpl.getRefactoringName(),
           message,
           HelpID.MOVE_MEMBERS,
           myProject);
@@ -284,7 +284,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
           }
           catch (IncorrectOperationException e) {
             CommonRefactoringUtil.showErrorMessage(
-              MoveMembersImpl.getREFACTORING_NAME(),
+              MoveMembersImpl.getRefactoringName(),
               e.getMessage(),
               HelpID.MOVE_MEMBERS,
               myProject);
@@ -350,7 +350,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     int answer = Messages.showYesNoDialog(
       myProject,
       RefactoringBundle.message("class.0.does.not.exist", fqName),
-      MoveMembersImpl.getREFACTORING_NAME(),
+      MoveMembersImpl.getRefactoringName(),
       Messages.getQuestionIcon()
     );
     if (answer != Messages.YES) return null;

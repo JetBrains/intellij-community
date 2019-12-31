@@ -114,7 +114,7 @@ private class DefaultNameChangeListCleaner(val project: Project, commitState: Ch
 
   fun clean() {
     if (isDefaultNameChangeList && isChangeListFullyIncluded) {
-      ChangeListManager.getInstance(project).editComment(LocalChangeList.getDEFAULT_NAME(), "")
+      ChangeListManager.getInstance(project).editComment(LocalChangeList.getDefaultName(), "")
     }
   }
 }

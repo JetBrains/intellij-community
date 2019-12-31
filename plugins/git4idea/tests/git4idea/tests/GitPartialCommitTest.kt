@@ -58,7 +58,7 @@ class GitPartialCommitTest : GitSingleRepoTest() {
       modified("a.java")
     }
 
-    val changes = changeListManager.findChangeList(LocalChangeList.getDEFAULT_NAME())!!.changes
+    val changes = changeListManager.findChangeList(LocalChangeList.getDefaultName())!!.changes
     commit(changes)
 
     assertChangesWithRefresh {

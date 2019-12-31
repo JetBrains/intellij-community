@@ -53,7 +53,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public abstract LocalChangeList copy();
 
   public boolean hasDefaultName() {
-    return getDEFAULT_NAME().equals(getName()) || OLD_DEFAULT_NAME.equals(getName());
+    return getDefaultName().equals(getName()) || OLD_DEFAULT_NAME.equals(getName());
   }
 
   public boolean isBlank() {
@@ -78,7 +78,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   @Deprecated
   public abstract void setReadOnly(boolean isReadOnly);
 
-  public static String getDEFAULT_NAME() {
+  public static String getDefaultName() {
     return VcsBundle.message("changes.default.changelist.name");
   }
 }

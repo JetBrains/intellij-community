@@ -255,29 +255,29 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_LEADING_ASTERISKS_ARE_ENABLED",
                                 ApplicationBundle.message("checkbox.enable.leading.asterisks"),
-                                getOTHER_GROUP());
+                                getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_USE_THROWS_NOT_EXCEPTION",
                                 ApplicationBundle.message("checkbox.use.throws.rather.than.exception"),
-                                getOTHER_GROUP());
+                                getOtherGroup());
       consumer.showStandardOptions("WRAP_COMMENTS");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_P_AT_EMPTY_LINES",
                                 ApplicationBundle.message("checkbox.generate.p.on.empty.lines"),
-                                getOTHER_GROUP());
+                                getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_LINES",
                                 ApplicationBundle.message("checkbox.keep.empty.lines"),
-                                getOTHER_GROUP());
+                                getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_DO_NOT_WRAP_ONE_LINE_COMMENTS",
                                 ApplicationBundle.message("checkbox.do.not.wrap.one.line.comments"),
-                                getOTHER_GROUP());
+                                getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_PRESERVE_LINE_FEEDS",
                                 ApplicationBundle.message("checkbox.preserve.line.feeds"),
-                                getOTHER_GROUP());
+                                getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_PARAM_DESCRIPTION_ON_NEW_LINE",
                                 ApplicationBundle.message("checkbox.param.description.on.new.line"),
-                                getOTHER_GROUP());
+                                getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_INDENT_ON_CONTINUATION",
                                 ApplicationBundle.message("checkbox.param.indent.on.continuation"),
-                                getOTHER_GROUP());
+                                getOtherGroup());
 
 
     }
