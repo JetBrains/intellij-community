@@ -38,12 +38,12 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.hash.HashBasedIndexGenerator;
+import com.intellij.util.indexing.hash.StubHashBasedIndexGenerator;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.index.stubs.StubHashBasedIndexGenerator;
 
 import java.io.File;
 import java.io.IOException;
