@@ -372,7 +372,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     popup.closeOk(null);
   }
 
-  static String getEMPTY_FILE_TEXT() {
+  static String getEmptyFileText() {
     return IdeBundle.message("recent.locations.popup.empty.file.text");
   }
 }

@@ -21,7 +21,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     myReferenceExpression = ref;
     myInvokedOnReference = myReferenceExpression != null;
 
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
     myOccurrencesNumber = getNumberOfOccurrences(myField);
     init();
   }
@@ -107,7 +107,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     return HelpID.INLINE_FIELD;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("inline.field.title");
   }
 }

@@ -54,7 +54,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   }
 
   public PullUpDialog(Project project, PsiClass aClass, List<PsiClass> superClasses, MemberInfoStorage memberInfoStorage, Callback callback) {
-    super(project, aClass, superClasses, memberInfoStorage, JavaPullUpHandler.getREFACTORING_NAME());
+    super(project, aClass, superClasses, memberInfoStorage, JavaPullUpHandler.getRefactoringName());
     myCallback = callback;
 
     init();

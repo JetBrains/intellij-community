@@ -27,7 +27,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     myInvokedOnReference = ref != null;
     myOccurrencesNumber = getNumberOfOccurrences(method);
 
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
     init();
   }
 
@@ -118,7 +118,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD = searchInTextOccurrences;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("inline.method.title");
   }
 }

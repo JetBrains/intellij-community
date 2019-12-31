@@ -52,13 +52,13 @@ public class LightEditUtil {
   static boolean confirmClose(@NotNull String message,
                               @NotNull String title,
                               @NotNull Runnable saveRunnable) {
-    final String[] options = {getCLOSE_SAVE(), getCLOSE_DISCARD(), getCLOSE_CANCEL()};
+    final String[] options = {getCloseSave(), getCLOSE_DISCARD(), getCLOSE_CANCEL()};
     int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
     if (result >= 0) {
       if (getCLOSE_CANCEL().equals(options[result])) {
         return false;
       }
-      else if (getCLOSE_SAVE().equals(options[result])) {
+      else if (getCloseSave().equals(options[result])) {
         saveRunnable.run();
       }
       return true;
@@ -90,7 +90,7 @@ public class LightEditUtil {
           .map(fileType -> fileType.getDefaultExtension()).sorted().distinct().collect(Collectors.toList()));
   }
 
-  private static String getCLOSE_SAVE() {
+  private static String getCloseSave() {
     return ApplicationBundle.message("light.edit.close.save");
   }
 

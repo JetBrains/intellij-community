@@ -28,7 +28,7 @@ public class DeprecationUtil {
     return InspectionsBundle.message("inspection.deprecated.display.name");
   }
 
-  public static String getFOR_REMOVAL_DISPLAY_NAME() {
+  public static String getForRemovalDisplayName() {
     return InspectionsBundle.message("inspection.marked.for.removal.display.name");
   }
 }

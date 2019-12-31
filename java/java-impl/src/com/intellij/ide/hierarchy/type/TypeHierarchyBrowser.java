@@ -47,7 +47,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     actionGroup.add(new ChangeScopeAction() {
       @Override
       protected boolean isEnabled() {
-        return !Comparing.strEqual(getCurrentViewType(), getSUPERTYPES_HIERARCHY_TYPE());
+        return !Comparing.strEqual(getCurrentViewType(), getSupertypesHierarchyType());
       }
     });
   }
@@ -87,7 +87,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
-    if (getSUPERTYPES_HIERARCHY_TYPE().equals(typeName)) {
+    if (getSupertypesHierarchyType().equals(typeName)) {
       return new SupertypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
     }
     else if (getSubtypesHierarchyType().equals(typeName)) {

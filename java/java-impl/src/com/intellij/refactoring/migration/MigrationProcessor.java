@@ -128,7 +128,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
-      Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), getREFACTORING_NAME());
+      Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), getRefactoringName());
       return false;
     }
     setPreviewUsages(true);
@@ -180,7 +180,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return getREFACTORING_NAME();
+    return getRefactoringName();
   }
 
   static class MigrationUsageInfo extends UsageInfo {
@@ -192,7 +192,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringName() {
     return RefactoringBundle.message("migration.title");
   }
 }

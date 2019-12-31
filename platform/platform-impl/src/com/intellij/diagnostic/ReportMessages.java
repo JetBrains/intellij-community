@@ -24,14 +24,14 @@ import com.intellij.notification.NotificationGroup;
 
 public class ReportMessages {
   /**
-   * Use {code {@link #getERROR_REPORT()}} instead
+   * Use {code {@link #getErrorReport()}} instead
    */
   @Deprecated
   public static final String ERROR_REPORT = "Error Report";
 
-  public static String getERROR_REPORT() {
+  public static String getErrorReport() {
     return DiagnosticBundle.message("error.report.title");
   }
 
-  public static final NotificationGroup GROUP = new NotificationGroup(getERROR_REPORT(), NotificationDisplayType.BALLOON, false);
+  public static final NotificationGroup GROUP = new NotificationGroup(getErrorReport(), NotificationDisplayType.BALLOON, false);
 }

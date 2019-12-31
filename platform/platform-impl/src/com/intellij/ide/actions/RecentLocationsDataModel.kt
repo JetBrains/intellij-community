@@ -3,7 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-import com.intellij.ide.actions.RecentLocationsAction.getEMPTY_FILE_TEXT
+import com.intellij.ide.actions.RecentLocationsAction.getEmptyFileText
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.*
@@ -131,7 +131,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
     val actualTextRange = getTrimmedRange(fileDocument, lineNumber)
     var documentText = fileDocument.getText(actualTextRange)
     if (actualTextRange.isEmpty) {
-      documentText = getEMPTY_FILE_TEXT()
+      documentText = getEmptyFileText()
     }
 
     val editorFactory = EditorFactory.getInstance()

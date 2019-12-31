@@ -74,7 +74,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-9419
   public void testConvertListToSet() {
-    doIntentionTest(getCONVERT_LIST_TO_SET());
+    doIntentionTest(getConvertListToSet());
   }
 
   // PY-9419
@@ -139,7 +139,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
   
   // PY-19399
   public void testCannotConvertEmptyListToSet() {
-    doNegativeTest(getCONVERT_LIST_TO_SET());
+    doNegativeTest(getConvertListToSet());
   }
 
   private static String getConvertTupleToList() {
@@ -154,7 +154,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
     return PyBundle.message("INTN.convert.collection.literal.text", "list", "tuple");
   }
 
-  private static String getCONVERT_LIST_TO_SET() {
+  private static String getConvertListToSet() {
     return PyBundle.message("INTN.convert.collection.literal.text", "list", "set");
   }
 

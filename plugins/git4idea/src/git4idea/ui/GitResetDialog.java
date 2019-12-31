@@ -65,7 +65,7 @@ public class GitResetDialog extends DialogWrapper {
     setOKButtonText(GitBundle.getString("reset.button"));
     myResetTypeComboBox.addItem(getMixed());
     myResetTypeComboBox.addItem(getSoft());
-    myResetTypeComboBox.addItem(getHARD());
+    myResetTypeComboBox.addItem(getHard());
     myResetTypeComboBox.setSelectedItem(getMixed());
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranchLabel);
     myGitReferenceValidator = new GitReferenceValidator(myProject, myGitRootComboBox, myCommitTextField, myValidateButton,
@@ -100,7 +100,7 @@ public class GitResetDialog extends DialogWrapper {
     if (getSoft().equals(type)) {
       handler.addParameters("--soft");
     }
-    else if (getHARD().equals(type)) {
+    else if (getHard().equals(type)) {
       handler.addParameters("--hard");
     }
     else if (getMixed().equals(type)) {
@@ -162,7 +162,7 @@ public class GitResetDialog extends DialogWrapper {
   /**
    * The --hard reset type
    */
-  static String getHARD() {
+  static String getHard() {
     return GitBundle.getString("reset.type.hard");
   }
 }

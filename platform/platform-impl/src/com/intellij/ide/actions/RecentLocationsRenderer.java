@@ -128,9 +128,9 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     editor.setBackgroundColor(getBackgroundColor(colorsScheme, selected));
     editor.setBorder(JBUI.Borders.empty(0, 4, 6, 0));
 
-    if (RecentLocationsAction.getEMPTY_FILE_TEXT().equals(editor.getDocument().getText())) {
+    if (RecentLocationsAction.getEmptyFileText().equals(editor.getDocument().getText())) {
       editor.getMarkupModel().addRangeHighlighter(0,
-                                                  RecentLocationsAction.getEMPTY_FILE_TEXT().length(),
+                                                  RecentLocationsAction.getEmptyFileText().length(),
                                                   HighlighterLayer.SYNTAX,
                                                   createEmptyTextForegroundTextAttributes(colorsScheme),
                                                   HighlighterTargetArea.EXACT_RANGE);

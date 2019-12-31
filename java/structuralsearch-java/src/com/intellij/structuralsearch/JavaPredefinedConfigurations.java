@@ -57,126 +57,126 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.methods.of.the.class"),
         "'_ReturnType? '_Method('_ParameterType '_Parameter*);",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.deprecated.methods"),
         "@Deprecated\n'_ReturnType '_Method('_ParameterType '_Parameter*);",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.fields.of.the.class"),
         "class '_Class { \n  '_FieldType 'Field+ = '_Init?;\n}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy"),
         "class '_ { \n  '_ReturnType 'Method+:* ('_ParameterType '_Parameter*);\n}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.all.fields.of.the.class"),
         "class '_Class { \n  '_FieldType 'Field+:* = '_Init?;\n}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.instance.fields.of.the.class"),
         "class '_Class { \n  @Modifier(\"Instance\") '_FieldType 'Field+ = '_Init?;\n}",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.packagelocal.fields.of.the.class"),
         "@Modifier(\"packageLocal\") '_FieldType 'Field = '_Init?;",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.constructors.of.the.class"),
         "'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.classes"),
         "class 'Class:[script( \"!__context__.interface && !__context__.enum\" )] {}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.classes.interfaces.enums"),
         "class 'ClassInterfaceEnum {}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.direct.subclasses"),
         "class 'Class extends '_Parent {}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.implementors.of.interface.within.hierarchy"),
         "class 'Class implements '_Interface:* {}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.interfaces"),
         "interface 'Interface {}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.inner.classes"),
         "class '_ {\n  class 'InnerClass+ {}\n}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.all.inner.classes.within.hierarchy"),
         "class '_Class {\n  class 'InnerClass+:* {}\n}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.anonymous.classes"),
         "new 'AnonymousClass() {}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.implements.two.interfaces"),
         "class 'A implements '_Interface1:[regex( *java\\.lang\\.Cloneable )], '_Interface2:*java\\.io\\.Serializable {\n" +"}",
-        getCLASS_TYPE()
+        getClassType()
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.static.blocks"),
         "static {\n  '_Statement*;\n}",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.instance.initialization.blocks"),
         "@Modifier(\"Instance\") {\n  '_Statement*;\n}",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.any.initialization.blocks"),
         "{\n  '_Statement*;\n}",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.enums"),
         "enum 'Enum {}",
-        getCLASS_TYPE()
+        getClassType()
       ),
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.with.parameterless.constructors"),
         "class 'Class {\n  '_Method{0,0}('_ParameterType '_Parameter+);\n}",
-        getCLASS_TYPE()
+        getClassType()
       ),
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.static.fields.without.final"),
         "static '_Type 'Variable+:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;",
-        getCLASS_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
+        getClassType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT
       ),
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.interfaces.having.no.descendants"),
         "interface 'A:[script( \"com.intellij.psi.search.searches.ClassInheritorsSearch.search(__context__).findFirst() == null\" )] {}",
-        getCLASS_TYPE()
+        getClassType()
       ),
 
       // Generics
@@ -388,7 +388,7 @@ class JavaPredefinedConfigurations {
     return SSRBundle.message("operators.category");
   }
 
-  private static String getCLASS_TYPE() {
+  private static String getClassType() {
     return SSRBundle.message("class.category");
   }
 

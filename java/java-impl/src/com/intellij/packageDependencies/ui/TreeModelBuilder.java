@@ -104,7 +104,7 @@ public class TreeModelBuilder {
     if (myGroupByScopeType) {
       mySourceRoot = new GeneralGroupNode(getProductionName(), AllIcons.Modules.SourceFolder, project);
       myTestRoot = new GeneralGroupNode(getTestName(), AllIcons.Modules.TestSourceFolder, project);
-      myLibsRoot = new GeneralGroupNode(getLIBRARY_NAME(), AllIcons.Nodes.PpLibFolder, project);
+      myLibsRoot = new GeneralGroupNode(getLibraryName(), AllIcons.Nodes.PpLibFolder, project);
       myRoot.add(mySourceRoot);
       myRoot.add(myTestRoot);
       myRoot.add(myLibsRoot);
@@ -471,7 +471,7 @@ public class TreeModelBuilder {
     return AnalysisScopeBundle.message("package.dependencies.test.node.text");
   }
 
-  public static String getLIBRARY_NAME() {
+  public static String getLibraryName() {
     return AnalysisScopeBundle.message("package.dependencies.library.node.text");
   }
 }

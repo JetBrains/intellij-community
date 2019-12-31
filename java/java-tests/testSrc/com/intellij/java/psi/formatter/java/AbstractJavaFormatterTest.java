@@ -176,7 +176,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       catch (IncorrectOperationException e) {
         assertTrue(e.getLocalizedMessage(), false);
       }
-    }), action == REFORMAT ? ReformatCodeProcessor.getCOMMAND_NAME() : "", "");
+    }), action == REFORMAT ? ReformatCodeProcessor.getCommandName() : "", "");
 
     return document.getText();
   }

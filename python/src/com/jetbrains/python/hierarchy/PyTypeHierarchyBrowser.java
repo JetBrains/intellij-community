@@ -54,7 +54,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   @Override
   @Nullable
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
-    if (getSUPERTYPES_HIERARCHY_TYPE().equals(typeName)) {
+    if (getSupertypesHierarchyType().equals(typeName)) {
       return new PySuperTypesHierarchyTreeStructure((PyClass)psiElement);
     }
     else if (getSubtypesHierarchyType().equals(typeName)) {

@@ -79,7 +79,7 @@ public class SelectBranchPopup {
 
     addIfNotNull(items, configuration.getTrunk());
     items.addAll(configuration.getBranchLocations());
-    items.add(getCONFIGURE_MESSAGE());
+    items.add(getConfigureMessage());
 
     BranchBasesPopupStep step = new BranchBasesPopupStep(project, vcsRoot, configuration, callback, items, title, component);
     step.showPopupAt(JBPopupFactory.getInstance().createListPopup(step));
@@ -114,7 +114,7 @@ public class SelectBranchPopup {
 
     @Override
     public ListSeparator getSeparatorAbove(Object value) {
-      return getCONFIGURE_MESSAGE().equals(value) ? new ListSeparator("") : null;
+      return getConfigureMessage().equals(value) ? new ListSeparator("") : null;
     }
 
     @NotNull
@@ -131,7 +131,7 @@ public class SelectBranchPopup {
 
     @Override
     public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
-      if (getCONFIGURE_MESSAGE().equals(selectedValue)) {
+      if (getConfigureMessage().equals(selectedValue)) {
         return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
       }
 
@@ -242,7 +242,7 @@ public class SelectBranchPopup {
     }
   }
 
-  private static String getCONFIGURE_MESSAGE() {
+  private static String getConfigureMessage() {
     return SvnBundle.message("configure.branches.item");
   }
 }

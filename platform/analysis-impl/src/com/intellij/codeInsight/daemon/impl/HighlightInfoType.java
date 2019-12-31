@@ -51,7 +51,7 @@ public interface HighlightInfoType {
 
   HighlightInfoType MARKED_FOR_REMOVAL = new HighlightInfoTypeSeverityByKey(
     HighlightDisplayKey.findOrRegister(
-      DeprecationUtil.FOR_REMOVAL_SHORT_NAME, DeprecationUtil.getFOR_REMOVAL_DISPLAY_NAME(), DeprecationUtil.FOR_REMOVAL_ID),
+      DeprecationUtil.FOR_REMOVAL_SHORT_NAME, DeprecationUtil.getForRemovalDisplayName(), DeprecationUtil.FOR_REMOVAL_ID),
     CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES);
 
   HighlightSeverity SYMBOL_TYPE_SEVERITY = new HighlightSeverity("SYMBOL_TYPE_SEVERITY", HighlightSeverity.INFORMATION.myVal-2);
