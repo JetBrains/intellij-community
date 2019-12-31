@@ -41,12 +41,13 @@ public class CacheUpdateRunner {
                                   @NotNull Collection<VirtualFile> files,
                                   @NotNull Project project,
                                   @NotNull Consumer<? super FileContent> processor) {
-    indicator.checkCanceled();
-    final FileContentQueue queue = new FileContentQueue(project, files, indicator);
+    ProgressIndicator updaterProgressIndicator = PoweredProgressIndicator.apply(indicator);
+    updaterProgressIndicator.checkCanceled();
+    final FileContentQueue queue = new FileContentQueue(project, files, updaterProgressIndicator);
     final double total = files.size();
     queue.startLoading();
 
-    indicator.setIndeterminate(false);
+    updaterProgressIndicator.setIndeterminate(false);
 
     ProgressUpdater progressUpdater = new ProgressUpdater() {
       final Set<VirtualFile> myFilesBeingProcessed = new THashSet<>();
@@ -54,16 +55,16 @@ public class CacheUpdateRunner {
 
       @Override
       public void processingStarted(@NotNull VirtualFile virtualFile) {
-        indicator.checkCanceled();
+        updaterProgressIndicator.checkCanceled();
         boolean added;
         synchronized (myFilesBeingProcessed) {
           added = myFilesBeingProcessed.add(virtualFile);
         }
         if (added) {
-          indicator.setFraction(myNumberOfFilesProcessed.incrementAndGet() / total);
+          updaterProgressIndicator.setFraction(myNumberOfFilesProcessed.incrementAndGet() / total);
 
           VirtualFile parent = virtualFile.getParent();
-          if (parent != null) indicator.setText2(parent.getPresentableUrl());
+          if (parent != null) updaterProgressIndicator.setText2(parent.getPresentableUrl());
         }
       }
 
@@ -77,15 +78,15 @@ public class CacheUpdateRunner {
     };
 
     while (!project.isDisposed()) {
-      indicator.checkCanceled();
-      if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, indicator, project, processor)) {
+      updaterProgressIndicator.checkCanceled();
+      if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, updaterProgressIndicator, project, processor)) {
         break;
       }
     }
 
     if (project.isDisposed()) {
-      indicator.cancel();
-      indicator.checkCanceled();
+      updaterProgressIndicator.cancel();
+      updaterProgressIndicator.checkCanceled();
     }
   }
 
