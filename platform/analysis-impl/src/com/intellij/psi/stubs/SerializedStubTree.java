@@ -26,13 +26,7 @@ public class SerializedStubTree {
                                                               : new StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer();
 
   private static final Logger LOG = Logger.getInstance(SerializedStubTree.class);
-  private static final ThreadLocalCachedValue<MessageDigest> HASHER = new ThreadLocalCachedValue<MessageDigest>() {
-    @NotNull
-    @Override
-    protected MessageDigest create() {
-      return DigestUtil.sha256();
-    }
-  };
+  private static final MessageDigest HASHER = DigestUtil.sha256();
 
   // serialized tree
   final byte[] myTreeBytes;
@@ -246,9 +240,7 @@ public class SerializedStubTree {
   @NotNull
   synchronized byte[] getTreeHash() {
     if (myTreeHash == null) {
-      MessageDigest digest = HASHER.getValue();
-      digest.update(myTreeBytes, 0, myTreeByteLength);
-      myTreeHash = digest.digest();
+      myTreeHash = DigestUtil.calculateContentHash(HASHER, myTreeBytes, 0, myTreeByteLength);
     }
     return myTreeHash;
   }
@@ -259,7 +251,7 @@ public class SerializedStubTree {
     String newTreeDump = "\nnew tree " + newTree.dumpStub();
     byte[] hash = newTree.getTreeHash();
     LOG.info("Stub tree hashing collision. Different trees have the same hash = " + toHexString(hash, hash.length) +
-             ". Hashing algorithm = " + HASHER.getValue().getAlgorithm() + "." + oldTreeDump + newTreeDump, new Exception());
+             ". Hashing algorithm = " + HASHER.getAlgorithm() + "." + oldTreeDump + newTreeDump, new Exception());
   }
 
   private static String toHexString(byte[] hash, int length) {
