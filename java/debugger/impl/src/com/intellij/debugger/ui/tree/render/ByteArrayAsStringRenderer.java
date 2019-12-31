@@ -24,7 +24,7 @@ final class ByteArrayAsStringRenderer extends CompoundReferenceRenderer {
           Value value = descriptor.getValue();
           if (value instanceof ArrayReference) {
             // TODO: read charset from the target vm
-            byte[] bytes = DebuggerUtilsImpl.readBytesArray(value);
+            byte[] bytes = DebuggerUtilsImpl.fastReadBytesArray(value, evaluationContext.getSuspendContext().getThread());
             if (bytes != null) {
               return new String(bytes, StandardCharsets.UTF_8);
             }

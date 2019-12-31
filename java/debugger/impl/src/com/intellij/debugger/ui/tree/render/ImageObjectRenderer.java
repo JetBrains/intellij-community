@@ -63,7 +63,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
   static ImageIcon getIcon(EvaluationContext evaluationContext, Value obj, String methodName) {
     try {
       Value bytes = getImageBytes(evaluationContext, obj, methodName);
-      byte[] data = DebuggerUtilsImpl.readBytesArray(bytes);
+      byte[] data = DebuggerUtilsImpl.fastReadBytesArray(bytes, evaluationContext.getSuspendContext().getThread());
       if (data != null) {
         return new ImageIcon(data);
       }
