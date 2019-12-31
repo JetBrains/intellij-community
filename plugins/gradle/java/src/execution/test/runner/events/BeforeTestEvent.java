@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +29,21 @@ public class BeforeTestEvent extends AbstractTestEvent {
     final String name = eventXml.getTestName();
     final String fqClassName = eventXml.getTestClassName();
 
+    doProcess(testId, parentTestId, name, fqClassName);
+  }
+
+  @Override
+  public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
+    TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
+    final String testId = testDescriptor.getId();
+    final String parentTestId = testDescriptor.getParentId();
+    final String name = testDescriptor.getMethodName();
+    final String fqClassName = testDescriptor.getClassName();
+
+    doProcess(testId, parentTestId, name, fqClassName);
+  }
+
+  private void doProcess(String testId, String parentTestId, String name, String fqClassName) {
     String locationUrl = findLocationUrl(name, fqClassName);
     final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, false, locationUrl, fqClassName);
 

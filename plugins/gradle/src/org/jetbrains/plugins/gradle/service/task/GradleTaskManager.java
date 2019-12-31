@@ -27,10 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
-import org.gradle.tooling.BuildLauncher;
-import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -108,11 +105,22 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
             effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
           }
 
-          BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-          launcher.forTasks(ArrayUtil.toStringArray(tasks));
+          boolean isTestExecution = Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST);
+          if (!isTestExecution) {
 
-          launcher.withCancellationToken(cancellationTokenSource.token());
-          launcher.run();
+            BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
+            launcher.forTasks(ArrayUtil.toStringArray(tasks));
+            launcher.withCancellationToken(cancellationTokenSource.token());
+            launcher.run();
+
+          } else {
+            TestLauncher launcher = myHelper.getTestLauncher(id, connection, effectiveSettings, listener);
+            launcher.withCancellationToken(cancellationTokenSource.token());
+
+            launcher.withJvmTestClasses(findTestPatterns(effectiveSettings.getArguments()));
+            launcher.run();
+          }
+
         }
         finally {
           myCancellationMap.remove(id);
@@ -130,6 +138,17 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
     }
     myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
+  }
+
+  private String findTestPatterns(List<String> arguments) {
+    Iterator<String> iter = arguments.iterator();
+    while (iter.hasNext()) {
+      String next = iter.next();
+      if ("--tests".equals(next)) {
+        return iter.next();
+      }
+    }
+    return "*";
   }
 
   protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {

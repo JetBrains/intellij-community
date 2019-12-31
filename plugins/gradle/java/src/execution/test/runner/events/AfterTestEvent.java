@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.externalSystem.model.task.event.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -35,6 +37,43 @@ public class AfterTestEvent extends AbstractTestEvent {
   }
 
   @Override
+  public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
+    if (!(testEvent instanceof ExternalSystemFinishEvent)) {
+      return;
+    }
+    final String testId = testEvent.getDescriptor().getId();
+
+    final SMTestProxy testProxy = findTestProxy(testId);
+    if (testProxy == null) return;
+
+    OperationResult result = ((ExternalSystemFinishEvent<? extends TestOperationDescriptor>)testEvent).getOperationResult();
+
+    long startTime = result.getStartTime();
+    long endTime = result.getEndTime();
+
+    testProxy.setDuration(endTime - startTime);
+
+    if (result instanceof SuccessResult) {
+      testProxy.setFinished();
+      return;
+    }
+
+    if (result instanceof SkippedResult) {
+      testProxy.setTestIgnored(null, null);
+      getResultsViewer().onTestIgnored(testProxy);
+      return;
+    }
+
+    if (result instanceof FailureResult) {
+      Failure failure = ((FailureResult)result).getFailures().iterator().next();
+      String failureMessage = failure.getMessage();
+      final String exceptionMessage = failureMessage == null ? "" : failureMessage;
+      final String stackTrace = failure.getDescription();
+      testProxy.setTestFailed(exceptionMessage, stackTrace, false);
+    }
+  }
+
+  @Override
   public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
 
     final String testId = eventXml.getTestId();
@@ -43,6 +82,7 @@ public class AfterTestEvent extends AbstractTestEvent {
     final String endTime = eventXml.getEventTestResultEndTime();
     final String exceptionMsg = decode(eventXml.getEventTestResultErrorMsg());
     final String stackTrace = decode(eventXml.getEventTestResultStackTrace());
+    final TestEventResult result = TestEventResult.fromValue(eventXml.getTestEventResultType());
 
     final SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;
@@ -53,7 +93,6 @@ public class AfterTestEvent extends AbstractTestEvent {
     catch (NumberFormatException ignored) {
     }
 
-    final TestEventResult result = TestEventResult.fromValue(eventXml.getTestEventResultType());
     switch (result) {
       case SUCCESS:
         testProxy.setFinished();

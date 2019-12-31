@@ -249,6 +249,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+            if (consoleView != null) {
+              consoleManager.onStatusChange(consoleView, event);
+            }
             if (event instanceof ExternalSystemBuildEvent) {
               eventDispatcher.onEvent(event.getId(), ((ExternalSystemBuildEvent)event).getBuildEvent());
             }

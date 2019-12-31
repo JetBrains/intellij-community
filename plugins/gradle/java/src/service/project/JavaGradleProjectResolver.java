@@ -173,7 +173,8 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
   public void enhanceTaskProcessing(@NotNull List<String> taskNames,
                                     @NotNull Consumer<String> initScriptConsumer,
                                     @NotNull Map<String, String> parameters) {
-    String testExecutionExpected = parameters.get(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY);
+    //String testExecutionExpected = parameters.get(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY);
+    String testExecutionExpected = String.valueOf(false);
 
     if (Boolean.valueOf(testExecutionExpected)) {
       String name = "/org/jetbrains/plugins/gradle/java/addTestListener.groovy";
