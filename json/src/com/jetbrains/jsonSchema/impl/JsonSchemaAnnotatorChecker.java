@@ -159,12 +159,8 @@ class JsonSchemaAnnotatorChecker {
     boolean checkedObject = false;
     if (type != null) {
       JsonSchemaType schemaType = getMatchingSchemaType(schema, type);
-      if (schemaType != null && !schemaType.equals(type)) {
-        JsonSchemaType altType = value.getAlternateType(type);
-        JsonSchemaType matchingAltType = getMatchingSchemaType(schema, altType);
-        if (altType == type || matchingAltType != null && !schemaType.equals(matchingAltType)) {
-          typeError(value.getDelegate(), altType, getExpectedTypes(Collections.singleton(schema)));
-        }
+      if (schemaType != null && !schemaType.equals(type) && !schemaType.equals(value.getAlternateType(type))) {
+        typeError(value.getDelegate(), value.getAlternateType(type), getExpectedTypes(Collections.singleton(schema)));
       }
       else {
         if (JsonSchemaType._string_number.equals(type)) {
