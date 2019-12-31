@@ -236,7 +236,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getCanBePrivate();
+      return getQUICK_FIX_NAME();
     }
 
     @Override
@@ -265,7 +265,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getCanBePrivate() {
+  private static String getQUICK_FIX_NAME() {
     return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
   }
 }

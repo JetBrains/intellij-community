@@ -46,7 +46,7 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    return getDisplayName();
+    return getCONFIGURABLE_DISPLAY_NAME();
   }
 
   @Override
@@ -54,7 +54,7 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
     return new XmlCodeStyleSettings(settings);
   }
 
-  public static String getDisplayName() {
+  public static String getCONFIGURABLE_DISPLAY_NAME() {
     return ApplicationBundle.message("title.xml");
   }
 }

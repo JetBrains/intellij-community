@@ -71,7 +71,7 @@ public class ReadWriteStatistics {
     }
     if (myShownReadKBytes > 0) {
       buffer.append(myShownReadKBytes);
-      buffer.append(getRefactoringName());
+      buffer.append(getREAD_PROGRESS_MESSAGE());
       if (myShownSentKBytes > 0) buffer.append("; ");
     }
 
@@ -84,7 +84,7 @@ public class ReadWriteStatistics {
     myProgress.setText(buffer.toString());
   }
 
-  private static String getRefactoringName() {
+  private static String getREAD_PROGRESS_MESSAGE() {
     return CvsBundle.message("progress.text.kb.read");
   }
 

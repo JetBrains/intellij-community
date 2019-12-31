@@ -36,7 +36,7 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   @NotNull
   public CodeStyleConfigurable createConfigurable(@NotNull final CodeStyleSettings baseSettings,
                                                   @NotNull final CodeStyleSettings modelSettings) {
-    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, getRefactoringName()){
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, getCONFIGURABLE_DISPLAY_NAME()){
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
@@ -121,7 +121,7 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
     return super.getAccessor(codeStyleObject, field);
   }
 
-  public static String getRefactoringName() {
+  public static String getCONFIGURABLE_DISPLAY_NAME() {
     return ApplicationBundle.message("title.xml");
   }
 }
