@@ -23,6 +23,9 @@ public class ExtensionPointUtil {
                                                                           @NotNull ExtensionPoint<?> extensionPoint,
                                                                           @Nullable Disposable parentDisposable) {
     extensionPoint.addExtensionPointListener(lazyValue::drop, false, parentDisposable);
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, lazyValue::drop);
+    }
     return lazyValue;
   }
 
