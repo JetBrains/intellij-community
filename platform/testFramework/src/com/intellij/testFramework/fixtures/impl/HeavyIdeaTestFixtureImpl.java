@@ -8,12 +8,14 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
@@ -230,8 +232,13 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       else {
         Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
         if (editor != null) {
-          FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-          return manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
+          if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+            return TextEditorProvider.getInstance().getTextEditor(editor);
+          }
+          else {
+            FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
+            return manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
+          }
         }
         if (LangDataKeys.IDE_VIEW.is(dataId)) {
           VirtualFile[] contentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
