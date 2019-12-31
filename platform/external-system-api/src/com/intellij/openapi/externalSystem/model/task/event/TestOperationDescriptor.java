@@ -15,12 +15,19 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
 public interface TestOperationDescriptor extends OperationDescriptor {
+  @Nullable
+  String getParentId();
+
+  @NotNull
+  String getId();
+
   @Nullable
   String getSuiteName();
 

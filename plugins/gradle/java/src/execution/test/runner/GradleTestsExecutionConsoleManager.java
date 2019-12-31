@@ -44,7 +44,12 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
@@ -245,6 +250,18 @@ public class GradleTestsExecutionConsoleManager
                        @NotNull String text,
                        @NotNull Key processOutputType) {
     GradleTestsExecutionConsoleOutputProcessor.onOutput(executionConsole, text, processOutputType);
+  }
+
+  @Override
+  public void onStatusChange(@NotNull GradleTestsExecutionConsole executionConsole, @NotNull ExternalSystemTaskNotificationEvent event) {
+    if (event instanceof ExternalSystemTaskExecutionEvent) {
+      ExternalSystemProgressEvent progressEvent = ((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
+      OperationDescriptor descriptor = progressEvent.getDescriptor();
+      if (descriptor instanceof TestOperationDescriptor) {
+        //noinspection unchecked
+        GradleTestEventsProcessor.onStatusChange(executionConsole, progressEvent);
+      }
+    }
   }
 
   @Override

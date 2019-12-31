@@ -236,6 +236,18 @@ public class GradleExecutionHelper {
     );
   }
 
+  @NotNull
+  public TestLauncher getTestLauncher(@NotNull final ExternalSystemTaskId id,
+                                        @NotNull ProjectConnection connection,
+                                        @Nullable GradleExecutionSettings settings,
+                                        @NotNull ExternalSystemTaskNotificationListener listener) {
+    TestLauncher result = connection.newTestLauncher();
+    if (settings != null) {
+      prepare(result, id, settings, listener, connection);
+    }
+    return result;
+  }
+
   @Nullable
   public static BuildEnvironment getBuildEnvironment(ProjectResolverContext projectResolverContext) {
     CancellationTokenSource cancellationTokenSource = projectResolverContext.getCancellationTokenSource();
@@ -336,7 +348,8 @@ public class GradleExecutionHelper {
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     operation.addProgressListener(gradleProgressListener,
                                   OperationType.TASK,
-                                  OperationType.TEST);
+                                  OperationType.TEST,
+                                  OperationType.TEST_OUTPUT);
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,4 +24,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface TestEvent {
   void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException;
+
+  void process(@NotNull final ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent);
 }

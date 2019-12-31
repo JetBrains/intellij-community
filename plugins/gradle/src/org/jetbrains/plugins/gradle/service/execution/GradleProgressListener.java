@@ -14,16 +14,20 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildE
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.OperationResult;
 import org.gradle.tooling.events.StatusEvent;
 import org.gradle.tooling.events.task.TaskProgressEvent;
+import org.gradle.tooling.events.test.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.Message;
@@ -75,11 +79,106 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     }
 
     maybeUpdateTaskStatus(progressBuildEvent);
+
+    if (event instanceof TestOutputEvent) {
+      final ExternalSystemTaskNotificationEvent testNotificationEvent = convertToTestNotificationEvent((TestOutputEvent)event, eventId);
+      if (testNotificationEvent != null) {
+        myListener.onStatusChange(testNotificationEvent);
+      }
+    }
+
+    if (event instanceof TestProgressEvent) {
+      final ExternalSystemTaskNotificationEvent testNotificationEvent = convertToTestNotificationEvent((TestProgressEvent)event, eventId);
+      if (testNotificationEvent != null) {
+        myListener.onStatusChange(testNotificationEvent);
+      }
+    }
+
+
     if (event instanceof TaskProgressEvent) {
       ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(
         myTaskId, event, new GradleProgressEventConverter.EventId(eventId.id, myTaskId));
       myListener.onStatusChange(notificationEvent);
     }
+  }
+
+  private ExternalSystemTaskNotificationEvent convertToTestNotificationEvent(TestOutputEvent outputEvent,
+                                                                             GradleProgressEventConverter.EventId eventId) {
+    TestOutputDescriptor descriptor = outputEvent.getDescriptor();
+    String prefix = outputEvent.getDescriptor().getDestination() == Destination.StdOut ? "StdOut" : "StdErr";
+    String message = prefix + outputEvent.getDescriptor().getMessage();
+    if (descriptor instanceof JvmTestOperationDescriptor) {
+      final TestOperationDescriptor operationDescriptor = convertDescriptor(outputEvent, (JvmTestOperationDescriptor)descriptor);
+      ExternalSystemStatusEventImpl<TestOperationDescriptor> event = new ExternalSystemStatusEventImpl<>(eventId.id.toString(),
+                                                                                                         eventId.parentId.toString(),
+                                                                              operationDescriptor,0,0, "",
+                                                                              message);
+      return new ExternalSystemTaskExecutionEvent(myTaskId, event);
+    }
+
+    return null;
+  }
+
+  private Failure convert(org.gradle.tooling.Failure gradleFailure) {
+    return new FailureImpl(gradleFailure.getMessage(),
+                           gradleFailure.getDescription(),
+                           ContainerUtil.map(gradleFailure.getCauses(), this::convert));
+  }
+
+  private ExternalSystemTaskNotificationEvent convertToTestNotificationEvent(TestProgressEvent testProgressEvent,
+                                                                             GradleProgressEventConverter.EventId eventId) {
+    org.gradle.tooling.events.test.TestOperationDescriptor descriptor = testProgressEvent.getDescriptor();
+
+    if (descriptor instanceof JvmTestOperationDescriptor) {
+      final TestOperationDescriptor operationDescriptor = convertDescriptor(testProgressEvent, (JvmTestOperationDescriptor)descriptor);
+      if (testProgressEvent instanceof TestStartEvent) {
+        ExternalSystemStartEvent<TestOperationDescriptor> event = new ExternalSystemStartEventImpl<>(eventId.id.toString(),
+                                                                                                     eventId.parentId.toString(),
+                                                                                                     operationDescriptor);
+        return new ExternalSystemTaskExecutionEvent(myTaskId, event);
+      }
+
+      if (testProgressEvent instanceof TestFinishEvent) {
+        TestOperationResult gradleResult = ((TestFinishEvent)testProgressEvent).getResult();
+
+        com.intellij.openapi.externalSystem.model.task.event.OperationResult operationResult = null;
+        if (gradleResult instanceof TestSuccessResult) {
+          operationResult = new SuccessResultImpl(gradleResult.getStartTime(), gradleResult.getEndTime(), true);
+        } else if (gradleResult instanceof TestFailureResult) {
+          TestFailureResult gradleFailure = (TestFailureResult)gradleResult;
+          operationResult = new FailureResultImpl(gradleFailure.getStartTime(), gradleFailure.getEndTime(), ContainerUtil.map(gradleFailure.getFailures(), this::convert));
+        } else  if (gradleResult instanceof TestSkippedResult) {
+          operationResult = new SkippedResultImpl(gradleResult.getStartTime(), gradleResult.getEndTime());
+        }
+
+        if (operationResult != null) {
+          ExternalSystemFinishEvent<TestOperationDescriptor> event =
+            new ExternalSystemFinishEventImpl<>(eventId.id.toString(),
+                                                eventId.parentId.toString(),
+                                                operationDescriptor,
+                                                operationResult);
+
+          return new ExternalSystemTaskExecutionEvent(myTaskId, event);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
+  private static TestOperationDescriptor convertDescriptor(org.gradle.tooling.events.ProgressEvent testProgressEvent,
+                                                           JvmTestOperationDescriptor descriptor) {
+    String id = descriptor.getDisplayName();
+    boolean parentIsTest = descriptor.getParent() instanceof org.gradle.tooling.events.test.TestOperationDescriptor;
+    String parentId = parentIsTest ? descriptor.getParent().getDisplayName() : null;
+
+    return new TestOperationDescriptorImpl(id, parentId, descriptor.getDisplayName(),
+                                           testProgressEvent.getEventTime(),
+                                           descriptor.getSuiteName(),
+                                           descriptor.getClassName(),
+                                           descriptor.getMethodName()
+    );
   }
 
   @Override

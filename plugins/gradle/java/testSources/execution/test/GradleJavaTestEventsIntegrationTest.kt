@@ -101,11 +101,40 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     )
 
     RunAll(
+      ThrowableRunnable { `call test task produces Gradle test events`() },
       ThrowableRunnable { `call test task produces test events`() },
       ThrowableRunnable { `call build task does not produce test events`() },
       ThrowableRunnable { `call task for specific test overrides existing filters`() },
       ThrowableRunnable { if (gradleSupportsJunitPlatform) `test events use display name`() }
     ).run()
+  }
+
+  private fun `call test task produces Gradle test events`() {
+    val taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myProject)
+    val eventLog = mutableListOf<String>()
+    val testListener = object : ExternalSystemTaskNotificationListenerAdapter() {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+        eventLog.add(text.trim('\r', '\n', ' '))
+      }
+    };
+
+    val settings = GradleManager().executionSettingsProvider.`fun`(Pair.create<Project, String>(myProject, projectPath))
+    settings.putUserData(GradleConstants.RUN_TASK_AS_TEST, true);
+    settings.withArguments("--tests","my.otherpack.*")
+
+
+    //assertThatThrownBy {
+      GradleTaskManager().executeTasks(taskId,
+                                       listOf(":test"),
+                                       projectPath,
+                                       settings,
+                                       null,
+                                       testListener);
+    //}
+    //  .hasMessageContaining("There were failing tests")
+
+    val result = eventLog.joinToString(separator = "\n")
+    println(result)
   }
 
   private fun `call test task produces test events`() {
