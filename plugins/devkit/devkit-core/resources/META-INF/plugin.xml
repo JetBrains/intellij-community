@@ -199,7 +199,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection groupPath="Java" shortName="HighlightVisitorInternal"
+    <localInspection shortName="HighlightVisitorInternal"
                      displayName="Good code is red"
                      groupKey="inspections.group.name"
                      enabledByDefault="false" isInternal="true"
