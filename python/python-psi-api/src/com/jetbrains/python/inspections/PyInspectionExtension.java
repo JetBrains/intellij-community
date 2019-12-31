@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -54,6 +55,13 @@ public abstract class PyInspectionExtension {
    * @return true if the unresolved reference could be ignored
    */
   public boolean ignoreUnresolvedReference(@NotNull PyElement node, @NotNull PsiReference reference, @NotNull TypeEvalContext context) {
+    return false;
+  }
+
+  /**
+   * Enable "unresolved reference" inspection regardless of IDE type and initialized SDK.
+   */
+  public boolean forciblyEnabledUnresolvedReferenceInspection(@NotNull PsiFile file) {
     return false;
   }
 

@@ -111,7 +111,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public boolean isEnabled(@NotNull PsiElement anchor) {
       if (myIsEnabled == null) {
         final boolean isPyCharm = PlatformUtils.isPyCharm();
-        if (PySkeletonRefresher.isGeneratingSkeletons()) {
+        if (forciblyEnabledUnresolvedReferenceInspection(anchor.getContainingFile())) {
+          myIsEnabled = true;
+        }
+        else if (PySkeletonRefresher.isGeneratingSkeletons()) {
           myIsEnabled = false;
         }
         else if (isPyCharm) {
@@ -122,6 +125,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       return myIsEnabled;
+    }
+
+    private static boolean forciblyEnabledUnresolvedReferenceInspection(@NotNull PsiFile file) {
+      return PyInspectionExtension.EP_NAME.getExtensionList().stream().anyMatch(e -> e.forciblyEnabledUnresolvedReferenceInspection(file));
     }
 
     public void highlightUnusedImports() {
