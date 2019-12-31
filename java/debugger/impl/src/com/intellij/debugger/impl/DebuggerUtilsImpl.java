@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -281,4 +282,31 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     }
     return null;
   }
+
+  // Performance compared to other implementations (128 MB of data):
+  // - This: 2.14s
+  // - Encoding/Decoding Base64: 2.49s
+  // - DebuggerUtilsImpl.readBytesArray (getValues+boxing per element at least x8 memory usage and potential GC pressure): 14.3s
+  // This should use COMPACT_STRINGS on newer java versions, thus String could be backed by a plain byte[], greatly reducing memory usage too
+  @Nullable
+  static public byte[] fastReadBytesArray(Value that, ThreadReference thread) {
+    try {
+      final VirtualMachine vm = that.virtualMachine();
+      final Type type = that.type();
+      if (type == null || !type.signature().equals("[B")) return null;
+      final ClassType StringClass = (ClassType) that.virtualMachine().classesByName("java.lang.String").get(0);
+      final Method constructor = StringClass.methodsByName("<init>", "([BI)V").get(0);
+      final ObjectReference string = StringClass.newInstance(thread, constructor, Arrays.asList(that, vm.mirrorOf(0)), 0);
+      final String str = ((StringReference)(string)).value();
+      final byte[] out = new byte[str.length()];
+      //noinspection deprecation
+      str.getBytes(0, str.length(), out, 0);
+      return out;
+    } catch (Throwable t) {
+      t.printStackTrace();
+      // If something goes wrong, use the original version as fallback.
+      return readBytesArray(that);
+    }
+  }
+
 }
