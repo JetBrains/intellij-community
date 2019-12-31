@@ -26,9 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   /**
-   * Use {code {@link #getPROBABLE_BUGS()}} instead
+   * Use {code {@link #getProbableBugs()}} instead
    */
-  @Deprecated public static final String PROBABLE_BUGS = getPROBABLE_BUGS();
+  @Deprecated public static final String PROBABLE_BUGS = getProbableBugs();
 
   @Nullable
   protected String buildErrorString(Object... args) {
@@ -57,7 +57,7 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   @NotNull
   protected abstract BaseInspectionVisitor buildVisitor();
 
-  public static String getPROBABLE_BUGS() {
+  public static String getProbableBugs() {
     return GroovyBundle.message("inspection.bugs");
   }
 }

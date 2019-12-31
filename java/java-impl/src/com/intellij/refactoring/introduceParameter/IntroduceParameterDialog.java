@@ -82,7 +82,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myMethodToSearchFor = methodToSearchFor;
     myNameSuggestionsGenerator = generator;
     myTypeSelectorManager = typeSelectorManager;
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
     init();
     myPanel.updateTypeSelector();
   }
@@ -324,7 +324,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     }
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringName() {
     return RefactoringBundle.message("introduce.parameter.title");
   }
 }

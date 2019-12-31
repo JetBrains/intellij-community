@@ -109,7 +109,7 @@ public abstract class AntReference {
 
     @Override
     public String getName() {
-      return GlobalAntConfiguration.getBUNDLED_ANT_NAME();
+      return GlobalAntConfiguration.getBundledAntName();
     }
 
     @Override

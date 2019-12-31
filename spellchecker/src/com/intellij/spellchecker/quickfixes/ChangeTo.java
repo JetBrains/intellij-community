@@ -28,7 +28,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return getFIX_NAME();
+    return getFixName();
   }
 
   @Override
@@ -75,7 +75,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
     return offset >=0 && offset <= documentLength ? offset : documentLength;
   }
 
-  public static String getFIX_NAME() {
+  public static String getFixName() {
     return SpellCheckerBundle.message("change.to");
   }
 }

@@ -64,7 +64,7 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
 
   @Override
   protected String getTitle() {
-    return getREFACTORING_NAME();
+    return getRefactoringName();
   }
 
   @Override
@@ -72,7 +72,7 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
     return "members.push.down";
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("push.members.down.title");
   }
 }

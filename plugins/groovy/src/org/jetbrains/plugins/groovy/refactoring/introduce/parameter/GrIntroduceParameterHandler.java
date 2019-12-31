@@ -182,7 +182,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     return new GrIntroduceVariableHandler().getContext(info.getProject(), editor, expr, var, stringPart, info.getToReplaceIn());
   }
 
-  static String getREFACTORING_NAME() {
+  static String getRefactoringName() {
     return RefactoringBundle.message("introduce.parameter.title");
   }
 }

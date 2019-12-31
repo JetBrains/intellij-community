@@ -45,7 +45,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
   private final LinkedHashSet<String> mySuggestedNames;
 
   public GrInplaceParameterIntroducer(IntroduceParameterInfo info, GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(GrIntroduceParameterHandler.getREFACTORING_NAME(), choice, context);
+    super(GrIntroduceParameterHandler.getRefactoringName(), choice, context);
     myInfo = info;
 
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
@@ -56,7 +56,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
 
   @Override
   protected String getActionName() {
-    return GrIntroduceParameterHandler.getREFACTORING_NAME();
+    return GrIntroduceParameterHandler.getRefactoringName();
   }
 
   @NotNull

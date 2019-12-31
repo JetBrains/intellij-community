@@ -21,7 +21,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
     myField = field;
     myInvokedOnReference = invokedOnReference;
 
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
 
     init();
   }
@@ -69,7 +69,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
     return HelpID.INLINE_FIELD;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("inline.field.title");
   }
 }

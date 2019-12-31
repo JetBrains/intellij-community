@@ -40,7 +40,7 @@ public final class PythonUnitTestConfigurationProducer extends PythonTestLegacyC
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module == null) return false;
     if ((TestRunnerService.getInstance(module).getProjectConfiguration().equals(
-      PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME()))) {
+      PythonTestConfigurationsModel.getPythonsUnittestName()))) {
       return true;
     }
     return false;

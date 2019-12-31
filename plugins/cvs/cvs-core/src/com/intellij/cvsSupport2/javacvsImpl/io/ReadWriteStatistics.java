@@ -77,7 +77,7 @@ public class ReadWriteStatistics {
 
     if (myShownSentKBytes > 0) {
       buffer.append(myShownSentKBytes);
-      buffer.append(getSENT_PROGRESS_MESSAGE());
+      buffer.append(getSentProgressMessage());
     }
 
 
@@ -88,7 +88,7 @@ public class ReadWriteStatistics {
     return CvsBundle.message("progress.text.kb.read");
   }
 
-  private static String getSENT_PROGRESS_MESSAGE() {
+  private static String getSentProgressMessage() {
     return CvsBundle.message("progress.text.kb.sent");
   }
 

@@ -55,7 +55,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   @Override
   @Nls
   public String getDescription() {
-    return getDESCR();
+    return getDescr();
   }
 
   @Override
@@ -156,7 +156,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
   }
 
-  public static String getDESCR() {
+  public static String getDescr() {
     return EclipseBundle.message("eclipse.classpath.storage.description");
   }
 }

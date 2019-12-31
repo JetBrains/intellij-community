@@ -25,7 +25,7 @@ import java.util.List;
 
 public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   /**
-   * Use {code {@link #getPYTHONS_UNITTEST_NAME()}} instead
+   * Use {code {@link #getPythonsUnittestName()}} instead
    */
   @Deprecated
   public static final String PYTHONS_UNITTEST_NAME = "Unittests";
@@ -51,7 +51,7 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
     return myTestRunner;
   }
 
-  public static String getPYTHONS_UNITTEST_NAME() {
+  public static String getPythonsUnittestName() {
     return PyBundle.message("runcfg.unittest.display_name");
   }
 }

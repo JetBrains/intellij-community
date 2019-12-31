@@ -42,13 +42,13 @@ public class SelectTagDialog extends DialogWrapper {
     myPanel = new JPanel(new GridLayout(1, 0, 4, 8));
 
     if (tags.isEmpty()){
-      createList(CvsBundle.message("dialog.title.select.revision"), revisions, getEXISTING_REVISIONS());
+      createList(CvsBundle.message("dialog.title.select.revision"), revisions, getExistingRevisions());
     }
     else if (revisions.isEmpty()){
       createList(CvsBundle.message("operation.name.select.tag"), tags, getEXISTING_TAGS());
     }
     else{
-      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, getEXISTING_REVISIONS());
+      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, getExistingRevisions());
       createList(CvsBundle.message("dialog.title.select.revision.or.tag"), tags, getEXISTING_TAGS());
     }
 
@@ -133,7 +133,7 @@ public class SelectTagDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public static String getEXISTING_REVISIONS() {
+  public static String getExistingRevisions() {
     return CvsBundle.message("label.existing.revisions");
   }
 

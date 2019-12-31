@@ -21,7 +21,7 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
   private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodDialog.class);
 
   public ConvertToInstanceMethodDialog(final PsiMethod method, final Object[] variables) {
-    super(method, variables, ConvertToInstanceMethodHandler.getREFACTORING_NAME());
+    super(method, variables, ConvertToInstanceMethodHandler.getRefactoringName());
     init();
   }
 

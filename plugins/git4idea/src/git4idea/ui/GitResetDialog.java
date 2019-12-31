@@ -64,7 +64,7 @@ public class GitResetDialog extends DialogWrapper {
     setTitle(GitBundle.getString("reset.title"));
     setOKButtonText(GitBundle.getString("reset.button"));
     myResetTypeComboBox.addItem(getMIXED());
-    myResetTypeComboBox.addItem(getSOFT());
+    myResetTypeComboBox.addItem(getSoft());
     myResetTypeComboBox.addItem(getHARD());
     myResetTypeComboBox.setSelectedItem(getMIXED());
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranchLabel);
@@ -97,7 +97,7 @@ public class GitResetDialog extends DialogWrapper {
   public GitLineHandler handler() {
     GitLineHandler handler = new GitLineHandler(myProject, getGitRoot(), GitCommand.RESET);
     String type = (String)myResetTypeComboBox.getSelectedItem();
-    if (getSOFT().equals(type)) {
+    if (getSoft().equals(type)) {
       handler.addParameters("--soft");
     }
     else if (getHARD().equals(type)) {
@@ -148,7 +148,7 @@ public class GitResetDialog extends DialogWrapper {
   /**
    * The --soft reset type
    */
-  static String getSOFT() {
+  static String getSoft() {
     return GitBundle.getString("reset.type.soft");
   }
 

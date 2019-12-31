@@ -25,7 +25,7 @@ abstract public class TestRunnerService
 
   protected TestRunnerService() {
     super(new ServiceState());
-    myConfigurations.add(PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME());
+    myConfigurations.add(PythonTestConfigurationsModel.getPythonsUnittestName());
     for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
       myConfigurations.add(PyTestFrameworkService.getSdkReadableNameByFramework(framework));
     }
@@ -71,7 +71,7 @@ abstract public class TestRunnerService
     }
 
     ServiceState() {
-      this(PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME());
+      this(PythonTestConfigurationsModel.getPythonsUnittestName());
     }
   }
 

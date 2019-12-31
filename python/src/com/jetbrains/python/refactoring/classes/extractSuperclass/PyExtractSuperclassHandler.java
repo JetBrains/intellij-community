@@ -67,7 +67,7 @@ public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
 
   @Override
   protected String getTitle() {
-    return getREFACTORING_NAME();
+    return getRefactoringName();
   }
 
   @Override
@@ -75,7 +75,7 @@ public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
     return "refactoring.extractSuperclass";
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("extract.superclass.title");
   }
 }

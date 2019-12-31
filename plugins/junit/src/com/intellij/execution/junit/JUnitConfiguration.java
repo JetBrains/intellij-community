@@ -757,7 +757,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
           if (moduleName.length() > 0) {
             return ExecutionBundle.message("default.junit.config.name.all.in.module", moduleName);
           }
-          return getDEFAULT_PACKAGE_NAME();
+          return getDefaultPackageName();
         }
         if (moduleName.length() > 0) {
           return ExecutionBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
@@ -866,7 +866,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
   }
 
-  public static String getDEFAULT_PACKAGE_NAME() {
+  public static String getDefaultPackageName() {
     return ExecutionBundle.message("default.package.presentable.name");
   }
 }

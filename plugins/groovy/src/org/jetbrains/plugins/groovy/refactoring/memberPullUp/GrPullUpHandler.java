@@ -50,7 +50,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MEMBERS_PULL_UP);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
         return;
       }
 
@@ -90,8 +90,8 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     if (aClass == null) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
-                                                                             getREFACTORING_NAME()));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MEMBERS_PULL_UP);
+                                                                             getRefactoringName()));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -107,7 +107,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
 
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.MEMBERS_PULL_UP);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -177,7 +177,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return RefactoringBundle.message("pull.members.up.title");
   }
 }

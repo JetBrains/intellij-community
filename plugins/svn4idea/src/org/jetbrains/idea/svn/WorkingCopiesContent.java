@@ -52,7 +52,7 @@ public class WorkingCopiesContent implements ChangesViewContentProvider {
       if (window != null) {
         window.show(null);
         final ContentManager cm = window.getContentManager();
-        final Content content = cm.findContent(getTAB_NAME());
+        final Content content = cm.findContent(getTabName());
         if (content != null) {
           cm.setSelectedContent(content, true);
         }
@@ -69,7 +69,7 @@ public class WorkingCopiesContent implements ChangesViewContentProvider {
     }
   }
 
-  public static String getTAB_NAME() {
+  public static String getTabName() {
     return SvnBundle.message("dialog.show.svn.map.title");
   }
 }

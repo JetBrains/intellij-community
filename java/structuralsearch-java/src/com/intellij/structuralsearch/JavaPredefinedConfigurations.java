@@ -329,40 +329,40 @@ class JavaPredefinedConfigurations {
                                "}", getMISC_TYPE()),
 
       // interesting types
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.symbol"), "'Symbol", getINTERESTING_TYPE()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.symbol"), "'Symbol", getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields.variables.read"),
                                "'Symbol:[ script( \"import com.intellij.psi.*\n" +
                                "import static com.intellij.psi.util.PsiUtil.*\n" +
-                               "Symbol instanceof PsiReferenceExpression && isAccessedForReading(Symbol)\" ) ]", getINTERESTING_TYPE()),
+                               "Symbol instanceof PsiReferenceExpression && isAccessedForReading(Symbol)\" ) ]", getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields_variables.with.given.name.pattern.updated"),
                                "'Symbol:[regex( name ) && script( \"import com.intellij.psi.*\n" +
                                "import static com.intellij.psi.util.PsiUtil.*\n" +
                                "Symbol instanceof PsiExpression && isAccessedForWriting(Symbol) ||\n" +
-                               "  Symbol instanceof PsiVariable && Symbol.getInitializer() != null\" )]", getINTERESTING_TYPE()),
+                               "  Symbol instanceof PsiVariable && Symbol.getInitializer() != null\" )]", getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"), "('CastType:*[regex( Base )]) '_Expr",
-                               getINTERESTING_TYPE()),
+                               getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.declarations"), "'_Type:Object|Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )];",
-                               getINTERESTING_TYPE()),
+                               getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.declarations"), "'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( Integer|Boolean|Long|Character|Short|Byte )];",
-                               getINTERESTING_TYPE()),
+                               getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.method.calls"), "'_Instance?.'Call('_BeforeParam*,'_Param:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)",
-                               getINTERESTING_TYPE()),
+                               getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.method.calls"), "'_Instance?.'Call('_BeforeParam*,'_Param:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)",
-                               getINTERESTING_TYPE()),
+                               getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.boxing"), "'_expression:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )]",
-                               getINTERESTING_TYPE()),
+                               getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.unboxing"), "'_expression:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )]",
-                               getINTERESTING_TYPE()),
+                               getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.try.without.resources"), "try ('_ResourceType '_resource{0,0} = '_init; '_expression{0,0}) {\n  '_TryStatement*;\n} catch('_ExceptionType '_Exception{0,0}) {\n  '_CatchStatement*;\n}",
-                               getINTERESTING_TYPE()),
+                               getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switch.with.branches"), "[ script( \"import com.intellij.psi.*;\n" +
                                                                                                    "import com.intellij.psi.util.*;\n" +
                                                                                                    "PsiTreeUtil.getChildrenOfType(__context__.body, PsiSwitchLabelStatementBase.class).length < 5\" ) ]switch ('_expression) {\n}",
-                               getINTERESTING_TYPE()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.labeled.break"), "break '_label;", getINTERESTING_TYPE()),
+                               getInterestingType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.labeled.break"), "break '_label;", getInterestingType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.methods.with.final.parameters"),
                                "'_ReturnType? '_Method('_BeforeType '_BeforeParameter*, final '_ParameterType '_Parameter, '_AfterType '_AfterParameter*);",
-                               getINTERESTING_TYPE(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+                               getInterestingType(), StdFileTypes.JAVA, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),
@@ -376,7 +376,7 @@ class JavaPredefinedConfigurations {
     return SSRBundle.message("expressions.category");
   }
 
-  private static String getINTERESTING_TYPE() {
+  private static String getInterestingType() {
     return SSRBundle.message("interesting.category");
   }
 

@@ -39,27 +39,27 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-9419
   public void testConvertParenthesizedTupleToSet() {
-    doIntentionTest(getCONVERT_TUPLE_TO_SET());
+    doIntentionTest(getConvertTupleToSet());
   }
 
   // PY-9419
   public void testConvertTupleToSetNotAvailableWithoutSetLiterals() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doNegativeTest(getCONVERT_TUPLE_TO_SET()));
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doNegativeTest(getConvertTupleToSet()));
   }
 
   // PY-9419
   public void testConvertTupleToSetNotAvailableInAssignmentTarget() {
-    doNegativeTest(getCONVERT_TUPLE_TO_SET());
+    doNegativeTest(getConvertTupleToSet());
   }
 
   // PY-9419
   public void testConvertTupleToSetNotAvailableInForLoop() {
-    doNegativeTest(getCONVERT_TUPLE_TO_SET());
+    doNegativeTest(getConvertTupleToSet());
   }
 
   // PY-9419
   public void testConvertTupleToSetNotAvailableInComprehension() {
-    doNegativeTest(getCONVERT_TUPLE_TO_SET());
+    doNegativeTest(getConvertTupleToSet());
   }
 
   // PY-9419
@@ -124,7 +124,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-16553
   public void testConvertOneElementTupleWithoutParenthesesToSet() {
-    doIntentionTest(getCONVERT_TUPLE_TO_SET());
+    doIntentionTest(getConvertTupleToSet());
   }
 
   // PY-16553
@@ -134,7 +134,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
 
   // PY-19399
   public void testCannotConvertEmptyTupleToSet() {
-    doNegativeTest(getCONVERT_TUPLE_TO_SET());
+    doNegativeTest(getConvertTupleToSet());
   }
   
   // PY-19399
@@ -146,7 +146,7 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
     return PyBundle.message("INTN.convert.collection.literal.text", "tuple", "list");
   }
 
-  private static String getCONVERT_TUPLE_TO_SET() {
+  private static String getConvertTupleToSet() {
     return PyBundle.message("INTN.convert.collection.literal.text", "tuple", "set");
   }
 

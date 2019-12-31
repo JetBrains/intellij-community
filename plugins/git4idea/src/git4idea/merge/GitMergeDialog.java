@@ -174,7 +174,7 @@ public class GitMergeDialog extends DialogWrapper {
       h.addParameters("--no-ff");
     }
     String strategy = (String)myStrategy.getSelectedItem();
-    if (!GitMergeUtil.getDEFAULT_STRATEGY().equals(strategy)) {
+    if (!GitMergeUtil.getDefaultStrategy().equals(strategy)) {
       h.addParameters("--strategy", strategy);
     }
     for (String branch : getSelectedBranches()) {

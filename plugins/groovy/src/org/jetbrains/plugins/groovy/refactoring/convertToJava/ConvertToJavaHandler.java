@@ -49,7 +49,7 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
       else {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           CommonRefactoringUtil.showErrorHint(project, editor, GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy"),
-                                              getREFACTORING_NAME(), null);
+                                              getRefactoringName(), null);
           return;
         }
       }
@@ -58,7 +58,7 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
     new ConvertToJavaProcessor(project, files.toArray(GroovyFile.EMPTY_ARRAY)).run();
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringName() {
     return GroovyRefactoringBundle.message("convert.to.java.refactoring.name");
   }
 }

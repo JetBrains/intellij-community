@@ -68,7 +68,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
         return AntReference.BUNDLED_ANT;
       }
     };
-    AntInstallation.NAME.set(bundledAnt.getProperties(), getBUNDLED_ANT_NAME());
+    AntInstallation.NAME.set(bundledAnt.getProperties(), getBundledAntName());
     final File antHome = PathManager.findFileInLibDirectory(ANT_FILE);
     AntInstallation.HOME_DIR.set(bundledAnt.getProperties(), antHome.getAbsolutePath());
     ArrayList<AntClasspathEntry> classpath = AntInstallation.CLASS_PATH.getModifiableList(bundledAnt.getProperties());
@@ -155,7 +155,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     return null;
   }
 
-  public static String getBUNDLED_ANT_NAME() {
+  public static String getBundledAntName() {
     return AntBundle.message("ant.reference.bundled.ant.name");
   }
 }

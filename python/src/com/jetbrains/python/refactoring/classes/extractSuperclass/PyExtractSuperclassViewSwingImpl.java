@@ -48,7 +48,7 @@ class PyExtractSuperclassViewSwingImpl
                                    @NotNull final Project project,
                                    @NotNull final PyExtractSuperclassPresenter presenter) {
     super(project, presenter, RefactoringBundle.message("extract.superclass.from"), true);
-    setTitle(PyExtractSuperclassHandler.getREFACTORING_NAME());
+    setTitle(PyExtractSuperclassHandler.getRefactoringName());
 
 
     final Box box = Box.createVerticalBox();

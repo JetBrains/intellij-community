@@ -163,7 +163,7 @@ public class SelectBranchPopup {
     private void showBranchPopup(@NotNull Url branchLocation) {
       List<SvnBranchItem> branches = myConfiguration.getBranches(branchLocation);
       List<Object> items = new ArrayList<>(branches);
-      items.add(getREFRESH_MESSAGE());
+      items.add(getRefreshMessage());
 
       JBPopup popup =
         JBPopupFactory.getInstance().createPopupChooserBuilder(items)
@@ -171,7 +171,7 @@ public class SelectBranchPopup {
                       .setRenderer(new BranchRenderer())
                       .setResizable(true)
                       .setItemChosenCallback((v) -> {
-                        if (getREFRESH_MESSAGE().equals(v)) {
+                        if (getRefreshMessage().equals(v)) {
                           loadBranches(branchLocation, () -> showBranchPopup(branchLocation));
                           return;
                         }
@@ -194,7 +194,7 @@ public class SelectBranchPopup {
       }
     }
 
-    private static String getREFRESH_MESSAGE() {
+    private static String getRefreshMessage() {
       return SvnBundle.message("refresh.branches.item");
     }
   }

@@ -53,7 +53,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     super.init();
 
     setModal(true);
-    setTitle(getREFACTORING_NAME());
+    setTitle(getRefactoringName());
 
     myCbReplaceAllOccurrences.setFocusable(false);
     myCbIsFinal.setFocusable(false);
@@ -219,7 +219,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     }
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringName() {
     return GroovyRefactoringBundle.message("introduce.variable.title");
   }
 }

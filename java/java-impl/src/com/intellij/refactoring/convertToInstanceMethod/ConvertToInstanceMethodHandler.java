@@ -52,7 +52,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
 
     if(!(element instanceof PsiMethod)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.CONVERT_TO_INSTANCE_METHOD);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
     if(LOG.isDebugEnabled()) {
@@ -68,7 +68,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       String message = RefactoringBundle.message("convertToInstanceMethod.method.is.not.static", method.getName());
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.CONVERT_TO_INSTANCE_METHOD);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -111,14 +111,14 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
       }
       message += " and containing class doesn't have default constructor";
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getREFACTORING_NAME(), HelpID.CONVERT_TO_INSTANCE_METHOD);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
 
     new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
   }
 
-  static String getREFACTORING_NAME() {
+  static String getRefactoringName() {
     return RefactoringBundle.message("convert.to.instance.method.title");
   }
 }

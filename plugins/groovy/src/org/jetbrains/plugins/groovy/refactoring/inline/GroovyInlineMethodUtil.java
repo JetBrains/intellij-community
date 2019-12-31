@@ -360,7 +360,7 @@ public class GroovyInlineMethodUtil {
       myAllowInlineThisOnly = allowInlineThisOnly;
       myInvokedOnReference = invokedOnReference;
 
-      setTitle(getREFACTORING_NAME());
+      setTitle(getRefactoringName());
 
       init();
     }
@@ -409,7 +409,7 @@ public class GroovyInlineMethodUtil {
       return myAllowInlineThisOnly;
     }
 
-    public static String getREFACTORING_NAME() {
+    public static String getRefactoringName() {
       return GroovyRefactoringBundle.message("inline.method.title");
     }
   }

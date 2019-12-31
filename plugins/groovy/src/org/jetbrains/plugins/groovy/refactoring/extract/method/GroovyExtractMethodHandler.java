@@ -109,7 +109,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       performRefactoring(initialInfo, editor);
     }
     catch (GrRefactoringError e) {
-      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), getREFACTORING_NAME(), HelpID.EXTRACT_METHOD);
+      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), getRefactoringName(), HelpID.EXTRACT_METHOD);
     }
   }
 
@@ -180,7 +180,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(realStatement));
       }
-    }), getREFACTORING_NAME(), null);
+    }), getRefactoringName(), null);
   }
 
   private static void createMethod(ExtractMethodInfoHelper helper, PsiClass owner) {
@@ -266,7 +266,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
   }
 
-  static String getREFACTORING_NAME() {
+  static String getRefactoringName() {
     return GroovyRefactoringBundle.message("extract.method.title");
   }
 }

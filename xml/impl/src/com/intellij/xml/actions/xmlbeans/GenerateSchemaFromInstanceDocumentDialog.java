@@ -42,7 +42,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
 
   private static final List<String> designTypes = Arrays.asList(
     getLocalElementsGlobalComplexTypes(),
-    getLOCAL_ELEMENTS_TYPES(),
+    getLocalElementsTypes(),
     getGLOBAL_ELEMENTS_LOCAL_TYPES()
   );
 
@@ -219,7 +219,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     return XmlBundle.message("local.elements.global.complex.types.option.name");
   }
 
-  static String getLOCAL_ELEMENTS_TYPES() {
+  static String getLocalElementsTypes() {
     return XmlBundle.message("local.elements.types.option.name");
   }
 

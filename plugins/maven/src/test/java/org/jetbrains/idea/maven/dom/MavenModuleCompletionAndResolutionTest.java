@@ -299,7 +299,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>subDir/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(getCREATE_MODULE_INTENTION());
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -336,7 +336,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>subDir/new<caret>Module.xml</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(getCREATE_MODULE_INTENTION());
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -374,7 +374,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</modules>");
     createProjectSubFile("subDir/newModule.xml/empty"); // ensure that "subDir/newModule.xml" exists as a directory
 
-    IntentionAction i = getIntentionAtCaret(getCREATE_MODULE_INTENTION());
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -415,7 +415,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(getCREATE_MODULE_INTENTION());
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -455,7 +455,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>${dirName}/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(getCREATE_MODULE_INTENTION());
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -478,7 +478,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(getCREATE_MODULE_INTENTION());
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
     myFixture.launchAction(i);
 
@@ -645,7 +645,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module><caret></module>" +
                      "</modules>");
 
-    assertNull(getIntentionAtCaret(getCREATE_MODULE_INTENTION()));
+    assertNull(getIntentionAtCaret(getCreateModuleIntention()));
   }
 
   public void testDoesNotShowCreatePomQuickFixExistingModule() {
@@ -673,7 +673,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>m<caret>odule</module>" +
                      "</modules>");
 
-    assertNull(getIntentionAtCaret(getCREATE_MODULE_INTENTION()));
+    assertNull(getIntentionAtCaret(getCreateModuleIntention()));
   }
 
   private void assertCreateModuleFixResult(String relativePath, String expectedText) {
@@ -688,7 +688,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertEquals(expectedText, doc.getText());
   }
 
-  private static String getCREATE_MODULE_INTENTION() {
+  private static String getCreateModuleIntention() {
     return MavenDomBundle.message("fix.create.module");
   }
 

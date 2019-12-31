@@ -102,7 +102,7 @@ public class TreeModelBuilder {
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(getPRODUCTION_NAME(), AllIcons.Modules.SourceFolder, project);
+      mySourceRoot = new GeneralGroupNode(getProductionName(), AllIcons.Modules.SourceFolder, project);
       myTestRoot = new GeneralGroupNode(getTEST_NAME(), AllIcons.Modules.TestSourceFolder, project);
       myLibsRoot = new GeneralGroupNode(getLIBRARY_NAME(), AllIcons.Nodes.PpLibFolder, project);
       myRoot.add(mySourceRoot);
@@ -463,7 +463,7 @@ public class TreeModelBuilder {
     return AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   }
 
-  public static String getPRODUCTION_NAME() {
+  public static String getProductionName() {
     return AnalysisScopeBundle.message("package.dependencies.production.node.text");
   }
 

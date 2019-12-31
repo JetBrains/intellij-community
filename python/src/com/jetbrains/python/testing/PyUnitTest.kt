@@ -55,7 +55,7 @@ class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, env
 
 class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
   PyAbstractTestConfiguration(project, factory,
-                              PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME()) { // Bare functions not supported in unittest: classes only
+                              PythonTestConfigurationsModel.getPythonsUnittestName()) { // Bare functions not supported in unittest: classes only
   @ConfigField
   var pattern: String? = null
 
@@ -105,5 +105,5 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 class PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project): PyUnitTestConfiguration = PyUnitTestConfiguration(project, this)
 
-  override fun getName(): String = PythonTestConfigurationsModel.getPYTHONS_UNITTEST_NAME()
+  override fun getName(): String = PythonTestConfigurationsModel.getPythonsUnittestName()
 }

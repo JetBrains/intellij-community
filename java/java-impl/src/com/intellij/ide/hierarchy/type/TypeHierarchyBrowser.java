@@ -93,7 +93,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     else if (getSUBTYPES_HIERARCHY_TYPE().equals(typeName)) {
       return new SubtypesHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
-    else if (getTYPE_HIERARCHY_TYPE().equals(typeName)) {
+    else if (getTypeHierarchyType().equals(typeName)) {
       return new TypeHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
     else {

@@ -41,7 +41,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
     String scope1 = PatternPackageSet.SCOPE_ANY;
     if (groupParent != null) {
       String name = groupParent.toString();
-      if (TreeModelBuilder.getPRODUCTION_NAME().equals(name)) {
+      if (TreeModelBuilder.getProductionName().equals(name)) {
         scope1 = PatternPackageSet.SCOPE_SOURCE;
       }
       else if (TreeModelBuilder.getTEST_NAME().equals(name)) {

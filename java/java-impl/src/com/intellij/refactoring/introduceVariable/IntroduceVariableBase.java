@@ -681,7 +681,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                                  editor, expr,
                                                                  allOccurrences,
                                                                  typeSelectorManager,
-                                                                 getREFACTORING_NAME());
+                                                                 getRefactoringName());
           }
           else {
             myInplaceIntroducer = new JavaVariableInplaceIntroducer(project,
@@ -690,7 +690,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                                     editor, expr, cantChangeFinalModifier,
                                                                     allOccurrences,
                                                                     typeSelectorManager,
-                                                                    getREFACTORING_NAME());
+                                                                    getRefactoringName());
           }
           if (myInplaceIntroducer.startInplaceIntroduceTemplate()) {
             return;
@@ -736,7 +736,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
               project.getMessageBus()
                 .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, afterData);
             }
-          }, getREFACTORING_NAME(), null);
+          }, getRefactoringName(), null);
       }
     };
 
@@ -783,16 +783,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   @Contract("_, _, null -> null")
   protected PsiElement checkAnchorStatement(Project project, Editor editor, PsiElement anchorStatement) {
     if (anchorStatement == null) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getREFACTORING_NAME());
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
       showErrorMessage(project, editor, message);
       return null;
     }
-    if (checkAnchorBeforeThisOrSuper(project, editor, anchorStatement, getREFACTORING_NAME(), HelpID.INTRODUCE_VARIABLE)) return null;
+    if (checkAnchorBeforeThisOrSuper(project, editor, anchorStatement, getRefactoringName(), HelpID.INTRODUCE_VARIABLE)) return null;
 
     final PsiElement tempContainer = anchorStatement.getParent();
 
     if (!(tempContainer instanceof PsiCodeBlock) && !RefactoringUtil.isLoopOrIf(tempContainer) && !(tempContainer instanceof PsiLambdaExpression) && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getREFACTORING_NAME());
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
       showErrorMessage(project, editor, message);
       return null;
     }
@@ -1219,7 +1219,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  protected static String getREFACTORING_NAME() {
+  protected static String getRefactoringName() {
     return RefactoringBundle.message("introduce.variable.title");
   }
 }

@@ -71,11 +71,11 @@ public class GitMergeUtil {
     }
     switch (branchCount) {
       case 0:
-        return new String[]{getDEFAULT_STRATEGY()};
+        return new String[]{getDefaultStrategy()};
       case 1:
-        return new String[]{getDEFAULT_STRATEGY(), "resolve", "recursive", "octopus", "ours", "subtree"};
+        return new String[]{getDefaultStrategy(), "resolve", "recursive", "octopus", "ours", "subtree"};
       default:
-        return new String[]{getDEFAULT_STRATEGY(), "octopus", "ours"};
+        return new String[]{getDefaultStrategy(), "octopus", "ours"};
     }
   }
 
@@ -92,7 +92,7 @@ public class GitMergeUtil {
         for (String s : getMergeStrategies(elements.size())) {
           strategy.addItem(s);
         }
-        strategy.setSelectedItem(getDEFAULT_STRATEGY());
+        strategy.setSelectedItem(getDefaultStrategy());
       }
 
       @Override
@@ -444,7 +444,7 @@ public class GitMergeUtil {
     return repository.getState().equals(GitRepository.State.REBASING);
   }
 
-  public static String getDEFAULT_STRATEGY() {
+  public static String getDefaultStrategy() {
     return GitBundle.getString("merge.default.strategy");
   }
 }

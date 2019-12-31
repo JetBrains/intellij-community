@@ -24,6 +24,6 @@ public class ShowSvnMapAction extends VcsShowToolWindowTabAction {
   @NotNull
   @Override
   protected String getTabName() {
-    return WorkingCopiesContent.getTAB_NAME();
+    return WorkingCopiesContent.getTabName();
   }
 }
