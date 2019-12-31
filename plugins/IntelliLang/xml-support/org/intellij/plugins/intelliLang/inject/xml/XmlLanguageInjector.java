@@ -19,9 +19,7 @@ package org.intellij.plugins.intelliLang.inject.xml;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -39,7 +37,6 @@ import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
@@ -61,14 +58,9 @@ import java.util.regex.Pattern;
 public final class XmlLanguageInjector implements MultiHostInjector {
   private final Configuration myConfiguration;
   private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
-  private final ClearableLazyValue<LanguageInjectionSupport> mySupport;
 
   public XmlLanguageInjector(@NotNull Project project) {
     myConfiguration = Configuration.getProjectInstance(project);
-    mySupport = ExtensionPointUtil.dropLazyValueOnChange(
-      ClearableLazyValue.create(() -> InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID)),
-      LanguageInjectionSupport.EP_NAME,
-      ExtensionPointUtil.createExtensionDisposable(this, MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(project)));
   }
 
   @Override
@@ -95,7 +87,8 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         ranges.add(textRange.shiftRight(host1.getTextRange().getStartOffset()));
       }
       InjectorUtils.registerInjection(language, list, containingFile, registrar);
-      InjectorUtils.registerSupport(mySupport.getValue(), true, list.get(0).getFirst(), language);
+      InjectorUtils.registerSupport(InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID),
+                                    true, list.get(0).getFirst(), language);
       if (Boolean.TRUE.equals(unparsableRef.get())) {
         InjectorUtils.putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }

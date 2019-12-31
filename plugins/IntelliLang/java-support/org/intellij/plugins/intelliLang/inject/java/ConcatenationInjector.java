@@ -5,12 +5,13 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.injection.ReferenceInjector;
@@ -43,14 +44,8 @@ import java.util.*;
 public final class ConcatenationInjector implements ConcatenationAwareInjector {
   private final Project myProject;
 
-  private final ClearableLazyValue<LanguageInjectionSupport> mySupport;
-
   public ConcatenationInjector(@NotNull Project project) {
     myProject = project;
-    mySupport = ExtensionPointUtil.dropLazyValueOnChange(
-      ClearableLazyValue.create(() -> InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)),
-      LanguageInjectionSupport.EP_NAME,
-      ExtensionPointUtil.createExtensionDisposable(this, ConcatenationInjectorManager.EP_NAME.getPoint(project)));
   }
 
   @Override
@@ -80,7 +75,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
                                         @NotNull PsiElement[] operands) {
     Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
     LanguageInjectionSupport injectionSupport = tempLanguage == null
-                                                ? mySupport.getValue()
+                                                ? InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)
                                                 : TemporaryPlacesRegistry.getInstance(myProject).getLanguageInjectionSupport();
     InjectionProcessor injectionProcessor = new InjectionProcessor(Configuration.getProjectInstance(myProject), injectionSupport, operands) {
       @Override
