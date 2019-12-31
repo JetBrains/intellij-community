@@ -84,24 +84,12 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     if (configurable != null && !myListeners.containsKey(wrapper)) {
       Disposable disposable = Disposer.newDisposable();
       Collection<BaseExtensionPointName<?>> dependencies = configurable.getDependencies();
-      ExtensionPointListener listener = new ExtensionPointListener() {
-        @Override
-        public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extensionChanged();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extensionChanged();
-        }
-
-        public void extensionChanged() {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            //dispose resources -> reset nested component
-            wrapper.disposeUIResources();
-            resetValue(wrapper);
-          }, ModalityState.stateForComponent(ConfigurableCardPanel.this), (__) -> ConfigurableCardPanel.this.isDisposed());
-        }
+      ExtensionPointListChangeListener listener = () -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          //dispose resources -> reset nested component
+          wrapper.disposeUIResources();
+          resetValue(wrapper);
+        }, ModalityState.stateForComponent(this), (__) -> this.isDisposed());
       };
 
       for (BaseExtensionPointName dependency : dependencies) {

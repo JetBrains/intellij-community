@@ -3,8 +3,6 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -64,30 +62,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       scheduleUpdateIndicesList();
     }
 
-    MavenRepositoryProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<MavenRepositoryProvider>() {
-      @Override
-      public void extensionAdded(@NotNull MavenRepositoryProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        scheduleUpdateIndicesList();
-      }
+    MavenRepositoryProvider.EP_NAME.addExtensionPointListener(this::scheduleUpdateIndicesList, myProject);
 
-      @Override
-      public void extensionRemoved(@NotNull MavenRepositoryProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        scheduleUpdateIndicesList();
-      }
-    }, myProject);
-
-    DependencyCompletionProviderFactory.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<DependencyCompletionProviderFactory>() {
-        @Override
-        public void extensionAdded(@NotNull DependencyCompletionProviderFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
-          scheduleUpdateIndicesList();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull DependencyCompletionProviderFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
-          scheduleUpdateIndicesList();
-        }
-      }, myProject);
+    DependencyCompletionProviderFactory.EP_NAME.addExtensionPointListener(this::scheduleUpdateIndicesList, myProject);
 
     getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
       @Override

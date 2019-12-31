@@ -24,7 +24,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -81,28 +80,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     App() {
       myDefaultInjections = loadDefaultInjections();
       myAdvancedConfiguration = new AdvancedConfiguration();
-      LanguageInjectionSupport.CONFIG_EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjectionConfigBean>() {
-        @Override
-        public void extensionAdded(@NotNull LanguageInjectionConfigBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          reloadInjections();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull LanguageInjectionConfigBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          reloadInjections();
-        }
-      }, null);
-      LanguageInjectionSupport.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjectionSupport>() {
-        @Override
-        public void extensionAdded(@NotNull LanguageInjectionSupport extension, @NotNull PluginDescriptor pluginDescriptor) {
-          reloadInjections();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull LanguageInjectionSupport extension, @NotNull PluginDescriptor pluginDescriptor) {
-          reloadInjections();
-        }
-      }, null);
+      LanguageInjectionSupport.CONFIG_EP_NAME.addExtensionPointListener(this::reloadInjections, null);
+      LanguageInjectionSupport.EP_NAME.addExtensionPointListener(this::reloadInjections, null);
     }
 
     private void reloadInjections() {

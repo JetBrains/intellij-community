@@ -97,7 +97,7 @@ public class FUCounterUsageLogger {
         }
 
         // Not unregistering groups when a plugin is unloaded is harmless
-      });
+      }, true, null);
 
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> logRegisteredGroups(), LOG_REGISTERED_INITIAL_DELAY_MIN, LOG_REGISTERED_DELAY_MIN, TimeUnit.MINUTES

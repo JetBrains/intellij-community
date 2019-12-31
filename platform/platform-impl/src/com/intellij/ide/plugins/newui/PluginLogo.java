@@ -10,7 +10,6 @@ import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -70,12 +69,9 @@ public final class PluginLogo {
         HiDPIPluginLogoIcon.clearCache();
       });
 
-      UIThemeProvider.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<UIThemeProvider>() {
-        @Override
-        public void extensionListChanged() {
-          Default = null;
-          HiDPIPluginLogoIcon.clearCache();
-        }
+      UIThemeProvider.EP_NAME.addExtensionPointListener(() -> {
+        Default = null;
+        HiDPIPluginLogoIcon.clearCache();
       }, application);
     }
   }

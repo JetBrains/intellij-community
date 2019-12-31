@@ -5,8 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,19 +21,7 @@ public final class AppCodeStyleSettingsManager extends CodeStyleSettingsManager 
   protected void registerExtensionPointListeners(@NotNull Disposable disposable) {
     super.registerExtensionPointListeners(disposable);
     LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          LanguageCodeStyleSettingsProvider.resetSettingsPagesProviders();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          LanguageCodeStyleSettingsProvider.resetSettingsPagesProviders();
-        }
-      },
-      disposable
-    );
+      LanguageCodeStyleSettingsProvider::resetSettingsPagesProviders, disposable);
   }
 
   @Override

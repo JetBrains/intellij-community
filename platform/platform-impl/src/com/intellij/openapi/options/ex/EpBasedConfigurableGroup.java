@@ -3,7 +3,10 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListChangeListener;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
@@ -91,7 +94,7 @@ class EpBasedConfigurableGroup
     if (myListeners.isEmpty()) {
       Project project = myProject;
       if (project == null) project = DefaultProjectFactory.getInstance().getDefaultProject();
-      ExtensionPointListener epListener = createListener();
+      ExtensionPointListChangeListener epListener = createListener();
       Configurable.APPLICATION_CONFIGURABLE.addExtensionPointListener(epListener, this);
       Configurable.PROJECT_CONFIGURABLE.getPoint(project).addExtensionPointListener(epListener, false, this);
 
@@ -138,27 +141,14 @@ class EpBasedConfigurableGroup
   }
 
   @NotNull
-  private ExtensionPointListener<?> createListener() {
-    return new ExtensionPointListener<Object>() {
-
-      @Override
-      public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
-        handle();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
-        handle();
-      }
-
-      void handle() {
-        myValue.drop();
-        ApplicationManager.getApplication().invokeLater(() -> {
-          for (Listener listener : myListeners) {
-            listener.handleUpdate();
-          }
-        });
-      }
+  private ExtensionPointListChangeListener<?> createListener() {
+    return () -> {
+      myValue.drop();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        for (Listener listener : myListeners) {
+          listener.handleUpdate();
+        }
+      });
     };
   }
 
