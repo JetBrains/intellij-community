@@ -137,7 +137,8 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
 
     if (element instanceof FakePsiElement) {
       nameElement = element.getNavigationElement();
-      isTag = nameElement != null && nameElement.getParent().getText().startsWith("element");
+      PsiElement parent = nameElement == null ? null : nameElement.getParent();
+      isTag = parent != null && parent.getText().startsWith("element");
     } else if (element instanceof XmlElementDecl) {
       nameElement = ((XmlElementDecl)element).getNameElement();
     } else if (element instanceof XmlAttributeDecl) {
