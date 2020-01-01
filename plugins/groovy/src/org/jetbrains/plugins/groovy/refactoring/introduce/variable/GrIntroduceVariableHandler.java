@@ -59,11 +59,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(stringPartInfo != null ? stringPartInfo.getLiteral() : selectedExpr);
     if (scope == null) {
       throw new GrRefactoringError(
-        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getREFACTORING_NAME()));
+        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringNameText()));
     }
     if (!GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(scope)) {
       throw new GrRefactoringError(
-        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getREFACTORING_NAME()));
+        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringNameText()));
     }
     return new GrControlFlowOwner[]{scope};
   }
@@ -245,7 +245,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   @NotNull
   @Override
   protected String getRefactoringName() {
-    return getREFACTORING_NAME();
+    return getRefactoringNameText();
   }
 
   @NotNull
@@ -261,7 +261,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return new GroovyIntroduceVariableDialog(context, validator);
   }
 
-  protected static String getREFACTORING_NAME() {
+  protected static String getRefactoringNameText() {
     return GroovyRefactoringBundle.message("introduce.variable.title");
   }
 }

@@ -140,7 +140,7 @@ public abstract class MvcFramework {
                                      "Error", Messages.getErrorIcon()) == Messages.NO) {
           return;
         }
-        ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.getNAME());
+        ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.getName());
       }
       module.putUserData(CREATE_APP_STRUCTURE, null);
       final GeneralCommandLine commandLine = getCreationCommandLine(module);

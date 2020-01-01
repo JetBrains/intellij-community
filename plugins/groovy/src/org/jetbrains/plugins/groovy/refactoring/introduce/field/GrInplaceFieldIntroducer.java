@@ -41,7 +41,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   private final GrVariable myLocalVar;
 
   public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(IntroduceFieldHandler.getREFACTORING_NAME(), choice, context);
+    super(IntroduceFieldHandler.getRefactoringNameText(), choice, context);
 
     finalListener = new GrFinalListener(myEditor);
 
@@ -211,7 +211,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
   @Override
   protected String getActionName() {
-    return IntroduceFieldHandler.getREFACTORING_NAME();
+    return IntroduceFieldHandler.getRefactoringNameText();
   }
 
   @NotNull

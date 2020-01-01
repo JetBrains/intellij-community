@@ -61,7 +61,7 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
     return false;
   }
 
-  public static String getDISPLAY_NAME() {
+  public static String getDisplayNameText() {
     return InspectionsBundle.message("unused.import.display.name");
   }
 }

@@ -43,7 +43,7 @@ import java.util.Map;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
   /**
-   * Use {code {@link #getNAME()}} instead
+   * Use {code {@link #getName()}} instead
    */
   @Deprecated
   public static final String NAME = "Dependencies";
@@ -71,7 +71,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public String getDisplayName() {
-    return getNAME();
+    return getName();
   }
 
   @Override
@@ -205,7 +205,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
   }
 
-  public static String getNAME() {
+  public static String getName() {
     return ProjectBundle.message("modules.classpath.title");
   }
 }

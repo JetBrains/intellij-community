@@ -434,7 +434,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
 
 
         HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME,
-                                                                               UnusedDeclarationInspectionBase.getDISPLAY_NAME(), UnusedDeclarationInspectionBase.SHORT_NAME);
+                                                                               UnusedDeclarationInspectionBase.getDisplayNameText(), UnusedDeclarationInspectionBase.SHORT_NAME);
         checkThrowsWhenCalledTwiceOnFixBuilder(holder, stubIntention, fixBuilder -> fixBuilder.key(myDeadCodeKey));
         checkThrowsWhenCalledTwiceOnFixBuilder(holder, stubIntention, fixBuilder -> fixBuilder.range(new TextRange(0, 0)));
 

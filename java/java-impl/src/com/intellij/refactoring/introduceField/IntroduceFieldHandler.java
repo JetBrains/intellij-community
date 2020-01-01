@@ -43,14 +43,14 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   @Override
   protected String getRefactoringName() {
-    return getREFACTORING_NAME();
+    return getRefactoringNameText();
   }
 
   @Override
   protected boolean validClass(PsiClass parentClass, Editor editor) {
     if (parentClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.field.in.interface"));
-      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getREFACTORING_NAME(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
       return false;
     }
     else {
@@ -68,7 +68,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    ElementToWorkOn.processElementToWorkOn(editor, file, getREFACTORING_NAME(), HelpID.INTRODUCE_FIELD, project, getElementProcessor(project, editor));
+    ElementToWorkOn.processElementToWorkOn(editor, file, getRefactoringNameText(), HelpID.INTRODUCE_FIELD, project, getElementProcessor(project, editor));
   }
 
   @Override
@@ -187,7 +187,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
       return false;
     }
     LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, false){
@@ -219,7 +219,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringNameText() {
     return RefactoringBundle.message("introduce.field.title");
   }
 }

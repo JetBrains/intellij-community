@@ -701,7 +701,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return myExtensions;
   }
 
-  public static String getDISPLAY_NAME() {
+  public static String getDisplayNameText() {
     return InspectionsBundle.message("inspection.dead.code.display.name");
   }
 }

@@ -43,7 +43,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
 
   @Override
   protected String getTitle(VcsContext context) {
-    return getTITLE();
+    return getTitleText();
   }
 
   @Override
@@ -72,7 +72,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       LOG.assertTrue(mySelectedConfiguration != null);
       final BrowserPanel browserPanel = new BrowserPanel(mySelectedConfiguration, project,
                                                          e -> VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.ERROR));
-      tabbedWindow.addTab(getTITLE(), browserPanel,
+      tabbedWindow.addTab(getTitleText(), browserPanel,
                           true, true, true, true, browserPanel.getActionGroup(), "cvs.browse");
     }
   }
@@ -80,7 +80,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
   private class MyCvsHandler extends CvsHandler {
 
     MyCvsHandler() {
-      super(getTITLE(), FileSetToBeUpdated.EMPTY);
+      super(getTitleText(), FileSetToBeUpdated.EMPTY);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
     }
   }
 
-  private static String getTITLE() {
+  private static String getTitleText() {
     return CvsBundle.message("operation.name.browse.repository");
   }
 }

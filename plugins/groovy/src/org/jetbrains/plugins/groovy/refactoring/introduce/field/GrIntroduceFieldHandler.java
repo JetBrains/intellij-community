@@ -43,7 +43,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
   @NotNull
   @Override
   protected String getRefactoringName() {
-    return IntroduceFieldHandler.getREFACTORING_NAME();
+    return IntroduceFieldHandler.getRefactoringNameText();
   }
 
   @NotNull

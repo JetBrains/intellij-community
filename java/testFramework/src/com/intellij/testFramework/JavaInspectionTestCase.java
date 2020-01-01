@@ -54,7 +54,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     ep.presentation = UnusedDeclarationPresentation.class.getName();
     ep.implementationClass = UnusedDeclarationInspection.class.getName();
     ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
-    ep.displayName = UnusedDeclarationInspectionBase.getDISPLAY_NAME();
+    ep.displayName = UnusedDeclarationInspectionBase.getDisplayNameText();
     return new GlobalInspectionToolWrapper(ep);
   }
 

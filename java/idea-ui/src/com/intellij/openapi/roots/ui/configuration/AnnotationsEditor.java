@@ -53,7 +53,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
   @Override
   public String getDisplayName() {
-    return getNAME();
+    return getName();
   }
 
   @Override
@@ -187,7 +187,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     }
   }
 
-  public static String getNAME() {
+  public static String getName() {
     return ProjectBundle.message("project.roots.external.annotations.tab.title");
   }
 }

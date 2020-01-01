@@ -21,7 +21,7 @@ public final class ProblemsScope extends NamedScope {
   public static final ProblemsScope INSTANCE = new ProblemsScope();
 
   private ProblemsScope() {
-    super(getNAME(), AllIcons.Scope.Problems, new FilteredPackageSet(getNAME()) {
+    super(getNameText(), AllIcons.Scope.Problems, new FilteredPackageSet(getNameText()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         WolfTheProblemSolver solver = project.isDisposed() ? null : WolfTheProblemSolver.getInstance(project);
@@ -38,7 +38,7 @@ public final class ProblemsScope extends NamedScope {
     }
   }
 
-  public static String getNAME() {
+  public static String getNameText() {
     return IdeBundle.message("predefined.scope.problems.name");
   }
 }

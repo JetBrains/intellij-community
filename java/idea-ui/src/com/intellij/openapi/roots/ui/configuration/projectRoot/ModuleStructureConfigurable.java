@@ -440,11 +440,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final MasterDetailsComponent.MyNode node = findModuleNode(module);
     if (node != null) {
       p.putPath(TREE_OBJECT, module);
-      p.putPath(ModuleEditor.SELECTED_EDITOR_NAME, ClasspathEditor.getNAME());
+      p.putPath(ModuleEditor.SELECTED_EDITOR_NAME, ClasspathEditor.getName());
       r = () -> {
         if (orderEntry != null) {
           ModuleEditor moduleEditor = ((ModuleConfigurable)node.getConfigurable()).getModuleEditor();
-          ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.getNAME());
+          ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.getName());
           if (editor instanceof ClasspathEditor) {
             ((ClasspathEditor)editor).selectOrderEntry(orderEntry);
           }

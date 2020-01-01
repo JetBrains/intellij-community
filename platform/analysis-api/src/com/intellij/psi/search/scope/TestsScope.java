@@ -24,7 +24,7 @@ public final class TestsScope extends NamedScope {
   public static final TestsScope INSTANCE = new TestsScope();
 
   private TestsScope() {
-    super(getNAME(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Tests), new FilteredPackageSet(getNAME()) {
+    super(getNameText(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Tests), new FilteredPackageSet(getNameText()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return TestSourcesFilter.isTestSources(file, project);
@@ -37,7 +37,7 @@ public final class TestsScope extends NamedScope {
     return "Green";
   }
 
-  public static String getNAME() {
+  public static String getNameText() {
     return IdeBundle.message("predefined.scope.tests.name");
   }
 }

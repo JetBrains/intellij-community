@@ -69,7 +69,7 @@ public class OutputEditor extends ModuleElementsEditor {
 
   @Override
   public String getDisplayName() {
-    return getNAME();
+    return getName();
   }
 
   @Override
@@ -92,7 +92,7 @@ public class OutputEditor extends ModuleElementsEditor {
     return "projectStructure.modules.paths";
   }
 
-  public static String getNAME() {
+  public static String getName() {
     return ProjectBundle.message("project.roots.path.tab.title");
   }
 }

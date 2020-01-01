@@ -58,7 +58,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return getNAME();
+    return getFixName();
   }
 
   @Override
@@ -78,7 +78,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   @Override
   @NotNull
   public String getText() {
-    return getNAME();
+    return getFixName();
   }
 
   @Override
@@ -125,14 +125,14 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
       model = new I18nizeQuickFixDialog(
         project,
         file,
-        getNAME(), dialogCustomization
+        getFixName(), dialogCustomization
       );
     }
     doAction(project, psiElement, model);
   }
 
   protected static I18nizeQuickFixDialog.DialogCustomization createDefaultCustomization(String suggestedKey, List<PropertiesFile> propertiesFiles) {
-    return new I18nizeQuickFixDialog.DialogCustomization(getNAME(), false, true, propertiesFiles, suggestedKey == null ? "" : suggestedKey);
+    return new I18nizeQuickFixDialog.DialogCustomization(getFixName(), false, true, propertiesFiles, suggestedKey == null ? "" : suggestedKey);
   }
 
   protected Couple<String> doAction(Project project, PsiElement psiElement, I18nizeQuickFixModel model) {
@@ -173,7 +173,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     return false;
   }
 
-  public static String getNAME() {
+  public static String getFixName() {
     return PropertiesBundle.message("create.property.quickfix.text");
   }
 }

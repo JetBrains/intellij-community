@@ -58,7 +58,7 @@ public class JavaFxProjectSdkSetupValidator extends EditorNotifications.Provider
   public void doFix(@NotNull Project project, @NotNull VirtualFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     final String moduleName = module != null && !module.isDisposed() ? module.getName() : null;
-    ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(moduleName, ClasspathEditor.getNAME());
+    ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(moduleName, ClasspathEditor.getName());
   }
 
   @Override

@@ -28,7 +28,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
   @Override
   public String getDisplayName() {
-    return getDISPLAY_NAME();
+    return getDisplayNameText();
   }
 
   @Override
@@ -190,7 +190,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
-  public static String getDISPLAY_NAME() {
+  public static String getDisplayNameText() {
     return XDebuggerBundle.message("debugger.configurable.display.name");
   }
 }

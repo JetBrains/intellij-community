@@ -439,7 +439,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       @Override
       @NotNull
       public String getFamilyName() {
-        return IntroduceConstantHandler.getREFACTORING_NAME();
+        return IntroduceConstantHandler.getRefactoringNameText();
       }
 
       @Override

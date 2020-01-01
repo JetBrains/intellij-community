@@ -99,7 +99,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getFamilyName() {
-    return getFAMILY_NAME();
+    return getFamilyNameText();
   }
 
   @Override
@@ -625,7 +625,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
   }
 
-  public static String getFAMILY_NAME() {
+  public static String getFamilyNameText() {
     return QuickFixBundle.message("simplify.boolean.expression.family");
   }
 }

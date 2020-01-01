@@ -20,7 +20,7 @@ public final class ProjectProductionScope extends NamedScope {
   public static final ProjectProductionScope INSTANCE = new ProjectProductionScope();
 
   private ProjectProductionScope() {
-    super(getNAME(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Production), new FilteredPackageSet(getNAME()) {
+    super(getNameText(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Production), new FilteredPackageSet(getNameText()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         ProjectFileIndex index = ProjectFilesScope.getFileIndex(project);
@@ -32,7 +32,7 @@ public final class ProjectProductionScope extends NamedScope {
     });
   }
 
-  public static String getNAME() {
+  public static String getNameText() {
     return IdeBundle.message("predefined.scope.production.name");
   }
 }

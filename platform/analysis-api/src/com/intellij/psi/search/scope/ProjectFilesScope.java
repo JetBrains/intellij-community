@@ -20,7 +20,7 @@ public final class ProjectFilesScope extends NamedScope {
   public static final ProjectFilesScope INSTANCE = new ProjectFilesScope();
 
   public ProjectFilesScope() {
-    super(getNAME(), AllIcons.Nodes.Folder, new FilteredPackageSet(getNAME()) {
+    super(getNameText(), AllIcons.Nodes.Folder, new FilteredPackageSet(getNameText()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         ProjectFileIndex fileIndex = getFileIndex(project);
@@ -36,7 +36,7 @@ public final class ProjectFilesScope extends NamedScope {
     return !project.isInitialized() ? null : ProjectRootManager.getInstance(project).getFileIndex();
   }
 
-  public static String getNAME() {
+  public static String getNameText() {
     return IdeBundle.message("predefined.scope.project.files.name");
   }
 }

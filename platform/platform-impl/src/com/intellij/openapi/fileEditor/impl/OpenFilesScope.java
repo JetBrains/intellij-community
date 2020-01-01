@@ -21,7 +21,7 @@ public final class OpenFilesScope extends NamedScope {
   public static final OpenFilesScope INSTANCE = new OpenFilesScope();
 
   private OpenFilesScope() {
-    super(getNAME(), AllIcons.FileTypes.Any_type, new FilteredPackageSet(getNAME()) {
+    super(getNameText(), AllIcons.FileTypes.Any_type, new FilteredPackageSet(getNameText()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         FileEditorManager manager = project.isDisposed() ? null : FileEditorManager.getInstance(project);
@@ -38,7 +38,7 @@ public final class OpenFilesScope extends NamedScope {
     }
   }
 
-  public static String getNAME() {
+  public static String getNameText() {
     return IdeBundle.message("scope.open.files");
   }
 }

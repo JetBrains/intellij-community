@@ -111,7 +111,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myTypeSelectorManager = typeSelectorManager;
     myDestinationClass = null;
 
-    setTitle(IntroduceConstantHandler.getREFACTORING_NAME());
+    setTitle(IntroduceConstantHandler.getRefactoringNameText());
     myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     myVPanel = new JavaVisibilityPanel(false, true);
     myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
@@ -422,7 +422,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       newClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
         if (Messages.showOkCancelDialog(myProject, RefactoringBundle.message("class.does.not.exist.in.the.project"),
-                                        IntroduceConstantHandler.getREFACTORING_NAME(), Messages.getErrorIcon()) != Messages.OK) {
+                                        IntroduceConstantHandler.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
           return;
         }
         myDestinationClass = new BaseExpressionToFieldHandler.TargetDestination(targetClassName, myParentClass);
@@ -443,7 +443,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-        IntroduceFieldHandler.getREFACTORING_NAME(),
+        IntroduceFieldHandler.getRefactoringNameText(),
         errorString,
         HelpID.INTRODUCE_FIELD,
         myProject);
@@ -456,7 +456,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         int answer = Messages.showYesNoDialog(
           myProject,
           RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName()),
-          IntroduceFieldHandler.getREFACTORING_NAME(),
+          IntroduceFieldHandler.getRefactoringNameText(),
           Messages.getWarningIcon()
         );
         if (answer != Messages.YES) {

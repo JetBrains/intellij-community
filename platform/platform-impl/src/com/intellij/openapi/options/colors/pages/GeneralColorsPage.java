@@ -198,7 +198,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   @Override
   @NotNull
   public String getDisplayName() {
-    return getDISPLAY_NAME();
+    return getDisplayNameText();
   }
 
   @Override
@@ -280,7 +280,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     return highlightInfoType.getSeverity(null).myName;
   }
 
-  public static String getDISPLAY_NAME() {
+  public static String getDisplayNameText() {
     return OptionsBundle.message("options.general.display.name");
   }
 }
