@@ -981,7 +981,9 @@
       <add-to-group group-id="VcsGroups" anchor="first"/>
     </group>
 
-    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup"/>
+    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup">
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </action>
 
     <group id="Vcs.Operations.Popup">
       <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
@@ -1035,7 +1037,11 @@
       <action id="ImportTestsFromFile" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction" icon="AllIcons.ToolbarDecorator.Import"/>
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
     </group>
-    <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights"/>
+
+    <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+
     <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.EditColors"/>
 
     <!-- Arrangement rules -->
@@ -1166,8 +1172,8 @@
     <group id="ServiceViewTreeToolbar">
       <group id="ServiceView.GroupBy" popup="true" text="Group By" icon="AllIcons.Actions.GroupBy"
              class="com.intellij.ide.actions.NonEmptyActionGroup">
-      <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"/>
-      <action id="ServiceView.GroupByServiceGroups" class="com.intellij.execution.services.GroupByServiceGroupsAction"/>
+        <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"/>
+        <action id="ServiceView.GroupByServiceGroups" class="com.intellij.execution.services.GroupByServiceGroupsAction"/>
         <separator/>
       </group>
       <group id="ServiceView.Filter" popup="true" text="Filter" icon="AllIcons.General.Filter"
@@ -1209,7 +1215,9 @@
            class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup">
       <add-to-group group-id="ServiceView.Filter"/>
     </group>
-      <action id="RunDashboard.AddType" class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction"/>
+    <action id="RunDashboard.AddType" class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction">
+      <add-to-group group-id="ServiceView.AddService"/>
+    </action>
     <reference id="RunDashboard.RestoreHiddenConfigurations">
       <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddType"/>
     </reference>
@@ -1217,7 +1225,10 @@
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
     </action>
-    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction"/>
+    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction">
+      <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
+      <add-to-group group-id="DebugReloadGroup" anchor="last"/>
+    </action>
 
     <group id="TouchBar">
       <group id="TouchBarDefault" text="Default">
@@ -1289,10 +1300,19 @@
         </group>
       </group>
     </group>
-    <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true"/>
-    <action id="RetypeFile" class="com.intellij.internal.retype.RetypeFileAction" internal="true"/>
-    <action id="CompletionQualityStats" class="com.intellij.internal.CompletionQualityStatsAction" internal="true"/>
-    <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction" internal="true"/>
+
+    <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true">
+      <add-to-group group-id="Internal.Performance" anchor="last"/>
+    </action>
+    <action id="RetypeFile" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
+      <add-to-group group-id="Internal.Performance" anchor="last"/>
+    </action>
+    <action id="CompletionQualityStats" class="com.intellij.internal.CompletionQualityStatsAction" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+    <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
     <group id="TodoMainGroup" text="TODO">
       <add-to-group group-id="Other.KeymapGroup"/>
       <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" popup="true">
