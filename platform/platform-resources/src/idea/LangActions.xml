@@ -460,7 +460,7 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <group id="Bookmarks" text="Bookmarks">
+    <group id="Bookmarks">
       <reference ref="ToggleBookmark"/>
       <reference ref="ShowBookmarks"/>
       <reference ref="GotoNextBookmark"/>
@@ -1005,7 +1005,7 @@
         <reference id="Start.Use.Vcs"/>
       </group>
       <separator/>
-      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotated Line" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
+      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
       <separator text="Local History"/>
       <reference id="LocalHistory.ShowHistory"/>
       <reference id="LocalHistory.PutLabel"/>
@@ -1170,22 +1170,22 @@
     </group>
 
     <group id="ServiceViewTreeToolbar">
-      <group id="ServiceView.GroupBy" popup="true" text="Group By" icon="AllIcons.Actions.GroupBy"
+      <group id="ServiceView.GroupBy" popup="true" icon="AllIcons.Actions.GroupBy"
              class="com.intellij.ide.actions.NonEmptyActionGroup">
         <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"/>
         <action id="ServiceView.GroupByServiceGroups" class="com.intellij.execution.services.GroupByServiceGroupsAction"/>
         <separator/>
       </group>
-      <group id="ServiceView.Filter" popup="true" text="Filter" icon="AllIcons.General.Filter"
+      <group id="ServiceView.Filter" popup="true" icon="AllIcons.General.Filter"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
-      <group id="ServiceView.OpenInNewTabGroup" popup="true" text="Open in New Tab" icon="AllIcons.Actions.OpenNewTab"
+      <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
              class="com.intellij.execution.services.OpenInNewTabActionGroup">
       <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
       <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
       <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
       </group>
       <separator/>
-      <group id="ServiceView.AddService" popup="true" text="Add Service" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
+      <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
              class="com.intellij.execution.services.AddServiceActionGroup">
       </group>
     </group>
@@ -1206,12 +1206,12 @@
       <action id="ServiceView.JumpToServices" class="com.intellij.execution.services.JumpToServicesAction" use-shortcut-of="ShowNavBar"/>
     </group>
       <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
-    <group id="RunDashboard.GroupBy" popup="true" text="Configuration" class="com.intellij.ide.actions.NonEmptyActionGroup">
+    <group id="RunDashboard.GroupBy" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
       <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
       <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"/>
       <add-to-group group-id="ServiceView.GroupBy"/>
     </group>
-    <group id="RunDashboard.Filter" popup="true" text="Configuration Status"
+    <group id="RunDashboard.Filter" popup="true"
            class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup">
       <add-to-group group-id="ServiceView.Filter"/>
     </group>
@@ -1231,25 +1231,25 @@
     </action>
 
     <group id="TouchBar">
-      <group id="TouchBarDefault" text="Default">
+      <group id="TouchBarDefault">
         <reference ref="RunConfiguration"/>
-        <group id="RunnerActionsTouchbar" text="Touchbar Run/Debug Actions"/> <!--filled from ExecutorRegistry-->
+        <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
         <reference ref="Stop"/>
         <separator text="type.small"/>
         <separator text="type.large"/>
-        <group id="TouchBarDefaultOptionalGroup" text="Optional Actions">
+        <group id="TouchBarDefaultOptionalGroup">
           <reference ref="Vcs.UpdateProject"/>
           <reference ref="CheckinProject"/>
           <reference ref="ChangesView.ToggleCommitUi"/>
         </group>
-        <group id="TouchBarDefault_ctrl" text="Default with Ctrl Key">
+        <group id="TouchBarDefault_ctrl">
           <separator/>
         </group>
-        <group id="TouchBarDefault_alt" text="Default with Alt Key">
+        <group id="TouchBarDefault_alt">
           <reference ref="SelectInProjectView"/>
           <separator text="type.flexible"/>
         </group>
-        <group id="TouchBarDefault_cmd" text="Default with Cmd Key">
+        <group id="TouchBarDefault_cmd">
           <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
           <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
           <reference ref="Back"/>
@@ -1260,11 +1260,11 @@
           <separator text="type.flexible"/>
           <reference ref="ShowUsages"/>
         </group>
-        <group id="TouchBarDefault_cmd.alt" text="Default with Alt+Cmd Key">
+        <group id="TouchBarDefault_cmd.alt">
           <separator text="type.flexible"/>
           <reference ref="FindUsages"/>
         </group>
-        <group id="TouchBarDefault_shift" text="Default with Shift Key">
+        <group id="TouchBarDefault_shift">
           <!--Use Shift to show Refactor actions/-->
           <reference ref="RenameElement"/>
           <reference ref="ChangeSignature"/>
@@ -1273,7 +1273,7 @@
           <reference ref="Move"/>
         </group>
       </group>
-      <group id="TouchBarDebug" text="Debugger">
+      <group id="TouchBarDebug">
         <reference ref="Rerun"/>
         <reference ref="Resume"/>
         <reference ref="Pause"/>
@@ -1281,16 +1281,16 @@
         <separator text="type.small"/>
         <reference ref="XDebugger.MuteBreakpoints"/>
         <separator text="type.flexible"/>
-        <group id="TouchBarDebug.StepButtons" compact="true" text="Debugger Step Actions">
+        <group id="TouchBarDebug.StepButtons" compact="true">
           <reference ref="StepOver"/>
           <reference ref="StepInto"/>
           <reference ref="StepOut"/>
         </group>
         <separator text="type.small"/>
-        <group id="TouchBarDebug_alt" text="Debugger with Alt Key">
+        <group id="TouchBarDebug_alt">
           <reference ref="ViewBreakpoints"/>
           <separator text="type.flexible"/>
-          <group id="TouchBarDebug.ForceStepButtons" compact="true" text="Debugger ForceStep Actions">
+          <group id="TouchBarDebug.ForceStepButtons" compact="true">
             <reference ref="RunToCursor"/>
             <reference ref="ForceStepOver"/>
             <reference ref="ForceStepInto"/>
@@ -1313,7 +1313,7 @@
     <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
-    <group id="TodoMainGroup" text="TODO">
+    <group id="TodoMainGroup">
       <add-to-group group-id="Other.KeymapGroup"/>
       <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" popup="true">
         <separator text="Group By"/>
