@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -133,6 +134,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @NotNull
   private static String getActionName() {
-    return "Compress Logs and Show in " + RevealFileAction.getFileManagerName();
+    return ActionsBundle.message("compress.logs.and.show.in.0", RevealFileAction.getFileManagerName());
   }
 }

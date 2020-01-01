@@ -1162,12 +1162,12 @@
       <add-to-group group-id="Internal"/>
     </group>
 
-    <action class="com.intellij.diagnostic.PluginStartupCostAction" text="Analyze Plugin Startup Performance">
+    <action id="AnalyzePluginStartupPerformance" class="com.intellij.diagnostic.AnalyzePluginStartupPerformanceAction">
       <add-to-group group-id="HelpDiagnosticTools" anchor="after" relative-to-action="Performance.ActivityMonitor"/>
     </action>
 
-    <action class="com.intellij.diagnostic.GenerateJarAccessLogAction" internal="true" text="Generate Jar Access Log"/>
-    <action class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true" text="Trigger Low Memory Notification"/>
+    <action id="GenerateJarAccessLog" class="com.intellij.diagnostic.GenerateJarAccessLogAction" internal="true"/>
+    <action id="TriggerLowMemoryNotification" class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true"/>
 
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"/>
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow"/>

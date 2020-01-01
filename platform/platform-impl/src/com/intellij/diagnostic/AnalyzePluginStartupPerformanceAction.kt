@@ -19,7 +19,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
-internal class PluginStartupCostAction : DumbAwareAction() {
+internal class AnalyzePluginStartupPerformanceAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     PluginStartupCostDialog(project).show()
@@ -64,7 +64,6 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
           true
         }
 
-        @Suppress("UNCHECKED_CAST")
         val ids = costMap.keys()
         ids.sort()
         val costDetails = StringBuilder()
@@ -90,7 +89,8 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
 
     val columns = if (ApplicationManager.getApplication().isInternal) {
       arrayOf(pluginColumn, costColumn, costDetailsColumn)
-    } else {
+    }
+    else {
       arrayOf(pluginColumn, costColumn)
     }
 
