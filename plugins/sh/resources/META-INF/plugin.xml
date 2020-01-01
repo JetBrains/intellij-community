@@ -4,6 +4,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
   <name>Shell Script</name>
+  <resource-bundle>messages.ShBundle</resource-bundle>
   <description><![CDATA[
 Adds support for working with shell script files
 
@@ -81,19 +82,12 @@ Adds support for working with shell script files
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction"
-            text="Run File"
-            description="Run current shell file in the terminal" use-shortcut-of="RunClass"/>
+            use-shortcut-of="RunClass"/>
 
     <group id="ShGenerateGroup">
-      <action id="ShGenerateForLoop" class="com.intellij.sh.actions.ShGenerateForLoop"
-              text="For Loop"
-              description="Creates for loop"/>
-      <action id="ShGenerateWhileLoop" class="com.intellij.sh.actions.ShGenerateWhileLoop"
-              text="While Loop"
-              description="Creates while loop"/>
-      <action id="ShGenerateUntilLoop" class="com.intellij.sh.actions.ShGenerateUntilLoop"
-              text="Until Loop"
-              description="Creates until loop"/>
+      <action id="ShGenerateForLoop" class="com.intellij.sh.actions.ShGenerateForLoop"/>
+      <action id="ShGenerateWhileLoop" class="com.intellij.sh.actions.ShGenerateWhileLoop"/>
+      <action id="ShGenerateUntilLoop" class="com.intellij.sh.actions.ShGenerateUntilLoop"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
   </actions>
