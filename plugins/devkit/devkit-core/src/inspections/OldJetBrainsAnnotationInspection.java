@@ -7,7 +7,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
@@ -30,8 +29,10 @@ public class OldJetBrainsAnnotationInspection extends AbstractBaseJavaLocalInspe
         if (!name.equals("Nullable") && !name.equals("NotNull")) return;
         PsiClass annotationClass = ObjectUtils.tryCast(nameElement.resolve(), PsiClass.class);
         if (annotationClass == null) return;
-        String qualifiedName = annotationClass.getQualifiedName();
-        if (qualifiedName == null || !"org.jetbrains.annotations".equals(StringUtil.getPackageName(qualifiedName))) return;
+        PsiJavaFile file = ObjectUtils.tryCast(annotationClass.getContainingFile(), PsiJavaFile.class);
+        if (file == null) return;
+        String packageName = file.getPackageName();
+        if (!"org.jetbrains.annotations".equals(packageName)) return;
         Set<PsiAnnotation.TargetType> targets = AnnotationTargetUtil.getAnnotationTargets(annotationClass);
         if (targets == null || targets.contains(PsiAnnotation.TargetType.TYPE_USE)) return;
         PsiAnnotationOwner owner = annotation.getOwner();
@@ -39,9 +40,6 @@ public class OldJetBrainsAnnotationInspection extends AbstractBaseJavaLocalInspe
         if (typeElement == null) return;
         PsiType type = typeElement.getType();
         if (!(type instanceof PsiArrayType)) return;
-        PsiAnnotation.TargetType target =
-          AnnotationTargetUtil.findAnnotationTarget(annotation, AnnotationTargetUtil.getTargetsForLocation(owner));
-        if (target == PsiAnnotation.TargetType.TYPE_USE) return;
         holder.registerProblem(annotation, "Old-style array annotation", new OldJetBrainsAnnotationFix());
       }
     };
