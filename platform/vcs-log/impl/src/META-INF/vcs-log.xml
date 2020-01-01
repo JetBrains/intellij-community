@@ -83,18 +83,15 @@
 
   <actions>
     <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Find"
-            use-shortcut-of="Find"
-            text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
-    <action class="com.intellij.vcs.log.ui.actions.GoToParentRowAction" id="Vcs.Log.GoToParent"
-            text="Go to Parent Commit" description="Navigate to the parent row in the commit graph">
+            use-shortcut-of="Find"/>
+    <action class="com.intellij.vcs.log.ui.actions.GoToParentRowAction" id="Vcs.Log.GoToParent">
       <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
     </action>
-    <action class="com.intellij.vcs.log.ui.actions.GoToChildRowAction" id="Vcs.Log.GoToChild"
-            text="Go to Child Commit" description="Navigate to the child row in the commit graph">
+    <action class="com.intellij.vcs.log.ui.actions.GoToChildRowAction" id="Vcs.Log.GoToChild">
       <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
-    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
+    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>
@@ -118,34 +115,27 @@
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
-            text="Show Commit Tooltip" description="Show tooltip for currently selected commit in the Log"
             use-shortcut-of="QuickJavaDoc"/>
-    <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction" id="Vcs.Log.EnableFilterByRegexAction"
-            text="Regex"/>
-    <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction" id="Vcs.Log.MatchCaseAction"
-            text="Match Case"/>
+    <action class="com.intellij.vcs.log.ui.actions.EnableFilterByRegexAction" id="Vcs.Log.EnableFilterByRegexAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.EnableMatchCaseAction" id="Vcs.Log.MatchCaseAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
     <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
-            use-shortcut-of="Vcs.OpenRepositoryVersion"
-            text="Show File at Revision" description="Open editor with selected revision of the file"/>
+            use-shortcut-of="Vcs.OpenRepositoryVersion"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
             use-shortcut-of="Vcs.GetVersion"
-            text="Get" description="Get version from repository" icon="AllIcons.Actions.Download"/>
+            icon="AllIcons.Actions.Download"/>
     <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
             use-shortcut-of="Annotate"
-            text="Annotate" description="Annotate selected revision" icon="AllIcons.Actions.Annotate"/>
+            icon="AllIcons.Actions.Annotate"/>
     <action class="com.intellij.vcs.log.ui.actions.history.ShowAllAffectedFromHistoryAction" id="Vcs.Log.ShowAllAffected"
-            use-shortcut-of="VcsHistory.ShowAllAffected" icon="AllIcons.Actions.ListChanges" text="Show All Affected Files"
-            description="Show all changes made in the chosen revision"/>
+            use-shortcut-of="VcsHistory.ShowAllAffected" icon="AllIcons.Actions.ListChanges"/>
     <action class="com.intellij.vcs.log.ui.actions.CompareRevisionsFromLogAction" id="Vcs.Log.CompareRevisions"
-            text="Compare Versions" description="Compare selected versions"
             icon="AllIcons.Actions.Diff"/>
     <action class="com.intellij.vcs.log.ui.actions.ResumeIndexingAction" id="Vcs.Log.ResumeIndexing"
-            icon="AllIcons.Process.ProgressResumeSmall"
-            text="Resume Indexing" description="Indexing was paused as it took longer than expected. Resume."/>
+            icon="AllIcons.Process.ProgressResumeSmall"/>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.Actions.Show" text="Presentation Settings" description="Configure presentation of the Log" popup="true">
+           icon="AllIcons.Actions.Show" popup="true">
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
       <reference id="Vcs.Log.CompactReferencesView"/>
       <reference id="Vcs.Log.AlignLabels"/>
@@ -160,7 +150,7 @@
       <reference id="Vcs.Log.ToggleColumns"/>
     </group>
     <group id="Vcs.Log.TextFilterSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.General.GearPlain" text="Text Filter Settings" description="Select text filter options" popup="true">
+           icon="AllIcons.General.GearPlain" popup="true">
       <reference id="Vcs.Log.EnableFilterByRegexAction"/>
       <reference id="Vcs.Log.MatchCaseAction"/>
     </group>
@@ -187,7 +177,7 @@
       <reference id="Vcs.Log.GoToRef"/>
     </group>
     <group id="Vcs.Log.LayoutConfiguration" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.Debugger.RestoreLayout" text="Configure Layout" description="Configure window layout" popup="true">
+           icon="AllIcons.Debugger.RestoreLayout" popup="true">
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
     </group>
@@ -216,8 +206,8 @@
       <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.Actions.Show" text="Presentation Settings"
-           description="Configure presentation of the File History" popup="true">
+           icon="AllIcons.Actions.Show"
+           popup="true">
       <reference id="Vcs.Log.PreferCommitDate"/>
       <reference id="Vcs.Log.ToggleColumns"/>
     </group>
@@ -235,7 +225,7 @@
       <separator/>
     </group>
 
-    <group id="Log.KeymapGroup" text="Log">
+    <group id="Log.KeymapGroup">
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="Vcs.Log.CompareRevisions"/>
       <separator/>

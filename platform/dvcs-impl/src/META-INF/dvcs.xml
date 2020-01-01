@@ -12,10 +12,10 @@
   </extensionPoints>
   <actions>
     <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
-    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push" text="Push...">
+    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push">
       <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
     </action>
-    <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction" text="_Force Push" />
+    <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
 
     <group id="Vcs.Push.Actions">
       <reference id="Vcs.Force.Push" />
@@ -43,7 +43,7 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
-    <action id="ChangesView.GroupBy.Repository" text="Repository" class="com.intellij.dvcs.actions.SetRepositoryChangesGroupingAction">
+    <action id="ChangesView.GroupBy.Repository" class="com.intellij.dvcs.actions.SetRepositoryChangesGroupingAction">
       <add-to-group group-id="ChangesView.GroupBy"/>
     </action>
 
