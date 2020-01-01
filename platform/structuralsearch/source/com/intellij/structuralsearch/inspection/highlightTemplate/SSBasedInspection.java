@@ -64,7 +64,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return getGENERAL_GROUP_NAME();
+    return getGeneralGroupName();
   }
 
   @Override

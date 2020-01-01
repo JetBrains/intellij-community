@@ -81,9 +81,9 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
 
   @Override
   protected void initTables() {
-    initCustomOptions(getALIGNMENT_GROUP());
-    initCustomOptions(getBLANK_LINES_GROUP());
-    initCustomOptions(getINVALID_TAGS_GROUP());
+    initCustomOptions(getAlignmentGroup());
+    initCustomOptions(getBlankLinesGroup());
+    initCustomOptions(getInvalidTagsGroup());
     initBooleanField("WRAP_COMMENTS", ApplicationBundle.message("checkbox.wrap.at.right.margin"), getOtherGroup());
     initCustomOptions(getOtherGroup());
   }
@@ -185,15 +185,15 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return ApplicationBundle.message("group.javadoc.other");
   }
 
-  public static String getINVALID_TAGS_GROUP() {
+  public static String getInvalidTagsGroup() {
     return ApplicationBundle.message("group.javadoc.invalid.tags");
   }
 
-  public static String getBLANK_LINES_GROUP() {
+  public static String getBlankLinesGroup() {
     return ApplicationBundle.message("group.javadoc.blank.lines");
   }
 
-  public static String getALIGNMENT_GROUP() {
+  public static String getAlignmentGroup() {
     return ApplicationBundle.message("group.javadoc.alignment");
   }
 }

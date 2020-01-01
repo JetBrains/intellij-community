@@ -52,10 +52,10 @@ public class LightEditUtil {
   static boolean confirmClose(@NotNull String message,
                               @NotNull String title,
                               @NotNull Runnable saveRunnable) {
-    final String[] options = {getCloseSave(), getCLOSE_DISCARD(), getCLOSE_CANCEL()};
+    final String[] options = {getCloseSave(), getCloseDiscard(), getCloseCancel()};
     int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
     if (result >= 0) {
-      if (getCLOSE_CANCEL().equals(options[result])) {
+      if (getCloseCancel().equals(options[result])) {
         return false;
       }
       else if (getCloseSave().equals(options[result])) {
@@ -94,11 +94,11 @@ public class LightEditUtil {
     return ApplicationBundle.message("light.edit.close.save");
   }
 
-  private static String getCLOSE_DISCARD() {
+  private static String getCloseDiscard() {
     return ApplicationBundle.message("light.edit.close.discard");
   }
 
-  private static String getCLOSE_CANCEL() {
+  private static String getCloseCancel() {
     return ApplicationBundle.message("light.edit.close.cancel");
   }
 }

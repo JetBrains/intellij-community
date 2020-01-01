@@ -225,33 +225,33 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",
                                 ApplicationBundle.message("checkbox.align.parameter.descriptions"),
-                                getALIGNMENT_GROUP());
+                                getAlignmentGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_EXCEPTION_COMMENTS",
                                 ApplicationBundle.message("checkbox.align.thrown.exception.descriptions"),
-                                getALIGNMENT_GROUP());
+                                getAlignmentGroup());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_DESCRIPTION",
                                 ApplicationBundle.message("checkbox.after.description"),
-                                getBLANK_LINES_GROUP());
+                                getBlankLinesGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_PARM_COMMENTS",
                                 ApplicationBundle.message("checkbox.after.parameter.descriptions"),
-                                getBLANK_LINES_GROUP());
+                                getBlankLinesGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_RETURN",
                                 ApplicationBundle.message("checkbox.after.return.tag"),
-                                getBLANK_LINES_GROUP());
+                                getBlankLinesGroup());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_INVALID_TAGS",
                                 ApplicationBundle.message("checkbox.keep.invalid.tags"),
-                                getINVALID_TAGS_GROUP());
+                                getInvalidTagsGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_PARAMETER",
                                 ApplicationBundle.message("checkbox.keep.empty.param.tags"),
-                                getINVALID_TAGS_GROUP());
+                                getInvalidTagsGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_RETURN",
                                 ApplicationBundle.message("checkbox.keep.empty.return.tags"),
-                                getINVALID_TAGS_GROUP());
+                                getInvalidTagsGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_EXCEPTION",
                                 ApplicationBundle.message("checkbox.keep.empty.throws.tags"),
-                                getINVALID_TAGS_GROUP());
+                                getInvalidTagsGroup());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_LEADING_ASTERISKS_ARE_ENABLED",
                                 ApplicationBundle.message("checkbox.enable.leading.asterisks"),

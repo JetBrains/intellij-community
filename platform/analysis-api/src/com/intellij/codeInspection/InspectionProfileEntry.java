@@ -253,7 +253,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public String[] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
     if (groupDisplayName.isEmpty()) {
-      groupDisplayName = getGENERAL_GROUP_NAME();
+      groupDisplayName = getGeneralGroupName();
     }
     return new String[]{groupDisplayName};
   }
@@ -488,7 +488,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  public static String getGENERAL_GROUP_NAME() {
+  public static String getGeneralGroupName() {
     return InspectionsBundle.message("inspection.general.tools.group.name");
   }
 }

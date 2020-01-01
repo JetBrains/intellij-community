@@ -22,7 +22,7 @@ final class ToggleFullScreenAction extends DumbAwareAction {
       return ActionsBundle.message("action.ToggleFullScreen.text.enter");
     }
 
-    private static String getTEXT_EXIT_FULL_SCREEN() {
+    private static String getTextExitFullScreen() {
       return ActionsBundle.message("action.ToggleFullScreen.text.exit");
     }
   }
@@ -52,7 +52,7 @@ final class ToggleFullScreenAction extends DumbAwareAction {
     p.setEnabled(isApplicable);
 
     if (isApplicable) {
-      p.setText(frame.isInFullScreen() ? Holder.getTEXT_EXIT_FULL_SCREEN() : Holder.getTextEnterFullScreen());
+      p.setText(frame.isInFullScreen() ? Holder.getTextExitFullScreen() : Holder.getTextEnterFullScreen());
     }
   }
 

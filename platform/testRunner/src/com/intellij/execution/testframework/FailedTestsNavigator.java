@@ -69,13 +69,13 @@ public class FailedTestsNavigator implements OccurenceNavigator {
   @NotNull
   @Override
   public String getNextOccurenceActionName() {
-    return getNEXT_NAME();
+    return getNextName();
   }
 
   @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
-    return getPREVIOUS_NAME();
+    return getPreviousName();
   }
 
   private FailedTestInfo getNextOccurenceInfo() {
@@ -183,11 +183,11 @@ public class FailedTestsNavigator implements OccurenceNavigator {
     }
   }
 
-  static String getNEXT_NAME() {
+  static String getNextName() {
     return ExecutionBundle.message("next.faled.test.action.name");
   }
 
-  static String getPREVIOUS_NAME() {
+  static String getPreviousName() {
     return ExecutionBundle.message("prev.faled.test.action.name");
   }
 }

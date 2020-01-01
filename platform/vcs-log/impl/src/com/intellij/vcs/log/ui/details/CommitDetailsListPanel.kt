@@ -109,7 +109,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
   fun setCommits(commits: List<VcsCommitMetadata>) {
     rebuildPanel(commits.size)
     if (commits.isEmpty()) {
-      setStatusText(StatusText.getDEFAULT_EMPTY_TEXT())
+      setStatusText(StatusText.getDefaultEmptyText())
       return
     }
     setStatusText("")

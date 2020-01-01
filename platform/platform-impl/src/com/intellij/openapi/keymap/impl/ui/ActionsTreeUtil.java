@@ -38,7 +38,7 @@ public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
   /**
-   * Use {code {@link #getMAIN_MENU_TITLE()}} instead
+   * Use {code {@link #getMainMenuTitle()}} instead
    */
   @Deprecated
   public static final String MAIN_MENU_TITLE = "Main menu";
@@ -129,7 +129,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createMainMenuGroup(Condition<? super AnAction> filtered) {
-    Group group = new Group(getMAIN_MENU_TITLE(), IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
+    Group group = new Group(getMainMenuTitle(), IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
     return group;
@@ -648,35 +648,35 @@ public class ActionsTreeUtil {
     return action;
   }
 
-  public static String getMAIN_MENU_TITLE() {
+  public static String getMainMenuTitle() {
     return KeyMapBundle.message("main.menu.action.title");
   }
 
-  public static String getMAIN_TOOLBAR() {
+  public static String getMainToolbar() {
     return KeyMapBundle.message("main.toolbar.title");
   }
 
-  public static String getEDITOR_POPUP() {
+  public static String getEditorPopup() {
     return KeyMapBundle.message("editor.popup.menu.title");
   }
 
-  public static String getEDITOR_TAB_POPUP() {
+  public static String getEditorTabPopup() {
     return KeyMapBundle.message("editor.tab.popup.menu.title");
   }
 
-  public static String getFAVORITES_POPUP() {
+  public static String getFavoritesPopup() {
     return KeyMapBundle.message("favorites.popup.title");
   }
 
-  public static String getPROJECT_VIEW_POPUP() {
+  public static String getProjectViewPopup() {
     return KeyMapBundle.message("project.view.popup.menu.title");
   }
 
-  public static String getCOMMANDER_POPUP() {
+  public static String getCommanderPopup() {
     return KeyMapBundle.message("commender.view.popup.menu.title");
   }
 
-  public static String getJ2EE_POPUP() {
+  public static String getJ2EEPopup() {
     return KeyMapBundle.message("j2ee.view.popup.menu.title");
   }
 }

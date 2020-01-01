@@ -300,7 +300,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
       myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
     }
     else {
-      myDualView.setEmptyText(StatusText.getDEFAULT_EMPTY_TEXT());
+      myDualView.setEmptyText(StatusText.getDefaultEmptyText());
     }
   }
 

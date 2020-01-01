@@ -131,7 +131,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
     String name = getGroupDisplayName();
     if (name == null) return null;
     if (groupPath == null) {
-      return new String[]{name.isEmpty() ? InspectionProfileEntry.getGENERAL_GROUP_NAME() : name};
+      return new String[]{name.isEmpty() ? InspectionProfileEntry.getGeneralGroupName() : name};
     }
     return ArrayUtil.append(groupPath.split(","), name);
   }
