@@ -17,7 +17,7 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public String toString() {
-    return SelectInManager.getCOMMANDER();
+    return SelectInManager.getCommander();
   }
 
   @Override

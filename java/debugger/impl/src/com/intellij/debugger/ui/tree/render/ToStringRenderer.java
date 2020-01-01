@@ -89,7 +89,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
         labelListener.labelChanged();
       }
     });
-    return XDebuggerUIConstants.getCOLLECTING_DATA_MESSAGE();
+    return XDebuggerUIConstants.getCollectingDataMessage();
   }
 
   @NotNull

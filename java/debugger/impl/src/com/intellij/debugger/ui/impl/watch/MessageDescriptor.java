@@ -37,7 +37,7 @@ public class MessageDescriptor extends NodeDescriptorImpl {
   public static final MessageDescriptor ARRAY_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.empty.array"));
   public static final MessageDescriptor CLASS_HAS_NO_FIELDS = new MessageDescriptor(DebuggerBundle.message("message.node.class.has.no.fields"));
   public static final MessageDescriptor OBJECT_COLLECTED = new MessageDescriptor(DebuggerBundle.message("message.node.object.collected"));
-  public static final MessageDescriptor EVALUATING = new MessageDescriptor(XDebuggerUIConstants.getCOLLECTING_DATA_MESSAGE());
+  public static final MessageDescriptor EVALUATING = new MessageDescriptor(XDebuggerUIConstants.getCollectingDataMessage());
   public static final MessageDescriptor THREAD_IS_RUNNING = new MessageDescriptor(DebuggerBundle.message("message.node.thread.running"));
   public static final MessageDescriptor THREAD_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.thread.has.no.frames"));
   public static final MessageDescriptor EVALUATION_NOT_POSSIBLE = new MessageDescriptor(DebuggerBundle.message("message.node.evaluation.not.possible", WARNING));

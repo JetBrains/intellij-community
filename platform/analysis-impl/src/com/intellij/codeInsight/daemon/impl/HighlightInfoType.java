@@ -41,7 +41,7 @@ public interface HighlightInfoType {
   HighlightInfoType DUPLICATE_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.DUPLICATE_FROM_SERVER);
 
   HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(
-    HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, getUNUSED_SYMBOL_DISPLAY_NAME(), UNUSED_SYMBOL_SHORT_NAME),
+    HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, getUnusedSymbolDisplayName(), UNUSED_SYMBOL_SHORT_NAME),
     CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
   HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(
@@ -235,7 +235,7 @@ public interface HighlightInfoType {
     boolean needsUpdateOnTyping();
   }
 
-  static String getUNUSED_SYMBOL_DISPLAY_NAME() {
+  static String getUnusedSymbolDisplayName() {
     return InspectionsBundle.message("inspection.dead.code.display.name");
   }
 }

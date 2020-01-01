@@ -16,7 +16,7 @@ import java.awt.*;
  */
 public class XDebuggerUIConstants {
   /**
-   * Use {code {@link #getCOLLECTING_DATA_MESSAGE()}} instead
+   * Use {code {@link #getCollectingDataMessage()}} instead
    */
   @Deprecated
   public static final String COLLECTING_DATA_MESSAGE = "Collecting data…";
@@ -50,15 +50,15 @@ public class XDebuggerUIConstants {
   private XDebuggerUIConstants() {
   }
 
-  public static String getCOLLECTING_DATA_MESSAGE() {
+  public static String getCollectingDataMessage() {
     return XDebuggerBundle.message("xdebugger.building.tree.node.message");
   }
 
-  public static String getEVALUATING_EXPRESSION_MESSAGE() {
+  public static String getEvaluatingExpressionMessage() {
     return XDebuggerBundle.message("xdebugger.evaluating.expression.node.message");
   }
 
-  public static String getMODIFYING_VALUE_MESSAGE() {
+  public static String getModifyingValueMessage() {
     return XDebuggerBundle.message("xdebugger.modifiyng.value.node.message");
   }
 }

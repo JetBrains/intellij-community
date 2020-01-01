@@ -19,7 +19,7 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public String toString() {
-    return SelectInManager.getPACKAGES();
+    return SelectInManager.getPackages();
   }
 
   @Override

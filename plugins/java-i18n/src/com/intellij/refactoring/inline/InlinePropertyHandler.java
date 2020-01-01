@@ -65,10 +65,10 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     );
 
     if (!result) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Property has non-method usages", getREFACTORING_NAME(), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, "Property has non-method usages", getRefactoringName(), null);
     }
     if (occurrences.isEmpty()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Property has no usages", getREFACTORING_NAME(), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, "Property has no usages", getRefactoringName(), null);
       return;
     }
 
@@ -76,7 +76,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
       String occurrencesString = RefactoringBundle.message("occurrences.string", occurrences.size());
       String question =
         PropertiesBundle.message("inline.property.confirmation", property.getName(), propertyValue) + " " + occurrencesString;
-      RefactoringMessageDialog dialog = new RefactoringMessageDialog(getREFACTORING_NAME(), question, HelpID.INLINE_VARIABLE,
+      RefactoringMessageDialog dialog = new RefactoringMessageDialog(getRefactoringName(), question, HelpID.INLINE_VARIABLE,
                                                                      "OptionPane.questionIcon", true, project);
       if (!dialog.showAndGet()) {
         return;
@@ -86,7 +86,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(psiElement.copy());
 
-    WriteCommandAction.writeCommandAction(project, containingFiles.toArray(PsiFile.EMPTY_ARRAY)).withName(getREFACTORING_NAME()).run(() -> {
+    WriteCommandAction.writeCommandAction(project, containingFiles.toArray(PsiFile.EMPTY_ARRAY)).withName(getRefactoringName()).run(() -> {
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
       PsiLiteral stringLiteral = (PsiLiteral)JavaPsiFacade.getInstance(project).getElementFactory().
         createExpressionFromText("\"" + StringUtil.escapeStringCharacters(propertyValue) + "\"", null);
@@ -100,10 +100,10 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return getREFACTORING_NAME();
+    return getRefactoringName();
   }
 
-  public static String getREFACTORING_NAME() {
+  public static String getRefactoringName() {
     return PropertiesBundle.message("inline.property.refactoring");
   }
 }

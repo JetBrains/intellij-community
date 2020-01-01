@@ -202,8 +202,8 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeName = descriptor.getName();
     }
 
-    if(text.equals(XDebuggerUIConstants.getCOLLECTING_DATA_MESSAGE())) {
-      descriptorText.append(XDebuggerUIConstants.getCOLLECTING_DATA_MESSAGE(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
+    if(text.equals(XDebuggerUIConstants.getCollectingDataMessage())) {
+      descriptorText.append(XDebuggerUIConstants.getCollectingDataMessage(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
       return descriptorText;
     }
 
@@ -283,8 +283,8 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
           }
           else {
-            if(valueLabel.equals(XDebuggerUIConstants.getCOLLECTING_DATA_MESSAGE())) {
-              descriptorText.append(XDebuggerUIConstants.getCOLLECTING_DATA_MESSAGE(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
+            if(valueLabel.equals(XDebuggerUIConstants.getCollectingDataMessage())) {
+              descriptorText.append(XDebuggerUIConstants.getCollectingDataMessage(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {
               appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs, colorScheme);

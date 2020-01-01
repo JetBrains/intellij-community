@@ -83,23 +83,23 @@ public final class SelectInManager  {
     return IdeBundle.message("select.in.project");
   }
 
-  public static String getPACKAGES() {
+  public static String getPackages() {
     return IdeBundle.message("select.in.packages");
   }
 
-  public static String getCOMMANDER() {
+  public static String getCommander() {
     return IdeBundle.message("select.in.commander");
   }
 
-  public static String getFAVORITES() {
+  public static String getFavorites() {
     return IdeBundle.message("select.in.favorites");
   }
 
-  public static String getNAV_BAR() {
+  public static String getNavBar() {
     return IdeBundle.message("select.in.nav.bar");
   }
 
-  public static String getSCOPE() {
+  public static String getScope() {
     return IdeBundle.message("select.in.scope");
   }
 }
