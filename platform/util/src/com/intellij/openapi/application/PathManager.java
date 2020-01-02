@@ -641,24 +641,4 @@ public class PathManager {
       return path;
     }
   }
-
-  @Nullable
-  public static File getLogFile() {
-    String logXmlPath = System.getProperty(PROPERTY_LOG_CONFIG_FILE);
-    if (logXmlPath == null) return null;
-
-    // If the property value specifies a file name rather than a path, look for the
-    // specified file in the bin directory (where log.xml was previously stored)
-    File logXmlFile;
-    if (logXmlPath.indexOf('/') < 0 && logXmlPath.indexOf('\\') < 0) {
-      logXmlFile = new File(getBinPath(), logXmlPath);
-    }
-    else {
-      logXmlFile = new File(logXmlPath);
-    }
-
-    if (logXmlFile.exists()) return logXmlFile;
-
-    return null;
-  }
 }
