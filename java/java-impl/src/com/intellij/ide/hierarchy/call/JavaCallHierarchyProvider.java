@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.hierarchy.call;
 
-import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.CallHierarchyBrowserBase;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;

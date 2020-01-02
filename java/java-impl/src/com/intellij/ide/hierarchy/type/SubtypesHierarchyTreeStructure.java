@@ -2,8 +2,8 @@
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;

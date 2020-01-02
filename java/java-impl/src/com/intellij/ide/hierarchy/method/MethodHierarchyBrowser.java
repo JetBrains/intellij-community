@@ -2,10 +2,11 @@
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.ide.hierarchy.JavaHierarchyUtil;
-import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyScopeType;
+import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
+import com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -30,7 +31,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
+  protected void createTrees(@NotNull Map<HierarchyScopeType, JTree> trees) {
     final JTree tree = createTree(false);
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP);
     PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
@@ -62,7 +63,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   @Override
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final HierarchyScopeType typeName, @NotNull final PsiElement psiElement) {
     if (!getMethodType().equals(typeName)) {
       LOG.error("unexpected type: " + typeName);
       return null;

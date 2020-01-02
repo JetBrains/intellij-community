@@ -16,7 +16,7 @@
 package com.intellij.testFramework.codeInsight.hierarchy;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 

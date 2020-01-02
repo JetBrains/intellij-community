@@ -3,7 +3,7 @@ package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.HierarchyProvider;
-import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;

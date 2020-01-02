@@ -3,8 +3,8 @@ package com.intellij.ide.hierarchy.method;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;

@@ -237,9 +237,9 @@
       <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
       <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
       <group id="HierarchyGroup">
-        <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
-        <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
-        <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
+        <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.newAPI.actions.BrowseTypeHierarchyAction"/>
+        <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.newAPI.actions.BrowseMethodHierarchyAction"/>
+        <action id="CallHierarchy" class="com.intellij.ide.hierarchy.newAPI.actions.BrowseCallHierarchyAction"/>
       </group>
       <separator/>
 
@@ -718,12 +718,12 @@
     <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
     </action>
-    <action id="TypeHierarchyBase.BaseOnThisType" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction" use-shortcut-of="TypeHierarchy"/>
-    <action id="MethodHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.MethodHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="MethodHierarchy"/>
-    <action id="CallHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.CallHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="CallHierarchy"/>
-    <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
-    <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
-    <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
+    <action id="TypeHierarchyBase.BaseOnThisType" class="com.intellij.ide.hierarchy.newAPI.TypeHierarchyBrowserBase$BaseOnThisTypeAction" use-shortcut-of="TypeHierarchy"/>
+    <action id="MethodHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="MethodHierarchy"/>
+    <action id="CallHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.newAPI.CallHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="CallHierarchy"/>
+    <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.newAPI.ViewClassHierarchyAction"/>
+    <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.newAPI.ViewSubtypesHierarchyAction"/>
+    <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.newAPI.ViewSupertypesHierarchyAction"/>
 
     <group id="TypeHierarchyPopupMenu">
       <reference ref="TypeHierarchyBase.BaseOnThisType"/>

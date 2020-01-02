@@ -16,7 +16,7 @@
 package com.jetbrains.python.hierarchy;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
+import com.intellij.ide.hierarchy.newAPI.HierarchyBrowserBaseEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestFixture;
 import com.jetbrains.python.fixtures.PyTestCase;

@@ -310,7 +310,7 @@
     <projectService serviceImplementation="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"/>
     <projectService serviceImplementation="com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration"/>
 
-    <projectService serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager"/>
+    <projectService serviceImplementation="com.intellij.ide.hierarchy.newAPI.HierarchyBrowserManager"/>
 
     <projectService serviceImplementation="com.intellij.packageDependencies.DependenciesToolWindow"/>
 

@@ -16,8 +16,8 @@
 package com.intellij.java.ide.hierarchy;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
-import com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction;
+import com.intellij.ide.hierarchy.newAPI.HierarchyBrowserBaseEx;
+import com.intellij.ide.hierarchy.newAPI.actions.BrowseTypeHierarchyAction;
 import com.intellij.ide.hierarchy.call.CalleeMethodsTreeStructure;
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
 import com.intellij.ide.highlighter.XmlFileType;
