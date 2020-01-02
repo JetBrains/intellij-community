@@ -87,7 +87,7 @@ configurations {
 dependencies {
   lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.10', classifier: 'sources', ext: 'jar'
 
-  testImplementation("junit:junit:4.12")
+  testImplementation("junit:junit:4.13")
   testImplementation("org.mockito:mockito-core:3.2.4")
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.5.2")
 }
