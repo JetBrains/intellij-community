@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -44,7 +44,7 @@ import java.util.*;
 public class SSBasedInspection extends LocalInspectionTool {
   static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
 
-  public static final String SHORT_NAME = "SSBasedInspection";
+  @NonNls public static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
   final Set<String> myProblemsReported = new HashSet<>(1);
   private InspectionProfileImpl mySessionProfile = null;
@@ -185,7 +185,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   }
 
   @TestOnly
-  public void setConfigurations(@NotNull final List<? extends Configuration> configurations, @NotNull final Project project) {
+  public void setConfigurations(@NotNull final List<? extends Configuration> configurations) {
     myConfigurations.clear();
     myConfigurations.addAll(configurations);
   }
