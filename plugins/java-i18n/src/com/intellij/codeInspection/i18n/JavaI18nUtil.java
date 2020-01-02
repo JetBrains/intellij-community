@@ -110,12 +110,15 @@ public class JavaI18nUtil extends I18nUtil {
   static boolean isPassedToAnnotatedParam(@NotNull UExpression expression,
                                           @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
+    if (parent instanceof UPolyadicExpression) {
+      parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
+    }
     UCallExpression callExpression = UastUtils.getUCallExpression(parent);
     if (callExpression == null) return false;
 
     List<UExpression> arguments = callExpression.getValueArguments();
     OptionalInt idx = IntStream.range(0, arguments.size())
-      .filter(i -> expression.equals(UastUtils.skipParenthesizedExprDown(arguments.get(i))))
+      .filter(i -> UastUtils.isUastChildOf(expression, arguments.get(i), false))
       .findFirst();
 
     if (!idx.isPresent()) return false;

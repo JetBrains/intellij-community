@@ -17,6 +17,7 @@ class C extends B{
 
     void bar(C c) {
         c.foo("text");
+        c.foo("text" + " " + "text");
         new C().foo(("text"));
     }
 }
