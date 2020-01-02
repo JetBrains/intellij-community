@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -55,6 +56,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         registerFactories();
       }
     }, myProject);
+    Disposer.register(myProject, () -> {
+      myRegisteredPassFactories.clear();
+      myDirtyScopeTrackingFactories.clear();
+    });
   }
 
   public void registerFactories() {
