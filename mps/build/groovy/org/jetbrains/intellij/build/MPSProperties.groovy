@@ -50,7 +50,7 @@ class MPSProperties extends ProductProperties {
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
         productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
-                JavaPluginLayout.javaPlugin(false)
+                JavaPluginLayout.javaPlugin()
         ]
 
         productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
