@@ -39,7 +39,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
   @NonNls static final String REMOVE_METHODS = "refactoring.removemiddleman.remove.methods";
 
   protected static String getRefactoringName() {
-    return getREFACTORING_NAME();
+    return getRefactoringNameText();
   }
 
   protected static String getHelpID() {
@@ -53,7 +53,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (!(element instanceof PsiField)) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
-          "the.caret.should.be.positioned.at.the.name.of.the.field.to.be.refactored"), getREFACTORING_NAME(), getHelpID());
+          "the.caret.should.be.positioned.at.the.name.of.the.field.to.be.refactored"), getRefactoringNameText(), getHelpID());
       return;
     }
     invoke((PsiField)element, editor);
@@ -76,7 +76,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     if (delegating.isEmpty()) {
       final String message =
         RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("field.selected.is.not.used.as.a.delegate");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
       return;
     }
 
@@ -91,7 +91,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     new RemoveMiddlemanDialog(field, infos).show();
   }
 
-  private static String getREFACTORING_NAME() {
+  private static String getRefactoringNameText() {
     return RefactorJBundle.message("remove.middleman");
   }
 }
