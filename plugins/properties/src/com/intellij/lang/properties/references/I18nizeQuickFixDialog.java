@@ -209,11 +209,13 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     if (myCustomization.suggestedName != null) {
       return myCustomization.suggestedName;
     }
+    return suggestUniquePropertyKey(value, defaultSuggestPropertyKey(value), getPropertiesFile());
+  }
 
+  public static String suggestUniquePropertyKey(String value, String defaultKey, PropertiesFile propertiesFile) {
     // suggest property key not existing in this file
-    String key = defaultSuggestPropertyKey(value);
     value = PATTERN.matcher(Normalizer.normalize(value, Normalizer.Form.NFD)).replaceAll("");
-    if (key == null) {
+    if (defaultKey == null) {
       final StringBuilder result = new StringBuilder();
       boolean insertDotBeforeNextWord = false;
       for (int i = 0; i < value.length(); i++) {
@@ -241,21 +243,20 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
           }
         }
       }
-      key = result.toString();
+      defaultKey = result.toString();
     }
 
-    PropertiesFile propertiesFile = getPropertiesFile();
     if (propertiesFile != null) {
-      if (propertiesFile.findPropertyByKey(key) == null) return key;
+      if (propertiesFile.findPropertyByKey(defaultKey) == null) return defaultKey;
 
       int suffix = 1;
-      while (propertiesFile.findPropertyByKey(key + suffix) != null) {
+      while (propertiesFile.findPropertyByKey(defaultKey + suffix) != null) {
         suffix++;
       }
-      return key + suffix;
+      return defaultKey + suffix;
     }
     else {
-      return key;
+      return defaultKey;
     }
   }
 

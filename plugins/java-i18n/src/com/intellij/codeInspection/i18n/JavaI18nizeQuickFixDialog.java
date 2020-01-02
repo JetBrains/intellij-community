@@ -56,7 +56,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   private final boolean myShowPreview;
 
   @NonNls public static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
-  @NonNls private static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
+  @NonNls public static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
   @NonNls public static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
 
   public JavaI18nizeQuickFixDialog(@NotNull Project project,

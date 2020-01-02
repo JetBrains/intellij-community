@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -519,26 +520,32 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         
         List<LocalQuickFix> fixes = new ArrayList<>();
 
-        if (myOnTheFly && sourcePsi instanceof PsiLiteralExpression) {
-          if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
-            fixes.add(new I18nizeConcatenationQuickFix());
-          }
-          fixes.add(new I18nizeQuickFix());
+        if (sourcePsi instanceof PsiLiteralExpression) {
+          if (myOnTheFly) {
+            if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
+              fixes.add(new I18nizeConcatenationQuickFix());
+            }
+            fixes.add(new I18nizeQuickFix());
 
-          if (!isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
-            fixes.add(createIntroduceConstantFix());
-          }
+            if (!isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
+              fixes.add(createIntroduceConstantFix());
+            }
 
-          if (PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
-            final JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
-            for (PsiModifierListOwner element : nonNlsTargets) {
-              if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
-                if (!element.getManager().isInProject(element) ||
-                    facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-                  fixes.add(new NonNlsAnnotationProvider().createFix(element));
+            if (PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
+              final JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
+              for (PsiModifierListOwner element : nonNlsTargets) {
+                if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
+                  if (!element.getManager().isInProject(element) ||
+                      facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
+                    fixes.add(new NonNlsAnnotationProvider().createFix(element));
+                  }
                 }
               }
             }
+          }
+          else if (Registry.is("i18n.for.idea.project") &&
+                   I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) == null) {
+            fixes.add(new I18nizeBatchQuickFix());
           }
         }
 
