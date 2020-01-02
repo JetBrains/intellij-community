@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,7 +112,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return a new matcher
    */
   @Contract(pure = true)
-  static Simple instanceCall(@NotNull String className, String... methodNames) {
+  static Simple instanceCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.INSTANCE);
   }
 
@@ -123,7 +124,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return a new matcher
    */
   @Contract(pure = true)
-  static Simple exactInstanceCall(@NotNull String className, String... methodNames) {
+  static Simple exactInstanceCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.EXACT_INSTANCE);
   }
 
@@ -135,7 +136,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return a new matcher
    */
   @Contract(pure = true)
-  static Simple staticCall(@NotNull String className, String... methodNames) {
+  static Simple staticCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.STATIC);
   }
 
