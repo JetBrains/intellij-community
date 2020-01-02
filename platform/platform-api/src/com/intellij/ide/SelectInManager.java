@@ -16,10 +16,10 @@ public final class SelectInManager  {
   private final Project myProject;
   private final SimpleSmartExtensionPoint<SelectInTarget> myTargets;
   /**
-   * Use {code {@link #getPROJECT()}} instead
+   * Use {code {@link #getProject()}} instead
    */
   @Deprecated
-  @NonNls public static final String PROJECT = getPROJECT();
+  @NonNls public static final String PROJECT = getProject();
 
   public SelectInManager(@NotNull Project project) {
     myProject = project;
@@ -79,7 +79,7 @@ public final class SelectInManager  {
     }
   }
 
-  public static String getPROJECT() {
+  public static String getProject() {
     return IdeBundle.message("select.in.project");
   }
 
