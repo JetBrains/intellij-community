@@ -191,6 +191,6 @@ public class SSBasedInspection extends LocalInspectionTool {
   }
 
   public List<Configuration> getConfigurations() {
-    return Collections.unmodifiableList(myConfigurations);
+    return myConfigurations;
   }
 }

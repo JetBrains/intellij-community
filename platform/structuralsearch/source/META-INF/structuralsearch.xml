@@ -24,6 +24,7 @@
     <codeInsight.linkHandler prefix="#ssr_edit_filters/" handlerClass="com.intellij.structuralsearch.plugin.ui.filters.FilterTooltipLinkHandler"/>
     <daemon.highlightInfoFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter"/>
     <postStartupActivity implementation="com.intellij.structuralsearch.inspection.InspectionProvider"/>
+    <inspectionProfileActionProvider implementation="com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider"/>
   </extensions>
 
   <actions>

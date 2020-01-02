@@ -1,17 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
-import com.intellij.structuralsearch.inspection.highlightTemplate.StructuralSearchFakeInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,12 +23,11 @@ public class InspectionProvider implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     if (!Registry.is("ssr.separate.inspections")) return;
-    addStructuralSearchInspectionsToProfiles(ApplicationInspectionProfileManager.getInstanceImpl(), project);
-    addStructuralSearchInspectionsToProfiles(ProjectInspectionProfileManager.getInstance(project), project);
+    addStructuralSearchInspectionsToProfiles(InspectionProfileManager.getInstance(), project);
+    addStructuralSearchInspectionsToProfiles(InspectionProfileManager.getInstance(project), project);
   }
 
   private static void addStructuralSearchInspectionsToProfiles(InspectionProfileManager profileManager, @NotNull Project project) {
-    final InspectionProfileImpl baseProfile = InspectionProfileKt.getBASE_PROFILE();
     for (InspectionProfileImpl profile : profileManager.getProfiles()) {
       final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
       assert wrapper != null;
@@ -38,48 +35,38 @@ public class InspectionProvider implements StartupActivity.DumbAware {
       final HighlightDisplayKey key = HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME);
       final boolean enabled = profile.isToolEnabled(key);
       for (Configuration configuration : ssBasedInspection.getConfigurations()) {
-        final UUID uuid = configuration.getUuid();
-        final InspectionToolWrapper<?, ?> toolWrapper;
-        if (uuid == null) {
-          configuration.setUuid(UUID.randomUUID());
-          toolWrapper = null;
-        }
-        else {
-          toolWrapper = profile.getInspectionTool(configuration.getUuid().toString(), project);
-        }
-        if (toolWrapper == null) {
-          final LocalInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
-          profile.addTool(project, wrapped, null);
-          profile.setToolEnabled(configuration.getUuid().toString(), enabled);
-          baseProfile.addTool(project, wrapped, null);
-        }
+        addConfigurationToProfile(project, profile, configuration, enabled);
       }
     }
   }
 
-  private static class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWrapper {
-    StructuralSearchInspectionToolWrapper(Configuration configuration) {
-      super(new StructuralSearchFakeInspection(configuration.getName(), configuration.getUuid()));
-    }
 
-    private StructuralSearchInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-      super(tool);
-    }
+  public static void addConfigurationToProfile(@NotNull Project project,
+                                               InspectionProfileImpl profile,
+                                               Configuration configuration) {
+    addConfigurationToProfile(project, profile, configuration, true);
+  }
 
-    @NotNull
-    @Override
-    public LocalInspectionToolWrapper createCopy() {
-      return new StructuralSearchInspectionToolWrapper(new StructuralSearchFakeInspection((StructuralSearchFakeInspection)getTool()));
+  private static void addConfigurationToProfile(@NotNull Project project,
+                                                InspectionProfileImpl profile,
+                                                Configuration configuration, boolean enabled) {
+    final UUID uuid = configuration.getUuid();
+    final InspectionToolWrapper<?, ?> toolWrapper;
+    if (uuid == null) {
+      configuration.setUuid(UUID.randomUUID());
+      toolWrapper = null;
     }
+    else {
+      toolWrapper = profile.getInspectionTool(configuration.getUuid().toString(), project);
+    }
+    if (toolWrapper == null) {
+      final LocalInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
+      profile.addTool(project, wrapped, null);
 
-    @Override
-    public void initialize(@NotNull GlobalInspectionContext context) {
-      super.initialize(context);
-      final InspectionProfileImpl profile = ((GlobalInspectionContextBase)context).getCurrentProfile();
-      final InspectionToolWrapper<?, ?> tool = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, context.getProject());
-      assert tool != null;
-      final SSBasedInspection inspection = (SSBasedInspection)tool.getTool();
-      inspection.setSessionProfile(profile);
+      // enable inspection even when profile is locked, because either:
+      // - user just added this inspection explicitly
+      // - or inspection was just imported from enabled old SSR inspection
+      profile.setToolEnabled(configuration.getUuid().toString(), enabled);
     }
   }
 }
