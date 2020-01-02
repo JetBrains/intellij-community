@@ -4,19 +4,22 @@ package com.intellij.codeInsight;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTreeUtilKt;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThreeState;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +28,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class TargetElementUtilBase {
+
+  /**
+   * A flag used in {@link #findTargetElement(Editor, int, int)} indicating that if a reference is found at the specified offset,
+   * it should be resolved and the result returned.
+   */
+  public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
+
+  /**
+   * A flag used in {@link #findTargetElement(Editor, int, int)} indicating that if a element declaration name (e.g. class name identifier)
+   * is found at the specified offset, the declared element should be returned.
+   */
+  public static final int ELEMENT_NAME_ACCEPTED = 0x02;
 
   /**
    * Attempts to adjust the {@code offset} in the {@code file} to point to an {@link #isIdentifierPart(PsiFile, CharSequence, int) identifier},
@@ -140,5 +155,139 @@ public final class TargetElementUtilBase {
     }
 
     return getNamedElement(element);
+  }
+
+  @Nullable
+  private static PsiElement doGetReferenceOrReferencedElement(@NotNull Editor editor, int flags, int offset) {
+    PsiReference ref = findReference(editor, offset);
+    if (ref == null) return null;
+
+    Project project = editor.getProject();
+    if (project == null) return null;
+    PsiElement[] result = {null};
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      final Language language = ref.getElement().getLanguage();
+      TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
+      if (evaluator != null) {
+        final PsiElement element = evaluator.getElementByReference(ref, flags);
+        if (element != null) {
+          result[0] = element;
+          return;
+        }
+      }
+      result[0] = ref.resolve();
+    }, project, DumbModeAccessType.RELIABLE_DATA_ONLY);
+
+    return result[0];
+  }
+
+  @Nullable
+  public static PsiReference findReference(@NotNull Editor editor, int offset) {
+    Project project = editor.getProject();
+    if (project == null) return null;
+
+    Document document = editor.getDocument();
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return null;
+
+    PsiReference ref = file.findReferenceAt(adjustOffset(file, document, offset));
+    if (ref == null) return null;
+    int elementOffset = ref.getElement().getTextRange().getStartOffset();
+
+    for (TextRange range : ReferenceRange.getRanges(ref)) {
+      if (range.shiftRight(elementOffset).containsOffset(offset)) {
+        return ref;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement getReferenceOrReferencedElement(@NotNull PsiFile file, @NotNull Editor editor, int flags, int offset) {
+    PsiElement result = doGetReferenceOrReferencedElement(editor, flags, offset);
+    PsiElement languageElement = file.findElementAt(offset);
+    Language language = languageElement != null ? languageElement.getLanguage() : file.getLanguage();
+    TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(language);
+    if (evaluator != null) {
+      result = evaluator.adjustReferenceOrReferencedElement(file, editor, offset, flags, result);
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement doFindTargetElement(@NotNull Editor editor, int flags, int offset) {
+    Project project = editor.getProject();
+    if (project == null) return null;
+
+    Document document = editor.getDocument();
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return null;
+
+    int adjusted = adjustOffset(file, document, offset);
+
+    PsiElement element = file.findElementAt(adjusted);
+    if (BitUtil.isSet(flags, REFERENCED_ELEMENT_ACCEPTED)) {
+      final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
+      //if (referenceOrReferencedElement == null) {
+      //  return getReferenceOrReferencedElement(file, editor, flags, offset);
+      //}
+      if (isAcceptableReferencedElement(element, referenceOrReferencedElement)) {
+        return referenceOrReferencedElement;
+      }
+    }
+
+    if (element == null) return null;
+
+    if (BitUtil.isSet(flags, ELEMENT_NAME_ACCEPTED)) {
+      if (element instanceof PsiNamedElement) return element;
+      return getNamedElement(element, adjusted - element.getTextRange().getStartOffset());
+    }
+    return null;
+  }
+
+  private static boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
+    if (referenceOrReferencedElement == null || !referenceOrReferencedElement.isValid()) return false;
+
+    TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
+    if (evaluator != null) {
+      ThreeState answer = evaluator.isAcceptableReferencedElement(element, referenceOrReferencedElement);
+      if (answer == ThreeState.YES) return true;
+      if (answer == ThreeState.NO) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Note: this method can perform slow PSI activity (e.g. {@link PsiReference#resolve()}, so please avoid calling it from Swing thread.
+   *
+   * @param editor editor
+   * @param flags  a combination of {@link #REFERENCED_ELEMENT_ACCEPTED}, {@link #ELEMENT_NAME_ACCEPTED}
+   * @return a PSI element declared or referenced at the specified offset in the editor, depending on the flags passed.
+   * @see #findTargetElement(Editor, int, int)
+   */
+  @Nullable
+  public static PsiElement findTargetElement(Editor editor, int flags) {
+    int offset = editor.getCaretModel().getOffset();
+    return findTargetElement(editor, flags, offset);
+  }
+
+  /**
+   * Note: this method can perform slow PSI activity (e.g. {@link PsiReference#resolve()}, so please avoid calling it from Swing thread.
+   * @param editor editor
+   * @param flags a combination of {@link #REFERENCED_ELEMENT_ACCEPTED}, {@link #ELEMENT_NAME_ACCEPTED}
+   * @param offset offset in the editor's document
+   * @return a PSI element declared or referenced at the specified offset in the editor, depending on the flags passed.
+   * @see #findTargetElement(Editor, int)
+   */
+  @Nullable
+  public static PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
+    PsiElement result = doFindTargetElement(editor, flags, offset);
+    TargetElementEvaluatorEx2 evaluator = result != null ? getElementEvaluatorsEx2(result.getLanguage()) : null;
+    if (evaluator != null) {
+      result = evaluator.adjustTargetElement(editor, offset, flags, result);
+    }
+    return result;
   }
 }
