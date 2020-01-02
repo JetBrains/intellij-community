@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.configurationStore.jdomSerializer
@@ -20,9 +20,9 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
@@ -39,6 +39,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.BeanBinding
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.swing.JComponent
 
 interface DynamicPluginListener {
   @JvmDefault
@@ -137,6 +138,20 @@ object DynamicPlugins {
 
   private fun isUnloadSafe(containerDescriptor: ContainerDescriptor): Boolean {
     return containerDescriptor.components.isNullOrEmpty()
+  }
+
+  @JvmStatic
+  @JvmOverloads
+  fun unloadPluginWithProgress(parentComponent: JComponent?,
+                               pluginDescriptor: IdeaPluginDescriptorImpl,
+                               disable: Boolean = false,
+                               isUpdate: Boolean = false): Boolean {
+    var result = false
+    val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", null, parentComponent, null)
+    indicator.runInSwingThread {
+      result = unloadPlugin(pluginDescriptor, disable, isUpdate)
+    }
+    return result
   }
 
   @JvmStatic
