@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -261,6 +261,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myPatchVersion;
   }
 
+  @NotNull
   @Override
   public String getFullVersion() {
     String result;
@@ -276,6 +277,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return result;
   }
 
+  @NotNull
   @Override
   public String getStrictVersion() {
     return myMajorVersion + "." + myMinorVersion + "." + StringUtil.notNullize(myMicroVersion, "0") + "." + StringUtil.notNullize(myPatchVersion, "0");
