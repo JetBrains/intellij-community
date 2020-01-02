@@ -1,0 +1,27 @@
+<idea-plugin>
+  <id>com.jetbrains.filePrediction</id>
+  <name>Next File Prediction</name>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[Predicts next file which will be open in IDE to start long running analysis and pre-load caches.]]></description>
+
+  <depends optional="true" config-file="file-prediction-vcs.xml">com.intellij.modules.vcs</depends>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.FilePredictionFeatureProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.FileExternalReferencesProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector groupId="file.prediction" version="1"/>
+
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionGeneralFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.FilePredictionHistoryFeatures"/>
+
+    <projectService serviceImplementation="com.intellij.filePrediction.history.FilePredictionHistory"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.filePrediction.FilePredictionEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+</idea-plugin>

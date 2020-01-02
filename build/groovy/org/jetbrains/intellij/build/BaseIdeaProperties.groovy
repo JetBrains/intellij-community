@@ -64,6 +64,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.statsCollector",
     "intellij.sh",
     "intellij.vcs.changeReminder",
+    "intellij.filePrediction",
     "intellij.markdown",
     "intellij.laf.macos",
     "intellij.laf.win10"

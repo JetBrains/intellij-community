@@ -1,0 +1,20 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.filePrediction.history
+
+import com.intellij.filePrediction.FilePredictionFeature
+import com.intellij.filePrediction.FilePredictionFeature.Companion.numerical
+import com.intellij.filePrediction.FilePredictionFeatureProvider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+
+class FilePredictionHistoryFeatures: FilePredictionFeatureProvider {
+  override fun getName(): String = "history"
+
+  override fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature> {
+    val result = HashMap<String, FilePredictionFeature>()
+    val history = FilePredictionHistory.getInstance(project)
+    result["position"] = numerical(history.position(newFile.url))
+    result["size"] = numerical(history.size())
+    return result
+  }
+}
