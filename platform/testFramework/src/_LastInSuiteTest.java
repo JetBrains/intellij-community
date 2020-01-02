@@ -72,6 +72,7 @@ public class _LastInSuiteTest extends TestCase {
 
     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = collectDynamicNonPlatformExtensions();
     unloadExtensionPoints(extensions.keySet());
+    startCorePluginUnload();
     disposePluginDisposables();
     ProjectManager pm = ProjectManager.getInstanceIfCreated();
     if (pm != null) {
@@ -79,6 +80,7 @@ public class _LastInSuiteTest extends TestCase {
         ((CachedValuesManagerImpl) CachedValuesManager.getManager(project)).clearCachedValues();
       }
     }
+    finishCorePluginUnload();
 
     GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
@@ -125,11 +127,23 @@ public class _LastInSuiteTest extends TestCase {
         ep.unregisterExtensions((a, b) -> false, false);
       });
     }
+  }
+
+  private static void startCorePluginUnload() {
     IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
     assert corePlugin != null;
     WriteAction.runAndWait(() -> {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
         .beforePluginUnload(corePlugin, false);
+    });
+  }
+
+  private static void finishCorePluginUnload() {
+    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
+    assert corePlugin != null;
+    WriteAction.runAndWait(() -> {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
+        .pluginUnloaded(corePlugin, false);
     });
   }
 
