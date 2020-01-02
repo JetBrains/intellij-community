@@ -77,7 +77,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @NotNull ProperTextRange priorityRange,
                                  @Nullable Editor editor,
                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    super(project, document, getPRESENTABLE_NAME(), file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
+    super(project, document, getPresentableNameText(), file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
 
@@ -599,7 +599,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
   }
 
-  private static String getPRESENTABLE_NAME() {
+  private static String getPresentableNameText() {
     return DaemonBundle.message("pass.syntax");
   }
 }
