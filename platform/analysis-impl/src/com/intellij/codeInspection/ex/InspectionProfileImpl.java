@@ -501,12 +501,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         getProfileManager().fireProfileChanged(InspectionProfileImpl.this);
       }
     }, project);
-    if (project != null) {
-      Disposer.register(project, () -> {
-        myTools.keySet().forEach(HighlightDisplayKey::unregister);
-        myTools.clear();
-      });
-    }
 
     DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<String>() {
       @NotNull
