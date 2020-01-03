@@ -2,7 +2,8 @@
   <extensionPoints>
     <extensionPoint name="editorFactoryListener" interface="com.intellij.openapi.editor.event.EditorFactoryListener"/>
     <extensionPoint name="syntaxHighlighter"
-                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
+                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
     </extensionPoint>
   </extensionPoints>

@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
@@ -56,6 +57,18 @@ public class EditorHighlighterUpdater {
     updateHighlightersOnExtensionsChange(parentDisposable, LanguageSyntaxHighlighters.EP_NAME);
     updateHighlightersOnExtensionsChange(parentDisposable, SyntaxHighlighterLanguageFactory.EP_NAME);
     updateHighlightersOnExtensionsChange(parentDisposable, FileTypeEditorHighlighterProviders.EP_NAME);
+
+    SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedFactoryEPBean>() {
+      @Override
+      public void extensionAdded(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        checkUpdateHighlighters(extension.key, false);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        checkUpdateHighlighters(extension.key, true);
+      }
+    }, parentDisposable);
   }
 
   private <T> void updateHighlightersOnExtensionsChange(@NotNull Disposable parentDisposable, @NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
