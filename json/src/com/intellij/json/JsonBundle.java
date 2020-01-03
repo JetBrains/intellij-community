@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class JsonBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "com.intellij.json.JsonBundle";
+  @NonNls public static final String BUNDLE = "messages.JsonBundle";
   private static final JsonBundle INSTANCE = new JsonBundle();
 
   private JsonBundle() {
