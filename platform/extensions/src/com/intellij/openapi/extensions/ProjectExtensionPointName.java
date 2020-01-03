@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -54,5 +55,18 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
   @Nullable
   public <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
     return ExtensionProcessingHelper.computeSafeIfAny(processor, getPointImpl(areaInstance));
+  }
+
+
+  public void addExtensionPointListener(@NotNull AreaInstance areaInstance,
+                                        @NotNull ExtensionPointListener<T> listener,
+                                        @Nullable Disposable parentDisposable) {
+    getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable);
+  }
+
+  public void addExtensionPointListener(@NotNull AreaInstance areaInstance,
+                                        @NotNull ExtensionPointChangeListener<T> listener,
+                                        @Nullable Disposable parentDisposable) {
+    getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable);
   }
 }

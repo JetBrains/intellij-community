@@ -392,7 +392,7 @@
     <extensionPoint name="usageViewFactory" interface="com.intellij.usages.impl.UsageViewFactory" dynamic="true"/>
     <extensionPoint name="usageViewElementsListener" interface="com.intellij.usages.impl.UsageViewElementsListener" dynamic="true"/>
 
-    <extensionPoint name="treeStructureProvider" interface="com.intellij.ide.projectView.TreeStructureProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="treeStructureProvider" interface="com.intellij.ide.projectView.TreeStructureProvider" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="defaultLiveTemplatesProvider" interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
     <extensionPoint name="defaultLiveTemplates" beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP" dynamic="true"/>
