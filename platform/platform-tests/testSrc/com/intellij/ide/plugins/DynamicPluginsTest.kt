@@ -5,13 +5,19 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
+import com.intellij.util.xmlb.annotations.Attribute
 import junit.framework.Assert.*
 import org.junit.ClassRule
 import org.junit.Rule
@@ -79,9 +85,40 @@ class DynamicPluginsTest {
     assertNotNull(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader)
   }
 
+  @Test
+  fun testSaveSettingsOnPluginUnload() {
+    val data = System.currentTimeMillis().toString()
+
+    val extensionTag = "<applicationService serviceImplementation=\"${MyPersistentComponent::class.java.name}\"/>"
+    val disposable = loadExtensionWithText(extensionTag, DynamicPlugins::class.java.classLoader)
+    val service = ServiceManager.getService(MyPersistentComponent::class.java)
+    service.myState.stateData = data
+    Disposer.dispose(disposable)
+
+    val disposable2 = loadExtensionWithText(extensionTag, DynamicPlugins::class.java.classLoader)
+    val service2 = ServiceManager.getService(MyPersistentComponent::class.java)
+    assertEquals(data, service2.myState.stateData)
+    Disposer.dispose(disposable2)
+  }
+
   private class MyUISettingsListener : UISettingsListener {
     override fun uiSettingsChanged(uiSettings: UISettings) {
       receivedNotifications.add(uiSettings)
+    }
+  }
+
+  private data class MyPersistentState(@Attribute var stateData: String? = "")
+
+  @State(name="MyTestState", storages = [Storage("other.xml")], allowLoadInTests = true)
+  private class MyPersistentComponent : PersistentStateComponent<MyPersistentState> {
+    var myState = MyPersistentState("")
+
+    override fun getState(): MyPersistentState? {
+      return myState
+    }
+
+    override fun loadState(state: MyPersistentState) {
+      myState = state
     }
   }
 }

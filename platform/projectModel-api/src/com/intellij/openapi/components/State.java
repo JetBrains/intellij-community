@@ -69,6 +69,8 @@ public @interface State {
    */
   boolean reportStatistic() default false;
 
+  boolean allowLoadInTests() default false;
+
   @ApiStatus.Experimental
   boolean useLoadedStateAsExisting() default true;
 
