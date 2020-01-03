@@ -24,7 +24,8 @@
 
     <extensionPoint name="checkinHandlerFactory"
                     interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
 
     <extensionPoint name="vcsCheckinHandlerFactory"
                     interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"/>
@@ -49,7 +50,8 @@
     <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider" dynamic="true"/>
     <extensionPoint name="vcs.changes.changesViewModifier"
                     interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint name="editChangelistSupport"
                     interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
                     area="IDEA_PROJECT"/>
