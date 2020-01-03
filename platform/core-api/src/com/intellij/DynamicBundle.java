@@ -8,10 +8,12 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public abstract class DynamicBundle extends AbstractBundle {
@@ -72,5 +74,16 @@ public abstract class DynamicBundle extends AbstractBundle {
 
   public static class LanguageBundleEP extends AbstractExtensionPointBean {
     public static final ExtensionPointName<LanguageBundleEP> EP_NAME = ExtensionPointName.create("com.intellij.languageBundle");
+  }
+
+  private static final Map<String, DynamicBundle> ourBundlesForForms = ContainerUtil.createConcurrentSoftValueMap();
+  
+  /**
+   * @deprecated used only dy GUI form builder
+   */
+  @Deprecated
+  public static ResourceBundle getBundle(String baseName) {
+    DynamicBundle bundle = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {});
+    return bundle.getResourceBundle();
   }
 }
