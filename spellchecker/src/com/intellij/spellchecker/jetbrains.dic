@@ -13,6 +13,7 @@ anyschema
 aopalliance
 apomorphism
 apothem
+appdata
 appender
 archivelog
 argc
@@ -407,6 +408,7 @@ liskov
 listable
 lldb
 llvm
+localappdata
 localhost
 localtime
 localtimestamp
