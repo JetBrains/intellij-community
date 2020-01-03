@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class TaskBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.intellij.tasks.TaskBundle";
+  @NonNls private static final String BUNDLE = "messages.TaskBundle";
   private static final TaskBundle INSTANCE = new TaskBundle();
 
   private TaskBundle() { super(BUNDLE); }
