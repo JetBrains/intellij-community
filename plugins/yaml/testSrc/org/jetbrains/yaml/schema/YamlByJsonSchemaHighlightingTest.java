@@ -932,7 +932,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "}", "<warning>r</warning>: true");
   }
 
-  public void testTypeVariants() throws IOException {
+  public void _testTypeVariants() throws IOException {
     @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/prometheus.schema.json"));
     doTest(schema, "alerting:\n" +
                    "  alertmanagers:\n" +
