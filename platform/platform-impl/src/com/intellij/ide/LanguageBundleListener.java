@@ -13,7 +13,7 @@ public class LanguageBundleListener implements ApplicationInitializedListener {
     PluginDescriptor pd = langBundle != null ? langBundle.getPluginDescriptor() : null;
     if (pd == null) return;
     ClassLoader pluginClassLoader = pd.getPluginClassLoader();
-    CommonBundle.setBundle(pluginClassLoader);
+    CommonBundle.loadBundleFromPlugin(pluginClassLoader);
     UIBundle.setBundle(pluginClassLoader);
   }
 }
