@@ -23,7 +23,7 @@ import java.util.ResourceBundle;
 
 public class MarkdownBundle {
   @NotNull
-  private static final String BUNDLE_NAME = "org.intellij.plugins.markdown.bundle.MarkdownBundle";
+  private static final String BUNDLE_NAME = "messages.MarkdownBundle";
   @NotNull
   private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 

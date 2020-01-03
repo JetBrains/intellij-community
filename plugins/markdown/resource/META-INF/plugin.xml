@@ -66,7 +66,7 @@ Includes the following features:</p>
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
 
     <applicationConfigurable id="Settings.Markdown"
-                             bundle="org.intellij.plugins.markdown.bundle.MarkdownBundle"
+                             bundle="messages.MarkdownBundle"
                              groupId="language"
                              nonDefaultProject="true"
                              key="markdown.settings.name"
@@ -80,7 +80,7 @@ Includes the following features:</p>
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
 
-    <localInspection shortName="MarkdownUnresolvedFileReference" bundle="org.intellij.plugins.markdown.bundle.MarkdownBundle"
+    <localInspection shortName="MarkdownUnresolvedFileReference" bundle="messages.MarkdownBundle"
                      key="markdown.unresolved.file.inspection.name" groupKey="markdown.inspection.group.ruby.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.plugins.markdown.lang.references.MarkdownUnresolvedFileReferenceInspection"/>
