@@ -54,11 +54,10 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
 
   private static class TestDataReferenceProvider extends UastInjectionHostReferenceProvider {
 
-    @NotNull
     @Override
-    public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
-                                                        @NotNull PsiLanguageInjectionHost host,
-                                                        @NotNull ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                                  @NotNull PsiLanguageInjectionHost host,
+                                                                  @NotNull ProcessingContext context) {
       TextRange range = ElementManipulators.getValueTextRange(host);
 
       String stringValue = UastUtils.evaluateString(uExpression);
@@ -113,9 +112,8 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
       super(fileReferenceSet, range, index, text);
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       if (getIndex() == 0 && !StringUtil.startsWithChar(getFileReferenceSet().getPathString(), '/')) {
         Collection<Object> variants = ContainerUtil.newHashSet(super.getVariants());
         final PsiDirectory projectPsiRoot = getProjectPsiRoot();
@@ -135,9 +133,8 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
       return super.getVariants();
     }
 
-    @NotNull
     @Override
-    protected ResolveResult[] innerResolve(boolean caseSensitive, @NotNull PsiFile containingFile) {
+    protected ResolveResult @NotNull [] innerResolve(boolean caseSensitive, @NotNull PsiFile containingFile) {
       if (getIndex() == 0 && StringUtil.startsWithChar(getText(), '$')) {
         if (PROJECT_ROOT_VARIABLE.equals(getText())) {
           final PsiDirectory projectPsiRoot = getProjectPsiRoot();

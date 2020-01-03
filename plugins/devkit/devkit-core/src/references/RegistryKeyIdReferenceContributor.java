@@ -40,11 +40,10 @@ class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                        .withName(string().oneOf("get", "is", "intValue", "doubleValue", "stringValue", "getColor"))
                                        .definedInClass(Registry.class.getName())),
                                      new UastInjectionHostReferenceProvider() {
-                                       @NotNull
                                        @Override
-                                       public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
-                                                                                           @NotNull PsiLanguageInjectionHost host,
-                                                                                           @NotNull ProcessingContext context) {
+                                       public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                                                                     @NotNull PsiLanguageInjectionHost host,
+                                                                                                     @NotNull ProcessingContext context) {
                                          return new PsiReference[]{new RegistryKeyIdReference(host)};
                                        }
                                      }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
@@ -87,9 +86,8 @@ class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
       return super.resolve();
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final PropertiesFile registryProperties = getRegistryPropertiesFile();
       if (registryProperties == null) {
         return EMPTY_ARRAY;

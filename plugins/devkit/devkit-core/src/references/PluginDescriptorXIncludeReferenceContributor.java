@@ -43,9 +43,8 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
       super(true);
     }
 
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
       PsiFile file = CompletionUtil.getOriginalOrSelf(element).getContainingFile();
       return new FileReferenceSet(element) {
         @Override

@@ -85,9 +85,8 @@ public class OldJetBrainsAnnotationInspection extends AbstractBaseJavaLocalInspe
       if (typeElement == null) return;
       PsiAnnotation copy = (PsiAnnotation)annotation.copy();
       PsiType newType = typeElement.getType().annotate(new TypeAnnotationProvider() {
-        @NotNull
         @Override
-        public PsiAnnotation[] getAnnotations() {
+        public PsiAnnotation @NotNull [] getAnnotations() {
           return new PsiAnnotation[]{copy};
         }
       });

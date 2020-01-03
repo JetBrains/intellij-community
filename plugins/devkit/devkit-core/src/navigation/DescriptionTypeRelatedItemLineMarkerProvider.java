@@ -49,9 +49,8 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
   private final Option myDescriptionOption = new Option("devkit.description", "Description", DevkitIcons.Gutter.DescriptionFile);
   private final Option myBeforeAfterOption = new Option("devkit.beforeAfter", "Before/After templates", DevkitIcons.Gutter.Diff);
 
-  @NotNull
   @Override
-  public Option[] getOptions() {
+  public Option @NotNull [] getOptions() {
     return new Option[]{myDescriptionOption, myBeforeAfterOption};
   }
 

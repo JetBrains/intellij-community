@@ -275,8 +275,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
 
 
   @Override
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     final Module module = getModule();
     return module != null ? new Module[]{module} : Module.EMPTY_ARRAY;
   }

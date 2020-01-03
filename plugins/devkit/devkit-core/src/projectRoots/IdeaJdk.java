@@ -181,7 +181,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static void appendIdeaLibrary(@NotNull String libDirPath,
                                         @NotNull List<VirtualFile> result,
-                                        @NotNull @NonNls final String... forbidden) {
+                                        @NonNls final String @NotNull ... forbidden) {
     Arrays.sort(forbidden);
     final String path = libDirPath + File.separator + LIB_DIR_NAME;
     final JarFileSystem jfs = JarFileSystem.getInstance();

@@ -49,9 +49,8 @@ public class NewActionAction extends CreateElementActionBase implements Descript
     super(DevKitBundle.message("new.menu.action.text"), DevKitBundle.message("new.menu.action.description"), null);
   }
 
-  @NotNull
   @Override
-  protected final PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+  protected final PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
     PsiElement[] psiElements = doInvokeDialog(project, directory);
     return psiElements == Holder.CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;
   }
@@ -96,9 +95,8 @@ public class NewActionAction extends CreateElementActionBase implements Descript
     return false;
   }
 
-  @NotNull
   @Override
-  protected PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
     PsiClass createdClass = DevkitActionsUtil.createSingleClass(newName, "Action.java", directory);
     DescriptorUtil.patchPluginXml(this, createdClass, pluginDescriptorToPatch);
     return new PsiElement[]{createdClass};

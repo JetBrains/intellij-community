@@ -84,9 +84,8 @@ public class TestDataGroupVirtualFile extends VirtualFile {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
