@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
+import com.intellij.DynamicBundle;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,13 +34,15 @@ import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 
@@ -74,8 +77,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, UIUtilities.class);
     appendPath(cp, SystemInfo.class);
     appendPath(cp, ApplicationManager.class);
+    appendPath(cp, DynamicBundle.class);
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));
+    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/com/intellij/uiDesigner/core/TestProperties.properties"));
     appendPath(cp, GridLayoutManager.class); // intellij.java.guiForms.rt
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
@@ -449,9 +454,6 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   private static class MyClassFinder extends InstrumentationClassFinder {
-    private final byte[] myTestPropertiesBytes = Charset.defaultCharset().encode(TestProperties.TEST_PROPERTY_CONTENT).array();
-    private final String myTestPropertiesClassInternalName = TestProperties.class.getName().replace('.', '/');
-    private final String myTestPropertiesFileInternalName = myTestPropertiesClassInternalName + ".properties";
     private final Map<String, byte[]> myClassData = new HashMap<>();
 
     private MyClassFinder(URL[] platformUrls, URL[] classpathUrls) {
@@ -468,18 +470,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       if (bytes != null) {
         return new ByteArrayInputStream(bytes);
       }
-      if (myTestPropertiesClassInternalName.equals(internalClassName)) {
-        return TestProperties.class.getClassLoader().getResourceAsStream(myTestPropertiesClassInternalName + ".class");
-      }
       return null;
-    }
-
-    @Override
-    public InputStream getResourceAsStream(String name) throws IOException {
-      if (myTestPropertiesFileInternalName.equals(name)) {
-        return new ByteArrayInputStream(myTestPropertiesBytes, 0, TestProperties.TEST_PROPERTY_CONTENT.length());
-      }
-      return super.getResourceAsStream(name);
     }
   }
 
