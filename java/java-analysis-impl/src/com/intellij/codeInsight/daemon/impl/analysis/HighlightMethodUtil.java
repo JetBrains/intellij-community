@@ -1961,12 +1961,6 @@ public class HighlightMethodUtil {
       for (int i = 0; i < parameters.length; i++) {
         PsiType componentType = components[i].getType();
         PsiType parameterType = parameters[i].getType();
-        if (componentType instanceof PsiEllipsisType) {
-          componentType = ((PsiEllipsisType)componentType).toArrayType();
-        }
-        if (parameterType instanceof PsiEllipsisType) {
-          parameterType = ((PsiEllipsisType)parameterType).toArrayType();
-        }
         String componentName = components[i].getName();
         String parameterName = parameters[i].getName();
         if (!parameterType.equals(componentType)) {

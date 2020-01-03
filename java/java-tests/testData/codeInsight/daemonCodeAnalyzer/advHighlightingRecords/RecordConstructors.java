@@ -23,12 +23,12 @@ record NameMismatch(int x, int y) {
 }
 // Current spec draft allows this
 record VarArgMismatch(int... x) {
-  public VarArgMismatch(int[] x) {
+  public VarArgMismatch(<error descr="Incorrect parameter type for record component 'x'. Expected: 'int...', found: 'int[]'">int[]</error> x) {
     this.x = x;
   }
 }
 record VarArgMismatch2(int[] x) {
-  public VarArgMismatch2(int... x) {
+  public VarArgMismatch2(<error descr="Incorrect parameter type for record component 'x'. Expected: 'int[]', found: 'int...'">int...</error> x) {
     this.x = x;
   }
 }
