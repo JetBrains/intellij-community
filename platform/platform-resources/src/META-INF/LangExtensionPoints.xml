@@ -529,10 +529,10 @@
       <with attribute="implementation" implements="com.intellij.semantic.SemContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP">
+    <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP" dynamic="true">
       <with attribute="className" implements="java.lang.Object"/>
     </extensionPoint>
-    <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP">
+    <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP" dynamic="true">
       <with attribute="className" implements="java.lang.Object"/>
     </extensionPoint>
     <extensionPoint name="presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
