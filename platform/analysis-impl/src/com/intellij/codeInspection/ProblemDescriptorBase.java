@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,6 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
   private ProblemGroup myProblemGroup;
-  private String myFakeInspectionShortName;
   @Nullable private final Throwable myCreationTrace;
 
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
@@ -89,6 +87,10 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
     myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
+  }
+
+  public boolean isOnTheFly() {
+    return myCreationTrace == null;
   }
 
   @Nullable
@@ -272,16 +274,9 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return ProblemDescriptorUtil.renderDescriptionMessage(this, element);
   }
 
-  @ApiStatus.Experimental
-  @Override
   @Nullable
-  public String getFakeInspectionShortName() {
-    return myFakeInspectionShortName;
-  }
-
-  @ApiStatus.Experimental
   @Override
-  public void setFakeInspectionShortName(String shortName) {
-    myFakeInspectionShortName = shortName;
+  public LocalQuickFix[] getFixes() {
+    return (LocalQuickFix[])super.getFixes();
   }
 }

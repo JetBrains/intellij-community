@@ -5,7 +5,6 @@ import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,19 +51,4 @@ public interface ProblemDescriptor extends CommonProblemDescriptor {
   void setProblemGroup(@Nullable ProblemGroup problemGroup);
 
   boolean showTooltip();
-
-  /**
-   * To report this problem as a different inspection.
-   * Can be used to let one master inspection pretend it is several different fake inspections.
-   * @return the shortName of the fake inspection
-   * @see InspectionEP#shortName
-   */
-  @ApiStatus.Experimental
-  @Nullable
-  default String getFakeInspectionShortName() {
-    return null;
-  }
-
-  @ApiStatus.Experimental
-  default void setFakeInspectionShortName(String shortName) {}
 }

@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
@@ -36,7 +37,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -109,9 +113,11 @@ public class SSBasedInspection extends LocalInspectionTool {
         final ProblemDescriptor descriptor =
           holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         if (Registry.is("ssr.separate.inspections")) {
-          descriptor.setFakeInspectionShortName(configuration.getUuid().toString());
+          holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
         }
-        holder.registerProblem(descriptor);
+        else {
+          holder.registerProblem(descriptor);
+        }
         return true;
       };
 
