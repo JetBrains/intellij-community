@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -174,12 +174,8 @@ public abstract class StructuralSearchProfile {
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
   }
 
-  public boolean highlightProblemsInEditor() {
-    return false;
-  }
-
   public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file, PatternContext context) {
-    return true;
+    return false;
   }
 
   // only for nodes not filtered by lexical-nodes filter; they can be by default

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.PatternContext;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -37,6 +38,9 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(file);
     if (profile == null) {
       return true;
+    }
+    if (!Registry.is("ssr.in.editor.problem.highlighting")) {
+      return false;
     }
     final PatternContext context = StructuralSearchUtil.findPatternContextByID(contextId, profile);
     final boolean result = profile.shouldShowProblem(highlightInfo, file, context);

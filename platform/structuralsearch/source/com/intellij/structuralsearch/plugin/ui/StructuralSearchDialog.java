@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
@@ -262,21 +261,12 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           }
         }, myDisposable, replace);
         editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-        if (profile.highlightProblemsInEditor()) {
-          document.putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
-            putClientProperty("JComponent.outline", "error");
-            repaint();
-            getOKAction().setEnabled(false);
-            removeMatchHighlights();
-          });
-        }
-        else {
-          final Project project = getProject();
-          final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
-          if (file != null) {
-            DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
-          }
-        }
+        getDocument().putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
+          putClientProperty("JComponent.outline", "error");
+          repaint();
+          getOKAction().setEnabled(false);
+          removeMatchHighlights();
+        });
 
         TextCompletionUtil.installCompletionHint(editor);
         editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);

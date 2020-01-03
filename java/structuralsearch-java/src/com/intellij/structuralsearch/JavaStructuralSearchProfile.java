@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -496,16 +496,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public boolean highlightProblemsInEditor() {
-    return true;
-  }
-
-  @Override
   public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file, PatternContext context) {
-    if (!Registry.is("ssr.in.editor.problem.highlighting")) {
-      return false;
-    }
-
     final PsiErrorElement error = findErrorElementAt(file, highlightInfo.startOffset, highlightInfo.getDescription());
     if (error == null) {
       return false;
