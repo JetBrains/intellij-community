@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -146,10 +147,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       super.visitErrorElement(element);
       final String errorDescription = element.getErrorDescription();
       final PsiElement parent = element.getParent();
-      if (parent instanceof XmlAttribute && "'=' expected".equals(errorDescription)) {
+      if (parent instanceof XmlAttribute && XmlErrorMessages.message("expected.attribute.eq.sign").equals(errorDescription)) {
         return;
       }
-      else if (parent instanceof XmlTag && errorDescription.startsWith("Element") && errorDescription.endsWith(" is not closed")) {
+      else if (parent instanceof XmlTag &&
+               XmlErrorMessages.message("named.element.is.not.closed", ((XmlTag)parent).getName()).equals(errorDescription)) {
         return;
       }
       throw new MalformedPatternException(errorDescription);
