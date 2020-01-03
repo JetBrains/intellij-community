@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="bebca"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="common.git.root"/>
+          <text resource-bundle="messages/GitBundle" key="common.git.root"/>
         </properties>
       </component>
       <vspacer id="67a13">
@@ -36,7 +36,7 @@
         </constraints>
         <properties>
           <labelFor value="e8e3d"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.branch"/>
+          <text resource-bundle="messages/GitBundle" key="rebase.branch"/>
         </properties>
       </component>
       <component id="e8e3d" class="com.intellij.openapi.ui.ComboBox" binding="myBranchComboBox" default-binding="true">
@@ -44,7 +44,7 @@
           <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.branch.tooltip"/>
+          <toolTipText resource-bundle="messages/GitBundle" key="rebase.branch.tooltip"/>
         </properties>
       </component>
       <component id="2b513" class="javax.swing.JLabel">
@@ -53,7 +53,7 @@
         </constraints>
         <properties>
           <labelFor value="b3800"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.onto"/>
+          <text resource-bundle="messages/GitBundle" key="rebase.onto"/>
         </properties>
       </component>
       <component id="b3800" class="com.intellij.openapi.ui.ComboBox" binding="myOntoComboBox" default-binding="true">
@@ -70,7 +70,7 @@
           <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.onto.validate"/>
+          <text resource-bundle="messages/GitBundle" key="rebase.onto.validate"/>
           <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.valdate.onto.tooltip"/>
         </properties>
       </component>
@@ -80,7 +80,7 @@
         </constraints>
         <properties>
           <labelFor value="438d6"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.from"/>
+          <text resource-bundle="messages/GitBundle" key="rebase.from"/>
         </properties>
       </component>
       <component id="438d6" class="com.intellij.openapi.ui.ComboBox" binding="myFromComboBox">
@@ -97,7 +97,7 @@
           <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.validate.from"/>
+          <text resource-bundle="messages/GitBundle" key="rebase.validate.from"/>
           <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.validate.from.tooltip"/>
         </properties>
       </component>
@@ -120,7 +120,7 @@
             </constraints>
             <properties>
               <selected value="false"/>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.preserve.merges"/>
+              <text resource-bundle="messages/GitBundle" key="rebase.preserve.merges"/>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.preserve.merges.tooltip"/>
             </properties>
           </component>
@@ -131,7 +131,7 @@
             <properties>
               <enabled value="true"/>
               <selected value="true"/>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="rebase.interactive"/>
+              <text resource-bundle="messages/GitBundle" key="rebase.interactive"/>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.interactive.tooltip"/>
             </properties>
           </component>
@@ -150,7 +150,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="regase.show.tags"/>
+              <text resource-bundle="messages/GitBundle" key="regase.show.tags"/>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="rebase.show.tags.tooltip"/>
             </properties>
           </component>

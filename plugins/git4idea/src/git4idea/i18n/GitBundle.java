@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class GitBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "git4idea.i18n.GitBundle";
+  @NonNls private static final String BUNDLE = "messages.GitBundle";
   private static final GitBundle INSTANCE = new GitBundle();
 
   private GitBundle() { super(BUNDLE); }

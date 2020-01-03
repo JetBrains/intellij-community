@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="7c46e"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="common.git.root"/>
+          <text resource-bundle="messages/GitBundle" key="common.git.root"/>
         </properties>
       </component>
       <component id="7c46e" class="javax.swing.JComboBox" binding="myGitRoot">
@@ -22,7 +22,7 @@
           <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="common.git.root.tooltip"/>
+          <toolTipText resource-bundle="messages/GitBundle" key="common.git.root.tooltip"/>
         </properties>
       </component>
       <component id="30b22" class="javax.swing.JLabel">
@@ -30,7 +30,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="common.current.branch"/>
+          <text resource-bundle="messages/GitBundle" key="common.current.branch"/>
         </properties>
       </component>
       <component id="a3d86" class="javax.swing.JLabel" binding="myCurrentBranch">
@@ -48,7 +48,7 @@
         </constraints>
         <properties>
           <labelFor value="deb7e"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="pull.remote"/>
+          <text resource-bundle="messages/GitBundle" key="pull.remote"/>
         </properties>
       </component>
       <component id="61c98" class="javax.swing.JLabel">
@@ -56,7 +56,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="merge.branches"/>
+          <text resource-bundle="messages/GitBundle" key="merge.branches"/>
         </properties>
       </component>
       <component id="81b8a" class="javax.swing.JLabel">
@@ -65,7 +65,7 @@
         </constraints>
         <properties>
           <labelFor value="84e56"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="merge.strategy"/>
+          <text resource-bundle="messages/GitBundle" key="merge.strategy"/>
         </properties>
       </component>
       <hspacer id="9a63a">
@@ -94,7 +94,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="merge.no.commit"/>
+              <text resource-bundle="messages/GitBundle" key="merge.no.commit"/>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.no.commit.tooltip"/>
             </properties>
           </component>
@@ -103,7 +103,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="merge.squash.commit"/>
+              <text resource-bundle="messages/GitBundle" key="merge.squash.commit"/>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.squash.tooltip"/>
             </properties>
           </component>
@@ -112,7 +112,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="merge.no.fast.forward"/>
+              <text resource-bundle="messages/GitBundle" key="merge.no.fast.forward"/>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.no.fast.forward.tooltip"/>
             </properties>
           </component>
@@ -121,7 +121,7 @@
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="merge.add.log.information"/>
+              <text resource-bundle="messages/GitBundle" key="merge.add.log.information"/>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.add.log.information.tooltip"/>
             </properties>
           </component>
