@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class ImagesBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.intellij.images.ImagesBundle";
+  @NonNls private static final String BUNDLE = "messages.ImagesBundle";
   private static final ImagesBundle INSTANCE = new ImagesBundle();
 
   private ImagesBundle() { super(BUNDLE); }

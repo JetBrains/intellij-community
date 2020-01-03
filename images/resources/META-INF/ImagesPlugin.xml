@@ -28,110 +28,84 @@
   </extensions>
 
   <actions>
-    <group text="Images">
+    <group id="ImagesRootGroup">
       <action class="org.intellij.images.actions.EditExternallyAction"
-              id="Images.EditExternally"
-              text="Open Image in External Editor">
+              id="Images.EditExternally">
         <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
         <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
       </action>
       <action class="org.intellij.images.actions.ConvertSvgToPngAction"
-              id="Images.ConvertSvgToPng"
-              text="Convert to PNG">
+              id="Images.ConvertSvgToPng">
         <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
       </action>
       <action class="org.intellij.images.actions.ShowThumbnailsAction"
-              id="Images.ShowThumbnails" text="Show Image Thumbnails">
+              id="Images.ShowThumbnails">
       </action>
       <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
               id="Images.ToggleTransparencyChessboard"
-              icon="ImagesIcons.ToggleTransparencyChessboard"
-              text="Show Chessboard"
-              description="Show a chessboard on transparent image parts">
+              icon="ImagesIcons.ToggleTransparencyChessboard">
       </action>
       <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
-              id="Images.SetBackgroundImage"
-              text="Set Background Image">
+              id="Images.SetBackgroundImage">
         <add-to-group group-id="ProjectViewPopupMenu"/>
         <add-to-group group-id="EditorPopupMenu3"/>
       </action>
       <action class="org.intellij.images.editor.actions.ToggleGridAction"
               id="Images.Editor.ToggleGrid"
-              icon="AllIcons.Graph.Grid"
-              text="Show Grid">
+              icon="AllIcons.Graph.Grid">
         <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
       </action>
       <action class="org.intellij.images.editor.actions.ZoomInAction"
               id="Images.Editor.ZoomIn"
               icon="AllIcons.Graph.ZoomIn"
-              text="Zoom In"
               use-shortcut-of="ExpandAll"/>
       <action class="org.intellij.images.editor.actions.ZoomOutAction"
               id="Images.Editor.ZoomOut"
               icon="AllIcons.Graph.ZoomOut"
-              text="Zoom Out"
               use-shortcut-of="CollapseAll"/>
       <action class="org.intellij.images.editor.actions.ActualSizeAction"
               id="Images.Editor.ActualSize"
-              icon="AllIcons.Graph.ActualZoom"
-              text="Zoom to Actual Size">
+              icon="AllIcons.Graph.ActualZoom">
         <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
       </action>
       <action class="org.intellij.images.editor.actions.FitZoomToWindowAction"
               id="Images.Editor.FitZoomToWindow"
-              icon="AllIcons.Graph.FitContent"
-              text="Fit Zoom to Window"/>
+              icon="AllIcons.Graph.FitContent"/>
       <separator/>
 
       <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
               id="Images.Thumbnails.UpFolder"
-              text="Parent Folder"
-              description="Show image thumbnails from the containing folder"
               icon="AllIcons.Nodes.UpFolder">
         <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default"/>
       </action>
       <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
               id="Images.Thumbnails.ToggleRecursive"
-              text="Recursive"
-              description="Toggle whether to show the images from subfolders recursively"
               icon="AllIcons.ObjectBrowser.FlattenPackages">
         <keyboard-shortcut first-keystroke="alt MULTIPLY" keymap="$default"/>
       </action>
       <action class="org.intellij.images.thumbnail.actions.ToggleFileSizeAction"
               id="Images.Thumbnails.ToggleFileSize"
-              text="File Size"
-              description="Toggle whether to show the image size information"
               icon="AllIcons.FileTypes.Any_type">
       </action>
       <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
               id="Images.Thumbnails.ToggleFileName"
-              text="File Name"
-              description="Toggle whether to show the image name"
               icon="AllIcons.Actions.ShowImportStatements">
       </action>
       <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
               internal="true"
-              id="Images.Thumbnails.FilterByTheme"
-              text="Filter by Theme"
-              description="Filter images by theme"/>
+              id="Images.Thumbnails.FilterByTheme"/>
       <action class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
               internal="true"
               popup="true"
-              id="Images.Thumbnails.FilterByTag"
-              text="Filter by Tag"
-              description="Filter images by tag"/>
+              id="Images.Thumbnails.FilterByTag"/>
       <action class="org.intellij.images.thumbnail.actions.ToggleTagsPanelAction"
               id="Images.Thumbnails.ToggleTagsPanelName"
-              text="Preview Tags"
-              description="Toggle whether to show the tags management panel"
               icon="AllIcons.Actions.Preview">
       </action>
 
       <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
               id="Images.Thumbnails.Hide"
-              text="Hide"
-              description="Hide image thumbnails"
               icon="AllIcons.Actions.Cancel" use-shortcut-of="CloseContent"/>
 
       <action class="org.intellij.images.thumbnail.actions.EnterAction"
