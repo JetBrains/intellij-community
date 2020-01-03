@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -69,11 +70,19 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiIdentifier) {
-        final PsiModifierListOwner psiMethod = (PsiModifierListOwner)psiElement.getParent();
-        if (psiMethod != null) {
-          new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
-        }
+      if (!(psiElement instanceof PsiIdentifier)) return;
+      PsiModifierListOwner owner = (PsiModifierListOwner)psiElement.getParent();
+      if (owner instanceof PsiClass) {
+        PsiClass rec = (PsiClass)owner;
+        if (!rec.isRecord()) return;
+        String compactCtorText = "public " + rec.getName() + " {}";
+        PsiMethod ctor = JavaPsiFacade.getElementFactory(project).createMethodFromText(compactCtorText, owner);
+        PsiMethod firstMethod = ArrayUtil.getFirstElement(rec.getMethods());
+        owner = (PsiMethod)WriteCommandAction.writeCommandAction(owner.getContainingFile()).withName(getFamilyName())
+          .compute(() -> rec.addBefore(ctor, firstMethod));
+      }
+      if (owner instanceof PsiMethod) {
+        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, owner, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
       }
     }
   }
@@ -120,7 +129,6 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
       if (AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) return;
       if (!method.isVarArgs()) return;
-      if (JavaPsiRecordUtil.isCompactConstructor(method)) return;
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiParameter psiParameter = parameters[parameters.length - 1];
@@ -139,7 +147,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       PsiRecordComponent lastComponent = ArrayUtil.getLastElement(header.getRecordComponents());
       if (lastComponent == null || !lastComponent.isVarArgs()) return;
       PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
-      if (constructor != null && JavaPsiRecordUtil.isExplicitCanonicalConstructor(constructor)) return;
+      if (constructor != null && constructor.isPhysical()) return; // will be reported on constructor instead
       final PsiType type = lastComponent.getType();
       LOG.assertTrue(type instanceof PsiEllipsisType, "type: " + type.getCanonicalText() + "; param: " + lastComponent);
 
