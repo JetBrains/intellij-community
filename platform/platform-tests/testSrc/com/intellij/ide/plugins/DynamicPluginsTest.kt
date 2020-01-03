@@ -4,6 +4,8 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
@@ -16,6 +18,7 @@ import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.io.write
 import com.intellij.util.xmlb.annotations.Attribute
 import junit.framework.Assert.*
@@ -99,6 +102,24 @@ class DynamicPluginsTest {
     val service2 = ServiceManager.getService(MyPersistentComponent::class.java)
     assertEquals(data, service2.myState.stateData)
     Disposer.dispose(disposable2)
+  }
+
+  @Test
+  fun unloadActionReference() {
+    val disposable = loadPluginWithText("""
+      <idea-plugin>
+        <id>foo</id>
+        <actions>
+          <reference ref="QuickActionPopup">
+            <add-to-group group-id="ListActions" anchor="last"/>
+          </reference>  
+        </actions>
+      </idea-plugin>
+    """.trimIndent(), DynamicPlugins::class.java.classLoader)
+    val group = ActionManager.getInstance().getAction("ListActions") as DefaultActionGroup
+    assertTrue(group.getChildren(null).any { it is ShowQuickActionPopupAction })
+    Disposer.dispose(disposable)
+    assertFalse(group.getChildren(null).any { it is ShowQuickActionPopupAction })
   }
 
   private class MyUISettingsListener : UISettingsListener {
