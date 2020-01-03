@@ -16,7 +16,9 @@ class FilePredictionVcsFeatures : FilePredictionFeatureProvider {
 
     val result = HashMap<String, FilePredictionFeature>()
     val changeListManager = ChangeListManager.getInstance(project)
-    result["prev_in_changelist"] = FilePredictionFeature.binary(prevFile != null && changeListManager.isFileAffected(prevFile))
+    if (prevFile != null) {
+      result["prev_in_changelist"] = FilePredictionFeature.binary(changeListManager.isFileAffected(prevFile))
+    }
     result["in_changelist"] = FilePredictionFeature.binary(changeListManager.isFileAffected(newFile))
     return result
   }
