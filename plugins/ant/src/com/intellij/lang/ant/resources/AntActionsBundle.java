@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class AntActionsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.intellij.lang.ant.resources.AntActionsBundle";
+  @NonNls private static final String BUNDLE = "messages.AntActionsBundle";
   private static final AntActionsBundle INSTANCE = new AntActionsBundle();
 
   private AntActionsBundle() { super(BUNDLE); }
