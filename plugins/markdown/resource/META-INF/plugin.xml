@@ -2,7 +2,8 @@
   <id>org.intellij.plugins.markdown</id>
   <name>Markdown</name>
   <vendor>JetBrains</vendor>
-
+  
+  <resource-bundle>messages.MarkdownBundle</resource-bundle>
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="plugin-intelliLang.xml">org.intellij.intelliLang</depends>
 
@@ -109,90 +110,65 @@ Includes the following features:</p>
   </extensions>
 
   <actions>
-    <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup" text="Markdown editor actions">
+    <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
-              text="Toggle bold mode"
-              description="Toggles bold mode on caret/selection"
               icon="MarkdownIcons.EditorActions.Bold">
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
-              text="Toggle strikethrough mode"
-              description="Toggles strikethrough mode on caret/selection"
               icon="MarkdownIcons.EditorActions.Strike_through">
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
-              text="Toggle italic mode"
-              description="Toggles italic mode on caret/selection"
               icon="MarkdownIcons.EditorActions.Italic">
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
-              text="Toggle monospaced (code span) mode"
-              description="Toggles monospaced mode (rendered as code span) on caret/selection"
               icon="MarkdownIcons.EditorActions.Code_span">
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
-              text="Decrease Header Level"
-              description="Decreases level of a header by caret"
               icon="MarkdownIcons.EditorActions.Header_level_down">
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
-              text="Increase Header Level"
-              description="Creates or increases level of a header by caret"
               icon="MarkdownIcons.EditorActions.Header_level_up">
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
-              text="Introduce reference"
-              description="Creates link from text and replaces it with a reference"
               icon="MarkdownIcons.EditorActions.Link">
       </action>
     </group>
 
-
     <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.CyclicSplitLayoutChangeAction"
             id="org.intellij.plugins.markdown.ui.actions.editorLayout.CyclicSplitLayoutChangeAction"
-            text="Change split layout"
-            description="Toggle markdown editor layout through different values (editor only, preview only, wysiwyg split)"
             icon="AllIcons.Actions.PreviewDetails"
             use-shortcut-of="ParameterInfo">
     </action>
 
-    <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup" text="Markdown editor layout actions">
+    <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
       <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"
               id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"
-              text="Show editor only"
-              description="Sets markdown editor layout to show editor only"
               icon="AllIcons.General.LayoutEditorOnly">
       </action>
       <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorAndPreviewLayoutChangeAction"
               id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorAndPreviewLayoutChangeAction"
-              text="Show editor and preview"
-              description="Sets markdown editor layout to show editor and preview in split"
               icon="AllIcons.General.LayoutEditorPreview">
       </action>
       <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction"
               id="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction"
-              text="Show preview only"
-              description="Sets markdown editor layout to show preview only"
               icon="AllIcons.General.LayoutPreviewOnly">
       </action>
       <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
               id="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
-              text="Auto-Scroll Preview"
-              description="Enable/Disable preview auto scroll"
               icon="AllIcons.Actions.SynchronizeScrolling">
       </action>
     </group>
