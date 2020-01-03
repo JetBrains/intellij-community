@@ -79,7 +79,9 @@ public abstract class TypedAction {
    *
    * @param handler the handler to set.
    * @return the previously registered handler.
+   * @deprecated Use &lt;typedHandler&gt; extension point for registering typing handlers
    */
+  @Deprecated
   public TypedActionHandler setupHandler(TypedActionHandler handler) {
     ensureHandlersLoaded();
     TypedActionHandler tmp = myHandler;
