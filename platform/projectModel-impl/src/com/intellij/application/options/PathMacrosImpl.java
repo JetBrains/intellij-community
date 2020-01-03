@@ -1,9 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacroContributor;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,6 +72,22 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   }
 
   public PathMacrosImpl() {
+    this(true);
+  }
+
+  public PathMacrosImpl(boolean loadContributors) {
+    if (loadContributors) {
+      for (PathMacroContributor contributor : PathMacroContributor.EP_NAME.getExtensionList()) {
+        contributor.registerPathMacros(this);
+      }
+
+      PathMacroContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<PathMacroContributor>() {
+        @Override
+        public void extensionAdded(@NotNull PathMacroContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
+          extension.registerPathMacros(PathMacrosImpl.this);
+        }
+      }, ApplicationManager.getApplication());
+    }
   }
 
   public static PathMacrosImpl getInstanceEx() {

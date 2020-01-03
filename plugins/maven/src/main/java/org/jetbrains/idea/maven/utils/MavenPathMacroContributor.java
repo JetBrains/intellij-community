@@ -2,19 +2,14 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.openapi.application.PathMacroContributor;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.util.io.FileUtil;
 
-final class MavenEnvironmentRegistrar implements ApplicationInitializedListener {
+final class MavenPathMacroContributor implements PathMacroContributor {
   @Override
-  public void componentsInitialized() {
-    registerPathVariable();
-  }
-
-  private static void registerPathVariable() {
+  public void registerPathMacros(PathMacros macros) {
     String repository = MavenUtil.resolveLocalRepository(null, null, null).getAbsolutePath();
-    PathMacros macros = PathMacros.getInstance();
 
     for (String each : macros.getAllMacroNames()) {
       String path = macros.getValue(each);

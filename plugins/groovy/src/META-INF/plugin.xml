@@ -1236,6 +1236,8 @@
 
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerGradleConfigurationHandler"/>
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader"/>
+
+    <pathMacroContributor implementation="org.jetbrains.plugins.groovy.mvc.MvcPathMacros"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -1363,12 +1365,6 @@
             class="org.jetbrains.plugins.groovy.ide.GroovyScriptingShellAction"
             text="Groovy IDE Scripting Shell"/>
   </actions>
-
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcPathMacros</implementation-class>
-    </component>
-  </application-components>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyUastPlugin"/>

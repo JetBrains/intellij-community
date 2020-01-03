@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
+import com.intellij.openapi.application.PathMacroContributor;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,16 +13,15 @@ import java.util.Set;
 /**
  * @author peter
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
-public class MvcPathMacros {
-
-  public MvcPathMacros() {
-    Set<String> macroNames = PathMacros.getInstance().getUserMacroNames();
+public class MvcPathMacros implements PathMacroContributor {
+  @Override
+  public void registerPathMacros(PathMacros macros) {
+    Set<String> macroNames = macros.getUserMacroNames();
     for (String framework : ContainerUtil.ar("grails", "griffon")) {
       String name = "USER_HOME_" + StringUtil.toUpperCase(framework);
       // OK, it may appear/disappear during the application lifetime, but we ignore that for now. Restart will help anyway
       if (!macroNames.contains(name)) {
-        PathMacros.getInstance().addLegacyMacro(name, StringUtil.trimEnd(getSdkWorkDirParent(framework), "/"));
+        macros.addLegacyMacro(name, StringUtil.trimEnd(getSdkWorkDirParent(framework), "/"));
       }
     }
   }
