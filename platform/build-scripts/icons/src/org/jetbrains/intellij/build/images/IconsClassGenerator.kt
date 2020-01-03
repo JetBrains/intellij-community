@@ -25,7 +25,9 @@ internal data class IconsClassInfo(val customLoad: Boolean,
                                    val outFile: Path)
 
 class IconsClassGenerator(private val projectHome: File, val modules: List<JpsModule>, private val writeChangesToDisk: Boolean = true) {
-  private val util: JpsModule = modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
+  private val util: JpsModule by lazy {
+    modules.find { it.name == "intellij.platform.util" } ?: error("Can't load module 'util'")
+  }
 
   private val processedClasses = AtomicInteger()
   private val processedIcons = AtomicInteger()

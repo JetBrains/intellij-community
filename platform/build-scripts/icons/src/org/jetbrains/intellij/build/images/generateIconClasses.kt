@@ -2,33 +2,32 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 
 fun main() = generateIconsClasses()
 
-internal fun generateIconsClasses() {
-  val homePath = PathManager.getHomePath()
+internal fun generateIconsClasses(homePath: String = PathManager.getHomePath(), modulesFilter: (JpsModule) -> Boolean = { true }) {
   val home = File(homePath)
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
 
-  val generator = IconsClassGenerator(home, project.modules)
-  project.modules.parallelStream().forEach(generator::processModule)
+  val modules = project.modules.filter(modulesFilter)
+
+  val generator = IconsClassGenerator(home, modules)
+  modules.parallelStream().forEach(generator::processModule)
   generator.printStats()
 
   val optimizer = ImageSizeOptimizer(home)
-  project.modules.parallelStream().forEach(optimizer::optimizeIcons)
+  modules.parallelStream().forEach(optimizer::optimizeIcons)
   optimizer.printStats()
 
   val preCompiler = ImageSvgPreCompiler()
-  preCompiler.preCompileIcons(project.modules)
+  preCompiler.preCompileIcons(modules)
   preCompiler.printStats()
 
   val checker = ImageSanityChecker(home)
-  project.modules.forEach { module ->
-    checker.check(module)
-  }
-//  checker.printInfo()
+  modules.forEach(checker::check)
   checker.printWarnings()
 
   println()

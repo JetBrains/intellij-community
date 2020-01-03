@@ -5,6 +5,7 @@ import java.io.File
 import java.io.IOException
 import java.util.stream.Collectors
 import java.util.stream.Stream
+import kotlin.math.max
 
 internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
   val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
@@ -72,13 +73,13 @@ internal fun listGitObjects(
   listGitTree(repo, null, fileFilter).map {
     // root relative <file> path to git object
     val rootRelativePath = repo.relativeTo(root).path
-    if (rootRelativePath.isEmpty()) {
+      if (rootRelativePath.isEmpty()) {
       it.first
-    }
-    else {
+      }
+      else {
       "$rootRelativePath/${it.first}"
     } to it.second
-  }
+      }
 }.collect(Collectors.toMap({ it.first }, { it.second }))
 
 /**
@@ -86,14 +87,14 @@ internal fun listGitObjects(
  */
 internal data class GitObject(val path: String, val hash: String, val repo: File) {
   val file = File(repo, path)
-}
+    }
 
 /**
  * @param dir path in repo
  * @return root of repo
  */
 internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File = when {
-  dir.isDirectory && dir.listFiles().find { file ->
+  dir.isDirectory && dir.listFiles()?.find { file ->
     file.isDirectory && file.name == ".git"
   } != null -> {
     if (!silent) log("Git repo found in $dir")
@@ -258,7 +259,7 @@ internal fun latestChangeTime(path: String, repo: File): Long {
   val commit = latestChangeCommit(path, repo)
   if (commit == null) return -1
   val mergeCommit = findMergeCommit(repo, commit.hash)
-  return Math.max(commit.timestamp, mergeCommit?.timestamp ?: -1)
+  return max(commit.timestamp, mergeCommit?.timestamp ?: -1)
 }
 
 /**
@@ -386,9 +387,9 @@ internal fun changesFromCommit(repo: File, hash: String) =
     }.filterNotNull().groupBy({ it.first }, { it.second })
 
 internal fun gitClone(uri: String, dir: File): File {
-  val filesBeforeClone = dir.listFiles().toList()
+  val filesBeforeClone = dir.listFiles()?.toList() ?: emptyList()
   execute(dir, GIT, "clone", uri)
-  return (dir.listFiles().toList() - filesBeforeClone).first {
+  return ((dir.listFiles()?.toList() ?: emptyList()) - filesBeforeClone).first {
     uri.contains(it.name)
   }
 }
