@@ -49,6 +49,7 @@ public class ManifestLexer extends LexerBase {
     SPECIAL_CHARACTERS_TOKEN_MAPPING.put('[', ManifestTokenType.OPENING_BRACKET_TOKEN);
     SPECIAL_CHARACTERS_TOKEN_MAPPING.put(']', ManifestTokenType.CLOSING_BRACKET_TOKEN);
     SPECIAL_CHARACTERS_TOKEN_MAPPING.put('\"', ManifestTokenType.QUOTE);
+    SPECIAL_CHARACTERS_TOKEN_MAPPING.put('\t', ManifestTokenType.TABLE);
   }
 
   private CharSequence myBuffer;
@@ -124,6 +125,10 @@ public class ManifestLexer extends LexerBase {
       }
       else if (c == '\n') {
         myTokenType = ManifestTokenType.SECTION_END;
+        myTokenEnd = myTokenStart + 1;
+      }
+      else if (c == '\t') {
+        myTokenType = ManifestTokenType.TABLE;
         myTokenEnd = myTokenStart + 1;
       }
       else {

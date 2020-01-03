@@ -44,6 +44,7 @@ public final class ManifestTokenType extends IElementType implements ILeafElemen
   public static final ManifestTokenType EQUALS = new ManifestTokenType("EQUALS_TOKEN");
   public static final ManifestTokenType COMMA = new ManifestTokenType("COMMA_TOKEN");
   public static final ManifestTokenType QUOTE = new ManifestTokenType("QUOTE_TOKEN");
+  public static final ManifestTokenType TABLE = new ManifestTokenType("TABLE_TOKEN");
   public static final ManifestTokenType HEADER_VALUE_PART = new ManifestTokenType("HEADER_VALUE_PART_TOKEN");
   public static final ManifestTokenType SIGNIFICANT_SPACE = new ManifestTokenType("SIGNIFICANT_SPACE_TOKEN");
   public static final ManifestTokenType OPENING_PARENTHESIS_TOKEN = new ManifestTokenType("OPENING_PARENTHESIS_TOKEN");

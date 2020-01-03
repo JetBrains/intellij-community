@@ -46,7 +46,8 @@ public class StandardHeaderParser implements HeaderParser {
     while (!builder.eof() && !ManifestParser.HEADER_END_TOKENS.contains(builder.getTokenType())) {
       IElementType lastToken = builder.getTokenType();
       builder.advanceLexer();
-      if (lastToken == ManifestTokenType.NEWLINE && builder.getTokenType() != ManifestTokenType.SIGNIFICANT_SPACE) {
+      if (lastToken == ManifestTokenType.NEWLINE && builder.getTokenType() != ManifestTokenType.SIGNIFICANT_SPACE
+          && builder.getTokenType() != ManifestTokenType.TABLE) {
         break;
       }
     }
