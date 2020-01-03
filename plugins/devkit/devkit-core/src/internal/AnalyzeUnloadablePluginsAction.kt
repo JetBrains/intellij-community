@@ -179,6 +179,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         analysisErrors.add("Cannot resolve EP ${extension.xmlElementName}")
         continue
       }
+      if (ep.module == ideaPlugin.module) continue  // a plugin can have extensions for its own non-dynamic EPs
       if (Registry.`is`("analyze.unloadable.discover.owners")) {
         extensionPointOwners.discoverOwner(ep)
       }
