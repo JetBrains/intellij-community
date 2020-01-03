@@ -39,13 +39,12 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
 
   @Override
   public void initialize(@NotNull GlobalInspectionContext context) {
-    super.initialize(context);
     RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
     final RefGraphAnnotator annotator = getTool().getAnnotator(refManager);
     if (annotator != null) {
       refManager.registerGraphAnnotator(annotator);
     }
-    getTool().initialize(context);
+    super.initialize(context);
   }
 
   @Override

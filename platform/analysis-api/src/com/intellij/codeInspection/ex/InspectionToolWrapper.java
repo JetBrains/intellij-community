@@ -58,6 +58,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public void initialize(@NotNull GlobalInspectionContext context) {
+    getTool().initialize(context);
   }
 
   @NotNull

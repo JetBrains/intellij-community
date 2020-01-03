@@ -191,6 +191,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public void cleanup(@NotNull Project project) {
   }
 
+  public void initialize(@NotNull GlobalInspectionContext context) {
+  }
+
   interface DefaultNameProvider {
 
     @NonNls

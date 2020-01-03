@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
@@ -245,8 +244,5 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   @Nullable
   public LocalInspectionTool getSharedLocalInspectionTool() {
     return null;
-  }
-
-  public void initialize(@NotNull GlobalInspectionContext context) {
   }
 }

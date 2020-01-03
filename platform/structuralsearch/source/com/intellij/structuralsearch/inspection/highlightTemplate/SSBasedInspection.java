@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.notification.NotificationType;
@@ -78,8 +79,18 @@ public class SSBasedInspection extends LocalInspectionTool {
     return SHORT_NAME;
   }
 
-  public void setSessionProfile(InspectionProfileImpl profile) {
-    mySessionProfile = profile;
+  @Override
+  public void initialize(@NotNull GlobalInspectionContext context) {
+    super.initialize(context);
+    if (Registry.is("ssr.separate.inspections")) {
+      mySessionProfile = ((GlobalInspectionContextBase)context).getCurrentProfile();
+    }
+  }
+
+  @Override
+  public void cleanup(@NotNull Project project) {
+    super.cleanup(project);
+    mySessionProfile = null;
   }
 
   @NotNull
