@@ -347,7 +347,7 @@
     <extensionPoint name="readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector" dynamic="true"/>
     <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>
 
-    <extensionPoint name="referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP">
+    <extensionPoint name="referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.PsiReferenceProvider"/>
     </extensionPoint>
 
