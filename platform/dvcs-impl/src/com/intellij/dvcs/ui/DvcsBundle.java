@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class DvcsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.intellij.dvcs.ui.DvcsBundle";
+  @NonNls private static final String BUNDLE = "messages.DvcsBundle";
   private static final DvcsBundle INSTANCE = new DvcsBundle();
 
   private DvcsBundle() { super(BUNDLE); }
@@ -30,7 +30,7 @@ public class DvcsBundle extends DynamicBundle {
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return INSTANCE.getMessage(key, params);
   }
-  
+
   @NotNull
   public static String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);
