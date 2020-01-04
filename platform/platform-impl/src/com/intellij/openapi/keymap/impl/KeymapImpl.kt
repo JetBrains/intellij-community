@@ -722,26 +722,38 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
   return true
 }
 
+private val macOSKeymap = "com.intellij.plugins.macoskeymap"
+private val gnomeKeymap = "com.intellij.plugins.gnomekeymap"
+private val kdeKeymap = "com.intellij.plugins.kdekeymap"
+private val xwinKeymap = "com.intellij.plugins.xwinkeymap"
+private val eclipseKeymap = "com.intellij.plugins.eclipsekeymap"
+private val emacsKeymap = "com.intellij.plugins.emacskeymap"
+private val netbeansKeymap = "com.intellij.plugins.netbeanskeymap"
+private val resharperKeymap = "com.intellij.plugins.resharperkeymap"
+private val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
+private val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
+private val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
+
 internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
   ApplicationManager.getApplication().invokeLater({
     // TODO remove when PluginAdvertiser implements that
     @Suppress("SpellCheckingInspection")
     val pluginId = when (keymapName) {
       "Mac OS X",
-      "Mac OS X 10.5+" -> "com.intellij.plugins.macoskeymap"
-      "Default for GNOME" -> "com.intellij.plugins.gnomekeymap"
-      "Default for KDE" -> "com.intellij.plugins.kdekeymap"
-      "Default for XWin" -> "com.intellij.plugins.xwinkeymap"
+      "Mac OS X 10.5+" -> macOSKeymap
+      "Default for GNOME" -> gnomeKeymap
+      "Default for KDE" -> kdeKeymap
+      "Default for XWin" -> xwinKeymap
       "Eclipse",
-      "Eclipse (Mac OS X)" -> "com.intellij.plugins.eclipsekeymap"
-      "Emacs" -> "com.intellij.plugins.emacskeymap"
-      "NetBeans 6.5" -> "com.intellij.plugins.netbeanskeymap"
+      "Eclipse (Mac OS X)" -> eclipseKeymap
+      "Emacs" -> emacsKeymap
+      "NetBeans 6.5" -> netbeansKeymap
       "ReSharper",
-      "ReSharper OSX" -> "com.intellij.plugins.resharperkeymap"
+      "ReSharper OSX" -> resharperKeymap
       "Sublime Text",
-      "Sublime Text (Mac OS X)" -> "com.intellij.plugins.sublimetextkeymap"
-      "Visual Studio" -> "com.intellij.plugins.visualstudiokeymap"
-      "Xcode" -> "com.intellij.plugins.xcodekeymap"
+      "Sublime Text (Mac OS X)" -> sublimeKeymap
+      "Visual Studio" -> visualStudioKeymap
+      "Xcode" -> xcodeKeymap
       else -> null
     }
     val action: AnAction? = when (pluginId) {
@@ -753,8 +765,20 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
       }
       else -> object : NotificationAction("Install $keymapName Keymap") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          PluginsAdvertiser.installAndEnable(setOf(PluginId.getId(pluginId))) {
+          PluginsAdvertiser.installAndEnable(getPluginIdWithDependencies(pluginId)) {
             notification.expire()
+          }
+        }
+
+        fun toPluginIds(vararg ids: String) = ids.map { PluginId.getId(it) }.toSet()
+
+        private fun getPluginIdWithDependencies(pluginId: String): Set<PluginId> {
+          return when(pluginId) {
+            gnomeKeymap -> toPluginIds(gnomeKeymap, xwinKeymap)
+            kdeKeymap -> toPluginIds(kdeKeymap, xwinKeymap)
+            resharperKeymap -> toPluginIds(resharperKeymap, visualStudioKeymap)
+            xcodeKeymap -> toPluginIds(xcodeKeymap, macOSKeymap)
+            else -> toPluginIds(pluginId)
           }
         }
       }
