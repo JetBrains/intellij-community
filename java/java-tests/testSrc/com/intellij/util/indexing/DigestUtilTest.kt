@@ -7,6 +7,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.junit.Test
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class DigestUtilTest {
 
@@ -25,6 +26,8 @@ class DigestUtilTest {
 
     PlatformTestUtil.startPerformanceTest("DigestUtil works quickly enough", 250) {
       threadPool.invokeAll(callableList)
+      threadPool.shutdown()
+      threadPool.awaitTermination(60, TimeUnit.SECONDS)
     }.usesAllCPUCores().attempts(5).assertTiming()
   }
 
