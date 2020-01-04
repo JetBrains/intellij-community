@@ -28,7 +28,7 @@ public class UIBundle {
     return ourBundle = ResourceBundle.getBundle(BUNDLE);
   }
 
-  public static void setBundle(@Nullable ClassLoader pluginClassLoader) {
+  public static void loadBundleFromPlugin(@Nullable ClassLoader pluginClassLoader) {
     ResourceBundle bundle = loadLanguageBundle(pluginClassLoader, BUNDLE);
     if (bundle != null) ourBundle = bundle;
   }
