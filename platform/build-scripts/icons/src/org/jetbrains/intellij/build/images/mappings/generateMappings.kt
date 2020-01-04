@@ -5,7 +5,6 @@ import org.jetbrains.intellij.build.images.IconsClassGenerator
 import org.jetbrains.intellij.build.images.ImageCollector
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.sync.*
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -91,7 +90,7 @@ private class Mapping(val product: String, val set: String, val path: String): C
 private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
   val home = context.devRepoDir
   val homePath = home.absolutePath
-  val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
+  val project = jpsProject(homePath)
   val generator = IconsClassGenerator(home, project.modules)
   return protectStdErr {
     project.modules.parallelStream().map { module ->

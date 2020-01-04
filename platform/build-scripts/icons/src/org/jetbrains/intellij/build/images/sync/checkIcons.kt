@@ -19,8 +19,6 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   // required to load com.intellij.ide.plugins.newui.PluginLogo
   System.setProperty("java.awt.headless", "true")
   logger = loggerImpl
-  context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
-  context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
   callWithTimer("Searching for changed icons..") {
     when {
@@ -34,10 +32,10 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
     }
   }
   syncDevRepo(context)
+  findCommitsToSync(context)
   when {
     !context.devIconsSyncAll && !context.iconsSyncRequired() && !context.devSyncRequired() -> log("No changes are found")
     isUnderTeamCity() -> {
-      findCommitsToSync(context)
       if (context.devCommitsToSync.isNotEmpty()) try {
         push(context)
       }

@@ -73,13 +73,13 @@ internal fun listGitObjects(
   listGitTree(repo, null, fileFilter).map {
     // root relative <file> path to git object
     val rootRelativePath = repo.relativeTo(root).path
-      if (rootRelativePath.isEmpty()) {
+    if (rootRelativePath.isEmpty()) {
       it.first
-      }
-      else {
+    }
+    else {
       "$rootRelativePath/${it.first}"
     } to it.second
-      }
+  }
 }.collect(Collectors.toMap({ it.first }, { it.second }))
 
 /**
@@ -87,7 +87,7 @@ internal fun listGitObjects(
  */
 internal data class GitObject(val path: String, val hash: String, val repo: File) {
   val file = File(repo, path)
-    }
+}
 
 /**
  * @param dir path in repo
@@ -114,6 +114,10 @@ internal fun unStageFiles(files: List<String>, repo: File) {
   }
 }
 
+internal fun resetToPreviousCommit(repo: File) {
+  execute(repo, GIT, "reset", "--hard", "HEAD^")
+}
+
 internal fun stageFiles(files: List<String>, repo: File) {
   // OS has argument length limit
   splitAndTry(1000, files, repo) {
@@ -136,7 +140,7 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
   }
 }
 
-internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String, force: Boolean = false): CommitInfo {
+internal fun commit(repo: File, message: String, user: String, email: String) {
   execute(
     repo, GIT,
     "-c", "user.name=$user",
@@ -144,6 +148,10 @@ internal fun commitAndPush(repo: File, branch: String, message: String, user: St
     "commit", "-m", message,
     "--author=$user <$email>"
   )
+}
+
+internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String, force: Boolean = false): CommitInfo {
+  commit(repo, message, user, email)
   push(repo, branch, user, email, force)
   return commitInfo(repo) ?: error("Unable to read last commit")
 }

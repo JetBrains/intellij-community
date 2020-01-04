@@ -2,15 +2,15 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
+import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 
 fun main() = generateIconsClasses()
 
 internal fun generateIconsClasses(homePath: String = PathManager.getHomePath(), modulesFilter: (JpsModule) -> Boolean = { true }) {
   val home = File(homePath)
-  val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
+  val project = jpsProject(homePath)
 
   val modules = project.modules.filter(modulesFilter)
 

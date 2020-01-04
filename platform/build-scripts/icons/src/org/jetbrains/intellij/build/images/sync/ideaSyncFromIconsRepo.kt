@@ -5,7 +5,6 @@ import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.images.generateIconsClasses
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 
@@ -48,9 +47,8 @@ private fun runTests(tests: Collection<String>, modules: Collection<String>) {
 }
 
 private fun dependencies(projectPath: String, module: String) =
-  JpsSerializationManager.getInstance()
-    .loadModel(projectPath, null)
-    .project.modules.first { it.name == module }
+  jpsProject(projectPath)
+    .modules.first { it.name == module }
     .let(JpsJavaExtensionService::dependencies)
     .recursively().libraries
     .flatMap { it.getRoots(JpsOrderRootType.COMPILED) }

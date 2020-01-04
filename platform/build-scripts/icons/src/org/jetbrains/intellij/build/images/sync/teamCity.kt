@@ -96,10 +96,8 @@ internal fun triggeredBy() =
     ?.let { teamCityGet("users/username:$it/email") }
     ?.removeSuffix(System.lineSeparator())
     ?.takeIf { triggeredByName != null }
-    ?.let { email -> TriggeredBy(triggeredByName, email) }
+    ?.let { email -> Committer(triggeredByName, email) }
   ?: error("Unable to find who triggered the build")
-
-internal class TriggeredBy(val name: String, val email: String)
 
 internal fun isScheduled() = triggeredByName?.contains("Schedule") == true
 

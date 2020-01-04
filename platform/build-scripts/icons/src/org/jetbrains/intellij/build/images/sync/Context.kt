@@ -16,8 +16,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     private const val iconsRepoArg = "icons.repo"
   }
 
-  val devRepoDir: File
-  val iconsRepoDir: File
+  var devRepoDir: File
+  var iconsRepoDir: File
   val iconsRepoName: String
   val devRepoName: String
   val skipDirsPattern: String?
@@ -26,8 +26,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val doSyncRemovedIconsInDev: Boolean
   private val failIfSyncDevIconsRequired: Boolean
   val notifySlack: Boolean
-  lateinit var iconsRepo: File
-  lateinit var devRepoRoot: File
   val byDev = Changes()
   val byCommit = mutableMapOf<String, Changes>()
   val consistent: MutableCollection<String> = mutableListOf()
@@ -122,6 +120,13 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
         val (file, _, commit) = split
         if (ImageExtension.fromName(file) != null) commit else null
       }?.toMutableSet() ?: mutableSetOf()
+  }
+
+  val iconsRepo: File by lazy {
+    findGitRepoRoot(iconsRepoDir)
+  }
+  val devRepoRoot: File by lazy {
+    findGitRepoRoot(devRepoDir)
   }
 
   private fun cloneIconsRepoToTempDir(): File {
