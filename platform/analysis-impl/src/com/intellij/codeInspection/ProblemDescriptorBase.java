@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -277,7 +278,6 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   @Nullable
   @Override
   public LocalQuickFix[] getFixes() {
-    return LocalQuickFix.EMPTY_ARRAY; // todo [anna]
-    //return (LocalQuickFix[])super.getFixes();
+    return JBIterable.of(super.getFixes()).filter(LocalQuickFix.class).toArray(LocalQuickFix.EMPTY_ARRAY); // todo [anna]
   }
 }
