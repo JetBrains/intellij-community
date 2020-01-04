@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote.ui
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Used in create remote SDK dialog to control the scope of SDK that is being
  * edited. The scope might be either application-wide or project-wide.
  */
+@ApiStatus.Experimental
 interface SdkScopeController {
   val isProjectLevelSupported: Boolean
 
