@@ -277,6 +277,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   @Nullable
   @Override
   public LocalQuickFix[] getFixes() {
-    return (LocalQuickFix[])super.getFixes();
+    return LocalQuickFix.EMPTY_ARRAY; // todo [anna]
+    //return (LocalQuickFix[])super.getFixes();
   }
 }
