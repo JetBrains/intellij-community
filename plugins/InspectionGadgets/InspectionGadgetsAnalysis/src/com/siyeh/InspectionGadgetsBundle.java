@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class InspectionGadgetsBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "com.siyeh.InspectionGadgetsBundle";
+  @NonNls public static final String BUNDLE = "messages.InspectionGadgetsBundle";
   private static final InspectionGadgetsBundle INSTANCE = new InspectionGadgetsBundle();
 
   private InspectionGadgetsBundle() { super(BUNDLE); }

@@ -75,7 +75,7 @@
       <runConfigurationProducer
           implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
       <localInspection implementationClass="com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspection"
-                       groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
+                       groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="messages.InspectionGadgetsBundle"
                        key="simplifiable.testng.assertion.display.name" groupName="TestNG"
                        enabledByDefault="true" level="WARNING"/>
       <localInspection groupPath="Java" language="JAVA" shortName="ConstantTestNGAssertArgument" displayName="Constant TestNG assert argument"
