@@ -2,7 +2,6 @@
 package com.intellij.psi.search.scope;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,15 +15,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Sergey Malenkov
  */
 public final class TestsScope extends NamedScope {
-  /**
-   * Use {code {@link #getNAME()}} instead
-   */
-  @Deprecated
   public static final String NAME = "Tests";
   public static final TestsScope INSTANCE = new TestsScope();
 
   private TestsScope() {
-    super(getNameText(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Tests), new FilteredPackageSet(getNameText()) {
+    super(NAME, IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Tests), new FilteredPackageSet(NAME) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return TestSourcesFilter.isTestSources(file, project);
@@ -35,9 +30,5 @@ public final class TestsScope extends NamedScope {
   @Override
   public String getDefaultColorName() {
     return "Green";
-  }
-
-  public static String getNameText() {
-    return IdeBundle.message("predefined.scope.tests.name");
   }
 }
