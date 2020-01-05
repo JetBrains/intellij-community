@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class SvnBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.jetbrains.idea.svn.SvnBundle";
+  @NonNls private static final String BUNDLE = "messages.SvnBundle";
 
   private static final SvnBundle INSTANCE = new SvnBundle();
 

@@ -11,7 +11,7 @@
   </description>
   <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
-  <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
+  <resource-bundle>messages.SvnBundle</resource-bundle>
 
   <actions>
 

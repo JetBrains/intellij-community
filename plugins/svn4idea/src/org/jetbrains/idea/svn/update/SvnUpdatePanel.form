@@ -30,8 +30,8 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.text"/>
-                  <toolTipText resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.description"/>
+                  <text resource-bundle="messages/SvnBundle" key="label.depth.text"/>
+                  <toolTipText resource-bundle="messages/SvnBundle" key="label.depth.description"/>
                 </properties>
               </component>
               <component id="1abb2" class="javax.swing.JCheckBox" binding="myForceBox">
