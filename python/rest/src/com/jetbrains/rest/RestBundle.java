@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class RestBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.jetbrains.rest.RestBundle";
+  @NonNls private static final String BUNDLE = "messages.RestBundle";
   private static final RestBundle INSTANCE = new RestBundle();
 
   private RestBundle() { super(BUNDLE); }

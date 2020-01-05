@@ -5,7 +5,7 @@
                                   implementationClass="com.jetbrains.rest.RestFileProviderFactory"/>
     <editorHighlighterProvider filetype="ReST" implementationClass="com.jetbrains.rest.RestEditorHighlighterProvider"/>
 
-    <localInspection language="ReST" shortName="RestRoleInspection" bundle="com.jetbrains.rest.RestBundle" key="INSP.role.not.defined"
+    <localInspection language="ReST" shortName="RestRoleInspection" bundle="messages.RestBundle" key="INSP.role.not.defined"
                      groupKey="INSP.GROUP.rest" enabledByDefault="false" level="WARNING"
                      implementationClass="com.jetbrains.rest.inspections.RestRoleInspection"/>
 
