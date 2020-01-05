@@ -64,7 +64,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final HierarchyScopeType typeName, @NotNull final PsiElement psiElement) {
-    if (!getMethodType().equals(typeName)) {
+    if (getMethodType() != typeName) {
       LOG.error("unexpected type: " + typeName);
       return null;
     }

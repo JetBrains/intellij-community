@@ -97,10 +97,10 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final HierarchyScopeType typeName, @NotNull final PsiElement psiElement) {
-    if (getCallerType().equals(typeName)) {
+    if (getCallerType() == typeName) {
       return new CallerMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }
-    if (getCalleeType().equals(typeName)) {
+    if (getCalleeType() == typeName) {
       return new CalleeMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }
     else {

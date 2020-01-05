@@ -84,10 +84,10 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   @Nullable
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull HierarchyScopeType typeName, @NotNull PsiElement psiElement) {
-    if (getCallerType().equals(typeName)) {
+    if (getCallerType() == typeName) {
       return new PyCallerFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
-    else if (getCalleeType().equals(typeName)) {
+    else if (getCalleeType() == typeName) {
       return new PyCalleeFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
     else {

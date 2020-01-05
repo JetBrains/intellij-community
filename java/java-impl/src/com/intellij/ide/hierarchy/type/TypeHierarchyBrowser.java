@@ -87,13 +87,13 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final HierarchyScopeType typeName, @NotNull final PsiElement psiElement) {
-    if (getSupertypesHierarchyType().equals(typeName)) {
+    if (getSupertypesHierarchyType() == typeName) {
       return new SupertypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
     }
-    else if (getSubtypesHierarchyType().equals(typeName)) {
+    else if (getSubtypesHierarchyType() == typeName) {
       return new SubtypesHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
-    else if (getTypeHierarchyType().equals(typeName)) {
+    else if (getTypeHierarchyType() == typeName) {
       return new TypeHierarchyTreeStructure(myProject, (PsiClass)psiElement, getCurrentScopeType());
     }
     else {
