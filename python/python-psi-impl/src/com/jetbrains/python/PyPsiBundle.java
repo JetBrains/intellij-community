@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class PyPsiBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.jetbrains.python.PyPsiBundle";
+  @NonNls private static final String BUNDLE = "messages.PyPsiBundle";
   public static final PyPsiBundle INSTANCE = new PyPsiBundle();
 
   private PyPsiBundle() { super(BUNDLE); }
