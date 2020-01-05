@@ -15,7 +15,7 @@
         <properties>
           <anchor value=""/>
           <labelFor value=""/>
-          <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.labels.script_parameters"/>
+          <text resource-bundle="messages/PyBundle" key="runcfg.labels.script_parameters"/>
         </properties>
       </component>
       <vspacer id="f8c96">
@@ -76,7 +76,7 @@
           </grid>
         </constraints>
         <properties>
-          <dialogCaption resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.captions.script_parameters_dialog"/>
+          <dialogCaption resource-bundle="messages/PyBundle" key="runcfg.captions.script_parameters_dialog"/>
           <text value=""/>
         </properties>
       </component>

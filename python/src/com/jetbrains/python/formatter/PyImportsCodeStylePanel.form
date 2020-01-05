@@ -22,14 +22,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title-resource-bundle="com/jetbrains/python/PyBundle" title-key="formatter.imports.panel.optimize.imports"/>
+        <border type="none" title-resource-bundle="messages/PyBundle" title-key="formatter.imports.panel.optimize.imports"/>
         <children>
           <component id="e4d2f" class="com.intellij.ui.components.JBCheckBox" binding="mySortImports" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.sort.imports"/>
+              <text resource-bundle="messages/PyBundle" key="formatter.imports.panel.sort.imports"/>
             </properties>
           </component>
           <component id="fdf9d" class="com.intellij.ui.components.JBCheckBox" binding="mySortNamesInFromImports" default-binding="true">
@@ -37,7 +37,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.sort.names.in.from.imports"/>
+              <text resource-bundle="messages/PyBundle" key="formatter.imports.panel.sort.names.in.from.imports"/>
             </properties>
           </component>
           <component id="f7db4" class="com.intellij.ui.components.JBCheckBox" binding="mySortImportsByTypeFirst">
@@ -45,7 +45,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.sort.by.type"/>
+              <text resource-bundle="messages/PyBundle" key="formatter.imports.panel.sort.by.type"/>
             </properties>
           </component>
           <component id="48046" class="com.intellij.ui.components.JBCheckBox" binding="mySortCaseInsensitively">
@@ -54,7 +54,7 @@
             </constraints>
             <properties>
               <selected value="false"/>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.sort.case.insensitively"/>
+              <text resource-bundle="messages/PyBundle" key="formatter.imports.panel.sort.case.insensitively"/>
             </properties>
           </component>
           <grid id="fdf68" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -66,7 +66,7 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="etched" title-resource-bundle="com/jetbrains/python/PyBundle" title-key="formatter.imports.panel.from.imports.structure.title">
+            <border type="etched" title-resource-bundle="messages/PyBundle" title-key="formatter.imports.panel.from.imports.structure.title">
               <title-color color="-16777216"/>
             </border>
             <children>
@@ -75,7 +75,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.from.imports.leave.as.is"/>
+                  <text resource-bundle="messages/PyBundle" key="formatter.imports.panel.from.imports.leave.as.is"/>
                 </properties>
               </component>
               <hspacer id="83cf6">
@@ -89,7 +89,7 @@
                 </constraints>
                 <properties>
                   <selected value="false"/>
-                  <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.from.imports.join.with.same.source"/>
+                  <text resource-bundle="messages/PyBundle" key="formatter.imports.panel.from.imports.join.with.same.source"/>
                 </properties>
               </component>
               <component id="3e7e6" class="com.intellij.ui.components.JBRadioButton" binding="myAlwaysSplitFromImports" default-binding="true">
@@ -97,7 +97,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="com/jetbrains/python/PyBundle" key="formatter.imports.panel.from.imports.always.split"/>
+                  <text resource-bundle="messages/PyBundle" key="formatter.imports.panel.from.imports.always.split"/>
                 </properties>
               </component>
             </children>

@@ -79,7 +79,7 @@ class PyInlineFunctionProcessor(project: Project,
     return showConflicts(conflicts, filtered.toTypedArray())
   }
 
-  private fun handleUsageError(element: PsiElement, @PropertyKey(resourceBundle = "com.jetbrains.python.PyBundle") error: String, conflicts: MultiMap<PsiElement, String>): Boolean {
+  private fun handleUsageError(element: PsiElement, @PropertyKey(resourceBundle = "messages.PyBundle") error: String, conflicts: MultiMap<PsiElement, String>): Boolean {
     val errorText = PyBundle.message(error, myFunction.name)
     if (myInlineThis) {
       // shortcut for inlining single reference: show error hint instead of modal dialog

@@ -17,7 +17,7 @@
     <lang.syntaxHighlighter language="BuildoutCfg"
                             implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgSyntaxHighlighter"/>
 
-    <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="com.jetbrains.python.PyBundle"
+    <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="messages.PyBundle"
                      key="buildout.unresolved.part.inspection" groupKey="buildout" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.buildout.config.inspection.BuildoutUnresolvedPartInspection"/>
 
