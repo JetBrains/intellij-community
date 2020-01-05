@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.hierarchy.call;
 
-import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.newAPI.CallHierarchyBrowserBase;
 import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.newAPI.HierarchyScopeType;
