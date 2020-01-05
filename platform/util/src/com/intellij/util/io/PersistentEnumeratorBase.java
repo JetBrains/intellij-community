@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.Flushable;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -53,7 +54,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private final boolean myAssumeDifferentSerializedBytesMeansObjectsInequality;
   private final AppendableStorageBackedByResizableMappedFile myKeyStorage;
   final KeyDescriptor<Data> myDataDescriptor;
-  protected final Path myFile;
+  protected final File myFile;
   private final Version myVersion;
   private final boolean myDoCaching;
 
@@ -143,6 +144,14 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public static class CorruptedException extends IOException {
+    /**
+     * @deprecated Only for binary compatibility with Kotlin's JpsPersistentHashMap until it gets removed
+     * https://github.com/JetBrains/kotlin/blob/master/build-common/src/com/intellij/util/io/JpsPersistentHashMap.java
+     */
+    public CorruptedException(File file) {
+      this(file.toPath());
+    }
+
     public CorruptedException(Path file) {
       this("PersistentEnumerator storage corrupted " + file);
     }
@@ -166,7 +175,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
                                   @NotNull RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler,
                                   boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
-    myFile = file;
+    myFile = file.toFile();
     myVersion = version;
     myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
     myDoCaching = doCaching;
@@ -465,7 +474,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   private Path keyStreamFile() {
-    return myFile.resolveSibling(myFile.getFileName() + ".keystream");
+    return myFile.toPath().resolveSibling(myFile.toPath().getFileName() + ".keystream");
   }
 
   public Data valueOf(int idx) throws IOException {
