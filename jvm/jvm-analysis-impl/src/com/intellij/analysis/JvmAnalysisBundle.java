@@ -11,7 +11,7 @@ public class JvmAnalysisBundle extends DynamicBundle {
     return ourInstance.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "com.intellij.jvm.analysis.JvmAnalysisBundle";
+  @NonNls private static final String BUNDLE = "messages.JvmAnalysisBundle";
   private static final JvmAnalysisBundle ourInstance = new JvmAnalysisBundle();
 
   private JvmAnalysisBundle() {
