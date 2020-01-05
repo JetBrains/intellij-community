@@ -290,6 +290,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return valueOf(keyId);
   }
 
+  @Override
   public int tryEnumerate(Data value) throws IOException {
     return doEnumerate(value, true, false);
   }
@@ -326,6 +327,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return id;
   }
 
+  @Override
   public int enumerate(Data value) throws IOException {
     return doEnumerate(value, false, false);
   }
@@ -478,6 +480,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return myFile.toPath().resolveSibling(myFile.toPath().getFileName() + ".keystream");
   }
 
+  @Override
   public Data valueOf(int idx) throws IOException {
     try {
 
