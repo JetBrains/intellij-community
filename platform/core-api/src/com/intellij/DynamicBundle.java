@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -77,13 +78,29 @@ public abstract class DynamicBundle extends AbstractBundle {
   }
 
   private static final Map<String, DynamicBundle> ourBundlesForForms = ContainerUtil.createConcurrentSoftValueMap();
-  
+
   /**
    * @deprecated used only dy GUI form builder
    */
   @Deprecated
   public static ResourceBundle getBundle(String baseName) {
-    DynamicBundle bundle = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {});
-    return bundle.getResourceBundle();
+    DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {});
+    ResourceBundle rb = dynamic.getResourceBundle();
+
+    if (BundleBase.SHOW_LOCALIZED_MESSAGES) {
+      return new ResourceBundle() {
+        @Override
+        protected Object handleGetObject(@NotNull String key) {
+          return rb.getObject(key) + BundleBase.L10N_MARKER;
+        }
+
+        @NotNull
+        @Override
+        public Enumeration<String> getKeys() {
+          return rb.getKeys();
+        }
+      };
+    }
+    return rb;
   }
 }

@@ -17,7 +17,8 @@ import java.util.ResourceBundle;
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
   public static final String MNEMONIC_STRING = Character.toString(MNEMONIC);
-  private static final String L10N_MARKER = "🔅";
+  public static final String L10N_MARKER = "🔅";
+  public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
 
   private static boolean assertOnMissedKeys = false;
 
@@ -30,7 +31,6 @@ public abstract class BundleBase {
     return messageOrDefault(bundle, key, null, params);
   }
 
-  private static final boolean myShowLocalizedMessages = Boolean.getBoolean("idea.l10n");
 
   public static String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
@@ -48,7 +48,7 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
-    if (myShowLocalizedMessages) {
+    if (SHOW_LOCALIZED_MESSAGES) {
       return result + L10N_MARKER;
     }
     return result;
