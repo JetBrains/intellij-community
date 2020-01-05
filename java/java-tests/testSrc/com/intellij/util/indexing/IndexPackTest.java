@@ -24,6 +24,7 @@ import gnu.trove.TIntHashSet;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+@Ignore
 public class IndexPackTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(IndexPackTest.class);
 
