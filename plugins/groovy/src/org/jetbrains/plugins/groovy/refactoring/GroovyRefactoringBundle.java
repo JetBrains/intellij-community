@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class GroovyRefactoringBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle";
+  @NonNls private static final String BUNDLE = "messages.GroovyRefactoringBundle";
   private static final GroovyRefactoringBundle INSTANCE = new GroovyRefactoringBundle();
 
   private GroovyRefactoringBundle() { super(BUNDLE); }

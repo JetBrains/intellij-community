@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class GroovyDocBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.jetbrains.plugins.groovy.doc.GroovyDocBundle";
+  @NonNls private static final String BUNDLE = "messages.GroovyDocBundle";
   private static final GroovyDocBundle INSTANCE = new GroovyDocBundle();
 
   private GroovyDocBundle() { super(BUNDLE); }

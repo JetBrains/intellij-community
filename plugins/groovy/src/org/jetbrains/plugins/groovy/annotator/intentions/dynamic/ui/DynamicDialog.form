@@ -60,7 +60,7 @@
             </constraints>
             <properties>
               <labelFor value="397c0"/>
-              <text resource-bundle="org/jetbrains/plugins/groovy/intentions/GroovyIntentionsBundle" key="dynamic.property.dialog.class"/>
+              <text resource-bundle="messages/GroovyIntentionsBundle" key="dynamic.property.dialog.class"/>
             </properties>
           </component>
           <component id="397c0" class="javax.swing.JComboBox" binding="myClassComboBox">

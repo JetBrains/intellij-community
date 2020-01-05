@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class GroovyIntentionsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle";
+  @NonNls private static final String BUNDLE = "messages.GroovyIntentionsBundle";
   private static final GroovyIntentionsBundle INSTANCE = new GroovyIntentionsBundle();
 
   private GroovyIntentionsBundle() { super(BUNDLE); }

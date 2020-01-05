@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class GroovyInspectionBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle";
+  @NonNls private static final String BUNDLE = "messages.GroovyInspectionBundle";
   private static final GroovyInspectionBundle INSTANCE = new GroovyInspectionBundle();
 
   private GroovyInspectionBundle() { super(BUNDLE); }

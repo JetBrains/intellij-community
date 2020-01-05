@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class GroovyCodeInsightBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.jetbrains.plugins.groovy.actions.generate.GroovyCodeInsightBundle";
+  @NonNls private static final String BUNDLE = "messages.GroovyCodeInsightBundle";
   private static final GroovyCodeInsightBundle INSTANCE = new GroovyCodeInsightBundle();
 
   private GroovyCodeInsightBundle() { super(BUNDLE); }
