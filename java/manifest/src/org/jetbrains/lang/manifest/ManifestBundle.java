@@ -25,7 +25,7 @@ public class ManifestBundle extends DynamicBundle {
     return BUNDLE.getMessage(key, params);
   }
 
-  public static final String PATH_TO_BUNDLE = "org.jetbrains.lang.manifest.ManifestBundle";
+  public static final String PATH_TO_BUNDLE = "messages.ManifestBundle";
   private static final ManifestBundle BUNDLE = new ManifestBundle();
 
   private ManifestBundle() {
