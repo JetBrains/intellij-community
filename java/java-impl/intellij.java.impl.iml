@@ -11,6 +11,7 @@
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/resources" type="java-resource" />
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/generate-tostring">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/src" isTestSource="false" />

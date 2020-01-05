@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class IntentionPowerPackBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.siyeh.IntentionPowerPackBundle";
+  @NonNls private static final String BUNDLE = "messages.IntentionPowerPackBundle";
   private static final IntentionPowerPackBundle INSTANCE = new IntentionPowerPackBundle();
 
   private IntentionPowerPackBundle() { super(BUNDLE); }
