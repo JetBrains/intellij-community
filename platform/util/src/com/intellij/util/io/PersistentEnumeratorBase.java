@@ -148,6 +148,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
      * @deprecated Only for binary compatibility with Kotlin's JpsPersistentHashMap until it gets removed
      * https://github.com/JetBrains/kotlin/blob/master/build-common/src/com/intellij/util/io/JpsPersistentHashMap.java
      */
+    @Deprecated
     public CorruptedException(File file) {
       this(file.toPath());
     }
