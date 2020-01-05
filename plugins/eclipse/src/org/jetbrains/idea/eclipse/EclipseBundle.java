@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class EclipseBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "EclipseBundle";
+  @NonNls private static final String BUNDLE = "messages.EclipseBundle";
   private static final EclipseBundle INSTANCE = new EclipseBundle();
 
   private EclipseBundle() { super(BUNDLE); }
