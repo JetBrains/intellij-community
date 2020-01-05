@@ -13,15 +13,9 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private final String myDescriptionTemplate;
 
   public CommonProblemDescriptorImpl(@Nullable QuickFix[] fixes, @NotNull final String descriptionTemplate) {
-    if (fixes == null) {
-      myFixes = null;
-    }
-    else if (fixes.length == 0) {
-      myFixes = QuickFix.EMPTY_ARRAY;
-    }
-    else {
-      // no copy in most cases
-      myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), QuickFix.EMPTY_ARRAY) : fixes;
+    if (fixes != null && fixes.length > 0) {
+      myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), ArrayUtil.newArray(ArrayUtil.getComponentType(fixes), 0))
+                                                : fixes;
       if (!(this instanceof ProblemDescriptor)) {
         for (QuickFix fix : fixes) {
           if (fix instanceof LocalQuickFix) {
@@ -29,6 +23,9 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
           }
         }
       }
+    }
+    else {
+      myFixes = fixes;
     }
     myDescriptionTemplate = descriptionTemplate;
   }
