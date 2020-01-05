@@ -17,7 +17,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.add.to.group"/>
+        <border type="none" title-resource-bundle="messages/DevKitBundle" title-key="new.action.add.to.group"/>
         <children>
           <scrollpane id="fe8a" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
@@ -40,7 +40,7 @@
             </constraints>
             <properties>
               <labelFor value="c0ce9"/>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.actions"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.group.actions"/>
             </properties>
           </component>
           <scrollpane id="c0ce9" class="com.intellij.ui.components.JBScrollPane">
@@ -67,14 +67,14 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value=""/>
             </clientProperties>
-            <border type="empty" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.group.anchor"/>
+            <border type="empty" title-resource-bundle="messages/DevKitBundle" title-key="new.action.group.anchor"/>
             <children>
               <component id="f4be7" class="javax.swing.JRadioButton" binding="myAnchorFirstRadio">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.first"/>
+                  <text resource-bundle="messages/DevKitBundle" key="new.action.group.anchor.first"/>
                 </properties>
               </component>
               <component id="74ccc" class="javax.swing.JRadioButton" binding="myAnchorLastRadio">
@@ -82,7 +82,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor."/>
+                  <text resource-bundle="messages/DevKitBundle" key="new.action.group.anchor."/>
                 </properties>
               </component>
               <component id="8b7" class="javax.swing.JRadioButton" binding="myAnchorBeforeRadio">
@@ -90,7 +90,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.before"/>
+                  <text resource-bundle="messages/DevKitBundle" key="new.action.group.anchor.before"/>
                 </properties>
               </component>
               <component id="a46a8" class="javax.swing.JRadioButton" binding="myAnchorAfterRadio">
@@ -98,7 +98,7 @@
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.after"/>
+                  <text resource-bundle="messages/DevKitBundle" key="new.action.group.anchor.after"/>
                 </properties>
               </component>
               <vspacer id="73244">
@@ -114,7 +114,7 @@
             </constraints>
             <properties>
               <labelFor value="fe8a"/>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.groups"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.group.groups"/>
             </properties>
           </component>
         </children>
@@ -141,7 +141,7 @@
             </constraints>
             <properties>
               <labelFor value="ce44f"/>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.id"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.id"/>
             </properties>
           </component>
           <component id="26274" class="javax.swing.JTextField" binding="myActionNameEdit">
@@ -166,7 +166,7 @@
             </constraints>
             <properties>
               <labelFor value="27b6b"/>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.description"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.description"/>
             </properties>
           </component>
           <component id="2f01e" class="javax.swing.JLabel">
@@ -175,7 +175,7 @@
             </constraints>
             <properties>
               <labelFor value="5645"/>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.class.name"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.class.name"/>
             </properties>
           </component>
           <component id="7cf7b" class="javax.swing.JLabel">
@@ -184,7 +184,7 @@
             </constraints>
             <properties>
               <labelFor value="26274"/>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.text"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.text"/>
             </properties>
           </component>
           <component id="ce44f" class="javax.swing.JTextField" binding="myActionIdEdit">
@@ -206,14 +206,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.keyboard.shortcuts"/>
+        <border type="none" title-resource-bundle="messages/DevKitBundle" title-key="new.action.keyboard.shortcuts"/>
         <children>
           <component id="d5e7e" class="javax.swing.JLabel">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.first"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.keyboard.first"/>
             </properties>
           </component>
           <component id="5ce08" class="javax.swing.JLabel">
@@ -221,7 +221,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.second"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.keyboard.second"/>
             </properties>
           </component>
           <grid id="24949" binding="myFirstKeystrokeEditPlaceholder" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -251,8 +251,8 @@
               </grid>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.clear"/>
-              <toolTipText resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.clear.tooltip"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.keyboard.clear"/>
+              <toolTipText resource-bundle="messages/DevKitBundle" key="new.action.keyboard.clear.tooltip"/>
             </properties>
           </component>
           <component id="986ce" class="javax.swing.JButton" binding="myClearSecondKeystroke">
@@ -264,8 +264,8 @@
               </grid>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.clear"/>
-              <toolTipText resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.clear.tooltip"/>
+              <text resource-bundle="messages/DevKitBundle" key="new.action.keyboard.clear"/>
+              <toolTipText resource-bundle="messages/DevKitBundle" key="new.action.keyboard.clear.tooltip"/>
             </properties>
           </component>
         </children>

@@ -26,7 +26,7 @@ public class DevKitBundle extends DynamicBundle {
     return ourInstance.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "org.jetbrains.idea.devkit.DevKitBundle";
+  @NonNls public static final String BUNDLE = "messages.DevKitBundle";
   private static final DevKitBundle ourInstance = new DevKitBundle();
 
   private DevKitBundle() {

@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="f034f"/>
-          <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.service.dialog.interface"/>
+          <text resource-bundle="messages/DevKitBundle" key="new.service.dialog.interface"/>
         </properties>
       </component>
       <component id="f034f" class="javax.swing.JTextField" binding="myServiceNameTextField">
@@ -31,7 +31,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.service.dialog.separate"/>
+          <text resource-bundle="messages/DevKitBundle" key="new.service.dialog.separate"/>
         </properties>
       </component>
       <component id="991e5" class="javax.swing.JLabel">
@@ -40,7 +40,7 @@
         </constraints>
         <properties>
           <labelFor value="465f3"/>
-          <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.service.dialog.implementation"/>
+          <text resource-bundle="messages/DevKitBundle" key="new.service.dialog.implementation"/>
         </properties>
       </component>
       <component id="465f3" class="javax.swing.JTextField" binding="myServiceImplementationTextField">

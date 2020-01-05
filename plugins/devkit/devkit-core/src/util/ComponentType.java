@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 public enum ComponentType {
@@ -28,8 +29,7 @@ public enum ComponentType {
   }
 
   ComponentType(Class<? extends BaseComponent> clazz, @NonNls String name,
-                @PropertyKey(resourceBundle = "org.jetbrains.idea.devkit.DevKitBundle") String propertyKey)
-  {
+                @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String propertyKey) {
     myPropertyKey = propertyKey;
     myClassName = clazz.getName();
     myName = name;
@@ -71,9 +71,8 @@ public enum ComponentType {
         final XmlTag impl = component.findFirstSubTag("implementation-class");
         final XmlTag intf = component.findFirstSubTag("interface-class");
         if (!processor.process(this, component,
-                impl != null ? impl.getValue() : null,
-                intf != null ? intf.getValue() : null))
-        {
+                               impl != null ? impl.getValue() : null,
+                               intf != null ? intf.getValue() : null)) {
           return;
         }
       }
