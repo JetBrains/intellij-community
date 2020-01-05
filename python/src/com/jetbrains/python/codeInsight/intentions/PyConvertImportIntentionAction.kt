@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyStatement
 import org.jetbrains.annotations.PropertyKey
 
-abstract class PyConvertImportIntentionAction(@PropertyKey(resourceBundle = "messages.PyBundle") intentionText: String) : PyBaseIntentionAction() {
+abstract class PyConvertImportIntentionAction(@PropertyKey(resourceBundle = PyBundle.BUNDLE) intentionText: String) : PyBaseIntentionAction() {
 
   init {
     text = PyBundle.message(intentionText)

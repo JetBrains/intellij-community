@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class PyBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.PyBundle";
+  @NonNls public static final String BUNDLE = "messages.PyBundle";
   public static final PyBundle INSTANCE = new PyBundle();
 
   private PyBundle() { super(BUNDLE); }
