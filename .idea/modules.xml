@@ -447,9 +447,9 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/intellij.android.debuggers.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/intellij.android.debuggers.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/deploy/intellij.android.deploy.iml" filepath="$PROJECT_DIR$/../adt/idea/deploy/intellij.android.deploy.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer-perf-tests/intellij.android.designer-perf-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/designer-perf-tests/intellij.android.designer-perf-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/customview/intellij.android.designer.customview.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/customview/intellij.android.designer.customview.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/customview/intellij.android.designer.customview.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/customview/intellij.android.designer.customview.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer-perf-tests/intellij.android.designer-perf-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/designer-perf-tests/intellij.android.designer-perf-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/game-tools-starter/intellij.android.gameToolsStarter.iml" filepath="$PROJECT_DIR$/../adt/idea/game-tools-starter/intellij.android.gameToolsStarter.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/gradle-tooling/studio-gradle-tooling-api/intellij.android.gradle-tooling.api.iml" filepath="$PROJECT_DIR$/../adt/idea/gradle-tooling/studio-gradle-tooling-api/intellij.android.gradle-tooling.api.iml" />
