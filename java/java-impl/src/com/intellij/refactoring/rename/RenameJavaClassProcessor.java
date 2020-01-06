@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -84,6 +85,12 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         }
         catch (IncorrectOperationException e) {//fall back to old scheme
           ref.handleElementRename(newName);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
         }
       }
     }
