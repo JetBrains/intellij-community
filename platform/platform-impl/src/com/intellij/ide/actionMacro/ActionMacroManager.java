@@ -55,6 +55,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
   private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
   private static final String RECORDED = "Recorded: ";
+  private static final String NO_NAME_NAME = "<noname>";
 
   private boolean myIsRecording;
   private ActionMacro myLastMacro;
@@ -326,7 +327,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     else {
       for (int i = 0; i < myMacros.size(); i++) {
         ActionMacro macro = myMacros.get(i);
-        if (IdeBundle.message("macro.noname").equals(macro.getName())) {
+        if (NO_NAME_NAME.equals(macro.getName())) {
           myMacros.set(i, myRecordingMacro);
           myRecordingMacro = null;
           break;
