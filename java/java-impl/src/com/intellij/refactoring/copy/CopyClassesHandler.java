@@ -358,23 +358,23 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           continue;
         }
 
-        List<PsiClass> nonSyntheticClasses = new ArrayList<>();
-        for (final PsiClass aClass : ((PsiClassOwner)createdFile).getClasses()) {
-          if (!isSynthetic(aClass)) {
-            nonSyntheticClasses.add(aClass);
+        Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
+        for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
+          if (!isSynthetic(destination)) {
+            PsiClass source = findByName(sources, destination.getName());
+            if (source == null) {
+              WriteAction.run(() -> destination.delete());
+            }
+            else {
+              sourceToDestination.put(source, destination);
+            }
           }
         }
 
-        for (final PsiClass destination : nonSyntheticClasses) {
-          PsiClass source = findByName(sources, destination.getName());
-          if (source != null) {
-            final PsiClass copy = copy(source, nonSyntheticClasses.size() > 1 ? null : copyClassName);
-            PsiElement newElement = WriteAction.compute(() -> destination.replace(copy));
-            oldToNewMap.put(source, newElement);
-          }
-          else {
-            WriteAction.run(() -> destination.delete());
-          }
+        for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
+          final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
+          PsiElement newElement = WriteAction.compute(() -> classEntry.getValue().replace(copy));
+          oldToNewMap.put(classEntry.getKey(), newElement);
         }
         createdFiles.add(createdFile);
       }
