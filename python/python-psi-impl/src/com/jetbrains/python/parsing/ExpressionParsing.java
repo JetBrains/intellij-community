@@ -127,7 +127,7 @@ public class ExpressionParsing extends Parsing {
       final PsiBuilder.Marker marker = builder.mark();
       nextToken();
       while (true) {
-        if (atToken(PyTokenTypes.FSTRING_TEXT)) {
+        if (atAnyOfTokens(PyTokenTypes.FSTRING_TEXT_TOKENS)) {
           nextToken();
         }
         else if (atToken(PyTokenTypes.FSTRING_FRAGMENT_START)) {
@@ -210,7 +210,7 @@ public class ExpressionParsing extends Parsing {
       final PsiBuilder.Marker marker = myContext.getBuilder().mark();
       nextToken();
       while (true) {
-        if (atToken(PyTokenTypes.FSTRING_TEXT)) {
+        if (atAnyOfTokens(PyTokenTypes.FSTRING_TEXT_TOKENS)) {
           nextToken();
         }
         else if (atToken(PyTokenTypes.FSTRING_FRAGMENT_START)) {

@@ -101,8 +101,8 @@ return yylength()-s.length();
 %%
 
 <FSTRING> {
-  {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
-  "\\" { return PyTokenTypes.FSTRING_TEXT; }
+  {FSTRING_TEXT_NO_QUOTES} { return fStringHelper.getTextTokenType(); }
+  "\\" { return fStringHelper.getTextTokenType(); }
   [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }
@@ -136,8 +136,8 @@ return yylength()-s.length();
 }
 
 <FSTRING_FRAGMENT_FORMAT> {
-  {FSTRING_FORMAT_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
-  "\\" { return PyTokenTypes.FSTRING_TEXT; }
+  {FSTRING_FORMAT_TEXT_NO_QUOTES} { return fStringHelper.getTextTokenType(); }
+  "\\" { return fStringHelper.getTextTokenType(); }
   [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }

@@ -18,6 +18,7 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -96,6 +97,10 @@ public class Parsing {
       if (currentTokenType == tokenType) return true;
     }
     return false;
+  }
+
+  protected boolean atAnyOfTokens(@NotNull TokenSet tokenTypes) {
+    return tokenTypes.contains(myBuilder.getTokenType());
   }
 
   protected boolean matchToken(final IElementType tokenType) {
