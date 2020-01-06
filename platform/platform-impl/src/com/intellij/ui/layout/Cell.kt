@@ -228,7 +228,7 @@ abstract class Cell : BaseBuilder {
 
   @JvmOverloads
   fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, vararg constraints: CCFlags = emptyArray()): JCheckBox {
-    val component = JCheckBox(text)
+    val component = JBCheckBox(text)
     component.isSelected = isSelected
     component(*constraints, comment = comment)
     return component
