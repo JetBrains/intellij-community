@@ -1816,6 +1816,14 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
+    name = "libam-instrumentation-data-proto",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/ddmlib:am-instrumentation-data-proto"],
+    runtime_deps = ["//tools/base/ddmlib:am-instrumentation-data-proto"],
+)
+
+# managed by go/iml_to_build
+java_library(
     name = "studio-proto",
     visibility = ["//visibility:public"],
     exports = ["//tools/base/bazel:studio-proto"],

@@ -23,6 +23,8 @@ import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 class AndroidStudioLibraryLicenses {
   public static final List<LibraryLicense> LICENSES_LIST = (([
     new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Am Instrument Data proto", libraryName: "libam-instrumentation-data-proto",
+                       license: "Apache 2.0", url: "http://source.android.com/"),
     // for instantapps-api module library in intellij.android.core
     new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api", license: "Apache 2.0"),
     // for jetifier-core module library in db-compilerCommon
