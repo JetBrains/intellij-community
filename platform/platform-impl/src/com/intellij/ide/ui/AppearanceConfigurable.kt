@@ -134,33 +134,35 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
 
   override fun createPanel(): DialogPanel {
     return panel {
-      fullRow {
-        label(message("combobox.look.and.feel"))
-        comboBox(lafManager.lafComboBoxModel,
-                 { lafManager.currentLookAndFeelReference },
-                 { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) })
-          .shouldUpdateLaF()
-      }
-      fullRow {
-        val overrideLaF = checkBox(cdOverrideLaFFont)
-          .shouldUpdateLaF()
-        component(FontComboBox())
-          .withBinding(
-            { it.fontName },
-            { it, value -> it.fontName = value },
-            PropertyBinding({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
-                            { settings.fontFace = it })
-          )
-          .shouldUpdateLaF()
-          .enableIf(overrideLaF.selected)
-        component(Label(message("label.font.size")))
+      blockRow {
+        fullRow {
+          label(message("combobox.look.and.feel"))
+          comboBox(lafManager.lafComboBoxModel,
+                   { lafManager.currentLookAndFeelReference },
+                   { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) })
+            .shouldUpdateLaF()
+        }
+        fullRow {
+          val overrideLaF = checkBox(cdOverrideLaFFont)
+            .shouldUpdateLaF()
+          component(FontComboBox())
+            .withBinding(
+              { it.fontName },
+              { it, value -> it.fontName = value },
+              PropertyBinding({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
+                              { settings.fontFace = it })
+            )
+            .shouldUpdateLaF()
+            .enableIf(overrideLaF.selected)
+          component(Label(message("label.font.size")))
           .withLargeLeftGap()
-          .enableIf(overrideLaF.selected)
-        fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size },
-                         { settings.fontSize = it },
-                         settings.fontSize)
-          .shouldUpdateLaF()
-          .enableIf(overrideLaF.selected)
+            .enableIf(overrideLaF.selected)
+          fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size },
+                           { settings.fontSize = it },
+                           settings.fontSize)
+            .shouldUpdateLaF()
+            .enableIf(overrideLaF.selected)
+        }
       }
       titledRow(message("title.accessibility")) {
         fullRow {
