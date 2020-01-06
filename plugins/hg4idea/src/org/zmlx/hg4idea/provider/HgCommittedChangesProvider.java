@@ -255,7 +255,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
     @Override
     public String getTitle() {
-      return HgVcsMessages.message("hg4idea.changelist.column.branch");
+      return HgBundle.message("hg4idea.changelist.column.branch");
     }
 
     @Override

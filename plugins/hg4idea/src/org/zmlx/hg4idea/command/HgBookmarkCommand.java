@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -32,7 +32,7 @@ public class HgBookmarkCommand {
       VcsNotifier.getInstance(project).notifyError("Hg Error", "Bookmark name is empty");
       return;
     }
-    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.bookmark", name)) {
+    new Task.Backgroundable(project, HgBundle.message("hg4idea.progress.bookmark", name)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (HgRepository repository : repositories) {

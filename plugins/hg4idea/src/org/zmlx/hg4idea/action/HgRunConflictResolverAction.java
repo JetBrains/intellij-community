@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
@@ -33,7 +33,7 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalSingleRepoActio
     final HgRepository repository = repositories.size() > 1 ? letUserSelectRepository(project, repositories, selectedRepo) :
                                     ContainerUtil.getFirstItem(repositories);
     if (repository != null) {
-      new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.run.conflict.resolver.description")) {
+      new Task.Backgroundable(project, HgBundle.message("action.hg4idea.run.conflict.resolver.description")) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {

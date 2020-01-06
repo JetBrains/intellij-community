@@ -101,7 +101,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
 
   @Override
   public String getCheckinOperationName() {
-    return HgVcsMessages.message("hg4idea.commit");
+    return HgBundle.message("hg4idea.commit");
   }
 
   @Override
@@ -226,8 +226,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     final int[] choice = new int[1];
     Runnable runnable = () -> choice[0] = Messages.showOkCancelDialog(
       myProject,
-      HgVcsMessages.message("hg4idea.commit.partial.merge.message", filesNotIncludedString),
-      HgVcsMessages.message("hg4idea.commit.partial.merge.title"),
+      HgBundle.message("hg4idea.commit.partial.merge.message", filesNotIncludedString),
+      HgBundle.message("hg4idea.commit.partial.merge.title"),
       null
     );
     ApplicationManager.getApplication().invokeAndWait(runnable);

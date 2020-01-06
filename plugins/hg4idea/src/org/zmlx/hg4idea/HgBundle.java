@@ -17,11 +17,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class HgVcsMessages extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.zmlx.hg4idea.HgVcsMessages";
-  private static final HgVcsMessages INSTANCE = new HgVcsMessages();
+public class HgBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.HgBundle";
+  private static final HgBundle INSTANCE = new HgBundle();
 
-  private HgVcsMessages() { super(BUNDLE); }
+  private HgBundle() { super(BUNDLE); }
 
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {

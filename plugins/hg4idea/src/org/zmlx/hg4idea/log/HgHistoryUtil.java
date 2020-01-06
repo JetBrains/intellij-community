@@ -118,7 +118,7 @@ public class HgHistoryUtil {
     }
     catch (VcsException e) {
       if (!silent) {
-        VcsNotifier.getInstance(project).notifyError(HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
+        VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.error.log.command.execution"), e.getMessage());
       }
       throw e;
     }
@@ -334,7 +334,7 @@ public class HgHistoryUtil {
           LOG.debug(errors.toString());
         }
         else {
-          VcsNotifier.getInstance(project).notifyError(HgVcsMessages.message("hg4idea.error.log.command.execution"), errors.toString());
+          VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.error.log.command.execution"), errors.toString());
         }
         return Collections.emptyList();
       }

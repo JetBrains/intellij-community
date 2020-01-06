@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text resource-bundle="org/zmlx/hg4idea/HgVcsMessages" key="hg4idea.init.already.under.hg.option.create.repo.here"/>
+              <text resource-bundle="messages/HgBundle" key="hg4idea.init.already.under.hg.option.create.repo.here"/>
             </properties>
           </component>
           <vspacer id="4f601">

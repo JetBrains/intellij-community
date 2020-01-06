@@ -172,5 +172,5 @@
     </group>
   </actions>
 
-  <resource-bundle>org.zmlx.hg4idea.HgVcsMessages</resource-bundle>
+  <resource-bundle>messages.HgBundle</resource-bundle>
 </idea-plugin>

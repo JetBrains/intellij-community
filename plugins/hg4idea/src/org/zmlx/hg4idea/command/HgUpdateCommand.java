@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
@@ -125,7 +125,7 @@ public class HgUpdateCommand {
                                   @NotNull final String targetRevision,
                                   final boolean clean,
                                   @Nullable final Runnable callInAwtLater) {
-    new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", targetRevision)) {
+    new Task.Backgroundable(project, HgBundle.message("action.hg4idea.updateTo.description", targetRevision)) {
       @Override
       public void onSuccess() {
         if (callInAwtLater != null) {
@@ -157,7 +157,7 @@ public class HgUpdateCommand {
     else if (hasUnresolvedConflicts) {
       new VcsNotifier(project)
         .notifyImportantWarning("Unresolved conflicts.",
-                                HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
+                                HgBundle.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
     }
     getRepositoryManager(project).updateRepository(repository);
     HgUtil.markDirectoryDirty(project, repository);

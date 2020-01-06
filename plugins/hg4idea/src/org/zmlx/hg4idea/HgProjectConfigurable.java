@@ -61,6 +61,6 @@ public class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProje
   }
 
   public static String getDISPLAY_NAME() {
-    return HgVcsMessages.message("hg4idea.mercurial");
+    return HgBundle.message("hg4idea.mercurial");
   }
 }

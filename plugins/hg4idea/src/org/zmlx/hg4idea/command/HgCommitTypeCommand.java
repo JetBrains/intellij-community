@@ -24,9 +24,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
@@ -77,7 +77,7 @@ public abstract class HgCommitTypeCommand {
 
   public void executeInCurrentThread() throws HgCommandException, VcsException {
     if (StringUtil.isEmptyOrSpaces(myMessage)) {
-      throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
+      throw new HgCommandException(HgBundle.message("hg4idea.commit.error.messageEmpty"));
     }
     if (myFiles.isEmpty()) {
       executeChunked(Collections.emptyList());

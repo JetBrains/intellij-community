@@ -430,7 +430,7 @@ public class HgVcs extends AbstractVcs {
         //sometimes not hg application has version command, but we couldn't parse an answer as valid hg,
         // so parse(output) throw ParseException, but hg and git executable seems to be valid in this case
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-        String message = HgVcsMessages.message("hg4idea.unable.to.run.hg", executable);
+        String message = HgBundle.message("hg4idea.unable.to.run.hg", executable);
         vcsNotifier.notifyError(message,
                                 reason +
                                 "<br/> Please check your hg executable path in <a href='" +

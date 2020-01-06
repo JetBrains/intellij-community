@@ -232,7 +232,7 @@ public abstract class HgUtil {
   public static VirtualFile getHgRootOrThrow(Project project, FilePath filePath) throws VcsException {
     final VirtualFile vf = getHgRootOrNull(project, filePath);
     if (vf == null) {
-      throw new VcsException(HgVcsMessages.message("hg4idea.exception.file.not.under.hg", filePath.getPresentableUrl()));
+      throw new VcsException(HgBundle.message("hg4idea.exception.file.not.under.hg", filePath.getPresentableUrl()));
     }
     return vf;
   }
