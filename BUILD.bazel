@@ -106,7 +106,6 @@ iml_project(
         "//tools/adt/idea/android:intellij.android.core.tests",
         "//tools/adt/idea/apkanalyzer:intellij.android.apkanalyzer",
         "//tools/adt/idea/app-inspection/api:intellij.android.app-inspection.api",
-        "//tools/adt/idea/app-inspection/api:intellij.android.app-inspection.api.tests",
         "//tools/adt/idea/app-inspection/ide:intellij.android.app-inspection.ide",
         "//tools/adt/idea/artwork:intellij.android.artwork",
         "//tools/adt/idea/assistant",
