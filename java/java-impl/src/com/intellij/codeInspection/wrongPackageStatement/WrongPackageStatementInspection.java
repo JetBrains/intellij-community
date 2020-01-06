@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
@@ -59,7 +59,7 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
 
       String packageName = dirPackage.getQualifiedName();
       if (!Comparing.strEqual(packageName, "", true) && packageStatement == null) {
-        String description = JavaErrorMessages.message("missing.package.statement", packageName);
+        String description = JavaErrorBundle.message("missing.package.statement", packageName);
 
         final LocalQuickFix fix =
           PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName) ? new AdjustPackageNameFix(packageName) : null;
@@ -78,9 +78,9 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
           addMoveToPackageFix(file, packName, availableFixes);
         }
         if (!availableFixes.isEmpty()){
-          String description = JavaErrorMessages.message("package.name.file.path.mismatch",
-                                                         packageReference.getQualifiedName(),
-                                                         dirPackage.getQualifiedName());
+          String description = JavaErrorBundle.message("package.name.file.path.mismatch",
+                                                       packageReference.getQualifiedName(),
+                                                       dirPackage.getQualifiedName());
           LocalQuickFix[] fixes = availableFixes.toArray(LocalQuickFix.EMPTY_ARRAY);
           ProblemDescriptor descriptor =
             manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly,

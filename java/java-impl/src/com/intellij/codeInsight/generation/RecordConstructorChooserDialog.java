@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -23,8 +23,8 @@ final class RecordConstructorChooserDialog extends DialogWrapper {
     myRecordClass = recordClass;
     setTitle(CodeInsightBundle.message("generate.record.constructor.title"));
     setOKButtonText(CodeInsightBundle.message("generate.button.title"));
-    myCompact = new JBRadioButton(JavaErrorMessages.message("record.compact.constructor"), true);
-    myCanonical = new JBRadioButton(JavaErrorMessages.message("record.canonical.constructor"), false);
+    myCompact = new JBRadioButton(JavaErrorBundle.message("record.compact.constructor"), true);
+    myCanonical = new JBRadioButton(JavaErrorBundle.message("record.canonical.constructor"), false);
     myCustom = new JBRadioButton(ApplicationBundle.message("custom.option"), false);
     init();
   }

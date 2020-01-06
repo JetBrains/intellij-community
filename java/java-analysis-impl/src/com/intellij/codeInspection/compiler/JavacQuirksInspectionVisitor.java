@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.compiler;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -90,9 +90,9 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     if (JavaSdkVersion.JDK_1_6.equals(JavaVersionService.getInstance().getJavaSdkVersion(assignment)) &&
         PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
-      String message = JavaErrorMessages.message("binary.operator.not.applicable", operatorText,
-                                                 JavaHighlightUtil.formatType(lType),
-                                                 JavaHighlightUtil.formatType(rExpression.getType()));
+      String message = JavaErrorBundle.message("binary.operator.not.applicable", operatorText,
+                                               JavaHighlightUtil.formatType(lType),
+                                               JavaHighlightUtil.formatType(rExpression.getType()));
 
       myHolder.registerProblem(assignment, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceAssignmentOperatorWithAssignmentFix(operationSign.getText()));

@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -189,7 +189,7 @@ public class CreateFromUsageUtils {
     if (oldBody == null) {
       PsiElement last = method.getLastChild();
       if (last instanceof PsiErrorElement &&
-          JavaErrorMessages.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
+          JavaErrorBundle.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
         oldBody = last;
       }
     }

@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.intentions;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -108,14 +108,14 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
                 final PsiType targetParam = elementFactory.createTypeFromText(myNewType, aClass);
                 if (!(targetParam instanceof PsiClassType)) {
                   HintManager.getInstance().showErrorHint(editor,
-                                                          JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type"));
+                                                          JavaErrorBundle.message("generics.type.argument.cannot.be.of.primitive.type"));
                   return;
                 }
                 final PsiClassType classType = (PsiClassType)targetParam;
                 final PsiClass target = classType.resolve();
                 if (target == null) {
-                  HintManager.getInstance().showErrorHint(editor, JavaErrorMessages.message("cannot.resolve.symbol",
-                                                                                            classType.getPresentableText()));
+                  HintManager.getInstance().showErrorHint(editor, JavaErrorBundle.message("cannot.resolve.symbol",
+                                                                                          classType.getPresentableText()));
                   return;
                 }
                 final TypeMigrationRules myRules = new TypeMigrationRules(project);

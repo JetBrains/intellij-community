@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -58,7 +58,7 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
       public void visitExpression(PsiExpression expression) {
         boolean hasOverflow = hasOverflow(expression, holder.getProject());
         if (hasOverflow && (!ignoreLeftShiftWithNegativeResult || !isLeftShiftWithNegativeResult(expression, holder.getProject()))) {
-          holder.registerProblem(expression, JavaErrorMessages.message("numeric.overflow.in.expression"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          holder.registerProblem(expression, JavaErrorBundle.message("numeric.overflow.in.expression"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     };

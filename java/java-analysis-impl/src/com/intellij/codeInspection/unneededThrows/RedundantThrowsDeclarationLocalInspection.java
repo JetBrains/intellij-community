@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
@@ -96,7 +96,7 @@ public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaL
 
     return candidates.stream().map(exceptionType -> {
       PsiJavaCodeReferenceElement reference = exceptionType.ref;
-      String description = JavaErrorMessages.message("exception.is.never.thrown", JavaHighlightUtil.formatType(exceptionType.type));
+      String description = JavaErrorBundle.message("exception.is.never.thrown", JavaHighlightUtil.formatType(exceptionType.type));
       LocalQuickFix quickFix = new MethodThrowsFix.Remove(method, exceptionType.type, false);
       return inspectionManager.createProblemDescriptor(reference, description, quickFix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, true);
     }).toArray(ProblemDescriptor[]::new);

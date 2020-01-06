@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -247,7 +247,7 @@ class PostHighlightingVisitor {
     if (UnusedSymbolUtil.isImplicitUsage(myProject, variable)) return null;
 
     if (!myRefCountHolder.isReferenced(variable)) {
-      String message = JavaErrorMessages.message("local.variable.is.never.used", identifier.getText());
+      String message = JavaErrorBundle.message("local.variable.is.never.used", identifier.getText());
       HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       IntentionAction fix = variable instanceof PsiResourceVariable ? QuickFixFactory.getInstance().createRenameToIgnoredFix(variable) : QuickFixFactory.getInstance().createRemoveUnusedVariableFix(variable);
       QuickFixAction.registerQuickFixAction(highlightInfo, fix, myDeadCodeKey);
@@ -255,7 +255,7 @@ class PostHighlightingVisitor {
     }
 
     if (!myRefCountHolder.isReferencedForRead(variable) && !UnusedSymbolUtil.isImplicitRead(myProject, variable)) {
-      String message = JavaErrorMessages.message("local.variable.is.not.used.for.reading", identifier.getText());
+      String message = JavaErrorBundle.message("local.variable.is.not.used.for.reading", identifier.getText());
       HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(variable), myDeadCodeKey);
       return highlightInfo;
@@ -264,7 +264,7 @@ class PostHighlightingVisitor {
     if (!variable.hasInitializer() &&
         !myRefCountHolder.isReferencedForWrite(variable) &&
         !UnusedSymbolUtil.isImplicitWrite(myProject, variable)) {
-      String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
+      String message = JavaErrorBundle.message("local.variable.is.not.assigned", identifier.getText());
       final HighlightInfo unusedSymbolInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       QuickFixAction
         .registerQuickFixAction(unusedSymbolInfo, QuickFixFactory.getInstance().createAddVariableInitializerFix(variable), myDeadCodeKey);
@@ -286,7 +286,7 @@ class PostHighlightingVisitor {
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
       final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
       if (!myRefCountHolder.isReferenced(field) && !UnusedSymbolUtil.isImplicitUsage(myProject, field)) {
-        String message = JavaErrorMessages.message("private.field.is.not.used", identifier.getText());
+        String message = JavaErrorBundle.message("private.field.is.not.used", identifier.getText());
 
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, identifier, message);
         if (!field.hasInitializer() && !field.hasModifierProperty(PsiModifier.FINAL)) {
@@ -298,7 +298,7 @@ class PostHighlightingVisitor {
 
       final boolean readReferenced = myRefCountHolder.isReferencedForRead(field);
       if (!readReferenced && !UnusedSymbolUtil.isImplicitRead(project, field)) {
-        String message = JavaErrorMessages.message("private.field.is.not.used.for.reading", identifier.getText());
+        String message = JavaErrorBundle.message("private.field.is.not.used.for.reading", identifier.getText());
         return suggestionsToMakeFieldUsed(field, identifier, message);
       }
 
@@ -307,7 +307,7 @@ class PostHighlightingVisitor {
       }
       final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
       if (!writeReferenced && !UnusedSymbolUtil.isImplicitWrite(project, field)) {
-        String message = JavaErrorMessages.message("private.field.is.not.assigned", identifier.getText());
+        String message = JavaErrorBundle.message("private.field.is.not.assigned", identifier.getText());
         final HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
 
         QuickFixAction.registerQuickFixAction(info, quickFixFactory.createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
@@ -327,7 +327,7 @@ class PostHighlightingVisitor {
     }
     else if (UnusedSymbolUtil.isFieldUnused(myProject, myFile, field, progress, helper)) {
       if (UnusedSymbolUtil.isImplicitWrite(myProject, field)) {
-        String message = JavaErrorMessages.message("private.field.is.not.used.for.reading", identifier.getText());
+        String message = JavaErrorBundle.message("private.field.is.not.used.for.reading", identifier.getText());
         HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
         QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(field), myDeadCodeKey);
         return highlightInfo;
@@ -401,7 +401,7 @@ class PostHighlightingVisitor {
   private HighlightInfo checkUnusedParameter(@NotNull PsiParameter parameter,
                                              @NotNull PsiIdentifier identifier) {
     if (!myRefCountHolder.isReferenced(parameter) && !UnusedSymbolUtil.isImplicitUsage(myProject, parameter)) {
-      String message = JavaErrorMessages.message("parameter.is.not.used", identifier.getText());
+      String message = JavaErrorBundle.message("parameter.is.not.used", identifier.getText());
       return UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     }
     return null;
@@ -422,7 +422,7 @@ class PostHighlightingVisitor {
       key = method.isConstructor() ? "constructor.is.not.used" : "method.is.not.used";
     }
     String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
-    String message = JavaErrorMessages.message(key, symbolName);
+    String message = JavaErrorBundle.message(key, symbolName);
     final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), myDeadCodeKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
@@ -467,14 +467,14 @@ class PostHighlightingVisitor {
 
 
   private static HighlightInfo formatUnusedSymbolHighlightInfo(@NotNull final Project project,
-                                                               @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String pattern,
+                                                               @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String pattern,
                                                                @NotNull final PsiNameIdentifierOwner aClass,
                                                                @NotNull final String element,
                                                                HighlightDisplayKey highlightDisplayKey,
                                                                @NotNull HighlightInfoType highlightInfoType,
                                                                @NotNull PsiElement identifier) {
     String symbolName = aClass.getName();
-    String message = JavaErrorMessages.message(pattern, symbolName);
+    String message = JavaErrorBundle.message(pattern, symbolName);
     final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(aClass), highlightDisplayKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, annoName -> {

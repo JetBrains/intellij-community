@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -43,7 +43,7 @@ import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 class ModuleHighlightUtil {
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
     if (PsiUtil.isModuleFile(file)) {
-      String message = JavaErrorMessages.message("module.no.package");
+      String message = JavaErrorBundle.message("module.no.package");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
       return info;
@@ -54,7 +54,7 @@ class ModuleHighlightUtil {
       if (packageName != null) {
         PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(module, packageName);
         if (origin != null) {
-          String message = JavaErrorMessages.message("module.conflicting.packages", packageName, origin.getName());
+          String message = JavaErrorBundle.message("module.conflicting.packages", packageName, origin.getName());
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
         }
       }
@@ -65,7 +65,7 @@ class ModuleHighlightUtil {
 
   static HighlightInfo checkFileName(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     if (!PsiJavaModule.MODULE_INFO_FILE.equals(file.getName())) {
-      String message = JavaErrorMessages.message("module.file.wrong.name");
+      String message = JavaErrorBundle.message("module.file.wrong.name");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, factory().createRenameFileFix(PsiJavaModule.MODULE_INFO_FILE));
       return info;
@@ -80,10 +80,11 @@ class ModuleHighlightUtil {
       Project project = file.getProject();
       Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
       if (others.size() > 1) {
-        String message = JavaErrorMessages.message("module.file.duplicate");
+        String message = JavaErrorBundle.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
         others.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
-          duplicate -> QuickFixAction.registerQuickFixAction(info, new GoToSymbolFix(duplicate, JavaErrorMessages.message("module.open.duplicate.text")))
+          duplicate -> QuickFixAction.registerQuickFixAction(info, new GoToSymbolFix(duplicate, JavaErrorBundle
+            .message("module.open.duplicate.text")))
         );
         return info;
       }
@@ -105,13 +106,13 @@ class ModuleHighlightUtil {
 
   private static <T extends PsiStatement> void checkDuplicateRefs(Iterable<? extends T> statements,
                                                                   Function<? super T, String> ref,
-                                                                  @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
+                                                                  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
                                                                   List<? super HighlightInfo> results) {
     Set<String> filter = new THashSet<>();
     for (T statement : statements) {
       String refText = ref.apply(statement);
       if (refText != null && !filter.add(refText)) {
-        String message = JavaErrorMessages.message(key, refText);
+        String message = JavaErrorBundle.message(key, refText);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
         QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
         QuickFixAction.registerQuickFixAction(info, MergeModuleStatementsFix.createFix(statement));
@@ -138,7 +139,7 @@ class ModuleHighlightUtil {
               String className = qName(ref);
               String packageName = StringUtil.getPackageName(className);
               if (!exports.contains(packageName) && !uses.contains(className)) {
-                String message = JavaErrorMessages.message("module.service.unused");
+                String message = JavaErrorBundle.message("module.service.unused");
                 HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create();
                 QuickFixAction.registerQuickFixAction(info, new AddExportsDirectiveFix(module, packageName, ""));
                 QuickFixAction.registerQuickFixAction(info, new AddUsesDirectiveFix(module, className));
@@ -162,7 +163,7 @@ class ModuleHighlightUtil {
     if (vFile != null) {
       VirtualFile root = ProjectFileIndex.SERVICE.getInstance(file.getProject()).getSourceRootForFile(vFile);
       if (root != null && !root.equals(vFile.getParent())) {
-        String message = JavaErrorMessages.message("module.file.wrong.location");
+        String message = JavaErrorBundle.message("module.file.wrong.location");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
         QuickFixAction.registerQuickFixAction(info, new MoveFileFix(vFile, root, QuickFixBundle.message("move.file.to.source.root.text")));
         return info;
@@ -180,15 +181,15 @@ class ModuleHighlightUtil {
       PsiJavaModule target = ref.resolve();
       if (target == null) {
         if (ref.multiResolve(true).length == 0) {
-          String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
+          String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
           return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message).create();
         }
         else if (ref.multiResolve(false).length > 1) {
-          String message = JavaErrorMessages.message("module.ambiguous", refElement.getReferenceText());
+          String message = JavaErrorBundle.message("module.ambiguous", refElement.getReferenceText());
           return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message).create();
         }
         else {
-          String message = JavaErrorMessages.message("module.not.on.path", refElement.getReferenceText());
+          String message = JavaErrorBundle.message("module.not.on.path", refElement.getReferenceText());
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message).create();
           factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
           return info;
@@ -196,7 +197,7 @@ class ModuleHighlightUtil {
       }
       PsiJavaModule container = (PsiJavaModule)statement.getParent();
       if (target == container) {
-        String message = JavaErrorMessages.message("module.cyclic.dependence", container.getName());
+        String message = JavaErrorBundle.message("module.cyclic.dependence", container.getName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
       }
       else {
@@ -204,7 +205,7 @@ class ModuleHighlightUtil {
         if (cycle.contains(container)) {
           Stream<String> stream = cycle.stream().map(PsiJavaModule::getName);
           if (ApplicationManager.getApplication().isUnitTestMode()) stream = stream.sorted();
-          String message = JavaErrorMessages.message("module.cyclic.dependence", stream.collect(Collectors.joining(", ")));
+          String message = JavaErrorBundle.message("module.cyclic.dependence", stream.collect(Collectors.joining(", ")));
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
         }
       }
@@ -218,7 +219,7 @@ class ModuleHighlightUtil {
     if (statement.getRole() == Role.OPENS &&
         (parent = statement.getParent()) instanceof PsiJavaModule &&
         ((PsiJavaModule)parent).hasModifierProperty(PsiModifier.OPEN)) {
-      String message = JavaErrorMessages.message("module.opens.in.weak.module");
+      String message = JavaErrorBundle.message("module.opens.in.weak.module");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, factory().createModifierListFix((PsiModifierListOwner)parent, PsiModifier.OPEN, false, false));
       QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
@@ -243,13 +244,13 @@ class ModuleHighlightUtil {
         boolean opens = statement.getRole() == Role.OPENS;
         HighlightInfoType type = opens ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
         if (directories.length == 0) {
-          String message = JavaErrorMessages.message("package.not.found", packageName);
+          String message = JavaErrorBundle.message("package.not.found", packageName);
           HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
           QuickFixAction.registerQuickFixAction(info, factory().createCreateClassInPackageInModuleFix(module, packageName));
           return info;
         }
         if (packageName != null && isPackageEmpty(directories, packageName, opens)) {
-          String message = JavaErrorMessages.message("package.is.empty", packageName);
+          String message = JavaErrorBundle.message("package.is.empty", packageName);
           HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
           QuickFixAction.registerQuickFixAction(info, factory().createCreateClassInPackageInModuleFix(module, packageName));
           return info;
@@ -280,12 +281,12 @@ class ModuleHighlightUtil {
       assert ref != null : statement;
       if (!targets.add(refText)) {
         boolean exports = statement.getRole() == Role.EXPORTS;
-        String message = JavaErrorMessages.message(exports ? "module.duplicate.exports.target" : "module.duplicate.opens.target", refText);
+        String message = JavaErrorBundle.message(exports ? "module.duplicate.exports.target" : "module.duplicate.opens.target", refText);
         HighlightInfo info = duplicateReference(refElement, message);
         results.add(info);
       }
       else if (ref.multiResolve(true).length == 0) {
-        String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
+        String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
         results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message).create());
       }
     }
@@ -297,11 +298,11 @@ class ModuleHighlightUtil {
     if (refElement != null) {
       PsiElement target = refElement.resolve();
       if (!(target instanceof PsiClass)) {
-        String message = JavaErrorMessages.message("cannot.resolve.symbol", refElement.getReferenceName());
+        String message = JavaErrorBundle.message("cannot.resolve.symbol", refElement.getReferenceName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).descriptionAndTooltip(message).create();
       }
       else if (((PsiClass)target).isEnum()) {
-        String message = JavaErrorMessages.message("module.service.enum", ((PsiClass)target).getName());
+        String message = JavaErrorBundle.message("module.service.enum", ((PsiClass)target).getName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).descriptionAndTooltip(message).create();
       }
     }
@@ -322,7 +323,7 @@ class ModuleHighlightUtil {
     for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
       String refText = implRef.getQualifiedName();
       if (!filter.add(refText)) {
-        String message = JavaErrorMessages.message("module.duplicate.impl", refText);
+        String message = JavaErrorBundle.message("module.duplicate.impl", refText);
         HighlightInfo info = duplicateReference(implRef, message);
         results.add(info);
         continue;
@@ -335,7 +336,7 @@ class ModuleHighlightUtil {
         PsiClass implClass = (PsiClass)implTarget;
 
         if (findModuleForFile(file) != findModuleForFile(implClass.getContainingFile())) {
-          String message = JavaErrorMessages.message("module.service.alien");
+          String message = JavaErrorBundle.message("module.service.alien");
           results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
         }
 
@@ -346,26 +347,26 @@ class ModuleHighlightUtil {
           PsiType type = provider.getReturnType();
           PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
           if (!InheritanceUtil.isInheritorOrSelf(typeClass, (PsiClass)intTarget, true)) {
-            String message = JavaErrorMessages.message("module.service.provider.type", implClass.getName());
+            String message = JavaErrorBundle.message("module.service.provider.type", implClass.getName());
             results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
         }
         else if (InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
           if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            String message = JavaErrorMessages.message("module.service.abstract", implClass.getName());
+            String message = JavaErrorBundle.message("module.service.abstract", implClass.getName());
             results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
           else if (!(ClassUtil.isTopLevelClass(implClass) || implClass.hasModifierProperty(PsiModifier.STATIC))) {
-            String message = JavaErrorMessages.message("module.service.inner", implClass.getName());
+            String message = JavaErrorBundle.message("module.service.inner", implClass.getName());
             results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
           else if (!PsiUtil.hasDefaultConstructor(implClass)) {
-            String message = JavaErrorMessages.message("module.service.no.ctor", implClass.getName());
+            String message = JavaErrorBundle.message("module.service.no.ctor", implClass.getName());
             results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
         }
         else {
-          String message = JavaErrorMessages.message("module.service.impl");
+          String message = JavaErrorBundle.message("module.service.impl");
           results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
         }
       }
@@ -377,7 +378,7 @@ class ModuleHighlightUtil {
   static HighlightInfo checkClashingReads(@NotNull PsiJavaModule module) {
     Trinity<String, PsiJavaModule, PsiJavaModule> conflict = JavaModuleGraphUtil.findConflict(module);
     if (conflict != null) {
-      String message = JavaErrorMessages.message(
+      String message = JavaErrorBundle.message(
         "module.conflicting.reads", module.getName(), conflict.first, conflict.second.getName(), conflict.third.getName());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(module)).descriptionAndTooltip(message).create();
     }
@@ -393,7 +394,7 @@ class ModuleHighlightUtil {
           .filter(PsiKeyword.class)
           .map(keyword -> {
             @PsiModifier.ModifierConstant String modifier = keyword.getText();
-            String message = JavaErrorMessages.message("modifier.not.allowed", modifier);
+            String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
             HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
             QuickFixAction.registerQuickFixAction(info, factory().createModifierListFix(modList, modifier, false, false));
             return info;

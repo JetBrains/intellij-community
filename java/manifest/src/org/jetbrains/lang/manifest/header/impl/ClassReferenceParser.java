@@ -15,7 +15,7 @@
  */
 package org.jetbrains.lang.manifest.header.impl;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -79,7 +79,7 @@ public class ClassReferenceParser extends StandardHeaderParser {
     GlobalSearchScope scope = module != null ? module.getModuleWithDependenciesAndLibrariesScope(false) : ProjectScope.getAllScope(project);
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
     if (aClass == null) {
-      String message = JavaErrorMessages.message("error.cannot.resolve.class", className);
+      String message = JavaErrorBundle.message("error.cannot.resolve.class", className);
       Annotation anno = holder.createErrorAnnotation(valuePart.getHighlightingRange(), message);
       anno.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       return true;

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
@@ -43,9 +43,9 @@ public abstract class CustomAnnotationChecker {
     PsiElement ownerToUse = owner instanceof PsiModifierList ? ((PsiElement)owner).getParent() : (PsiElement)owner;
     PsiAnnotation.TargetType[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
     if (elementTypeFields.length != 0 && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, elementTypeFields)) {
-      String annotationTargetText = JavaErrorMessages.message("annotation.target." + elementTypeFields[0]);
+      String annotationTargetText = JavaErrorBundle.message("annotation.target." + elementTypeFields[0]);
       GrCodeReferenceElement ref = annotation.getClassReference();
-      return JavaErrorMessages.message("annotation.not.applicable", ref.getText(), annotationTargetText);
+      return JavaErrorBundle.message("annotation.not.applicable", ref.getText(), annotationTargetText);
     }
 
     return null;

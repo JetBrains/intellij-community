@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -1208,7 +1208,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           !TypeConversionUtil.areTypesConvertible(operandType, castType) &&
           PsiUtil.resolveClassInType(operandType) != null) {
         throw new EvaluateRuntimeException(
-          new EvaluateException(JavaErrorMessages.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
+          new EvaluateException(
+            JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
             .formatType(castType)))
         );
       }

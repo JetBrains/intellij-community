@@ -2,7 +2,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
@@ -31,7 +31,7 @@ public class FileParser {
   }
 
   public void parse(@NotNull PsiBuilder builder) {
-    parseFile(builder, FileParser::stopImportListParsing, JavaErrorMessages.INSTANCE, "expected.class.or.interface");
+    parseFile(builder, FileParser::stopImportListParsing, JavaErrorBundle.INSTANCE, "expected.class.or.interface");
   }
 
   public void parseFile(@NotNull PsiBuilder builder,
@@ -114,7 +114,7 @@ public class FileParser {
 
     PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
     if (ref == null) {
-      statement.error(JavaErrorMessages.message("expected.class.or.interface"));
+      statement.error(JavaErrorBundle.message("expected.class.or.interface"));
       return;
     }
 
@@ -142,7 +142,7 @@ public class FileParser {
       if (statement != null) {
         isEmpty = false;
         if (invalidElements != null) {
-          invalidElements.errorBefore(JavaErrorMessages.message("unexpected.token"), statement);
+          invalidElements.errorBefore(JavaErrorBundle.message("unexpected.token"), statement);
           invalidElements = null;
         }
         continue;

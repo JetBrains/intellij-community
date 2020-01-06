@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -164,7 +164,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
             fix = ReplaceSignatureQuickFix
               .createFix(constructorTypeExpression, ownerClassName, validSignatures, true, holder.isOnTheFly());
           }
-          holder.registerProblem(constructorTypeExpression, JavaErrorMessages.message("cannot.resolve.constructor", declarationText), fix);
+          holder.registerProblem(constructorTypeExpression, JavaErrorBundle.message("cannot.resolve.constructor", declarationText), fix);
         }
       }
     }
@@ -215,7 +215,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     if (!ownerClass.isExact()) return;
     final PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(methodName, true);
     if (methods.length == 0) {
-      holder.registerProblem(methodNameExpression, JavaErrorMessages.message("cannot.resolve.method", methodName));
+      holder.registerProblem(methodNameExpression, JavaErrorBundle.message("cannot.resolve.method", methodName));
       return;
     }
 
@@ -245,7 +245,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
         .collect(Collectors.toList());
       final LocalQuickFix fix =
         ReplaceSignatureQuickFix.createFix(methodTypeExpression, methodName, validSignatures, false, holder.isOnTheFly());
-      holder.registerProblem(methodTypeExpression, JavaErrorMessages.message("cannot.resolve.method", declarationText), fix);
+      holder.registerProblem(methodTypeExpression, JavaErrorBundle.message("cannot.resolve.method", declarationText), fix);
       return;
     }
     if (!isAbstractAllowed) {

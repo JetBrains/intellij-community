@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -40,28 +40,28 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
           case PsiKeyword.ASSERT:
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_4) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
-              return JavaErrorMessages.message("assert.identifier.warn");
+              return JavaErrorBundle.message("assert.identifier.warn");
             }
             break;
           case PsiKeyword.ENUM:
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_5) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
-              return JavaErrorMessages.message("enum.identifier.warn");
+              return JavaErrorBundle.message("enum.identifier.warn");
             }
             break;
           case "_":
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
-              return JavaErrorMessages.message("underscore.identifier.warn");
+              return JavaErrorBundle.message("underscore.identifier.warn");
             }
             break;
           case PsiKeyword.VAR:
             if (languageLevel.isLessThan(LanguageLevel.JDK_10) && parent instanceof PsiClass) {
-              return JavaErrorMessages.message("var.identifier.warn");
+              return JavaErrorBundle.message("var.identifier.warn");
             }
             break;
           case PsiKeyword.YIELD:
             if (languageLevel.isLessThan(LanguageLevel.JDK_X) && parent instanceof PsiClass) {
-              return JavaErrorMessages.message("yield.identifier.warn");
+              return JavaErrorBundle.message("yield.identifier.warn");
             }
             break;
         }
@@ -75,7 +75,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
         if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
             languageLevel.isLessThan(LanguageLevel.JDK_X)) {
           PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression.getMethodExpression());
-          holder.registerProblem(nameElement, JavaErrorMessages.message("yield.unqualified.method.warn"),
+          holder.registerProblem(nameElement, JavaErrorBundle.message("yield.unqualified.method.warn"),
                                    qualifier == null ? null : new QualifyCallFix(), new RenameFix());
         }
       }
@@ -90,7 +90,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
             if (parent instanceof PsiModifierList) {
               PsiElement grand = parent.getParent();
               if (grand instanceof PsiRequiresStatement && PsiJavaModule.JAVA_BASE.equals(((PsiRequiresStatement)grand).getModuleName())) {
-                String message = JavaErrorMessages.message("module.unwanted.modifier.warn");
+                String message = JavaErrorBundle.message("module.unwanted.modifier.warn");
                 LocalQuickFix fix = QuickFixFactory.getInstance().createModifierListFix((PsiModifierList)parent, modifier, false, false);
                 holder.registerProblem(keyword, message, fix);
               }
