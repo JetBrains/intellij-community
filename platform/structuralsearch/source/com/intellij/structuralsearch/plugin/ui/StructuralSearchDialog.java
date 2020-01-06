@@ -238,49 +238,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     document.addDocumentListener(this, myDisposable);
     document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
-    final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
-      @Override
-      protected EditorEx createEditor() {
-        final EditorEx editor = super.createEditor();
-        editor.setHorizontalScrollbarVisible(true);
-        editor.setVerticalScrollbarVisible(true);
-        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-        assert profile != null;
-        TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
-        SubstitutionShortInfoHandler.install(editor, variableName -> {
-          if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
-            variableName = trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
-            assert myConfiguration instanceof ReplaceConfiguration;
-            myFilterPanel.initFilters(UIUtil.getOrAddReplacementVariable(variableName, myConfiguration));
-          }
-          else{
-            myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-          }
-          if (isFilterPanelVisible()) {
-            myConfiguration.setCurrentVariableName(variableName);
-          }
-        }, myDisposable, replace);
-        editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-        getDocument().putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
-          putClientProperty("JComponent.outline", "error");
-          repaint();
-          getOKAction().setEnabled(false);
-          removeMatchHighlights();
-        });
-
-        TextCompletionUtil.installCompletionHint(editor);
-        editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
-        editor.setEmbeddedIntoDialogWrapper(true);
-        return editor;
-      }
-
-      @Override
-      protected void updateBorder(@NotNull EditorEx editor) {
-        setupBorder(editor);
-        final JScrollPane scrollPane = editor.getScrollPane();
-        scrollPane.setBorder(new ErrorBorder(scrollPane.getBorder()));
-      }
-    };
+    final EditorTextField textField = new MyEditorTextField(document, replace);
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     textField.setFont(scheme.getFont(EditorFontType.PLAIN));
     textField.setPreferredSize(new Dimension(550, 150));
@@ -1318,5 +1276,57 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
   public static String getUserDefined() {
     return SSRBundle.message("new.template.defaultname");
+  }
+
+  private class MyEditorTextField extends EditorTextField {
+    private final boolean myReplace;
+
+    MyEditorTextField(Document document, boolean replace) {
+      super(document, StructuralSearchDialog.this.getProject(), StructuralSearchDialog.this.myFileType, false, false);
+      myReplace = replace;
+    }
+
+    @Override
+    protected EditorEx createEditor() {
+      final EditorEx editor = super.createEditor();
+      editor.setHorizontalScrollbarVisible(true);
+      editor.setVerticalScrollbarVisible(true);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+      assert profile != null;
+      TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
+      SubstitutionShortInfoHandler.install(editor, variableName -> {
+        if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
+          //noinspection AssignmentToLambdaParameter
+          variableName = trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
+          assert myConfiguration instanceof ReplaceConfiguration;
+          myFilterPanel.initFilters(UIUtil.getOrAddReplacementVariable(variableName, myConfiguration));
+        }
+        else{
+          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+        }
+        if (isFilterPanelVisible()) {
+          myConfiguration.setCurrentVariableName(variableName);
+        }
+      }, myDisposable, myReplace);
+      editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
+      getDocument().putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
+        putClientProperty("JComponent.outline", "error");
+        repaint();
+        getOKAction().setEnabled(false);
+        removeMatchHighlights();
+      });
+
+      TextCompletionUtil.installCompletionHint(editor);
+      editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
+      editor.setEmbeddedIntoDialogWrapper(true);
+      return editor;
+    }
+
+    @Override
+    protected void updateBorder(@NotNull EditorEx editor) {
+      setupBorder(editor);
+      final JScrollPane scrollPane = editor.getScrollPane();
+      scrollPane.setBorder(new ErrorBorder(scrollPane.getBorder()));
+    }
   }
 }
