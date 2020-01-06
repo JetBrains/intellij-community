@@ -2,7 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -45,7 +45,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   @Override
   @NotNull
   public String getName() {
-    return XmlErrorMessages.message("remove.attribute.quickfix.text", myLocalName);
+    return XmlErrorBundle.message("remove.attribute.quickfix.text", myLocalName);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -58,7 +58,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorMessages.message("remove.attribute.quickfix.family");
+    return XmlErrorBundle.message("remove.attribute.quickfix.family");
   }
 
   @Override

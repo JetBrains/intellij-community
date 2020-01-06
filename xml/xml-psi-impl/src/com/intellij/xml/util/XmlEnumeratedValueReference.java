@@ -2,7 +2,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -61,7 +61,7 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
   public String getUnresolvedMessagePattern() {
     String name = getElement() instanceof XmlTag ? "tag" : "attribute";
     return myDescriptor.isFixed()
-           ? XmlErrorMessages.message("should.have.fixed.value", StringUtil.capitalize(name), myDescriptor.getDefaultValue())
-           : XmlErrorMessages.message("wrong.value", name);
+           ? XmlErrorBundle.message("should.have.fixed.value", StringUtil.capitalize(name), myDescriptor.getDefaultValue())
+           : XmlErrorBundle.message("wrong.value", name);
   }
 }

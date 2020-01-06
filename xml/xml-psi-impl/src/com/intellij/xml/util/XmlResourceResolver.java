@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.UriUtil;
@@ -250,7 +250,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
       if (publicId != null && publicId.contains(":/")) {
         try {
           myErrorReporter.processError(
-            new SAXParseException(XmlErrorMessages.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0,0), ValidateXmlActionHandler.ProblemType.ERROR);
+            new SAXParseException(XmlErrorBundle.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);
         }
         catch (SAXException ignore) {
 

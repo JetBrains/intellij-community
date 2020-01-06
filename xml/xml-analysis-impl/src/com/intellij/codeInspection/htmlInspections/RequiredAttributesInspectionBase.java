@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,7 +117,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           LocalQuickFix insertRequiredAttributeIntention = isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
-          final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
+          final String localizedMessage = XmlErrorBundle.message("element.doesnt.have.required.attribute", name, attrName);
           reportOneTagProblem(
             tag,
             attrName,

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -111,8 +111,8 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)
         final String message = isAbstractDescriptor(ownDescriptor)
-                               ? XmlErrorMessages.message("unknown.html.tag", name)
-                               : XmlErrorMessages.message("element.is.not.allowed.here", name);
+                               ? XmlErrorBundle.message("unknown.html.tag", name)
+                               : XmlErrorBundle.message("element.is.not.allowed.here", name);
 
         final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
         assert startTagName != null;

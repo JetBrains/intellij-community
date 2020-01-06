@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -32,7 +32,6 @@ import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,10 +100,10 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
             if (html5) {
               if (attributeDescriptor instanceof XmlEnumerationDescriptor &&
                   ((XmlEnumerationDescriptor)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
-                error = XmlErrorMessages.message("wrong.value", "attribute");
+                error = XmlErrorBundle.message("wrong.value", "attribute");
               }
             } else {
-              error = XmlErrorMessages.message("attribute.is.not.boolean", attribute.getName());
+              error = XmlErrorBundle.message("attribute.is.not.boolean", attribute.getName());
             }
             if (error != null) {
               registerProblemOnAttributeName(attribute, error, holder, quickFixes);

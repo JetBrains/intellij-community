@@ -17,7 +17,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
@@ -107,15 +107,15 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
           final LocalQuickFix localQuickFix = new MyLocalQuickFix(doctype.getNameElement().getText());
 
           holder.registerProblem(XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()).getPsi(),
-            XmlErrorMessages.message("wrong.root.element"),
-            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, localQuickFix
+                                 XmlErrorBundle.message("wrong.root.element"),
+                                 ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, localQuickFix
           );
 
           final ASTNode astNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag.getNode());
           if (astNode != null) {
             holder.registerProblem(astNode.getPsi(),
-              XmlErrorMessages.message("wrong.root.element"),
-              ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, localQuickFix
+                                   XmlErrorBundle.message("wrong.root.element"),
+                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, localQuickFix
             );
           }
         }

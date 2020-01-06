@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -41,14 +41,14 @@ public class RemoveTagIntentionFix extends LocalQuickFixAndIntentionActionOnPsiE
   @NotNull
   @Override
   public String getText() {
-    return XmlErrorMessages.message("remove.tag.quickfix.text", myTagName);
+    return XmlErrorBundle.message("remove.tag.quickfix.text", myTagName);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return XmlErrorMessages.message("remove.tag.quickfix.family");
+    return XmlErrorBundle.message("remove.tag.quickfix.family");
   }
 
   @Override

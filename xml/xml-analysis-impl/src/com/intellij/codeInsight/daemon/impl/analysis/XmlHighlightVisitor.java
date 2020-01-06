@@ -5,7 +5,7 @@ import com.intellij.BundleBase;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.IdeValidationHost;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
@@ -108,7 +108,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
             TextRange textRange = token.getTextRange();
             int start = textRange.getStartOffset() + i;
             HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-            String description = XmlErrorMessages.message("cdata.end.should.not.appear.in.content.unless.to.mark.end.of.cdata.section");
+            String description = XmlErrorBundle.message("cdata.end.should.not.appear.in.content.unless.to.mark.end.of.cdata.section");
             HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(start, start + marker.length()).descriptionAndTooltip(description).create();
             addToResults(info);
           }
@@ -169,7 +169,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if (eParent instanceof PsiComment) e = eParent;
         if (eParent instanceof XmlProcessingInstruction) break;
 
-        String description = XmlErrorMessages.message("xml.declaration.should.precede.all.document.content");
+        String description = XmlErrorBundle.message("xml.declaration.should.precede.all.document.content");
         addToResults(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(e).descriptionAndTooltip(description).create());
       }
     }
@@ -223,7 +223,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
         addElementsForTag(
           tag,
-          XmlErrorMessages.message("element.is.not.allowed.here", name),
+          XmlErrorBundle.message("element.is.not.allowed.here", name),
           getTagProblemInfoType(tag)
         );
         return;
@@ -242,7 +242,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       elementDescriptor = tag.getDescriptor();
 
      if (elementDescriptor == null) {
-       addElementsForTag(tag, XmlErrorMessages.message("element.must.be.declared", name), HighlightInfoType.WRONG_REF);
+       addElementsForTag(tag, XmlErrorBundle.message("element.must.be.declared", name), HighlightInfoType.WRONG_REF);
        return;
       }
     }
@@ -285,7 +285,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     if (!(prevLeaf instanceof PsiWhiteSpace)) {
       TextRange textRange = attribute.getTextRange();
       HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-      String description = XmlErrorMessages.message("attribute.should.be.preceded.with.space");
+      String description = XmlErrorBundle.message("attribute.should.be.preceded.with.space");
       HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(textRange.getStartOffset(), textRange.getStartOffset()).descriptionAndTooltip(description).create();
       addToResults(info);
     }
@@ -306,7 +306,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (attributeDescriptor == null) {
       if (!XmlUtil.attributeFromTemplateFramework(name, tag)) {
-        final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
+        final String localizedMessage = XmlErrorBundle.message("attribute.is.not.allowed.here", name);
         final HighlightInfo highlightInfo = reportAttributeProblem(tag, name, attribute, localizedMessage);
         if (highlightInfo != null) {
           PsiFile file = tag.getContainingFile();
@@ -383,7 +383,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         assert attributeNameNode != null;
         HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(getTagProblemInfoType(tag))
           .range(attributeNameNode)
-          .descriptionAndTooltip(XmlErrorMessages.message("duplicate.attribute", localName)).create();
+          .descriptionAndTooltip(XmlErrorBundle.message("duplicate.attribute", localName)).create();
         addToResults(highlightInfo);
 
         IntentionAction intentionAction = new RemoveAttributeIntentionFix(localName);

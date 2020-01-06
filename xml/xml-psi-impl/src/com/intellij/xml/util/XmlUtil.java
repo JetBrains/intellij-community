@@ -3,7 +3,7 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.UriUtil;
@@ -388,7 +388,7 @@ public class XmlUtil {
 
       if (presentNames.containsKey(nameKey)) {
         final T psiElement = presentNames.get(nameKey);
-        final String message = XmlErrorMessages.message("duplicate.declaration", nameKey);
+        final String message = XmlErrorBundle.message("duplicate.declaration", nameKey);
 
         if (psiElement != null) {
           presentNames.put(nameKey, null);

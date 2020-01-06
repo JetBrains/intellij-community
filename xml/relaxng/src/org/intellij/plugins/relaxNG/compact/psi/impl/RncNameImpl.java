@@ -18,7 +18,7 @@ package org.intellij.plugins.relaxNG.compact.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -219,7 +219,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlErrorMessages.message("create.namespace.declaration.quickfix.family");
+      return XmlErrorBundle.message("create.namespace.declaration.quickfix.family");
     }
 
     @Override

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -102,7 +102,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
 
-          registerProblemOnAttributeName(attribute, XmlErrorMessages.message("attribute.is.not.allowed.here", attribute.getName()), holder,
+          registerProblemOnAttributeName(attribute, XmlErrorBundle.message("attribute.is.not.allowed.here", attribute.getName()), holder,
                                          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.codeInsight.hint.HintManager;
@@ -91,7 +91,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @NotNull
   public String getText() {
     final String alias = getXmlNamespaceHelper().getNamespaceAlias(getFile());
-    return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
+    return XmlErrorBundle.message("create.namespace.declaration.quickfix", alias);
   }
 
   private XmlNamespaceHelper getXmlNamespaceHelper() {
@@ -101,7 +101,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorMessages.message("create.namespace.declaration.quickfix.family");
+    return XmlErrorBundle.message("create.namespace.declaration.quickfix.family");
   }
 
   @Override
@@ -201,7 +201,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   private String getTitle() {
-    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(getXmlNamespaceHelper().getNamespaceAlias(getFile())));
+    return XmlErrorBundle.message("select.namespace.title", StringUtil.capitalize(getXmlNamespaceHelper().getNamespaceAlias(getFile())));
   }
 
   @Override
@@ -328,7 +328,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                          final ExternalUriProcessor processor) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.run(() -> processExternalUrisImpl(metaHandler, file, processor)),
-      XmlErrorMessages.message("finding.acceptable.uri"),
+      XmlErrorBundle.message("finding.acceptable.uri"),
       false,
       file.getProject()
     );
@@ -372,7 +372,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final String searchFor = metaHandler.searchFor();
 
     if (pi != null) {
-      pi.setText(XmlErrorMessages.message("looking.in.schemas"));
+      pi.setText(XmlErrorBundle.message("looking.in.schemas"));
       pi.setIndeterminate(false);
     }
     final ExternalResourceManager instanceEx = ExternalResourceManager.getInstance();

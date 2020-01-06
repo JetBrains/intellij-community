@@ -15,7 +15,7 @@
  */
 package com.intellij.xml.template.formatter;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
@@ -44,8 +44,8 @@ public class TemplateFormatUtil {
   private final static List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();
   
   private final static String[] IGNORABLE_ERROR_MESSAGES = {
-    XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing"),
-    XmlErrorMessages.message("xml.parsing.closing.tag.name.missing")
+    XmlErrorBundle.message("xml.parsing.closing.tag.matches.nothing"),
+    XmlErrorBundle.message("xml.parsing.closing.tag.name.missing")
   };
 
   private TemplateFormatUtil() {
