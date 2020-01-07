@@ -162,7 +162,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.designer", "android.jar")
       withModule("intellij.android.compose-designer", "android.jar")
       withModule("intellij.android.designer.customview", "android.jar")
-      withModule("intellij.android.naveditor", "android.jar")
+      withModule("intellij.android.nav.editor", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.wizard.model", "android.jar")

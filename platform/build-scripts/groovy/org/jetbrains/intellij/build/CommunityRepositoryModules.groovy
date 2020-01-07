@@ -271,7 +271,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.layoutInspector", "android.jar")
       withModule("intellij.android.transport", "android.jar")
       withModule("intellij.android.designer", "android.jar")
-      withModule("intellij.android.naveditor", "android.jar")
+      withModule("intellij.android.nav.editor", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.wizard.model", "android.jar")
