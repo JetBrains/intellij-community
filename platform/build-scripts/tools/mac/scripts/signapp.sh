@@ -70,31 +70,35 @@ if [[ $non_plist -gt 0 ]]; then
   exit 1
 fi
 
-log "Unlocking keychain..."
-# Make sure *.p12 is imported into local KeyChain
-security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
+if [ "$CODESIGN_STRING" != "" ]; then
+  log "Unlocking keychain..."
+  # Make sure *.p12 is imported into local KeyChain
+  security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
 
-attempt=1
-limit=3
-set +e
-while [[ $attempt -le $limit ]]; do
-  log "Signing (attempt $attempt) $APPLICATION_PATH ..."
-  ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING"
-  ec=$?
-  if [[ $ec -ne 0 ]]; then
-    ((attempt += 1))
-    if [ $attempt -eq $limit ]; then
-      set -e
+  attempt=1
+  limit=3
+  set +e
+  while [[ $attempt -le $limit ]]; do
+    log "Signing (attempt $attempt) $APPLICATION_PATH ..."
+    ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING"
+    ec=$?
+    if [[ $ec -ne 0 ]]; then
+      ((attempt += 1))
+      if [ $attempt -eq $limit ]; then
+        set -e
+      fi
+      log "Signing failed, wait for 30 sec and try to sign again"
+      sleep 30
+    else
+      log "Signing done"
+      codesign -v "$APPLICATION_PATH" -vvvvv
+      log "Check sign done"
+      ((attempt += limit))
     fi
-    log "Signing failed, wait for 30 sec and try to sign again"
-    sleep 30
-  else
-    log "Signing done"
-    codesign -v "$APPLICATION_PATH" -vvvvv
-    log "Check sign done"
-    ((attempt += limit))
-  fi
-done
+  done
+else
+  log "Signing is disabled"
+fi
 
 set -e
 

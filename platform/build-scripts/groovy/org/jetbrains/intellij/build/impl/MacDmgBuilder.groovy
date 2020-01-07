@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.BuildException
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
@@ -120,14 +121,80 @@ class MacDmgBuilder {
     ant.zip(destfile: sitFile.path, update: true) {
       zipfileset(dir: productJsonDir, prefix: zipRoot)
     }
-
-    ftpAction("mkdir") {}
-    try {
-      signMacZip(sitFile, jreArchivePath, notarize)
-      buildDmg(targetName)
-    } finally {
-      deleteRemoteDir()
+    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP) || !isMac()) {
+      ftpAction("mkdir") {}
+      try {
+        signMacZip(sitFile, jreArchivePath, notarize)
+        buildDmg(targetName)
+      }
+      finally {
+        deleteRemoteDir()
+      }
     }
+    else {
+      bundleJBRLocally(sitFile, jreArchivePath)
+      buildDmgLocally(sitFile, targetName)
+    }
+  }
+
+  private void bundleJBRLocally(File targetFile, String jreArchivePath) {
+    buildContext.messages.progress("Bundling JBR")
+    File tempDir = new File(buildContext.paths.temp, "mac.dist.bundled.jre")
+    tempDir.mkdirs()
+    ant.copy(todir: tempDir) {
+      ant.fileset(file: targetFile.path)
+      if (jreArchivePath != null) {
+        ant.fileset(file: jreArchivePath)
+      }
+    }
+    ant.copy(todir: tempDir, file: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts/signapp.sh")
+    ant.chmod(file: new File(tempDir, "signapp.sh"), perm: "777")
+    List<String> args = [targetFile.name,
+                         buildContext.fullBuildNumber,
+                         "\"\"",
+                         "\"\"",
+                         "\"\"",
+                         jreArchivePath != null ? '"' + PathUtilRt.getFileName(jreArchivePath) + '"' : "no-jdk",
+                         "no",
+                         customizer.bundleIdentifier,
+    ]
+    ant.exec(dir: tempDir, command: "./signapp.sh ${args.join(" ")}")
+    ant.move(todir: artifactsPath, file: new File(tempDir, targetFile.name))
+  }
+
+  private void buildDmgLocally(File sitFile, String targetFileName){
+    File tempDir = new File(buildContext.paths.temp, "mac.dist.dmg")
+    tempDir.mkdirs()
+    buildContext.messages.progress("Building ${targetFileName}.dmg")
+    def dmgImagePath = (buildContext.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath
+    def dmgImageCopy = "$tempDir/${buildContext.fullBuildNumber}.png"
+    ant.copy(file: dmgImagePath, tofile: dmgImageCopy)
+    ant.copy(file: sitFile, todir: tempDir)
+    ant.copy(todir: tempDir) {
+      ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
+        include(name: "makedmg.sh")
+        include(name: "create-dmg.sh")
+        include(name: "makedmg-locally.sh")
+      }
+    }
+    ant.chmod(file: new File(tempDir, "makedmg.sh"), perm: "777")
+
+    ant.exec(dir: tempDir, command: "sh ./makedmg-locally.sh ${targetFileName} ${buildContext.fullBuildNumber}")
+    def dmgFilePath = "$artifactsPath/${targetFileName}.dmg"
+    ant.copy(tofile: dmgFilePath) {
+      ant.fileset(dir: tempDir) {
+        include(name: "**/${targetFileName}.dmg")
+      }
+    }
+    if (!new File(dmgFilePath).exists()) {
+      buildContext.messages.error("Failed to build .dmg file")
+    }
+    buildContext.notifyArtifactBuilt(dmgFilePath)
+  }
+
+  static boolean isMac() {
+    final String osName = System.properties['os.name']
+    return osName.toLowerCase().startsWith('mac')
   }
 
   private void buildDmg(String targetFileName) {
