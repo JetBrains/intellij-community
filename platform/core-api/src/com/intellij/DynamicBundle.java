@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.application.Application;
@@ -84,8 +84,9 @@ public abstract class DynamicBundle extends AbstractBundle {
    */
   @Deprecated
   public static ResourceBundle getBundle(String baseName) {
+    Class<?> callerClass = ReflectionUtil.findCallerClass(2);
     DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {});
-    ResourceBundle rb = dynamic.getResourceBundle();
+    ResourceBundle rb = dynamic.getResourceBundle(callerClass == null ? null : callerClass.getClassLoader());
 
     if (BundleBase.SHOW_LOCALIZED_MESSAGES) {
       return new ResourceBundle() {

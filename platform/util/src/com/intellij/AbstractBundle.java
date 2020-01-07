@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,15 +56,20 @@ public abstract class AbstractBundle {
                                  @NotNull Object... params) {
     return CommonBundle.messageOrDefault(getResourceBundle(), key, defaultValue, params);
   }
-  
+
   public boolean containsKey(@NotNull String key) {
     return getResourceBundle().containsKey(key);
   }
 
   public ResourceBundle getResourceBundle() {
+    return getResourceBundle(null);
+  }
+
+  @ApiStatus.Internal
+  public ResourceBundle getResourceBundle(@Nullable ClassLoader classLoader) {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
-      bundle = getResourceBundle(myPathToBundle, getClass().getClassLoader());
+      bundle = getResourceBundle(myPathToBundle, classLoader == null ? getClass().getClassLoader() : classLoader);
       myBundle = new SoftReference<>(bundle);
     }
     return bundle;
