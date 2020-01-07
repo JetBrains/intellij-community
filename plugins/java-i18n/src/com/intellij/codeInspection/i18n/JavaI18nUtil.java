@@ -108,6 +108,7 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   static boolean isPassedToAnnotatedParam(@NotNull UExpression expression,
+                                          String annFqn,
                                           @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     if (parent instanceof UPolyadicExpression) {
@@ -124,7 +125,7 @@ public class JavaI18nUtil extends I18nUtil {
     if (!idx.isPresent()) return false;
 
     PsiMethod method = callExpression.resolve();
-    return method != null && isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, AnnotationUtil.NON_NLS, null, nonNlsTargets);
+    return method != null && isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, annFqn, null, nonNlsTargets);
     
   }
 
@@ -204,6 +205,28 @@ public class JavaI18nUtil extends I18nUtil {
       if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, resourceBundleRef, null)) return true;
     }
 
+    PsiClass containingClass = method.getContainingClass();
+    while (containingClass != null) {
+      PsiAnnotation classAnnotation = AnnotationUtil.findAnnotation(containingClass, annFqn);
+      if (classAnnotation != null) {
+        processAnnotationAttributes(resourceBundleRef, classAnnotation);
+        return true;
+      }
+      containingClass = containingClass.getContainingClass();
+    }
+
+    PsiFile containingFile = method.getContainingFile();
+    if (containingFile instanceof PsiClassOwner) {
+      String packageName = ((PsiClassOwner)containingFile).getPackageName();
+      PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
+      if (aPackage != null) {
+        final PsiAnnotation packageAnnotation = AnnotationUtil.findAnnotation(aPackage, annFqn);
+        if (packageAnnotation != null) {
+          processAnnotationAttributes(resourceBundleRef, packageAnnotation);
+          return true;
+        }
+      }
+    }
     return false;
   }
 

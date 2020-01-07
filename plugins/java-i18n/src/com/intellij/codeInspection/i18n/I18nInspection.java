@@ -70,6 +70,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   public boolean ignoreForClassReferences = true;
   public boolean ignoreForPropertyKeyReferences = true;
   public boolean ignoreForNonAlpha = true;
+  private boolean ignoreForAllButNls = false;
   public boolean ignoreAssignedToConstants;
   public boolean ignoreToString;
   @NonNls public String nonNlsCommentPattern = "NON-NLS";
@@ -99,27 +100,37 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private static final String SKIP_FOR_ENUM = "ignoreForEnumConstant";
+  private static final String IGNORE_ALL_BUT_NLS = "ignoreAllButNls";
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
     if (ignoreForEnumConstants) {
-      final Element e = new Element("option");
-      e.setAttribute("name", SKIP_FOR_ENUM);
-      e.setAttribute("value", Boolean.toString(ignoreForEnumConstants));
-      node.addContent(e);
+      node.addContent(new Element("option")
+                        .setAttribute("name", SKIP_FOR_ENUM)
+                        .setAttribute("value", Boolean.toString(ignoreForEnumConstants)));
+    }
+    if (ignoreForAllButNls) {
+      node.addContent(new Element("option")
+                        .setAttribute("name", IGNORE_ALL_BUT_NLS)
+                        .setAttribute("value", Boolean.toString(ignoreForAllButNls)));
     }
   }
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
-    for (Object o : node.getChildren()) {
-      if (o instanceof Element && Comparing.strEqual(((Element)o).getAttributeValue("name"), SKIP_FOR_ENUM)) {
-        final String ignoreForConstantsAttr = ((Element)o).getAttributeValue("value");
-        if (ignoreForConstantsAttr != null) {
-          ignoreForEnumConstants = Boolean.parseBoolean(ignoreForConstantsAttr);
+    for (Element o : node.getChildren()) {
+      String nameAttr = o.getAttributeValue("name");
+      String valueAttr = o.getAttributeValue("value");
+      if (Comparing.strEqual(nameAttr, SKIP_FOR_ENUM)) {
+        if (valueAttr != null) {
+          ignoreForEnumConstants = Boolean.parseBoolean(valueAttr);
         }
-        break;
+      }
+      else if (Comparing.strEqual(nameAttr, IGNORE_ALL_BUT_NLS)) {
+        if (valueAttr != null) {
+          ignoreForAllButNls = Boolean.parseBoolean(valueAttr);
+        }
       }
     }
     cacheNonNlsCommentPattern();
@@ -141,6 +152,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   public boolean setIgnoreForEnumConstants(boolean ignoreForEnumConstants) {
     boolean old = this.ignoreForEnumConstants;
     this.ignoreForEnumConstants = ignoreForEnumConstants;
+    return old;
+  }
+
+  @TestOnly
+  public boolean setIgnoreForAllButNls(boolean ignoreForAllButNls) {
+    boolean old = this.ignoreForAllButNls;
+    this.ignoreForAllButNls = ignoreForAllButNls;
     return old;
   }
 
@@ -217,11 +235,19 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
     });
 
-    final JCheckBox ignoreEnumConstants = new JCheckBox("Ignore enum constants", ignoreForEnumConstants);
+    final JCheckBox ignoreEnumConstants = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.enum"), ignoreForEnumConstants);
     ignoreEnumConstants.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
         ignoreForEnumConstants = ignoreEnumConstants.isSelected();
+      }
+    });
+
+    final JCheckBox ignoreAllButNls = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
+    ignoreAllButNls.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(@NotNull ChangeEvent e) {
+        ignoreForAllButNls = ignoreAllButNls.isSelected();
       }
     });
 
@@ -233,6 +259,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     gc.gridy = 0;
     gc.weightx = 1;
     gc.weighty = 0;
+    panel.add(ignoreAllButNls, gc);
+
+    gc.gridy ++;
     panel.add(assertStatementsCheckbox, gc);
 
     gc.gridy ++;
@@ -587,7 +616,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return false;
     }
 
-    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, nonNlsTargets)) {
+    if (ignoreForAllButNls) {
+      return JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NLS, null);
+    }
+
+    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, nonNlsTargets)) {
       return false;
     }
 

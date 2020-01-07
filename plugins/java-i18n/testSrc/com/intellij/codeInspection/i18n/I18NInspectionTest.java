@@ -54,6 +54,30 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
     myTool.cacheNonNlsCommentPattern();
     doTest();
   }
+
+  public void testNlsOnly() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
+  public void testNlsPackage() {
+    myFixture.addFileToProject("package-info.java", "@Nls\n" +
+                                                    "package foo;\n" +
+                                                    "import org.jetbrains.annotations.Nls;");
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
   public void testAnnotationArgument() { doTest(); }
   public void testAssertionStmt() { doTest(); }
   public void testExceptionCtor() { doTest(); }
