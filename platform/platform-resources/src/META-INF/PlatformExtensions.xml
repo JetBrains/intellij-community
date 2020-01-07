@@ -412,8 +412,11 @@
     <!-- Keymap -->
     <applicationConfigurable groupId="root" groupWeight="65" instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
                              bundle="messages.KeyMapBundle"/>
-    <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" id="reference.idesettings.quicklists"
-                             displayName="Quick Lists"/>
+    <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" 
+                             id="reference.idesettings.quicklists"
+                             bundle="messages.IdeBundle"
+                             key="configurable.quick.lists.name"
+    />
 
     <!-- Customizations -->
     <applicationConfigurable groupId="appearance" groupWeight="130" instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
@@ -422,9 +425,11 @@
     <!-- Notifications -->
     <applicationConfigurable groupId="appearance"
                              groupWeight="110"
-                             displayName="Notifications"
                              id="reference.settings.ide.settings.notifications"
-                             provider="com.intellij.notification.impl.NotificationsConfigurableProvider"/>
+                             provider="com.intellij.notification.impl.NotificationsConfigurableProvider"
+                             bundle="messages.IdeBundle"
+                             key="configurable.notifications.name"
+    />
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
 
     <!-- Plugins -->
@@ -474,7 +479,8 @@
     <applicationConfigurable
         groupId="editor"
         groupWeight="189"
-        displayName="Font"
+        bundle="messages.IdeBundle"
+        key="configurable.font.name"
         instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"
     />
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor.fonts;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontCache;
@@ -12,12 +13,13 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LazyInstance;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public final class AppEditorFontConfigurable implements SearchableConfigurable, NoScroll {
-  public static final String ID = "editor.preferences.fonts.default";
+  @NonNls public static final String ID = "editor.preferences.fonts.default";
   private final LazyInstance<AppEditorFontPanel> myFontPanelInstance = new LazyInstance<AppEditorFontPanel>() {
     @Override
     protected Class<AppEditorFontPanel> getInstanceClass() {
@@ -76,7 +78,7 @@ public final class AppEditorFontConfigurable implements SearchableConfigurable, 
   @Nls
   @Override
   public String getDisplayName() {
-    return "Font";
+    return IdeBundle.message("configurable.font.name");
   }
 
   @Override
