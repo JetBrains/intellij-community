@@ -44,7 +44,7 @@ private fun listGitTree(
   fileFilter: (File) -> Boolean
 ): Stream<Pair<String, GitObject>> {
   val relativeDirToList = dirToList?.relativeTo(repo)?.path ?: ""
-  log("Inspecting $repo")
+  log("Inspecting $repo/$relativeDirToList")
   if (!isUnderTeamCity()) gitPull(repo)
   return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .trim().lines().stream()

@@ -165,7 +165,7 @@ private fun findCommitsByRepo(context: Context, projectId: String?, root: File, 
 ): Map<File, Collection<CommitInfo>> {
   val commits = findCommits(context, root, changes)
   if (commits.isEmpty()) return emptyMap()
-  log("$projectId: ${commits.size} commits found")
+  log("${projectId?.let { "$it:" } ?: ""} ${commits.size} commits found")
   return commits.map { it.key }.groupBy(CommitInfo::repo)
 }
 
