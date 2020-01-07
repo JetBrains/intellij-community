@@ -170,6 +170,11 @@ public class RegistryValue {
     if (systemProperty != null) {
       return systemProperty;
     }
+
+    if (!myRegistry.isLoaded()) {
+      LOG.warn("The registry key '" + key + "' accessed, but not loaded yet");
+    }
+
     final String bundleValue = Registry.getInstance().getBundleValue(key, mustExistInBundle);
     if (bundleValue != null) {
       return bundleValue;

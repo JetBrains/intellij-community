@@ -31,6 +31,7 @@ public final class Registry  {
   private final THashMap<String, RegistryKeyDescriptor> myContributedKeys = new THashMap<>();
 
   private static final Registry ourInstance = new Registry();
+  private volatile boolean myLoaded = false;
 
   @NotNull
   public static RegistryValue get(@NotNull String key) {
@@ -151,6 +152,11 @@ public final class Registry  {
         }
       }
     }
+    myLoaded = true;
+  }
+
+  public boolean isLoaded() {
+    return myLoaded;
   }
 
   @NotNull
