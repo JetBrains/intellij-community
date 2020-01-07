@@ -77,7 +77,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public final class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
+public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
 
   @NonNls
@@ -96,10 +96,6 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
     }
     return result;
   });
-
-  public PluginXmlDomInspection() {
-    super(IdeaPlugin.class);
-  }
 
   @NotNull
   @Override

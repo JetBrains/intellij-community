@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.references.PropertyReference;
@@ -19,7 +18,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -28,18 +26,16 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.OverrideText;
 
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-public class PluginXmlCapitalizationInspection extends BasicDomElementsInspection<IdeaPlugin> {
-
-  public PluginXmlCapitalizationInspection() {
-    super(IdeaPlugin.class);
-  }
-
+public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
@@ -109,17 +105,7 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
                                                   DomElement domElement,
                                                   Nls.Capitalization capitalization,
                                                   String resourceKey, boolean required) {
-    final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(domElement, IdeaPlugin.class, true);
-    if (ideaPlugin == null) return;
-
-    final XmlElement resourceBundleTag = ideaPlugin.getResourceBundle().getXmlElement();
-    if (resourceBundleTag == null) return;
-
-    final ResourceBundleReference bundleReference =
-      ContainerUtil.findInstance(resourceBundleTag.getReferences(), ResourceBundleReference.class);
-    if (bundleReference == null) return;
-
-    final PropertiesFileImpl bundleFile = ObjectUtils.tryCast(bundleReference.resolve(), PropertiesFileImpl.class);
+    final PropertiesFileImpl bundleFile = findBundlePropertiesFile(domElement);
     if (bundleFile == null) return;
 
     final Property property = ObjectUtils.tryCast(bundleFile.findPropertyByKey(resourceKey), Property.class);

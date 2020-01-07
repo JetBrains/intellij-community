@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.AddDomElementQuickFix;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
@@ -28,13 +27,8 @@ import org.jetbrains.idea.devkit.dom.*;
 import javax.swing.*;
 import java.util.Objects;
 
-public class PluginXmlDynamicPluginInspection extends BasicDomElementsInspection<IdeaPlugin> {
-
+public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
   public boolean highlightNonDynamicEPUsages = false;
-
-  public PluginXmlDynamicPluginInspection() {
-    super(IdeaPlugin.class);
-  }
 
   @Nullable
   @Override

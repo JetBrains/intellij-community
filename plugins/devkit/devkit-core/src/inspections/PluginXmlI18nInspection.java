@@ -16,7 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
@@ -28,11 +28,7 @@ import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-public class PluginXmlI18nInspection extends BasicDomElementsInspection<IdeaPlugin> {
-  public PluginXmlI18nInspection() {
-    super(IdeaPlugin.class);
-  }
-
+public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
@@ -79,6 +75,9 @@ public class PluginXmlI18nInspection extends BasicDomElementsInspection<IdeaPlug
         XmlElement xml = ag.getXmlElement();
         if (xml == null) return;
         @NonNls String prefix = ag instanceof Action ? "action" : "group";
+
+        IdeaPlugin ideaPlugin = ag.getParentOfType(IdeaPlugin.class, false);
+        GenericDomValue<String> bundle = ideaPlugin != null ? ideaPlugin.getResourceBundle() : null;
 
         if (text != null) ag.getText().setStringValue(null);
         if (desc != null) ag.getDescription().setStringValue(null);
