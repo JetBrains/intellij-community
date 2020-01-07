@@ -164,21 +164,35 @@ public class UITheme {
               return null;
             }
 
+            byte[] digest = scope.digest();
+            Map<String, String> newPalette = scope.newPalette;
+            Map<String, Integer> alphas = scope.alphas;
+            return newPatcher(digest, newPalette, alphas);
+          }
+
+          @Nullable
+          private SVGLoader.SvgElementColorPatcher newPatcher(@Nullable byte[] digest,
+                                                              @NotNull Map<String, String> newPalette,
+                                                              @NotNull Map<String, Integer> alphas) {
+            if (newPalette.isEmpty()) {
+              return null;
+            }
+
             return new SVGLoader.SvgElementColorPatcher() {
               @Override
               public byte[] digest() {
-                return scope.digest();
+                return digest;
               }
 
               @Override
               public void patchColors(@NotNull Element svg) {
                 String fill = svg.getAttribute("fill");
                 if (fill != null) {
-                  String newFill = scope.newPalette.get(StringUtil.toLowerCase(fill));
+                  String newFill = newPalette.get(StringUtil.toLowerCase(fill));
                   if (newFill != null) {
                     svg.setAttribute("fill", newFill);
-                    if (scope.alphas.get(newFill) != null) {
-                      svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(scope.alphas.get(newFill)) / 255f)));
+                    if (alphas.get(newFill) != null) {
+                      svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(alphas.get(newFill)) / 255f)));
                     }
                   }
                 }
