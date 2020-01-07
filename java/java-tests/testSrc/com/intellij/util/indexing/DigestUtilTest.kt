@@ -26,9 +26,10 @@ class DigestUtilTest {
 
     PlatformTestUtil.startPerformanceTest("DigestUtil works quickly enough", 250) {
       threadPool.invokeAll(callableList)
-      threadPool.shutdown()
-      threadPool.awaitTermination(60, TimeUnit.SECONDS)
     }.usesAllCPUCores().attempts(5).assertTiming()
+
+    threadPool.shutdown()
+    threadPool.awaitTermination(60, TimeUnit.SECONDS)
   }
 
   private fun calculateContentHash(bytes: ByteArray) {
