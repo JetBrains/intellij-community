@@ -36,8 +36,9 @@ iml_project(
         "//tools/idea/lib:all-libs",
         "//tools/idea/platform/build-scripts:scripts",
         "//tools/idea/plugins/stats-collector/features:resources",
+        "//tools/idea/bin",
+        ":licenses",
     ] + glob([
-        "license/**",
         ".idea/.name",
         ".idea/ant.xml",
         ".idea/codeInsightSettings.xml",
@@ -71,10 +72,7 @@ iml_project(
         ".idea/templateLanguages.xml",
         ".idea/uiDesigner.xml",
         ".idea/vcs.xml",
-        "bin/**",
         "build.txt",
-        "LICENSE.txt",
-        "NOTICE.txt",
         "native/WinLauncher/WinLauncher/resource.h",
     ]),
     modules = [
@@ -551,8 +549,12 @@ iml_project(
 )
 
 filegroup(
-    name = "config",
-    srcs = ["bin/log.xml"],
+    name = "licenses",
+    srcs = glob([
+        "license/**",
+        "LICENSE.txt",
+        "NOTICE.txt",
+    ]),
     visibility = ["//visibility:public"],
 )
 
