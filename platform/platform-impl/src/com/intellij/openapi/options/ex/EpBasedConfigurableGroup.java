@@ -11,6 +11,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
@@ -46,22 +47,41 @@ final class EpBasedConfigurableGroup
   EpBasedConfigurableGroup(@Nullable Project project,
                            @NotNull Supplier<ConfigurableGroup> delegate) {
     myProject = project;
-
-    ConfigurableGroup group = delegate.get();
-    List<ConfigurableWrapper> list = new ArrayList<>();
-    ConfigurableVisitor.collect(configurable -> {
-      if (!(configurable instanceof ConfigurableWrapper)) {
-        return;
-      }
-
-      ConfigurableWrapper configurableWrapper = (ConfigurableWrapper)configurable;
-      ConfigurableEP<?> ep = configurableWrapper.getExtensionPoint();
-      if (ep.childrenEPName != null || ep.dynamic) {
-        list.add(configurableWrapper);
-      }
-    }, group.getConfigurables());
     myValue = ClearableLazyValue.createAtomic(delegate);
-    myExtendableEp = list;
+
+    myExtendableEp = new ArrayList<>();
+    collect(myExtendableEp, myValue.getValue().getConfigurables());
+  }
+
+  @ApiStatus.Internal
+  private static void collect(@NotNull List<ConfigurableWrapper> list, @NotNull Configurable[] configurables) {
+    for (Configurable configurable : configurables) {
+      if (configurable instanceof ConfigurableWrapper) {
+        ConfigurableWrapper configurableWrapper = (ConfigurableWrapper)configurable;
+        ConfigurableEP<?> ep = configurableWrapper.getExtensionPoint();
+        if (ep.childrenEPName != null || ep.dynamic) {
+          list.add(configurableWrapper);
+        }
+      }
+
+      if (!(configurable instanceof Composite)) {
+        continue;
+      }
+
+      Composite composite = (Composite)configurable;
+      Configurable[] children;
+      try {
+        children = composite.getConfigurables();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        ConfigurableWrapper.LOG.error("Cannot get children " + composite, e);
+        continue;
+      }
+      collect(list, children);
+    }
   }
 
   @Override

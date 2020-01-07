@@ -22,7 +22,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
-  private static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
+  static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
