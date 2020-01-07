@@ -14,14 +14,13 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
@@ -49,15 +48,19 @@ final class EpBasedConfigurableGroup
     myValue = AtomicClearableLazyValue.create(delegate::get);
     myProject = project;
 
-    List<Configurable> all = ConfigurableVisitor.findAll(configurable -> {
+    List<ConfigurableWrapper> list = new ArrayList<>();
+    ConfigurableVisitor.collect(configurable -> {
       if (!(configurable instanceof ConfigurableWrapper)) {
-        return false;
+        return;
       }
-      ConfigurableEP<?> ep = ((ConfigurableWrapper)configurable).getExtensionPoint();
-      return ep.childrenEPName != null || ep.dynamic;
-    }, Collections.singletonList(myValue.getValue()));
 
-    myExtendableEp = StreamEx.of(all).select(ConfigurableWrapper.class).toImmutableList();
+      ConfigurableWrapper configurableWrapper = (ConfigurableWrapper)configurable;
+      ConfigurableEP<?> ep = configurableWrapper.getExtensionPoint();
+      if (ep.childrenEPName != null || ep.dynamic) {
+        list.add(configurableWrapper);
+      }
+    }, myValue.getValue().getConfigurables());
+    myExtendableEp = list;
   }
 
   @Override

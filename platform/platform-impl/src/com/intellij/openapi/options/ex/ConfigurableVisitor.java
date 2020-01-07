@@ -4,12 +4,14 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -74,20 +76,23 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   @NotNull
   public static List<Configurable> findAll(@NotNull Predicate<Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     List<Configurable> list = new ArrayList<>();
+    Consumer<Configurable> consumer = configurable -> {
+      if (visitor.test(configurable)) {
+        list.add(configurable);
+      }
+    };
     for (ConfigurableGroup group : groups) {
-      add(visitor, list, group.getConfigurables());
+      collect(consumer, group.getConfigurables());
     }
     return list;
   }
 
-  private static void add(@NotNull Predicate<Configurable> visitor, @NotNull List<? super Configurable> list, Configurable[] configurables) {
+  @ApiStatus.Internal
+  public static void collect(@NotNull Consumer<Configurable> visitor, @NotNull Configurable[] configurables) {
     for (Configurable configurable : configurables) {
-      if (visitor.test(configurable)) {
-        list.add(configurable);
-      }
+      visitor.accept(configurable);
       if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite)configurable;
-        add(visitor, list, composite.getConfigurables());
+        collect(visitor, ((Configurable.Composite)configurable).getConfigurables());
       }
     }
   }
