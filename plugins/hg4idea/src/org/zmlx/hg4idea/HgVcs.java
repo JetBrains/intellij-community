@@ -235,8 +235,7 @@ public class HgVcs extends AbstractVcs {
   public File getPromptHooksExtensionFile() {
     if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
       // check that hooks are available
-      String base = myVersion.isPython3() ? "prompthooks3" : "prompthooks2";
-      myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile(base);
+      myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
       if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
         LOG.error(
           "prompthooks.py Mercurial extension is not found. Please reinstall " + ApplicationNamesInfo.getInstance().getProductName());
