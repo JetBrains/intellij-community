@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
 /**
  * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
@@ -44,6 +45,11 @@ public abstract class AbstractBundle {
   @NotNull
   public String getMessage(@NotNull String key, @NotNull Object... params) {
     return CommonBundle.message(getResourceBundle(), key, params);
+  }
+
+  @NotNull
+  public Supplier<String> localizedMessage(@NotNull String key, @NotNull Object... params) {
+    return () -> getMessage(key, params);
   }
 
   @Nullable

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Represents an entity that has a state, a presentation and can be performed.
@@ -82,7 +83,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param icon Default icon to appear in toolbars and menus (Note some platform don't have icons in menu).
    */
   public AnAction(Icon icon){
-    this(null, null, icon);
+    this(Presentation.NULL_COMPUTABLE, Presentation.NULL_COMPUTABLE, icon);
   }
 
   /**
@@ -94,6 +95,17 @@ public abstract class AnAction implements PossiblyDumbAware {
    */
   public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text){
     this(text, null, null);
+  }
+
+  /**
+   * Creates a new action with the specified text. Description and icon are
+   * set to {@code null}.
+   *
+   * @param textComputable Serves as a tooltip when the presentation is a button and the name of the
+   * menu item when the presentation is a menu item. Use it if you need to localize text.
+   */
+  public AnAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> textComputable) {
+    this(textComputable, Presentation.NULL_COMPUTABLE, null);
   }
 
   /**
@@ -110,9 +122,26 @@ public abstract class AnAction implements PossiblyDumbAware {
   public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
                   @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                   @Nullable Icon icon) {
+    this(() -> text, () -> description, icon);
+  }
+
+  /**
+   * Constructs a new action with the specified textComputable, descriptionComputable and icon.
+   *
+   * @param textComputable Serves as a tooltip when the presentation is a button and the name of the
+   *  menu item when the presentation is a menu item. Use it if you need to localize text.
+   *
+   * @param descriptionComputable Describes current action, this descriptionComputable will appear on
+   *  the status bar when presentation has focus. Use it if you need to localize description.
+   *
+   * @param icon Action's icon
+   */
+  public AnAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> textComputable,
+                  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) Supplier<String> descriptionComputable,
+                  @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
-    presentation.setText(text);
-    presentation.setDescription(description);
+    presentation.setText(textComputable);
+    presentation.setDescription(descriptionComputable);
     presentation.setIcon(icon);
   }
 
@@ -336,7 +365,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   public void applyTextOverride(AnActionEvent e) {
     String override = myActionTextOverrides.get(e.getPlace());
     if (override != null) {
-      e.getPresentation().setText(override);
+      e.getPresentation().setText(() -> override);
     }
   }
 

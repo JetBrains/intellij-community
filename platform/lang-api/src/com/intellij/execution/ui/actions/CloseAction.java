@@ -29,7 +29,7 @@ public class CloseAction extends AnAction implements DumbAware {
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setIcon(AllIcons.Actions.Cancel);
     templatePresentation.setText(ExecutionBundle.message("close.tab.action.name"));
-    templatePresentation.setDescription(null);
+    templatePresentation.setDescription(Presentation.NULL_COMPUTABLE);
   }
 
   @Override
