@@ -83,10 +83,18 @@ public abstract class DynamicBundle extends AbstractBundle {
    * @deprecated used only dy GUI form builder
    */
   @Deprecated
-  public static ResourceBundle getBundle(String baseName) {
+  public static ResourceBundle getBundle(@NotNull String baseName) {
     Class<?> callerClass = ReflectionUtil.findCallerClass(2);
+    return getBundle(baseName, callerClass == null ? DynamicBundle.class : callerClass);
+  }
+
+  /**
+   * @deprecated used only dy GUI form builder
+   */
+  @Deprecated
+  public static ResourceBundle getBundle(@NotNull String baseName, @NotNull Class<?> formClass) {
     DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {});
-    ResourceBundle rb = dynamic.getResourceBundle(callerClass == null ? null : callerClass.getClassLoader());
+    ResourceBundle rb = dynamic.getResourceBundle(formClass.getClassLoader());
 
     if (BundleBase.SHOW_LOCALIZED_MESSAGES) {
       return new ResourceBundle() {
