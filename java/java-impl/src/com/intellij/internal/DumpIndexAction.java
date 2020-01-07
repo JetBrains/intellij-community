@@ -125,11 +125,14 @@ public class DumpIndexAction extends AnAction {
                                     @NotNull List<IndexChunk> chunks,
                                     @NotNull Path out,
                                     @NotNull ProgressIndicator indicator) {
+    Path indexRoot = PathKt.createDirectories(out.resolve("unpacked"));
+    Path zipFile = out.resolve(out.getFileName() + ".zip");
+
     indicator.setIndeterminate(false);
     AtomicInteger idx = new AtomicInteger();
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(chunks, indicator, chunk -> {
       indicator.setText("Indexing chunk " + chunk.getName());
-      Path chunkRoot = out.resolve(chunk.getName());
+      Path chunkRoot = indexRoot.resolve(chunk.getName());
       ReadAction.run(() -> {
         List<HashBasedIndexGenerator<?, ?>> fileBasedGenerators = getExportableIndices(true)
           .map(extension -> getGenerator(chunkRoot, extension))
@@ -152,7 +155,7 @@ public class DumpIndexAction extends AnAction {
       throw new AssertionError();
     }
 
-    zipIndexOut(out, indicator);
+    zipIndexOut(indexRoot, zipFile, indicator);
   }
 
   @NotNull
@@ -181,18 +184,14 @@ public class DumpIndexAction extends AnAction {
     }
   }
 
-  private static void zipIndexOut(@NotNull Path out, @NotNull ProgressIndicator indicator) {
+  private static void zipIndexOut(@NotNull Path indexRoot, @NotNull Path zipFile, @NotNull ProgressIndicator indicator) {
     indicator.setIndeterminate(true);
     indicator.setText("Zipping index pack");
 
-    File zipFile = new File(out.toFile().getAbsolutePath() + ".zip");
-    if (zipFile.exists()) {
-      FileUtil.delete(zipFile);
-    }
-    try (JBZipFile file = new JBZipFile(zipFile)) {
-      Files.walk(out).forEach(p -> {
+    try (JBZipFile file = new JBZipFile(zipFile.toFile())) {
+      Files.walk(indexRoot).forEach(p -> {
         if (Files.isDirectory(p)) return;
-        String relativePath = out.relativize(p).toString();
+        String relativePath = indexRoot.relativize(p).toString();
         try {
           JBZipEntry entry = file.getOrCreateEntry(relativePath);
           entry.setMethod(ZipEntry.STORED);
