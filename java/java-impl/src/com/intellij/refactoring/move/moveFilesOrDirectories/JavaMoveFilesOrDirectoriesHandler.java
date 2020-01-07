@@ -66,7 +66,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     }
     MoveFilesOrDirectoriesUtil
       .doMove(project, elements, new PsiElement[]{targetContainer}, callback,
-              elements1 -> WriteCommandAction.writeCommandAction(project).withName("Regrouping ...").compute(() -> {
+              elements1 -> WriteCommandAction.writeCommandAction(project).withName("Regrouping...").compute(() -> {
                 final List<PsiElement> adjustedElements = new ArrayList<>();
                 for (int i = 0, length = elements1.length; i < length; i++) {
                   PsiElement element = elements1[i];
