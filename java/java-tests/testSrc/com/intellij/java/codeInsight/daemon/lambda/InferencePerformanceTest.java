@@ -16,7 +16,9 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -69,6 +71,42 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
 
   public void testLongQualifierChainInsideLambda() {
     PlatformTestUtil.startPerformanceTest("long qualifier chain", 12000, this::doTest).usesAllCPUCores().assertTiming();
+  }
+  public void testLongQualifierChainInsideLambdaInTypeCast() {
+    enableInspectionTool(new RedundantCastInspection());
+     @Language("JAVA")
+    String template = "import java.util.function.Function;\n" +
+                      "abstract class Snippet {\n" +
+                      "    abstract <V> V valueOf(V var2);\n" +
+                      "    abstract <V> V valueOf(java.util.List<? extends V> var2);\n" +
+                      "    static final class Builder {\n" +
+                      "        public Builder foo(Foo foo) {\n" +
+                      "            return this;\n" +
+                      "        }\n" +
+                      "        public Snippet build() {\n" +
+                      "            return null;\n" +
+                      "        }\n" +
+                      "    }\n" +
+                      "    public static final class Foo { }\n" +
+                      "\n" +
+                      "\n" +
+                      "    public static final Function<Snippet, Snippet> _snippet = (Function<Snippet, Snippet>) (snippet -> {\n" +
+                      "        Foo foo = new Foo();\n" +
+                      "\n" +
+                      "        return new Builder().\n" +
+                      "                $chain$" +
+                      "                .build();\n" +
+                      "    });\n" +
+                      "\n" +
+                      "}";
+    int count = 70;
+    String entries = "foo(snippet.valueOf(foo))\n" +//to trick injection 
+                     StringUtil.repeat(".foo(snippet.valueOf(foo))\n", count);
+    configureFromFileText("Test.java", template.replace("$chain$", entries));
+    PlatformTestUtil.startPerformanceTest(count + " chain in type cast", 3000, () -> doHighlighting())
+      .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
+      .usesAllCPUCores().assertTiming();
+    assertEmpty(highlightErrors());
   }
 
   private void doTest() {
