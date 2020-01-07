@@ -14,6 +14,7 @@
         </constraints>
         <properties>
           <icon value="to/addmodulewizard.png"/>
+          <icon value="to/addmodulewizard.png"/>
           <text value="tt"/>
         </properties>
       </component>
