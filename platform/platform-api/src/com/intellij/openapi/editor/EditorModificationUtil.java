@@ -430,11 +430,10 @@ public class EditorModificationUtil {
     String message = READ_ONLY_VIEW_MESSAGE_KEY.get(editor);
     if (message != null) return new ReadOnlyHint(message, null);
 
-    return ReadOnlyHint.DEFAULT;
+    return new ReadOnlyHint(EditorBundle.message("editing.viewer.hint"), null);
   }
 
   private static class ReadOnlyHint {
-    private static final ReadOnlyHint DEFAULT = new ReadOnlyHint(EditorBundle.message("editing.viewer.hint"), null);
 
     @NotNull public final String message;
     @Nullable public final HyperlinkListener linkListener;
