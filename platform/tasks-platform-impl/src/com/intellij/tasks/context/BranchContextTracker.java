@@ -19,19 +19,21 @@ public class BranchContextTracker implements BranchChangeListener {
   public static final NotificationGroup NOTIFICATION = new NotificationGroup(
     "Branch Context group", NotificationDisplayType.BALLOON, true);
 
-  private final WorkingContextManager myContextManager;
   private final Project myProject;
   private String myLastBranch;
 
-  private BranchContextTracker(@NotNull Project project) {
+  public BranchContextTracker(@NotNull Project project) {
     myProject = project;
-    myContextManager = WorkingContextManager.getInstance(project);
+  }
+
+  private WorkingContextManager getContextManager() {
+    return WorkingContextManager.getInstance(myProject);
   }
 
   @Override
   public void branchWillChange(@NotNull String branchName) {
     myLastBranch = branchName;
-    myContextManager.saveContext(getContextName(branchName), null);
+    getContextManager().saveContext(getContextName(branchName), null);
   }
 
   @Override
@@ -49,23 +51,24 @@ public class BranchContextTracker implements BranchChangeListener {
     }
 
     String contextName = getContextName(branchName);
-    if (!myContextManager.hasContext(contextName)) return;
+    if (!getContextManager().hasContext(contextName)) return;
 
     TransactionGuard.submitTransaction(myProject, () -> switchContext(branchName, contextName));
   }
 
   private void switchContext(@NotNull String branchName, String contextName) {
-    myContextManager.clearContext();
-    myContextManager.loadContext(contextName);
+    WorkingContextManager contextManager = getContextManager();
+    contextManager.clearContext();
+    contextManager.loadContext(contextName);
 
     Notification notification =
       NOTIFICATION.createNotification("Workspace associated with branch '" + branchName + "' has been restored", NotificationType.INFORMATION);
-    if (myLastBranch != null && myContextManager.hasContext(getContextName(myLastBranch))) {
+    if (myLastBranch != null && contextManager.hasContext(getContextName(myLastBranch))) {
       notification.addAction(new NotificationAction("Rollback") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          myContextManager.clearContext();
-          myContextManager.loadContext(getContextName(myLastBranch));
+          contextManager.clearContext();
+          contextManager.loadContext(getContextName(myLastBranch));
         }
       });
     }
