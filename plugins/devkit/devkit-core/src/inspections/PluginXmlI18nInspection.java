@@ -20,8 +20,10 @@ import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -53,7 +55,7 @@ public class PluginXmlI18nInspection extends BasicDomElementsInspection<IdeaPlug
 
   @NotNull
   private static String getText() {
-    return "Extract text/description for i18n";
+    return DevKitBundle.message("inspections.plugin.xml.i18n.name");
   }
 
   private static LocalQuickFix createAnalyzeEPFix(ActionOrGroup ag, String id, String text, String desc) {
@@ -76,7 +78,7 @@ public class PluginXmlI18nInspection extends BasicDomElementsInspection<IdeaPlug
       public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
         XmlElement xml = ag.getXmlElement();
         if (xml == null) return;
-        String prefix = ag instanceof Action ? "action" : "group";
+        @NonNls String prefix = ag instanceof Action ? "action" : "group";
 
         if (text != null) ag.getText().setStringValue(null);
         if (desc != null) ag.getDescription().setStringValue(null);
@@ -103,12 +105,12 @@ public class PluginXmlI18nInspection extends BasicDomElementsInspection<IdeaPlug
         }, xml.getFirstChild());
       }
 
-      private void append(@NotNull Project project, PsiFile file, String tt) {
+      private void append(@NotNull Project project, PsiFile file, @NonNls String text) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         if (document == null) return;
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
         int length = document.getTextLength();
-        document.insertString(length, "\n" + tt);
+        document.insertString(length, "\n" + text);
         PsiDocumentManager.getInstance(project).commitDocument(document);
       }
     };
