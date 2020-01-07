@@ -89,12 +89,13 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       else if (element instanceof PsiDirectory || element instanceof PsiPackage) directoryCount++;
     }
     if (directoryCount == 0) {
-      return classCount == 1 ? "Move Class..." : "Move Classes...";
+      return classCount == 1 ? RefactoringBundle.message("move.class") : RefactoringBundle.message("move.classes");
     }
     if (classCount == 0) {
-      return directoryCount == 1 ? "Move Package or Directory..." : "Move Packages or Directories...";
+      return directoryCount == 1 ? RefactoringBundle.message("move.package.or.directory")
+                                 : RefactoringBundle.message("move.packages.or.directories");
     }
-    return "Move Classes and Packages...";
+    return RefactoringBundle.message("move.classes.and.packages");
   }
 
   public static boolean invalid4Move(PsiElement element) {
@@ -316,8 +317,8 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   }
 
   @Nullable
-  private static String getPromptToMoveDirectoryLibrariesSafe(PsiElement[] elements) {
-    if (elements.length == 0 || elements.length > 1) return null;
+  private static String getPromptToMoveDirectoryLibrariesSafe(@Nullable PsiElement[] elements) {
+    if (elements == null || elements.length != 1) return null;
     final Project project = elements[0].getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (!(elements[0] instanceof PsiDirectory)) return null;
