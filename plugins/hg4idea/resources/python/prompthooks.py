@@ -20,7 +20,7 @@
 import socket
 import struct
 import sys
-from mercurial import  ui, util, error
+from mercurial import ui, util, error
 from mercurial.i18n import _
 
 try:
@@ -30,11 +30,11 @@ except:
 
 PY3 = sys.version_info.major == 3
 
-def sendInt( client, number):
+def sendInt(client, number):
     length = struct.pack('>L', number)
-    client.sendall( length )
+    client.sendall(length)
 
-def send( client, data ):
+def send(client, data):
     if data is None:
         sendInt(client, 0)
     else:
@@ -47,7 +47,7 @@ def receiveIntWithMessage(client, message):
     while len(buffer)<requiredLength:
         chunk = client.recv(requiredLength-len(buffer))
         if chunk == '':
-            raise error.Abort( message )
+            raise error.Abort(message)
         buffer = buffer + chunk
         
     # struct.unpack always returns a tuple, even if that tuple only contains a single
@@ -60,17 +60,17 @@ def receiveIntWithMessage(client, message):
 def receiveInt(client):
     return receiveIntWithMessage(client, "could not get information from server")
 
-def receive( client ):
+def receive(client):
     receiveWithMessage(client, "could not get information from server")
     
-def receiveWithMessage( client, message ):
+def receiveWithMessage(client, message):
     length = receiveIntWithMessage(client, message)
     buffer = ''.encode('utf-8')
     while len(buffer) < length :
         chunk = client.recv(length - len(buffer))
         if chunk == '':
-            raise error.Abort( message)
-        buffer = buffer+chunk
+            raise error.Abort(message)
+        buffer = buffer + chunk
         
     return buffer
 
@@ -97,18 +97,18 @@ def sendchoicestoidea(ui, msg, choices, default):
     if not numOfChoices:
         return default
 
-    client = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     try:
-        client.connect( ('127.0.0.1', port) )
+        client.connect(('127.0.0.1', port))
 
-        send( client, msg )
-        sendInt( client, numOfChoices )
+        send(client, msg)
+        sendInt(client, numOfChoices)
         for choice in choices:
-            send( client, choice )
-        sendInt( client, default )
+            send(client, choice)
+        sendInt(client, default)
     
-        answer = receiveInt( client )
+        answer = receiveInt(client)
         if answer == -1:
             raise error.Abort("User cancelled")
         else:      
@@ -134,15 +134,15 @@ def warn(self, *msg):
 
     self.debug( "hg4idea prompt server waiting on port %s" % port )
 
-    client = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
-    self.debug( "connecting ..." )
-    client.connect( ('127.0.0.1', port) )
-    self.debug( "connected, sending data ..." )
+    self.debug("connecting ...")
+    client.connect(('127.0.0.1', port))
+    self.debug("connected, sending data ...")
     
-    sendInt( client, len(msg) )
+    sendInt(client, len(msg))
     for message in msg:
-        send( client, message )
+        send(client, message)
 
 
 def retrieve_pass_from_server(ui, uri,path, proposed_user):
