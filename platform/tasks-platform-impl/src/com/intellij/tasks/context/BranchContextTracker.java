@@ -1,14 +1,10 @@
 package com.intellij.tasks.context;
 
 import com.intellij.notification.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.BranchChangeListener;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.tasks.BranchInfo;
@@ -27,11 +23,9 @@ public class BranchContextTracker implements BranchChangeListener {
   private final Project myProject;
   private String myLastBranch;
 
-  private BranchContextTracker(@NotNull Project project, @NotNull Disposable activityDisposable) {
+  private BranchContextTracker(@NotNull Project project) {
     myProject = project;
     myContextManager = WorkingContextManager.getInstance(project);
-    project.getMessageBus().connect(activityDisposable)
-      .subscribe(BranchChangeListener.VCS_BRANCH_CHANGED, this);
   }
 
   @Override
@@ -93,13 +87,4 @@ public class BranchContextTracker implements BranchChangeListener {
     return "__branch_context_" + branchName;
   }
 
-  public static class TrackerStartupActivity implements StartupActivity{
-
-    @Override
-    public void runActivity(@NotNull Project project) {
-      Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
-      Disposer.register(project, activityDisposable);
-      new BranchContextTracker(project, activityDisposable);
-    }
-  }
 }
