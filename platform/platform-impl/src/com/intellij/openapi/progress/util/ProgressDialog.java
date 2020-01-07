@@ -19,7 +19,6 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
@@ -33,11 +32,11 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-class ProgressDialog implements Disposable {
+final class ProgressDialog implements Disposable {
   private final ProgressWindow myProgressWindow;
   private long myLastTimeDrawn = -1;
   private final boolean myShouldShowBackground;
-  private final Alarm myUpdateAlarm = new Alarm(this);
+  private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> update(), 500, this);
   private boolean myWasShown;
 
   final Runnable myRepaintRunnable = new Runnable() {
@@ -48,9 +47,8 @@ class ProgressDialog implements Disposable {
       String text2 = myProgressWindow.getText2();
 
       if (myProgressBar.isShowing()) {
-        final int perc = (int)(fraction * 100);
         myProgressBar.setIndeterminate(myProgressWindow.isIndeterminate());
-        myProgressBar.setValue(perc);
+        myProgressBar.setValue((int)(fraction * 100));
       }
 
       myTextLabel.setText(fitTextToLabel(text, myTextLabel));
@@ -64,8 +62,6 @@ class ProgressDialog implements Disposable {
       }
     }
   };
-
-  private final Runnable myUpdateRequest = () -> update();
 
   JPanel myPanel;
   private JLabel myTextLabel;
@@ -207,10 +203,10 @@ class ProgressDialog implements Disposable {
       }
       else {
         // later to avoid concurrent dispose/addRequest
-        if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
+        if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.isEmpty()) {
           EdtExecutorService.getInstance().execute(() -> {
-            if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-              myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
+            if (!myUpdateAlarm.isDisposed()) {
+              myUpdateAlarm.request(myProgressWindow.getModalityState());
             }
           });
         }

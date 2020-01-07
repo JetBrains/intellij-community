@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -118,7 +118,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     if (!active) {
       return;
     }
-    if (myAlarm.getActiveRequestCount() == 0) {
+    if (myAlarm.isEmpty()) {
       myAlarm.addRequest(() -> {
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
         if (project == null) return;

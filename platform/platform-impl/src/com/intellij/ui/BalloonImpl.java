@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.application.Topics;
@@ -158,7 +158,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
           final boolean moveChanged = insideBalloon != myLastMoveWasInsideBalloon;
           myLastMoveWasInsideBalloon = insideBalloon;
           if (moveChanged) {
-            if (insideBalloon && myFadeoutAlarm.getActiveRequestCount() > 0) { //Pause hiding timer when mouse is hover
+            if (insideBalloon && !myFadeoutAlarm.isEmpty()) { //Pause hiding timer when mouse is hover
               myFadeoutAlarm.cancelAllRequests();
               myFadeoutRequestDelay -= System.currentTimeMillis() - myFadeoutRequestMillis;
             }
@@ -953,7 +953,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     Topics.subscribe(FrameStateListener.TOPIC, this, new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
-        if (myFadeoutAlarm.getActiveRequestCount() > 0) {
+        if (!myFadeoutAlarm.isEmpty()) {
           myFadeoutAlarm.cancelAllRequests();
           mySmartFadeoutDelay = myFadeoutRequestDelay - (int)(System.currentTimeMillis() - myFadeoutRequestMillis);
           if (mySmartFadeoutDelay <= 0) {
