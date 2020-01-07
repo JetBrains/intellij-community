@@ -1,6 +1,7 @@
 package circlet.vcs.clone
 
 import circlet.client.api.*
+import circlet.platform.api.*
 import circlet.platform.client.*
 import circlet.workspaces.*
 import com.intellij.util.ui.cloneDialog.*
@@ -59,7 +60,7 @@ class CircletCloneComponentViewModel(
             result
         }
     ) { batch ->
-        projectService.projectsBatch(batch, "", "", false)
+        projectService.projectsBatch(batch, "", "").map { it.resolve() }
     }
 
 }
