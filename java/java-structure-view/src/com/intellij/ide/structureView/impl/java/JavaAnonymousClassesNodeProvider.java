@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.FileStructureNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,8 +29,8 @@ import java.util.List;
  */
 public class JavaAnonymousClassesNodeProvider
   implements FileStructureNodeProvider<JavaAnonymousClassTreeElement>, PropertyOwner, DumbAware {
-  public static final String ID = "SHOW_ANONYMOUS";
-  public static final String JAVA_ANONYMOUS_PROPERTY_NAME = "java.anonymous.provider";
+  @NonNls public static final String ID = "SHOW_ANONYMOUS";
+  @NonNls public static final String JAVA_ANONYMOUS_PROPERTY_NAME = "java.anonymous.provider";
 
   @NotNull
   @Override
@@ -54,7 +56,7 @@ public class JavaAnonymousClassesNodeProvider
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return "Show Anonymous Classes";
+    return IdeBundle.message("file.structure.toggle.show.anonymous.classes");
   }
 
   @NotNull
