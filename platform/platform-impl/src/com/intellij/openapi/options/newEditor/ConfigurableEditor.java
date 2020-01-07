@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.BundleBase;
@@ -286,7 +286,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private JComponent createDefaultContent(Configurable configurable) {
     JComponent content = new JPanel(new BorderLayout());
     content.setBorder(JBUI.Borders.empty(10));
-    String key = configurable == null ? null : ConfigurableVisitor.ByID.getID(configurable) + ".settings.description";
+    String key = configurable == null ? null : ConfigurableVisitor.getId(configurable) + ".settings.description";
     String description = key == null ? null : getString(configurable, key);
     if (description == null) {
       description = "Select configuration element in the tree to edit its settings";

@@ -7,7 +7,10 @@ import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableEP;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
@@ -46,14 +49,13 @@ final class EpBasedConfigurableGroup
     myValue = AtomicClearableLazyValue.create(delegate::get);
     myProject = project;
 
-    List<Configurable> all = new ConfigurableVisitor() {
-      @Override
-      protected boolean accept(@NotNull Configurable configurable) {
-        if (!(configurable instanceof ConfigurableWrapper)) return false;
-        ConfigurableEP<?> ep = ((ConfigurableWrapper)configurable).getExtensionPoint();
-        return ep.childrenEPName != null || ep.dynamic;
+    List<Configurable> all = ConfigurableVisitor.findAll(configurable -> {
+      if (!(configurable instanceof ConfigurableWrapper)) {
+        return false;
       }
-    }.findAll(Collections.singletonList(myValue.getValue()));
+      ConfigurableEP<?> ep = ((ConfigurableWrapper)configurable).getExtensionPoint();
+      return ep.childrenEPName != null || ep.dynamic;
+    }, Collections.singletonList(myValue.getValue()));
 
     myExtendableEp = StreamEx.of(all).select(ConfigurableWrapper.class).toImmutableList();
   }
@@ -129,8 +131,7 @@ final class EpBasedConfigurableGroup
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-
+  public void apply() {
   }
 
   @Override
