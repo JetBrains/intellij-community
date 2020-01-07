@@ -154,7 +154,6 @@
       <with attribute="wordsScannerClass" implements="com.intellij.lang.cacheBuilder.WordsScanner"/>
     </extensionPoint>
 
-    <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint name="searcher" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
       <with attribute="forClass" implements="com.intellij.model.search.SearchParameters"/>
       <with attribute="implementationClass" implements="com.intellij.model.search.Searcher"/>
@@ -164,10 +163,8 @@
     <extensionPoint name="indexPatternSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
 
     <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider"/>
-    <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger" dynamic="true"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
-    <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
     <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
 
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter" dynamic="true"/>

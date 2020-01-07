@@ -108,9 +108,6 @@
     <projectService serviceInterface="com.intellij.pom.references.PomService"
                     serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
-    <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
-                    serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
-
     <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>
 
@@ -325,8 +322,6 @@
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexTodoCacheManagerImpl"/>
-    <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
-                    serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
     <testSourcesFilter implementation="com.intellij.openapi.roots.ProjectRootTestSourcesFilter"/>
     <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>

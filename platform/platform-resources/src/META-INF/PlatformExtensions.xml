@@ -340,9 +340,6 @@
     <toolWindow id="Events Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
                 factoryClass="com.intellij.diagnostic.ui.EventsWatcherToolWindowFactory"/>
 
-    <applicationService serviceInterface="com.intellij.ide.plugins.PluginUtil"
-                        serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>
-
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"

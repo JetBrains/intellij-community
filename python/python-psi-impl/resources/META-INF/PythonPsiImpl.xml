@@ -35,6 +35,7 @@
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyClassReferenceSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
+    <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
 
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyStringLiteralExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionManipulator"/>

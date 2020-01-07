@@ -457,7 +457,7 @@
                   order="first, before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralReferenceSearcher"/>
-    <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
+
     <findUsagesHandlerFactory implementation="com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory" id="Python"
                               order="last, before default"/>
     <readWriteAccessDetector implementation="com.jetbrains.python.findUsages.PyReadWriteAccessDetector"/>

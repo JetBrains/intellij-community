@@ -11,6 +11,13 @@
     <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
+
+    <extensionPoint name="codeInsight.containerProvider"
+                    interface="com.intellij.codeInsight.ContainerProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>

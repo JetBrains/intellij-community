@@ -4,13 +4,16 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +25,10 @@ public final class RenameUtilBase {
   }
 
 
-  static void doRenameGenericNamedElement(@NotNull PsiElement namedElement,
-                                          String newName,
-                                          UsageInfo[] usages,
-                                          @Nullable RefactoringElementListener listener) {
+  public static void doRenameGenericNamedElement(@NotNull PsiElement namedElement,
+                                                 String newName,
+                                                 UsageInfo[] usages,
+                                                 @Nullable RefactoringElementListener listener) {
     PsiWritableMetaData writableMetaData = null;
     if (namedElement instanceof PsiMetaOwner) {
       final PsiMetaData metaData = ((PsiMetaOwner)namedElement).getMetaData();
@@ -41,7 +44,8 @@ public final class RenameUtilBase {
     for (UsageInfo usage : usages) {
       if (!(usage.getReference() instanceof BindablePsiReference)) {
         rename(usage, newName);
-      } else {
+      }
+      else {
         hasBindables = true;
       }
     }
@@ -84,5 +88,18 @@ public final class RenameUtilBase {
     PsiReference ref = info.getReference();
     if (ref == null) return;
     ref.handleElementRename(newName);
+  }
+
+  @ApiStatus.Internal
+  public static UsageInfo createMoveRenameUsageInfo(@NotNull PsiElement element,
+                                                    @NotNull PsiReference ref,
+                                                    @NotNull PsiElement referenceElement) {
+    return new MoveRenameUsageInfo(referenceElement, ref,
+                                   ref.getRangeInElement().getStartOffset(),
+                                   ref.getRangeInElement().getEndOffset(),
+                                   element,
+                                   ref.resolve() == null &&
+                                   !(ref instanceof PsiPolyVariantReference &&
+                                     ((PsiPolyVariantReference)ref).multiResolve(true).length > 0));
   }
 }

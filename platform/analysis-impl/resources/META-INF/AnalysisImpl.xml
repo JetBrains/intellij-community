@@ -6,6 +6,9 @@
                     beanClass="com.intellij.codeInsight.completion.CompletionDataEP">
       <with attribute="className" implements="com.intellij.codeInsight.completion.CompletionData"/>
     </extensionPoint>
+
+    <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger" dynamic="true"/>
+    <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
@@ -19,6 +22,13 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.BaseCompletionService"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginUtil"
+                        serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>
+
+    <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
+                    serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
+                    serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
