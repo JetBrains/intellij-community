@@ -39,5 +39,7 @@
              order="after priority"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
              order="last"/>
+
+    <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
   </extensions>
 </idea-plugin>

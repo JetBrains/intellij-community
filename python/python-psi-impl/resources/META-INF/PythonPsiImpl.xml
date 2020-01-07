@@ -122,6 +122,7 @@
       <with attribute="implementationClass" implements="com.jetbrains.python.psi.PythonVisitorFilter"/>
     </extensionPoint>
     <extensionPoint qualifiedName="Pythonid.pyReferenceCustomTargetChecker" interface="com.jetbrains.python.psi.impl.references.PyReferenceCustomTargetChecker"/>
+    <extensionPoint qualifiedName="Pythonid.pyDataclassParametersProvider" interface="com.jetbrains.python.codeInsight.PyDataclassParametersProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
