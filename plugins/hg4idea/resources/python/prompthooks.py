@@ -19,7 +19,7 @@
 
 import socket
 import struct
-import urllib2
+import sys
 from mercurial import  ui, util, error
 from mercurial.i18n import _
 
@@ -27,6 +27,8 @@ try:
     from mercurial.url import passwordmgr
 except:
     from mercurial.httprepo import passwordmgr
+
+PY3 = sys.version_info.major == 3
 
 def sendInt( client, number):
     length = struct.pack('>L', number)
@@ -37,11 +39,11 @@ def send( client, data ):
         sendInt(client, 0)
     else:
         # we need to send data length and data together because it may produce read problems, see org.zmlx.hg4idea.execution.SocketServer
-        client.sendall(struct.pack('>L', len(data)) + data)
+        client.sendall(struct.pack('>L', len(data)) + data.encode('utf-8'))
     
 def receiveIntWithMessage(client, message):
     requiredLength = struct.calcsize('>L')
-    buffer = ''
+    buffer = ''.encode('utf-8')
     while len(buffer)<requiredLength:
         chunk = client.recv(requiredLength-len(buffer))
         if chunk == '':
@@ -63,7 +65,7 @@ def receive( client ):
     
 def receiveWithMessage( client, message ):
     length = receiveIntWithMessage(client, message)
-    buffer = ''
+    buffer = ''.encode('utf-8')
     while len(buffer) < length :
         chunk = client.recv(length - len(buffer))
         if chunk == '':
@@ -80,7 +82,7 @@ def monkeypatch_method(cls):
     return decorator
 
 def sendchoicestoidea(ui, msg, choices, default):
-    port = int(ui.config( 'hg4ideaprompt', 'port', None, True))
+    port = int(ui.config( b'hg4ideaprompt', b'port', None, True))
 
     if not port:
         raise error.Abort("No port was specified")
@@ -122,7 +124,7 @@ original_warn = ui.ui.warn
 @monkeypatch_method(ui.ui)
 def warn(self, *msg):
     original_warn(self, *msg)
-    hg4ideaWarnConfig = self.config('hg4ideawarn', 'port', None, True)
+    hg4ideaWarnConfig = self.config(b'hg4ideawarn', b'port', None, True)
     if hg4ideaWarnConfig is None:
         return
     port = int(hg4ideaWarnConfig)
@@ -144,7 +146,7 @@ def warn(self, *msg):
 
 
 def retrieve_pass_from_server(ui, uri,path, proposed_user):
-    port = int(ui.config('hg4ideapass', 'port', None, True))
+    port = int(ui.config(b'hg4ideapass', b'port', None, True))
     if port is None:
         raise error.Abort("No port was specified")
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -156,8 +158,8 @@ def retrieve_pass_from_server(ui, uri,path, proposed_user):
     send(client, uri)
     send(client, path)
     send(client, proposed_user)
-    user = receiveWithMessage(client, "http authorization required")
-    password = receiveWithMessage(client, "http authorization required")
+    user = receiveWithMessage(client, b"http authorization required")
+    password = receiveWithMessage(client, b"http authorization required")
     return user, password
 
 
@@ -180,15 +182,21 @@ def find_user_password(self, realm, authuri):
 
         # After mercurial 3.8.3 urllib2.HTTPPasswordmgrwithdefaultrealm.find_user_password etc were changed to appropriate methods
         # in util.urlreq module with slightly different semantics
-        newMerc = False if isinstance(self, urllib2.HTTPPasswordMgrWithDefaultRealm) else True
+        #
+        # Mercurial 5.2 started supporting python3, where urllib2 has been split into several modules
+        if PY3:
+            import urllib.request as urllib
+        else:
+            import urllib2 as urllib
+        newMerc = False if isinstance(self, urllib.HTTPPasswordMgrWithDefaultRealm) else True
         if newMerc:
             user, password = util.urlreq.httppasswordmgrwithdefaultrealm().find_user_password(realm, authuri)
         else:
-            user, password = urllib2.HTTPPasswordMgrWithDefaultRealm.find_user_password(self, realm, authuri)
+            user, password = urllib.HTTPPasswordMgrWithDefaultRealm.find_user_password(self, realm, authuri)
         if user is None:
             auth = read_hgrc_authtoken(self.ui, authuri)
             if auth:
-                user = auth.get("username")
+                user = auth.get(b"username")
 
         pmWithRealm = util.urlreq.httppasswordmgrwithdefaultrealm() if newMerc else self
         reduced_uri, path = pmWithRealm.reduce_uri(authuri, False)
