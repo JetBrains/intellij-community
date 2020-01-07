@@ -169,7 +169,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.wizardTemplate.plugin", "wizard-template.jar")
       withModule("intellij.android.wizardTemplate.impl", "wizard-template.jar")
       withModule("intellij.android.profilersAndroid", "android.jar")
-      withModule("intellij.android.gameToolsStarter", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
