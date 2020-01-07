@@ -38,6 +38,11 @@ class DumpIndexStarter : ApplicationStarter {
       System.getProperty("dump.index.remove.downloaded.jdks", "false")!!.toBoolean()
     }
 
+    val tempPath: Path by lazy {
+      val property = System.getProperty("dump.index.temp.path")
+      (if (property != null) Paths.get(property) else outputPath.resolve("temp")).createDirectories()
+    }
+
     fun info(message: String) {
       println(message)
     }
@@ -63,7 +68,6 @@ class DumpIndexStarter : ApplicationStarter {
   }
 
   private fun start() {
-    val tempPath = outputPath.resolve("temp")
     val projectPath = tempPath.resolve("project").createDirectories()
     val jdksPath = tempPath.resolve("jdks").createDirectories()
 
