@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -14,9 +14,9 @@ public class ConfigurableExtensionTest extends LightPlatformTestCase {
       "    <configurable instance=\"com.intellij.javaee.XMLCatalogConfigurable\" displayName=\"XML Catalog\"/>\n" +
       "  </projectConfigurable>");
 
-    final ConfigurableEP bean = new ConfigurableEP();
+    ConfigurableEP<?> bean = new ConfigurableEP<>();
     XmlSerializer.deserializeInto(element, bean);
     assertNotNull(bean.children);
-    assertEquals(1, bean.children.length);
+    assertEquals(1, bean.children.size());
   }
 }

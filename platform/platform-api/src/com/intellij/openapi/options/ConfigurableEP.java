@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -110,7 +111,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
   @Property(surroundWithTag = false)
   @XCollection
-  public ConfigurableEP[] children;
+  public List<ConfigurableEP<?>> children;
 
   /**
    * This attribute specifies a name of the extension point of {@code ConfigurableEP} type that will be used to calculate children.
@@ -137,8 +138,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("parentId")
   public String parentId;
 
-  public ConfigurableEP[] getChildren() {
-    for (ConfigurableEP child : children) {
+  @NotNull
+  public List<ConfigurableEP<?>> getChildren() {
+    for (ConfigurableEP<?> child : children) {
       child.myPicoContainer = myPicoContainer;
       child.myPluginDescriptor = myPluginDescriptor;
       child.myProject = myProject;
@@ -406,7 +408,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
         return null;
       }
       catch (AssertionError | LinkageError | Exception e) {
-        LOG.error(e);
+        LOG.error("Cannot create configurable", e);
       }
       return null;
     }
