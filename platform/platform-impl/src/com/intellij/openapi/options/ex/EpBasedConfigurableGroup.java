@@ -13,7 +13,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.openapi.util.ClearableLazyValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ final class EpBasedConfigurableGroup
   private final Project myProject;
 
   @NotNull
-  private final AtomicClearableLazyValue<ConfigurableGroup> myValue;
+  private final ClearableLazyValue<ConfigurableGroup> myValue;
   @NotNull
   private final CopyOnWriteArrayList<Listener> myListeners = new CopyOnWriteArrayList<>();
   @NotNull
@@ -45,9 +45,9 @@ final class EpBasedConfigurableGroup
 
   EpBasedConfigurableGroup(@Nullable Project project,
                            @NotNull Supplier<ConfigurableGroup> delegate) {
-    myValue = AtomicClearableLazyValue.create(delegate::get);
     myProject = project;
 
+    ConfigurableGroup group = delegate.get();
     List<ConfigurableWrapper> list = new ArrayList<>();
     ConfigurableVisitor.collect(configurable -> {
       if (!(configurable instanceof ConfigurableWrapper)) {
@@ -59,7 +59,8 @@ final class EpBasedConfigurableGroup
       if (ep.childrenEPName != null || ep.dynamic) {
         list.add(configurableWrapper);
       }
-    }, myValue.getValue().getConfigurables());
+    }, group.getConfigurables());
+    myValue = ClearableLazyValue.createAtomic(delegate);
     myExtendableEp = list;
   }
 

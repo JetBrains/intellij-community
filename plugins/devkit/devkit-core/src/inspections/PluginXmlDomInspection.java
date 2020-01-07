@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -24,8 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -87,17 +87,15 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
 
   @XCollection
   public List<PluginModuleSet> PLUGINS_MODULES = new ArrayList<>();
-  private final AtomicClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName =
-    AtomicClearableLazyValue.create(() -> {
-      Map<String, PluginModuleSet> result = new HashMap<>();
-      for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
-        for (String module : modulesSet.modules) {
-          result.put(module, modulesSet);
-        }
+  private final ClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = ClearableLazyValue.createAtomic(() -> {
+    Map<String, PluginModuleSet> result = new HashMap<>();
+    for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
+      for (String module : modulesSet.modules) {
+        result.put(module, modulesSet);
       }
-      return result;
-    });
-
+    }
+    return result;
+  });
 
   public PluginXmlDomInspection() {
     super(IdeaPlugin.class);
@@ -170,9 +168,7 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
     }
     else {
       ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
-        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName,
-                                               myRegistrationCheckIgnoreClassList,
-                                               holder);
+        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, myRegistrationCheckIgnoreClassList, holder);
       if (element instanceof Extension) {
         annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
       }

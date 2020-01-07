@@ -3,6 +3,8 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * Lazy value with ability to reset (and recompute) the value.
  * Thread-safe version: {@link AtomicClearableLazyValue}.
@@ -15,6 +17,17 @@ public abstract class ClearableLazyValue<T> {
       @Override
       protected T compute() {
         return computable.compute();
+      }
+    };
+  }
+
+  @NotNull
+  public static <T> ClearableLazyValue<T> createAtomic(@NotNull Supplier<? extends T> computable) {
+    return new AtomicClearableLazyValue<T>() {
+      @NotNull
+      @Override
+      protected T compute() {
+        return computable.get();
       }
     };
   }
