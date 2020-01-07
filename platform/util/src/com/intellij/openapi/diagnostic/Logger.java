@@ -174,7 +174,7 @@ public abstract class Logger {
   public abstract void error(@NonNls String message, @Nullable Throwable t, @NotNull String... details);
 
   @Contract("false,_->fail") // wrong, but avoid quite a few warnings in the code
-  public boolean assertTrue(boolean value, @Nullable Object message) {
+  public boolean assertTrue(boolean value, @NonNls @Nullable Object message) {
     if (!value) {
       String resultMessage = "Assertion failed";
       if (message != null) resultMessage += ": " + message;
