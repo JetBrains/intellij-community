@@ -114,19 +114,9 @@ def sendchoicestoidea(ui, msg, choices, default):
     except:
         raise
 
-# determine which method to monkey patch : 
-# in Mercurial 1.4 the prompt method was renamed to promptchoice
-if getattr(ui.ui, 'promptchoice', None):
-    @monkeypatch_method(ui.ui)
-    def promptchoice(self, msg, choices=None, default=0):
-        return sendchoicestoidea(self, msg, choices, default)
-else:
-    @monkeypatch_method(ui.ui)
-    def prompt(self, msg, choices=None, default="y"):
-        resps = [s[s.index('&')+1].lower() for s in choices]
-        defaultIndex = resps.index( default )
-        responseIndex = sendchoicestoidea( self, msg, choices, defaultIndex)
-        return resps[responseIndex]
+@monkeypatch_method(ui.ui)
+def promptchoice(self, msg, choices=None, default=0):
+    return sendchoicestoidea(self, msg, choices, default)
 
 original_warn = ui.ui.warn
 @monkeypatch_method(ui.ui)
@@ -177,32 +167,16 @@ def find_user_password(self, realm, authuri):
     try:
         return original_retrievepass(self, realm, authuri)
     except error.Abort:
-
-        # In mercurial 1.8 the readauthtoken method was replaced with
-        # the readauthforuri method, which has different semantics
-        if getattr(self, 'readauthtoken', None):
-            def read_hgrc_authtoken(ui, authuri):
-                return self.readauthtoken(authuri)
-        else:
-            def read_hgrc_authtoken(ui, authuri):
-                try:
-                    # since hg 1.8
-                    from mercurial.url import readauthforuri
-                except ImportError:
-                    # hg 1.9: readauthforuri moved to httpconnection
-                    from mercurial.httpconnection import readauthforuri
-                from inspect import getargspec
-                args, _, _, _ = getargspec(readauthforuri)
-                if len(args) == 2:
-                    res = readauthforuri(self.ui, authuri)
-                else:
-                    # since hg 1.9.2 readauthforuri accepts 3 required arguments instead of 2
-                    res = readauthforuri(self.ui, authuri, "")
-                if res:
-                    group, auth = res
-                    return auth
-                else:
-                    return None
+        def read_hgrc_authtoken(ui, authuri):
+            from mercurial.httpconnection import readauthforuri
+            from inspect import getargspec
+            args, _, _, _ = getargspec(readauthforuri)
+            res = readauthforuri(self.ui, authuri, "")
+            if res:
+                group, auth = res
+                return auth
+            else:
+                return None
 
         # After mercurial 3.8.3 urllib2.HTTPPasswordmgrwithdefaultrealm.find_user_password etc were changed to appropriate methods
         # in util.urlreq module with slightly different semantics
