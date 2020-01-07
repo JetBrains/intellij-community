@@ -68,10 +68,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   @Nullable
   @Override
   public String getActionName(PsiElement[] elements) {
-    if (elements.length == 1 && !(elements[0] instanceof PsiPackage) && !(elements [0] instanceof PsiDirectory)) {
-      return "Copy Class...";
+    if (elements.length == 1 && !(elements[0] instanceof PsiPackage) && !(elements[0] instanceof PsiDirectory)) {
+      return RefactoringBundle.message("copy.handler.copy.class.with.dialog");
     }
-    return "Copy Classes...";
+    return RefactoringBundle.message("copy.handler.copy.classes.with.dialog");
   }
 
   public static boolean canCopyClass(PsiElement... elements) {
@@ -182,7 +182,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
     Project project = defaultTargetDirectory.getProject();
     if (DumbService.isDumb(elements[0].getProject())) {
-      DumbService.getInstance(project).showDumbModeNotification("Copy classes is not available during indexing");
+      DumbService.getInstance(project).showDumbModeNotification(RefactoringBundle.message(
+        "copy.handler.is.not.available.during.indexing"));
       return;
     }
 
