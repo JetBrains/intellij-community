@@ -41,6 +41,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -136,14 +137,14 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
             contentsEquals = false;
           }
           else if (FileUtilRt.isTooLarge(length1) || FileUtilRt.isTooLarge(length2)) {
-            return new ComparisonData(ThreeState.UNSURE, "Files are too large to compare");
+            return new ComparisonData(ThreeState.UNSURE, () -> "Files are too large to compare");
           }
           else {
             contentsEquals = DiffUtil.compareStreams(() -> DiffUtil.getFileInputStream(file1), () -> DiffUtil.getFileInputStream(file2));
           }
 
           return new ComparisonData(ThreeState.fromBoolean(contentsEquals),
-                                    contentsEquals ? DiffBundle.message("diff.contents.are.identical.message.text") : null);
+                                    () -> contentsEquals ? DiffBundle.message("diff.contents.are.identical.message.text") : null);
         }
         catch (IOException e) {
           LOG.warn(e);
@@ -171,8 +172,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
       myComparisonData = comparisonData;
 
-      if (myComparisonData.notification != null) {
-        myPanel.addNotification(DiffNotifications.createNotification(myComparisonData.notification));
+      if (myComparisonData.notification.get() != null) {
+        myPanel.addNotification(DiffNotifications.createNotification(myComparisonData.notification.get()));
       }
       myStatusPanel.update();
     };
@@ -275,13 +276,13 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
   }
 
   private static class ComparisonData {
-    public static final ComparisonData UNKNOWN = new ComparisonData(ThreeState.UNSURE, null);
-    public static final ComparisonData ERROR = new ComparisonData(ThreeState.UNSURE, DiffBundle.message("diff.cant.calculate.diff"));
+    public static final ComparisonData UNKNOWN = new ComparisonData(ThreeState.UNSURE, () -> null);
+    public static final ComparisonData ERROR = new ComparisonData(ThreeState.UNSURE, () -> DiffBundle.message("diff.cant.calculate.diff"));
 
     @NotNull public final ThreeState isContentsEqual;
-    @Nullable public final String notification;
+    @NotNull public final NullableComputable<String> notification;
 
-    private ComparisonData(@NotNull ThreeState isContentsEqual, @Nullable String notification) {
+    private ComparisonData(@NotNull ThreeState isContentsEqual, @NotNull NullableComputable<String> notification) {
       this.isContentsEqual = isContentsEqual;
       this.notification = notification;
     }
