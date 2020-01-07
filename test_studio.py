@@ -23,7 +23,7 @@ class StudioTests(unittest.TestCase):
 
   def test_artifacts_are_present(self):
     name = self.artifact_prefix() + build
-    for suffix in [ ".mac.zip", ".tar.gz", ".win.zip", ".win32.zip"]:
+    for suffix in [ ".mac.zip", ".tar.gz", ".win.zip"]:
       file = os.path.join(dist_dir, name + suffix)
       self.assertTrue(os.path.exists(file), "Artifact " + file + " not found.")
 
@@ -77,7 +77,7 @@ class StudioTests(unittest.TestCase):
       return
 
     name = self.artifact_prefix() + build
-    for suffix in [ ".mac.zip", ".win.zip", ".win32.zip"]:
+    for suffix in [ ".mac.zip", ".win.zip"]:
       file_name = os.path.join(dist_dir, name + suffix)
       with zipfile.ZipFile(file_name) as file:
         for f in file.infolist():

@@ -28,7 +28,6 @@ public class AndroidStudioBundleTest {
   @Test
   public void testLoggingBinarySize() throws Exception {
     List<String> files = Arrays.asList("android-studio.win.zip",
-                                       "android-studio.win32.zip",
                                        "android-studio.mac.zip",
                                        "android-studio.tar.gz");
 
