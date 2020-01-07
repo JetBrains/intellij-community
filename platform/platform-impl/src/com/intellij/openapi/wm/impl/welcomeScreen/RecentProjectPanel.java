@@ -141,10 +141,7 @@ public class RecentProjectPanel extends JPanel {
               removeRecentProject();
             }
             else if (selection != null) {
-              AnAction selectedAction = (AnAction) selection;
-              AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
-              ActionUtil.performActionDumbAware(selectedAction, actionEvent);
-
+              AnAction selectedAction = performSelectedAction(event, (AnAction)selection);
               // remove action from list if needed
               if (selectedAction instanceof ReopenProjectAction) {
                 if (((ReopenProjectAction)selectedAction).isRemoved()) {
@@ -154,7 +151,6 @@ public class RecentProjectPanel extends JPanel {
             }
           }
         }
-
         return true;
       }
     }.installOn(myList);
@@ -164,9 +160,11 @@ public class RecentProjectPanel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         List selectedValued = myList.getSelectedValuesList();
         if (selectedValued != null) {
-          for (Object selection : selectedValued) {
-            AnActionEvent event = AnActionEvent.createFromInputEvent((AnAction)selection, null, ActionPlaces.WELCOME_SCREEN);
-            ActionUtil.performActionDumbAware((AnAction)selection, event);
+          for (Object selectedAction : selectedValued) {
+            if (selectedAction instanceof AnAction) {
+              InputEvent event = new KeyEvent(myList, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), KeyEvent.VK_ENTER, '\r');
+              performSelectedAction(event, (AnAction)selectedAction);
+            }
           }
         }
       }
@@ -219,6 +217,15 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+  }
+
+  @NotNull
+  private AnAction performSelectedAction(@NotNull InputEvent event, AnAction selection) {
+    AnActionEvent actionEvent = AnActionEvent
+      .createFromInputEvent(event, ActionPlaces.WELCOME_SCREEN, selection.getTemplatePresentation(),
+                            DataManager.getInstance().getDataContext(myList), false, false);
+    ActionUtil.performActionDumbAwareWithCallbacks(selection, actionEvent, actionEvent.getDataContext());
+    return selection;
   }
 
   private void removeRecentProject() {
