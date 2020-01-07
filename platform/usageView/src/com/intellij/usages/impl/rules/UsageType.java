@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.BundleBase;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 public final class UsageType {
   public static final UsageType CLASS_INSTANCE_OF = new UsageType(() -> UsageViewBundle.message("usage.type.instanceof"));
@@ -60,7 +47,7 @@ public final class UsageType {
 
   @Deprecated
   private final String myName;
-  private final Computable<String> myNameComputable;
+  private final Supplier<String> myNameComputable;
 
   @Deprecated
   public UsageType(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name) {
@@ -68,20 +55,20 @@ public final class UsageType {
     myName = name;
   }
 
-  public UsageType(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) Computable<String> nameComputable) {
+  public UsageType(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) Supplier<String> nameComputable) {
     myNameComputable = nameComputable;
-    myName = nameComputable.compute();
+    myName = nameComputable.get();
   }
 
   @NotNull
   public String toString(@NotNull UsageViewPresentation presentation) {
     String word = presentation.getUsagesWord();
-    String usageWord = StringUtil.startsWithChar(myNameComputable.compute(), '{') ? StringUtil.capitalize(word) : word;
-    return BundleBase.format(myNameComputable.compute(), usageWord);
+    String usageWord = StringUtil.startsWithChar(myNameComputable.get(), '{') ? StringUtil.capitalize(word) : word;
+    return BundleBase.format(myNameComputable.get(), usageWord);
   }
 
   @Override
   public String toString() {
-    return myNameComputable.compute();
+    return myNameComputable.get();
   }
 }
