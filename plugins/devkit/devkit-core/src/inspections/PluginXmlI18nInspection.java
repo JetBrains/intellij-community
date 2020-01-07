@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -16,9 +17,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
+import org.gradle.internal.impldep.org.eclipse.jgit.annotations.NonNull;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   @Override
@@ -71,19 +71,19 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       }
 
       @Override
-      public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+      public void applyFix(@NotNull Project project, PsiFile xmlFile, @Nullable Editor editor) {
         XmlElement xml = ag.getXmlElement();
         if (xml == null) return;
         @NonNls String prefix = ag instanceof Action ? "action" : "group";
 
-        IdeaPlugin ideaPlugin = ag.getParentOfType(IdeaPlugin.class, false);
-        GenericDomValue<String> bundle = ideaPlugin != null ? ideaPlugin.getResourceBundle() : null;
-
         if (text != null) ag.getText().setStringValue(null);
         if (desc != null) ag.getDescription().setStringValue(null);
 
-        if (text != null) append(project, file, prefix + "." + id + ".text=" + text);
-        if (desc != null) append(project, file, prefix + "." + id + ".description=" + desc);
+        PropertiesFileImpl propertiesFile = findBundlePropertiesFile(ag);
+
+        PsiFile fileToWrite = propertiesFile != null ? propertiesFile : xmlFile;
+        if (text != null) append(project, fileToWrite, prefix + "." + id + ".text=" + text);
+        if (desc != null) append(project, fileToWrite, prefix + "." + id + ".description=" + desc);
 
         removeEmptyLines(xml);
       }
@@ -104,8 +104,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         }, xml.getFirstChild());
       }
 
-      private void append(@NotNull Project project, PsiFile file, @NonNls String text) {
-        Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      private void append(@NotNull Project project, @NonNull PsiFile fileToWrite, @NonNls String text) {
+        Document document = PsiDocumentManager.getInstance(project).getDocument(fileToWrite);
         if (document == null) return;
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
         int length = document.getTextLength();
