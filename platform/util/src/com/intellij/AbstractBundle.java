@@ -66,7 +66,7 @@ public abstract class AbstractBundle {
   }
 
   @ApiStatus.Internal
-  public ResourceBundle getResourceBundle(@Nullable ClassLoader classLoader) {
+  protected ResourceBundle getResourceBundle(@Nullable ClassLoader classLoader) {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
       bundle = getResourceBundle(myPathToBundle, classLoader == null ? getClass().getClassLoader() : classLoader);
