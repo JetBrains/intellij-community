@@ -145,7 +145,7 @@
     <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.buildTargetScopeProvider"
-                    interface="com.intellij.compiler.impl.BuildTargetScopeProvider"/>
+                    interface="com.intellij.compiler.impl.BuildTargetScopeProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.optionsManager"
                     interface="com.intellij.compiler.options.CompilerOptionsFilter" dynamic="true"/>
@@ -181,9 +181,9 @@
     <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableAdder"
                     interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableContributor"/>
 
-    <extensionPoint qualifiedName="com.intellij.compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"/>
+    <extensionPoint qualifiedName="com.intellij.compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
-    <extensionPoint qualifiedName="com.intellij.compiler.task" area="IDEA_PROJECT" beanClass="com.intellij.compiler.CompileTaskBean"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.task" area="IDEA_PROJECT" beanClass="com.intellij.compiler.CompileTaskBean" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.compilerSettingsFactory" area="IDEA_PROJECT" interface="com.intellij.compiler.CompilerSettingsFactory"/>
     <extensionPoint qualifiedName="com.intellij.compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.buildProcess.parametersProvider" area="IDEA_PROJECT"
@@ -200,7 +200,7 @@
     <extensionPoint qualifiedName="com.intellij.projectStructureValidator"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator"/>
 
-    <extensionPoint qualifiedName="com.intellij.compiler.updateResourcesBuildContributor" interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.updateResourcesBuildContributor" interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.junitPatcher"
                     interface="com.intellij.execution.JUnitPatcher"/>
@@ -262,7 +262,7 @@
 
     <extensionPoint qualifiedName="com.intellij.compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
