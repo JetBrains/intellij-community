@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {addExportMenu, StatChartManager} from "@/charts/ChartManager"
@@ -7,6 +7,7 @@ import {GroupedMetricResponse} from "@/aggregatedStats/model"
 // todo https://www.amcharts.com/demos/variance-indicators/
 export class ClusteredChartManager implements StatChartManager {
   private readonly chart: am4charts.XYChart
+  private currentChartTitle: string | null = null
 
   constructor(container: HTMLElement) {
     this.chart = am4core.create(container, am4charts.XYChart)
@@ -41,8 +42,6 @@ export class ClusteredChartManager implements StatChartManager {
     label.maxWidth = 120
     label.tooltipText = "{category}"
   }
-
-  private currentChartTitle: string | null = null
 
   setChartTitle(value: string) {
     if (this.currentChartTitle === value) {

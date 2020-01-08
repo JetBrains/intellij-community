@@ -1,4 +1,4 @@
-<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<!-- Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
   <div>
     <el-row>
@@ -120,12 +120,12 @@
             <el-row :gutter="5" style="margin-top: 5px;">
               <el-col :span="12">
                 <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
-                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
+                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="1M"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
                 <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
-                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
+                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings" timeRange="1M"/>
                 </el-card>
               </el-col>
             </el-row>
