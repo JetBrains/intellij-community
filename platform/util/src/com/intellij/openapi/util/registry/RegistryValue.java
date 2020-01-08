@@ -171,9 +171,10 @@ public class RegistryValue {
       return systemProperty;
     }
 
-    if (!myRegistry.isLoaded() && !isHeadlessMode()) {
-      LOG.warn("The registry key '" + key + "' accessed, but not loaded yet");
-    }
+    //todo[kb] uncomment when have a better description for what to do with this warning
+    //if (!myRegistry.isLoaded() && !isHeadlessMode()) {
+      //LOG.warn("The registry key '" + key + "' accessed, but not loaded yet");
+    //}
 
     final String bundleValue = Registry.getInstance().getBundleValue(key, mustExistInBundle);
     if (bundleValue != null) {
