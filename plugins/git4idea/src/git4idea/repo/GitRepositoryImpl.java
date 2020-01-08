@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -30,7 +29,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.concurrent.ExecutorService;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -271,7 +269,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
-    sw.report();
+    sw.report(LOG);
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
                            new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
                            new LinkedHashSet<>(trackInfos),

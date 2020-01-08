@@ -869,7 +869,12 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun `assert remote branch deleted`(repository: GitRepository, name: String) {
-    assertNull("Branch should be deleted", repository.branches.findBranchByName(name))
+    val branch = repository.branches.findBranchByName(name)
+    if (branch != null) {
+      assertNull("Branch $name should be deleted in $repository but was found in the repo info." +
+                 "native git branch list: \n${git("branch --list --all")}", branch)
+
+    }
   }
 
   private fun assertDetachedState(reference: String) {
