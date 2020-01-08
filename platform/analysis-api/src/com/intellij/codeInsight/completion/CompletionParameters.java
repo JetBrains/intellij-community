@@ -21,6 +21,7 @@ public final class CompletionParameters {
   private final int myInvocationCount;
   private final CompletionProcess myProcess;
   private boolean isTestingMode = false;
+  private boolean onlyCompletionsWithAutoImport = false;
 
   @ApiStatus.Internal
   public CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
@@ -136,5 +137,13 @@ public final class CompletionParameters {
 
   public void setIsTestingMode(boolean runTestingMode) {
     isTestingMode = runTestingMode;
+  }
+
+  public boolean isOnlyCompletionsWithAutoImport() {
+    return onlyCompletionsWithAutoImport;
+  }
+
+  public void setOnlyCompletionsWithAutoImport(boolean onlyAutoImport) {
+    onlyCompletionsWithAutoImport = onlyAutoImport;
   }
 }
