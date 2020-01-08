@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.configurationStore.StateStorageManagerKt;
@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -87,6 +88,10 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
@@ -1070,5 +1075,28 @@ public class PlatformTestUtil {
     }
     int offset = psiFile.getText().indexOf(signature);
     return psiFile.findElementAt(offset);
+  }
+
+  public static void useAppConfigDir(ThrowableRunnable<? extends Exception> task) throws Exception {
+    Path configDir = Paths.get(PathManager.getConfigPath());
+
+    Path configCopy;
+    if (Files.exists(configDir)) {
+      configCopy = Files.move(configDir, Paths.get(configDir + "_bak"), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    }
+    else {
+      FileUtil.delete(configDir);
+      configCopy = null;
+    }
+
+    try {
+      task.run();
+    }
+    finally {
+      FileUtil.delete(configDir);
+      if (configCopy != null) {
+        Files.move(configCopy, configDir, StandardCopyOption.ATOMIC_MOVE);
+      }
+    }
   }
 }
