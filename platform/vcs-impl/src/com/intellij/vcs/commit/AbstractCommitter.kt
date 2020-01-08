@@ -125,7 +125,7 @@ abstract class AbstractCommitter(
 
     endSemaphore.down()
     ChangeListManagerImpl.getInstanceImpl(project).executeOnUpdaterThread {
-      indicator.text = "Performing VCS commit..."
+      indicator.text = message("message.text.commit.progress")
       try {
         ProgressManager.getInstance().runProcess(
           {
@@ -143,7 +143,7 @@ abstract class AbstractCommitter(
       }
     }
 
-    indicator.text = "Waiting for VCS background tasks to finish..."
+    indicator.text = message("message.text.background.tasks")
     ProgressIndicatorUtils.awaitWithCheckCanceled(endSemaphore, indicator)
   }
 
