@@ -493,6 +493,7 @@
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
 
+    <projectSdkSetupValidator id="javaSdk" implementation="com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator"/>
     <editorNotificationProvider implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
 
     <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>

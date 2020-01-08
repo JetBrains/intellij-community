@@ -70,7 +70,7 @@
     <projectTemplate projectType="Java FX" templatePath="resources/projectTemplates/Java/JavaFX Application.zip" category="true"/>
     <javaMainMethodProvider implementation="org.jetbrains.plugins.javaFX.JavaFxMainMethodRunConfigurationProvider"/>
     <deadCode implementation="org.jetbrains.plugins.javaFX.JavaFxEntryPoint"/>
-    <editorNotificationProvider implementation="org.jetbrains.plugins.javaFX.JavaFxProjectSdkSetupValidator"/>
+    <projectSdkSetupValidator implementation="org.jetbrains.plugins.javaFX.JavaFxProjectSdkSetupValidator" order="after javaSdk"/>
     <predefinedMigrationMapProvider implementation="org.jetbrains.plugins.javaFX.refactoring.migration.JavaFx9Migration"/>
     <postStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil$JavaFxDetectionStartupActivity"/>
     <runConfigurationExtension implementation="org.jetbrains.plugins.javaFX.execution.JavaFxRunConfigurationExtension"/>
