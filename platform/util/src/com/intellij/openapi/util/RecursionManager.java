@@ -382,7 +382,6 @@ public class RecursionManager {
     // IDEA-228814
     // resolve & inference
     "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
-    "com.intellij.psi.util.PsiUtil.getApplicabilityLevel(",
     "com.intellij.psi.ThreadLocalTypes.performWithTypes(",
     // inner class imports
     "com.intellij.psi.impl.source.PsiJavaFileBaseImpl.processOnDemandStaticImports(",
