@@ -171,7 +171,7 @@ public class RegistryValue {
       return systemProperty;
     }
 
-    if (!myRegistry.isLoaded()) {
+    if (!myRegistry.isLoaded() && !isHeadlessMode()) {
       LOG.warn("The registry key '" + key + "' accessed, but not loaded yet");
     }
 
@@ -188,6 +188,10 @@ public class RegistryValue {
 
   public void setValue(int value) {
     setValue(Integer.toString(value));
+  }
+
+  private static boolean isHeadlessMode() {
+    return "true".equalsIgnoreCase(System.getProperty("java.awt.headless"));
   }
 
   public void setValue(String value) {
