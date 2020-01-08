@@ -1,184 +1,137 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.options.ex;
+package com.intellij.openapi.options.ex
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.BaseExtensionPointName;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointChangeListener;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableEP;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DefaultProjectFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ClearableLazyValue;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Supplier;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointChangeListener
+import com.intellij.openapi.extensions.ExtensionsArea
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.Configurable.NoScroll
+import com.intellij.openapi.options.Configurable.WithEpDependencies
+import com.intellij.openapi.options.ConfigurableGroup
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.DefaultProjectFactory
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ClearableLazyValue
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Supplier
+import javax.swing.JComponent
 
 /**
  * This class provides logic for handling change in EPs and sends the update signals to the listeners.
  * e.g. EPs can be updated when settings dialog is open: in this case we have to update the UI according to the changes.
  */
 @ApiStatus.Experimental
-final class EpBasedConfigurableGroup
-  implements Configurable.NoScroll, MutableConfigurableGroup, Weighted, SearchableConfigurable, Disposable {
+internal class EpBasedConfigurableGroup(private val project: Project?, delegate: Supplier<ConfigurableGroup?>) : NoScroll, MutableConfigurableGroup, Weighted, SearchableConfigurable, Disposable {
+  private val value = ClearableLazyValue.createAtomic(delegate)
+  private val listeners = CopyOnWriteArrayList<MutableConfigurableGroup.Listener>()
+  private val extendableEp: MutableList<ConfigurableWrapper>
 
-  @Nullable
-  private final Project myProject;
+  override fun getDisplayName(): String = value.value.displayName
 
-  @NotNull
-  private final ClearableLazyValue<ConfigurableGroup> myValue;
-  @NotNull
-  private final CopyOnWriteArrayList<Listener> myListeners = new CopyOnWriteArrayList<>();
-  @NotNull
-  private final List<ConfigurableWrapper> myExtendableEp;
+  override fun getConfigurables(): Array<Configurable> = value.value.configurables
 
-  EpBasedConfigurableGroup(@Nullable Project project,
-                           @NotNull Supplier<ConfigurableGroup> delegate) {
-    myProject = project;
-    myValue = ClearableLazyValue.createAtomic(delegate);
-
-    myExtendableEp = new ArrayList<>();
-    collect(myExtendableEp, myValue.getValue().getConfigurables());
+  override fun getId(): String {
+    val value = value.value
+    return if (value is SearchableConfigurable) (value as SearchableConfigurable).id else "root"
   }
 
-  @ApiStatus.Internal
-  private static void collect(@NotNull List<ConfigurableWrapper> list, @NotNull Configurable[] configurables) {
-    for (Configurable configurable : configurables) {
-      if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper configurableWrapper = (ConfigurableWrapper)configurable;
-        ConfigurableEP<?> ep = configurableWrapper.getExtensionPoint();
-        if (ep.childrenEPName != null || ep.dynamic) {
-          list.add(configurableWrapper);
-        }
-      }
+  override fun createComponent(): JComponent? = null
 
-      if (!(configurable instanceof Composite)) {
-        continue;
-      }
+  override fun isModified() = false
 
-      Composite composite = (Composite)configurable;
-      Configurable[] children;
-      try {
-        children = composite.getConfigurables();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        ConfigurableWrapper.LOG.error("Cannot get children " + composite, e);
-        continue;
-      }
-      collect(list, children);
-    }
-  }
-
-  @Override
-  public String getDisplayName() {
-    return myValue.getValue().getDisplayName();
-  }
-
-  @NotNull
-  @Override
-  public Configurable[] getConfigurables() {
-    return myValue.getValue().getConfigurables();
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    ConfigurableGroup value = myValue.getValue();
-    return value instanceof SearchableConfigurable ? ((SearchableConfigurable)value).getId() : "root";
-  }
-
-  @Nullable
-  @Override
-  public JComponent createComponent() {
-    return null;
-  }
-
-  @Override
-  public boolean isModified() {
-    return false;
-  }
-
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  @Override
-  public synchronized void addListener(@NotNull Listener listener) {
-    if (myListeners.isEmpty()) {
-      Project project = myProject;
-      if (project == null) project = DefaultProjectFactory.getInstance().getDefaultProject();
-      ExtensionPointChangeListener epListener = createListener();
-      Configurable.APPLICATION_CONFIGURABLE.addExtensionPointListener(epListener, this);
-      Configurable.PROJECT_CONFIGURABLE.getPoint(project).addExtensionPointListener(epListener, false, this);
-
-      for (ConfigurableWrapper wrapper : myExtendableEp) {
-        ConfigurableEP<?> ep = wrapper.getExtensionPoint();
-        Project areaProject = wrapper.getProject();
-        ExtensionsArea area = areaProject == null ? ApplicationManager.getApplication().getExtensionArea() : areaProject.getExtensionArea();
+  @Synchronized
+  override fun addListener(listener: MutableConfigurableGroup.Listener) {
+    if (listeners.isEmpty()) {
+      val project = project ?: DefaultProjectFactory.getInstance().defaultProject
+      val epListener = createListener()
+      Configurable.APPLICATION_CONFIGURABLE.getPoint(null).addExtensionPointListener(epListener, false, this)
+      Configurable.PROJECT_CONFIGURABLE.getPoint(project).addExtensionPointListener(epListener, false, this)
+      for (wrapper in extendableEp) {
+        val ep = wrapper.extensionPoint
+        val area = wrapper.project?.extensionArea ?: ApplicationManager.getApplication().extensionArea
         if (ep.childrenEPName != null) {
-          ExtensionPoint point = area.getExtensionPointIfRegistered(ep.childrenEPName);
-          if (point != null) {
-            point.addExtensionPointListener(epListener, false, this);
-          }
+          area.getExtensionPointIfRegistered<Any>(ep.childrenEPName)?.addExtensionPointListener(epListener, false, this)
         }
         else if (ep.dynamic) {
-          WithEpDependencies cast = ConfigurableWrapper.cast(WithEpDependencies.class, wrapper);
+          val cast = ConfigurableWrapper.cast(WithEpDependencies::class.java, wrapper)
           if (cast != null) {
-            Collection<BaseExtensionPointName<?>> dependencies = cast.getDependencies();
-            dependencies.forEach(
-              el ->findExtensionPoint(area, el.getName()).addExtensionPointListener(epListener, false, this));
+            for (it in cast.dependencies) {
+              findExtensionPoint(area, it.name).addExtensionPointListener(epListener, false, this)
+            }
           }
         }
       }
     }
-
-    myListeners.add(listener);
+    listeners.add(listener)
   }
 
-  @NotNull
-  private static ExtensionPoint<?> findExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name) {
-    return area.hasExtensionPoint(name)
-           ? area.getExtensionPoint(name)
-           : ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name);
+  override fun apply() {}
+
+  override fun getWeight(): Int {
+    val value = value.value
+    return if (value is Weighted) (value as Weighted).weight else 0
   }
 
-  @Override
-  public void apply() {
-  }
-
-  @Override
-  public int getWeight() {
-    ConfigurableGroup value = myValue.getValue();
-    return value instanceof Weighted ? ((Weighted)value).getWeight() : 0;
-  }
-
-  @NotNull
-  private ExtensionPointChangeListener<?> createListener() {
-    return () -> {
-      myValue.drop();
-      ApplicationManager.getApplication().invokeLater(() -> {
-        for (Listener listener : myListeners) {
-          listener.handleUpdate();
+  private fun createListener(): ExtensionPointChangeListener {
+    return ExtensionPointChangeListener {
+      value.drop()
+      ApplicationManager.getApplication().invokeLater {
+        for (listener in listeners) {
+          listener.handleUpdate()
         }
-      });
-    };
+      }
+    }
   }
 
-  @Override
-  public void dispose() {
-    myValue.drop();
-    myListeners.clear();
+  override fun dispose() {
+    value.drop()
+    listeners.clear()
+  }
+
+  init {
+    extendableEp = ArrayList()
+    collect(extendableEp, value.value.configurables)
+  }
+}
+
+private fun findExtensionPoint(area: ExtensionsArea, name: String): ExtensionPoint<Any> {
+  if (area.hasExtensionPoint(name)) {
+    return area.getExtensionPoint(name)
+  }
+  else {
+    return ApplicationManager.getApplication().extensionArea.getExtensionPoint(name)
+  }
+}
+
+@ApiStatus.Internal
+private fun collect(list: MutableList<ConfigurableWrapper>, configurables: Array<Configurable>) {
+  for (configurable in configurables) {
+    if (configurable is ConfigurableWrapper) {
+      val ep = configurable.extensionPoint
+      if (ep.childrenEPName != null || ep.dynamic) {
+        list.add(configurable)
+      }
+    }
+    if (configurable !is Configurable.Composite) {
+      continue
+    }
+
+    var children: Array<Configurable>
+    children = try {
+      configurable.configurables
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      ConfigurableWrapper.LOG.error("Cannot get children $configurable", e)
+      continue
+    }
+    collect(list, children)
   }
 }
