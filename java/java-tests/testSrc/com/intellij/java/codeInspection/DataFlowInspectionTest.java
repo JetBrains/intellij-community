@@ -40,6 +40,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testLocalClass() { doTest(); }
 
   public void testNotNullOnSuperParameter() { doTest(); }
+  public void testNullableOnSuperParameter() { doTest(); }
 
   public void testFieldInAnonymous() { doTest(); }
   public void testFieldInitializerInAnonymous() { doTest(); }
