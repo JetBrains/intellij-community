@@ -46,7 +46,7 @@ import java.util.List;
  * @author peter
  */
 public class EditorNotificationsImpl extends EditorNotifications {
-  private static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
+  public static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final MergingUpdateQueue myUpdateMerger;
@@ -101,17 +101,21 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
         @Override
         public void extensionRemoved(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          //noinspection unchecked
-          Key<? extends JComponent> key = extension.getKey();
-          for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-            List<FileEditor> editors = getEditors(file);
-
-            for (FileEditor editor : editors) {
-              updateNotification(editor, key, null, PluginInfoDetectorKt.getPluginInfo(extension.getClass()));
-            }
-          }
+          updateNotifications(extension);
         }
       }, false, project);
+  }
+
+  @Override
+  public void updateNotifications(@NotNull Provider<?> provider) {
+    Key<? extends JComponent> key = provider.getKey();
+    for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+      List<FileEditor> editors = getEditors(file);
+
+      for (FileEditor editor : editors) {
+        updateNotification(editor, key, null, PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+      }
+    }
   }
 
   @Override

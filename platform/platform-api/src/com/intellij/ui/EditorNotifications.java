@@ -45,6 +45,8 @@ public abstract class EditorNotifications {
 
   public abstract void updateNotifications(@NotNull VirtualFile file);
 
+  public abstract void updateNotifications(@NotNull Provider<?> provider);
+
   public abstract void updateAllNotifications();
 
   @ApiStatus.Internal
