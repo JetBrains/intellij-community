@@ -55,7 +55,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
   private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
   private static final String RECORDED = "Recorded: ";
-  private static final String NO_NAME_NAME = "<noname>";
+  public static final String NO_NAME_NAME = "<noname>";
 
   private boolean myIsRecording;
   private ActionMacro myLastMacro;
