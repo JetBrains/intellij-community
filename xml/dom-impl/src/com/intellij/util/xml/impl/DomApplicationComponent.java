@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class DomApplicationComponent {
+public final class DomApplicationComponent {
   private final MultiMap<String, DomFileMetaData> myRootTagName2FileDescription = MultiMap.createSet();
   private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new THashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
@@ -55,7 +55,7 @@ public class DomApplicationComponent {
     addChangeListener(DomFileMetaData.EP_NAME, this::extensionsChanged);
   }
 
-  private static <T> void addChangeListener(ExtensionPointName<T> ep, ExtensionPointChangeListener<T> onChange) {
+  private static <T> void addChangeListener(ExtensionPointName<T> ep, ExtensionPointChangeListener onChange) {
     Application app = ApplicationManager.getApplication();
     if (Disposer.isDisposing(app)) return;
 

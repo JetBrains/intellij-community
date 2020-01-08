@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -121,8 +121,8 @@ import java.util.Collection;
  * @see ShowSettingsUtil
  */
 public interface Configurable extends UnnamedConfigurable {
-  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = ExtensionPointName.create("com.intellij.applicationConfigurable");
-  ExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = ExtensionPointName.create("com.intellij.projectConfigurable");
+  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = new ExtensionPointName<>("com.intellij.applicationConfigurable");
+  ExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = new ExtensionPointName<>("com.intellij.projectConfigurable");
 
   /**
    * Returns the visible name of the configurable component.
@@ -187,7 +187,7 @@ public interface Configurable extends UnnamedConfigurable {
      */
     boolean isProjectLevel();
   }
-  
+
   /**
    * The interface is used for configurable that depends on some dynamic extension points.
    * If a configurable implements the interface by default the configurable will re-created after adding / removing extensions for the EP.
