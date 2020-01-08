@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.Patches;
@@ -15,7 +15,6 @@ import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -372,7 +371,6 @@ public final class StartupUtil {
 
   private static synchronized boolean checkSystemDirs() {
     String configPath = PathManager.getConfigPath();
-    PathManager.ensureConfigFolderExists();
     if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, true, false)) {
       return false;
     }
