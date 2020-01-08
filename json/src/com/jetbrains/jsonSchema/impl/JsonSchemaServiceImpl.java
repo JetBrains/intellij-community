@@ -3,11 +3,15 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -32,7 +36,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTracker {
+public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTracker, Disposable {
   private static final Logger LOG = Logger.getInstance(JsonSchemaServiceImpl.class);
 
   @NotNull private final Project myProject;
@@ -53,17 +57,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
         return ContainerUtil.map2SetNotNull(myState.getFiles(), f -> JsonCachedValues.getSchemaId(f, myProject));
       }
     };
-    JsonSchemaProviderFactory.EP_NAME.addExtensionPointListener(this::reset, myProject);
-    JsonSchemaEnabler.EXTENSION_POINT_NAME.addExtensionPointListener(this::reset, myProject);
-    JsonSchemaCatalogExclusion.EP_NAME.addExtensionPointListener(this::reset, myProject);
-    Disposer.register(myProject, () -> {
-      myState.reset();
-      myBuiltInSchemaIds.drop();
-    });
+    JsonSchemaProviderFactory.EP_NAME.addExtensionPointListener(this::reset, this);
+    JsonSchemaEnabler.EXTENSION_POINT_NAME.addExtensionPointListener(this::reset, this);
+    JsonSchemaCatalogExclusion.EP_NAME.addExtensionPointListener(this::reset, this);
 
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 
-    MessageBusConnection connection = project.getMessageBus().connect();
+    MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
     connection.subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> {
       myRefs.clear();
@@ -76,6 +76,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   @Override
   public long getModificationCount() {
     return myAnyChangeCount.get();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @NotNull

@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonFileType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -44,7 +45,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
       protected void onChange(@Nullable PsiFile file) {
         if (file != null) updater.onFileChange(file.getViewProvider().getVirtualFile());
       }
-    });
+    }, (Disposable)service);
   }
 
   private JsonSchemaVfsListener(@NotNull MyUpdater updater) {
@@ -73,7 +74,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
 
     protected MyUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
       myProject = project;
-      myUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, project);
+      myUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, (Disposable)service);
       myService = service;
       myRunnable = () -> {
         if (myProject.isDisposed()) return;
