@@ -880,10 +880,13 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   @Nullable
   private XmlFile getFileForAnnotations(@NotNull VirtualFile root, @NotNull PsiModifierListOwner owner, Project project) {
     final PsiFile containingFile = owner.getOriginalElement().getContainingFile();
-    if (!(containingFile instanceof PsiJavaFile)) {
+    String packageName = owner instanceof PsiPackage
+                         ? ((PsiPackage)owner).getQualifiedName()
+                         : containingFile instanceof PsiJavaFile
+                           ? ((PsiJavaFile)containingFile).getPackageName() : null;
+    if (packageName == null) {
       return null;
     }
-    String packageName = ((PsiJavaFile)containingFile).getPackageName();
 
     List<XmlFile> annotationsFiles = findExternalAnnotationsXmlFiles(owner);
 
@@ -897,7 +900,10 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
         return null;
       }
 
-      registerExternalAnnotations(containingFile, newAnnotationsFile);
+      Object key = owner instanceof PsiPackage ? owner : containingFile.getVirtualFile();
+      if (key != null) {
+        registerExternalAnnotations(key, newAnnotationsFile);
+      }
       return newAnnotationsFile;
     });
   }

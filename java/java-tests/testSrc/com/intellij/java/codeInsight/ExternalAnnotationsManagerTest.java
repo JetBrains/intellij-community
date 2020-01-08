@@ -157,6 +157,9 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     String unescaped = StringUtil.unescapeXmlEntities(externalName);
     List<String> words = StringUtil.split(unescaped, " ");
     String className = words.get(0);
+    if (words.size() == 1 && JavaPsiFacade.getInstance(getProject()).findPackage(className) != null) {
+      return;
+    }
     PsiClass aClass = assertClassFqn(className, psiFile, externalName, assumedPackage);
     if (words.size() == 1) return;
 

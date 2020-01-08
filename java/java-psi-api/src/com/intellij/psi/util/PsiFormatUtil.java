@@ -389,6 +389,10 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
 
   @Nullable
   public static String getExternalName(PsiModifierListOwner owner, boolean showParamName, int maxParamsToShow) {
+    if (owner instanceof PsiPackage) {
+      return ((PsiPackage)owner).getQualifiedName();
+    }
+
     StringBuilder builder = new StringBuilder();
     if (owner instanceof PsiClass) {
       ClassUtil.formatClassName((PsiClass)owner, builder);

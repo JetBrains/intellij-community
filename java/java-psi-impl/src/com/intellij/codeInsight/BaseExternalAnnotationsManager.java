@@ -35,7 +35,9 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public abstract class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance(BaseExternalAnnotationsManager.class);
@@ -44,7 +46,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   protected final PsiManager myPsiManager;
 
-  private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotationsCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
+  private final ConcurrentMap<Object, List<PsiFile>> myExternalAnnotationsCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = ContainerUtil.createWeakKeyWeakValueMap(); // guarded by myAnnotationDataCache
   private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStampCache = ContainerUtil.createConcurrentSoftMap();
 
@@ -258,13 +260,25 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Override
   @Nullable
   public List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
+    if (listOwner instanceof PsiPackage) {
+      String packageName = ((PsiPackage)listOwner).getQualifiedName();
+      Function<PsiPackage, List<VirtualFile>> roots = pack -> Arrays.stream(pack.getDirectories())
+        .flatMap(dir -> getExternalAnnotationsRoots(dir.getVirtualFile()).stream())
+        .distinct()
+        .collect(Collectors.toList());
+      return findExternalAnnotationsFiles(packageName, (PsiPackage)listOwner, roots);
+    }
     final PsiFile containingFile = PsiUtil.preferCompiledElement(listOwner).getContainingFile();
     if (!(containingFile instanceof PsiClassOwner)) return null;
 
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
 
-    final List<PsiFile> files = myExternalAnnotationsCache.get(virtualFile);
+    return findExternalAnnotationsFiles(((PsiClassOwner)containingFile).getPackageName(), virtualFile, f -> getExternalAnnotationsRoots(f));
+  }
+
+  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, T key, Function<T, List<VirtualFile>> roots) {
+    final List<PsiFile> files = myExternalAnnotationsCache.get(key);
     if (files == NULL_LIST) return null;
 
     if (files != null) {
@@ -281,8 +295,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     Set<PsiFile> possibleAnnotationXmls = new THashSet<>();
-    String relativePath = ((PsiClassOwner)containingFile).getPackageName().replace('.', '/') + '/' + ANNOTATIONS_XML;
-    for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
+
+    String relativePath = packageName.replace('.', '/') + '/' + ANNOTATIONS_XML;
+    for (VirtualFile root : roots.apply(key)) {
       VirtualFile ext = root.findFileByRelativePath(relativePath);
       if (ext != null && ext.isValid()) {
         PsiFile psiFile = myPsiManager.findFile(ext);
@@ -293,7 +308,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     if (possibleAnnotationXmls.isEmpty()) {
-      myExternalAnnotationsCache.put(virtualFile, NULL_LIST);
+      myExternalAnnotationsCache.put(key, NULL_LIST);
       return null;
     }
 
@@ -304,7 +319,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       boolean w2 = f2.isWritable();
       return w1 == w2 ? 0 : w1 ? -1 : 1;
     });
-    myExternalAnnotationsCache.put(virtualFile, result);
+    myExternalAnnotationsCache.put(key, result);
     return result;
   }
 
@@ -391,18 +406,15 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     throw new UnsupportedOperationException();
   }
 
-  protected void registerExternalAnnotations(@NotNull PsiFile fromFile, @NotNull PsiFile annotationsFile) {
-    VirtualFile virtualFile = fromFile.getVirtualFile();
-    if (virtualFile != null) {
-      myExternalAnnotationsCache.compute(virtualFile, (k, v) -> {
-        if (v == null || v == NULL_LIST) {
-          return new SmartList<>(annotationsFile);
-        }
+  protected void registerExternalAnnotations(@NotNull Object key, @NotNull PsiFile annotationsFile) {
+    myExternalAnnotationsCache.compute(key, (k, v) -> {
+      if (v == null || v == NULL_LIST) {
+        return new SmartList<>(annotationsFile);
+      }
 
-        v.add(annotationsFile);
-        return v;
-      });
-    }
+      v.add(annotationsFile);
+      return v;
+    });
   }
 
   public static class AnnotationData {
