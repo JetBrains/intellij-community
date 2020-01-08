@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
@@ -6,6 +6,7 @@ import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
@@ -92,9 +93,9 @@ internal class GitVcsPanel(private val project: Project,
     }.queue()
   }
 
-  private class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
-                                                modalityState: ModalityState,
-                                                disposable: Disposable) :
+  private inner class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
+                                                      private val modalityState: ModalityState,
+                                                      disposable: Disposable) :
     InlineErrorNotifier(inlineComponent, modalityState, disposable) {
     @CalledInAny
     override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
@@ -105,6 +106,13 @@ internal class GitVcsPanel(private val project: Project,
         super.showError(text, description, fixOption)
       }
     }
+
+    override fun resetGitExecutable() {
+      invokeAndWaitIfNeeded(modalityState) {
+        super.resetGitExecutable()
+        resetPathSelector()
+      }
+    }
   }
 
   private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
@@ -112,12 +120,7 @@ internal class GitVcsPanel(private val project: Project,
   private fun LayoutBuilder.gitExecutableRow() = row {
     pathSelector.mainPanel(growX)
       .onReset {
-        val projectSettingsPathToGit = projectSettings.pathToGit
-        pathSelector.reset(applicationSettings.savedPathToGit,
-                           projectSettingsPathToGit != null,
-                           projectSettingsPathToGit,
-                           executableManager.detectedExecutable)
-        updateBranchUpdateInfoRow()
+        resetPathSelector()
       }
       .onIsModified {
         val projectSettingsPathToGit = projectSettings.pathToGit
@@ -142,6 +145,15 @@ internal class GitVcsPanel(private val project: Project,
         validateExecutableOnceAfterClose()
         updateBranchUpdateInfoRow()
       }
+  }
+
+  private fun resetPathSelector() {
+    val projectSettingsPathToGit = projectSettings.pathToGit
+    pathSelector.reset(applicationSettings.savedPathToGit,
+                       projectSettingsPathToGit != null,
+                       projectSettingsPathToGit,
+                       executableManager.detectedExecutable)
+    updateBranchUpdateInfoRow()
   }
 
   /**

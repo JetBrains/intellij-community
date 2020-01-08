@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.execution.process.ProcessOutput
@@ -49,6 +49,12 @@ interface ErrorNotifier {
 
   @CalledInAny
   fun hideProgress()
+
+  @CalledInAny
+  fun resetGitExecutable() {
+    GitVcsApplicationSettings.getInstance().setPathToGit(null)
+    GitExecutableManager.getInstance().dropExecutableCache()
+  }
 
   sealed class FixOption(val text: String, @CalledInAwt val fix: () -> Unit) {
     class Standard(text: String, @CalledInAwt fix: () -> Unit) : FixOption(text, fix)
