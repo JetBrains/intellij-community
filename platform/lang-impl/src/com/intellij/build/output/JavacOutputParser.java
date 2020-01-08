@@ -27,7 +27,7 @@ public class JavacOutputParser implements BuildOutputParser {
 
   private static final char COLON = ':';
   private static final String WARNING_PREFIX = "warning:"; // default value
-  private static final String INFO_PREFIX = "info:";
+  private static final String NOTE_PREFIX = "note:";
   private static final String ERROR_PREFIX = "error:";
   private final String[] myFileExtensions;
 
@@ -98,8 +98,8 @@ public class JavacOutputParser implements BuildOutputParser {
             text = text.substring(WARNING_PREFIX.length()).trim();
             kind = MessageEvent.Kind.WARNING;
           }
-          else if (text.startsWith(INFO_PREFIX)) {
-            text = text.substring(INFO_PREFIX.length()).trim();
+          else if (text.startsWith(NOTE_PREFIX)) {
+            text = text.substring(NOTE_PREFIX.length()).trim();
             kind = MessageEvent.Kind.INFO;
           }
           else if (text.startsWith(ERROR_PREFIX)) {
