@@ -21,7 +21,6 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
@@ -104,11 +103,11 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     BundledKeymapBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapBean> {
       override fun extensionAdded(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
         val keymapName = ep.keymapName
-        if (!SystemInfo.isMac &&
-            keymapName != KeymapManager.MAC_OS_X_KEYMAP &&
-            keymapName != KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP &&
-            DefaultKeymap.isBundledKeymapHidden(keymapName) &&
-            schemeManager.findSchemeByName(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP) == null) return
+        //if (!SystemInfo.isMac &&
+        //    keymapName != KeymapManager.MAC_OS_X_KEYMAP &&
+        //    keymapName != KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP &&
+        //    DefaultKeymap.isBundledKeymapHidden(keymapName) &&
+        //    schemeManager.findSchemeByName(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP) == null) return
         val keymap = DefaultKeymap.instance.loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read() = pluginDescriptor.pluginClassLoader
             .getResourceAsStream(ep.effectiveFile).use { JDOMUtil.load(it) }

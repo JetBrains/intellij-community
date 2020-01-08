@@ -222,7 +222,11 @@ public final class PluginsAdvertiser {
   }
 
   public static void installAndEnable(@NotNull Set<PluginId> pluginIds, @NotNull Runnable onSuccess) {
-    ProgressManager.getInstance().run(new Task.Modal(null, "Search for Plugins in Repository", true) {
+    installAndEnable(null, pluginIds, true, onSuccess);
+  }
+
+  public static void installAndEnable(@Nullable Project project, @NotNull Set<PluginId> pluginIds, boolean showDialog, @NotNull Runnable onSuccess) {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Search for Plugins in Repository", true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
 
@@ -253,8 +257,14 @@ public final class PluginsAdvertiser {
             new PluginsAdvertiserDialog(null,
                                         myPlugins.toArray(new PluginDownloader[0]),
                                         myAllPlugins);
-          if (advertiserDialog.showAndGet()) {
-            onSuccess.run();
+          if (showDialog) {
+            if (advertiserDialog.showAndGet()) {
+              onSuccess.run();
+            }
+          } else {
+            if (advertiserDialog.doInstallPlugins()) {
+              onSuccess.run();
+            }
           }
         }
       }

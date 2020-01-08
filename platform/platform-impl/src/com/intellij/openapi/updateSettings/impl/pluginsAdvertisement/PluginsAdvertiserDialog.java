@@ -59,6 +59,12 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    if (doInstallPlugins()) {
+      super.doOKAction();
+    }
+  }
+
+  public boolean doInstallPlugins() {
     Set<PluginDescriptor> pluginsToEnable = new HashSet<>();
     List<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myUploadedPlugins) {
@@ -72,7 +78,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     }
 
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(nodes)) {
-      return;
+      return false;
     }
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
@@ -96,6 +102,6 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
         notifyRunnable.run();
       }
     }
-    super.doOKAction();
+    return true;
   }
 }
