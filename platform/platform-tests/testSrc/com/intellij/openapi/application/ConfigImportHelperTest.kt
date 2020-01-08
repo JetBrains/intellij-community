@@ -53,10 +53,10 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val cfg221 = createConfigDir("2022.1", storageTS = 300)
 
     val newConfigPath = createConfigDir("2022.3")
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath, SystemInfo.isMac, false)).containsExactly(cfg221, cfg211, cfg201)
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
 
     writeStorageFile(cfg211, 400)
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath, SystemInfo.isMac, false)).containsExactly(cfg211, cfg221, cfg201)
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg211, cfg221, cfg201)
   }
 
   @Test fun `sort if no anchor files`() {
@@ -65,7 +65,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val cfg221 = createConfigDir("2022.1")
 
     val newConfigPath = createConfigDir("2022.3")
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath, SystemInfo.isMac, false)).containsExactly(cfg221, cfg211, cfg201)
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
   }
 
   @Test fun `sort some real historic config dirs`() {
@@ -82,7 +82,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val cfg173 = createConfigDir("2017.3", "DataGrip", 1549092322000)
 
     val newConfigPath = createConfigDir("2019.2", "DataGrip")
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath, SystemInfo.isMac, false)).containsExactly(
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(
       cfg173, cfg191, cfg182, cfg183, cfg181, cfg163, cfg172, cfg171, cfg161, cfg162, cfg10)
   }
 
