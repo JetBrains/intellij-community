@@ -717,20 +717,18 @@
   </extensions>
 
   <actions>
-    <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction" text="Fo_rce Step Into"
-            icon="PlatformDebuggerImplIcons.Actions.Force_step_into" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
+    <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"
+            icon="PlatformDebuggerImplIcons.Actions.Force_step_into"/>
 
     <!-- Console -->
     <action id="com.jetbrains.python.console.RunPythonOrDebugConsoleAction"
             class="com.jetbrains.python.console.RunPythonOrDebugConsoleAction"
-            text="Python or Debug Console" description="Allows to quickly run Python Console or Debug Console if debug session is running">
+    >
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
     <action id="ExecuteInPyConsoleAction"
-            class="com.jetbrains.python.actions.PyExecuteSelectionAction"
-            text="Execute selection in console"
-            description="Executes selected code fragment in Python/Django console">
+            class="com.jetbrains.python.actions.PyExecuteSelectionAction">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
 
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
@@ -744,7 +742,7 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
     </action>
 
-    <action id="PyConsoleRenameAction" class="com.jetbrains.python.console.actions.PyConsoleRenameAction" text="Rename Console">
+    <action id="PyConsoleRenameAction" class="com.jetbrains.python.console.actions.PyConsoleRenameAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
 
@@ -752,60 +750,55 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewXml"/>
     </action>
 
-    <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction" text="Python Package"
-            description="Create a new directory and __init__.py inside it" icon="AllIcons.Nodes.Package">
+    <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
+            icon="AllIcons.Nodes.Package">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
 
-    <action id="CompuleQrc" class="com.jetbrains.pyqt.CompileQrcAction" text="Compile .qrc file">
+    <action id="CompuleQrc" class="com.jetbrains.pyqt.CompileQrcAction">
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
 
-    <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction" text="Clean Python Compiled Files"
-            description="Delete compiled bytecode files in selected directory and its subdirectories">
+    <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
     </action>
 
-    <group id="PyPackagingMenu" text="Packaging">
+    <group id="PyPackagingMenu">
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
       <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
     <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
-            text="Generate Python Spellchecker Dictionaries" internal="true">
+            internal="true">
       <add-to-group group-id="Internal"/>
     </action>
 
-    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction" text="View as Array">
+    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
     </action>
 
-    <action id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup" text="View as">
+    <action id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last" />
     </action>
 
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
-            text="Convert to Python Package"
-            description="Create package with the same name and move content of the module to its __init__.py">
+    >
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
     <action id="PyConvertPackageToModuleAction" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertPackageToModuleAction"
-            text="Convert to Python Module"
-            description="Create module with the same name and move content of __init__.py to that module">
+    >
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
     <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode"
-            text="Step Into My Code" description="Step to the next line executed ignoring libraries"
             use-shortcut-of="ForceStepInto">
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
     </action>
 
-    <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction"
-            text="&amp;Jump To Cursor" description="Jump to the line where the caret is">
+    <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction">
       <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
       <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>
     </action>
