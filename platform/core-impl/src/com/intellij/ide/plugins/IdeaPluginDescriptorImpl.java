@@ -1182,6 +1182,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           PluginId[] optionalDependencies = new PluginId[optionalSize];
           index = 0;
           for (PluginDependency dependency : dependencies) {
+            if (dependency == null) {
+              continue;
+            }
             if (dependency.optional) {
               optionalDependencies[index++] = dependency.pluginId;
             }
