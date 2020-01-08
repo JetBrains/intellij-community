@@ -364,6 +364,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     super.dispose();
 
+    if (myComponentStore.isComputed()) {
+      myComponentStore.getValue().release();
+    }
+
     if (!app.isDisposed()) {
       //noinspection deprecation
       app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);

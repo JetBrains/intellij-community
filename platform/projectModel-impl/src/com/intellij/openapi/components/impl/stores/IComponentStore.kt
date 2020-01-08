@@ -33,6 +33,9 @@ interface IComponentStore {
 
   @TestOnly
   fun saveComponent(component: PersistentStateComponent<*>)
+
+  @JvmDefault
+  fun release() {}
 }
 
 data class SaveSessionAndFile(val session: SaveSession, val file: VirtualFile)
