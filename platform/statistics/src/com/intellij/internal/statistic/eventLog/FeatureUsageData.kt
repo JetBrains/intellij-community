@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.NonNls
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -61,7 +62,7 @@ class FeatureUsageData {
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["version:regexp#version"])
-  fun addVersionByString(version: String?): FeatureUsageData {
+  fun addVersionByString(@NonNls version: String?): FeatureUsageData {
     if (version == null) {
       data["version"] = "unknown"
     }
@@ -72,7 +73,7 @@ class FeatureUsageData {
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["version:regexp#version"])
-  fun addVersion(version: Version?): FeatureUsageData {
+  fun addVersion(@NonNls version: Version?): FeatureUsageData {
     data["version"] = if (version != null) "${version.major}.${version.minor}" else "unknown.format"
     return this
   }
@@ -102,7 +103,7 @@ class FeatureUsageData {
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["lang:util#lang"])
-  fun addLanguage(id: String?): FeatureUsageData {
+  fun addLanguage(@NonNls id: String?): FeatureUsageData {
     id?.let {
       addLanguage(Language.findLanguageByID(id))
     }
@@ -133,7 +134,7 @@ class FeatureUsageData {
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["input_event:util#shortcut"])
-  fun addInputEvent(event: InputEvent?, place: String?): FeatureUsageData {
+  fun addInputEvent(event: InputEvent?, @NonNls place: String?): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getInputEventText(event, place)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
       data["input_event"] = inputEvent
@@ -169,7 +170,7 @@ class FeatureUsageData {
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["place:util#place"])
-  fun addPlace(place: String?): FeatureUsageData {
+  fun addPlace(@NonNls place: String?): FeatureUsageData {
     if (place == null) return this
 
     var reported = ActionPlaces.UNKNOWN
@@ -188,13 +189,13 @@ class FeatureUsageData {
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["file_path:util#hash"])
-  fun addAnonymizedPath(path: String?): FeatureUsageData {
+  fun addAnonymizedPath(@NonNls path: String?): FeatureUsageData {
     data["file_path"] = path?.let { EventLogConfiguration.anonymize(path) } ?: "undefined"
     return this
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["anonymous_id:util#hash"])
-  fun addAnonymizedId(id: String): FeatureUsageData {
+  fun addAnonymizedId(@NonNls id: String): FeatureUsageData {
     data["anonymous_id"] = EventLogConfiguration.anonymize(id)
     return this
   }
@@ -220,35 +221,35 @@ class FeatureUsageData {
   /**
    * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  fun addData(key: String, value: Boolean): FeatureUsageData {
+  fun addData(@NonNls key: String, value: Boolean): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
   /**
    * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  fun addData(key: String, value: Int): FeatureUsageData {
+  fun addData(@NonNls key: String, value: Int): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
   /**
    * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  fun addData(key: String, value: Long): FeatureUsageData {
+  fun addData(@NonNls key: String, value: Long): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
   /**
    * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  fun addData(key: String, value: Float): FeatureUsageData {
+  fun addData(@NonNls key: String, value: Float): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
   /**
    * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  fun addData(key: String, value: Double): FeatureUsageData {
+  fun addData(@NonNls key: String, value: Double): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
@@ -256,7 +257,7 @@ class FeatureUsageData {
    * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    * @param value can contain "-", "_", ".", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  fun addData(key: String, value: String): FeatureUsageData {
+  fun addData(@NonNls key: String, @NonNls value: String): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
@@ -265,7 +266,7 @@ class FeatureUsageData {
    *
    * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  fun addData(key: String, value: List<String>): FeatureUsageData {
+  fun addData(@NonNls key: String, value: List<String>): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
@@ -295,7 +296,7 @@ class FeatureUsageData {
     return this
   }
 
-  fun merge(next: FeatureUsageData, prefix: String): FeatureUsageData {
+  fun merge(next: FeatureUsageData, @NonNls prefix: String): FeatureUsageData {
     for ((key, value) in next.build()) {
       val newKey = if (key.startsWith("data_")) "$prefix$key" else key
       data[newKey] = value
