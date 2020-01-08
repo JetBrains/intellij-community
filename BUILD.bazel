@@ -197,6 +197,7 @@ iml_project(
         "//tools/base/layoutlib-api:studio.android.sdktools.layoutlib-api",
         "//tools/base/lint:studio.android.sdktools.lint-api",
         "//tools/base/lint:studio.android.sdktools.lint-checks",
+        "//tools/base/mlkit-common:studio.android.sdktools.mlkit-common",
         "//tools/base/ninepatch:studio.android.sdktools.ninepatch",
         "//tools/base/perf-logger:studio.perf-logger",
         "//tools/base/perflib:studio.android.sdktools.perflib",

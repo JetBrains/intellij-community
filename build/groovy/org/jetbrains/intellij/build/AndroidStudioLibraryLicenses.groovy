@@ -45,6 +45,10 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j:0.7.1", license: "Eclipse Public License 1.0"),
     new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.7.1", license: "Eclipse Public License 1.0"),
     new LibraryLicense(name: "fetchasgoogle.jar", libraryName: "fetchasgoogle.jar", license: "Apache 2.0"),
+    // for flatbuffers-java module library in android.sdktools.mlkit-common
+    new LibraryLicense(name: "FlatBuffers Java API", libraryName: "flatbuffers-java",
+                       version: "1.11.1", url: "https://google.github.io/flatbuffers/",
+                       license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     // for freemarker module library in intellij.android.core
     new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", version: "2.3.20", license: "BSD", url: "https://freemarker.apache.org/"),
     new LibraryLicense(name: "Google APIs Client Library for Java", version: "min-repackaged-1.20.0",
@@ -134,6 +138,10 @@ class AndroidStudioLibraryLicenses {
                        license: "Eclipse Public License 1.0", licenseUrl: "http://www.eclipse.org/legal/epl-v10.html"),
     new LibraryLicense(name: "uiautomatorviewer.jar", libraryName: "uiautomatorviewer.jar", license: "Apache 2.0"),
     new LibraryLicense(name: "TightVNC", libraryName: "tightvnc", license: "Commercial License"),
+    // for tensorflow-lite-support module library in android.sdktools.mlkit-common
+    new LibraryLicense(name: "TensorFlow Lite Support Library", libraryName: "tensorflow-lite-support",
+                       version: "0.0.0-experimental-metadata", url: "https://tensorflow.org/lite",
+                       license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Transport Pipeline", libraryName: "transport-proto", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Xtext", libraryName: "org.eclipse.xtext.xbase", license: "Eclipse Public License 1.0"),

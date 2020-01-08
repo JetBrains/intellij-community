@@ -212,6 +212,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
       withModule("android.sdktools.lint-api", "sdk-tools.jar")
       withModule("android.sdktools.lint-checks", "sdk-tools.jar")
+      withModule("android.sdktools.mlkit-common", "sdk-tools.jar")
       withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.builder-model", "sdk-tools.jar")
