@@ -35,6 +35,9 @@
   <item name="javax.swing.JComponent java.lang.Object getClientProperty(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name="javax.swing">
+    <annotation name="org.jetbrains.annotations.Nls" />
+  </item>
   <item name="javax.swing.JComponent javax.swing.InputMap getInputMap(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
