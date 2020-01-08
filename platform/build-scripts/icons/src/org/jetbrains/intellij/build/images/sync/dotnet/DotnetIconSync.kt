@@ -43,11 +43,13 @@ internal object DotnetIconSync {
       val path = context.iconsRepo.resolve(it.iconsPath).toPath()
       DotnetIconsTransformation.transformToIdeaFormat(path)
     }
-    return context.iconsRepo.commit(
-      "temporary commit, shouldn't be pushed",
-      "DotnetIconSyncRobot",
-      "dotnet-icon-sync-robot-no-reply@jetbrains.com"
-    ) ?: error("Unable to make a commit")
+    return muteStdOut {
+      context.iconsRepo.commit(
+        "temporary commit, shouldn't be pushed",
+        "DotnetIconSyncRobot",
+        "dotnet-icon-sync-robot-no-reply@jetbrains.com"
+      )
+    } ?: error("Unable to make a commit")
   }
 
   private fun generateClasses() {
@@ -59,15 +61,17 @@ internal object DotnetIconSync {
   }
 
   private fun commitChanges(tmpCommit: CommitInfo) {
+    step("Committing changes..")
     val changes = context.iconsCommitsToSync.mapValues {
       it.value.filterNot { commit ->
         commit.hash == tmpCommit.hash
       }
     }
     val (user, email) = triggeredBy()
-    context.devRepoRoot.commit(changes.commitMessage(), user, email) {
+    val commit = context.devRepoRoot.commit(changes.commitMessage(), user, email) {
       it.fileName.toString().endsWith(".java")
     }
+    println("Committed ${commit?.hash} ${commit?.subject}")
   }
 
   private fun File.commit(message: String, user: String, email: String, filter: (Path) -> Boolean = { false }) =

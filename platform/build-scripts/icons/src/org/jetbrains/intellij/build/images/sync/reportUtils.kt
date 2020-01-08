@@ -88,27 +88,25 @@ internal fun createReviewForDev(context: Context): Review? {
     context.byDesigners.clear()
     return null
   }
+  val projectId = UPSOURCE_DEV_PROJECT_ID
+  if (projectId.isNullOrEmpty()) {
+    log("Unable to create Upsource review without project id")
+    return null
+  }
   val user = triggeredBy()
   val master = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
   return withTmpBranch(repos, master) { branch ->
     val commitsForReview = commitAndPush(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), repos)
-    val projectId = UPSOURCE_DEV_PROJECT_ID
-    if (projectId.isNullOrEmpty()) {
-      log("WARNING: unable to create Upsource review for ${context.devRepoName}, just plain old branch review")
-      PlainOldReview(branch, projectId)
+    val review = createReview(projectId, branch, master, commitsForReview.map(CommitInfo::hash))
+    try {
+      addReviewer(projectId, review, user.email)
+      postVerificationResultToReview(review)
+      removeReviewer(projectId, review, UpsourceUser.email)
+      review
     }
-    else {
-      val review = createReview(projectId, branch, master, commitsForReview.map(CommitInfo::hash))
-      try {
-        addReviewer(projectId, review, user.email)
-        postVerificationResultToReview(review)
-        removeReviewer(projectId, review, UpsourceUser.email)
-        review
-      }
-      catch (e: Exception) {
-        closeReview(projectId, review)
-        throw e
-      }
+    catch (e: Exception) {
+      closeReview(projectId, review)
+      throw e
     }
   }
 }

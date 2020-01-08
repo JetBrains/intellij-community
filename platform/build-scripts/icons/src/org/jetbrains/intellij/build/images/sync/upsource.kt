@@ -46,7 +46,6 @@ private fun HttpRequestBase.upsourceAuthAndLog(method: String, args: String) {
 
 internal sealed class Review(val id: String, val projectId: String?, val url: String)
 internal class UpsourceReview(id: String, projectId: String?, url: String) : Review(id, projectId, url)
-internal class PlainOldReview(branch: String, projectId: String?) : Review(branch, projectId, branch)
 private class Revision(val revisionId: String, val branchHeadLabel: String)
 
 internal fun createReview(projectId: String, branch: String, head: String, commits: Collection<String>): Review {
