@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.GsonBuilder;
-import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
@@ -54,11 +53,11 @@ public class FUStatisticsWhiteListGroupsService {
   }
 
   @Nullable
-  public static String loadWhiteListFromServer(@NotNull EventLogExternalSettingsService settingsService) {
+  public static String loadWhiteListFromServer(@NotNull EventLogUploadSettingsService settingsService) {
     return getFUSWhiteListContent(settingsService.getWhiteListProductUrl());
   }
 
-  public static long lastModifiedWhitelist(@NotNull EventLogExternalSettingsService settingsService) {
+  public static long lastModifiedWhitelist(@NotNull EventLogUploadSettingsService settingsService) {
     return lastModifiedWhitelist(settingsService.getWhiteListProductUrl());
   }
 
@@ -105,7 +104,6 @@ public class FUStatisticsWhiteListGroupsService {
     return groups;
   }
 
-  @VisibleForTesting
   @NotNull
   public static FUSWhitelist parseApprovedGroups(@Nullable String content) {
     final WLGroups groups = parseWhiteListContent(content);

@@ -1,8 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.persistence;
 
-import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,11 +23,11 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
   @NotNull
   private final String myRecorderId;
   @NotNull
-  private final EventLogExternalSettingsService mySettingsService;
+  private final EventLogUploadSettingsService mySettingsService;
 
   public EventLogWhitelistPersistence(@NotNull String recorderId) {
     myRecorderId = recorderId;
-    mySettingsService = new EventLogExternalSettingsService(recorderId);
+    mySettingsService = StatisticsUploadAssistant.createExternalSettings(recorderId, false);
   }
 
   @Override

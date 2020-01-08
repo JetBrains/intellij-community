@@ -16,9 +16,9 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
     private const val RECORD_SIZE = 1000 * 1000 // 1000KB
     private val LOG = Logger.getInstance(LogEventRecordRequest::class.java)
 
-    fun create(file: File, recorder: String, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
+    fun create(file: File, recorder: String, deviceId: String, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
       try {
-        return create(file, recorder, ApplicationInfo.getInstance().build.productCode, EventLogConfiguration.deviceId, RECORD_SIZE, filter, internal)
+        return create(file, recorder, ApplicationInfo.getInstance().build.productCode, deviceId, RECORD_SIZE, filter, internal)
       }
       catch (e: Exception) {
         LOG.warn("Failed reading event log file", e)

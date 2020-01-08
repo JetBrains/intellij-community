@@ -3,10 +3,7 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.internal.statistic.eventLog.LogEventFilter;
-import com.intellij.internal.statistic.eventLog.LogEventRecordRequest;
-import com.intellij.internal.statistic.eventLog.LogEventSerializer;
-import com.intellij.internal.statistic.eventLog.LogEventWhitelistFilter;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.lang.Language;
@@ -212,7 +209,8 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
     final File log = FileUtil.createTempFile("feature-event-log", ".log");
     try {
       FileUtil.writeToFile(log, text);
-      final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(log, "FUS", filter, true);
+      final String deviceId = EventLogConfiguration.INSTANCE.getDeviceId();
+      final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(log, "FUS", deviceId, filter, true);
       if (request == null) {
         throw new ParseEventLogWhitelistException("Failed parsing event log");
       }

@@ -14,7 +14,7 @@ interface StatisticsEventLogger {
   fun log(group: EventLogGroup, eventId: String, isState: Boolean)
   fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean)
   fun getActiveLogFile(): EventLogFile?
-  fun getLogFiles(): List<EventLogFile>
+  fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
   fun rollOver()
 }
@@ -32,8 +32,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     return logger.getActiveLogFile()
   }
 
-  fun getLogFiles(): List<EventLogFile> {
-    return logger.getLogFiles()
+  fun getLogFilesProvider(): EventLogFilesProvider {
+    return logger.getLogFilesProvider()
   }
 
   private fun createLogger(): StatisticsEventLogger {
@@ -62,9 +62,13 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
   override fun getActiveLogFile(): EventLogFile? = null
-  override fun getLogFiles(): List<EventLogFile> = emptyList()
+  override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
+}
+
+object EmptyEventLogFilesProvider: EventLogFilesProvider {
+  override fun getLogFiles(): List<EventLogFile> = emptyList()
 }
 
 fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {

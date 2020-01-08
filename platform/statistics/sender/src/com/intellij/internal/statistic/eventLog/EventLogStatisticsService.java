@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.connect.StatServiceException;
@@ -27,22 +27,27 @@ public class EventLogStatisticsService implements StatisticsService {
 
   private static final int MAX_FILES_TO_SEND = 5;
 
-  private final String myRecorder;
+  private final DeviceConfiguration myDeviceConfiguration;
   private final EventLogSettingsService mySettingsService;
+  private final EventLogRecorderConfig myRecorderConfiguration;
 
-  public EventLogStatisticsService(@NotNull String recorder) {
-    myRecorder = recorder;
-    mySettingsService = new EventLogExternalSettingsService(recorder);
+  public EventLogStatisticsService(@NotNull DeviceConfiguration device,
+                                   @NotNull EventLogRecorderConfig config,
+                                   @NotNull EventLogApplication application) {
+    myDeviceConfiguration = device;
+    myRecorderConfiguration = config;
+    mySettingsService = new EventLogUploadSettingsService(config.getRecorderId(), application);
   }
 
   @Override
   public StatisticsResult send() {
-    return send(myRecorder, mySettingsService, new EventLogCounterResultDecorator());
+    return send(myDeviceConfiguration, myRecorderConfiguration, mySettingsService, new EventLogCounterResultDecorator());
   }
 
-  public static StatisticsResult send(@NotNull String recorder, @NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
-    final StatisticsEventLoggerProvider config = StatisticsEventLoggerKt.getEventLogProvider(recorder);
-
+  public static StatisticsResult send(@NotNull DeviceConfiguration device,
+                                      @NotNull EventLogRecorderConfig config,
+                                      @NotNull EventLogSettingsService settings,
+                                      @NotNull EventLogResultDecorator decorator) {
     final List<EventLogFile> logs = getLogFiles(config);
     if (!config.isSendEnabled()) {
       cleanupEventLogFiles(logs);
@@ -58,7 +63,7 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
 
-    if (!isSendLogsEnabled(settings.getPermittedTraffic())) {
+    if (!isSendLogsEnabled(device, settings.getPermittedTraffic())) {
       cleanupEventLogFiles(logs);
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
@@ -70,7 +75,8 @@ public class EventLogStatisticsService implements StatisticsService {
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
         final File file = logs.get(i).getFile();
-        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, config.getRecorderId(), filter, settings.isInternal());
+        final String deviceId = device.getDeviceId();
+        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, config.getRecorderId(), deviceId, filter, settings.isInternal());
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {
@@ -121,7 +127,8 @@ public class EventLogStatisticsService implements StatisticsService {
       }
 
       cleanupFiles(toRemove);
-      EventLogSystemLogger.logFilesSend(config.getRecorderId(), logs.size(), size, failed);
+      //TODO: add listeners
+      //EventLogSystemLogger.logFilesSend(config.getRecorderId(), logs.size(), size, failed);
       return decorator.toResult();
     }
     catch (Exception e) {
@@ -140,11 +147,11 @@ public class EventLogStatisticsService implements StatisticsService {
     }
   }
 
-  private static boolean isSendLogsEnabled(int percent) {
+  private static boolean isSendLogsEnabled(@NotNull DeviceConfiguration userData, int percent) {
     if (percent == 0) {
       return false;
     }
-    return EventLogConfiguration.INSTANCE.getBucket() < percent * 2.56;
+    return userData.getBucket() < percent * 2.56;
   }
 
   @Nullable
@@ -175,9 +182,9 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
-  protected static List<EventLogFile> getLogFiles(StatisticsEventLoggerProvider config) {
+  protected static List<EventLogFile> getLogFiles(@NotNull EventLogRecorderConfig provider) {
     try {
-      return config.getLogFiles();
+      return provider.getLogFilesProvider().getLogFiles();
     }
     catch (Exception e) {
       LOG.info(e);

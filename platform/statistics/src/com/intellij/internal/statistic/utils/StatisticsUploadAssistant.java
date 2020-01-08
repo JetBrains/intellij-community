@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ public class StatisticsUploadAssistant {
 
   public static final Object LOCK = new Object();
 
-  private StatisticsUploadAssistant(){}
+  private StatisticsUploadAssistant() {}
 
   public static long getSendPeriodInMillis() {
     return UsageStatisticsPersistenceComponent.getInstance().getPeriod().getMillis();
@@ -54,6 +54,14 @@ public class StatisticsUploadAssistant {
 
   @NotNull
   public static StatisticsService getEventLogStatisticsService(@NotNull String recorderId) {
-    return new EventLogStatisticsService(recorderId);
+    return new EventLogStatisticsService(
+      new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
+      new EventLogRecorderConfigImpl(recorderId),
+      new EventLogApplicationImpl(false)
+    );
+  }
+
+  public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTest) {
+    return new EventLogUploadSettingsService(recorderId, new EventLogApplicationImpl(isTest));
   }
 }

@@ -16,7 +16,7 @@ interface StatisticsEventLogWriter {
 
   fun getActiveFile(): EventLogFile?
 
-  fun getFiles(): List<EventLogFile>
+  fun getLogFilesProvider(): EventLogFilesProvider
 
   fun cleanup()
 
@@ -68,10 +68,8 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
     return EventLogFile(File(File(getEventLogDir().toUri()), activeLog))
   }
 
-  override fun getFiles(): List<EventLogFile> {
-    val activeLog = fileAppender?.activeLogName
-    val files = File(getEventLogDir().toUri()).listFiles { f: File -> !StringUtil.equals(f.name, activeLog) }
-    return files?.map { EventLogFile(it) }?.toList() ?: emptyList()
+  override fun getLogFilesProvider(): EventLogFilesProvider {
+    return DefaultEventLogFilesProvider(getEventLogDir()) { fileAppender?.activeLogName }
   }
 
   override fun cleanup() {

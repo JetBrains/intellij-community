@@ -3,8 +3,8 @@
  */
 package com.intellij.internal.statistic.eventLog
 
-import com.google.common.reflect.TypeToken
 import com.google.gson.*
+import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.diagnostic.Logger
 import java.io.OutputStreamWriter
 import java.lang.reflect.Type

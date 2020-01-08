@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.internal.statistic.eventLog.EventLogStatisticsService.send;
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
 public class SendEventLogAction extends AnAction {
@@ -49,7 +48,7 @@ public class SendEventLogAction extends AnAction {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Send Feature Usage Event Log", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final StatisticsResult result = send(FUS_RECORDER, new EventLogTestSettingsService(), new EventLogTestResultDecorator());
+        final StatisticsResult result = send();
         final StatisticsResult.ResultCode code = result.getCode();
         if (code == StatisticsResult.ResultCode.SENT_WITH_ERRORS || code == StatisticsResult.ResultCode.SEND) {
           final boolean succeed = tryToOpenInScratch(project, result.getDescription());
@@ -63,12 +62,21 @@ public class SendEventLogAction extends AnAction {
                                                   StringUtil.replace(result.getDescription(), ";", "\n"),
                                                   null, null), ModalityState.NON_MODAL, project.getDisposed());
       }
+
+      private StatisticsResult send() {
+        return EventLogStatisticsService.send(
+          new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
+          new EventLogRecorderConfigImpl(FUS_RECORDER),
+          new EventLogTestSettingsService(),
+          new EventLogTestResultDecorator()
+        );
+      }
     });
   }
 
-  private static class EventLogTestSettingsService extends EventLogExternalSettingsService implements EventLogSettingsService {
+  private static class EventLogTestSettingsService extends EventLogUploadSettingsService implements EventLogSettingsService {
     private EventLogTestSettingsService() {
-      super(FUS_RECORDER, true);
+      super(FUS_RECORDER, new EventLogTestApplication());
     }
 
     @Override
@@ -81,6 +89,12 @@ public class SendEventLogAction extends AnAction {
     public LogEventFilter getEventFilter() {
       final FUSWhitelist whitelist = getWhitelistedGroups();
       return new LogEventWhitelistFilter(whitelist != null ? whitelist : FUSWhitelist.empty());
+    }
+  }
+
+  private static class EventLogTestApplication extends EventLogApplicationImpl {
+    private EventLogTestApplication() {
+      super(true);
     }
 
     @Override
