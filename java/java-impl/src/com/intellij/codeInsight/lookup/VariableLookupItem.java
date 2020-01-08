@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -135,6 +136,13 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
 
+    if (myTailText != null) {
+      if (myTailText.startsWith(EQ)) {
+        presentation.appendTailTextItalic(" (" + myTailText + ")", true);
+      } else {
+        presentation.setTailText(myTailText, true);
+      }
+    }
     if (myHelper != null) {
       myHelper.renderElement(presentation, qualify, true, getSubstitutor());
     }
@@ -142,13 +150,6 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       presentation.setTypeText("", JBUI.scale(new ColorIcon(12, myColor)));
     } else {
       presentation.setTypeText(getType().getPresentableText());
-    }
-    if (myTailText != null && StringUtil.isEmpty(presentation.getTailText())) {
-      if (myTailText.startsWith(EQ)) {
-        presentation.appendTailTextItalic(" (" + myTailText + ")", true);
-      } else {
-        presentation.setTailText(myTailText, true);
-      }
     }
   }
 
