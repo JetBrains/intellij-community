@@ -205,25 +205,39 @@ public class JavaI18nUtil extends I18nUtil {
       if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, resourceBundleRef, null)) return true;
     }
 
-    PsiClass containingClass = method.getContainingClass();
-    while (containingClass != null) {
-      PsiAnnotation classAnnotation = AnnotationUtil.findAnnotation(containingClass, annFqn);
-      if (classAnnotation != null) {
-        processAnnotationAttributes(resourceBundleRef, classAnnotation);
-        return true;
+    if (annFqn.equals(AnnotationUtil.NON_NLS) || annFqn.equals(AnnotationUtil.NLS)) {
+      String oppositeFQN = annFqn.equals(AnnotationUtil.NON_NLS) ? AnnotationUtil.NLS
+                                                                 : AnnotationUtil.NON_NLS;
+      if (AnnotationUtil.findAnnotation(param, oppositeFQN) != null) {
+        return false;
       }
-      containingClass = containingClass.getContainingClass();
-    }
 
-    PsiFile containingFile = method.getContainingFile();
-    if (containingFile instanceof PsiClassOwner) {
-      String packageName = ((PsiClassOwner)containingFile).getPackageName();
-      PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
-      if (aPackage != null) {
-        final PsiAnnotation packageAnnotation = AnnotationUtil.findAnnotation(aPackage, annFqn);
-        if (packageAnnotation != null) {
-          processAnnotationAttributes(resourceBundleRef, packageAnnotation);
-          return true;
+      PsiClass containingClass = method.getContainingClass();
+      while (containingClass != null) {
+        PsiAnnotation classAnnotation = AnnotationUtil.findAnnotation(containingClass, AnnotationUtil.NON_NLS, AnnotationUtil.NLS);
+        if (classAnnotation != null) {
+          if (classAnnotation.hasQualifiedName(annFqn)) {
+            processAnnotationAttributes(resourceBundleRef, classAnnotation);
+            return true;
+          }
+          return false;
+        }
+        containingClass = containingClass.getContainingClass();
+      }
+
+      PsiFile containingFile = method.getContainingFile();
+      if (containingFile instanceof PsiClassOwner) {
+        String packageName = ((PsiClassOwner)containingFile).getPackageName();
+        PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
+        if (aPackage != null) {
+          final PsiAnnotation packageAnnotation = AnnotationUtil.findAnnotation(aPackage, AnnotationUtil.NON_NLS, AnnotationUtil.NLS);
+          if (packageAnnotation != null) {
+            if (packageAnnotation.hasQualifiedName(annFqn)) {
+              processAnnotationAttributes(resourceBundleRef, packageAnnotation);
+              return true;
+            }
+            return false;
+          }
         }
       }
     }
