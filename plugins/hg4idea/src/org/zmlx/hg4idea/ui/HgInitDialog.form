@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text resource-bundle="org/zmlx/hg4idea/HgVcsMessages" key="hg4idea.init.dialog.option.create.repository.for.whole.project"/>
+              <text resource-bundle="messages/HgBundle" key="hg4idea.init.dialog.option.create.repository.for.whole.project"/>
             </properties>
           </component>
           <component id="6bbb3" class="javax.swing.JRadioButton" binding="mySelectWhereToCreateRadioButton" default-binding="true">
