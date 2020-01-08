@@ -34,6 +34,7 @@
       <option name="STATIC_FIELD_NAME_PREFIX" value="our" />
       <option name="PREFER_LONGER_NAMES" value="false" />
       <option name="VISIBILITY" value="EscalateVisible" />
+      <option name="USE_EXTERNAL_ANNOTATIONS" value="true" />
       <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="2147483647" />
       <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="2147483647" />
       <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
