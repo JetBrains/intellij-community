@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
@@ -138,6 +139,37 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
                                                         "java.util.function.Supplier<Foo>");
     assertFalse(suggestedTypes.stream().anyMatch(type -> "MyFactoryReturnNumber".equals(type.getCanonicalText())));
     assertFalse(suggestedTypes.stream().anyMatch(type -> "MyFactoryString".equals(type.getCanonicalText())));
+  }
+
+  public void testConstructorFactoryWithDefaultConstructor() {
+    final Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo {}", "Foo::new");
+    checkWithExpected(suggestedTypes, "java.lang.Runnable",
+                      "java.util.concurrent.Callable<Foo>",
+                      "java.util.function.Supplier<Foo>");
+  }
+
+  public void testConstructorFactoryWithNoargConstructor() {
+    final Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo { Foo() {} }", "Foo::new");
+    checkWithExpected(suggestedTypes, "java.lang.Runnable",
+                      "java.util.concurrent.Callable<Foo>",
+                      "java.util.function.Supplier<Foo>");
+  }
+
+  public void testConstructorFactoryWithTypeParams() {
+    final Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo<T> {}", "Foo<Integer>::new");
+    checkWithExpected(suggestedTypes, "java.lang.Runnable",
+                      "java.util.concurrent.Callable<Foo<java.lang.Integer>>",
+                      "java.util.function.Supplier<Foo<java.lang.Integer>>");
+  }
+
+  public void testConstructorFactoryWithTypeParamsAndConstructors() {
+    final Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo<T> { Foo(int i) {} Foo() {} }", "Foo<String>::new");
+    checkWithExpected(suggestedTypes, "java.lang.Runnable",
+                      "java.util.concurrent.Callable<Foo<java.lang.String>>",
+                      "java.util.function.Function<java.lang.Integer,Foo<java.lang.String>>",
+                      "java.util.function.IntConsumer",
+                      "java.util.function.IntFunction<Foo<java.lang.String>>",
+                      "java.util.function.Supplier<Foo<java.lang.String>>");
   }
 
   public void testSAMWithThrowable() {
