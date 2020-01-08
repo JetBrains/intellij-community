@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,11 @@ import java.util.Map;
  */
 public interface CustomizableReferenceProvider {
 
+  /**
+   * @deprecated Please customize references in their respective reference-specific ways
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   void setOptions(@Nullable Map<CustomizationKey, Object> options);
 
   @Nullable

@@ -78,11 +78,7 @@ public class ReferenceProviderType {
 
     @Override
     public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
-      for (PsiReferenceProvider provider : COLLECTOR.forKey(myType)) {
-        if (provider instanceof CustomizableReferenceProvider) {
-          ((CustomizableReferenceProvider) provider).setOptions(options);
-        }
-      }
+      throw new UnsupportedOperationException("Modifying shared reference provider is not supported");
     }
 
     @Nullable
