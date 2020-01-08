@@ -253,8 +253,9 @@ public class LookupElementPresentation {
     public String toString() {
       return "TextFragment{" +
              "text='" + text + '\'' +
-             ", grayed=" + myGrayed +
-             ", fgColor=" + myFgColor +
+             (myGrayed ? ", grayed" : "") +
+             (myItalic ? ", italic" : "") +
+             (myFgColor != null ? ", fgColor=" + myFgColor : "") +
              '}';
     }
 
