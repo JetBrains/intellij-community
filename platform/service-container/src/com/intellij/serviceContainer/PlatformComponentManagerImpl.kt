@@ -758,6 +758,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     // dispose components and services
     Disposer.dispose(serviceParentDisposable)
 
+    // release references to services instances
+    myPicoContainer.release()
+
     val messageBus = messageBus
     if (messageBus != null ) {
       // Must be after disposing of serviceParentDisposable, because message bus disposes child buses, so, we must dispose all services first.
