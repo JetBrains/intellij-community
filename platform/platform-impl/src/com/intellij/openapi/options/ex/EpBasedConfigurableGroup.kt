@@ -80,11 +80,11 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
   private fun createListener(): ExtensionPointChangeListener {
     return ExtensionPointChangeListener {
       value.drop()
-      ApplicationManager.getApplication().invokeLater {
+      ApplicationManager.getApplication().invokeLater(Runnable {
         for (listener in listeners) {
           listener.handleUpdate()
         }
-      }
+      }, project?.disposed ?: ApplicationManager.getApplication().disposed)
     }
   }
 
