@@ -53,8 +53,6 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
     <registryKey key="sdk.auto" defaultValue="true" description="Check unknown SDKs on project open, attempts to fix automatically and suggest fix actions"/>
-    <registryKey key="sdk.auto.use.editor.notification" defaultValue="true" description="Show editor notifications to resolve problems"/>
-    <registryKey key="sdk.auto.use.editor.notification.for.unset" defaultValue="false" description="Show editor notifications for unset SDKs"/>
 
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification"/>

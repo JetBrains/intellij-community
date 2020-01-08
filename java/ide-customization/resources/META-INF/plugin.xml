@@ -29,7 +29,7 @@
                          id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle"
                          nonDefaultProject="true"/>
 
-    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
 
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
 
