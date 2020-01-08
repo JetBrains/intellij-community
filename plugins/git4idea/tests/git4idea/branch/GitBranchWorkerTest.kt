@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.dvcs.repo.Repository
@@ -27,7 +27,6 @@ import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.test.GitScenarios.*
 import java.io.File
-import java.util.*
 
 class GitBranchWorkerTest : GitPlatformTest() {
 
@@ -274,7 +273,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     branchWithCommit(myRepositories, "feature")
 
 
-    val untracked = Arrays.asList<String>("untracked.txt")
+    val untracked = listOf("untracked.txt")
     untrackedFileOverwrittenBy(second, "feature", untracked)
 
     val untrackedPaths = mutableListOf<String>()
@@ -288,7 +287,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    assertTrue("Untracked files dialog was not shown", !untrackedPaths.isEmpty())
+    assertTrue("Untracked files dialog was not shown", untrackedPaths.isNotEmpty())
     assertEquals("Incorrect set of untracked files was shown in the dialog", untracked, untrackedPaths)
   }
 
@@ -316,7 +315,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             operation: String,
                                             forceButton: String?): GitSmartOperationDialog.Choice {
         actualChanges.addAll(changes)
-        return GitSmartOperationDialog.Choice.CANCEL
+        return CANCEL
       }
     })
 
@@ -414,7 +413,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             forceButton: String?): GitSmartOperationDialog.Choice {
         smartOperationDialogTimes++
         filesInDialog.addAll(ChangesUtil.getPaths(changes).map { it.path })
-        return GitSmartOperationDialog.Choice.SMART
+        return SMART
       }
     })
 
@@ -430,7 +429,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             changes: List<Change>,
                                             paths: Collection<String>,
                                             operation: String,
-                                            forceButton: String?) = GitSmartOperationDialog.Choice.CANCEL
+                                            forceButton: String?) = CANCEL
     })
 
     assertNull("Notification was unexpectedly shown:" + vcsNotifier.lastNotification, vcsNotifier.lastNotification)
