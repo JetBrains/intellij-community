@@ -378,14 +378,18 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   @NotNull
-  public Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file, @NotNull FileEditorManagerImpl fileEditorManager) {
+  public Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file,
+                                                                            @NotNull FileEditorManagerImpl fileEditorManager) {
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
     register(container);
 
     DockWindow window = createWindowFor(null, container);
-    window.show(true);
-    final EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
-    final Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      window.show(true);
+    }
+
+    EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
+    Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
     container.add(EditorTabbedContainer.createDockableEditor(myProject, null, file, new Presentation(file.getName()), editorWindow), null);
 
     SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
@@ -416,11 +420,13 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myContainer = container;
       setProject(project);
 
-      if (!(container instanceof DockContainer.Dialog)) {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !(container instanceof DockContainer.Dialog)) {
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        Window frame = getFrame();
-        if (statusBar != null && frame instanceof IdeFrame) {
-          setStatusBar(statusBar.createChild((IdeFrame)frame));
+        if (statusBar != null) {
+          Window frame = getFrame();
+          if (frame instanceof IdeFrame) {
+            setStatusBar(statusBar.createChild((IdeFrame)frame));
+          }
         }
       }
 
@@ -467,7 +473,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     private void updateNorthPanel() {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
+
       myNorthPanel.setVisible(UISettings.getInstance().getShowNavigationBar()
                               && !(myContainer instanceof DockContainer.Dialog)
                               && !UISettings.getInstance().getPresentationMode());
