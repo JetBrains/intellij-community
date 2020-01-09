@@ -20,6 +20,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 // List of non-negative ints, monotonically increasing, optimized for one int case (90% of our lists are one-element)
 @ApiStatus.Internal
 @Debug.Renderer(text = "myArray == null ? \"[\" + myData + \"]\" : java.util.Arrays.toString(myArray)")
@@ -80,5 +83,10 @@ public final class StubIdList {
     }
     if (i >= myData) throw new IncorrectOperationException();
     return myArray[i];
+  }
+
+  @Override
+  public String toString() {
+    return Arrays.toString(IntStream.range(0, size()).map(idx -> get(idx)).toArray());
   }
 }
