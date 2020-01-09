@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.ShTypes;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class ShFile extends PsiFileBase {
     return ShFileType.INSTANCE;
   }
 
-  public Map<String, ShFunctionName> findFunctions() {
+  public Map<PsiElement, ShFunctionName> findFunctions() {
     return CachedValuesManager.getCachedValue(this, () ->
       CachedValueProvider.Result.create(new ShFunctionInnerResolver().findFunctionsInner(this), this));
   }
@@ -46,31 +47,40 @@ public class ShFile extends PsiFileBase {
 
   private static class ShFunctionInnerResolver {
     private final Map<String, FunctionContext> myExecutionContext;
-    private final Map<String, ShFunctionName> myFunctionMapping;
+    private final Map<PsiElement, ShFunctionName> myFunctionMapping;
 
     private ShFunctionInnerResolver() {
       myExecutionContext = new HashMap<>();
       myFunctionMapping = new HashMap<>();
     }
 
-    public Map<String, ShFunctionName> findFunctionsInner(@NotNull ShFile shFile) {
+    public Map<PsiElement, ShFunctionName> findFunctionsInner(@NotNull ShFile shFile) {
       // Execution context should be build, not check inner function if it was not called
-      checkChildren(shFile);
+      checkChildren(shFile, false);
+      checkUnvisitedFunctions();
       return myFunctionMapping;
     }
 
-    private void checkChildren(PsiElement element) {
+    private void checkUnvisitedFunctions() {
+      // We should visit all not visited function one by one with checking inner function also
+      ContainerUtil.filter(myExecutionContext.values(), it -> !it.visited).forEach(notVisitedFunction -> {
+        notVisitedFunction.visited = true;
+        checkChildren(notVisitedFunction.function, true);
+      });
+    }
+
+    private void checkChildren(PsiElement element, boolean visitInnerFunction) {
       if (element == null) return;
       for (PsiElement child : element.getChildren()) {
-        buildExecutionContext(skipUnnecessaryNodes(child));
+        buildExecutionContext(skipUnnecessaryNodes(child), visitInnerFunction);
       }
     }
 
-    private void buildExecutionContext(PsiElement element) {
+    private void buildExecutionContext(PsiElement element, boolean visitInnerFunction) {
       if (element == null) return;
       if (element instanceof ShFunctionDefinition) {
         // If we meet function definition, should add it to the context like a not visited node
-        handleFunction((ShFunctionDefinition)element);
+        handleFunction((ShFunctionDefinition)element, visitInnerFunction);
         return;
       }
       if (element instanceof ShGenericCommandDirective) {
@@ -82,18 +92,18 @@ public class ShFile extends PsiFileBase {
           String literalText = literal.getText();
           FunctionContext functionContext = myExecutionContext.get(literalText);
           if (functionContext == null) {
-            myFunctionMapping.put(literalText, null);
+            myFunctionMapping.put(literal, null);
             return;
           }
-          myFunctionMapping.put(literalText, functionContext.function.getFunctionName());
+          myFunctionMapping.put(literal, functionContext.function.getFunctionName());
           if (!functionContext.visited) {
             functionContext.visited = true;
-            checkChildren(functionContext.function);
+            checkChildren(functionContext.function, visitInnerFunction);
           }
           return;
         }
       }
-      checkChildren(element);
+      checkChildren(element, visitInnerFunction);
     }
 
     private static PsiElement skipUnnecessaryNodes(@NotNull PsiElement element) {
@@ -108,13 +118,14 @@ public class ShFile extends PsiFileBase {
       return element.getChildren().length == 1 && !(element instanceof ShGenericCommandDirective || element instanceof ShFunctionDefinition);
     }
 
-    private void handleFunction(@NotNull ShFunctionDefinition functionDefinition) {
+    private void handleFunction(@NotNull ShFunctionDefinition functionDefinition, boolean visitInnerFunction) {
       ShFunctionName functionName = functionDefinition.getFunctionName();
       assert functionName != null;
       FunctionContext functionContext = new FunctionContext(functionDefinition);
       myExecutionContext.put(functionName.getText(), functionContext);
+      if (!visitInnerFunction) return;
       functionContext.visited = true;
-      checkChildren(functionDefinition);
+      checkChildren(functionDefinition, true);
     }
 
     private static class FunctionContext {

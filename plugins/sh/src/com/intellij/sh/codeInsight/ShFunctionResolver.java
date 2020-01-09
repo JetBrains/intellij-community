@@ -16,7 +16,7 @@ class ShFunctionResolver implements ResolveCache.Resolver {
     PsiElement refElement = ref.getElement();
     PsiFile file = refElement.getContainingFile();
     if (file instanceof ShFile) {
-      return ((ShFile)file).findFunctions().get(refElement.getText());
+      return ((ShFile)file).findFunctions().get(refElement);
     }
     return null;
   }
