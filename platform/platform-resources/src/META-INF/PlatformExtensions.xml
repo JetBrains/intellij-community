@@ -90,7 +90,7 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.ex.temp.TempFileSystem" key="temp" physical="true"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.util.registry.RegistryState" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.openapi.util.registry.RegistryManager" preload="true"/>
 
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
@@ -412,7 +412,7 @@
     <!-- Keymap -->
     <applicationConfigurable groupId="root" groupWeight="65" instance="com.intellij.openapi.keymap.impl.ui.KeymapPanel" id="preferences.keymap" key="keymap.display.name"
                              bundle="messages.KeyMapBundle"/>
-    <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel" 
+    <applicationConfigurable groupId="appearance" instance="com.intellij.openapi.keymap.impl.ui.QuickListsPanel"
                              id="reference.idesettings.quicklists"
                              bundle="messages.IdeBundle"
                              key="configurable.quick.lists.name"
@@ -434,7 +434,7 @@
 
     <!-- Plugins -->
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
-                             treeRenderer="com.intellij.ide.plugins.PluginManagerConfigurableTreeRenderer" 
+                             treeRenderer="com.intellij.ide.plugins.PluginManagerConfigurableTreeRenderer"
                              bundle="messages.IdeBundle" key="title.plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.PluginsActionFromOptionDescriptorProvider"/>
     <customFileDropHandler implementation="com.intellij.ide.plugins.PluginDropHandler"/>

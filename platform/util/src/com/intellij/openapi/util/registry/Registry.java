@@ -4,6 +4,7 @@ package com.intellij.openapi.util.registry;
 import com.intellij.diagnostic.LoadingState;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -144,6 +145,7 @@ public final class Registry  {
     return state;
   }
 
+  @ApiStatus.Internal
   public void loadState(@NotNull Element state) {
     myUserProperties.clear();
     for (Element eachEntry : state.getChildren("entry")) {
@@ -157,6 +159,11 @@ public final class Registry  {
         }
       }
     }
+    markAsLoaded();
+  }
+
+  @ApiStatus.Internal
+  public void markAsLoaded() {
     myLoaded = true;
   }
 
