@@ -40,7 +40,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   private val classTitle = ClippingTitle()
 
   private var simplePaths: List<TitlePart>? = null
-  private var basePaths: Set<TitlePart> = setOf(projectTitle, classTitle)
+  private var basePaths: List<TitlePart> = listOf(projectTitle, classTitle)
   protected var components = basePaths
 
   private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
@@ -145,7 +145,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       unInstallListeners()
     }
 
-    project?.let {
+    project?.let { it ->
       val disp = Disposer.newDisposable()
       Disposer.register(it, disp)
       disposable = disp
@@ -154,11 +154,12 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       Registry.get("ide.borderless.title.classpath").addListener(registryListener, disp)
 
       simpleExtensions = getProviders(it)
-      simpleExtensions?.forEach { _ -> update() }
+      simpleExtensions?.forEach { ext -> ext.addUpdateListener { update() } }
       simplePaths = simpleExtensions?.map { ex -> ex.borderlessTitlePart }
 
-      val listOf = setOf(projectTitle, classTitle)
-      components = simplePaths?.let{ listOf.union(it) } ?: listOf
+      val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
+      simplePaths?.let{ sp -> shrinkingPaths.addAll(sp) }
+      components = shrinkingPaths
       updateTitlePaths()
 
       it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
@@ -257,7 +258,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     val testSimple = simplePaths?.let { testSimple(it, width - (projectTitle.longWidth + classTitle.longWidth)) }
 
-    val listOf = listOf(
+    val pathPatterns = listOf( 
       Pattern(projectTitle.longWidth + classTitle.shortWidth) {
         projectTitle.getLong() +
         classTitle.shrink(label, fm, width - projectTitle.longWidth)
@@ -273,7 +274,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     titleString = testSimple?.let {
       projectTitle.getLong() +
       classTitle.getLong() + it
-    } ?: listOf.first { it.preferredWidth < width }.let {
+    } ?: pathPatterns.first { it.preferredWidth < width }.let {
         it.createTitle()
     }
 
