@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.facet.FacetManager
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.impl.ModuleImpl
@@ -30,9 +29,9 @@ internal class LegacyBridgeModuleImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
-                                  notifyListeners: Boolean) {
-    super.registerComponents(plugins, false)
+  override fun registerComponents(plugins: List<DescriptorToLoad>,
+                                  listenerCallbacks: List<Runnable>?) {
+    super.registerComponents(plugins, null)
 
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
                            ?: error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")

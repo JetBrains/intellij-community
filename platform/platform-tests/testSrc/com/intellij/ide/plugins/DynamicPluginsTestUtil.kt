@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
@@ -41,16 +41,30 @@ fun loadExtensionWithText(extensionTag: String, loader: ClassLoader, ns: String 
 }
 
 fun loadPluginWithText(pluginXml: String, loader: ClassLoader): Disposable {
-  val directory = FileUtil.createTempDirectory("test", "test", true)
-  val plugin = File(directory, "/plugin/META-INF/plugin.xml")
-  FileUtil.createParentDirs(plugin)
-  FileUtil.writeToFile(plugin, pluginXml)
-  var descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
+  val pair = preparePluginDescriptor(pluginXml)
+  val plugin = pair.first
+  var descriptor = pair.second
+  Assertions.assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
   descriptor.setLoader(loader)
-  loadPlugin(descriptor, false)
+  try {
+    loadPlugin(descriptor, false)
+  }
+  catch (e: Exception) {
+    unloadPlugin(descriptor, false)
+    throw RuntimeException(e)
+  }
 
   return Disposable {
     descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
     unloadPlugin(descriptor, false)
   }
+}
+
+fun preparePluginDescriptor(pluginXml: String): Pair<File, IdeaPluginDescriptorImpl> {
+  val directory = FileUtil.createTempDirectory("test", "test", true)
+  val plugin = File(directory, "/plugin/META-INF/plugin.xml")
+  FileUtil.createParentDirs(plugin)
+  FileUtil.writeToFile(plugin, pluginXml)
+  val descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
+  return Pair(plugin, descriptor)
 }

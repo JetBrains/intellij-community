@@ -614,6 +614,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return found;
   }
 
+  public abstract boolean unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks);
+
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull T extensionObject,
                                @NotNull PluginDescriptor pluginDescriptor,
@@ -815,7 +817,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   final synchronized void registerExtensions(@NotNull List<? extends Element> extensionElements,
                                              @NotNull IdeaPluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager,
-                                             boolean notifyListeners) {
+                                             @Nullable List<Runnable> listenerCallbacks) {
     if (myComponentManager != componentManager) {
       LOG.error("The same point on different levels (pointName=" + getName() + ")");
     }
@@ -835,13 +837,14 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, componentManager));
     }
 
-    if (notifyListeners) {
+    if (listenerCallbacks != null) {
       clearCache();
 
-      notifyListeners(ExtensionEvent.ADDED,
-                      () -> ContainerUtil.map(myAdapters.subList(oldSize, myAdapters.size()),
-                                              adapter -> Pair.create(processAdapter(adapter), pluginDescriptor)),
-                      myListeners);
+      listenerCallbacks.add(() ->
+                              notifyListeners(ExtensionEvent.ADDED,
+                                              () -> ContainerUtil.map(myAdapters.subList(oldSize, myAdapters.size()),
+                                                                      adapter -> Pair.create(processAdapter(adapter), pluginDescriptor)),
+                                              myListeners));
     }
   }
 

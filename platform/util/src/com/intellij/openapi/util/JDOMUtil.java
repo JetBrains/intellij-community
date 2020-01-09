@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -136,7 +136,11 @@ public final class JDOMUtil {
 
     return Comparing.equal(e1.getName(), e2.getName())
            && isAttributesEqual(getAttributes(e1), getAttributes(e2), ignoreEmptyAttrValues)
-           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
+           && areElementContentsEqual(e1, e2, ignoreEmptyAttrValues);
+  }
+
+  public static boolean areElementContentsEqual(@NotNull Element e1, @NotNull Element e2, boolean ignoreEmptyAttrValues) {
+    return contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
   }
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();

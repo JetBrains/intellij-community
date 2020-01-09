@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.LoadingState
@@ -103,7 +103,19 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
 
   @Internal
-  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, notifyListeners: Boolean) {
+  fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, notifyListeners: Boolean) {
+    val listenerCallbacks = if (notifyListeners) mutableListOf<Runnable>() else null
+    registerComponents(plugins.map { DescriptorToLoad(it) }, listenerCallbacks)
+    listenerCallbacks?.forEach(Runnable::run)
+  }
+
+  data class DescriptorToLoad(
+    val descriptor: IdeaPluginDescriptorImpl,
+    val rootDescriptor: IdeaPluginDescriptorImpl = descriptor
+  )
+
+  @Internal
+  open fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     val app = getApplication()
@@ -119,7 +131,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     else StartUpMeasurer.startMainActivity("${activityNamePrefix}service and ep registration")
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
-    for (plugin in plugins) {
+    for ((plugin, _) in plugins) {
       val containerDescriptor = getContainerDescriptor(plugin)
       registerServices(containerDescriptor.services, plugin)
 
@@ -161,8 +173,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    for (descriptor in plugins) {
-      descriptor.registerExtensions(extensionArea, this, notifyListeners)
+    for ((pluginDescriptor, rootDescriptor) in plugins) {
+      pluginDescriptor.registerExtensions(extensionArea, this, rootDescriptor, listenerCallbacks)
     }
     activity?.end()
 

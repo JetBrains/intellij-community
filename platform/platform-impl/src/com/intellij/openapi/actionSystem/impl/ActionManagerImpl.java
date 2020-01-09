@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
@@ -149,7 +149,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {
-      registerPluginActions(plugin);
+      registerPluginActions(plugin, plugin.getActionDescriptionElements());
     }
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
@@ -495,14 +495,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons);
   }
 
-  public void registerPluginActions(@NotNull IdeaPluginDescriptorImpl plugin) {
-    List<Element> elementList = plugin.getActionDescriptionElements();
-    if (elementList == null) {
+  public void registerPluginActions(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable List<Element> actionDescriptionElements) {
+    if (actionDescriptionElements == null) {
       return;
     }
 
     long startTime = StartUpMeasurer.getCurrentTime();
-    for (Element e : elementList) {
+    for (Element e : actionDescriptionElements) {
       processActionsChildElement(plugin, e);
     }
     StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);

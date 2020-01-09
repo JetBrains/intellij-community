@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -61,6 +61,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
 
   private final Path myPath;
+  private Path myBasePath;   // base path for resolving optional dependency descriptors
   private final boolean myBundled;
   private String myName;
   private PluginId myId;
@@ -78,6 +79,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private String myUrl;
   private PluginId[] myDependencies = PluginId.EMPTY_ARRAY;
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
+  private List<PluginDependency> myPluginDependencies;
 
   // used only during initializing
   transient Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalConfigs;
@@ -140,6 +142,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myPath;
   }
 
+  public Path getBasePath() {
+    return myBasePath;
+  }
+
   /**
    * @deprecated Use {@link PluginManager#loadDescriptorFromFile(IdeaPluginDescriptorImpl, Path, SafeJdomFactory, boolean, Set)}
    */
@@ -154,6 +160,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
                               @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                               @NotNull DescriptorLoadingContext context,
                               @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
+    myBasePath = basePath;
+
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -187,7 +195,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
     XmlReader.readMetaInfo(this, element);
 
-    List<PluginDependency> dependencies = null;
+    myPluginDependencies = null;
     for (Content content : element.getContent()) {
       if (!(content instanceof Element)) {
         continue;
@@ -279,18 +287,17 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
               }
             }
 
-            if (isAvailable) {
-              if (dependencies == null) {
-                dependencies = new ArrayList<>();
-              }
-
-              PluginDependency dependency = new PluginDependency();
-              dependency.pluginId = dependencyId;
-              dependency.optional = isOptional;
-              dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
-              dependency.dependency = dependencyDescriptor;
-              dependencies.add(dependency);
+            if (myPluginDependencies == null) {
+              myPluginDependencies = new ArrayList<>();
             }
+
+            PluginDependency dependency = new PluginDependency();
+            dependency.pluginId = dependencyId;
+            dependency.optional = isOptional;
+            dependency.available = isAvailable;
+            dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
+            dependency.dependency = dependencyDescriptor;
+            myPluginDependencies.add(dependency);
           }
           break;
 
@@ -342,8 +349,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       myVersion = context.parentContext.getDefaultVersion();
     }
 
-    if (dependencies != null) {
-      XmlReader.readDependencies(rootDescriptor, this, dependencies, context, basePath, pathResolver);
+    if (myPluginDependencies != null) {
+      XmlReader.readDependencies(rootDescriptor, this, myPluginDependencies, context, pathResolver);
     }
 
     return true;
@@ -591,6 +598,18 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   @ApiStatus.Internal
   public void registerExtensions(@NotNull ExtensionsAreaImpl area, @NotNull ComponentManager componentManager, boolean notifyListeners) {
+    List<Runnable> listeners = notifyListeners ? new ArrayList<>() : null;
+    registerExtensions(area, componentManager, this, listeners);
+    if (listeners != null) {
+      listeners.forEach(Runnable::run);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void registerExtensions(@NotNull ExtensionsAreaImpl area,
+                                 @NotNull ComponentManager componentManager,
+                                 @NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                 @Nullable List<Runnable> listenerCallbacks) {
     THashMap<String, List<Element>> extensions;
     if (componentManager.getPicoContainer().getParent() == null) {
       extensions = myAppContainerDescriptor.extensions;
@@ -600,7 +619,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         }
 
         myExtensions.retainEntries((name, list) -> {
-          if (area.registerExtensions(name, list, this, componentManager, notifyListeners)) {
+          if (area.registerExtensions(name, list, rootDescriptor, componentManager, listenerCallbacks)) {
             if (myAppContainerDescriptor.extensions == null) {
               myAppContainerDescriptor.extensions = new THashMap<>();
             }
@@ -627,7 +646,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     extensions.forEachEntry((name, list) -> {
-      area.registerExtensions(name, list, this, componentManager, notifyListeners);
+      area.registerExtensions(name, list, rootDescriptor, componentManager, listenerCallbacks);
       return true;
     });
   }
@@ -994,10 +1013,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private static final class PluginDependency {
     public PluginId pluginId;
     public boolean optional;
+    public boolean available;
     public String configFile;
 
     // maybe null if not yet read (as we read in parallel)
     public IdeaPluginDescriptorImpl dependency;
+  }
+
+  @Nullable
+  public String findOptionalDependencyConfigFile(@NotNull PluginId pluginId) {
+    if (myDependencies == null) return null;
+    for (PluginDependency dependency : myPluginDependencies) {
+      if (dependency.pluginId.equals(pluginId)) {
+        return dependency.configFile;
+      }
+    }
+    return null;
   }
 
   private static final class XmlReader {
@@ -1089,7 +1120,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
                                      @NotNull IdeaPluginDescriptorImpl descriptor,
                                      @NotNull List<PluginDependency> dependencies,
                                      @NotNull DescriptorLoadingContext context,
-                                     @NotNull Path basePath,
                                      @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver) {
       List<String> visitedFiles = null;
 
@@ -1098,7 +1128,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       for (int i = 0, n = dependencies.size(); i < n; i++) {
         PluginDependency dependency = dependencies.get(i);
         size++;
-        if (!dependency.optional) {
+        if (!dependency.available || !dependency.optional) {
           continue;
         }
 
@@ -1120,7 +1150,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
         Element element;
         try {
-          element = pathResolver.resolvePath(basePath, configFile, context.parentContext.getXmlFactory());
+          element = pathResolver.resolvePath(descriptor.myBasePath, configFile, context.parentContext.getXmlFactory());
         }
         catch (IOException | JDOMException e) {
           context.parentContext.getLogger().info("Plugin " + rootDescriptor.getPluginId() + " misses optional descriptor " + configFile);
@@ -1145,7 +1175,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         }
 
         visitedFiles.add(configFile);
-        if (!tempDescriptor.readExternal(element, basePath, pathResolver, context, rootDescriptor)) {
+        if (!tempDescriptor.readExternal(element, descriptor.myBasePath, pathResolver, context, rootDescriptor)) {
           tempDescriptor = null;
         }
         visitedFiles.clear();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -6,10 +6,16 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.XmlSerializer;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   @Nullable
@@ -75,6 +81,30 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
     }
     return instance;
+  }
+
+  boolean isLoadedFromAnyElement(List<Element> candidateElements) {
+    Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance);
+    Map<String, String> serializedAttributes = getExtensionAttributesMap(serializedElement);
+
+    for (Element candidateElement : candidateElements) {
+      Map<String, String> candidateAttributes = getExtensionAttributesMap(candidateElement);
+      if (serializedAttributes.equals(candidateAttributes) &&
+          JDOMUtil.areElementContentsEqual(serializedElement, candidateElement, true)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Map<String, String> getExtensionAttributesMap(Element serializedElement) {
+    Map<String, String> attributes = new HashMap<>();
+    for (Attribute attribute : serializedElement.getAttributes()) {
+      if (!attribute.getName().equals("id") && !attribute.getName().equals("order")) {
+        attributes.put(attribute.getName(), attribute.getValue());
+      }
+    }
+    return attributes;
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
