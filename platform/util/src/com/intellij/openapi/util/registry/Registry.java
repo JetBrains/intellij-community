@@ -214,14 +214,6 @@ public final class Registry  {
     return false;
   }
 
-  /**
-   * @deprecated Use extension point `com.intellij.registryKey`.
-   */
-  @Deprecated
-  public static synchronized void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
-    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, null));
-  }
-
   public static synchronized void addKeys(@NotNull List<RegistryKeyDescriptor> descriptors) {
     // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
     THashMap<String, RegistryKeyDescriptor> map = ourInstance.myContributedKeys;
@@ -240,15 +232,7 @@ public final class Registry  {
    * @deprecated Use extension point `com.intellij.registryKey`.
    */
   @Deprecated
-  public static void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
-    addKey(key, description, Integer.toString(defaultValue), restartRequired);
-  }
-
-  /**
-   * @deprecated Use extension point `com.intellij.registryKey`.
-   */
-  @Deprecated
-  public static void addKey(@NotNull String key, @NotNull String description, boolean defaultValue, boolean restartRequired) {
-    addKey(key, description, Boolean.toString(defaultValue), restartRequired);
+  public static synchronized void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
+    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, Integer.toString(defaultValue), restartRequired, null));
   }
 }
