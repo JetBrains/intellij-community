@@ -62,7 +62,7 @@ To build installation packages, run the `ant` command in `<IDEA_HOME>` directory
 ## Running IntelliJ IDEA
 To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".
 
-To run tests on the build, apply these setting to the **Run | Edit Run Configurations... | Defaults | JUnit** configuration tab:
+To run tests on the build, apply these setting to the **Run | Edit Configurations... | Templates | JUnit** configuration tab:
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 
