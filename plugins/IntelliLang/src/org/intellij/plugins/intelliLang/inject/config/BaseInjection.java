@@ -147,7 +147,10 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     mySuffix = suffix;
   }
 
-  @Override
+  /**
+   * Determines whether injection to host or concatenation must be ignored. If at least one place in concatenation is ignored then
+   * the entire concatenation must be ignored and language must not be injected.
+   */
   public boolean isIgnoredPlace(PsiElement element) {
     if (myCompiledIgnorePattern == null) {
       return false;
