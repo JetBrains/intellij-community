@@ -17,6 +17,10 @@ public final class ComponentUtil {
     return (T)component.getClientProperty(key);
   }
 
+  public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
+    component.putClientProperty(key, value);
+  }
+
   public static boolean isDisableAutoRequestFocus() {
     return Registry.is("suppress.focus.stealing.disable.auto.request.focus", true);
   }

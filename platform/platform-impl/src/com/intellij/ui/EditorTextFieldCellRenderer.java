@@ -116,7 +116,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     panel = createRendererComponent(myProject, myLanguage, myInheritFontFromLaF);
     Disposer.register(this, panel);
-    Disposer.register(this, () -> UIUtil.putClientProperty(table, MY_PANEL_PROPERTY, null));
+    Disposer.register(this, () -> ComponentUtil.putClientProperty(table, MY_PANEL_PROPERTY, null));
 
     table.putClientProperty(MY_PANEL_PROPERTY, panel);
     return panel;

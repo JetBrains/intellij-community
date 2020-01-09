@@ -24,7 +24,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PausesStat;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -329,7 +328,7 @@ public final class ActionUtil {
   }
 
   public static void clearActions(@NotNull JComponent component) {
-    UIUtil.putClientProperty(component, AnAction.ACTIONS_KEY, null);
+    ComponentUtil.putClientProperty(component, AnAction.ACTIONS_KEY, null);
   }
 
   public static void copyRegisteredShortcuts(@NotNull JComponent to, @NotNull JComponent from) {

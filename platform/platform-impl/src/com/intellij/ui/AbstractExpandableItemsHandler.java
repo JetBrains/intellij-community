@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
@@ -321,9 +321,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
-    UIUtil.putClientProperty(myComponent, EXPANDED_RENDERER, true);
+    ComponentUtil.putClientProperty(myComponent, EXPANDED_RENDERER, true);
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
-    UIUtil.putClientProperty(myComponent, EXPANDED_RENDERER, null);
+    ComponentUtil.putClientProperty(myComponent, EXPANDED_RENDERER, null);
     if (rendererAndBounds == null) return null;
 
     JComponent renderer = ObjectUtils.tryCast(rendererAndBounds.first, JComponent.class);

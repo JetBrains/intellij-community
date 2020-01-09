@@ -1593,7 +1593,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     toolWindowPane!!.stretchHeight((toolWindow)!!, value)
   }
 
-  private class BalloonHyperlinkListener internal constructor(private val listener: HyperlinkListener?) : HyperlinkListener {
+  private class BalloonHyperlinkListener constructor(private val listener: HyperlinkListener?) : HyperlinkListener {
     var balloon: Balloon? = null
 
     override fun hyperlinkUpdate(e: HyperlinkEvent) {

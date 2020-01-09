@@ -595,7 +595,7 @@ public final class UIUtil {
   }
 
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
-    component.putClientProperty(key, value);
+    ComponentUtil.putClientProperty(component, key, value);
   }
 
   @NotNull

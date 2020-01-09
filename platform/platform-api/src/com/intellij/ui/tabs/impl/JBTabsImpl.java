@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -343,10 +344,10 @@ public class JBTabsImpl extends JComponent
         }
       }
     };
-    UIUtil.putClientProperty(
-      this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS,
-      (Iterable<JComponent>)() -> JBIterable.from(getVisibleInfos()).filter(Conditions.not(Conditions.is(mySelectedInfo))).transform(
-        info -> info.getComponent()).iterator());
+    ComponentUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS,
+                                    (Iterable<? extends Component>)(Iterable<JComponent>)() -> JBIterable.from(getVisibleInfos())
+                                      .filter(Conditions.not(Conditions.is(mySelectedInfo))).transform(
+                                        info -> info.getComponent()).iterator());
   }
 
   public boolean isMouseInsideTabsArea() {

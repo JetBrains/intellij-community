@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.intellij.openapi.util.Conditions;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -52,18 +53,19 @@ final class PanelContentUI implements ContentUI {
       return;
     }
     myPanel = new JPanel(new BorderLayout());
-    UIUtil.putClientProperty(myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
-      if (myContentManager == null || myContentManager.getContentCount() == 0) {
-        return Collections.emptyIterator();
-      }
-      return JBIterable.of(myContentManager.getContents())
-        .map(content -> {
-          JComponent component = content.getComponent();
-          return component != null && myPanel != component.getParent() ? component : null;
-        })
-        .filter(Conditions.notNull())
-        .iterator();
-    });
+    ComponentUtil
+      .putClientProperty(myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<? extends Component>)(Iterable<JComponent>)() -> {
+        if (myContentManager == null || myContentManager.getContentCount() == 0) {
+          return Collections.emptyIterator();
+        }
+        return JBIterable.of(myContentManager.getContents())
+          .map(content -> {
+            JComponent component = content.getComponent();
+            return component != null && myPanel != component.getParent() ? component : null;
+          })
+          .filter(Conditions.notNull())
+          .iterator();
+      });
   }
 
   private void showContent(@NotNull Content content) {

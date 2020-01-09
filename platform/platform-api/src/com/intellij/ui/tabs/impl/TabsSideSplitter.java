@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.Splittable;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,7 +55,7 @@ class TabsSideSplitter implements Splittable, PropertyChangeListener {
   void setSideTabsLimit(int sideTabsLimit) {
     if (mySideTabsLimit != sideTabsLimit) {
       mySideTabsLimit = sideTabsLimit;
-      UIUtil.putClientProperty(myTabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, mySideTabsLimit);
+      ComponentUtil.putClientProperty(myTabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, mySideTabsLimit);
       myTabs.resetLayout(true);
       myTabs.doLayout();
       myTabs.repaint();

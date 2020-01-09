@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
@@ -125,7 +126,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @Override
   protected JComponent createCenterPanel() {
     JComponent centerPanel = super.createCenterPanel();
-    UIUtil.putClientProperty(centerPanel, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    ComponentUtil.putClientProperty(centerPanel, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     return centerPanel;
   }
 

@@ -849,7 +849,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         windowRef.set(editorWindow);
         if (editorWindow != null) {
           if (tabSizeLimit != 1) {
-            UIUtil.putClientProperty(editorWindow.getTabbedPane().getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit);
+            ComponentUtil.putClientProperty(editorWindow.getTabbedPane().getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit);
           }
         }
       });

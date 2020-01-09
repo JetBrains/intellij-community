@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -90,7 +90,7 @@ public class VcsLogUiUtil {
   @NotNull
   public static JScrollPane setupScrolledGraph(@NotNull VcsLogGraphTable graphTable, int border) {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(graphTable, border);
-    UIUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     graphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
   }

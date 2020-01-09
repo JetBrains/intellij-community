@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -477,14 +477,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (shouldScrollBarBeOpaque()) myVerticalScrollBar.setOpaque(true);
     myPanel = new JPanel();
 
-    UIUtil.putClientProperty(
-      myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
-        JComponent component = getPermanentHeaderComponent();
-        if (component != null && component.getParent() == null) {
-          return Collections.singleton(component).iterator();
-        }
-        return Collections.emptyIterator();
-      });
+    ComponentUtil.putClientProperty(myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS,
+                                    (Iterable<? extends Component>)(Iterable<JComponent>)() -> {
+                                      JComponent component = getPermanentHeaderComponent();
+                                      if (component != null && component.getParent() == null) {
+                                        return Collections.singleton(component).iterator();
+                                      }
+                                      return Collections.emptyIterator();
+                                    });
 
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
@@ -3032,7 +3032,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private OpaqueAwareScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
-      UIUtil.putClientProperty(this, ColorKey.FUNCTION_KEY, key -> getColorsScheme().getColor(key));
+      ComponentUtil.putClientProperty(this, ColorKey.FUNCTION_KEY, key -> getColorsScheme().getColor(key));
       addPropertyChangeListener("opaque", event -> {
         revalidate();
         repaint();

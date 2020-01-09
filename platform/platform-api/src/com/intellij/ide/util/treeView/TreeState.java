@@ -17,7 +17,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -447,7 +446,7 @@ public class TreeState implements JDOMExternalizable {
     if (expanding == null) expanding = Promises.resolvedPromise();
     expanding.onProcessed(value -> {
       AsyncPromise<Void> promise = new AsyncPromise<>();
-      UIUtil.putClientProperty(tree, EXPANDING, promise);
+      ComponentUtil.putClientProperty(tree, EXPANDING, promise);
       consumer.accept(promise);
     });
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
@@ -80,7 +81,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Data
 
     // InternalDecorator adds myContent right after "this" (via ToolWindowHeader)
     // also myContent is never removed (can be invisible due to DumbAwareHider)
-    UIUtil.putClientProperty(myContent, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+    ComponentUtil.putClientProperty(myContent, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
       @Override
       public Iterator<JComponent> iterator() {
         if (contentManager == null || contentManager.getContentCount() == 0) {

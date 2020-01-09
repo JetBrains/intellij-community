@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -358,7 +359,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (customComponent == null) {
       customComponent = ((CustomComponentAction)action).createCustomComponent(presentation, myPlace);
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
-      UIUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
+      ComponentUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
     }
     tweakActionComponentUI(customComponent);
 

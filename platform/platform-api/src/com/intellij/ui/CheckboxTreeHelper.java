@@ -6,7 +6,6 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,7 @@ public class CheckboxTreeHelper {
 
     KeyListener keyListener = setupKeyListener(tree, mainComponent);
     ClickListener clickListener = setupMouseListener(tree, mainComponent, cellRenderer);
-    UIUtil.putClientProperty(mainComponent, TREE_LISTENERS_REMOVER, () -> {
+    ComponentUtil.putClientProperty(mainComponent, TREE_LISTENERS_REMOVER, () -> {
       mainComponent.removeKeyListener(keyListener);
       clickListener.uninstall(mainComponent);
     });

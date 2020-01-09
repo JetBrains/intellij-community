@@ -345,7 +345,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public void setCustomTooltip(JComponent component, IdeTooltip tooltip) {
-    UIUtil.putClientProperty(component, CUSTOM_TOOLTIP, tooltip);
+    ComponentUtil.putClientProperty(component, CUSTOM_TOOLTIP, tooltip);
     // We need to register a dummy mouse listener to make sure events will be generated for this specific component, not its parent
     component.removeMouseListener(DUMMY_LISTENER);
     component.removeMouseMotionListener(DUMMY_LISTENER);

@@ -75,7 +75,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     Key<Component> key = LEADING.equals(name) ? DefaultScrollBarUI.LEADING : TRAILING.equals(name) ? DefaultScrollBarUI.TRAILING : null;
     if (key != null) {
       Component old = ComponentUtil.getClientProperty(this, key);
-      UIUtil.putClientProperty(this, key, component);
+      ComponentUtil.putClientProperty(this, key, component);
       if (old != null) remove(old);
     }
     super.addImpl(component, name, index);

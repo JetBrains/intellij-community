@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +180,8 @@ public abstract class AnAction implements PossiblyDumbAware {
     if (component == null) return;
     List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList == null) {
-      UIUtil.putClientProperty(component, ACTIONS_KEY, actionList = new SmartList<>());
+      List<AnAction> value = actionList = new SmartList<>();
+      ComponentUtil.putClientProperty(component, ACTIONS_KEY, value);
     }
     if (!actionList.contains(this)) {
       actionList.add(this);
