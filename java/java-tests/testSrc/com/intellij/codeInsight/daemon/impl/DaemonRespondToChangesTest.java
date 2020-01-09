@@ -2195,7 +2195,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           @Override
           public void visitKeyword(PsiKeyword keyword) {
             if (Objects.equals(keyword.getText(), "this")) {
-              holder.createAnnotation(HighlightSeverity.WARNING, keyword.getTextRange(), "XXX");
+              holder.newAnnotation(HighlightSeverity.WARNING, "XXX").range(keyword).create();
               TimeoutUtil.sleep(random.nextInt(100));
               iDidIt();
             }
@@ -2422,7 +2422,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
-        holder.createErrorAnnotation(element.getTextRange(), SWEARING);
+        holder.newAnnotation(HighlightSeverity.ERROR, SWEARING).range(element).create();
         iDidIt();
       }
     }
@@ -2432,7 +2432,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && ((PsiComment)element).getTokenType().equals(JavaTokenType.C_STYLE_COMMENT)) {
-        holder.createInfoAnnotation(element.getTextRange(), "comment");
+        holder.newAnnotation(HighlightSeverity.INFORMATION, "comment").create();
         iDidIt();
       }
     }
