@@ -279,7 +279,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         ifStatement.delete();
       }
       else if(thenElse.myCommonPartType != CommonPartType.WHOLE_BRANCH) {
-        // this is possible when one branch can be removed but it contains comments
+        // it is possible when one branch can be removed but it contains comments
         return true;
       }
       else if (elseToDelete) {
