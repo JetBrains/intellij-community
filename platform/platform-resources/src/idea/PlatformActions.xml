@@ -20,7 +20,7 @@
             class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction"/>
 
     <group id="Other.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Others -->
-    <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
+    <group id="Vcs.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
     <group id="ListActions">
@@ -445,8 +445,8 @@
 
       <!-- Edit -->
       <group id="EditMenu" popup="true">
-        <action id="$Undo" class="com.intellij.ide.actions.UndoAction" icon="AllIcons.Actions.Undo" text="Undo"/>
-        <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="AllIcons.Actions.Redo" text="Redo"/>
+        <action id="$Undo" class="com.intellij.ide.actions.UndoAction" icon="AllIcons.Actions.Undo"/>
+        <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="AllIcons.Actions.Redo"/>
         <separator/>
         <group id="CutCopyPasteGroup">
           <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="AllIcons.Actions.Menu_cut"/>
@@ -855,7 +855,7 @@
       <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction"/>
       <action id="WelcomeScreen.EditGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.EditProjectGroupAction"/>
       <group id="WelcomeScreen.MoveToGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.MoveProjectToGroupActionGroup"
-             text="Move To Group" popup="true"/>
+             popup="true"/>
       <action id="WelcomeScreen.ChangeProjectIcon" class="com.intellij.openapi.wm.impl.welcomeScreen.ChangeProjectIconAction"/>
       <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.CopyProjectPathAction"
               use-shortcut-of="CopyPaths"/>
@@ -923,8 +923,8 @@
       <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Vcs.History"/>
     </group>
 
-    <group id="Internal" text="&amp;Internal Actions" internal="true" popup="true" compact="true">
-      <group id="Internal.Errors" popup="true" text="Exceptions">
+    <group id="Internal" internal="true" popup="true" compact="true">
+      <group id="Internal.Errors" popup="true">
         <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
         <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"/>
         <action id="DropPluginError" internal="true" class="com.intellij.diagnostic.DropPluginErrorAction"/>
@@ -936,21 +936,21 @@
       <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction"/>
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
-      <group id="Internal.Performance" text="Performance" popup="true">
+      <group id="Internal.Performance" popup="true">
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction"/>
       </group>
       <separator/>
-      <group id="Internal.Editor" popup="true" text="&amp;Editor">
+      <group id="Internal.Editor" popup="true">
         <action id="AddInlayInternalAction" internal="true" class="com.intellij.internal.AddInlayInternalAction"/>
         <action id="EditorRenderingBenchmarkAction" internal="true"
                 class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"/>
       </group>
-      <group id="Internal.UI" popup="true" text="&amp;UI">
+      <group id="Internal.UI" popup="true">
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction"/>
         <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
         <separator/>
-        <group id="Internal.focusAndModality" popup="true" text="Focus and Modality Testing">
+        <group id="Internal.focusAndModality" popup="true">
           <action id="CheckMessagesButtonsOrderAction" internal="true"
                   class="com.intellij.internal.validation.CheckMessagesButtonsOrderAction"/>
           <action id="ShowDelayedMessageInternalAction" internal="true"
@@ -1000,7 +1000,7 @@
         <action id="ShowcaseUiDslAction" internal="true" class="com.intellij.ui.layout.ShowcaseUiDslAction"/>
         <action id="WebBrowser" class="com.intellij.internal.WebBrowser"/>
       </group>
-      <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" text="Top Anomalies" popup="true"/>
+      <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>
       <action id="ShowNonRetinaImages" internal="true" class="com.intellij.internal.ShowNonRetinaImagesActions"/>
       <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.internal.ShowUpdateInfoDialogAction"/>
@@ -1008,7 +1008,7 @@
       <separator/>
       <reference ref="MaintenanceGroup"/>
 
-      <group id="Internal.PMM" popup="true" text="PMM Utils">
+      <group id="Internal.PMM" popup="true">
         <action id="ApplyFixedWindowSize" internal="true" class="com.intellij.internal.inspector.ApplyWindowSizeAction"/>
         <action id="ConfigureDefaultSize" internal="true" class="com.intellij.internal.inspector.ConfigureCustomSizeAction"/>
       </group>

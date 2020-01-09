@@ -41,7 +41,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <group id="InspectCodeGroup" text="Inspect Code Actions">
+    <group id="InspectCodeGroup">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
       <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
