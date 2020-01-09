@@ -12,30 +12,25 @@
 
   <actions>
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
-            text="Open in Terminal"
-            description="Open current file location in terminal"
             icon="TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
-    <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction" text="Rename Session">
+    <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction" text="Move to Editor">
+    <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction"
-            text="Move Tab Left">
+    <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction">
       <keyboard-shortcut first-keystroke="control alt shift LEFT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction"
-            text="Move Tab Right">
+    <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction">
       <keyboard-shortcut first-keystroke="control alt shift RIGHT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction"
-            text="Switch Focus To Editor">
+    <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction">
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
   </actions>
