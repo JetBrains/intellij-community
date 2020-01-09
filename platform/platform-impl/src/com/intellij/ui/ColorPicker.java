@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -74,9 +74,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JLabel myR = new JLabel("R:");
   private final JLabel myG = new JLabel("G:");
   private final JLabel myB = new JLabel("B:");
-  private final JLabel myR_after = new JLabel("");
-  private final JLabel myG_after = new JLabel("");
-  private final JLabel myB_after = new JLabel("");
+  private final JLabel myR_after = new JLabel(" ");
+  private final JLabel myG_after = new JLabel(" ");
+  private final JLabel myB_after = new JLabel(" "); // " " is here because empty text would cause unfortunate traversal order (WEB-43164)
   private final JComboBox myFormat = new JComboBox(new String[]{"RGB", "HSB"}) {
     @Override
     public Dimension getPreferredSize() {
@@ -111,11 +111,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       public void actionPerformed(ActionEvent e) {
         PropertiesComponent.getInstance().setValue(HSB_PROPERTY, String.valueOf(!isRGBMode()), Boolean.FALSE.toString());
         myR.setText(isRGBMode() ? "R:" : "H:");
+        myR_after.setText(isRGBMode() ? " " : "\u00B0");
         myG.setText(isRGBMode() ? "G:" : "S:");
-        myR_after.setText(isRGBMode() ? "" : "\u00B0");
-        myG.setText(isRGBMode() ? "G:" : "S:");
-        myG_after.setText(isRGBMode() ? "" : "%");
-        myB_after.setText(isRGBMode() ? "" : "%");
+        myG_after.setText(isRGBMode() ? " " : "%");
+        myB_after.setText(isRGBMode() ? " " : "%"); // " " is here because empty text would cause unfortunate traversal order (WEB-43164)
         applyColor(myColor);
       }
     });
