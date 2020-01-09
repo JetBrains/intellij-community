@@ -1,582 +1,445 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.ui;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.ui
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.jdkEx.JdkEx;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.*;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.FrameState;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+import com.intellij.application.options.RegistryManager
+import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.jdkEx.JdkEx
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.MouseGestureManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.*
+import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.openapi.wm.ex.IdeFrameEx
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
+import com.intellij.ui.AppUIUtil
+import com.intellij.ui.BalloonLayout
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.FrameState
+import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
+import java.awt.*
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import java.io.File
+import java.util.*
+import javax.swing.*
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.util.List;
-import java.util.*;
+open class FrameWrapper @JvmOverloads constructor(project: Project?,
+                                                  @param:NonNls private var dimensionKey: String? = null,
+                                                  private val isDialog: Boolean = false,
+                                                  var title: String = "") : Disposable, DataProvider {
+  open var component: JComponent? = null
 
-public class FrameWrapper implements Disposable, DataProvider {
-  private String myDimensionKey;
-  private JComponent myComponent = null;
-  private JComponent myPreferredFocus = null;
-  private String myTitle = "";
-  private List<? extends Image> myImages = null;
-  private boolean myCloseOnEsc = false;
-  private BooleanGetter myOnCloseHandler;
-  private Window myFrame;
-  private final Map<String, Object> myDataMap = new HashMap<>();
-  private Project myProject;
-  private FocusWatcher myFocusWatcher;
+  open var preferredFocusedComponent: JComponent? = null
+  private var images: List<Image>? = null
+  private var isCloseOnEsc = false
+  private var onCloseHandler: BooleanGetter? = null
+  private var myFrame: Window? = null
+  private val dataMap: MutableMap<String, Any> = HashMap()
+  private var project: Project? = null
+  private var focusWatcher: FocusWatcher? = null
+  private var isDisposing = false
 
-  private boolean myDisposing;
-  private boolean myDisposed;
+  var isDisposed = false
+    private set
 
-  protected StatusBar myStatusBar;
-  private final boolean myIsDialog;
-
-  public FrameWrapper(Project project) {
-    this(project, null);
-  }
-
-  public FrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey) {
-    this(project, dimensionServiceKey, false);
-  }
-
-  public FrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey, boolean isDialog) {
-    myDimensionKey = dimensionServiceKey;
-    myIsDialog = isDialog;
-    if (project != null) {
-      setProject(project);
+  protected var statusBar: StatusBar? = null
+    set(value) {
+      field?.let {
+        Disposer.dispose(it)
+      }
+      field = value
     }
+
+  init {
+    project?.let { setProject(it) }
   }
 
-  public void setDimensionKey(String dimensionKey) {
-    myDimensionKey = dimensionKey;
+  fun setDimensionKey(dimensionKey: String?) {
+    this.dimensionKey = dimensionKey
   }
 
-  public void setData(String dataId, Object data) {
-    myDataMap.put(dataId, data);
+  fun setData(dataId: String, data: Any) {
+    dataMap.put(dataId, data)
   }
 
-  public void setProject(@NotNull Project project) {
-    myProject = project;
-    setData(CommonDataKeys.PROJECT.getName(), project);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        if (project == myProject) {
-          close();
+  fun setProject(project: Project) {
+    this.project = project
+    setData(CommonDataKeys.PROJECT.name, project)
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectClosing(project: Project) {
+        if (project === this@FrameWrapper.project) {
+          close()
         }
       }
-    });
+    })
   }
 
-  public void show() {
-    show(true);
+  open fun show() {
+    show(true)
   }
 
-  public void show(boolean restoreBounds) {
-     Window frame = getFrame();
-    if (frame instanceof JFrame) {
-      ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+  fun show(restoreBounds: Boolean) {
+    val frame = frame
+    if (frame is JFrame) {
+      frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
     }
     else {
-      ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      (frame as JDialog).defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
     }
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosing(WindowEvent e) {
-        close();
+    frame.addWindowListener(object : WindowAdapter() {
+      override fun windowClosing(e: WindowEvent) {
+        close()
       }
-    });
+    })
 
-    UIUtil.decorateWindowHeader(((RootPaneContainer)frame).getRootPane());
-
-    if (frame instanceof JFrame) {
-      UIUtil.setCustomTitleBar(frame, ((JFrame)frame).getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
+    UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
+    if (frame is JFrame) {
+      UIUtil.setCustomTitleBar(frame, frame.rootPane) { runnable ->
+        Disposer.register(this, Disposable { runnable.run() })
+      }
     }
 
-    WindowAdapter focusListener = new WindowAdapter() {
-      @Override
-      public void windowOpened(WindowEvent e) {
-        IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
-        JComponent toFocus = getPreferredFocusedComponent();
-        if (toFocus == null) {
-          toFocus = fm.getFocusTargetFor(myComponent);
-        }
-
+    val focusListener = object : WindowAdapter() {
+      override fun windowOpened(e: WindowEvent) {
+        val focusManager = IdeFocusManager.getInstance(project)
+        val toFocus = preferredFocusedComponent ?: focusManager.getFocusTargetFor(component!!)
         if (toFocus != null) {
-          fm.requestFocus(toFocus, true);
+          focusManager.requestFocus(toFocus, true)
         }
       }
-    };
-    frame.addWindowListener(focusListener);
-    if (Registry.is("ide.perProjectModality")) {
-      frame.setAlwaysOnTop(true);
     }
+    frame.addWindowListener(focusListener)
 
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        frame.removeWindowListener(focusListener);
-      }
-    });
+    if (RegistryManager.getInstance().`is`("ide.perProjectModality")) {
+      frame.isAlwaysOnTop = true
+    }
+    Disposer.register(this, Disposable {
+      frame.removeWindowListener(focusListener)
+    })
 
-    if (myCloseOnEsc) {
-      addCloseOnEsc((RootPaneContainer)frame);
+    if (isCloseOnEsc) {
+      addCloseOnEsc(frame as RootPaneContainer)
     }
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      myComponent = CustomFrameDialogContent.getCustomContentHolder(frame, myComponent);
+      component = getCustomContentHolder(frame, component!!)
     }
-
-    ((RootPaneContainer)frame).getContentPane().add(myComponent, BorderLayout.CENTER);
-    if (frame instanceof JFrame) {
-      ((JFrame)frame).setTitle(myTitle);
-    } else {
-      ((JDialog)frame).setTitle(myTitle);
-    }
-    if (myImages != null) {
-      // unwrap the image before setting as frame's icon
-      frame.setIconImages(ContainerUtil.map(myImages, ImageUtil::toBufferedImage));
+    frame.contentPane.add(component!!, BorderLayout.CENTER)
+    if (frame is JFrame) {
+      frame.title = title
     }
     else {
-      AppUIUtil.updateWindowIcon(myFrame);
+      (frame as JDialog).title = title
     }
-
-    WindowState state = myDimensionKey == null ? null : getWindowStateService(myProject).getState(myDimensionKey, frame);
+    if (images == null) {
+      AppUIUtil.updateWindowIcon(frame)
+    }
+    else {
+      // unwrap the image before setting as frame's icon
+      frame.setIconImages(ContainerUtil.map(images!!) { image: Image? ->
+        ImageUtil.toBufferedImage((image)!!)
+      })
+    }
+    val state = if (dimensionKey == null) null
+    else getWindowStateService(project).getState(dimensionKey!!, frame)
     if (restoreBounds) {
-      loadFrameState(state);
+      loadFrameState(state)
     }
-
-    if (SystemInfo.isLinux && frame instanceof JFrame && GlobalMenuLinux.isAvailable()) {
-      JFrame parentFrame = WindowManager.getInstance().getFrame(myProject);
+    if (SystemInfo.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
+      val parentFrame = WindowManager.getInstance().getFrame(project)
       if (parentFrame != null) {
-        LinuxIdeMenuBar.doBindAppMenuOfParent((JFrame)frame, parentFrame);
+        doBindAppMenuOfParent(frame, parentFrame)
       }
     }
-
-    myFocusWatcher = new FocusWatcher();
-    myFocusWatcher.install(myComponent);
-    frame.setVisible(true);
+    focusWatcher = FocusWatcher()
+    focusWatcher!!.install((component)!!)
+    frame.isVisible = true
   }
 
-  public void close() {
-    if (myDisposed || (myOnCloseHandler != null && !myOnCloseHandler.get())) {
-      return;
+  fun close() {
+    if (isDisposed || (onCloseHandler != null && !onCloseHandler!!.get())) {
+      return
     }
 
     // if you remove this line problems will start happen on Mac OS X
     // 2 projects opened, call Cmd+D on the second opened project and then Esc.
     // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
     // App is unusable until Cmd+Tab, Cmd+tab
-    myFrame.setVisible(false);
-    Disposer.dispose(this);
+    myFrame?.isVisible = false
+    Disposer.dispose(this)
   }
 
-  @Override
-  public void dispose() {
-    if (isDisposed()) {
-      return;
+  override fun dispose() {
+    if (isDisposed) {
+      return
     }
-
-    Window frame = myFrame;
-    StatusBar statusBar = myStatusBar;
-
-    myFrame = null;
-    myPreferredFocus = null;
-    myProject = null;
-    myDataMap.clear();
-
-    if (myComponent != null && myFocusWatcher != null) {
-      myFocusWatcher.deinstall(myComponent);
+    val frame = myFrame
+    val statusBar = statusBar
+    myFrame = null
+    preferredFocusedComponent = null
+    project = null
+    dataMap.clear()
+    if (component != null && focusWatcher != null) {
+      focusWatcher!!.deinstall(component)
     }
-    myFocusWatcher = null;
-
-    myComponent = null;
-    myImages = null;
-    myDisposed = true;
-
+    focusWatcher = null
+    component = null
+    images = null
+    isDisposed = true
     if (statusBar != null) {
-      Disposer.dispose(statusBar);
+      Disposer.dispose(statusBar)
     }
-
     if (frame != null) {
-      frame.setVisible(false);
-
-      JRootPane rootPane = ((RootPaneContainer)frame).getRootPane();
-      frame.removeAll();
-      DialogWrapper.cleanupRootPane(rootPane);
-
-      if (frame instanceof IdeFrame) {
-        MouseGestureManager.getInstance().remove((IdeFrame)frame);
+      frame.isVisible = false
+      val rootPane = (frame as RootPaneContainer).rootPane
+      frame.removeAll()
+      DialogWrapper.cleanupRootPane(rootPane)
+      if (frame is IdeFrame) {
+        MouseGestureManager.getInstance().remove((frame as IdeFrame?)!!)
       }
-
-      frame.dispose();
-
-      DialogWrapper.cleanupWindowListeners(frame);
+      frame.dispose()
+      DialogWrapper.cleanupWindowListeners(frame)
     }
   }
 
-  public boolean isDisposed() {
-    return myDisposed;
-  }
-
-  private void addCloseOnEsc(@NotNull RootPaneContainer frame) {
-    JRootPane rootPane = frame.getRootPane();
-    ActionListener closeAction = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (!PopupUtil.handleEscKeyEvent()) {
-          close();
-        }
+  private fun addCloseOnEsc(frame: RootPaneContainer) {
+    val rootPane = frame.rootPane
+    val closeAction = ActionListener {
+      if (!PopupUtil.handleEscKeyEvent()) {
+        close()
       }
-    };
-    rootPane.registerKeyboardAction(closeAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-    ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeAction, CommonShortcuts.getCloseActiveWindow());
-  }
-
-  @NotNull
-  public Window getFrame() {
-    assert !myDisposed : "Already disposed!";
-
-    if (myFrame == null) {
-      IdeFrame parent = WindowManager.getInstance().getIdeFrame(myProject);
-      myFrame = myIsDialog ? createJDialog(parent) : createJFrame(Objects.requireNonNull(parent));
     }
-    return myFrame;
+    rootPane.registerKeyboardAction(closeAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW)
+    ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeAction, CommonShortcuts.getCloseActiveWindow())
   }
 
-  public boolean isActive() {
-    return myFrame != null && myFrame.isActive();
-  }
-
-  @NotNull
-  protected JFrame createJFrame(@NotNull IdeFrame parent) {
-    return new MyJFrame(this, parent);
-  }
-
-  protected JDialog createJDialog(IdeFrame parent) {
-    return new MyJDialog(this, parent);
-  }
-
-  protected IdeRootPaneNorthExtension getNorthExtension(String key) {
-    return null;
-  }
-
-  @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
+  val frame: Window
+    get() {
+      assert(!isDisposed) { "Already disposed!" }
+      if (myFrame == null) {
+        val parent = WindowManager.getInstance().getIdeFrame(project)!!
+        myFrame = if (isDialog) createJDialog(parent) else createJFrame(parent)
+      }
+      return (myFrame)!!
     }
-    return null;
+
+  val isActive: Boolean
+    get() = myFrame?.isActive == true
+
+  protected open fun createJFrame(parent: IdeFrame): JFrame {
+    return MyJFrame(this, parent)
   }
 
-  @Nullable
-  private Object getDataInner(String dataId) {
-    Object data = getData(dataId);
-    return data != null ? data : myDataMap.get(dataId);
+  protected open fun createJDialog(parent: IdeFrame): JDialog = MyJDialog(this, parent)
+
+  protected open fun getNorthExtension(key: String?): IdeRootPaneNorthExtension? {
+    return null
   }
 
-  public void setComponent(JComponent component) {
-    myComponent = component;
+  override fun getData(@NonNls dataId: String): Any? {
+    return if (CommonDataKeys.PROJECT.`is`(dataId)) {
+      project
+    }
+    else null
   }
 
-  public void setPreferredFocusedComponent(JComponent preferedFocus) {
-    myPreferredFocus = preferedFocus;
+  private fun getDataInner(dataId: String): Any? {
+    val data = getData(dataId)
+    return data ?: dataMap.get(dataId)
   }
 
-  public JComponent getPreferredFocusedComponent() {
-    return myPreferredFocus;
+  fun closeOnEsc() {
+    isCloseOnEsc = true
   }
 
-  public void closeOnEsc() {
-    myCloseOnEsc = true;
+  fun setImage(image: Image?) {
+    setImages(listOfNotNull(image))
   }
 
-  public void setImage(Image image) {
-    setImages(image != null ? Collections.singletonList(image) : Collections.emptyList());
+  fun setImages(value: List<Image>?) {
+    images = value
   }
 
-  public void setImages(List<? extends Image> images) {
-    myImages = images;
+  fun setOnCloseHandler(value: BooleanGetter?) {
+    onCloseHandler = value
   }
 
-  public void setOnCloseHandler(BooleanGetter onCloseHandler) {
-    myOnCloseHandler = onCloseHandler;
-  }
-
-  protected void loadFrameState(@Nullable WindowState state) {
-    final Window frame = getFrame();
-    if (state != null) {
-      state.applyTo(frame);
+  protected open fun loadFrameState(state: WindowState?) {
+    val frame = frame
+    if (state == null) {
+      val ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(project)
+      if (ideFrame != null) {
+        frame.bounds = ideFrame.suggestChildFrameBounds()
+      }
     }
     else {
-      final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
-      if (ideFrame != null) {
-        frame.setBounds(ideFrame.suggestChildFrameBounds());
+      state.applyTo(frame)
+    }
+    (frame as RootPaneContainer).rootPane.revalidate()
+  }
+
+  private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
+    private var frameTitle: String? = null
+    private var fileTitle: String? = null
+    private var file: File? = null
+
+    init {
+      FrameState.setFrameStateListener(this)
+      glassPane = IdeGlassPaneImpl(getRootPane(), true)
+      if (SystemInfo.isMac && !(SystemInfo.isMacSystemMenu && SystemProperties.`is`("mac.system.menu.singleton"))) {
+        jMenuBar = IdeMenuBar.createMenuBar()
       }
-    }
-    ((RootPaneContainer)frame).getRootPane().revalidate();
-  }
-
-  public void setTitle(String title) {
-    myTitle = title;
-  }
-
-  public void addDisposable(@NotNull Disposable disposable) {
-    Disposer.register(this, disposable);
-  }
-
-  protected void setStatusBar(StatusBar statusBar) {
-    if (myStatusBar != null) {
-      Disposer.dispose(myStatusBar);
-    }
-    myStatusBar = statusBar;
-  }
-
-  private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child, IdeFrameEx {
-    private static final boolean USE_SINGLE_SYSTEM_MENUBAR = SystemInfo.isMacSystemMenu && "true".equalsIgnoreCase(System.getProperty("mac.system.menu.singleton"));
-    private FrameWrapper myOwner;
-    private final IdeFrame myParent;
-
-    private String myFrameTitle;
-    private String myFileTitle;
-    private File myFile;
-
-    private MyJFrame(@NotNull FrameWrapper owner, @NotNull IdeFrame parent) throws HeadlessException {
-      myOwner = owner;
-      myParent = parent;
-      FrameState.setFrameStateListener(this);
-      setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
-
-      if (SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR) {
-        setJMenuBar(IdeMenuBar.createMenuBar());
-      }
-
-      MouseGestureManager.getInstance().add(this);
-      setFocusTraversalPolicy(new IdeFocusTraversalPolicy());
+      MouseGestureManager.getInstance().add(this)
+      focusTraversalPolicy = IdeFocusTraversalPolicy()
     }
 
-    @Override
-    public boolean isInFullScreen() {
-      return false;
-    }
+    override fun isInFullScreen() = false
 
-    @NotNull
-    @Override
-    public Promise<?> toggleFullScreen(boolean state) {
-      return Promises.resolvedPromise();
-    }
+    override fun toggleFullScreen(state: Boolean): Promise<*> = resolvedPromise<Any>()
 
-    @Override
-    public void addNotify() {
+    override fun addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        JdkEx.setHasCustomDecoration(this);
+        JdkEx.setHasCustomDecoration(this)
       }
-      super.addNotify();
+      super.addNotify()
     }
 
-    @Override
-    public JComponent getComponent() {
-      return getRootPane();
+    override fun getComponent(): JComponent = getRootPane()
+
+    override fun getStatusBar(): StatusBar? {
+      return (if (owner.isDisposing) null else owner.statusBar) ?: parent.statusBar
     }
 
-    @Nullable
-    @Override
-    public StatusBar getStatusBar() {
-      StatusBar ownerBar = myOwner != null ? myOwner.myStatusBar : null;
-      return ownerBar != null ? ownerBar : myParent != null ? myParent.getStatusBar() : null;
+    override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
+
+    override fun getProject() = parent.project
+
+    override fun setFrameTitle(title: String) {
+      frameTitle = title
+      updateTitle()
     }
 
-    @NotNull
-    @Override
-    public Rectangle suggestChildFrameBounds() {
-      return myParent != null ? myParent.suggestChildFrameBounds() : getOnScreenBounds();
+    override fun setFileTitle(fileTitle: String, ioFile: File) {
+      this.fileTitle = fileTitle
+      file = ioFile
+      updateTitle()
     }
 
-    private static Rectangle getOnScreenBounds() {
-      Rectangle r = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .getDefaultScreenDevice()
-        .getDefaultConfiguration()
-        .getBounds();
-      int margin = r.width / 20; // 1/20th or 5% from each side
-      return new Rectangle(r.x + margin, r.y + margin, r.width - margin * 2, r.height - margin * 2);
+    override fun getNorthExtension(key: String): IdeRootPaneNorthExtension? {
+      return owner.getNorthExtension(key)
     }
 
-    @Override
-    public Project getProject() {
-      return myParent != null ? myParent.getProject() : ProjectManager.getInstance().getDefaultProject();
+    override fun getBalloonLayout(): BalloonLayout? {
+      return null
     }
 
-    @Override
-    public void setFrameTitle(String title) {
-      myFrameTitle = title;
-      updateTitle();
+    private fun updateTitle() {
+      ProjectFrameHelper.updateTitle(this, frameTitle, fileTitle, file)
     }
 
-    @Override
-    public void setFileTitle(String fileTitle, File ioFile) {
-      myFileTitle = fileTitle;
-      myFile = ioFile;
-      updateTitle();
-    }
-
-    @Nullable
-    @Override
-    public IdeRootPaneNorthExtension getNorthExtension(String key) {
-      return myOwner.getNorthExtension(key);
-    }
-
-    @Nullable
-    @Override
-    public BalloonLayout getBalloonLayout() {
-      return null;
-    }
-
-    private void updateTitle() {
-      ProjectFrameHelper.updateTitle(this, myFrameTitle, myFileTitle, myFile);
-    }
-
-    @Override
-    public void dispose() {
-      FrameWrapper owner = myOwner;
-      myOwner = null;
-      if (owner == null || owner.myDisposing) return;
-      owner.myDisposing = true;
-      Disposer.dispose(owner);
-      super.dispose();
-      rootPane = null;
-      setMenuBar(null);
-    }
-
-    @Override
-    public Object getData(@NotNull String dataId) {
-      if (IdeFrame.KEY.getName().equals(dataId)) {
-        return this;
+    override fun dispose() {
+      val owner = owner
+      if (owner.isDisposing) {
+        return
       }
-      return myOwner == null ? null : myOwner.getDataInner(dataId);
+
+      owner.isDisposing = true
+      Disposer.dispose(owner)
+      super.dispose()
+      rootPane = null
+      menuBar = null
     }
 
-    @Override
-    public void paint(Graphics g) {
-      UISettings.setupAntialiasing(g);
-      super.paint(g);
-    }
-  }
-
-  private static class MyJDialog extends JDialog implements DataProvider, IdeFrame.Child {
-    private FrameWrapper myOwner;
-    private final IdeFrame myParent;
-
-    private MyJDialog(FrameWrapper owner, IdeFrame parent) throws HeadlessException {
-      super(ComponentUtil.getWindow(parent.getComponent()));
-      myOwner = owner;
-      myParent = parent;
-      setGlassPane(new IdeGlassPaneImpl(getRootPane()));
-      getRootPane().putClientProperty("Window.style", "small");
-      setBackground(UIUtil.getPanelBackground());
-      MouseGestureManager.getInstance().add(this);
-      setFocusTraversalPolicy(new IdeFocusTraversalPolicy());
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return getRootPane();
-    }
-
-    @Nullable
-    @Override
-    public StatusBar getStatusBar() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public BalloonLayout getBalloonLayout() {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public Rectangle suggestChildFrameBounds() {
-      return myParent.suggestChildFrameBounds();
-    }
-
-    @Override
-    public Project getProject() {
-      return myParent.getProject();
-    }
-
-    @Override
-    public void setFrameTitle(String title) {
-      setTitle(title);
-    }
-
-    @Override
-    public void dispose() {
-      FrameWrapper owner = myOwner;
-      myOwner = null;
-      if (owner == null || owner.myDisposing) return;
-      owner.myDisposing = true;
-      Disposer.dispose(owner);
-      super.dispose();
-      rootPane = null;
-    }
-
-    @Override
-    public Object getData(@NotNull String dataId) {
-      if (IdeFrame.KEY.getName().equals(dataId)) {
-        return this;
+    override fun getData(dataId: String): Any? {
+      if ((IdeFrame.KEY.name == dataId)) {
+        return this
       }
-      return myOwner == null ? null : myOwner.getDataInner(dataId);
+      return if (owner.isDisposing) null else owner.getDataInner(dataId)
     }
 
-    @Override
-    public void paint(Graphics g) {
-      UISettings.setupAntialiasing(g);
-      super.paint(g);
+    override fun paint(g: Graphics) {
+      setupAntialiasing(g)
+      super.paint(g)
     }
   }
 
-
-  public void setLocation(Point location) {
-    getFrame().setLocation(location);
+  fun setLocation(location: Point) {
+    frame.location = location
   }
 
-  public void setSize(Dimension size) {
-    getFrame().setSize(size);
+  fun setSize(size: Dimension?) {
+    frame.size = size
   }
 
-  @NotNull
-  private static WindowStateService getWindowStateService(@Nullable Project project) {
-    return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
+  private class MyJDialog(private val owner: FrameWrapper, private val parent: IdeFrame) : JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child {
+    override fun getComponent(): JComponent = getRootPane()
+
+    override fun getStatusBar(): StatusBar? = null
+
+    override fun getBalloonLayout(): BalloonLayout? = null
+
+    override fun suggestChildFrameBounds(): Rectangle = parent.suggestChildFrameBounds()
+
+    override fun getProject(): Project? = parent.project
+
+    init {
+      glassPane = IdeGlassPaneImpl(getRootPane())
+      getRootPane().putClientProperty("Window.style", "small")
+      background = UIUtil.getPanelBackground()
+      MouseGestureManager.getInstance().add(this)
+      focusTraversalPolicy = IdeFocusTraversalPolicy()
+    }
+
+    override fun setFrameTitle(title: String) {
+      setTitle(title)
+    }
+
+    override fun dispose() {
+      if (owner.isDisposing) {
+        return
+      }
+
+      owner.isDisposing = true
+      Disposer.dispose(owner)
+      super.dispose()
+      rootPane = null
+    }
+
+    override fun getData(dataId: String): Any? {
+      return when {
+        IdeFrame.KEY.`is`(dataId) -> this
+        owner.isDisposing -> null
+        else -> owner.getDataInner(dataId)
+      }
+    }
+
+    override fun paint(g: Graphics) {
+      setupAntialiasing(g)
+      super.paint(g)
+    }
   }
+}
+
+private fun getWindowStateService(project: Project?): WindowStateService {
+  return if (project == null) WindowStateService.getInstance() else WindowStateService.getInstance(project)
 }

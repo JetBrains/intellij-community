@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
@@ -1634,10 +1634,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun addWindowedDecorator(entry: ToolWindowEntry, info: WindowInfo) {
     val id = entry.id
     val decorator = entry.toolWindow.decoratorComponent!!
-    val windowedDecorator = FrameWrapper(project)
+    val windowedDecorator = FrameWrapper(project, title = "$id - ${project.name}")
     MnemonicHelper.init((windowedDecorator.frame as RootPaneContainer).contentPane)
-    windowedDecorator.setTitle("$id - ${project.name}")
-    windowedDecorator.setComponent(decorator)
+    windowedDecorator.component = decorator
 
     val shouldBeMaximized = info.isMaximized
     val window = windowedDecorator.frame
@@ -1656,12 +1655,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       window.setLocationRelativeTo(frame!!.frame)
     }
     entry.windowedDecorator = windowedDecorator
-    windowedDecorator.addDisposable {
+    Disposer.register(windowedDecorator, Disposable {
       if (idToEntry.get(id)?.windowedDecorator != null) {
         hideToolWindow(id, false)
       }
-    }
-
+    })
     windowedDecorator.show(false)
 
     val rootPane = (window as RootPaneContainer).rootPane

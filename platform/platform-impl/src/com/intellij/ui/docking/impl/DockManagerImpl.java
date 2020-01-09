@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -345,7 +345,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     return null;
   }
 
-
   private DockContainerFactory getFactory(String type) {
     assert myFactories.containsKey(type) : "No factory for content type=" + type;
     return myFactories.get(type);
@@ -436,12 +435,13 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       center.add(myDockContentUiContainer, BorderLayout.CENTER);
 
       myUiContainer.add(center, BorderLayout.CENTER);
-      if (myStatusBar != null) {
-        myUiContainer.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
+      StatusBar statusBar = getStatusBar();
+      if (statusBar != null) {
+        myUiContainer.add(statusBar.getComponent(), BorderLayout.SOUTH);
       }
 
       setComponent(myUiContainer);
-      addDisposable(container);
+      Disposer.register(this, container);
 
       IdeEventQueue.getInstance().addPostprocessor(this, this);
 
@@ -539,14 +539,14 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     @Override
-    protected JDialog createJDialog(IdeFrame parent) {
+    @NotNull
+    protected JDialog createJDialog(@NotNull IdeFrame parent) {
       JDialog frame = super.createJDialog(parent);
       installListeners(frame);
-
       return frame;
     }
 
-    private void installListeners(Window frame) {
+    private void installListeners(@NotNull Window frame) {
       frame.addWindowListener(new WindowAdapter() {
         @Override
         public void windowClosing(WindowEvent e) {
@@ -558,7 +558,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       Disposer.register(myContainer, connector);
     }
   }
-
 
   @Override
   public Element getState() {
