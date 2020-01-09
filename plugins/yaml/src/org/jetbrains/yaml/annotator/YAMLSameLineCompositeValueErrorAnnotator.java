@@ -3,6 +3,7 @@ package org.jetbrains.yaml.annotator;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -70,7 +71,7 @@ public class YAMLSameLineCompositeValueErrorAnnotator implements Annotator {
   }
 
   private static void reportAboutSameLine(@NotNull final AnnotationHolder holder, @NotNull YAMLValue value) {
-    holder.createErrorAnnotation(value, YAMLBundle.message("annotator.same.line.composed.value.message"));
+    holder.newAnnotation(HighlightSeverity.ERROR, YAMLBundle.message("annotator.same.line.composed.value.message")).range(value).create();
   }
 
   private static boolean psiAreAtTheSameLine(@NotNull PsiElement psi1, @NotNull PsiElement psi2, @NotNull CharSequence documentContent) {
