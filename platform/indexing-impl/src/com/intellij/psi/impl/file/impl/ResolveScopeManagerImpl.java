@@ -56,6 +56,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
       ContainerUtil::createConcurrentWeakKeySoftValueMap);
 
     ((PsiManagerImpl)myManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
+    // Make it explicit that registering and removing ResolveScopeProviders needs to clear the resolve scope cache
+    // (even though normally registerRunnableToRunOnChange would be enough to clear the cache)
     ResolveScopeProvider.EP_NAME.addExtensionPointListener(() -> myDefaultResolveScopesCache.clear(), project);
   }
 
