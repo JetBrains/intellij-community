@@ -28,9 +28,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgRepositoryReaderTest extends HgPlatformTest {
 
   @NotNull private HgRepositoryReader myRepositoryReader;
@@ -82,7 +79,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
 
   public void testCurrentBranch() {
     String currentBranch = myRepositoryReader.readCurrentBranch();
-    assertEquals(currentBranch, "firstBranch");
+    assertEquals("firstBranch", currentBranch);
   }
 
   public void testBranches() {
