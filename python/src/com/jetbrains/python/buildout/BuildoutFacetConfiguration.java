@@ -24,6 +24,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ui.JBUI;
+import com.jetbrains.python.PyBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -95,9 +96,9 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
 
     @Nls
     @Override
-    public String getDisplayName() {
-      return "Buildout";
-    }
+  public String getDisplayName() {
+    return PyBundle.message("configurable.Tab.display.name");
+  }
 
     @NotNull
     @Override
