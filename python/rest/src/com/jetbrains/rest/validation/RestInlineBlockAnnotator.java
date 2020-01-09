@@ -15,6 +15,7 @@
  */
 package com.jetbrains.rest.validation;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.rest.RestBundle;
@@ -33,7 +34,7 @@ public class RestInlineBlockAnnotator extends RestAnnotator {
       PsiElement el = node.getLastChild();
       if (el != null) {
         final int endOffset = node.getTextRange().getEndOffset();
-        getHolder().createErrorAnnotation(TextRange.create(endOffset-1, endOffset), RestBundle.message("ANN.inline.block"));
+        getHolder().newAnnotation(HighlightSeverity.ERROR, RestBundle.message("ANN.inline.block")).range(TextRange.create(endOffset - 1, endOffset)).create();
       }
     }
   }
