@@ -71,7 +71,7 @@
             </constraints>
             <properties>
               <margin top="2" left="14" bottom="2" right="14"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="button.text.test.connection"/>
+              <text resource-bundle="messages/CvsBundle" key="button.text.test.connection"/>
             </properties>
           </component>
         </children>
