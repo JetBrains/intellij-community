@@ -382,8 +382,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
     register(container);
 
-    final DockWindow window = createWindowFor(null, container);
-
+    DockWindow window = createWindowFor(null, container);
     window.show(true);
     final EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
     final Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
@@ -394,9 +393,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   private DockWindow createWindowFor(@Nullable String id, DockContainer container) {
-    String windowId = id != null ? id : String.valueOf(myWindowIdCounter++);
+    String windowId = id != null ? id : Integer.toString(myWindowIdCounter++);
     DockWindow window = new DockWindow(windowId, myProject, container, container instanceof DockContainer.Dialog);
-    window.setDimensionKey("dock-window-" + windowId);
     myWindows.put(container, window);
     return window;
   }
@@ -411,8 +409,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final NonOpaquePanel myUiContainer;
     private final NonOpaquePanel myDockContentUiContainer;
 
-    private DockWindow(String id, @NotNull Project project, DockContainer container, boolean dialog) {
-      super(project, null, dialog);
+    private DockWindow(String id, @NotNull Project project, DockContainer container, boolean isDialog) {
+      super(project, "dock-window-" + id, isDialog);
+
       myId = id;
       myContainer = container;
       setProject(project);

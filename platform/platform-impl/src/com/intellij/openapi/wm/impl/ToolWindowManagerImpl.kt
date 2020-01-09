@@ -1046,7 +1046,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     entry.windowedDecorator?.let { windowedDecorator ->
       entry.windowedDecorator = null
-      val frame = windowedDecorator.frame
+      val frame = windowedDecorator.getFrame()
       if (frame.isShowing) {
         val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
         if (maximized) {
@@ -1576,7 +1576,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     if (window.type == ToolWindowType.WINDOWED && window is ToolWindowImpl) {
       val decorator = getWindowedDecorator(window.id)
-      val frame = if (decorator != null && decorator.frame is Frame) decorator.frame as Frame else return
+      val frame = if (decorator != null && decorator.getFrame() is Frame) decorator.getFrame() as Frame else return
       val state = frame.state
       if (state == Frame.NORMAL) {
         frame.state = Frame.MAXIMIZED_BOTH
@@ -1635,11 +1635,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val id = entry.id
     val decorator = entry.toolWindow.decoratorComponent!!
     val windowedDecorator = FrameWrapper(project, title = "$id - ${project.name}")
-    MnemonicHelper.init((windowedDecorator.frame as RootPaneContainer).contentPane)
+    MnemonicHelper.init((windowedDecorator.getFrame() as RootPaneContainer).contentPane)
     windowedDecorator.component = decorator
 
     val shouldBeMaximized = info.isMaximized
-    val window = windowedDecorator.frame
+    val window = windowedDecorator.getFrame()
     val bounds = info.floatingBounds
     if ((bounds != null && bounds.width > 0 && (bounds.height > 0) &&
          WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width))) {
@@ -1666,12 +1666,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val rootPaneBounds = rootPane.bounds
     val point = rootPane.locationOnScreen
     val windowBounds = window.bounds
-    //Point windowLocation = windowBounds.getLocation();
-    //windowLocation.translate(windowLocation.x - point.x, windowLocation.y - point.y);
     window.setLocation(2 * windowBounds.x - point.x, 2 * windowBounds.y - point.y)
     window.setSize(2 * windowBounds.width - rootPaneBounds.width, 2 * windowBounds.height - rootPaneBounds.height)
     if (shouldBeMaximized && window is Frame) {
-      (window as Frame).extendedState = Frame.MAXIMIZED_BOTH
+      window.extendedState = Frame.MAXIMIZED_BOTH
     }
     window.toFront()
   }
@@ -1759,7 +1757,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
     else if (info.type == ToolWindowType.WINDOWED) {
       val decorator = getWindowedDecorator(toolWindow.id)
-      val frame = decorator?.frame
+      val frame = decorator?.getFrame()
       if (frame == null || !frame.isShowing) {
         return
       }

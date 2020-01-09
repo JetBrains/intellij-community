@@ -40,11 +40,10 @@ import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.io.File
-import java.util.*
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
-                                                  @param:NonNls private var dimensionKey: String? = null,
+                                                  @param:NonNls private val dimensionKey: String? = null,
                                                   private val isDialog: Boolean = false,
                                                   var title: String = "") : Disposable, DataProvider {
   open var component: JComponent? = null
@@ -53,8 +52,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   private var images: List<Image>? = null
   private var isCloseOnEsc = false
   private var onCloseHandler: BooleanGetter? = null
-  private var myFrame: Window? = null
-  private val dataMap: MutableMap<String, Any> = HashMap()
+  private var frame: Window? = null
   private var project: Project? = null
   private var focusWatcher: FocusWatcher? = null
   private var isDisposing = false
@@ -74,17 +72,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     project?.let { setProject(it) }
   }
 
-  fun setDimensionKey(dimensionKey: String?) {
-    this.dimensionKey = dimensionKey
-  }
-
-  fun setData(dataId: String, data: Any) {
-    dataMap.put(dataId, data)
-  }
-
   fun setProject(project: Project) {
     this.project = project
-    setData(CommonDataKeys.PROJECT.name, project)
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectClosing(project: Project) {
         if (project === this@FrameWrapper.project) {
@@ -99,7 +88,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   }
 
   fun show(restoreBounds: Boolean) {
-    val frame = frame
+    val frame = getFrame()
     if (frame is JFrame) {
       frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
     }
@@ -160,11 +149,12 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
         ImageUtil.toBufferedImage((image)!!)
       })
     }
-    val state = if (dimensionKey == null) null
-    else getWindowStateService(project).getState(dimensionKey!!, frame)
+
+    val state = dimensionKey?.let { dimensionKey -> getWindowStateService(project).getState(dimensionKey, frame) }
     if (restoreBounds) {
       loadFrameState(state)
     }
+
     if (SystemInfo.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
       val parentFrame = WindowManager.getInstance().getFrame(project)
       if (parentFrame != null) {
@@ -172,7 +162,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       }
     }
     focusWatcher = FocusWatcher()
-    focusWatcher!!.install((component)!!)
+    focusWatcher!!.install(component!!)
     frame.isVisible = true
   }
 
@@ -185,7 +175,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     // 2 projects opened, call Cmd+D on the second opened project and then Esc.
     // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
     // App is unusable until Cmd+Tab, Cmd+tab
-    myFrame?.isVisible = false
+    frame?.isVisible = false
     Disposer.dispose(this)
   }
 
@@ -193,12 +183,12 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     if (isDisposed) {
       return
     }
-    val frame = myFrame
+
+    val frame = frame
     val statusBar = statusBar
-    myFrame = null
+    this.frame = null
     preferredFocusedComponent = null
     project = null
-    dataMap.clear()
     if (component != null && focusWatcher != null) {
       focusWatcher!!.deinstall(component)
     }
@@ -206,16 +196,18 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     component = null
     images = null
     isDisposed = true
+
     if (statusBar != null) {
       Disposer.dispose(statusBar)
     }
+
     if (frame != null) {
       frame.isVisible = false
       val rootPane = (frame as RootPaneContainer).rootPane
       frame.removeAll()
       DialogWrapper.cleanupRootPane(rootPane)
       if (frame is IdeFrame) {
-        MouseGestureManager.getInstance().remove((frame as IdeFrame?)!!)
+        MouseGestureManager.getInstance().remove(frame)
       }
       frame.dispose()
       DialogWrapper.cleanupWindowListeners(frame)
@@ -233,39 +225,35 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeAction, CommonShortcuts.getCloseActiveWindow())
   }
 
-  val frame: Window
-    get() {
-      assert(!isDisposed) { "Already disposed!" }
-      if (myFrame == null) {
-        val parent = WindowManager.getInstance().getIdeFrame(project)!!
-        myFrame = if (isDialog) createJDialog(parent) else createJFrame(parent)
-      }
-      return (myFrame)!!
+  fun getFrame(): Window {
+    assert(!isDisposed) { "Already disposed!" }
+    var result = frame
+    if (result == null) {
+      val parent = WindowManager.getInstance().getIdeFrame(project)!!
+      result = if (isDialog) createJDialog(parent) else createJFrame(parent)
+      frame = result
     }
+    return result
+  }
 
   val isActive: Boolean
-    get() = myFrame?.isActive == true
+    get() = frame?.isActive == true
 
-  protected open fun createJFrame(parent: IdeFrame): JFrame {
-    return MyJFrame(this, parent)
-  }
+  protected open fun createJFrame(parent: IdeFrame): JFrame = MyJFrame(this, parent)
 
   protected open fun createJDialog(parent: IdeFrame): JDialog = MyJDialog(this, parent)
 
-  protected open fun getNorthExtension(key: String?): IdeRootPaneNorthExtension? {
-    return null
-  }
+  protected open fun getNorthExtension(key: String?): IdeRootPaneNorthExtension? = null
 
   override fun getData(@NonNls dataId: String): Any? {
-    return if (CommonDataKeys.PROJECT.`is`(dataId)) {
-      project
-    }
-    else null
+    return if (CommonDataKeys.PROJECT.`is`(dataId)) project else null
   }
 
   private fun getDataInner(dataId: String): Any? {
-    val data = getData(dataId)
-    return data ?: dataMap.get(dataId)
+    return when {
+      CommonDataKeys.PROJECT.`is`(dataId) -> project
+      else -> getData(dataId)
+    }
   }
 
   fun closeOnEsc() {
@@ -285,7 +273,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   }
 
   protected open fun loadFrameState(state: WindowState?) {
-    val frame = frame
+    val frame = getFrame()
     if (state == null) {
       val ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(project)
       if (ideFrame != null) {
@@ -371,10 +359,11 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
 
     override fun getData(dataId: String): Any? {
-      if ((IdeFrame.KEY.name == dataId)) {
-        return this
+      return when {
+        IdeFrame.KEY.`is`(dataId) -> this
+        owner.isDisposing -> null
+        else -> owner.getDataInner(dataId)
       }
-      return if (owner.isDisposing) null else owner.getDataInner(dataId)
     }
 
     override fun paint(g: Graphics) {
@@ -384,11 +373,11 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   }
 
   fun setLocation(location: Point) {
-    frame.location = location
+    getFrame().location = location
   }
 
   fun setSize(size: Dimension?) {
-    frame.size = size
+    getFrame().size = size
   }
 
   private class MyJDialog(private val owner: FrameWrapper, private val parent: IdeFrame) : JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child {

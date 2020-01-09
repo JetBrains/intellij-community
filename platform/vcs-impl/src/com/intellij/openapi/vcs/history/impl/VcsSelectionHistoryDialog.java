@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.diff.Block;
@@ -63,8 +63,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvider {
-
+public final class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvider {
   private static final VcsRevisionNumber LOCAL_REVISION_NUMBER = new VcsRevisionNumber() {
     @NotNull
     @Override
@@ -123,7 +122,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
                                    int selectionStart,
                                    int selectionEnd,
                                    @NotNull String title) {
-    super(project);
+    super(project, "VCS.FileHistoryDialog");
+
     myProject = project;
     myFile = file;
     myActiveVcs = vcs;
@@ -208,9 +208,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     setTitle(title);
     setComponent(mySplitter);
     setPreferredFocusedComponent(myList);
-    setDimensionKey("VCS.FileHistoryDialog");
     closeOnEsc();
-
 
     myBlockLoader = new BlockLoader(myRevisions, myFile, document, selectionStart, selectionEnd) {
       @Override
