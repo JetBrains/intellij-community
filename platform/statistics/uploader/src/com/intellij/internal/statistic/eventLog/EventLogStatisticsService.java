@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -198,7 +197,11 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   private static void cleanupEventLogFiles(@NotNull List<EventLogFile> toRemove) {
-    cleanupFiles(ContainerUtil.map(toRemove, logFile -> logFile.getFile()));
+    List<File> filesToRemove = new ArrayList<>();
+    for (EventLogFile file : toRemove) {
+      filesToRemove.add(file.getFile());
+    }
+    cleanupFiles(filesToRemove);
   }
 
   private static void cleanupFiles(@NotNull List<File> toRemove) {

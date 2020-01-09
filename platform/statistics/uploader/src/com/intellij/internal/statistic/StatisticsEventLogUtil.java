@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,5 +72,36 @@ public class StatisticsEventLogUtil {
       result.add(s.substring(pos, s.length()));
     }
     return result;
+  }
+
+  public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2) {
+    if (a1.length == 0) {
+      return a2;
+    }
+    if (a2.length == 0) {
+      return a1;
+    }
+
+    final Class<T> class1 = getComponentType(a1);
+    final Class<T> class2 = getComponentType(a2);
+    final Class<T> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
+
+    T[] result = newArray(aClass, a1.length + a2.length);
+    System.arraycopy(a1, 0, result, 0, a1.length);
+    System.arraycopy(a2, 0, result, a1.length, a2.length);
+    return result;
+  }
+
+  @NotNull
+  public static <T> T[] newArray(@NotNull Class<T> type, int length) {
+    //noinspection unchecked
+    return (T[])Array.newInstance(type, length);
+  }
+
+
+  @NotNull
+  public static <T> Class<T> getComponentType(@NotNull T[] collection) {
+    //noinspection unchecked
+    return (Class<T>)collection.getClass().getComponentType();
   }
 }

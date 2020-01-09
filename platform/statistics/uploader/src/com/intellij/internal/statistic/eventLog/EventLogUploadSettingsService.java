@@ -1,16 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
+import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class EventLogUploadSettingsService extends SettingsConnectionService implements EventLogSettingsService {
   private static final Logger LOG = Logger.getInstance(EventLogUploadSettingsService.class);
@@ -37,7 +35,8 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
 
   @Override
   public String @NotNull [] getAttributeNames() {
-    return ArrayUtil.mergeArrays(super.getAttributeNames(), PERCENT_TRAFFIC, APPROVED_GROUPS_SERVICE, DICTIONARY_SERVICE);
+    String[] additionalOptions = {PERCENT_TRAFFIC, APPROVED_GROUPS_SERVICE, DICTIONARY_SERVICE};
+    return StatisticsEventLogUtil.mergeArrays(super.getAttributeNames(), additionalOptions);
   }
 
   @Override
@@ -65,6 +64,10 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   public LogEventFilter getEventFilter() {
     final FUSWhitelist whitelist = notNull(getWhitelistedGroups(), FUSWhitelist.empty());
     return new LogEventCompositeFilter(new LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter.INSTANCE);
+  }
+
+  private static FUSWhitelist notNull(@Nullable FUSWhitelist whitelist, @NotNull FUSWhitelist defaultValue) {
+    return whitelist != null ? whitelist : defaultValue;
   }
 
   @Override

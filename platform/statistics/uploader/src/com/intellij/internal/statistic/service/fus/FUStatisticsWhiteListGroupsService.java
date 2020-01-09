@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.emptyList;
 
 /**
@@ -136,9 +135,25 @@ public class FUStatisticsWhiteListGroupsService {
 
   @NotNull
   private static GroupFilterCondition toCondition(@Nullable List<WLBuild> builds, @Nullable List<WLVersion> versions) {
-    final List<BuildRange> buildRanges = builds != null ? map(builds, b -> BuildRange.create(b.from, b.to)) : emptyList();
-    final List<VersionRange> versionRanges = versions != null ? map(versions, v -> VersionRange.create(v.from, v.to)) : emptyList();
+    final List<BuildRange> buildRanges = builds != null && !builds.isEmpty() ? toBuildRanges(builds) : emptyList();
+    final List<VersionRange> versionRanges = versions != null && !versions.isEmpty() ? toVersionRanges(versions) : emptyList();
     return new GroupFilterCondition(buildRanges, versionRanges);
+  }
+
+  private static List<BuildRange> toBuildRanges(@NotNull List<WLBuild> builds) {
+    List<BuildRange> result = new ArrayList<>();
+    for (WLBuild build : builds) {
+      result.add(BuildRange.create(build.from, build.to));
+    }
+    return result;
+  }
+
+  private static List<VersionRange> toVersionRanges(@NotNull List<WLVersion> versions) {
+    List<VersionRange> result = new ArrayList<>();
+    for (WLVersion version : versions) {
+      result.add(VersionRange.create(version.from, version.to));
+    }
+    return result;
   }
 
   public static class WLGroups {
