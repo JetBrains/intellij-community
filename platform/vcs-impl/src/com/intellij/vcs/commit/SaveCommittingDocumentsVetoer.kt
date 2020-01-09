@@ -1,84 +1,67 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.commit;
+package com.intellij.vcs.commit
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.Messages.getQuestionIcon
+import com.intellij.openapi.ui.Messages.showOkCancelDialog
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.vcs.VcsBundle.message
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+private val SAVE_DENIED = Any()
 
-import static com.intellij.openapi.ui.Messages.getQuestionIcon;
-import static com.intellij.openapi.ui.Messages.showOkCancelDialog;
-import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
-import static java.util.Collections.singletonList;
-
-final class SaveCommittingDocumentsVetoer extends FileDocumentSynchronizationVetoer implements FileDocumentManagerListener {
-
-  private static final Object SAVE_DENIED = new Object();
-
-  @Override
-  public void beforeAllDocumentsSaving() {
-    Map<Document, Project> documentsToWarn = getDocumentsBeingCommitted();
-    if (!documentsToWarn.isEmpty()) {
-      Project project = documentsToWarn.values().iterator().next();
-      boolean allowSave = confirmSave(project, documentsToWarn.keySet());
-      updateSaveability(documentsToWarn, allowSave);
+private fun getDocumentsBeingCommitted(): Map<Document, Project> {
+  val documentsToWarn = mutableMapOf<Document, Project>()
+  for (unsavedDocument in FileDocumentManager.getInstance().unsavedDocuments) {
+    val data = unsavedDocument.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY)
+    if (data is Project) {
+      documentsToWarn[unsavedDocument] = data
     }
   }
+  return documentsToWarn
+}
 
-  @Override
-  public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
-    final Object beingCommitted = document.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY);
-    if (beingCommitted == SAVE_DENIED) {
-      return false;
-    }
-    if (beingCommitted instanceof Project) {
-      return confirmSave((Project)beingCommitted, singletonList(document));
-    }
-    return true;
+private fun updateSaveability(documentsToWarn: Map<Document, Project>, allowSave: Boolean) {
+  val newValue = if (allowSave) null else SAVE_DENIED
+  for (document in documentsToWarn.keys) {
+    val oldData = documentsToWarn[document]
+    //the committing thread could have finished already and file is not being committed anymore
+    (document as UserDataHolderEx).replace(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, oldData, newValue)
+  }
+}
+
+internal class SaveCommittingDocumentsVetoer : FileDocumentSynchronizationVetoer(), FileDocumentManagerListener {
+  override fun beforeAllDocumentsSaving() {
+    val documentsToWarn = getDocumentsBeingCommitted()
+    if (documentsToWarn.isEmpty()) return
+
+    val project = documentsToWarn.values.first()
+    val allowSave = confirmSave(project, documentsToWarn.keys)
+    updateSaveability(documentsToWarn, allowSave)
   }
 
-  private static Map<Document, Project> getDocumentsBeingCommitted() {
-    Map<Document, Project> documentsToWarn = new HashMap<>();
-    for (Document unsavedDocument : FileDocumentManager.getInstance().getUnsavedDocuments()) {
-      final Object data = unsavedDocument.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY);
-      if (data instanceof Project) {
-        documentsToWarn.put(unsavedDocument, (Project)data);
-      }
+  override fun maySaveDocument(document: Document, isSaveExplicit: Boolean): Boolean =
+    when (val beingCommitted = document.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY)) {
+      SAVE_DENIED -> false
+      is Project -> confirmSave(beingCommitted, listOf(document))
+      else -> true
     }
-    return documentsToWarn;
-  }
+}
 
-  private static void updateSaveability(Map<Document, Project> documentsToWarn, boolean allowSave) {
-    Object newValue = allowSave ? null : SAVE_DENIED;
-    for (Document document : documentsToWarn.keySet()) {
-      Project oldData = documentsToWarn.get(document);
-      //the committing thread could have finished already and file is not being committed anymore
-      ((UserDataHolderEx)document).replace(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, oldData, newValue);
-    }
-  }
+private fun confirmSave(project: Project, documents: Collection<Document>): Boolean {
+  val files = documents.mapNotNull { FileDocumentManager.getInstance().getFile(it) }
+  val text = message("save.committing.files.confirmation.text", documents.size, files.joinToString("\n") { it.presentableUrl })
 
-  private static boolean confirmSave(@NotNull Project project, @NotNull Collection<Document> documents) {
-    Collection<VirtualFile> files = mapNotNull(documents, it -> FileDocumentManager.getInstance().getFile(it));
-    String text = message("save.committing.files.confirmation.text", documents.size(), join(files, it -> it.getPresentableUrl(), "\n"));
-
-    return Messages.OK == showOkCancelDialog(
-      project,
-      text,
-      message("save.committing.files.confirmation.title"),
-      message("save.committing.files.confirmation.ok"),
-      message("save.committing.files.confirmation.cancel"),
-      getQuestionIcon()
-    );
-  }
+  return Messages.OK == showOkCancelDialog(
+    project,
+    text,
+    message("save.committing.files.confirmation.title"),
+    message("save.committing.files.confirmation.ok"),
+    message("save.committing.files.confirmation.cancel"),
+    getQuestionIcon()
+  )
 }
