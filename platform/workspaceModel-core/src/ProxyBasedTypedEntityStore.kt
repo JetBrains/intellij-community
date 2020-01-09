@@ -334,7 +334,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     if (updatePersistentIdReference) {
       val oldRefs = persistentIdReferrers[oldPersistentId.hashCode()] ?: return
       persistentIdReferrers.remove(oldPersistentId.hashCode())
-      val newRefs = persistentIdReferrers[newPersistentId.hashCode()] ?: return
+      val newRefs = persistentIdReferrers.getOrPut(newPersistentId.hashCode()) { mutableSetOf() }
       newRefs.addAll(oldRefs)
     }
   }

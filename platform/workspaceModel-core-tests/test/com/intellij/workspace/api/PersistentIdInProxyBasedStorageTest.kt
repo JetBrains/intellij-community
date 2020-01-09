@@ -98,6 +98,7 @@ class PersistentIdInProxyBasedStorageTest {
     builder.modifyEntity(ModifiableFirstEntity::class.java, maven) {
       name = newName
     }
+    builder.checkConsistency()
     val newSecondEntity = builder.entities(SecondEntity::class.java).single()
     assertFalse(newSecondEntity === originSecondEntity)
     assertEquals(newSecondEntity.firstId.name, newName)
@@ -113,6 +114,7 @@ class PersistentIdInProxyBasedStorageTest {
     builder.modifyEntity(ModifiableFirstEntity::class.java, maven) {
       name = newName
     }
+    builder.checkConsistency()
     val newThirdEntity = builder.entities(ThirdEntity::class.java).single()
     assertFalse(newThirdEntity === originThirdEntity)
     assertEquals(newThirdEntity.property1.firstId.name, newName)
@@ -130,6 +132,7 @@ class PersistentIdInProxyBasedStorageTest {
     builder.modifyEntity(ModifiableFirstEntity::class.java, maven) {
       name = newName
     }
+    builder.checkConsistency()
     val newList = builder.entities(FourthEntity::class.java).single().property1
     assertFalse(originList === newList)
     assertTrue(newList.map { it.name }.contains(newName))
@@ -150,6 +153,7 @@ class PersistentIdInProxyBasedStorageTest {
     builder.modifyEntity(ModifiableFirstEntity::class.java, ant) {
       name = newName
     }
+    builder.checkConsistency()
     val newList = builder.entities(FourthEntity::class.java).single().property1
     assertFalse(originList === newList)
     assertTrue(newList.map { it.name }.contains(newName))
