@@ -300,7 +300,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
   @Nullable
   private static Class<?> findFirstInterestingCallerClass() {
-    for (int i = 1; i <= 5; i++) {
+    for (int i = 1; i <= 7; i++) {
       Class<?> clazz = ReflectionUtil.findCallerClass(i);
       if (clazz == null || !clazz.getName().contains(VcsDirtyScopeManagerImpl.class.getName())) return clazz;
     }
