@@ -193,6 +193,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       public void focusGained(final FocusEvent e) {
         field.selectAll();
       }
+
+      @Override
+      public void focusLost(FocusEvent event) {
+        myUpdateQueue.cancelAllRequests();
+        validateAndUpdatePreview(field);
+      }
     });
     return field;
   }
@@ -229,6 +235,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private void update(final JTextField src) {
+    if (!src.hasFocus()) return;
+
     myUpdateQueue.cancelAllRequests();
     myUpdateQueue.addRequest(() -> validateAndUpdatePreview(src), 300);
   }
@@ -244,8 +252,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private void validateAndUpdatePreview(JTextField src) {
+    boolean fromHex = src == myHex;
     Color color;
-    if (myHex.hasFocus()) {
+    if (fromHex) {
       Color c = ColorUtil.fromHex(myHex.getText(), null);
       color = c != null ? ColorUtil.toAlpha(c, myColorWheelPanel.myColorWheel.myOpacity) : null;
     } else {
@@ -255,7 +264,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       if (myColorWheelPanel.myOpacityComponent != null) {
         color = ColorUtil.toAlpha(color, myColorWheelPanel.myOpacityComponent.getValue());
       }
-      updatePreview(color, src == myHex);
+      updatePreview(color, fromHex);
     }
   }
 
