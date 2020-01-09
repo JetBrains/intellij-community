@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -447,7 +448,7 @@ public final class TreeUtil {
 
   @NotNull
   public static ActionCallback selectPath(@NotNull final JTree tree, final TreePath path) {
-    return selectPath(tree, path, true);
+    return selectPath(tree, path, Registry.is("ide.tree.autoscrollToVCenter"));
   }
 
   @NotNull
@@ -1487,7 +1488,7 @@ public final class TreeUtil {
   private static void internalSelectPath(@NotNull JTree tree, @NotNull TreePath path) {
     assert EventQueue.isDispatchThread();
     tree.setSelectionPath(path);
-    scrollToVisible(tree, path, true);
+    scrollToVisible(tree, path, Registry.is("ide.tree.autoscrollToVCenter"));
   }
 
   /**
@@ -1510,7 +1511,7 @@ public final class TreeUtil {
     if (paths.isEmpty()) return;
     tree.setSelectionPaths(paths.toArray(EMPTY_TREE_PATH));
     for (TreePath path : paths) {
-      if (scrollToVisible(tree, path, true)) {
+      if (scrollToVisible(tree, path, Registry.is("ide.tree.autoscrollToVCenter"))) {
         break;
       }
     }
