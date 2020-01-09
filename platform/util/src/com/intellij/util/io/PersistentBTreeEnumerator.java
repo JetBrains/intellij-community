@@ -129,7 +129,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private void initBtree(boolean initial) throws IOException {
-    myBTree = new IntToIntBtree(BTREE_PAGE_SIZE, indexFile(myFile.toPath()), myStorage.getPagedFileStorage().getStorageLockContext(), initial);
+    myBTree = new IntToIntBtree(BTREE_PAGE_SIZE, indexFile(myFile), myStorage.getPagedFileStorage().getStorageLockContext(), initial);
   }
 
   private void storeVars(boolean toDisk) {
@@ -240,7 +240,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       });
     }
     catch (IllegalStateException e) {
-      CorruptedException corruptedException = new CorruptedException(myFile.toPath());
+      CorruptedException corruptedException = new CorruptedException(myFile);
       corruptedException.initCause(e);
       throw corruptedException;
     }
@@ -310,7 +310,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       return keyIdToNonNegativeOffset(myResultBuf[0]);
     }
     catch (IllegalStateException e) {
-      CorruptedException exception = new CorruptedException(myFile.toPath());
+      CorruptedException exception = new CorruptedException(myFile);
       exception.initCause(e);
       throw exception;
     }
@@ -353,7 +353,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
     }
     catch (IllegalStateException e) {
-      CorruptedException exception = new CorruptedException(myFile.toPath());
+      CorruptedException exception = new CorruptedException(myFile);
       exception.initCause(e);
       throw exception;
     }
@@ -485,7 +485,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       return newValueId;
     }
     catch (IllegalStateException e) {
-      CorruptedException exception = new CorruptedException(myFile.toPath());
+      CorruptedException exception = new CorruptedException(myFile);
       exception.initCause(e);
       throw exception;
     }

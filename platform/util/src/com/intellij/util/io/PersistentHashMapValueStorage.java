@@ -22,7 +22,6 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
@@ -769,15 +768,6 @@ public class PersistentHashMapValueStorage {
     finally {
       if (readOnly) CreationTimeOptions.READONLY.set(null);
     }
-  }
-
-  /**
-   * @deprecated Only for binary compatibility with Kotlin's JpsPersistentHashMap until it gets removed
-   * https://github.com/JetBrains/kotlin/blob/master/build-common/src/com/intellij/util/io/JpsPersistentHashMap.java
-   */
-  @Deprecated
-  public static PersistentHashMapValueStorage create(@NotNull String path, @NotNull CreationTimeOptions options) throws IOException {
-    return create(Paths.get(path), options);
   }
 
   public static PersistentHashMapValueStorage create(@NotNull Path path, @NotNull CreationTimeOptions options) throws IOException {

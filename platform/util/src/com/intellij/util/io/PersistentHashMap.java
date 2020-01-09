@@ -337,7 +337,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public Path getBaseFile() {
-    return myEnumerator.myFile.toPath();
+    return myEnumerator.myFile;
   }
 
   @TestOnly // public for tests
@@ -795,7 +795,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       final long now = System.currentTimeMillis();
 
-      Path oldDataFile = getDataFile(myEnumerator.myFile.toPath());
+      Path oldDataFile = getDataFile(myEnumerator.myFile);
       final File[] oldFiles = getFilesInDirectoryWithNameStartingWith(oldDataFile);
 
       final Path newPath = oldDataFile.resolveSibling(oldDataFile.getFileName() + ".new");
