@@ -791,12 +791,12 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       List<PsiLocalVariable> conditionVariables = new ArrayList<>();
       boolean conditionVariablesCantBeChangedTransitively = StreamEx.ofTree(((PsiElement)condition), el -> StreamEx.of(el.getChildren()))
         .allMatch(element -> {
-          if (element instanceof PsiReferenceExpression) {
-            PsiLocalVariable localVariable = tryCast(((PsiReferenceExpression)element).resolve(), PsiLocalVariable.class);
-            if (localVariable == null) return false;
-            conditionVariables.add(localVariable);
+          if (!(element instanceof PsiReferenceExpression)) {
+            return !(element instanceof PsiMethodCallExpression);
           }
-          else return !(element instanceof PsiMethodCallExpression);
+          PsiLocalVariable localVariable = tryCast(((PsiReferenceExpression)element).resolve(), PsiLocalVariable.class);
+          if (localVariable == null) return false;
+          conditionVariables.add(localVariable);
           return true;
         });
 
