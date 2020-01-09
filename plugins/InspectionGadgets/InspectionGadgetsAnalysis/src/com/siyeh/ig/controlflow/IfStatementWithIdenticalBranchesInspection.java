@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -187,7 +188,13 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     boolean statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenInitializer, e -> false);
     boolean mayInfluenceCondition = mayInfluenceCondition(thenInitializer, conditionVariables);
     boolean equivalent = equivalence.expressionsAreEquivalent(thenInitializer, elseVariable.getInitializer());
-    return new ExtractionUnit(thenStmt, elseStmt, statementMayChangeSemantics, mayInfluenceCondition, equivalent);
+    return new VariableDeclarationUnit(thenStmt,
+                                       elseStmt,
+                                       statementMayChangeSemantics,
+                                       mayInfluenceCondition,
+                                       equivalent,
+                                       thenVariable,
+                                       elseVariable);
   }
 
   private static boolean mayInfluenceCondition(@NotNull PsiElement element, @NotNull List<PsiLocalVariable> conditionVariables) {
@@ -297,91 +304,52 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       return true;
     }
 
-    private static void bindNames(@NotNull PsiStatement statement, PsiVariable variable, String finalName) {
-      ReferencesSearch.search(variable, new LocalSearchScope(statement)).forEach(reference -> {
-        if (reference.getElement() instanceof PsiReferenceExpression) {
-          ExpressionUtils.bindReferenceTo((PsiReferenceExpression)reference.getElement(), finalName);
-        }
-      });
-      variable.setName(finalName);
-    }
-
-    /**
-     * Computes substitutions for reference expressions (for all refs, even in tail).
-     * They can't be replaced during collection because resolve will be affected in this case.
-     */
-
-    // TODO clarify what exactly happens here
     private static boolean tryCleanUpHead(@NotNull PsiIfStatement ifStatement,
                                           @NotNull List<? extends ExtractionUnit> units,
                                           @NotNull PsiElementFactory factory,
                                           @NotNull Map<PsiLocalVariable, String> substitutionTable,
                                           @NotNull CommentTracker ct) {
-      PsiElement parent = ifStatement.getParent();
-      // TODO why I am sure here, that parent == CodeBlock? (and not another if?)
-      PsiStatement elseBranch = ifStatement.getElseBranch();
-      if(elseBranch == null) return false;
-      // variables to rename should be prepared and only after that renamed at once to avoid conflicts with names
+      // collect replacement info
+      Map<PsiReferenceExpression, String> referenceToNewName = new HashMap<>();
+      Map<PsiLocalVariable, String> variableToNewName = new HashMap<>();
       for (ExtractionUnit unit : units) {
-        PsiStatement thenStatement = unit.getThenStatement();
-        PsiStatement elseStatement = unit.getElseStatement();
-        if (thenStatement instanceof PsiDeclarationStatement) {
-          PsiLocalVariable thenVariable = extractVariable(thenStatement);
-          PsiLocalVariable elseVariable = extractVariable(elseStatement);
-          if (thenVariable == null || elseVariable == null) return false;
-          String typeText = thenVariable.getType().getCanonicalText();
-          String thenVariableTypeText = thenVariable.getType().getCanonicalText();
-          PsiModifierList thenModifierList = thenVariable.getModifierList();
-          // TODO Maybe this can be simplified?
-          String modifiers = thenModifierList == null || thenModifierList.getText().isEmpty() ? "" : thenModifierList.getText() + " ";
-          String thenNameToReplaceInElse = substitutionTable.get(elseVariable);
-          // TODO Looks overcomplicated and seems like thenVariable.getName() not used at all
-          String varName = thenNameToReplaceInElse != null ? thenNameToReplaceInElse : thenVariable.getName();
-
-          if(thenNameToReplaceInElse != null) {
-            JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(ifStatement.getProject());
-            varName = manager.suggestUniqueVariableName(thenNameToReplaceInElse, ifStatement, var -> PsiTreeUtil.isAncestor(ifStatement, var, false));
-            if (!thenNameToReplaceInElse.equals(elseVariable.getName())) {
-              thenStatement = replaceName(ifStatement, factory, thenStatement, thenVariable, varName, modifiers);
-              bindNames(elseBranch, elseVariable, varName);
+        if (unit instanceof VariableDeclarationUnit) {
+          VariableDeclarationUnit declarationUnit = (VariableDeclarationUnit)unit;
+          PsiLocalVariable thenVariable = declarationUnit.myThenVariable;
+          PsiLocalVariable elseVariable = declarationUnit.myElseVariable;
+          String baseName = substitutionTable.get(elseVariable);
+          JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(ifStatement.getProject());
+          if (baseName != null) {
+            Predicate<PsiVariable> canReuseVariable = var -> PsiTreeUtil.isAncestor(ifStatement, var, false);
+            String nameToBeReplacedWith = manager.suggestUniqueVariableName(baseName, ifStatement, canReuseVariable);
+            for (PsiReference reference : ReferencesSearch.search(thenVariable, new LocalSearchScope(ifStatement))) {
+              PsiReferenceExpression expression = (PsiReferenceExpression)reference.getElement();
+              referenceToNewName.put(expression, nameToBeReplacedWith);
             }
-          }
-
-          if (!unit.isEquivalent()) {
-            String variableDeclaration = modifiers + thenVariableTypeText + " " + varName + ";";
-            PsiStatement varDeclarationStmt = factory.createStatementFromText(variableDeclaration, parent);
-            parent.addBefore(varDeclarationStmt, ifStatement);
-
-            PsiExpression thenInitializer = thenVariable.getInitializer();
-            PsiExpression elseInitializer = elseVariable.getInitializer();
-            replaceWithAssignmentIfNeeded(ifStatement, factory, thenStatement, thenInitializer, varName, typeText);
-            replaceWithAssignmentIfNeeded(ifStatement, factory, elseStatement, elseInitializer, varName, typeText);
-            continue;
+            for (PsiReference reference : ReferencesSearch.search(elseVariable, new LocalSearchScope(ifStatement))) {
+              PsiReferenceExpression expression = (PsiReferenceExpression)reference.getElement();
+              referenceToNewName.put(expression, nameToBeReplacedWith);
+            }
+            variableToNewName.put(thenVariable, nameToBeReplacedWith);
+            variableToNewName.put(elseVariable, nameToBeReplacedWith);
+            declarationUnit.myNewVariableName = nameToBeReplacedWith;
+          } else {
+            declarationUnit.myNewVariableName = thenVariable.getName();
           }
         }
-        parent.addBefore(thenStatement.copy(), ifStatement);
-        thenStatement.delete();
-        ct.delete(elseStatement);
+      }
+
+      // do actual replace (can't be done in collection loop, because it can affect resolve)
+      referenceToNewName.forEach((reference, newName) -> ExpressionUtils.bindReferenceTo(reference, newName));
+      variableToNewName.forEach((variable, newName) -> variable.setName(newName));
+
+      PsiElement parent = ifStatement.getParent();
+      for (ExtractionUnit unit : units) {
+        PsiStatement statement = unit.getStatementToPutBeforeIf(factory, ifStatement);
+        parent.addBefore(statement, ifStatement);
+        unit.cleanup(ct, factory, ifStatement);
       }
       return true;
-    }
-
-    private static PsiStatement replaceName(PsiIfStatement ifStatement,
-                                            PsiElementFactory factory,
-                                            PsiStatement thenStatement,
-                                            PsiVariable variable, String varName,
-                                            String modifiers) {
-      ReferencesSearch.search(variable, new LocalSearchScope(ifStatement)).forEach(reference -> {
-        if (reference.getElement() instanceof PsiReferenceExpression) {
-          ExpressionUtils.bindReferenceTo((PsiReferenceExpression)reference.getElement(), varName);
-        }
-      });
-      String maybeInitializer = variable.getInitializer() == null ? "" : "=" + variable.getInitializer().getText();
-      String text = modifiers + variable.getType().getCanonicalText() + " " + varName + maybeInitializer + ";";
-      PsiStatement variableDeclaration =
-        factory.createStatementFromText(text, null);
-      thenStatement = (PsiStatement)thenStatement.replace(variableDeclaration);
-      return thenStatement;
     }
 
     private static void cleanUpTail(@NotNull PsiIfStatement ifStatement,
@@ -407,24 +375,6 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         }
       }
     }
-
-    private static void replaceWithAssignmentIfNeeded(PsiIfStatement ifStatement,
-                                                      PsiElementFactory factory,
-                                                      PsiStatement statement,
-                                                      @Nullable PsiExpression initializer,
-                                                      String varName,
-                                                      String type) {
-      if (initializer != null) {
-        final String initializerText;
-        if (initializer instanceof PsiArrayInitializerExpression) {
-          initializerText = "new " + type + initializer.getText();
-        } else {
-          initializerText = initializer.getText();
-        }
-        PsiStatement assignment = factory.createStatementFromText(varName + "=" + initializerText + ";", ifStatement);
-        statement.replace(assignment);
-      }
-    }
   }
 
   @Nullable
@@ -439,6 +389,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
   /**
    * Unit of equivalence, represents pair of equivalent statements in if/else branches
+   * Main part to preserve is by convention from then branch
    */
   private static class ExtractionUnit {
     private final boolean myMayChangeSemantics;
@@ -460,51 +411,130 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       myIsEquivalent = isEquivalent;
     }
 
-    public boolean haveSideEffects() {
+    boolean haveSideEffects() {
       return myMayChangeSemantics;
     }
 
     @NotNull
-    public PsiStatement getThenStatement() {
+    PsiStatement getThenStatement() {
       return myThenStatement;
     }
 
     @NotNull
-    public PsiStatement getElseStatement() {
+    PsiStatement getElseStatement() {
       return myElseStatement;
     }
 
     /**
      * Can return false only if it is declaration statement and initializers are not equivalent
+     *
      * @return true if pair of statements in both branches are equivalent in terms of {@link LocalEquivalenceChecker }
      */
-    public boolean isEquivalent() {
+    boolean isEquivalent() {
       return myIsEquivalent;
     }
 
     /**
      * @return true if this statement may somehow change variables, that are used in condition if put this statement before condition
      */
-    public boolean mayInfluenceCondition() {
+    boolean mayInfluenceCondition() {
       return myMayInfluenceCondition;
+    }
+
+    @NotNull
+    PsiStatement getStatementToPutBeforeIf(PsiElementFactory factory, @NotNull PsiIfStatement ifStatement) {
+      return (PsiStatement)myThenStatement.copy();
+    }
+
+    void cleanup(@NotNull CommentTracker ct, PsiElementFactory factory, PsiIfStatement ifStatement) {
+      myThenStatement.delete(); // Intentionally do not preserve comments in one branch
+      ct.delete(myElseStatement);
+    }
+  }
+
+  private static class VariableDeclarationUnit extends ExtractionUnit {
+    final @NotNull PsiLocalVariable myThenVariable;
+    final @NotNull PsiLocalVariable myElseVariable;
+    String myNewVariableName; // must be set when
+
+    private VariableDeclarationUnit(@NotNull PsiStatement thenStatement,
+                                    @NotNull PsiStatement elseStatement,
+                                    boolean mayChangeSemantics,
+                                    boolean mayInfluenceCondition,
+                                    boolean isEquivalent,
+                                    @NotNull PsiLocalVariable thenVariable,
+                                    @NotNull PsiLocalVariable elseVariable) {
+      super(thenStatement, elseStatement, mayChangeSemantics, mayInfluenceCondition, isEquivalent);
+      myThenVariable = thenVariable;
+      myElseVariable = elseVariable;
+    }
+
+    @Override
+    void cleanup(@NotNull CommentTracker ct, PsiElementFactory factory, PsiIfStatement ifStatement) {
+      if (isEquivalent()) {
+        super.cleanup(ct, factory, ifStatement);
+        return;
+      }
+      String type = myThenVariable.getType().getCanonicalText();
+      PsiExpression thenInitializer = myThenVariable.getInitializer();
+      PsiStatement thenAssignment = createAssignment(thenInitializer, type, myNewVariableName, ifStatement, factory);
+      if (thenAssignment != null) {
+        getThenStatement().replace(thenAssignment);
+      }
+      PsiExpression elseInitializer = myElseVariable.getInitializer();
+      PsiStatement elseAssignment = createAssignment(elseInitializer, type, myNewVariableName, ifStatement, factory);
+      if (elseAssignment != null) {
+        ct.replace(getElseStatement(), elseAssignment);
+      }
+    }
+
+    private static PsiStatement createAssignment(PsiExpression initializer,
+                                                 String type,
+                                                 String varName,
+                                                 PsiIfStatement ifStatement,
+                                                 PsiElementFactory factory) {
+      if (initializer == null) return null;
+      final String initializerText;
+      if (initializer instanceof PsiArrayInitializerExpression) {
+        initializerText = "new " + type + initializer.getText();
+      }
+      else {
+        initializerText = initializer.getText();
+      }
+      return factory.createStatementFromText(varName + "=" + initializerText + ";", ifStatement);
+    }
+
+    @NotNull
+    @Override
+    PsiStatement getStatementToPutBeforeIf(PsiElementFactory factory, @NotNull PsiIfStatement ifStatement) {
+      if (isEquivalent()) {
+        return getThenStatement();
+      }
+      String thenVariableTypeText = myThenVariable.getType().getCanonicalText();
+      PsiModifierList thenModifierList = myThenVariable.getModifierList();
+      String modifiers = thenModifierList == null || thenModifierList.getText().isEmpty() ? "" : thenModifierList.getText() + " ";
+      return factory.createStatementFromText(modifiers + thenVariableTypeText + " " + myNewVariableName + ";", ifStatement.getParent());
     }
   }
 
 
   private enum CommonPartType {
     VARIABLES_ONLY("inspection.common.if.parts.message.variables.only", "inspection.common.if.parts.description.variables.only"),
-    WITH_VARIABLES_EXTRACT("inspection.common.if.parts.message.with.variables.extract", "inspection.common.if.parts.description.with.variables.extract"),
-    WITHOUT_VARIABLES_EXTRACT("inspection.common.if.parts.message.without.variables.extract", "inspection.common.if.parts.description.without.variables.extract"),
+    WITH_VARIABLES_EXTRACT("inspection.common.if.parts.message.with.variables.extract",
+                           "inspection.common.if.parts.description.with.variables.extract"),
+    WITHOUT_VARIABLES_EXTRACT("inspection.common.if.parts.message.without.variables.extract",
+                              "inspection.common.if.parts.description.without.variables.extract"),
     WHOLE_BRANCH("inspection.common.if.parts.message.whole.branch", "inspection.common.if.parts.description.whole.branch"),
-    COMPLETE_DUPLICATE("inspection.common.if.parts.message.complete.duplicate", "inspection.common.if.parts.description.complete.duplicate"),
-    EXTRACT_SIDE_EFFECTS("inspection.common.if.parts.message.complete.duplicate.side.effect", "inspection.common.if.parts.description.complete.duplicate.side.effect");
+    COMPLETE_DUPLICATE("inspection.common.if.parts.message.complete.duplicate",
+                       "inspection.common.if.parts.description.complete.duplicate"),
+    EXTRACT_SIDE_EFFECTS("inspection.common.if.parts.message.complete.duplicate.side.effect",
+                         "inspection.common.if.parts.description.complete.duplicate.side.effect");
 
     private @NotNull final String myBundleFixKey;
     private @NotNull final String myBundleDescriptionKey;
 
     @NotNull
     private String getFixMessage(boolean mayChangeSemantics) {
-      // TODO localize it!
       String mayChangeSemanticsText = mayChangeSemantics ? " (may change semantics)" : "";
       return InspectionsBundle.message(myBundleFixKey, mayChangeSemanticsText);
     }
@@ -710,6 +740,19 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       mySubstitutionTable = substitutionTable;
     }
 
+    boolean variableRenameRequired() {
+      return StreamEx.of(myHeadUnitsOfThen)
+        .anyMatch(unit -> {
+          if (unit instanceof VariableDeclarationUnit) {
+            VariableDeclarationUnit declarationUnit = (VariableDeclarationUnit)unit;
+            if (!Objects.equals(declarationUnit.myThenVariable.getName(), declarationUnit.myElseVariable.getName())) {
+              return true;
+            }
+          }
+          return false;
+        });
+    }
+
 
     private static boolean mayChangeSemantics(boolean conditionHasSideEffects,
                                               boolean conditionVariablesCantBeChangedTransitively,
@@ -882,12 +925,16 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                           && thenElse.myHeadUnitsOfThen.isEmpty();
       boolean isInfoLevel = mayChangeSemantics
                             || isNotInCodeBlock
-                            || type == CommonPartType.WITH_VARIABLES_EXTRACT
+                            || isVariableTypeWithRename(thenElse, type)
                             || tailStatementIsSingleCall;
       PsiElement elementToHighlight = isInfoLevel ? ifStatement : ifStatement.getFirstChild();
       if (type == CommonPartType.VARIABLES_ONLY && !isOnTheFly) return null;
       return new IfInspectionResult(elementToHighlight, !isInfoLevel, fix,
                                     type.getDescriptionMessage(mayChangeSemantics));
+    }
+
+    private static boolean isVariableTypeWithRename(ThenElse thenElse, CommonPartType type) {
+      return (type == CommonPartType.WITH_VARIABLES_EXTRACT || type == CommonPartType.VARIABLES_ONLY) && thenElse.variableRenameRequired();
     }
 
     private static void tryAppendHeadPartsToTail(List<? extends ExtractionUnit> headCommonParts,
