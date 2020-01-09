@@ -4,6 +4,7 @@ import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -15,6 +16,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -32,13 +34,13 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   private final VcsConfiguration myVcsConfiguration;
   private final DiffRequestProcessor myChangeProcessor;
 
-  private MergingUpdateQueue mySelectInEditor;
+  private final MergingUpdateQueue mySelectInEditor;
 
   public EditorTabPreview(@NotNull DiffRequestProcessor changeProcessor,
-                   @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
-    myProject = changeProcessor.getProject();
+                          @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
+    myProject = ObjectUtils.assertNotNull(changeProcessor.getProject());
 
-    mySelectInEditor = new MergingUpdateQueue("selectInEditorQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, changeProcessor.getProject(), null, true);
+    mySelectInEditor = new MergingUpdateQueue("selectInEditorQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, myProject, null, true);
     mySelectInEditor.setRestartTimerOnAdd(true);
 
     myChangeProcessor = changeProcessor;
@@ -61,7 +63,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
     new DumbAwareAction() {
       {
-        copyShortcutFrom(ActionManager.getInstance().getAction("NextDiff"));
+        copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF));
       }
 
       @Override
