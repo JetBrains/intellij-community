@@ -115,7 +115,7 @@ fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescrip
     }
     it
   }
-                          }
+}
 
 private fun startApp(app: ApplicationImpl,
                      starter: ApplicationStarter,
@@ -397,7 +397,7 @@ private fun loadSystemFonts() {
   GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
 }
 
-fun findStarter(key: String): ApplicationStarter? = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
+fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
 fun openFilesOnLoading(files: List<File>) {
   filesToLoad = files
