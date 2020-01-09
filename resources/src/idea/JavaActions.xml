@@ -50,14 +50,13 @@
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
 
-    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests"
-            text="Show Affected Tests">
+    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests">
       <add-to-group group-id="RunTestGroup" anchor="last"/>
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
 
     <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
-            text="Find Unused Test Data" internal="true"/>
+            internal="true"/>
 
     <action id="JShell.Console"
             class="com.intellij.execution.jshell.LaunchJShellConsoleAction">
@@ -106,50 +105,44 @@
     </group>
 
     <!-- Tools -->
-    <group id="Internal1" text="IDEA Internal Actions" internal="true">
+    <group id="Internal1" internal="true">
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
       <separator/>
       <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
-      <group id="Internal.Dump" text="Dump" internal="true" popup="true">
-        <action id="DumpExtensions" internal="true" text="Dump Extensions" class="com.intellij.internal.DumpExtensionsAction"/>
+      <group id="Internal.Dump" internal="true" popup="true">
+        <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
         <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
         <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
         <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
         <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
-        <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
-                text="Dump All Comments In Project"/>
-        <action id="DumpScreenConfiguration" text="Dump Screen Configuration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
+        <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
+        <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       </group>
 
       <separator/>
       <group internal="true" text="Cached Value Profiler" popup="true">
         <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
-                text="Turn on Cached Value Profiler" internal="true"/>
+                internal="true"/>
         <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
-                text="Dump Results" internal="true"/>
+                internal="true"/>
       </group>
 
       <separator/>
-      <group id="Internal.VFS" text="VFS" popup="true">
+      <group id="Internal.VFS" popup="true">
         <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
-        <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
-                text="Mark File Dirty"/>
+        <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"/>
         <separator/>
-        <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"
-                text="Check VFS Sanity"/>
-        <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load All Files Content"/>
-        <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"
-                text="Load All VFS Stored Files Content"/>
+        <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"/>
+        <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
+        <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
         <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
         <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
         <separator/>
-        <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"
-                text="Prune Empty Directories"/>
-        <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction" text="Fix Line Separators"/>
+        <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
+        <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
         <separator/>
-        <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction"
-                text="Validate Local History Storage"/>
+        <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction"/>
       </group>
 
       <separator/>
@@ -158,14 +151,12 @@
     </group>
 
     <action internal="true" id="TestParseEventLogWhitelistAction"
-            class="com.intellij.internal.statistic.actions.TestParseEventLogWhitelistAction"
-            text="Test Parsing Event Log Whitelist...">
+            class="com.intellij.internal.statistic.actions.TestParseEventLogWhitelistAction">
       <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
     <action internal="true" id="CollectFUStatisticsAction"
-            class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction"
-            text="Collect Statistics from Collector...">
+            class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction">
       <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
@@ -436,23 +427,17 @@
       <add-to-group group-id="Internal.Errors"/>
     </action>
 
-    <group id="Internal.Java" text="Java" popup="true" internal="true" compact="true">
-      <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
-              text="Generate Hierarchy Visitor..."/>
+    <group id="Internal.Java" popup="true" internal="true" compact="true">
+      <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"/>
 
-      <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
-              text="List Used Icons"/>
-      <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
-              text="Collect Java Expression Statistics"/>
+      <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"/>
+      <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"/>
 
-      <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
-              text="List Static Field Initializers"/>
+      <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"/>
 
-      <action id="DumpIndex" internal="true" class="com.intellij.internal.DumpIndexAction"
-              text="Dump Index"/>
+      <action id="DumpIndex" internal="true" class="com.intellij.internal.DumpIndexAction"/>
 
-      <action id="InspectStubIndex" internal="true" class="com.intellij.internal.InspectStubIndexAction"
-              text="Inspect Stub Index"/>
+      <action id="InspectStubIndex" internal="true" class="com.intellij.internal.InspectStubIndexAction"/>
 
       <add-to-group group-id="Internal"/>
     </group>
