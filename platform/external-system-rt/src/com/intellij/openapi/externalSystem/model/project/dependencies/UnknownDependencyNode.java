@@ -16,6 +16,6 @@ public class UnknownDependencyNode extends AbstractDependencyNode {
   @NotNull
   @Override
   public String getDisplayName() {
-    return name;
+    return name == null ? "unknown" : name;
   }
 }
