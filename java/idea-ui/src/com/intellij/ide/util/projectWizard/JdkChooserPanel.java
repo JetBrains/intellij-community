@@ -307,7 +307,7 @@ public class JdkChooserPanel extends JPanel {
     return dialog.showAndGet() ? jdkChooserPanel.getChosenJdk() : null;
   }
 
-  public static Sdk chooseAndSetJDK(final Project project) {
+  public static Sdk chooseAndSetJDK(@NotNull final Project project) {
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
     String path = jdk != null ? jdk.getHomePath() : null;
