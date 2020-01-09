@@ -13,19 +13,36 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewShortNameLocation;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+
+import static com.intellij.psi.util.PsiFormatUtilBase.*;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_TYPE;
 
 /**
  * @author anna
  */
 public class JavaNavBarExtension extends AbstractNavBarModelExtension {
+  @Nullable
   @Override
-  public String getPresentableText(final Object object) {
+  public String getPresentableText(Object object) {
+    return getPresentableText(object, false);
+  }
+
+  @Override
+  public String getPresentableText(final Object object, boolean forPopup) {
     if (object instanceof PsiMember) {
+      if (forPopup && object instanceof PsiMethod) {
+        return PsiFormatUtil.formatMethod((PsiMethod)object,
+                                          PsiSubstitutor.EMPTY,
+                                          SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS,
+                                          SHOW_TYPE);
+      }
       return ElementDescriptionUtil.getElementDescription((PsiElement)object, UsageViewShortNameLocation.INSTANCE);
     }
     else if (object instanceof PsiPackage) {
@@ -90,9 +107,35 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
       if (psiFile == null || editor == null) return null;
       PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
       if (psiElement != null && psiElement.getLanguage() == JavaLanguage.INSTANCE) {
-        return PsiTreeUtil.getParentOfType(psiElement, PsiMember.class);
+        PsiMember member = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class);
+        return member instanceof PsiField ? member.getContainingClass() : member;
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean processChildren(Object object, Object rootElement, Processor<Object> processor) {
+    if (object instanceof PsiClass) {
+      PsiClass psiClass = (PsiClass)object;
+      for (PsiMethod method : psiClass.getMethods()) {
+        if (!processor.process(method)) {
+          return false;
+        }
+      }
+      for (PsiClass innerClass : psiClass.getInnerClasses()) {
+        if (!processor.process(innerClass)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+    return super.processChildren(object, rootElement, processor);
+  }
+
+  @Override
+  public boolean normalizeChildren() {
+    return false;
   }
 }
