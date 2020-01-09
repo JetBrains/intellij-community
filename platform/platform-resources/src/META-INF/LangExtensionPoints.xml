@@ -16,7 +16,7 @@
       <with attribute="instance" implements="com.intellij.application.options.editor.CodeFoldingOptionsProvider"/>
     </extensionPoint>
     <extensionPoint name="codeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.CodeStyleSettingsProvider" dynamic="true"/>
-    <extensionPoint name="generalCodeStyleOptionsProvider" beanClass="com.intellij.application.options.GeneralCodeStyleOptionsProviderEP">
+    <extensionPoint name="generalCodeStyleOptionsProvider" beanClass="com.intellij.application.options.GeneralCodeStyleOptionsProviderEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.application.options.GeneralCodeStyleOptionsProvider"/>
     </extensionPoint>
     <extensionPoint dynamic="true" name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
