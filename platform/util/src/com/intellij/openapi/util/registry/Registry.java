@@ -2,7 +2,6 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,12 +34,19 @@ public final class Registry  {
 
   @NotNull
   public static RegistryValue get(@NotNull String key) {
-    Registry registry = getInstance();
-    RegistryValue value = registry.myValues.get(key);
-    if (value == null) {
-      value = ConcurrencyUtil.cacheOrGet(registry.myValues, key, new RegistryValue(registry, key, registry.myContributedKeys.get(key)));
+    return getInstance().doGet(key);
+  }
+
+  @NotNull
+  private RegistryValue doGet(@NotNull String key) {
+    RegistryValue value = myValues.get(key);
+    if (value != null) {
+      return value;
     }
-    return value;
+
+    value = new RegistryValue(this, key, myContributedKeys.get(key));
+    RegistryValue prev = myValues.putIfAbsent(key, value);
+    return prev == null ? value : prev;
   }
 
   public static boolean is(@NotNull String key) throws MissingResourceException {
@@ -144,8 +150,8 @@ public final class Registry  {
       String key = eachEntry.getAttributeValue("key");
       String value = eachEntry.getAttributeValue("value");
       if (key != null && value != null) {
-        RegistryValue registryValue = get(key);
-        if (registryValue.isChangedFromDefault(value)) {
+        RegistryValue registryValue = doGet(key);
+        if (registryValue.isChangedFromDefault(value, this)) {
           myUserProperties.put(key, value);
           registryValue.resetCache();
         }

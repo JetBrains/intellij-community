@@ -140,7 +140,7 @@ public class RegistryValue {
   }
 
   public boolean isChangedFromDefault() {
-    return isChangedFromDefault(asString());
+    return isChangedFromDefault(asString(), Registry.getInstance());
   }
 
   @Nullable
@@ -148,8 +148,8 @@ public class RegistryValue {
     return myKeyDescriptor != null ? myKeyDescriptor.getPluginId() : null;
   }
 
-  boolean isChangedFromDefault(@NotNull String newValue) {
-    return !newValue.equals(Registry.getInstance().getBundleValue(myKey, false));
+  final boolean isChangedFromDefault(@NotNull String newValue, @NotNull Registry registry) {
+    return !newValue.equals(registry.getBundleValue(myKey, false));
   }
 
   protected String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
@@ -174,10 +174,9 @@ public class RegistryValue {
       return systemProperty;
     }
 
-    //todo[kb] uncomment when have a better description for what to do with this warning
-    //if (!myRegistry.isLoaded() && !isHeadlessMode()) {
-      //LOG.warn("The registry key '" + key + "' accessed, but not loaded yet");
-    //}
+    if (!myRegistry.isLoaded()) {
+      LOG.debug("The registry key '" + key + "' accessed, but not loaded yet");
+    }
 
     String bundleValue = Registry.getInstance().getBundleValue(key, mustExistInBundle);
     return bundleValue == null ? defaultValue : bundleValue;
