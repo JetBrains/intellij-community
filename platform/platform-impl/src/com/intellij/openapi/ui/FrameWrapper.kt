@@ -43,7 +43,7 @@ import java.io.File
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
-                                                  @param:NonNls private val dimensionKey: String? = null,
+                                                  @param:NonNls protected open val dimensionKey: String? = null,
                                                   private val isDialog: Boolean = false,
                                                   var title: String = "") : Disposable, DataProvider {
   open var component: JComponent? = null
