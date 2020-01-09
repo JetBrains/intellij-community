@@ -1245,56 +1245,40 @@
   </extensions>
 
   <actions>
-    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
-            text="Execute Groovy Code"
-            description="Execute Groovy code in console"/>
+    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"/>
 
     <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
-           popup="true"
-           text="Gr_oovy Resources"
-           description="Run the compiler for Groovy files in resource roots to check for compilation issues">
-      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"
-              text="_Build Resources"
-              description="Run the incremental compiler for Groovy files in resource roots to check for compilation issues"/>
-      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Rebuild" id="Groovy.CheckResources.Rebuild"
-              text="_Rebuild Resources"
-              description="Run the compiler for all Groovy files in resource roots to check for compilation issues"/>
+           popup="true">
+      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"/>
+      <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Rebuild" id="Groovy.CheckResources.Rebuild"/>
       <add-to-group group-id="BuildMenu"/>
     </group>
 
-    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction"
-            text="Groovy Class" description="Create new Groovy class">
+    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
     </action>
-    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
-            text="Groovy Script" description="Create new Groovy script">
+    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
     <action id="ConvertGroovyToJava"
-            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
-            text="Convert to Java"
-            description="Convert Groovy files to Java">
+            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 
     <action id="ConvertToCompileStatic"
-            class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction"
-            text="Convert to @CompileStatic"
-            description="Convert Groovy files to @CompileStatic">
+            class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 
     <action id="DumpGroovyControlFlowAction"
             class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
-            text="Dump Groovy Control Flow"
             internal="true">
       <add-to-group group-id="Internal"/>
     </action>
 
     <action id="ExcludeFromStubGeneration"
-            class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"
-            text="Exclude from Stub Generation" description="Don't generate Java stubs for this Groovy file on compilation">
+            class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction">
       <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
 
@@ -1302,58 +1286,46 @@
     <group id="GroovyGenerateGroup1">
       <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"
-              text="to_String()" description="Generate toString() method"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
-              text="Constructor" description="Generates constructor"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterAction"
-              text="Getter" description="Generates getter"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterAction"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateSetterAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateSetterAction"
-              text="Setter" description="Generates setter"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateSetterAction"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
-              text="Getter and Setter" description="Generates getter"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"/>
       <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"
-              text="equals() and hashCode()" description="Action generates equals and hashCode now"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"/>
       <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
-              text="methodMissing()" description="Action generates propertyMissing()"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"/>
       <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
-              class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
-              text="propertyMissing()" description="Action generates propertyMissing()"/>
+              class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"/>
 
       <add-to-group group-id="GenerateGroup" anchor="after" relative-to-action="JavaGenerateGroup1"/>
     </group>
 
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
-            text="Generate GroovyDoc..." description="Generating Groovy documentation"
             icon="JetgroovyIcons.Groovy.GroovyDoc">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
     <action id="Groovy.Shell"
             class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
-            text="Groovy Shell..." description="Launch Groovy shell"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup" text="Grails/Griffon">
+    <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
       <action id="Mvc.Upgrade"
-              class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction"
-              text="Change SDK Version" description="Change Grails/Griffon SDK version">
+              class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction">
       </action>
 
-      <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.actions.MvcRunCommandAction"
-              text="Run Command" description="Run arbitrary Grails/Griffon command">
+      <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.actions.MvcRunCommandAction">
         <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
       </action>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddFrameworkSupport"/>
@@ -1362,8 +1334,7 @@
     </group>
 
     <action id="groovy.scripting.shell"
-            class="org.jetbrains.plugins.groovy.ide.GroovyScriptingShellAction"
-            text="Groovy IDE Scripting Shell"/>
+            class="org.jetbrains.plugins.groovy.ide.GroovyScriptingShellAction"/>
   </actions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
