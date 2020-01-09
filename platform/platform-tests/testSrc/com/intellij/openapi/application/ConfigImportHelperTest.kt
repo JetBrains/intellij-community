@@ -17,7 +17,6 @@ import org.assertj.core.api.Condition
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -148,8 +147,8 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
 
   private fun createConfigDir(version: String, product: String = "IntelliJIdea", storageTS: Long = 0): Path {
     val defaultPath = PathManager.getDefaultConfigPathFor("${product}${version}")
-    val relative = defaultPath.removePrefix(SystemProperties.getUserHome() + File.separatorChar)
-    val dir = Files.createDirectories(memoryFs.fs.getPath("/data/$relative"))
+    val relative = Paths.get(SystemProperties.getUserHome()).relativize(Paths.get(defaultPath))
+    val dir = Files.createDirectories(memoryFs.fs.getPath("/data/${relative.toString().replace('\\', '/')}"))
     if (storageTS > 0) writeStorageFile(dir, storageTS)
     return dir
   }
