@@ -353,7 +353,6 @@
     <extensionPoint name="config.inlaySettingsProvider" interface="com.intellij.codeInsight.hints.settings.InlaySettingsProvider"/>
 
     <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
-    <extensionPoint name="sdkUsagesContributor" interface="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$SdkUsagesContributor" dynamic="true"/>
     <extensionPoint name="unknownSdkResolver" interface="com.intellij.openapi.projectRoots.impl.UnknownSdkResolver" dynamic="true"/>
 
     <extensionPoint name="pathMacroContributor" interface="com.intellij.openapi.application.PathMacroContributor" dynamic="true"/>
