@@ -293,6 +293,7 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
 
     <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
+    <registryKey key="java.detector.enabled" defaultValue="true" description="Toggles JDK detection features" />
 
     <sdkDownload implementation="com.intellij.jdkDownloader.JdkDownloader" />
     <unknownSdkResolver implementation="com.intellij.jdkDownloader.JdkAuto"/>

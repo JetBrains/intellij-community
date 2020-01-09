@@ -6,6 +6,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -36,6 +38,16 @@ public abstract class JavaHomeFinder {
   protected abstract List<String> findExistingJdks();
 
   private static JavaHomeFinder getFinder() {
+    if (!Registry.is("java.detector.enabled")) {
+      return new JavaHomeFinder() {
+        @NotNull
+        @Override
+        protected List<String> findExistingJdks() {
+          return Collections.emptyList();
+        }
+      };
+    }
+
     if (SystemInfo.isWindows) {
       return new WindowsJavaFinder();
     }

@@ -23,6 +23,7 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker"/>
     <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector" />
+    <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features" />
 
     <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used, better to preload it -->
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
