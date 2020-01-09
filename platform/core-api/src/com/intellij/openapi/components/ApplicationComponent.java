@@ -8,12 +8,8 @@ package com.intellij.openapi.components;
  * plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance until user calls its
  * actions explicitly.
  *
- * @deprecated This interface is not used anymore. Application component do no need to extend any special interface.
- *
- * Instead of {@link #initComponent()} please use {@link com.intellij.util.messages.MessageBus} and corresponding topics.
- * Or {@link com.intellij.openapi.components.PersistentStateComponent#initializeComponent()}).
- *
- * Instead of {@link #disposeComponent()} please use {@link com.intellij.openapi.Disposable}.
+ * @deprecated Components are deprecated; please see http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for
+ * guidelines on migrating to other APIs.
  */
 @Deprecated
 public interface ApplicationComponent extends BaseComponent {

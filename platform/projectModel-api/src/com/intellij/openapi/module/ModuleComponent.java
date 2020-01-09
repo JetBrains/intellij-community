@@ -15,7 +15,8 @@ import com.intellij.openapi.project.Project;
  * any feature of your plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance
  * until user calls its actions explicitly.</strong>
  *
- * Consider to use {@link com.intellij.ProjectTopics#MODULES}
+ * @deprecated Components are deprecated; please see http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for
+ * guidelines on migrating to other APIs.
  */
 public interface ModuleComponent extends BaseComponent {
   /**
