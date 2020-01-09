@@ -23,6 +23,7 @@ import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
     };
     JsonSchemaProviderFactory.EP_NAME.addExtensionPointListener(this::reset, myProject);
+    JsonSchemaEnabler.EXTENSION_POINT_NAME.addExtensionPointListener(this::reset, myProject);
+    JsonSchemaCatalogExclusion.EP_NAME.addExtensionPointListener(this::reset, myProject);
     Disposer.register(myProject, () -> {
       myState.reset();
       myBuiltInSchemaIds.drop();
