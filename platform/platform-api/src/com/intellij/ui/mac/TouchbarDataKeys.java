@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public interface TouchbarDataKeys {
 
   @NotNull
   static DlgButtonDesc putDialogButtonDescriptor(@NotNull JButton button, int orderIndex, boolean isMainGroup) {
-    DlgButtonDesc result = UIUtil.getClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY);
+    DlgButtonDesc result = ComponentUtil.getClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY);
     if (result == null)
       UIUtil.putClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY, result = new DlgButtonDesc(orderIndex));
     result.setMainGroup(isMainGroup);

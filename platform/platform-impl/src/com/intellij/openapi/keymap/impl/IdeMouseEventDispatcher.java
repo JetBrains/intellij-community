@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel;
@@ -44,8 +45,8 @@ import static java.awt.event.MouseEvent.*;
  */
 public final class IdeMouseEventDispatcher {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private final ArrayList<AnAction> myActions = new ArrayList<>(1);
-  private final Map<Container, BlockState> myRootPane2BlockedId = new HashMap<>();
+  private final List<AnAction> myActions = new ArrayList<>(1);
+  private final Map<Container, BlockState> myRootPaneToBlockedId = new HashMap<>();
   private int myLastHorScrolledComponentHash;
   private boolean myPressedModifiersStored;
   @JdkConstants.InputEventMask
@@ -98,20 +99,26 @@ public final class IdeMouseEventDispatcher {
       }
     }
 
+    ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    if (actionManager == null) {
+      return;
+    }
+
     // search in main keymap
     KeymapManager keymapManager = KeymapManagerImpl.isKeymapManagerInitialized() ? KeymapManager.getInstance() : null;
-    if (keymapManager != null) {
-      Keymap keymap = keymapManager.getActiveKeymap();
-      ActionManager actionManager = ActionManager.getInstance();
-      for (String actionId : keymap.getActionIds(mouseShortcut)) {
-        AnAction action = actionManager.getAction(actionId);
-        if (action == null || isModalContext && !action.isEnabledInModalContext()) {
-          continue;
-        }
+    if (keymapManager == null) {
+      return;
+    }
 
-        if (!myActions.contains(action)) {
-          myActions.add(action);
-        }
+    Keymap keymap = keymapManager.getActiveKeymap();
+    for (String actionId : keymap.getActionIds(mouseShortcut)) {
+      AnAction action = actionManager.getAction(actionId);
+      if (action == null || isModalContext && !action.isEnabledInModalContext()) {
+        continue;
+      }
+
+      if (!myActions.contains(action)) {
+        myActions.add(action);
       }
     }
   }
@@ -194,7 +201,7 @@ public final class IdeMouseEventDispatcher {
 
     final JRootPane root = findRoot(e);
     if (root != null) {
-      BlockState blockState = myRootPane2BlockedId.get(root);
+      BlockState blockState = myRootPaneToBlockedId.get(root);
       if (blockState != null) {
         if (SWING_EVENTS_PRIORITY.indexOf(blockState.currentEventId) < SWING_EVENTS_PRIORITY.indexOf(e.getID())) {
           blockState.currentEventId = e.getID();
@@ -205,7 +212,7 @@ public final class IdeMouseEventDispatcher {
             ignore = true;
           }
         } else {
-          myRootPane2BlockedId.remove(root);
+          myRootPaneToBlockedId.remove(root);
         }
       }
     }
@@ -391,7 +398,7 @@ public final class IdeMouseEventDispatcher {
     final JRootPane root = findRoot(e);
     if (root == null) return;
 
-    myRootPane2BlockedId.put(root, new BlockState(e.getID(), blockMode));
+    myRootPaneToBlockedId.put(root, new BlockState(e.getID(), blockMode));
   }
 
   @Nullable

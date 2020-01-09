@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splittable;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.UIUtil;
@@ -96,7 +97,7 @@ class TabsSideSplitter implements Splittable, PropertyChangeListener {
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt.getSource() != myTabs) return;
-    Integer limit = UIUtil.getClientProperty(myTabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
+    Integer limit = ComponentUtil.getClientProperty(myTabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
     if (limit == null) limit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
     setSideTabsLimit(limit);
   }

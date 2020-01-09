@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -1262,34 +1262,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Alloy Look-n-Feel is deprecated and not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderAlloyIDEALookAndFeel() {
-    return false;
-  }
-
-  /**
-   * @deprecated Native OS Look-n-Feel is not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderWindowsLookAndFeel() {
-    return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
-  }
-
-  /**
-   * @deprecated Native OS Look-n-Feel is not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderWindowsClassicLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().equals("Windows Classic");
-  }
-
-
-  /**
    * @deprecated Aqua Look-n-Feel is not supported anymore
    */
   @Deprecated
@@ -1304,15 +1276,6 @@ public final class UIUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderNimbusLookAndFeel() {
-    return false;
-  }
-
-  /**
-   * @deprecated JGoodies Look-n-Feel is deprecated and not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderJGoodiesLookAndFeel() {
     return false;
   }
 
@@ -1365,29 +1328,6 @@ public final class UIUtil {
     } catch (Exception e) {
       return false;
     }
-  }
-
-  /**
-   * @deprecated GTK Look-n-Feel is not supported anymore
-   */
-  @Deprecated
-  @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static String getGtkThemeName() {
-    final LookAndFeel laf = UIManager.getLookAndFeel();
-    if (laf != null && "GTKLookAndFeel".equals(laf.getClass().getSimpleName())) {
-      try {
-        final Method method = laf.getClass().getDeclaredMethod("getGtkThemeName");
-        method.setAccessible(true);
-        final Object theme = method.invoke(laf);
-        if (theme != null) {
-          return theme.toString();
-        }
-      }
-      catch (Exception ignored) {
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -2326,7 +2266,7 @@ public final class UIUtil {
         .filter(Conditions.not(Conditions.instanceOf(JPanel.class, JLayeredPane.class)))
         .isEmpty()) continue;
 
-      Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
+      Integer keepBorderSides = ComponentUtil.getClientProperty(scrollPane, KEEP_BORDER_SIDES);
       if (keepBorderSides != null) {
         if (scrollPane.getBorder() instanceof LineBorder) {
           Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
@@ -2630,7 +2570,7 @@ public final class UIUtil {
     }
     if (c instanceof JComponent) {
       JComponent jc = (JComponent)c;
-      Iterable<? extends Component> orphans = getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+      Iterable<? extends Component> orphans = ComponentUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
       if (orphans != null) {
         result = result.append(orphans);
       }
@@ -3065,7 +3005,7 @@ public final class UIUtil {
   }
 
   public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
-    UndoManager undoManager = getClientProperty(textComponent, UNDO_MANAGER);
+    UndoManager undoManager = ComponentUtil.getClientProperty(textComponent, UNDO_MANAGER);
     if (undoManager != null) {
       undoManager.discardAllEdits();
     }

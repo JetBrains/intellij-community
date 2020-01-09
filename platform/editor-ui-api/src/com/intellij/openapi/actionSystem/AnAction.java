@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.LoadingState;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
@@ -178,7 +179,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   public final void registerCustomShortcutSet(@Nullable JComponent component, @Nullable Disposable parentDisposable) {
     if (component == null) return;
-    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+    List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList == null) {
       UIUtil.putClientProperty(component, ACTIONS_KEY, actionList = new SmartList<>());
     }
@@ -192,7 +193,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public final void unregisterCustomShortcutSet(@Nullable JComponent component) {
-    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+    List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList != null) {
       actionList.remove(this);
     }

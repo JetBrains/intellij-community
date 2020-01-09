@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.BackgroundSupplier;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
@@ -44,7 +45,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @NotNull
   private static Control.Painter getPainter(@NotNull JTree tree) {
-    Control.Painter painter = UIUtil.getClientProperty(tree, Control.Painter.KEY);
+    Control.Painter painter = ComponentUtil.getClientProperty(tree, Control.Painter.KEY);
     if (painter != null) return painter;
     // painter is not specified for the given tree
     Application application = getApplication();
@@ -195,7 +196,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             if (hsb != null && hsb.isVisible()) hsbVisible = true;
             JScrollBar vsb = pane.getVerticalScrollBar();
             if (vsb != null && vsb.isVisible() && !vsb.isOpaque()) {
-              Boolean property = UIUtil.getClientProperty(vsb, IGNORE_SCROLLBAR_IN_INSETS);
+              Boolean property = ComponentUtil.getClientProperty(vsb, IGNORE_SCROLLBAR_IN_INSETS);
               if (SystemInfo.isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
                 vsbWidth = vsb.getWidth(); // to calculate a right margin of a renderer component
               }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -395,7 +395,7 @@ public final class IdeBackgroundUtil {
   private static final class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
     public Graphics2D fun(JComponent c, Graphics2D g) {
-      if (Boolean.TRUE.equals(UIUtil.getClientProperty(c, NO_BACKGROUND))) return g;
+      if (Boolean.TRUE.equals(ComponentUtil.getClientProperty(c, NO_BACKGROUND))) return g;
       String type = getComponentType(c);
       if (type == null) return g;
       if ("frame".equals(type)) return withFrameBackground(g, c);

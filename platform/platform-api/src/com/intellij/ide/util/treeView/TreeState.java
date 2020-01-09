@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.navigation.NavigationItem;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -374,7 +375,7 @@ public class TreeState implements JDOMExternalizable {
 
     @Override
     public ActionCallback getInitialized() {
-      WeakReference<ActionCallback> ref = UIUtil.getClientProperty(tree, CALLBACK);
+      WeakReference<ActionCallback> ref = ComponentUtil.getClientProperty(tree, CALLBACK);
       ActionCallback callback = SoftReference.dereference(ref);
       if (callback != null) return callback;
       return ActionCallback.DONE;
@@ -441,7 +442,7 @@ public class TreeState implements JDOMExternalizable {
    */
   @Deprecated
   public static void expand(@NotNull JTree tree, @NotNull Consumer<? super AsyncPromise<Void>> consumer) {
-    Promise<Void> expanding = UIUtil.getClientProperty(tree, EXPANDING);
+    Promise<Void> expanding = ComponentUtil.getClientProperty(tree, EXPANDING);
     LOG.debug("EXPANDING: ", expanding);
     if (expanding == null) expanding = Promises.resolvedPromise();
     expanding.onProcessed(value -> {

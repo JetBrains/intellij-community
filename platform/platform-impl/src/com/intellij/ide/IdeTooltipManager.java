@@ -356,7 +356,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public IdeTooltip getCustomTooltip(JComponent component) {
-    return UIUtil.getClientProperty(component, CUSTOM_TOOLTIP);
+    return ComponentUtil.getClientProperty(component, CUSTOM_TOOLTIP);
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {

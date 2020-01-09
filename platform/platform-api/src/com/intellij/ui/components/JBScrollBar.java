@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.TouchScrollUtil;
@@ -73,7 +74,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   protected void addImpl(Component component, Object name, int index) {
     Key<Component> key = LEADING.equals(name) ? DefaultScrollBarUI.LEADING : TRAILING.equals(name) ? DefaultScrollBarUI.TRAILING : null;
     if (key != null) {
-      Component old = UIUtil.getClientProperty(this, key);
+      Component old = ComponentUtil.getClientProperty(this, key);
       UIUtil.putClientProperty(this, key, component);
       if (old != null) remove(old);
     }

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,11 @@ import java.awt.*;
 import java.util.function.Predicate;
 
 public final class ComponentUtil {
+  public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
+    //noinspection unchecked
+    return (T)component.getClientProperty(key);
+  }
+
   public static boolean isDisableAutoRequestFocus() {
     return Registry.is("suppress.focus.stealing.disable.auto.request.focus", true);
   }
