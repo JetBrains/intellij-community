@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,15 @@ public class JavaPsiRecordUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * @param field synthetic field that corresponds to the record component
+   * @return the corresponding record component; null if given field doesn't correspond to the record component.
+   */
+  @Nullable
+  public static PsiRecordComponent getComponentForField(@NotNull PsiField field) {
+    return field instanceof LightRecordField ? ((LightRecordField)field).getRecordComponent() : null;
   }
 
   /**
