@@ -612,8 +612,7 @@ public class HighlightUtil extends HighlightUtilBase {
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         @Override
         protected boolean check(final PsiVariable var, final ResolveState state) {
-          return (var instanceof PsiLocalVariable || var instanceof PsiParameter || var instanceof PsiPatternVariable) && 
-                 super.check(var, state);
+          return PsiUtil.isJvmLocalVariable(var) && super.check(var, state);
         }
       };
       PsiIdentifier identifier = variable.getNameIdentifier();

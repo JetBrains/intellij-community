@@ -17,7 +17,6 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -44,9 +43,6 @@ public class JavaUnresolvableLocalCollisionDetector {
       if (!(element instanceof ImplicitVariable)) {
         anchor = element.getParent();
       }
-    }
-    else if (element instanceof PsiPatternVariable) {
-      scope = ((LocalSearchScope)element.getUseScope()).getScope()[0];
     }
     else {
       // element is a PsiParameter

@@ -10,7 +10,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +42,10 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     }
   }
 
-  @Nullable
+  @NotNull
   @Override
   public PsiPattern getPattern() {
-    return ObjectUtils.tryCast(getParent(), PsiPattern.class);
+    return (PsiPattern)getParent();
   }
 
   @Override
@@ -68,6 +67,29 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   @Override
   public PsiType getType() {
     return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getDeclarationScope() {
+    PsiElement parent = getPattern().getParent();
+    while (parent instanceof PsiInstanceOfExpression || parent instanceof PsiParenthesizedExpression ||
+           parent instanceof PsiConditionalExpression ||
+           parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType().equals(EXCL) ||
+           parent instanceof PsiPolyadicExpression &&
+           (((PsiPolyadicExpression)parent).getOperationTokenType().equals(ANDAND) ||
+            ((PsiPolyadicExpression)parent).getOperationTokenType().equals(OROR))) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiIfStatement || parent instanceof PsiConditionalLoopStatement) {
+      return parent.getParent();
+    }
+    return parent;
+  }
+
+  @Override
+  public boolean isVarArgs() {
+    return false;
   }
 
   @NotNull
@@ -113,23 +135,7 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   @NotNull
   @Override
   public SearchScope getUseScope() {
-    PsiPattern pattern = getPattern();
-    if (pattern != null) {
-      PsiElement parent = pattern.getParent();
-      while (parent instanceof PsiInstanceOfExpression || parent instanceof PsiParenthesizedExpression ||
-             parent instanceof PsiConditionalExpression ||
-             parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType().equals(EXCL) ||
-             parent instanceof PsiPolyadicExpression && 
-             (((PsiPolyadicExpression)parent).getOperationTokenType().equals(ANDAND) || 
-              ((PsiPolyadicExpression)parent).getOperationTokenType().equals(OROR))) {
-        parent = parent.getParent();
-      }
-      if (parent instanceof PsiIfStatement || parent instanceof PsiConditionalLoopStatement) {
-        return new LocalSearchScope(parent.getParent());
-      }
-      return new LocalSearchScope(parent);
-    }
-    return super.getUseScope();
+    return new LocalSearchScope(getDeclarationScope());
   }
 
   @Override

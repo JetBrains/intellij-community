@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A variable declared within the pattern
  */
-public interface PsiPatternVariable extends PsiVariable {
+public interface PsiPatternVariable extends PsiParameter {
   @NotNull
   @Override
   String getName();

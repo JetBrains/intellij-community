@@ -433,6 +433,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPatternVariable(PsiPatternVariable variable) {
-    visitVariable(variable);
+    visitParameter(variable);
   }
 }

@@ -61,7 +61,7 @@ public class JavaRainbowVisitor extends RainbowVisitor {
     if (PsiUtil.isJvmLocalVariable(resolved)) {
       String name = ((PsiVariable)resolved).getName();
       if (name != null) {
-        return getInfo(context, rainbowElement, name, resolved instanceof PsiLocalVariable || resolved instanceof PsiPatternVariable
+        return getInfo(context, rainbowElement, name, resolved instanceof PsiLocalVariable
                                                      ? JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES
                                                      : rainbowElement instanceof PsiDocTagValue
                                                        ? JavaHighlightingColors.DOC_COMMENT_TAG_VALUE

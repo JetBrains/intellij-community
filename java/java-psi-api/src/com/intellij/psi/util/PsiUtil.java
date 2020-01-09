@@ -22,7 +22,6 @@ import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -316,9 +315,6 @@ public final class PsiUtil extends PsiUtilCore {
       } else if (declarationScope instanceof PsiLambdaExpression) {
         codeBlock = ((PsiLambdaExpression)declarationScope).getBody();
       }
-    }
-    else if (variable instanceof PsiPatternVariable) {
-      codeBlock = ((LocalSearchScope)variable.getUseScope()).getScope()[0];
     }
     else if (variable instanceof PsiResourceVariable) {
       final PsiElement resourceList = variable.getParent();
@@ -1415,8 +1411,6 @@ public final class PsiUtil extends PsiUtilCore {
    */
   @Contract("null -> false")
   public static boolean isJvmLocalVariable(PsiElement variable) {
-    return variable instanceof PsiLocalVariable ||
-           variable instanceof PsiParameter ||
-           variable instanceof PsiPatternVariable;
+    return variable instanceof PsiLocalVariable || variable instanceof PsiParameter;
   }
 }
