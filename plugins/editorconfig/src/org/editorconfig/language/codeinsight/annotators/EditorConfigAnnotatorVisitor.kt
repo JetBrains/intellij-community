@@ -2,6 +2,7 @@
 package org.editorconfig.language.codeinsight.annotators
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
@@ -33,7 +34,7 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
           val start = firstDot!!.textRange.startOffset
           val end = lastDot!!.textRange.endOffset // + lastDot!!.textLength
           val range = TextRange.create(start, end)
-          holder.createErrorAnnotation(range, message)
+          holder.newAnnotation(HighlightSeverity.ERROR, message).range(range).create()
           firstDot = null
           lastDot = null
         }
@@ -49,7 +50,7 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
     if (edgeElement.node.elementType != EditorConfigElementTypes.DOT) return
     if (neighbourElement?.node?.elementType == EditorConfigElementTypes.DOT) return
     val message = EditorConfigBundle["annotator.error.key.dangling-dot"]
-    holder.createErrorAnnotation(edgeElement, message)
+    holder.newAnnotation(HighlightSeverity.ERROR, message).range(edgeElement).create()
   }
 
   override fun visitOption(option: EditorConfigOption) {
@@ -60,32 +61,32 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
   private fun checkLineBreaks(option: EditorConfigOption) {
     if (!option.textContains('\n')) return
     val message = EditorConfigBundle["annotator.error.option.suspicious.line.break"]
-    holder.createErrorAnnotation(option, message)
+    holder.newAnnotation(HighlightSeverity.ERROR, message).range(option).create()
   }
 
   private fun checkDanglingKey(option: EditorConfigOption) {
     if (option.anyValue != null) return
     val message = EditorConfigBundle["annotator.error.dangling.key"]
-    holder.createErrorAnnotation(option, message)
+    holder.newAnnotation(HighlightSeverity.ERROR, message).range(option).create()
   }
 
   override fun visitFlatOptionKey(flatKey: EditorConfigFlatOptionKey) {
-    holder.createInfoAnnotation(flatKey, null).textAttributes = EditorConfigSyntaxHighlighter.PROPERTY_KEY
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(flatKey).textAttributes(EditorConfigSyntaxHighlighter.PROPERTY_KEY).create()
   }
 
   override fun visitQualifiedKeyPart(keyPart: EditorConfigQualifiedKeyPart) {
     val descriptor = keyPart.getDescriptor(false)
-    holder.createInfoAnnotation(keyPart, null).textAttributes =
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(keyPart).textAttributes(
       if (descriptor is EditorConfigDeclarationDescriptor) EditorConfigSyntaxHighlighter.PROPERTY_KEY
-      else EditorConfigSyntaxHighlighter.KEY_DESCRIPTION
+      else EditorConfigSyntaxHighlighter.KEY_DESCRIPTION).create()
   }
 
   override fun visitOptionValueIdentifier(identifier: EditorConfigOptionValueIdentifier) {
-    holder.createInfoAnnotation(identifier, null).textAttributes = EditorConfigSyntaxHighlighter.PROPERTY_VALUE
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(identifier).textAttributes(EditorConfigSyntaxHighlighter.PROPERTY_VALUE).create()
   }
 
   override fun visitFlatPattern(flatPattern: EditorConfigFlatPattern) {
-    holder.createInfoAnnotation(flatPattern, null).textAttributes = EditorConfigSyntaxHighlighter.PATTERN
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(flatPattern).textAttributes(EditorConfigSyntaxHighlighter.PATTERN).create()
     if (!flatPattern.textContains('\\')) return
 
     val text = flatPattern.text
@@ -97,11 +98,11 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
         val range = TextRange(offset + index, offset + index + 2)
         index += 1
         if (EditorConfigSyntaxHighlighter.VALID_ESCAPES.contains(text[index])) {
-          holder.createInfoAnnotation(range, null).textAttributes = EditorConfigSyntaxHighlighter.VALID_CHAR_ESCAPE
+          holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(range).textAttributes(EditorConfigSyntaxHighlighter.VALID_CHAR_ESCAPE).create()
         }
         else {
           val message = EditorConfigBundle["annotator.error.illegal.char.escape"]
-          holder.createInfoAnnotation(range, message).textAttributes = EditorConfigSyntaxHighlighter.INVALID_CHAR_ESCAPE
+          holder.newAnnotation(HighlightSeverity.INFORMATION, message).range(range).textAttributes(EditorConfigSyntaxHighlighter.INVALID_CHAR_ESCAPE).create()
         }
       }
       index += 1
@@ -109,33 +110,37 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
   }
 
   override fun visitAsteriskPattern(pattern: EditorConfigAsteriskPattern) {
-    holder.createInfoAnnotation(pattern, null).textAttributes = EditorConfigSyntaxHighlighter.SPECIAL_SYMBOL
+    special(pattern)
   }
 
   override fun visitDoubleAsteriskPattern(pattern: EditorConfigDoubleAsteriskPattern) {
-    holder.createInfoAnnotation(pattern, null).textAttributes = EditorConfigSyntaxHighlighter.SPECIAL_SYMBOL
+    special(pattern)
+  }
+
+  private fun special(pattern: PsiElement) {
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(pattern).textAttributes(
+      EditorConfigSyntaxHighlighter.SPECIAL_SYMBOL).create()
   }
 
   override fun visitCharClassExclamation(exclamation: EditorConfigCharClassExclamation) {
-    holder.createInfoAnnotation(exclamation, null).textAttributes = EditorConfigSyntaxHighlighter.SPECIAL_SYMBOL
+    special(exclamation)
   }
 
   override fun visitQuestionPattern(pattern: EditorConfigQuestionPattern) {
-    holder.createInfoAnnotation(pattern, null).textAttributes = EditorConfigSyntaxHighlighter.SPECIAL_SYMBOL
+    special(pattern)
   }
 
   override fun visitCharClassLetter(letter: EditorConfigCharClassLetter) = when {
-    !letter.isEscape -> holder.createInfoAnnotation(letter, null).textAttributes = EditorConfigSyntaxHighlighter.PATTERN
-    letter.isValidEscape -> holder.createInfoAnnotation(letter, null).textAttributes = EditorConfigSyntaxHighlighter.VALID_CHAR_ESCAPE
-    else -> holder.createInfoAnnotation(letter, EditorConfigBundle["annotator.error.illegal.char.escape"]).textAttributes =
-      EditorConfigSyntaxHighlighter.INVALID_CHAR_ESCAPE
+    !letter.isEscape -> holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(letter).textAttributes(EditorConfigSyntaxHighlighter.PATTERN).create()
+    letter.isValidEscape -> holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(letter).textAttributes(EditorConfigSyntaxHighlighter.VALID_CHAR_ESCAPE).create()
+    else -> holder.newAnnotation(HighlightSeverity.INFORMATION, EditorConfigBundle["annotator.error.illegal.char.escape"]).range(letter).textAttributes(EditorConfigSyntaxHighlighter.INVALID_CHAR_ESCAPE).create()
   }
 
   override fun visitRootDeclarationKey(key: EditorConfigRootDeclarationKey) {
-    holder.createInfoAnnotation(key, null).textAttributes = EditorConfigSyntaxHighlighter.PROPERTY_KEY
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(key).textAttributes(EditorConfigSyntaxHighlighter.PROPERTY_KEY).create()
   }
 
   override fun visitRootDeclarationValue(value: EditorConfigRootDeclarationValue) {
-    holder.createInfoAnnotation(value, null).textAttributes = EditorConfigSyntaxHighlighter.PROPERTY_VALUE
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(value).textAttributes(EditorConfigSyntaxHighlighter.PROPERTY_VALUE).create()
   }
 }
