@@ -115,14 +115,17 @@ public final class XmlLanguageInjector implements MultiHostInjector {
 
           xmlTag.acceptChildren(new PsiElementVisitor() {
             @Override
-            public void visitElement(@NotNull final PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
               if (element instanceof XmlText) {
                 if (!(element instanceof PsiLanguageInjectionHost) || element.getTextLength() == 0) return;
-                final List<TextRange> list = injection.getInjectedArea(element);
-                final InjectedLanguage l =
-                  InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
-                for (TextRange textRange : list) {
-                  result.add(Trinity.create((PsiLanguageInjectionHost)element, l, textRange));
+
+                if (!injection.isIgnoredPlace(element)) {
+                  List<TextRange> list = injection.getInjectedArea(element);
+                  InjectedLanguage l =
+                    InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
+                  for (TextRange textRange : list) {
+                    result.add(Trinity.create((PsiLanguageInjectionHost)element, l, textRange));
+                  }
                 }
               }
               else if (element instanceof XmlTag) {

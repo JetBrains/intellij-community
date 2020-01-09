@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static java.util.Collections.emptyList;
+
 /**
  * @author cdr
  */
@@ -337,13 +339,13 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
     @NotNull
     List<Pair<PsiLanguageInjectionHost, Language>> processInjectionWithContext(BaseInjection injection, boolean settingsAvailable) {
       Language language = InjectorUtils.getLanguage(injection);
-      if (language == null) return Collections.emptyList();
+      if (language == null) return emptyList();
 
       boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
       Ref<Boolean> unparsableRef = Ref.create(myUnparsable);
       List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
-      if (objects.isEmpty()) return Collections.emptyList();
+      if (objects.isEmpty()) return emptyList();
       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<>();
       int len = objects.size();
       for (int i = 0; i < len; i++) {
@@ -351,7 +353,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         Object o = objects.get(i);
         if (o instanceof String) {
           curPrefix = (String)o;
-          if (i == len - 1) return Collections.emptyList(); // IDEADEV-26751
+          if (i == len - 1) return emptyList(); // IDEADEV-26751
           o = objects.get(++i);
         }
         String curSuffix = null;
@@ -371,6 +373,10 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
         else {
           if (curHost instanceof PsiLiteralExpression) {
+            if (injection.isIgnoredPlace(curHost)) {
+              return emptyList();
+            }
+
             List<TextRange> textBlockInjectedArea = getTextBlockInjectedArea(curHost);
             List<TextRange> injectedArea = (textBlockInjectedArea == null) ? injection.getInjectedArea(curHost) : textBlockInjectedArea;
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
@@ -392,7 +398,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
       }
       if (result.isEmpty()) {
-        return Collections.emptyList();
+        return emptyList();
       }
       List<Pair<PsiLanguageInjectionHost, Language>> res = new ArrayList<>();
       if (separateFiles) {

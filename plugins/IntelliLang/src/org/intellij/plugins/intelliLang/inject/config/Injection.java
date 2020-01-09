@@ -47,6 +47,12 @@ public interface Injection {
   List<TextRange> getInjectedArea(PsiElement element);
 
   /**
+   * Determines whether injection to host or concatenation must be ignored. If at least one place in concatenation is ignored then
+   * the entire concatenation must be ignored and language must not be injected.
+   */
+  boolean isIgnoredPlace(PsiElement element);
+
+  /**
    * Determines how the injection would like being displayed (e.g. attributes
    * return a qualified TAG-NAME/@ATT-NAME combination name instead of just
    * the plain name.
