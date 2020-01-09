@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="jackson-module-kotlin" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1" />
+    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.module:jackson-module-kotlin:2.10.2" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.10.1/jackson-module-kotlin-2.10.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.10.2/jackson-module-kotlin-2.10.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.10.1/jackson-module-kotlin-2.10.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.10.2/jackson-module-kotlin-2.10.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
