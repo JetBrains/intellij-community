@@ -431,11 +431,10 @@ class Intf {
     assert gotoFile('samplecontrol', false) == [enumControl, control]
   }
 
-  @Bombed(user = "Mikhail.Sokolov", year=2020, month = Calendar.FEBRUARY, day = 1, description = "Should be handled by SE UI, not Contributor")
   void "test show longer suffix matches from jdk and shorter from project"() {
     def seq = addEmptyFile("langc/Sequence.java")
     def charSeq = myFixture.findClass(CharSequence.name)
-    assert gotoFile('langcsequence', false) == [charSeq.containingFile, seq]
+    assert gotoFile('langcsequence', true) == [charSeq.containingFile, seq]
   }
 
   void "test show no matches from jdk when there are in project"() {
