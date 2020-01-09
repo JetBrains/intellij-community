@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -116,14 +116,14 @@ public class TreeTest implements Disposable {
   public static void test(int minutes, Supplier<TreeNode> supplier, Consumer<TreeTest> consumer) {
     new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, null));
     new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, null));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, new Invoker.Background(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, new Invoker.Background(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, new Invoker.Background(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, new Invoker.Background(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, Invoker.forEventDispatchThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, Invoker.forEventDispatchThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, Invoker.forEventDispatchThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, Invoker.forEventDispatchThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, Invoker.forBackgroundThreadWithReadAction(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, Invoker.forBackgroundThreadWithReadAction(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, Invoker.forBackgroundThreadWithReadAction(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, Invoker.forBackgroundThreadWithReadAction(parent)));
   }
 
   private static TreeModel model(Supplier<TreeNode> supplier, long delay, boolean showLoadingNode, Invoker invoker) {
