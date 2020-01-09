@@ -129,7 +129,7 @@ class BuildOptions {
    * <p>By default 'development mode' is enabled if build is not running under continuous integration server (TeamCity).</p>
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
-                                                                    System.getProperty("teamcity.buildType.id") == null)
+                                                                    System.getenv("TEAMCITY_VERSION") == null)
 
 
   /**

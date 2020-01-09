@@ -481,7 +481,7 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private static boolean isUnderTeamCity() {
-    System.getProperty("teamcity.buildType.id") != null
+    System.getenv("TEAMCITY_VERSION") != null
   }
 
   static boolean dependenciesInstalled
