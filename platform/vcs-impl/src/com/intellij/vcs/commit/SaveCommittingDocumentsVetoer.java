@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit;
 
 import com.intellij.openapi.editor.Document;
@@ -8,13 +8,19 @@ import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static com.intellij.openapi.ui.Messages.showOkCancelDialog;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.vcs.VcsBundle.message;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import static java.util.Collections.singletonList;
 
 final class SaveCommittingDocumentsVetoer extends FileDocumentSynchronizationVetoer implements FileDocumentManagerListener {
 
@@ -24,7 +30,8 @@ final class SaveCommittingDocumentsVetoer extends FileDocumentSynchronizationVet
   public void beforeAllDocumentsSaving() {
     Map<Document, Project> documentsToWarn = getDocumentsBeingCommitted();
     if (!documentsToWarn.isEmpty()) {
-      boolean allowSave = showAllowSaveDialog(documentsToWarn);
+      Project project = documentsToWarn.values().iterator().next();
+      boolean allowSave = confirmSave(project, documentsToWarn.keySet());
       updateSaveability(documentsToWarn, allowSave);
     }
   }
@@ -36,7 +43,7 @@ final class SaveCommittingDocumentsVetoer extends FileDocumentSynchronizationVet
       return false;
     }
     if (beingCommitted instanceof Project) {
-      return showAllowSaveDialog(Collections.singletonMap(document, (Project)beingCommitted));
+      return confirmSave((Project)beingCommitted, singletonList(document));
     }
     return true;
   }
@@ -61,19 +68,17 @@ final class SaveCommittingDocumentsVetoer extends FileDocumentSynchronizationVet
     }
   }
 
-  private static boolean showAllowSaveDialog(Map<Document, Project> documentsToWarn) {
-    StringBuilder messageBuilder = new StringBuilder("The following " + (documentsToWarn.size() == 1 ? "file is" : "files are") +
-                                                     " currently being committed to the VCS. " +
-                                                     "Saving now could cause inconsistent data to be committed.\n");
-    for (Document document : documentsToWarn.keySet()) {
-      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      messageBuilder.append(FileUtil.toSystemDependentName(file.getPath())).append("\n");
-    }
-    messageBuilder.append("Save the ").append(documentsToWarn.size() == 1 ? "file" : "files").append(" now?");
+  private static boolean confirmSave(@NotNull Project project, @NotNull Collection<Document> documents) {
+    Collection<VirtualFile> files = mapNotNull(documents, it -> FileDocumentManager.getInstance().getFile(it));
+    String text = message("save.committing.files.confirmation.text", documents.size(), join(files, it -> it.getPresentableUrl(), "\n"));
 
-    Project project = documentsToWarn.values().iterator().next();
-    int rc = Messages.showOkCancelDialog(project, messageBuilder.toString(), "Save Files During Commit", "Save Now", "Postpone Save",
-                                         Messages.getQuestionIcon());
-    return rc == Messages.OK;
+    return Messages.OK == showOkCancelDialog(
+      project,
+      text,
+      message("save.committing.files.confirmation.title"),
+      message("save.committing.files.confirmation.ok"),
+      message("save.committing.files.confirmation.cancel"),
+      getQuestionIcon()
+    );
   }
 }
