@@ -26,6 +26,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,29 +163,30 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   private static ExtractionUnit extractHeadCommonStatement(@NotNull PsiStatement thenStmt,
                                                            @NotNull PsiStatement elseStmt,
                                                            @NotNull List<PsiLocalVariable> conditionVariables,
-                                                           LocalEquivalenceChecker equivalence) {
-    boolean equal = thenStmt instanceof PsiDeclarationStatement
-                    ? equivalence.topLevelVarsAreEqualNotConsideringInitializers(thenStmt, elseStmt)
-                    : equivalence.statementsAreEquivalent(thenStmt, elseStmt);
-    if (!equal) return null;
-    final boolean statementMayChangeSemantics;
-    final boolean equivalent;
-    final boolean mayInfluenceCondition;
-    if (!(thenStmt instanceof PsiDeclarationStatement)) {
-      statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenStmt, e -> false);
-      equivalent = true;
-      mayInfluenceCondition = mayInfluenceCondition(thenStmt, conditionVariables);
+                                                           @NotNull LocalEquivalenceChecker equivalence) {
+    if (thenStmt instanceof PsiDeclarationStatement) {
+      return extractDeclarationUnit(thenStmt, elseStmt, conditionVariables, equivalence);
     }
-    else {
-      PsiLocalVariable thenVariable = extractVariable(thenStmt);
-      PsiLocalVariable elseVariable = extractVariable(elseStmt);
-      if (thenVariable == null || elseVariable == null) return null;
-      PsiExpression thenInitializer = thenVariable.getInitializer();
-      if (thenInitializer == null) return null;
-      statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenInitializer, e -> false);
-      mayInfluenceCondition = mayInfluenceCondition(thenInitializer, conditionVariables);
-      equivalent = equivalence.expressionsAreEquivalent(thenInitializer, elseVariable.getInitializer());
-    }
+    if (!equivalence.statementsAreEquivalent(thenStmt, elseStmt)) return null;
+    boolean statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenStmt, e -> false);
+    boolean mayInfluenceCondition = mayInfluenceCondition(thenStmt, conditionVariables);
+    return new ExtractionUnit(thenStmt, elseStmt, statementMayChangeSemantics, mayInfluenceCondition, true);
+  }
+
+  @Nullable
+  private static ExtractionUnit extractDeclarationUnit(@NotNull PsiStatement thenStmt,
+                                                       @NotNull PsiStatement elseStmt,
+                                                       @NotNull List<PsiLocalVariable> conditionVariables,
+                                                       @NotNull LocalEquivalenceChecker equivalence) {
+    if (!equivalence.topLevelVarsAreEqualNotConsideringInitializers(thenStmt, elseStmt)) return null;
+    PsiLocalVariable thenVariable = extractVariable(thenStmt);
+    PsiLocalVariable elseVariable = extractVariable(elseStmt);
+    if (thenVariable == null || elseVariable == null) return null;
+    PsiExpression thenInitializer = thenVariable.getInitializer();
+    if (thenInitializer == null) return null;
+    boolean statementMayChangeSemantics = SideEffectChecker.mayHaveSideEffects(thenInitializer, e -> false);
+    boolean mayInfluenceCondition = mayInfluenceCondition(thenInitializer, conditionVariables);
+    boolean equivalent = equivalence.expressionsAreEquivalent(thenInitializer, elseVariable.getInitializer());
     return new ExtractionUnit(thenStmt, elseStmt, statementMayChangeSemantics, mayInfluenceCondition, equivalent);
   }
 
@@ -304,27 +306,36 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       variable.setName(finalName);
     }
 
-    private static boolean tryCleanUpHead(PsiIfStatement ifStatement,
-                                          List<? extends ExtractionUnit> units, PsiElementFactory factory,
-                                          Map<PsiLocalVariable, String> substitutionTable, CommentTracker ct) {
+    /**
+     * Computes substitutions for reference expressions (for all refs, even in tail).
+     * They can't be replaced during collection because resolve will be affected in this case.
+     */
+
+    // TODO clarify what exactly happens here
+    private static boolean tryCleanUpHead(@NotNull PsiIfStatement ifStatement,
+                                          @NotNull List<? extends ExtractionUnit> units,
+                                          @NotNull PsiElementFactory factory,
+                                          @NotNull Map<PsiLocalVariable, String> substitutionTable,
+                                          @NotNull CommentTracker ct) {
       PsiElement parent = ifStatement.getParent();
+      // TODO why I am sure here, that parent == CodeBlock? (and not another if?)
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if(elseBranch == null) return false;
+      // variables to rename should be prepared and only after that renamed at once to avoid conflicts with names
       for (ExtractionUnit unit : units) {
         PsiStatement thenStatement = unit.getThenStatement();
         PsiStatement elseStatement = unit.getElseStatement();
         if (thenStatement instanceof PsiDeclarationStatement) {
-          PsiExpression thenInitializer = extractInitializer(thenStatement);
-          PsiExpression elseInitializer = extractInitializer(elseStatement);
-          PsiVariable thenVariable = extractVariable(thenStatement);
+          PsiLocalVariable thenVariable = extractVariable(thenStatement);
           PsiLocalVariable elseVariable = extractVariable(elseStatement);
-          if(thenVariable == null || elseVariable == null) return false;
+          if (thenVariable == null || elseVariable == null) return false;
           String typeText = thenVariable.getType().getCanonicalText();
           String thenVariableTypeText = thenVariable.getType().getCanonicalText();
           PsiModifierList thenModifierList = thenVariable.getModifierList();
-          String modifiers;
-          modifiers = thenModifierList == null || thenModifierList.getText().isEmpty() ? "" : thenModifierList.getText() + " ";
+          // TODO Maybe this can be simplified?
+          String modifiers = thenModifierList == null || thenModifierList.getText().isEmpty() ? "" : thenModifierList.getText() + " ";
           String thenNameToReplaceInElse = substitutionTable.get(elseVariable);
+          // TODO Looks overcomplicated and seems like thenVariable.getName() not used at all
           String varName = thenNameToReplaceInElse != null ? thenNameToReplaceInElse : thenVariable.getName();
 
           if(thenNameToReplaceInElse != null) {
@@ -336,14 +347,15 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
             }
           }
 
-          if (!unit.hasEquivalentStatements()) {
-
+          if (!unit.isEquivalent()) {
             String variableDeclaration = modifiers + thenVariableTypeText + " " + varName + ";";
             PsiStatement varDeclarationStmt = factory.createStatementFromText(variableDeclaration, parent);
             parent.addBefore(varDeclarationStmt, ifStatement);
 
-            replaceWithDeclarationIfNeeded(ifStatement, factory, thenStatement, thenInitializer, varName, typeText);
-            replaceWithDeclarationIfNeeded(ifStatement, factory, elseStatement, elseInitializer, varName, typeText);
+            PsiExpression thenInitializer = thenVariable.getInitializer();
+            PsiExpression elseInitializer = elseVariable.getInitializer();
+            replaceWithAssignmentIfNeeded(ifStatement, factory, thenStatement, thenInitializer, varName, typeText);
+            replaceWithAssignmentIfNeeded(ifStatement, factory, elseStatement, elseInitializer, varName, typeText);
             continue;
           }
         }
@@ -396,12 +408,12 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       }
     }
 
-    private static void replaceWithDeclarationIfNeeded(PsiIfStatement ifStatement,
-                                                       PsiElementFactory factory,
-                                                       PsiStatement statement,
-                                                       PsiExpression initializer,
-                                                       String varName,
-                                                       String type) {
+    private static void replaceWithAssignmentIfNeeded(PsiIfStatement ifStatement,
+                                                      PsiElementFactory factory,
+                                                      PsiStatement statement,
+                                                      @Nullable PsiExpression initializer,
+                                                      String varName,
+                                                      String type) {
       if (initializer != null) {
         final String initializerText;
         if (initializer instanceof PsiArrayInitializerExpression) {
@@ -413,16 +425,10 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         statement.replace(assignment);
       }
     }
-
-    @Nullable
-    private static PsiExpression extractInitializer(@Nullable PsiStatement statement) {
-      PsiVariable variable = extractVariable(statement);
-      if (variable == null) return null;
-      return variable.getInitializer();
-    }
   }
 
   @Nullable
+  @Contract(pure = true)
   private static PsiLocalVariable extractVariable(@Nullable PsiStatement statement) {
     PsiDeclarationStatement declarationStatement = tryCast(statement, PsiDeclarationStatement.class);
     if (declarationStatement == null) return null;
@@ -431,18 +437,22 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     return tryCast(elements[0], PsiLocalVariable.class);
   }
 
+  /**
+   * Unit of equivalence, represents pair of equivalent statements in if/else branches
+   */
   private static class ExtractionUnit {
     private final boolean myMayChangeSemantics;
     private final boolean myMayInfluenceCondition;
     private final @NotNull PsiStatement myThenStatement;
     private final @NotNull PsiStatement myElseStatement;
-    private final boolean myIsEquivalent;
+    private final boolean myIsEquivalent; // What it means, if it is not equivalent?
 
 
     private ExtractionUnit(@NotNull PsiStatement thenStatement,
                            @NotNull PsiStatement elseStatement,
                            boolean mayChangeSemantics,
-                           boolean mayInfluenceCondition, boolean isEquivalent) {
+                           boolean mayInfluenceCondition,
+                           boolean isEquivalent) {
       myMayChangeSemantics = mayChangeSemantics;
       myThenStatement = thenStatement;
       myElseStatement = elseStatement;
@@ -464,10 +474,17 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       return myElseStatement;
     }
 
-    public boolean hasEquivalentStatements() {
+    /**
+     * Can return false only if it is declaration statement and initializers are not equivalent
+     * @return true if pair of statements in both branches are equivalent in terms of {@link LocalEquivalenceChecker }
+     */
+    public boolean isEquivalent() {
       return myIsEquivalent;
     }
 
+    /**
+     * @return true if this statement may somehow change variables, that are used in condition if put this statement before condition
+     */
     public boolean mayInfluenceCondition() {
       return myMayInfluenceCondition;
     }
@@ -487,6 +504,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
     @NotNull
     private String getFixMessage(boolean mayChangeSemantics) {
+      // TODO localize it!
       String mayChangeSemanticsText = mayChangeSemantics ? " (may change semantics)" : "";
       return InspectionsBundle.message(myBundleFixKey, mayChangeSemanticsText);
     }
@@ -789,6 +807,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       boolean conditionHasSideEffects = SideEffectChecker.mayHaveSideEffects(condition);
       if (!isOnTheFly && conditionHasSideEffects) return null;
       List<PsiLocalVariable> conditionVariables = new ArrayList<>();
+      // TODO clarify, not clear what is it at all
       boolean conditionVariablesCantBeChangedTransitively = StreamEx.ofTree(((PsiElement)condition), el -> StreamEx.of(el.getChildren()))
         .allMatch(element -> {
           if (!(element instanceof PsiReferenceExpression)) {
@@ -881,7 +900,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         for (int i = headCommonParts.size() - 1; i >= 0; i--) {
           ExtractionUnit unit = headCommonParts.get(i);
           PsiStatement thenStatement = unit.getThenStatement();
-          if (!unit.haveSideEffects() || !unit.hasEquivalentStatements()) break;
+          if (!unit.haveSideEffects() || !unit.isEquivalent()) break;
           headCommonParts.remove(i);
           tailCommonParts.add(thenStatement);
         }
@@ -942,7 +961,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
           PsiVariable variable = extractVariable(unit.getThenStatement());
           if (variable != null) {
             extractedVariables.add(variable);
-            if (!unit.hasEquivalentStatements()) {
+            if (!unit.isEquivalent()) {
               notEquivalentVariableDeclarations.add(variable);
             }
           }
@@ -1093,6 +1112,9 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
   }
 
+  /**
+   * Equivalence checker that allows to substitute some variable names with another
+   */
   private static class LocalEquivalenceChecker extends EquivalenceChecker {
     final Set<PsiLocalVariable> myLocalVariables;
     // From else variable to then variable name
