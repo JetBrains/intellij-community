@@ -55,6 +55,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       return ReadAction.compute(() -> {
         AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), true);
         annotationHolder.applyExternalAnnotatorWithContext(file, annotator, annotationResult);
+        annotationHolder.assertAllAnnotationsCreated();
         return ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file);
       });
     }

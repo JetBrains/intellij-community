@@ -50,12 +50,18 @@ class B implements AnnotationBuilder {
     this.severity = severity;
     this.message = message;
     myCurrentElement = currentElement;
+    holder.annotationBuilderCreated(this);
   }
 
-  private static void assertNotSet(Object o, String description) {
+  private void assertNotSet(Object o, String description) {
     if (o != null) {
+      markNotAbandoned(); // it crashed, not abandoned
       throw new IllegalStateException(description + " was set already");
     }
+  }
+
+  private void markNotAbandoned() {
+    created = true;
   }
 
   class FixB implements FixBuilder {
@@ -98,6 +104,7 @@ class B implements AnnotationBuilder {
 
     private void assertLQF() {
       if (!(fix instanceof LocalQuickFix || fix instanceof LocalQuickFixAsIntentionAdapter)) {
+        markNotAbandoned();
         throw new IllegalArgumentException("Fix " + fix + " must be instance of LocalQuickFix to be registered as batch");
       }
     }
@@ -147,6 +154,7 @@ class B implements AnnotationBuilder {
     assertNotSet(this.range, "range");
     TextRange currentElementRange = myCurrentElement.getTextRange();
     if (!currentElementRange.contains(range)) {
+      markNotAbandoned();
       //LOG.warn("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range, new IllegalArgumentException());
       throw new IllegalArgumentException("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range);
     }
@@ -297,11 +305,41 @@ class B implements AnnotationBuilder {
     }
     myHolder.add(annotation);
     myHolder.queueToUpdateIncrementally();
+    myHolder.annotationCreatedFrom(this);
   }
 
   private static <T extends IntentionAction & LocalQuickFix>
   void registerBatchFix(@NotNull Annotation annotation, @NotNull Object fix, @NotNull TextRange range, HighlightDisplayKey key) {
     //noinspection unchecked
     annotation.registerBatchFix((T)fix, range, key);
+  }
+
+  void assertAnnotationCreated() {
+    if (!created) {
+      throw new IllegalStateException("AnnotationBuilder was created but abandoned. Use 'builder.create()' to create Annotation. "+this);
+    }
+  }
+
+  private static String omitIfEmpty(Object o, String name) {
+    return o == null ? "" : ", " + name + "=" + o;
+  }
+  @Override
+  public String toString() {
+    return "Builder{" +
+           "message='" + message + '\'' +
+           ", myCurrentElement=" + myCurrentElement +
+           ", severity=" + severity +
+           ", range=" + (range == null ? "(implicit)"+myCurrentElement.getTextRange() : range) +
+           omitIfEmpty(afterEndOfLine, "afterEndOfLine") +
+           omitIfEmpty(fileLevel, "fileLevel") +
+           omitIfEmpty(gutterIconRenderer, "gutterIconRenderer") +
+           omitIfEmpty(problemGroup, "problemGroup") +
+           omitIfEmpty(enforcedAttributes, "enforcedAttributes") +
+           omitIfEmpty(textAttributes, "textAttributes") +
+           omitIfEmpty(highlightType, "highlightType") +
+           omitIfEmpty(needsUpdateOnTyping, "needsUpdateOnTyping") +
+           omitIfEmpty(tooltip, "tooltip") +
+           omitIfEmpty(fixes, "fixes") +
+           '}';
   }
 }

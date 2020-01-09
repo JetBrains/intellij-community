@@ -95,6 +95,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     finally {
       myAnnotators.clear();
       myHolder = null;
+      myAnnotationHolder.assertAllAnnotationsCreated();
       myAnnotationHolder = null;
     }
     return true;
