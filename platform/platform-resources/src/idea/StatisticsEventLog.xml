@@ -1,34 +1,18 @@
 <idea-plugin>
   <actions>
-    <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true" text="Feature Usages Statistics">
-      <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction"
-              text="Send Feature Usage Event Log"
-              description="Sends event log files to qa server"/>
-      <action internal="true" id="CleanupEventLogStatistics" class="com.intellij.internal.statistic.actions.CleanupEventLogAction"
-              text="Clean Up Event Log"
-              description="Removes all not send event log files"/>
-      <action internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.actions.OpenEventLogFileAction"
-              text="Open Event Log in Editor"
-              description="Opens active event log file in IDE"/>
+    <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true">
+      <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction"/>
+      <action internal="true" id="CleanupEventLogStatistics" class="com.intellij.internal.statistic.actions.CleanupEventLogAction"/>
+      <action internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.actions.OpenEventLogFileAction"/>
       <action internal="true" id="AddTestGroupToLocalWhitelistAction"
-              class="com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction"
-              text="Add Test Group to Local Whitelist"
-              description="Allows all data from the group. Use it to test new collector locally."/>
+              class="com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction"/>
       <action internal="true" id="RecordStateCollectors"
-              class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"
-              text="Record State Collectors to Event Log"
-              description="Invokes all state collectors and records result to event log"/>
+              class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"/>
       <action internal="true" id="CleanupLocalWhitelistAction"
-              class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"
-              text="Clean Up Local Whitelist"
-              description="Removes all groups from the local whitelist"/>
+              class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"/>
       <action internal="true" id="ShowStatisticsEventLogAction"
-              class="com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction"
-              text="Show Statistics Event Log"
-              description="Opens toolwindow with feature usage statistics event log"/>
-      <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"
-              text="Configure Whitelist"
-              description="Configure whitelist from the custom folder"/>
+              class="com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction"/>
+      <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
   </actions>
