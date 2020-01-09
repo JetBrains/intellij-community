@@ -85,7 +85,7 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   }
 
   @Override
-  protected boolean convertSubstitutionChunk(@NotNull SubstitutionChunk subsChunk, @NotNull StringBuilder fStringText) {
+  protected boolean processSubstitutionChunk(@NotNull SubstitutionChunk subsChunk, @NotNull StringBuilder fStringText) {
     final char conversionChar = subsChunk.getConversionType();
 
     String widthAndPrecision = StringUtil.notNullize(subsChunk.getWidth());
@@ -132,5 +132,10 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     }
     fStringText.append("}");
     return true;
+  }
+
+  @Override
+  protected void processLiteralChunk(@NotNull String chunk, @NotNull StringBuilder fStringText) {
+    fStringText.append(chunk.replace("%%", "%"));
   }
 }
