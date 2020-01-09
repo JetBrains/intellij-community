@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ApplicationLoader")
 package com.intellij.idea
 
@@ -108,12 +108,14 @@ private fun executeInitAppInEdt(args: List<String>,
 
 @ApiStatus.Internal
 fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>,
-                          app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> = pluginFuture.thenApply {
-  runActivity("app component registration", ActivityCategory.MAIN) {
-    app.registerComponents(it, false)
+                          app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
+  return pluginFuture.thenApply {
+    runActivity("app component registration", ActivityCategory.MAIN) {
+      app.registerComponents(it, false)
+    }
+    it
   }
-  it
-}
+                          }
 
 private fun startApp(app: ApplicationImpl,
                      starter: ApplicationStarter,
@@ -252,8 +254,9 @@ private fun startApp(app: ApplicationImpl,
 }
 
 @ApiStatus.Internal
-fun createExecutorToPreloadServices(): Executor =
-  AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+fun createExecutorToPreloadServices(): Executor {
+  return AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+}
 
 @ApiStatus.Internal
 @JvmOverloads
@@ -263,7 +266,7 @@ fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
                     onlyIfAwait: Boolean = false,
                     executor: Executor = createExecutorToPreloadServices()): CompletableFuture<Void?> {
   val syncActivity = StartUpMeasurer.startActivity("${activityPrefix}service sync preloading")
-  val asyncActivity = StartUpMeasurer.startActivity(" ${activityPrefix}service async preloading")
+  val asyncActivity = StartUpMeasurer.startActivity("${activityPrefix}service async preloading")
 
   val result = container.preloadServices(plugins, executor, onlyIfAwait)
 
@@ -283,19 +286,21 @@ fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
 
 @ApiStatus.Internal
 fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
-                                 app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> = registerFuture.thenCompose { plugins ->
-  val future = CompletableFuture.runAsync(Runnable {
-    runActivity("add registry keys") {
-      RegistryKeyBean.addKeysFromPlugins()
+                                 app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
+  return registerFuture.thenCompose { plugins ->
+    val future = CompletableFuture.runAsync(Runnable {
+      runActivity("add registry keys") {
+        RegistryKeyBean.addKeysFromPlugins()
+      }
+    }, AppExecutorUtil.getAppExecutorService())
+
+    // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
+    initConfigurationStore(app, null)
+
+    future.thenApply {
+      @Suppress("UNCHECKED_CAST")
+      plugins as List<IdeaPluginDescriptorImpl>
     }
-  }, AppExecutorUtil.getAppExecutorService())
-
-  // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
-  initConfigurationStore(app, null)
-
-  future.thenApply {
-    @Suppress("UNCHECKED_CAST")
-    plugins as List<IdeaPluginDescriptorImpl>
   }
 }
 
