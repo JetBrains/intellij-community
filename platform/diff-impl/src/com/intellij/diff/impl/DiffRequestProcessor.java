@@ -161,6 +161,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
   }
 
+  protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
+    return toolbarComponents.needTopToolbarBorder;
+  }
+
   //
   // Update
   //
@@ -1220,7 +1224,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       buildActionPopup(toolbarComponents.popupActions);
 
       myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
-      if (toolbarComponents.needTopToolbarBorder) {
+      if (shouldAddToolbarBottomBorder(toolbarComponents)) {
         myToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       }
     }
@@ -1279,7 +1283,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       buildActionPopup(mergeActions(toolbarComponents1.popupActions, toolbarComponents2.popupActions));
 
       myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
-      if (toolbarComponents1.needTopToolbarBorder) {
+      if (shouldAddToolbarBottomBorder(toolbarComponents1)) {
         myToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       }
     }
