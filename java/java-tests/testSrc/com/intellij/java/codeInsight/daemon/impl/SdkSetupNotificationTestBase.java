@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider;
 import com.intellij.codeInsight.intention.IntentionActionWithOptions;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationsImpl;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +29,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 /**
  * @author Pavel.Dolgov
  */
+
+@TestFor(classes = SdkSetupNotificationProvider.class)
 public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -48,11 +52,17 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
       ModuleRootModificationUtil.setSdkInherited(getModule());
     }
 
-    final PsiFile psiFile = myFixture.configureByText(name, text);
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(getProject());
+    return runOnText(myFixture, name, text);
+  }
+
+  public static EditorNotificationPanel runOnText(@NotNull JavaCodeInsightTestFixture fixture,
+                                                  @NotNull String fileName,
+                                                  @NotNull String fileText) {
+    final PsiFile psiFile = fixture.configureByText(fileName, fileText);
+    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(fixture.getProject());
     VirtualFile virtualFile = psiFile.getVirtualFile();
     final FileEditor[] editors = fileEditorManager.openFile(virtualFile, true);
-    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
+    Disposer.register(fixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         fileEditorManager.closeFile(virtualFile);
