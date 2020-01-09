@@ -12,11 +12,12 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 class B implements AnnotationBuilder {
-  private static final Logger LOG = Logger.getInstance(B.class);
   @NotNull
   private final AnnotationHolderImpl myHolder;
   private final String message;
@@ -44,6 +44,7 @@ class B implements AnnotationBuilder {
   private String tooltip;
   private List<FixB> fixes;
   private boolean created;
+  private final Throwable myDebugCreationPlace;
 
   B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, String message, @NotNull PsiElement currentElement) {
     myHolder = holder;
@@ -51,6 +52,7 @@ class B implements AnnotationBuilder {
     this.message = message;
     myCurrentElement = currentElement;
     holder.annotationBuilderCreated(this);
+    myDebugCreationPlace = ApplicationManager.getApplication().isUnitTestMode() ? ThrowableInterner.intern(new Throwable()) : null;
   }
 
   private void assertNotSet(Object o, String description) {
@@ -316,7 +318,8 @@ class B implements AnnotationBuilder {
 
   void assertAnnotationCreated() {
     if (!created) {
-      throw new IllegalStateException("AnnotationBuilder was created but abandoned. Use 'builder.create()' to create Annotation. "+this);
+      throw new IllegalStateException("Abandoned AnnotationBuilder - its 'create()' method was never called: "+this
+                                      +(myDebugCreationPlace == null ? "" : "\nSee cause for the AnnotationBuilder creation stacktrace"), myDebugCreationPlace);
     }
   }
 
