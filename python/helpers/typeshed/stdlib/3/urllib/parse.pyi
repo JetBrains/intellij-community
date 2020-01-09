@@ -1,5 +1,6 @@
 # Stubs for urllib.parse
 from typing import Any, List, Dict, Tuple, AnyStr, Generic, overload, Sequence, Mapping, Union, NamedTuple, Callable, Optional
+import sys
 
 _Str = Union[bytes, str]
 
@@ -11,7 +12,7 @@ non_hierarchical: List[str]
 uses_query: List[str]
 uses_fragment: List[str]
 scheme_chars: str
-MAX_CACHE_SIZE = 0
+MAX_CACHE_SIZE: int
 
 class _ResultMixinBase(Generic[AnyStr]):
     def geturl(self) -> AnyStr: ...
@@ -39,31 +40,33 @@ class _DefragResultBase(Tuple[Any, ...], Generic[AnyStr]):
     fragment: AnyStr
 
 
-_SplitResultBase = NamedTuple(
-    '_SplitResultBase',
-    [
-        ('scheme', str), ('netloc', str), ('path', str), ('query', str), ('fragment', str)
-    ]
-)
-_SplitResultBytesBase = NamedTuple(
-    '_SplitResultBytesBase',
-    [
-        ('scheme', bytes), ('netloc', bytes), ('path', bytes), ('query', bytes), ('fragment', bytes)
-    ]
-)
+class _SplitResultBase(NamedTuple):
+    scheme: str
+    netloc: str
+    path: str
+    query: str
+    fragment: str
+class _SplitResultBytesBase(NamedTuple):
+    scheme: bytes
+    netloc: bytes
+    path: bytes
+    query: bytes
+    fragment: bytes
 
-_ParseResultBase = NamedTuple(
-    '_ParseResultBase',
-    [
-        ('scheme', str), ('netloc', str), ('path', str), ('params', str), ('query', str), ('fragment', str)
-    ]
-)
-_ParseResultBytesBase = NamedTuple(
-    '_ParseResultBytesBase',
-    [
-        ('scheme', bytes), ('netloc', bytes), ('path', bytes), ('params', bytes), ('query', bytes), ('fragment', bytes)
-    ]
-)
+class _ParseResultBase(NamedTuple):
+    scheme: str
+    netloc: str
+    path: str
+    params: str
+    query: str
+    fragment: str
+class _ParseResultBytesBase(NamedTuple):
+    scheme: bytes
+    netloc: bytes
+    path: bytes
+    params: bytes
+    query: bytes
+    fragment: bytes
 
 # Structured result objects for string data
 class DefragResult(_DefragResultBase[str], _ResultMixinStr): ...
@@ -79,11 +82,31 @@ class SplitResultBytes(_SplitResultBytesBase, _NetlocResultMixinBytes): ...
 
 class ParseResultBytes(_ParseResultBytesBase, _NetlocResultMixinBytes): ...
 
+if sys.version_info >= (3, 8):
+    def parse_qs(
+        qs: Optional[AnyStr],
+        keep_blank_values: bool = ...,
+        strict_parsing: bool = ...,
+        encoding: str = ...,
+        errors: str = ...,
+        max_num_fields: Optional[int] = ...,
+    ) -> Dict[AnyStr, List[AnyStr]]: ...
+    def parse_qsl(
+        qs: Optional[AnyStr],
+        keep_blank_values: bool = ...,
+        strict_parsing: bool = ...,
+        encoding: str = ...,
+        errors: str = ...,
+        max_num_fields: Optional[int] = ...,
+    ) -> List[Tuple[AnyStr, AnyStr]]: ...
 
-def parse_qs(qs: Optional[AnyStr], keep_blank_values: bool = ..., strict_parsing: bool = ..., encoding: str = ..., errors: str = ...) -> Dict[AnyStr, List[AnyStr]]: ...
-
-def parse_qsl(qs: Optional[AnyStr], keep_blank_values: bool = ..., strict_parsing: bool = ..., encoding: str = ..., errors: str = ...) -> List[Tuple[AnyStr, AnyStr]]: ...
-
+else:
+    def parse_qs(
+        qs: Optional[AnyStr], keep_blank_values: bool = ..., strict_parsing: bool = ..., encoding: str = ..., errors: str = ...,
+    ) -> Dict[AnyStr, List[AnyStr]]: ...
+    def parse_qsl(
+        qs: Optional[AnyStr], keep_blank_values: bool = ..., strict_parsing: bool = ..., encoding: str = ..., errors: str = ...,
+    ) -> List[Tuple[AnyStr, AnyStr]]: ...
 
 @overload
 def quote(string: str, safe: _Str = ..., encoding: str = ..., errors: str = ...) -> str: ...

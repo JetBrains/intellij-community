@@ -7,13 +7,15 @@
 ## About
 
 Typeshed contains external type annotations for the Python standard library
-and Python builtins, as well as third party packages.
+and Python builtins, as well as third party packages as contributed by
+people external to those projects.
 
 This data can e.g. be used for static analysis, type checking or type inference.
 
 For information on how to use `typeshed`, read below.  Information for
 contributors can be found in [CONTRIBUTING.md](CONTRIBUTING.md).  **Please read
-it before submitting pull requests.**
+it before submitting pull requests; do not report issues with annotations to
+the project the stubs are for, but instead report them here to typeshed.**
 
 Typeshed supports Python versions 2.7 and 3.5 and up.
 

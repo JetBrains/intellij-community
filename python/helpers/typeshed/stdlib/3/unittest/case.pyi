@@ -1,11 +1,13 @@
+import datetime
 import logging
 import sys
 import unittest.result
+import warnings
 from types import TracebackType
 from typing import (
     Any, AnyStr, Callable, Container, ContextManager, Dict, FrozenSet, Generic,
-    Iterable, List, NoReturn, Optional, overload, Pattern, Sequence, Set,
-    Tuple, Type, TypeVar, Union,
+    Iterable, List, Mapping, NoReturn, Optional, overload, Pattern, Sequence,
+    Set, Tuple, Type, TypeVar, Union,
 )
 
 _E = TypeVar('_E', bound=BaseException)
@@ -114,11 +116,16 @@ class TestCase:
                          expected_regex: Union[str, bytes, Pattern[str], Pattern[bytes]],
                          msg: Any = ...) -> _AssertWarnsContext: ...
     def assertLogs(
-        self, logger: Optional[logging.Logger] = ...,
+        self, logger: Optional[Union[str, logging.Logger]] = ...,
         level: Union[int, str, None] = ...
     ) -> _AssertLogsContext: ...
+    @overload
     def assertAlmostEqual(self, first: float, second: float, places: int = ...,
                           msg: Any = ..., delta: float = ...) -> None: ...
+    @overload
+    def assertAlmostEqual(self, first: datetime.datetime, second: datetime.datetime,
+                          places: int = ..., msg: Any = ...,
+                          delta: datetime.timedelta = ...) -> None: ...
     @overload
     def assertNotAlmostEqual(self, first: float, second: float, *,
                              msg: Any = ...) -> None: ...
@@ -128,6 +135,10 @@ class TestCase:
     @overload
     def assertNotAlmostEqual(self, first: float, second: float, *,
                              msg: Any = ..., delta: float = ...) -> None: ...
+    @overload
+    def assertNotAlmostEqual(self, first: datetime.datetime, second: datetime.datetime,
+                             places: int = ..., msg: Any = ...,
+                             delta: datetime.timedelta = ...) -> None: ...
     def assertRegex(self, text: AnyStr, expected_regex: Union[AnyStr, Pattern[AnyStr]],
                     msg: Any = ...) -> None: ...
     def assertNotRegex(self, text: AnyStr, unexpected_regex: Union[AnyStr, Pattern[AnyStr]],
@@ -197,12 +208,18 @@ class TestCase:
     @overload
     def assertRaisesRegexp(self,  # type: ignore
                            exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
-                           callable: Callable[..., Any] = ...,
+                           expected_regex: Union[str, bytes, Pattern[str], Pattern[bytes]],
+                           callable: Callable[..., Any],
                            *args: Any, **kwargs: Any) -> None: ...
     @overload
     def assertRaisesRegexp(self,
                            exception: Union[Type[_E], Tuple[Type[_E], ...]],
+                           expected_regex: Union[str, bytes, Pattern[str], Pattern[bytes]],
                            msg: Any = ...) -> _AssertRaisesContext[_E]: ...
+    def assertDictContainsSubset(self,
+                                 expected: Mapping[Any, Any],
+                                 actual: Mapping[Any, Any],
+                                 msg: object = ...) -> None: ...
 
 class FunctionTestCase(TestCase):
     def __init__(self, testFunc: Callable[[], None],
@@ -217,9 +234,10 @@ class _AssertRaisesContext(Generic[_E]):
                  exc_tb: Optional[TracebackType]) -> bool: ...
 
 class _AssertWarnsContext:
-    warning: Warning
+    warning: warnings.WarningMessage
     filename: str
     lineno: int
+    warnings: List[warnings.WarningMessage]
     def __enter__(self) -> _AssertWarnsContext: ...
     def __exit__(self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException],
                  exc_tb: Optional[TracebackType]) -> None: ...
