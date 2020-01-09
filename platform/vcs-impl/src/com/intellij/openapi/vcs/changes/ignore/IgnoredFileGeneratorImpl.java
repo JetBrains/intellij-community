@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -245,9 +245,10 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     return !askedToManageIgnores && !isManageIgnoreTurnOn(project);
   }
 
-  @State(name = "IgnoredFileRootStore", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+  @State(name = "IgnoredFileRootStore", storages = {
+    @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+  })
   static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
-
     static class State {
       public Set<String> generatedRoots = new HashSet<>();
     }
