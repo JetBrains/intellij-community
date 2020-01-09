@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
@@ -35,8 +35,7 @@ public final class Registry  {
 
   @NotNull
   public static RegistryValue get(@NotNull String key) {
-    final Registry registry = getInstance();
-
+    Registry registry = getInstance();
     RegistryValue value = registry.myValues.get(key);
     if (value == null) {
       value = ConcurrencyUtil.cacheOrGet(registry.myValues, key, new RegistryValue(registry, key, registry.myContributedKeys.get(key)));
@@ -57,7 +56,7 @@ public final class Registry  {
     try {
       return get(key).asBoolean();
     }
-    catch (MissingResourceException ex) {
+    catch (MissingResourceException ignore) {
       return defaultValue;
     }
   }
@@ -75,7 +74,7 @@ public final class Registry  {
     try {
       return get(key).asInteger();
     }
-    catch (MissingResourceException ex) {
+    catch (MissingResourceException ignore) {
       return defaultValue;
     }
   }
