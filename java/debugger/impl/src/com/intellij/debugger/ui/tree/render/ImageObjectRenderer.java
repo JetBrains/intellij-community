@@ -8,13 +8,13 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.ClassLoadingUtils;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.debugger.ImageSerializer;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
+import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 import org.intellij.images.editor.impl.ImageEditorManagerImpl;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,8 +63,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
   @Nullable
   static ImageIcon getIcon(EvaluationContext evaluationContext, Value obj, String methodName) {
     try {
-      Value bytes = getImageBytes(evaluationContext, obj, methodName);
-      byte[] data = DebuggerUtilsImpl.readBytesArray(bytes);
+      byte[] data = getImageBytes(evaluationContext, obj, methodName);
       if (data != null) {
         return new ImageIcon(data);
       }
@@ -74,7 +74,8 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     return null;
   }
 
-  private static Value getImageBytes(EvaluationContext evaluationContext, Value obj, String methodName)
+  @Nullable
+  private static byte[] getImageBytes(EvaluationContext evaluationContext, Value obj, String methodName)
     throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
     EvaluationContext copyContext = evaluationContext.createEvaluationContext(obj);
@@ -83,7 +84,11 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     if (helperClass != null) {
       List<Method> methods = helperClass.methodsByName(methodName);
       if (!methods.isEmpty()) {
-        return process.invokeMethod(copyContext, helperClass, methods.get(0), Collections.singletonList(obj));
+        StringReference bytes =
+          (StringReference)process.invokeMethod(copyContext, helperClass, methods.get(0), Collections.singletonList(obj));
+        if (bytes != null) {
+          return bytes.value().getBytes(StandardCharsets.ISO_8859_1);
+        }
       }
     }
     return null;
