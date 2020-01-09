@@ -1,20 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.internal.statistic.IdeActivity
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
@@ -23,38 +19,12 @@ import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 
 private val LOG = logger<AbstractCommitter>()
 
-/**
- * @see SaveCommittingDocumentsVetoer
- */
-private fun markCommittingDocuments(project: Project, changes: List<Change>): Collection<Document> {
-  val result = mutableListOf<Document>()
-  for (change in changes) {
-    val virtualFile = ChangesUtil.getFilePath(change).virtualFile
-    if (virtualFile != null && !virtualFile.fileType.isBinary) {
-      val doc = FileDocumentManager.getInstance().getDocument(virtualFile)
-      if (doc != null) {
-        doc.putUserData<Any>(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, project)
-        result.add(doc)
-      }
-    }
-  }
-  return result
-}
-
-/**
- * @see SaveCommittingDocumentsVetoer
- */
-private fun unmarkCommittingDocuments(committingDocuments: Collection<Document>) = committingDocuments.forEach { document ->
-  document.putUserData<Any>(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, null)
-}
-
 abstract class AbstractCommitter(
   val project: Project,
   val changes: List<Change>,
   val commitMessage: String,
   val commitContext: CommitContext
 ) {
-  private val committingDocuments = mutableListOf<Document>()
   private val resultHandlers = createLockFreeCopyOnWriteList<CommitResultHandler>()
 
   private val _feedback = mutableSetOf<String>()
@@ -150,14 +120,7 @@ abstract class AbstractCommitter(
   private fun doRunCommit() {
     var canceled = false
     try {
-      runReadAction { markCommittingDocuments() }
-      try {
-        commit()
-      }
-      finally {
-        runReadAction { unmarkCommittingDocuments() }
-      }
-
+      SaveCommittingDocumentsVetoer.run(project, changes) { commit() }
       afterCommit()
     }
     catch (e: ProcessCanceledException) {
@@ -196,19 +159,7 @@ abstract class AbstractCommitter(
     }
   }
 
-  private fun markCommittingDocuments() {
-    committingDocuments.addAll(markCommittingDocuments(project, changes))
-  }
-
-  private fun unmarkCommittingDocuments() {
-    unmarkCommittingDocuments(committingDocuments)
-    committingDocuments.clear()
-  }
-
   companion object {
-    @JvmField
-    val DOCUMENT_BEING_COMMITTED_KEY = Key<Any>("DOCUMENT_BEING_COMMITTED")
-
     @JvmStatic
     fun collectErrors(exceptions: List<VcsException>): List<VcsException> = exceptions.filterNot { it.isWarning }
 

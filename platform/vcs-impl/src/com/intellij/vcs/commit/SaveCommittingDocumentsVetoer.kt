@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
@@ -9,48 +10,67 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.getQuestionIcon
 import com.intellij.openapi.ui.Messages.showOkCancelDialog
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 
-private val SAVE_DENIED = Any()
+private sealed class SaveState
+private object SaveDenied : SaveState()
+private class ConfirmSave(val project: Project) : SaveState()
 
-private fun getDocumentsBeingCommitted(): Map<Document, Project> {
-  val documentsToWarn = mutableMapOf<Document, Project>()
-  for (unsavedDocument in FileDocumentManager.getInstance().unsavedDocuments) {
-    val data = unsavedDocument.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY)
-    if (data is Project) {
-      documentsToWarn[unsavedDocument] = data
-    }
-  }
-  return documentsToWarn
-}
+private val SAVE_STATE_KEY = Key<SaveState>("Vcs.Commit.SaveState")
 
-private fun updateSaveability(documentsToWarn: Map<Document, Project>, allowSave: Boolean) {
-  val newValue = if (allowSave) null else SAVE_DENIED
-  for (document in documentsToWarn.keys) {
-    val oldData = documentsToWarn[document]
-    //the committing thread could have finished already and file is not being committed anymore
-    (document as UserDataHolderEx).replace(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, oldData, newValue)
-  }
-}
+private fun getSaveState(document: Document): SaveState? = document.getUserData(SAVE_STATE_KEY)
+
+private fun setSaveState(documents: Collection<Document>, state: SaveState?) =
+  documents.forEach { it.putUserData(SAVE_STATE_KEY, state) }
+
+private fun replaceSaveState(documents: Map<Document, SaveState?>, newState: SaveState?) =
+  documents.forEach { (document, oldState) -> (document as UserDataHolderEx).replace(SAVE_STATE_KEY, oldState, newState) }
 
 internal class SaveCommittingDocumentsVetoer : FileDocumentSynchronizationVetoer(), FileDocumentManagerListener {
   override fun beforeAllDocumentsSaving() {
-    val documentsToWarn = getDocumentsBeingCommitted()
-    if (documentsToWarn.isEmpty()) return
+    val confirmSaveDocuments =
+      FileDocumentManager.getInstance().unsavedDocuments
+        .associateBy({ it }, { getSaveState(it) })
+        .filterValues { it is ConfirmSave }
+        .mapValues { it.value as ConfirmSave }
+    if (confirmSaveDocuments.isEmpty()) return
 
-    val project = documentsToWarn.values.first()
-    val allowSave = confirmSave(project, documentsToWarn.keys)
-    updateSaveability(documentsToWarn, allowSave)
+    val project = confirmSaveDocuments.values.first().project
+    val newSaveState = if (confirmSave(project, confirmSaveDocuments.keys)) null else SaveDenied
+    replaceSaveState(confirmSaveDocuments, newSaveState) // use `replace` as commit could already be completed
   }
 
   override fun maySaveDocument(document: Document, isSaveExplicit: Boolean): Boolean =
-    when (val beingCommitted = document.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY)) {
-      SAVE_DENIED -> false
-      is Project -> confirmSave(beingCommitted, listOf(document))
-      else -> true
+    when (val saveState = getSaveState(document)) {
+      SaveDenied -> false
+      is ConfirmSave -> confirmSave(saveState.project, listOf(document))
+      null -> true
     }
+
+  companion object {
+    fun run(project: Project, changes: Collection<Change>, block: () -> Unit) {
+      val confirmSaveState = ConfirmSave(project)
+      val documents = runReadAction { getDocuments(changes).also { setSaveState(it, confirmSaveState) } }
+      try {
+        block()
+      }
+      finally {
+        runReadAction { setSaveState(documents, null) }
+      }
+    }
+  }
 }
+
+private fun getDocuments(changes: Collection<Change>): Collection<Document> =
+  changes
+    .mapNotNull { getFilePath(it).virtualFile }
+    .filterNot { it.fileType.isBinary }
+    .mapNotNull { FileDocumentManager.getInstance().getDocument(it) }
+    .toList()
 
 private fun confirmSave(project: Project, documents: Collection<Document>): Boolean {
   val files = documents.mapNotNull { FileDocumentManager.getInstance().getFile(it) }
