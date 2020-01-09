@@ -2097,12 +2097,11 @@ public class ContainerUtil extends ContainerUtilRt {
   /**
    * @param collection an input collection to process
    * @param mapping a side-effect free function which transforms iterable elements
-   * @return read-only list consisting of the elements from the input collection converted by mapping
+   * @return a list consisting of the elements from the input collection converted by mapping
    */
   @NotNull
   @Contract(pure=true)
   public static <T,V> List<V> map(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
-    if (collection.isEmpty()) return emptyList();
     List<V> list = new ArrayList<>(collection.size());
     for (final T t : collection) {
       list.add(mapping.fun(t));
