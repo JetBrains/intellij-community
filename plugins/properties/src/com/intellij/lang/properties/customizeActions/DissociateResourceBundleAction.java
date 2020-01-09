@@ -45,7 +45,7 @@ public class DissociateResourceBundleAction extends AnAction {
   private static final String MULTIPLE_RB_PRESENTATION_TEXT_TEMPLATE = "Dissociate %s Resource Bundles";
 
   public DissociateResourceBundleAction() {
-    super(Presentation.NULL_COMPUTABLE, Presentation.NULL_COMPUTABLE, AllIcons.FileTypes.Properties);
+    super(Presentation.NULL_STRING, Presentation.NULL_STRING, AllIcons.FileTypes.Properties);
   }
 
   @Override

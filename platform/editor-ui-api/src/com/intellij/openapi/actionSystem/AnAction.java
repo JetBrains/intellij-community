@@ -83,7 +83,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param icon Default icon to appear in toolbars and menus (Note some platform don't have icons in menu).
    */
   public AnAction(Icon icon){
-    this(Presentation.NULL_COMPUTABLE, Presentation.NULL_COMPUTABLE, icon);
+    this(Presentation.NULL_STRING, Presentation.NULL_STRING, icon);
   }
 
   /**
@@ -101,11 +101,13 @@ public abstract class AnAction implements PossiblyDumbAware {
    * Creates a new action with the specified text. Description and icon are
    * set to {@code null}.
    *
-   * @param textComputable Serves as a tooltip when the presentation is a button and the name of the
-   * menu item when the presentation is a menu item. Use it if you need to localize text.
+   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
+   * menu item when the presentation is a menu item.
+   *
+   *  Use it if you need to localize action text.
    */
-  public AnAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> textComputable) {
-    this(textComputable, Presentation.NULL_COMPUTABLE, null);
+  public AnAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> dynamicText) {
+    this(dynamicText, Presentation.NULL_STRING, null);
   }
 
   /**
@@ -126,22 +128,22 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
-   * Constructs a new action with the specified textComputable, descriptionComputable and icon.
+   * Constructs a new action with the specified dynamicText, dynamicDescription and icon.
    *
-   * @param textComputable Serves as a tooltip when the presentation is a button and the name of the
-   *  menu item when the presentation is a menu item. Use it if you need to localize text.
+   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
+   *  menu item when the presentation is a menu item. Use it if you need to localize action text.
    *
-   * @param descriptionComputable Describes current action, this descriptionComputable will appear on
+   * @param dynamicDescription Describes current action, this dynamicDescription will appear on
    *  the status bar when presentation has focus. Use it if you need to localize description.
    *
    * @param icon Action's icon
    */
-  public AnAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> textComputable,
-                  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) Supplier<String> descriptionComputable,
+  public AnAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> dynamicText,
+                  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) Supplier<String> dynamicDescription,
                   @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
-    presentation.setText(textComputable);
-    presentation.setDescription(descriptionComputable);
+    presentation.setText(dynamicText);
+    presentation.setDescription(dynamicDescription);
     presentation.setIcon(icon);
   }
 

@@ -29,6 +29,6 @@ public abstract class CloseTabToolbarAction extends AnAction implements DumbAwar
     Presentation presentation = getTemplatePresentation();
     presentation.setIcon(AllIcons.Actions.Cancel);
     presentation.setText(CommonBundle.getCloseButtonText());
-    presentation.setDescription(Presentation.NULL_COMPUTABLE);
+    presentation.setDescription(Presentation.NULL_STRING);
   }
 }

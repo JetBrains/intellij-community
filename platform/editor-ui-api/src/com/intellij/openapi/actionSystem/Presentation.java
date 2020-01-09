@@ -40,7 +40,7 @@ import java.util.function.Supplier;
  * @see ActionPlaces
  */
 public final class Presentation implements Cloneable {
-  public static final Supplier<String> NULL_COMPUTABLE = () -> null;
+  public static final Supplier<String> NULL_STRING = () -> null;
 
   private SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
@@ -196,7 +196,7 @@ public final class Presentation implements Cloneable {
   }
 
   /**
-   * Sets the text with mnemonic computable. Use it if you need to localize text.
+   * Sets the text with mnemonic supplier. Use it if you need to localize text.
    */
   public void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> text) {
     setText(text, true);
