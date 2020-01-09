@@ -54,8 +54,6 @@
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor" language="Python"/>
-    <!-- We run it before FilePathCompletionContributor (id="filePath") to get help text about full path results in the extended completion -->
-    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PySoftFileReferenceContributor" language="Python" order="before filePath"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"
                               language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"

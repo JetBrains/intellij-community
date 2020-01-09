@@ -23,7 +23,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  *
  * @author vlan
  */
-class PySoftFileReferenceContributor : PsiReferenceContributor() {
+open class PySoftFileReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     val stringLiteral = psiElement(PyStringLiteralExpression::class.java)
     val pattern = psiElement()
@@ -31,8 +31,10 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
              stringLiteral.with(AssignmentMatchingNamePattern),
              stringLiteral.with(KeywordArgumentMatchingNamePattern),
              stringLiteral.with(CallArgumentMatchingParameterNamePattern))
-    registrar.registerReferenceProvider(pattern, PySoftFileReferenceProvider)
+    registrar.registerReferenceProvider(pattern, createSoftFileReferenceProvider())
   }
+
+  open fun createSoftFileReferenceProvider(): PsiReferenceProvider = PySoftFileReferenceProvider
 
   /**
    * Matches string literals used in assignment statements where the assignment target has a name that has something about files or paths.
@@ -155,7 +157,12 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
     override fun isSoft(): Boolean = true
 
     override fun createFileReference(range: TextRange, index: Int, text: String): FileReference? =
-      super.createFileReference(range, index, expandUserHome(text))
+      doCreateFileReference(range, index, expandUserHome(text))
+
+    open fun doCreateFileReference(range: TextRange,
+                                   index: Int,
+                                   expandedText: String?): FileReference? =
+      super.createFileReference(range, index, expandedText)
 
     override fun isAbsolutePathReference(): Boolean =
       super.isAbsolutePathReference() || pathString.startsWith("~")
