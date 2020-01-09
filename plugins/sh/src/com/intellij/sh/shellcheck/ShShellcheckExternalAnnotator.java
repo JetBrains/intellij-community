@@ -8,10 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.ExternalAnnotator;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,16 +130,17 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
               "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
               "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +
           "</html>";
-      Annotation annotation = holder.createAnnotation(severity(result.level), range, message, html);
+      AnnotationBuilder builder = holder.newAnnotation(severity(result.level), message).range(range).tooltip(html);
 
       String formattedMessage = format(message);
       Fix fix = result.fix;
       if (fix != null && !ArrayUtil.isEmpty(fix.replacements)) {
-        annotation.registerFix(new ShQuickFixIntention(formattedMessage, fix, shellcheckResponse.timestamp));
+        builder = builder.withFix(new ShQuickFixIntention(formattedMessage, fix, shellcheckResponse.timestamp));
       }
       String quotedMessage = quote(formattedMessage);
-      annotation.registerFix(new SuppressInspectionIntention(quotedMessage, scCode, startOffset));
-      annotation.registerFix(new ShDisableInspectionIntention(quotedMessage, scCode));
+      builder.withFix(new SuppressInspectionIntention(quotedMessage, scCode, startOffset))
+      .withFix(new ShDisableInspectionIntention(quotedMessage, scCode))
+        .create();
     }
   }
 

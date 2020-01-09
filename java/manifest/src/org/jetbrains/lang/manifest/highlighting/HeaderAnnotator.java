@@ -44,7 +44,7 @@ final class HeaderAnnotator implements Annotator {
       Header header = (Header)psiElement;
       String name = header.getName();
       if (!isValidName(name)) {
-        holder.createAnnotation(HighlightSeverity.ERROR, header.getNameElement().getTextRange(), ManifestBundle.message("header.name.invalid"));
+        holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("header.name.invalid")).range(header.getNameElement()).create();
       }
       else {
         HeaderParser headerParser = HeaderParserRepository.getInstance().getHeaderParser(name);

@@ -4,9 +4,7 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -53,12 +51,18 @@ public class JavaFxAnnotator implements Annotator {
           if (resolve instanceof PsiMember) {
             if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
               final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
-              final Annotation annotation = holder.createErrorAnnotation(element,
-                                                                         symbolPresentation + (resolve instanceof PsiClass ? " should be public" : " should be public or annotated with @FXML"));
+              AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, symbolPresentation +
+                                                                                        (resolve instanceof PsiClass
+                                                                                         ? " should be public"
+                                                                                         : " should be public or annotated with @FXML"));
               if (!(resolve instanceof PsiClass)) {
-                annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve,
-                                                                     ArrayUtilRt.EMPTY_STRING_ARRAY), null, null);
+                AddAnnotationFix fix = new AddAnnotationFix(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve,
+                                                            ArrayUtilRt.EMPTY_STRING_ARRAY);
+                builder = builder.withFix(fix)
+                  .newFix(fix).batch()
+                  .registerFix();
               }
+              builder.create();
             }
           }
         }
@@ -69,7 +73,7 @@ public class JavaFxAnnotator implements Annotator {
       if (!FxmlConstants.FX_BUILT_IN_ATTRIBUTES.contains(attributeName) &&
           !attribute.isNamespaceDeclaration() &&
           JavaFxPsiUtil.isReadOnly(attributeName, attribute.getParent())) {
-        holder.createErrorAnnotation(element.getNavigationElement(), "Property '" + attributeName + "' is read-only");
+        holder.newAnnotation(HighlightSeverity.ERROR, "Property '" + attributeName + "' is read-only").range(element.getNavigationElement()).create();
       }
       if (FxmlConstants.SOURCE.equals(attributeName)) {
         final XmlAttributeValue valueElement = attribute.getValueElement();
@@ -79,10 +83,10 @@ public class JavaFxAnnotator implements Annotator {
             final XmlTag referencedTag = JavaFxBuiltInTagDescriptor.getReferencedTag(xmlTag);
             if (referencedTag != null) {
               if (referencedTag.getTextOffset() > xmlTag.getTextOffset()) {
-                holder.createErrorAnnotation(valueElement.getValueTextRange(), valueElement.getValue() + " not found");
+                holder.newAnnotation(HighlightSeverity.ERROR, valueElement.getValue() + " not found").range(valueElement.getValueTextRange()).create();
               } else if (xmlTag.getParentTag() == referencedTag.getParentTag()) {
-                final Annotation annotation = holder.createErrorAnnotation(valueElement.getValueTextRange(), "Duplicate child added");
-                annotation.registerFix(new JavaFxWrapWithDefineIntention(referencedTag, valueElement.getValue()));
+                holder.newAnnotation(HighlightSeverity.ERROR, "Duplicate child added").range(valueElement.getValueTextRange())
+                .withFix(new JavaFxWrapWithDefineIntention(referencedTag, valueElement.getValue())).create();
               }
             }
           }
@@ -96,9 +100,9 @@ public class JavaFxAnnotator implements Annotator {
           final List<String> langs = JavaFxPsiUtil.parseInjectedLanguages((XmlFile)element.getContainingFile());
           if (langs.isEmpty()) {
             final ASTNode openTag = element.getNode().findChildByType(XmlTokenType.XML_NAME);
-            final Annotation annotation =
-              holder.createErrorAnnotation(openTag != null ? openTag.getPsi() : element, "Page language not specified.");
-            annotation.registerFix(new JavaFxInjectPageLanguageIntention());
+
+              holder.newAnnotation(HighlightSeverity.ERROR, "Page language not specified.").range(openTag != null ? openTag.getPsi() : element)
+            .withFix(new JavaFxInjectPageLanguageIntention()).create();
           }
         }
       }
@@ -118,8 +122,7 @@ public class JavaFxAnnotator implements Annotator {
       }
       if (color != null) {
         final ColorIcon icon = JBUI.scale(new ColorIcon(8, color));
-        final Annotation annotation = holder.createInfoAnnotation(element, null);
-        annotation.setGutterIconRenderer(new ColorIconRenderer(icon, element));
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).gutterIconRenderer(new ColorIconRenderer(icon, element)).create();
       }
     }
     catch (Exception ignored) {
