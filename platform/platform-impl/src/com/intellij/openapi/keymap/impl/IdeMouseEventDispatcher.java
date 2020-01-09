@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -30,8 +31,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.Patches.JDK_BUG_ID_8147994;
 import static java.awt.event.MouseEvent.*;
@@ -67,14 +70,16 @@ public final class IdeMouseEventDispatcher {
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
   // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
   // theirs ids to properly use method blockNextEvents(MouseEvent)
-  private static final List<Integer> SWING_EVENTS_PRIORITY = Arrays.asList(MOUSE_PRESSED,
-                                                                           MOUSE_ENTERED,
-                                                                           MOUSE_EXITED,
-                                                                           MOUSE_MOVED,
-                                                                           MOUSE_DRAGGED,
-                                                                           MOUSE_WHEEL,
-                                                                           MOUSE_RELEASED,
-                                                                           MOUSE_CLICKED);
+  private static final int[] SWING_EVENTS_PRIORITY = new int[]{
+    MOUSE_PRESSED,
+    MOUSE_ENTERED,
+    MOUSE_EXITED,
+    MOUSE_MOVED,
+    MOUSE_DRAGGED,
+    MOUSE_WHEEL,
+    MOUSE_RELEASED,
+    MOUSE_CLICKED
+  };
 
   public IdeMouseEventDispatcher() {
   }
@@ -203,7 +208,7 @@ public final class IdeMouseEventDispatcher {
     if (root != null) {
       BlockState blockState = myRootPaneToBlockedId.get(root);
       if (blockState != null) {
-        if (SWING_EVENTS_PRIORITY.indexOf(blockState.currentEventId) < SWING_EVENTS_PRIORITY.indexOf(e.getID())) {
+        if (ArrayUtil.indexOf(SWING_EVENTS_PRIORITY, blockState.currentEventId) < ArrayUtil.indexOf(SWING_EVENTS_PRIORITY, e.getID())) {
           blockState.currentEventId = e.getID();
           if (blockState.blockMode == IdeEventQueue.BlockMode.COMPLETE) {
             return true;
@@ -211,7 +216,8 @@ public final class IdeMouseEventDispatcher {
           else {
             ignore = true;
           }
-        } else {
+        }
+        else {
           myRootPaneToBlockedId.remove(root);
         }
       }
