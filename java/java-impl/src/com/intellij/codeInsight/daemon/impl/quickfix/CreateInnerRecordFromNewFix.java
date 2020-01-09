@@ -39,7 +39,7 @@ public class CreateInnerRecordFromNewFix extends CreateInnerClassFromNewFix {
   TemplateBuilderImpl createConstructorTemplate(PsiClass aClass, PsiNewExpression newExpression, PsiExpressionList argList) {
     TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
     PsiRecordHeader header = aClass.getRecordHeader();
-    CreateFromUsageUtils.setupRecordComponents(header, templateBuilder, argList, getTargetSubstitutor(newExpression));
+    CreateRecordFromNewFix.setupRecordComponents(header, templateBuilder, argList, getTargetSubstitutor(newExpression));
     return templateBuilder;
   }
 

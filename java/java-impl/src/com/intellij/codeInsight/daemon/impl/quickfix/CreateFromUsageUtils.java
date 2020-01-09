@@ -304,71 +304,8 @@ public class CreateFromUsageUtils {
     }
   }
 
-  static void setupRecordComponents(@Nullable PsiRecordHeader header, @NotNull TemplateBuilder builder,
-                                    @NotNull PsiExpressionList argumentList, @NotNull PsiSubstitutor substitutor)
-    throws IncorrectOperationException {
-    if (header == null) return;
-    PsiExpression[] args = argumentList.getExpressions();
-    final PsiManager psiManager = header.getManager();
-    final Project project = psiManager.getProject();
-
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    GlobalSearchScope resolveScope = header.getResolveScope();
-    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor);
-
-    final PsiClass containingClass = header.getContainingClass();
-    if (containingClass == null) return;
-    class ComponentData {
-      final PsiType myType;
-      final String[] myNames;
-
-      ComponentData(PsiType type, String[] names) {
-        myType = type;
-        myNames = names;
-      }
-
-      @Override
-      public String toString() {
-        return myType.getCanonicalText() + " " + myNames[0];
-      }
-    }
-    List<ComponentData> components = new ArrayList<>();
-    //255 is the maximum number of record components
-    for (int i = 0; i < Math.min(args.length, 255); i++) {
-      PsiExpression exp = args[i];
-
-      PsiType argType = RefactoringUtil.getTypeByExpression(exp);
-      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
-        VariableKind.PARAMETER, null, exp, argType);
-      @NonNls String[] names = suggestedInfo.names;
-
-      if (names.length == 0) {
-        names = new String[]{"c" + i};
-      }
-
-      argType = normalizeType(argType, psiManager, resolveScope);
-      components.add(new ComponentData(argType, names));
-    }
-    PsiRecordHeader newHeader = factory.createRecordHeaderFromText(StringUtil.join(components, ", "), containingClass);
-    PsiRecordHeader replacedHeader = (PsiRecordHeader)header.replace(newHeader);
-    PsiRecordComponent[] recordComponents = replacedHeader.getRecordComponents();
-    assert recordComponents.length == components.size();
-    for (int i = 0; i < recordComponents.length; i++) {
-      PsiRecordComponent component = recordComponents[i];
-      ComponentData data = components.get(i);
-
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, data.myType, TailType.NONE);
-
-      PsiElement context = PsiTreeUtil.getParentOfType(argumentList, PsiClass.class, PsiMethod.class);
-      guesser.setupTypeElement(Objects.requireNonNull(component.getTypeElement()), new ExpectedTypeInfo[]{info}, context, containingClass);
-
-      Expression expression = new ParameterNameExpression(data.myNames);
-      builder.replaceElement(Objects.requireNonNull(component.getNameIdentifier()), expression);
-    }
-  }
-
   @NotNull
-  private static PsiType normalizeType(PsiType argType, PsiManager psiManager, GlobalSearchScope resolveScope) {
+  static PsiType normalizeType(PsiType argType, PsiManager psiManager, GlobalSearchScope resolveScope) {
     if (argType instanceof PsiDisjunctionType) {
       argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
     }
