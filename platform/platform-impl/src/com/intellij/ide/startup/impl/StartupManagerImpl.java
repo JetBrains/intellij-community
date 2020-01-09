@@ -170,7 +170,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
 
       if (!pluginDescriptor.isBundled() && pluginDescriptor.getPluginId() != PluginManagerCore.JAVA_PLUGIN_ID) {
-        LOG.error("Only bundled plugin can define " + extensionPoint.getName());
+        LOG.error("Only bundled plugin can define " + extensionPoint.getName() + ": " + pluginDescriptor);
         return;
       }
 
