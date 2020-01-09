@@ -87,7 +87,7 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
         names = new String[]{"c" + i};
       }
 
-      argType = CreateFromUsageUtils.normalizeType(argType, psiManager, resolveScope);
+      argType = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, resolveScope);
       components.add(new ComponentData(argType, names));
     }
     PsiRecordHeader newHeader = factory.createRecordHeaderFromText(StringUtil.join(components, ", "), containingClass);

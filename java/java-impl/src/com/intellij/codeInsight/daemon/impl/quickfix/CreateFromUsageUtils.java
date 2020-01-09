@@ -284,7 +284,7 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      argType = normalizeType(argType, psiManager, resolveScope);
+      argType = getParameterTypeByArgumentType(argType, psiManager, resolveScope);
       PsiParameter parameter = parameterList.getParameter(i);
       if (parameter == null) {
         PsiParameter param = factory.createParameter(names[0], argType);
@@ -304,8 +304,18 @@ public class CreateFromUsageUtils {
     }
   }
 
+  /**
+   * Get a type suitable for parameter declaration based on given argument type
+   * 
+   * @param argType argument type
+   * @param psiManager psiManager to use
+   * @param resolveScope type resolve scope
+   * @return a type suitable for parameter declaration; java.lang.Object if supplied argument type is null
+   */
   @NotNull
-  static PsiType normalizeType(PsiType argType, PsiManager psiManager, GlobalSearchScope resolveScope) {
+  public static PsiType getParameterTypeByArgumentType(@Nullable PsiType argType,
+                                                       @NotNull PsiManager psiManager, 
+                                                       @NotNull GlobalSearchScope resolveScope) {
     if (argType instanceof PsiDisjunctionType) {
       argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
     }
