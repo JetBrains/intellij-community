@@ -1151,8 +1151,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Override
-    protected Match referenceExpressionsMatch(PsiReferenceExpression first,
-                                              PsiReferenceExpression second) {
+    protected Match referenceExpressionsMatch(PsiReferenceExpression first, PsiReferenceExpression second) {
       PsiElement firstElement = first.resolve();
       PsiElement secondElement = second.resolve();
       if (firstElement instanceof PsiLocalVariable &&
@@ -1164,9 +1163,11 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         if (firstVar.getType().equals(secondVar.getType())) {
           String firstVarName = firstVar.getName();
           String secondVarName = secondVar.getName();
-          return firstVarName.equals(secondVarName) || firstVarName.equals(mySubstitutionTable.get(secondVar))
-                 ? EXACT_MATCH
-                 : EXACT_MISMATCH;
+          String substitutedName = mySubstitutionTable.get(secondVar);
+          if (substitutedName == null) {
+            return firstVarName.equals(secondVarName)  ? EXACT_MATCH : EXACT_MISMATCH;
+          }
+          return firstVarName.equals(substitutedName) ? EXACT_MATCH : EXACT_MISMATCH;
         }
       }
       return super.referenceExpressionsMatch(first, second);
