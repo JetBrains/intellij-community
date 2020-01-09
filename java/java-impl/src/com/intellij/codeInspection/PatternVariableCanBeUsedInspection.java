@@ -101,11 +101,34 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
               }
             }
           }
+          if (isConflictingNameDeclaredInside(identifier, stmt)) return true;
           if (stmt instanceof PsiSwitchLabelStatementBase) break;
         }
         return false;
       }
 
+      private boolean isConflictingNameDeclaredInside(PsiIdentifier identifier, PsiElement statement) {
+        class Visitor extends JavaRecursiveElementWalkingVisitor {
+          boolean hasConflict = false;
+          
+          @Override
+          public void visitClass(final PsiClass aClass) {}
+
+          @Override
+          public void visitVariable(PsiVariable variable) {
+            String name = variable.getName();
+            if (name != null && identifier.textMatches(name)) {
+              hasConflict = true;
+              stopWalking();
+            }
+            super.visitVariable(variable);
+          }
+        }
+        Visitor visitor = new Visitor();
+        statement.accept(visitor);
+        return visitor.hasConflict;
+      }
+      
       private boolean canCompleteNormally(@NotNull PsiElement parent, @Nullable PsiStatement statement) {
         if (statement == null) return true;
         ControlFlow flow;
