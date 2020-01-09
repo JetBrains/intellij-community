@@ -178,6 +178,21 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return 0;
   }
 
+  @Nullable
+  protected String getIntentionActionText() {
+    return null;
+  }
+
+  @NotNull
+  protected PriorityAction.Priority getIntentionActionPriority() {
+    return PriorityAction.Priority.NORMAL;
+  }
+
+  @NotNull
+  protected String getIntentionActionFamilyName() {
+    return "Editor notification";
+  }
+
   private static class ActionHyperlinkLabel extends HyperlinkLabel {
     private final boolean myShowInIntentionMenu;
 
@@ -187,7 +202,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private class MyIntentionAction implements IntentionActionWithOptions, Iconable {
+  private class MyIntentionAction implements IntentionActionWithOptions, Iconable, PriorityAction {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
@@ -224,6 +239,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public String getText() {
+      String textOverride = getIntentionActionText();
+      if (textOverride != null) {
+        return textOverride;
+      }
+
       if (!myOptions.isEmpty()) {
         return myOptions.get(0).getText();
       }
@@ -232,11 +252,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
                                       : StringUtil.shortenTextWithEllipsis(text, 50, 0);
     }
 
+    @NotNull
+    @Override
+    public Priority getPriority() {
+      return getIntentionActionPriority();
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Editor notification";
+      return getIntentionActionFamilyName();
     }
 
     @Override
