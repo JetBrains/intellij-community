@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -59,6 +60,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final ControlFlowFactory myControlFlowFactory;
   private final Map<PsiElement, ControlFlowSubRange> mySubRanges = new THashMap<>();
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
+  private final Map<PsiField, PsiParameter> myImplicitCompactConstructorAssignments;
 
   ControlFlowAnalyzer(@NotNull PsiElement codeFragment,
                       @NotNull ControlFlowPolicy policy,
@@ -80,6 +82,24 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     Project project = codeFragment.getProject();
     myControlFlowFactory = ControlFlowFactory.getInstance(project);
     myConstantEvaluationHelper = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
+    myImplicitCompactConstructorAssignments = getImplicitCompactConstructorAssignmentsMap();
+  }
+
+  private Map<PsiField, PsiParameter> getImplicitCompactConstructorAssignmentsMap() {
+    PsiMethod ctor = ObjectUtils.tryCast(myCodeFragment.getParent(), PsiMethod.class);
+    if (ctor == null || !JavaPsiRecordUtil.isCompactConstructor(ctor)) return Collections.emptyMap();
+    PsiClass containingClass = ctor.getContainingClass();
+    if (containingClass == null) return Collections.emptyMap();
+    PsiParameter[] parameters = ctor.getParameterList().getParameters();
+    PsiRecordComponent[] components = containingClass.getRecordComponents();
+    Map<PsiField, PsiParameter> map = new HashMap<>();
+    for (int i = 0; i < Math.min(components.length, parameters.length); i++) {
+      PsiRecordComponent component = components[i];
+      PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
+      PsiParameter parameter = parameters[i];
+      map.put(field, parameter);
+    }
+    return map;
   }
 
   @NotNull
@@ -103,6 +123,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     return myCurrentFlow;
+  }
+
+  private void generateCompactConstructorAssignments() {
+    myImplicitCompactConstructorAssignments.values().stream().filter(myPolicy::isParameterAccepted).forEach(this::generateReadInstruction);
   }
 
   private static class StatementStack {
@@ -369,6 +393,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     int nextOffset = myCurrentFlow.getSize();
     if (!(block.getParent() instanceof PsiSwitchStatement) && prevOffset == nextOffset) {
       emitEmptyInstruction();
+    }
+    if (block == myCodeFragment) {
+      generateCompactConstructorAssignments();
     }
 
     finishElement(block);
@@ -1370,6 +1397,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     boolean generatedWriteInstruction = false;
     PsiExpression lExpr = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
     if (lExpr instanceof PsiReferenceExpression) {
+      if (!myImplicitCompactConstructorAssignments.isEmpty()) {
+        PsiElement target = ((PsiReferenceExpression)lExpr).resolve();
+        if (target instanceof PsiField) {
+          myImplicitCompactConstructorAssignments.remove(target);
+        }
+      }
       PsiVariable variable = getUsedVariable((PsiReferenceExpression)lExpr);
       if (variable != null) {
         if (myAssignmentTargetsAreElements) {
