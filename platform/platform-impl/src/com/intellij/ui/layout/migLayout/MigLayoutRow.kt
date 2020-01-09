@@ -425,9 +425,9 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
   private val row: MigLayoutRow,
   override val component: T
-) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder, CellBuilderPropertyEx<T> {
+) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
   private var applyIfEnabled = false
-  lateinit var property: GraphProperty<*>
+  var property: GraphProperty<*>? = null
 
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
     row.addCommentRow(component, text, maxLineLength)
@@ -446,13 +446,7 @@ class CellBuilderImpl<T : JComponent> internal constructor(
 
   override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
     builder.componentValidateCallbacks[component.origin] = { callback(ValidationInfoBuilder(component.origin), component) }
-    return this
-  }
-
-  override fun withValidationOnProperty(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
-    withValidationOnApply(callback)
-    withValidationOnInput(callback)
-    builder.customValidationRequestors.putValue(component.origin, property::afterPropagation)
+    property?.let { builder.customValidationRequestors.putValue(component.origin, it::afterPropagation) }
     return this
   }
 
