@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" exported="" name="tcServiceMessages" level="project" />
-    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
     <orderEntry type="library" scope="TEST" name="easymock" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
