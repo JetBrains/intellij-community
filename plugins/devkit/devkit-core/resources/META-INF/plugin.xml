@@ -354,44 +354,42 @@
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
     </group>
 
-    <group id="DevkitNewActions" text="Plugin DevKit" icon="AllIcons.Nodes.Plugin" popup="true"
+    <group id="DevkitNewActions" icon="AllIcons.Nodes.Plugin" popup="true"
            class="com.intellij.ide.actions.NonTrivialActionGroup">
-      <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction"/>
+      <action class="org.jetbrains.idea.devkit.actions.NewActionAction" id="NewAction"/>
       <separator/>
-      <action text="Application Service" id="NewApplicationService"
+      <action id="NewApplicationService"
               class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
-      <action text="Project Service" id="NewProjectService"
+      <action id="NewProjectService"
               class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
-      <action text="Module Service" id="NewModuleService"
+      <action id="NewModuleService"
               class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
       <separator/>
-      <action text="Theme" id="DevKit.NewTheme"
+      <action id="DevKit.NewTheme"
               class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
 
-    <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" text="Generate Externalization"
+    <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction"
             id="GenerateExternalization">
       <add-to-group anchor="last" group-id="GenerateGroup"/>
     </action>
 
-    <group id="Internal.DevKit" internal="true" text="DevKit" popup="true">
+    <group id="Internal.DevKit" internal="true" popup="true">
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction"
-              text="Toggle Expected Highlighting Markup"
               id="ToggleHighlightingMarkup"/>
 
       <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction"
-              text="Shuffle/Scramble/Anonymize/Permute Names"
               id="ShuffleNamesAction"/>
 
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction"
               id="ShowSerializedXml"/>
 
-      <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction" text="Generate DOM Model..."
+      <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction"
               id="GenerateDomModel"/>
 
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" text="Show Help Page by ID"
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction"
               id="ShowHelpPageById"/>
 
       <add-to-group group-id="Internal" anchor="last"/>
@@ -399,24 +397,20 @@
     </group>
     <action id="TestData.Navigate"
             class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
-            text="Navigate to Test Data" use-shortcut-of="GotoRelated">
+            use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
-    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction"
-            text="Dump Highlighting-Markup-Free Data">
+    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
-    <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"
-            text="Analyze Unloadable Plugins">
+    <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction">
       <add-to-group group-id="Internal.DevKit"/>
     </action>
 
-    <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"
-            text="Analyze EP Usage">
+    <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction">
       <add-to-group group-id="Internal.DevKit"/>
     </action>
-    <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction"
-            text="Analyze EP Usage (Do not Follow Safe Types)">
+    <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction">
       <add-to-group group-id="Internal.DevKit"/>
     </action>
 
@@ -427,9 +421,9 @@
 
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">
-      <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" text="Preview Theme" icon="AllIcons.Actions.Execute"/>
-      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" text="Stop Theme Preview" icon="AllIcons.Actions.Suspend"/>
-      <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" text="Edit Editor Color Scheme" icon="AllIcons.Actions.EditScheme"/>
+      <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" icon="AllIcons.Actions.Execute"/>
+      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" icon="AllIcons.Actions.Suspend"/>
+      <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" icon="AllIcons.Actions.EditScheme"/>
     </group>
 
   </actions>
