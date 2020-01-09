@@ -77,7 +77,8 @@ val whiteList = setOf(
   "unittest",
   "urllib",
   "uuid",
-  "werkzeug"
+  "werkzeug",
+  "xml"
 )
 
 println("Cleaning")
