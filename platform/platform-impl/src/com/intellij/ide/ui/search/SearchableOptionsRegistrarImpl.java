@@ -374,15 +374,14 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     return result;
   }
 
-  @Override
   @Nullable
-  public String getInnerPath(SearchableConfigurable configurable, @NonNls String option) {
-    loadHugeFilesIfNecessary();
+  private Set<OptionDescription> getOptionDescriptionsByWords(SearchableConfigurable configurable, Set<String> words) {
     Set<OptionDescription> path = null;
-    final Set<String> words = getProcessedWordsWithoutStemming(option);
+
     for (String word : words) {
       Set<OptionDescription> configs = getAcceptableDescriptions(word);
       if (configs == null) return null;
+
       final Set<OptionDescription> paths = new HashSet<>();
       for (OptionDescription config : configs) {
         if (Comparing.strEqual(config.getConfigurableId(), configurable.getId())) {
@@ -394,27 +393,40 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
       path.retainAll(paths);
     }
-    if (path == null || path.isEmpty()) {
-      return null;
-    }
-    else {
-      OptionDescription result = null;
+    return path;
+  }
+
+  @Override
+  public Set<String> getInnerPaths(SearchableConfigurable configurable, String option) {
+    loadHugeFilesIfNecessary();
+    final Set<String> words = getProcessedWordsWithoutStemming(option);
+    final Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
+
+    HashSet<String> resultSet = new HashSet<>();
+    if (path != null && !path.isEmpty()) {
+      OptionDescription theOnlyResult = null;
       for (OptionDescription description : path) {
         final String hit = description.getHit();
         if (hit != null) {
           boolean theBest = true;
           for (String word : words) {
-            if (!hit.contains(word)) {
+            if (!StringUtil.containsIgnoreCase(hit, word)) {
               theBest = false;
               break;
             }
           }
-          if (theBest) return description.getPath();
+          if (theBest) {
+            resultSet.add(description.getPath());
+          }
         }
-        result = description;
+        theOnlyResult = description;
       }
-      return result.getPath();
+
+      if (resultSet.isEmpty())
+        resultSet.add(theOnlyResult.getPath());
     }
+
+    return resultSet;
   }
 
   @Override
