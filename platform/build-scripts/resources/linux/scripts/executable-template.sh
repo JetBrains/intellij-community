@@ -40,7 +40,7 @@ GREP_OPTIONS=''
 OS_TYPE=$("$UNAME" -s)
 
 # ---------------------------------------------------------------------
-# Ensure IDE_HOME points to the directory where the IDE is installed.
+# Ensure $IDE_HOME points to the directory where the IDE is installed.
 # ---------------------------------------------------------------------
 SCRIPT_LOCATION="$0"
 if [ -x "$READLINK" ]; then
@@ -56,7 +56,7 @@ cd "${OLDPWD}" || exit 2
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory command -v will be used to run the IDE.
-# Try (in order): __product_uc___JDK, __vm_options__.jdk, ./jbr, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr, .../jre64, $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
