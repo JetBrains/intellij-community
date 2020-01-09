@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -38,6 +39,8 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         if (scope == null) return;
         PsiDeclarationStatement declaration = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
         if (declaration == null) return;
+        if (!variable.hasModifierProperty(PsiModifier.FINAL) &&
+            !HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return;
         PsiElement context = declaration;
         PsiElement parent = context.getParent();
         if (parent instanceof PsiCodeBlock) {
