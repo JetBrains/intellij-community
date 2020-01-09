@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
@@ -32,7 +33,7 @@ public class StarAnnotator extends PyAnnotator {
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
     if (!node.isAssignmentTarget() && !allowedUnpacking(node) && !(node.getParent() instanceof PyParameterTypeList)) {
-      getHolder().createErrorAnnotation(node, "Can't use starred expression here");
+      getHolder().newAnnotation(HighlightSeverity.ERROR, "Can't use starred expression here").create();
     }
   }
 

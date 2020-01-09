@@ -12,9 +12,7 @@ import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -294,33 +292,48 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           }
           problemRange = new TextRange(offset, lineEndOffset);
         }
-        final Annotation annotation;
+
         final boolean inInternalMode = ApplicationManager.getApplication().isInternal();
         final String message = "PEP 8: " + (inInternalMode ? problem.myCode + " " : "") + problem.myDescription;
+        HighlightSeverity severity;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {
-          annotation = holder.createErrorAnnotation(problemRange, message);
+          severity = HighlightSeverity.ERROR;
         }
         else if (annotationResult.level == HighlightDisplayLevel.WARNING) {
-          annotation = holder.createWarningAnnotation(problemRange, message);
+          severity = HighlightSeverity.WARNING;
         }
         else {
-          annotation = holder.createWeakWarningAnnotation(problemRange, message);
+          severity = HighlightSeverity.WEAK_WARNING;
         }
+        IntentionAction fix;
+        boolean universal;
         if (problem.myCode.equals("E401")) {
-          annotation.registerUniversalFix(new OptimizeImportsQuickFix(), null, null);
+          fix = new OptimizeImportsQuickFix();
+          universal = true;
         }
         else if (problem.myCode.equals("W391")) {
-          annotation.registerUniversalFix(new RemoveTrailingBlankLinesFix(), null, null);
+          fix = new RemoveTrailingBlankLinesFix();
+          universal = true;
         }
         else if (problem.myCode.equals("E501")) {
-          annotation.registerFix(new PyFillParagraphFix());
+          fix = new PyFillParagraphFix();
+          universal = false;
         }
         else {
-          annotation.registerUniversalFix(new ReformatFix(), null, null);
+          fix = new ReformatFix();
+          universal = true;
         }
-        annotation.registerFix(new IgnoreErrorFix(problem.myCode));
-        annotation.registerFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
-                                                                           () -> "Edit inspection profile setting"));
+        AnnotationBuilder builder = holder.newAnnotation(severity, message).range(problemRange);
+        if (universal) {
+          builder = builder.newFix(fix).universal().registerFix();
+        }
+        else {
+          builder = builder.withFix(fix);
+        }
+        builder
+          .withFix(new IgnoreErrorFix(problem.myCode))
+          .withFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
+                                                               () -> "Edit inspection profile setting")).create();
       }
     }
   }
