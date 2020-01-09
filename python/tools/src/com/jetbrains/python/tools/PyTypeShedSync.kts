@@ -36,6 +36,7 @@ val whiteList = setOf(
   "builtins",
   "collections",
   "concurrent",
+  "contextvars",
   "cPickle",
   "crypt",
   "ctypes",
