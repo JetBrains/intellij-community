@@ -2864,6 +2864,7 @@
   </item>
   <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.PropertyKey'/>
   </item>
   <item name='java.util.ResourceBundle java.lang.String[] getStringArray(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
