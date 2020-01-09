@@ -484,18 +484,23 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val info = layout.getInfo(id) ?: continue
       info.isActive = false
       info.isVisible = false
-      when (info.type) {
-        ToolWindowType.FLOATING -> {
-          entry.floatingDecorator?.dispose()
-        }
-        ToolWindowType.WINDOWED -> {
-          entry.windowedDecorator?.let {
-            Disposer.dispose(it)
+      try {
+        when (info.type) {
+          ToolWindowType.FLOATING -> {
+            entry.floatingDecorator?.dispose()
+          }
+          ToolWindowType.WINDOWED -> {
+            entry.windowedDecorator?.let {
+              Disposer.dispose(it)
+            }
+          }
+          else -> {
+            removeDecorator(info, entry, dirtyMode = true)
           }
         }
-        else -> {
-          removeDecorator(info, entry, dirtyMode = true)
-        }
+      }
+      finally {
+        Disposer.dispose(entry.disposable)
       }
     }
 
@@ -1632,14 +1637,18 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun addWindowedDecorator(entry: ToolWindowEntry, info: WindowInfo) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      return
+    }
+
     val id = entry.id
     val decorator = entry.toolWindow.decoratorComponent!!
-    val windowedDecorator = FrameWrapper(project, title = "$id - ${project.name}")
-    MnemonicHelper.init((windowedDecorator.getFrame() as RootPaneContainer).contentPane)
-    windowedDecorator.component = decorator
+    val windowedDecorator = FrameWrapper(project, title = "$id - ${project.name}", component = decorator)
+    val window = windowedDecorator.getFrame()
+
+    MnemonicHelper.init((window as RootPaneContainer).contentPane)
 
     val shouldBeMaximized = info.isMaximized
-    val window = windowedDecorator.getFrame()
     val bounds = info.floatingBounds
     if ((bounds != null && bounds.width > 0 && (bounds.height > 0) &&
          WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width))) {

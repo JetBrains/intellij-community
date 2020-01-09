@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.ConsoleDependentFilterProvider;
@@ -48,11 +48,11 @@ public final class ConsoleViewUtil {
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
   @NotNull
-  public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
+  public static EditorEx setupConsoleEditor(Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(document);
-    EditorEx editor = (EditorEx) editorFactory.createViewer(document, project, EditorKind.CONSOLE);
+    EditorEx editor = (EditorEx)editorFactory.createViewer(document, project, EditorKind.CONSOLE);
     setupConsoleEditor(editor, foldingOutlineShown, lineMarkerAreaShown);
     return editor;
   }

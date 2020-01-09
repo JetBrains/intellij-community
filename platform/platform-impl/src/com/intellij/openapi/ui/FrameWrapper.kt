@@ -45,9 +45,8 @@ import javax.swing.*
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
                                                   @param:NonNls protected open val dimensionKey: String? = null,
                                                   private val isDialog: Boolean = false,
-                                                  var title: String = "") : Disposable, DataProvider {
-  open var component: JComponent? = null
-
+                                                  var title: String = "",
+                                                  open var component: JComponent? = null) : Disposable, DataProvider {
   open var preferredFocusedComponent: JComponent? = null
   private var images: List<Image>? = null
   private var isCloseOnEsc = false
