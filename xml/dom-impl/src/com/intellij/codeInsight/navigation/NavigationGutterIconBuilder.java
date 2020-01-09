@@ -188,10 +188,20 @@ public class NavigationGutterIconBuilder<T> {
     return doInstall(holder.createAnnotation(element, HighlightSeverity.INFORMATION, null), element.getManager().getProject());
   }
 
+  /**
+   * @deprecated Use {{@link #createGutterIcon(AnnotationHolder, PsiElement)}} instead
+   */
   @Nullable
+  @Deprecated
   public Annotation install(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
     if (!myLazy && myTargets.getValue().isEmpty() || element == null) return null;
     return doInstall(holder.createInfoAnnotation(element, null), element.getProject());
+  }
+
+  public void createGutterIcon(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
+    if (!myLazy && myTargets.getValue().isEmpty() || element == null) return;
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(element).gutterIconRenderer(createGutterIconRenderer(
+      element.getProject())).needsUpdateOnTyping(false).create();
   }
 
   @NotNull

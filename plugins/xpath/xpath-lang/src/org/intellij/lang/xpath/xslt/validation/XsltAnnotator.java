@@ -16,9 +16,9 @@
 package org.intellij.lang.xpath.xslt.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -53,13 +53,13 @@ public class XsltAnnotator implements Annotator {
         XsltPatternValidator.validate(holder, file);
       } else {
         if (file.getText().trim().length() == 0 && file.getExpression() == null) {
-          holder.createErrorAnnotation(file, "Empty XPath expression");
+          holder.newAnnotation(HighlightSeverity.ERROR, "Empty XPath expression").create();
         }
       }
       if (XsltSupport.isXsltAttribute(context) && !XsltSupport.mayBeAVT(context)) {
         final ASTNode node = file.getNode();
         if (node.findChildByType(XPathTokenTypes.LBRACE) != null) {
-          holder.createErrorAnnotation(file, "Attribute Value Template is not allowed here");
+          holder.newAnnotation(HighlightSeverity.ERROR, "Attribute Value Template is not allowed here").create();
         }
       }
     }
@@ -68,9 +68,10 @@ public class XsltAnnotator implements Annotator {
   public void visitXPathToken(XPathToken token, AnnotationHolder holder) {
     if (XPathTokenTypes.REL_OPS.contains(token.getTokenType())) {
       if (token.textContains('<')) {
-        final Annotation ann = holder.createErrorAnnotation(token, "'<' must be escaped as '&lt;' in XSLT documents");
-        ann.registerFix(new ConvertToEntityFix(token));
-        ann.registerFix(new FlipOperandsFix(token));
+        holder.newAnnotation(HighlightSeverity.ERROR, "'<' must be escaped as '&lt;' in XSLT documents")
+        .withFix(new ConvertToEntityFix(token))
+        .withFix(new FlipOperandsFix(token))
+        .create();
       }
     }
   }

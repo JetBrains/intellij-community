@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public class XmlWrongClosingTagNameInspection implements Annotator {
-
   @Override
   public void annotate(@NotNull final PsiElement psiElement, @NotNull final AnnotationHolder holder) {
     if (psiElement instanceof XmlToken) {
@@ -76,9 +75,9 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
   }
 
   private static void registerProblemStart(@NotNull final AnnotationHolder holder,
-                                      @NotNull final XmlTag tag,
-                                      @NotNull final XmlToken start,
-                                      @NotNull final XmlToken end) {
+                                           @NotNull final XmlTag tag,
+                                           @NotNull final XmlToken start,
+                                           @NotNull final XmlToken end) {
     PsiElement context = tag.getContainingFile().getContext();
     if (context != null) {
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
@@ -97,7 +96,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
     holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorBundle.message("tag.has.wrong.closing.tag.name"))
-      .range(start.getTextRange())
+      .range(start)
       .withFix(renameEndAction)
       .withFix(renameStartAction)
       .create();
@@ -124,7 +123,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
     holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorBundle.message("wrong.closing.tag.name"))
-      .range(end.getTextRange())
+      .range(end)
       .withFix(new RemoveExtraClosingTagIntentionAction())
       .withFix(renameEndAction)
       .withFix(renameStartAction)
