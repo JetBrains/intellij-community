@@ -19,7 +19,6 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
-import org.gradle.internal.impldep.org.eclipse.jgit.annotations.NonNull;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +103,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         }, xml.getFirstChild());
       }
 
-      private void append(@NotNull Project project, @NonNull PsiFile fileToWrite, @NonNls String text) {
+      private void append(@NotNull Project project, @NotNull PsiFile fileToWrite, @NonNls String text) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(fileToWrite);
         if (document == null) return;
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
