@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.annotator
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 
@@ -13,8 +14,9 @@ internal class UnresolvedReferenceAnnotatorSink(private val annotationHolder: An
                                highlightType: ProblemHighlightType,
                                message: String,
                                actions: List<IntentionAction>) {
-    val annotation = annotationHolder.createErrorAnnotation(highlightElement, message)
-    annotation.highlightType = highlightType
-    actions.forEach(annotation::registerFix)
+    val builder = annotationHolder.newAnnotation(HighlightSeverity.ERROR, message).range(highlightElement)
+      .highlightType(highlightType)
+    actions.forEach { builder.withFix(it) }
+    builder.create()
   }
 }

@@ -4,16 +4,20 @@ package org.jetbrains.plugins.groovy.annotator
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.annotation.Annotation
+import com.intellij.lang.annotation.AnnotationBuilder
 import com.intellij.openapi.util.TextRange
 
-class AnnotationFixRegistrar(private val annotation: Annotation) : QuickFixActionRegistrar {
+class AnnotationFixRegistrar(private val annotation: AnnotationBuilder) : QuickFixActionRegistrar {
 
   override fun register(action: IntentionAction) {
-    annotation.registerFix(action)
+    annotation.withFix(action)
   }
 
   override fun register(fixRange: TextRange, action: IntentionAction, key: HighlightDisplayKey?) {
-    annotation.registerFix(action, fixRange, key)
+    val fixBuilder = annotation.newFix(action).range(fixRange)
+    if (key != null) {
+      fixBuilder.key(key)
+    }
+    fixBuilder.registerFix()
   }
 }

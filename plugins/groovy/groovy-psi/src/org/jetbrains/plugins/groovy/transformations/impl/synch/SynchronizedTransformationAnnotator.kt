@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.transformations.impl.synch
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
@@ -32,7 +33,7 @@ class SynchronizedTransformationAnnotator : Annotator {
     if (element is GrAnnotation && element.qualifiedName == ANNO_FQN) {
       val method = (element.owner as? GrModifierList)?.parent as? GrMethod ?: return
       if (GrTraitUtil.isMethodAbstract(method)) {
-        holder.createErrorAnnotation(element, "@Synchronized not allowed on abstract method")
+        holder.newAnnotation(HighlightSeverity.ERROR, "@Synchronized not allowed on abstract method").range(element).create()
       }
     }
     else if (element.node.elementType == GroovyTokenTypes.mIDENT) {
@@ -41,13 +42,13 @@ class SynchronizedTransformationAnnotator : Annotator {
       if (!staticField) {
         val hasStaticMethods = getMethodsReferencingLock(field).any { it.isStatic() }
         if (hasStaticMethods) {
-          holder.createErrorAnnotation(element, "Lock field '${field.name}' must be static")
+          holder.newAnnotation(HighlightSeverity.ERROR, "Lock field '${field.name}' must be static").range(element).create()
         }
       }
       else if (field.name == LOCK_NAME) {
         val hasInstanceMethods = getMethodsReferencingLock(field).any { !it.isStatic() }
         if (hasInstanceMethods) {
-          holder.createErrorAnnotation(element, "Lock field '$LOCK_NAME' must not be static")
+          holder.newAnnotation(HighlightSeverity.ERROR, "Lock field '$LOCK_NAME' must not be static").range(element).create()
         }
       }
     }
@@ -57,7 +58,7 @@ class SynchronizedTransformationAnnotator : Annotator {
       val field = reference.resolve() as? GrField
       if (field == null) {
         val range = reference.rangeInElement.shiftRight(element.textRange.startOffset)
-        holder.createErrorAnnotation(range, "Lock field '${element.value}' not found")
+        holder.newAnnotation(HighlightSeverity.ERROR, "Lock field '${element.value}' not found").range(range).create()
       }
     }
   }
