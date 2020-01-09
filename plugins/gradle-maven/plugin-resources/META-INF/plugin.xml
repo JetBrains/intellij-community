@@ -6,6 +6,7 @@
   <depends>org.intellij.groovy</depends>
   <depends>org.jetbrains.idea.maven</depends>
   <depends>org.jetbrains.plugins.gradle</depends>
+  <depends>org.jetbrains.idea.reposearch</depends>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <repositoryProvider implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenRepositoryProvider"/>

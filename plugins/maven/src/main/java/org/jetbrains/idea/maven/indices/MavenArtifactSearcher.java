@@ -6,9 +6,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
+import org.jetbrains.idea.reposearch.DependencySearchService;
+import org.jetbrains.idea.reposearch.SearchParameters;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,9 +23,13 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
       return Collections.emptyList();
     }
     List<MavenRepositoryArtifactInfo> searchResults = new ArrayList<>();
-    DependencySearchService searchService = MavenProjectIndicesManager.getInstance(project).getDependencySearchService();
-    Promise<Void> asyncPromise = searchService.fulltextSearch(pattern, SearchParameters.DEFAULT, mdci -> searchResults.add(mdci));
-    new WaitFor((int)SearchParameters.DEFAULT.getMillisToWait()) {
+    DependencySearchService searchService = DependencySearchService.getInstance(project);
+    Promise<Integer> asyncPromise = searchService.fulltextSearch(pattern, new SearchParameters(false, false), mdci -> {
+      if (mdci instanceof MavenRepositoryArtifactInfo) {
+        searchResults.add((MavenRepositoryArtifactInfo)mdci);
+      }
+    });
+    new WaitFor(1000) {
       @Override
       protected boolean condition() {
         return asyncPromise.getState() != Promise.State.PENDING;

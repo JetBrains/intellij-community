@@ -2,29 +2,23 @@
 package org.jetbrains.idea.maven.onlinecompletion;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenSearchIndex;
-import org.jetbrains.idea.maven.model.MavenCoordinate;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItemWithClass;
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
-import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.reposearch.DependencySearchProvider;
+import org.jetbrains.idea.reposearch.RepositoryArtifactData;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
 
 
 /**
  * This class is used as a solution to support completion from repositories, which do not support online completion
  */
-public class IndexBasedCompletionProvider implements DependencyCompletionProvider {
+public class IndexBasedCompletionProvider implements DependencySearchProvider {
 
   private final MavenIndex myIndex;
   private final MavenDependencyCompletionItem.Type resultingType;
@@ -36,56 +30,38 @@ public class IndexBasedCompletionProvider implements DependencyCompletionProvide
                     : MavenDependencyCompletionItem.Type.REMOTE;
   }
 
-  @NotNull
+
   @Override
-  public List<MavenDependencyCompletionItem> findGroupCandidates(MavenCoordinate template, SearchParameters parameters) {
-    return ContainerUtil.map(myIndex.getGroupIds(), g -> new MavenDependencyCompletionItem(g, resultingType));
+  public void fulltextSearch(@NotNull String searchString, @NotNull Consumer<RepositoryArtifactData> consumer) {
+    MavenId mavenId = new MavenId(searchString);
+    search(consumer, mavenId);
   }
 
-  @NotNull
   @Override
-  public List<MavenDependencyCompletionItem> findArtifactCandidates(MavenCoordinate template, SearchParameters parameters)
-    throws IOException {
-    return ContainerUtil.map(myIndex.getArtifactIds(template.getGroupId()), a ->
-      new MavenDependencyCompletionItem(template.getGroupId(), a, null, resultingType));
+  public void suggestPrefix(@Nullable String groupId, @Nullable String artifactId, @NotNull Consumer<RepositoryArtifactData> consumer) {
+    search(consumer, new MavenId(groupId, artifactId, null));
   }
 
-  @NotNull
-  @Override
-  public List<MavenDependencyCompletionItem> findAllVersions(MavenCoordinate template, SearchParameters parameters) {
-    return ContainerUtil.map(myIndex.getVersions(template.getGroupId(), template.getArtifactId()), v ->
-      new MavenDependencyCompletionItem(template.getGroupId(), template.getArtifactId(), v, resultingType));
+  private void search(@NotNull Consumer<RepositoryArtifactData> consumer, MavenId mavenId) {
+    for (String groupId : myIndex.getGroupIds()) {
+      if (mavenId.getGroupId() != null && !mavenId.getGroupId().isEmpty() && !StringUtil.startsWith(groupId, mavenId.getGroupId())) {
+        continue;
+      }
+      for (String artifactId : myIndex.getArtifactIds(groupId)) {
+        if (mavenId.getArtifactId() != null &&
+            !mavenId.getArtifactId().isEmpty() &&
+            !StringUtil.startsWith(artifactId, mavenId.getArtifactId())) {
+          continue;
+        }
+        MavenRepositoryArtifactInfo info = new MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId));
+        consumer.accept(info);
+      }
+    }
   }
 
-  @NotNull
   @Override
-  public List<MavenDependencyCompletionItemWithClass> findClassesByString(@NotNull String str, SearchParameters parameters) {
-    if (StringUtil.isEmpty(str)) {
-      return Collections.emptyList();
-    }
-    Query searchQuery;
-    try {
-      searchQuery = createSearchQuery(str);
-    }
-    catch (ParseException e) {
-      MavenLog.LOG.debug(e);
-      return Collections.emptyList();
-    }
-    return ContainerUtil.map(myIndex.search(searchQuery, parameters.getMaxResults()),
-                             r -> new MavenDependencyCompletionItemWithClass(r.getGroupId(), r.getArtifactId(), r.getVersion(),
-                                                                             resultingType,
-                                                                             Collections.singletonList(r.getClassNames())));
-  }
-
-  private static Query createSearchQuery(@NotNull String str) throws ParseException {
-    String[] patterns = str.split("\\.");
-    StringBuilder builder = new StringBuilder();
-    for (String pattern : patterns) {
-      builder.append("c:").append(pattern).append(" OR ");
-    }
-
-    builder.append("fc:").append(str);
-    return new QueryParser("c", new StandardAnalyzer()).parse(builder.toString());
+  public boolean isLocal() {
+    return true;
   }
 
   public MavenSearchIndex getIndex() {

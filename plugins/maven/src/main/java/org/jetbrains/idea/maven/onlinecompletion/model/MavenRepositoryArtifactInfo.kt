@@ -1,57 +1,37 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.onlinecompletion.model;
+package org.jetbrains.idea.maven.onlinecompletion.model
 
+import org.jetbrains.idea.maven.model.MavenCoordinate
+import org.jetbrains.idea.reposearch.RepositoryArtifactData
 
-import org.jetbrains.idea.maven.model.MavenCoordinate;
+class MavenRepositoryArtifactInfo(private val groupId: String,
+                                  private val artifactId: String,
+                                  val items: Array<MavenDependencyCompletionItem>) : MavenCoordinate, RepositoryArtifactData {
 
-public class MavenRepositoryArtifactInfo implements MavenCoordinate {
-  private final String groupId;
-  private final String artifactId;
-  private final MavenDependencyCompletionItem[] items;
-  private final boolean myOnlyLocal;
+  constructor(g: String, a: String, versions: Collection<String>) : this(g, a,
+                                                                    versions.map { MavenDependencyCompletionItem(g, a, it) }.toTypedArray())
 
-  public MavenRepositoryArtifactInfo(String groupId,
-                                     String artifactId,
-                                     MavenDependencyCompletionItem[] items) {
-    this(false, groupId, artifactId, items);
+  override fun getGroupId(): String {
+    return groupId
   }
 
-  public MavenRepositoryArtifactInfo(boolean onlyLocal,
-                                     String groupId,
-                                     String artifactId,
-                                     MavenDependencyCompletionItem[] items) {
-    myOnlyLocal = onlyLocal;
-    this.groupId = groupId;
-    this.artifactId = artifactId;
-    this.items = items;
-
+  override fun getArtifactId(): String {
+    return artifactId
   }
 
-  @Override
-  public String getGroupId() {
-    return groupId;
-  }
-
-  @Override
-  public String getArtifactId() {
-    return artifactId;
-  }
-
-
-  @Override
-  public String getVersion() {
-    if (items.length < 1) {
-      return null;
+  override fun getVersion(): String? {
+    return if (items.size < 1) {
+      null
     }
-    return items[0].getVersion();
+    else items[0].version!!
   }
 
-  public MavenDependencyCompletionItem[] getItems() {
-    return items;
+  override fun getKey(): String {
+    return getGroupId() + ":" + getArtifactId()
   }
 
-  @Override
-  public String toString() {
-    return "maven(" + groupId + ':' + artifactId + ":" + getVersion() + " " + items.length + " total)";
+  override fun toString(): String {
+    return "maven(" + groupId + ':' + artifactId + ":" + version + " " + items.size + " total)"
   }
+
 }

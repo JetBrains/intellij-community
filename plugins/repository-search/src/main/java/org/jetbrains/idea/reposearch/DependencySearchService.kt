@@ -5,15 +5,18 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
+import org.jetbrains.concurrency.resolvedPromise
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.function.BiConsumer
+import java.util.function.Consumer
 
 typealias ResultConsumer = (RepositoryArtifactData) -> Unit
 
@@ -23,10 +26,25 @@ class DependencySearchService(private val myProject: Project) {
   private val remoteProviders: MutableList<DependencySearchProvider> = ArrayList()
   private val localProviders: MutableList<DependencySearchProvider> = ArrayList()
 
-  fun updateProviders() {
-    remoteProviders.clear()
+
+  init {
+    DependencySearchProvidersFactory.EXTENSION_POINT_NAME.addExtensionPointListener(
+      object : ExtensionPointListener<DependencySearchProvidersFactory> {
+        override fun extensionAdded(extension: DependencySearchProvidersFactory,
+                                    pluginDescriptor: PluginDescriptor) {
+          updateProviders()
+        }
+
+        override fun extensionRemoved(extension: DependencySearchProvidersFactory,
+                                      pluginDescriptor: PluginDescriptor) {
+          updateProviders()
+        }
+      }, myProject)
+  }
+
+  fun updateProviders() { remoteProviders.clear()
     localProviders.clear()
-    DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList.forEach { f ->
+    DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList.filter { it.isApplicable(myProject) }.forEach { f ->
       f.getProviders(myProject).forEach { provider ->
         if (provider.isLocal) {
           localProviders.add(provider)
@@ -41,7 +59,7 @@ class DependencySearchService(private val myProject: Project) {
   private fun performSearch(cacheKey: String,
                             parameters: SearchParameters,
                             consumer: ResultConsumer,
-                            searchMethod: (DependencySearchProvider, ResultConsumer) -> Unit): Promise<*> {
+                            searchMethod: (DependencySearchProvider, ResultConsumer) -> Unit): Promise<Int> {
     if (parameters.useCache()) {
       val cachedValue = foundInCache(cacheKey, parameters, consumer)
       if (cachedValue != null) {
@@ -51,6 +69,12 @@ class DependencySearchService(private val myProject: Project) {
 
     val resultSet: MutableSet<RepositoryArtifactData> = ConcurrentHashMap.newKeySet()
     localProviders.forEach { lp -> searchMethod(lp) { resultSet.add(it) } }
+    resultSet.forEach(consumer)
+
+    if (parameters.isLocalOnly || remoteProviders.size == 0) {
+      return resolvedPromise(0)
+    }
+
     val promises: MutableList<Promise<Void>> = ArrayList(remoteProviders.size)
 
     for (provider in remoteProviders) {
@@ -66,36 +90,48 @@ class DependencySearchService(private val myProject: Project) {
         }
       }
     }
-    return promises.all(promises.size, true).onSuccess {
+    return promises.all(resultSet, ignoreErrors = true).then {
       if (!resultSet.isEmpty()) {
         cache[cacheKey] = completedFuture<Collection<RepositoryArtifactData>>(resultSet)
       }
+      return@then 1
     }
   }
+
 
   fun suggestPrefix(groupId: String, artifactId: String,
                     parameters: SearchParameters,
-                    consumer: ResultConsumer): Promise<*> {
+                    consumer: Consumer<RepositoryArtifactData>) = suggestPrefix(groupId, artifactId, parameters) { consumer.accept(it) }
+
+  fun suggestPrefix(groupId: String, artifactId: String,
+                    parameters: SearchParameters,
+                    consumer: ResultConsumer): Promise<Int> {
     val cacheKey = "_$groupId:$artifactId"
     return performSearch(cacheKey, parameters, consumer) { p, c ->
-      p.suggestPrefix(groupId, artifactId, consumer)
+      p.suggestPrefix(groupId, artifactId, c)
     }
   }
 
+
   fun fulltextSearch(searchString: String,
                      parameters: SearchParameters,
-                     consumer: ResultConsumer): Promise<*> {
+                     consumer: Consumer<RepositoryArtifactData>) = fulltextSearch(searchString, parameters) { consumer.accept(it) }
+
+
+  fun fulltextSearch(searchString: String,
+                     parameters: SearchParameters,
+                     consumer: ResultConsumer): Promise<Int> {
     return performSearch(searchString, parameters, consumer) { p, c ->
-      p.fulltextSearch(searchString, consumer)
+      p.fulltextSearch(searchString, c)
     }
   }
 
   private fun foundInCache(searchString: String,
                            parameters: SearchParameters,
-                           consumer: ResultConsumer): Promise<*>? {
+                           consumer: ResultConsumer): Promise<Int>? {
     val future = cache[searchString]
     if (future != null) {
-      val p: AsyncPromise<*> = AsyncPromise<Any>()
+      val p: AsyncPromise<Int> = AsyncPromise()
       future.whenComplete(
         BiConsumer { r: Collection<RepositoryArtifactData>, e: Throwable? ->
           if (e != null) {
@@ -113,6 +149,7 @@ class DependencySearchService(private val myProject: Project) {
 
 
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): DependencySearchService {
       return project.getService(DependencySearchService::class.java)
     }
@@ -133,5 +170,15 @@ class DependencySearchService(private val myProject: Project) {
         }
       }, myProject)
     updateProviders()
+  }
+
+  @TestOnly
+  fun setProviders(local: List<DependencySearchProvider>, remote: List<DependencySearchProvider>) {
+    remoteProviders.clear()
+    localProviders.clear()
+
+    remoteProviders.addAll(remote)
+    localProviders.addAll(local)
+
   }
 }

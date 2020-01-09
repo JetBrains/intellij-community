@@ -81,6 +81,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.core" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
+    <orderEntry type="module" module-name="intellij.repository.search" />
   </component>
   <component name="copyright">
     <Base>

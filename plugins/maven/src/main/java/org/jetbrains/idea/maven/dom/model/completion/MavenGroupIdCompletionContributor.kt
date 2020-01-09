@@ -6,8 +6,9 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.indices.IndicesBundle
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.function.Consumer
 import java.util.function.Predicate
 
@@ -23,12 +24,12 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,
                     parameters: CompletionParameters,
-                    consumer: Consumer<MavenRepositoryArtifactInfo>): Promise<Void> {
+                    consumer: Consumer<RepositoryArtifactData>): Promise<Int> {
     val searchParameters = createSearchParameters(parameters)
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
     return service.suggestPrefix(groupId, artifactId, searchParameters, withPredicate(consumer,
-                                                                           Predicate { searchParameters.isShowAll || artifactId.isEmpty() || artifactId == it.artifactId}))
+                                                                                      Predicate { it is MavenRepositoryArtifactInfo && (artifactId.isEmpty() || artifactId == it.artifactId) }))
   }
 
 

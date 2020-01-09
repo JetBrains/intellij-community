@@ -1,9 +1,20 @@
 package org.jetbrains.idea.reposearch;
 
 public class SearchParameters {
-  private boolean cache;
+
+  private final boolean myCache;
+  private final boolean myLocalOnly;
+
+  public SearchParameters(boolean cache, boolean localOnly) {
+    myCache = cache;
+    myLocalOnly = localOnly;
+  }
 
   public boolean useCache() {
-    return cache;
+    return myCache;
+  }
+
+  public boolean isLocalOnly() {
+    return myLocalOnly;
   }
 }

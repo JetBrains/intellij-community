@@ -1,5 +1,5 @@
 <idea-plugin>
-  <id>org.jetbrains.repository.search</id>
+  <id>org.jetbrains.idea.reposearch</id>
   <name>Jetbrains Repository Search</name>
   <vendor>JetBrains</vendor>
   <description>
@@ -8,7 +8,8 @@
     ]]>
   </description>
   <extensionPoints>
-    <extensionPoint name="providerFactory" interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
+    <extensionPoint name="provider"
+                    interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.jetbrains.idea.reposearch.DependencySearchService"/>
