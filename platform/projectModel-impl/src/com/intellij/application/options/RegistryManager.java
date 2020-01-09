@@ -1,18 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.util.registry;
+package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.MissingResourceException;
 
 @State(name = "Registry", storages = @Storage("ide.general.xml"))
 public final class RegistryManager implements PersistentStateComponent<Element> {
@@ -23,8 +24,17 @@ public final class RegistryManager implements PersistentStateComponent<Element> 
     return ApplicationManager.getApplication().getService(RegistryManager.class);
   }
 
-  public int intValue(@NotNull String key) throws MissingResourceException {
+  public boolean is(@NotNull String key) {
+    return Registry.get(key).asBoolean();
+  }
+
+  public int intValue(@NotNull String key) {
     return Registry.get(key).asInteger();
+  }
+
+  @NotNull
+  public RegistryValue get(@NotNull String key) {
+    return Registry.get(key);
   }
 
   @Override

@@ -172,7 +172,8 @@ public final class Registry  {
   }
 
   @NotNull
-  Map<String, String> getUserProperties() {
+  @ApiStatus.Internal
+  public Map<String, String> getUserProperties() {
     return myUserProperties;
   }
 

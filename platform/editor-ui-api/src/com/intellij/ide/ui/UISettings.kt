@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -11,7 +11,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
@@ -225,10 +224,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.sortLookupElementsLexicographically = value
     }
 
-  @Deprecated("The property name is grammatically incorrect", replaceWith = ReplaceWith("this.hideTabsIfNeeded"))
-  val hideTabsIfNeed: Boolean
-    get() = hideTabsIfNeeded
-
   val hideTabsIfNeeded: Boolean
     get() = state.hideTabsIfNeeded
   var showFileIconInTabs: Boolean
@@ -387,12 +382,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.sortTabsAlphabetically = value
     }
 
-  var openTabsAtTheEnd: Boolean
-    get() = state.openTabsAtTheEnd
-    set(value) {
-      state.openTabsAtTheEnd = value
-    }
-
   var showInplaceComments: Boolean
     get() = state.showInplaceComments
     set(value) {
@@ -404,11 +393,8 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
   init {
     // TODO Remove the registry keys and migration code in 2019.3
-    if (Registry.`is`("tabs.alphabetical", false)) {
+    if (SystemProperties.`is`("tabs.alphabetical")) {
       sortTabsAlphabetically = true
-    }
-    if (Registry.`is`("ide.editor.tabs.open.at.the.end", false)) {
-      openTabsAtTheEnd = true
     }
   }
 

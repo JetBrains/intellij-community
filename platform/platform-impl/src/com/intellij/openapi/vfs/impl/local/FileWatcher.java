@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +9,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
@@ -30,10 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-/**
- * @author max
- */
-public class FileWatcher {
+public final class FileWatcher {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
   public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
@@ -44,7 +41,7 @@ public class FileWatcher {
     }
   };
 
-  static class DirtyPaths {
+  final static class DirtyPaths {
     final Set<String> dirtyPaths = new THashSet<>();
     final Set<String> dirtyPathsRecursive = new THashSet<>();
     final Set<String> dirtyDirectories = new THashSet<>();
@@ -67,8 +64,9 @@ public class FileWatcher {
     }
   }
 
+  @NotNull
   private static ExecutorService executor() {
-    boolean async = Registry.is("vfs.filewatcher.works.in.async.way");
+    boolean async = RegistryManager.getInstance().is("vfs.filewatcher.works.in.async.way");
     return async ? AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) : ConcurrencyUtil.newSameThreadExecutorService();
   }
 
@@ -194,7 +192,7 @@ public class FileWatcher {
     }
   }
 
-  private class MyFileWatcherNotificationSink implements FileWatcherNotificationSink {
+  private final class MyFileWatcherNotificationSink implements FileWatcherNotificationSink {
     private final Object myLock = new Object();
     private DirtyPaths myDirtyPaths = new DirtyPaths();
 

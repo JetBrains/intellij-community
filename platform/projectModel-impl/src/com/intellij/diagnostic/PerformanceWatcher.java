@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +10,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -74,7 +74,7 @@ public final class PerformanceWatcher implements Disposable {
 
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.setNewThreadListener(new Consumer<Thread>() {
-      private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
+      private final int ourReasonableThreadPoolSize = RegistryManager.getInstance().intValue("core.pooled.threads");
 
       @Override
       public void accept(Thread thread) {
@@ -104,7 +104,7 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private static int getMaxAttempts() {
-    return Registry.intValue("performance.watcher.unresponsive.max.attempts.before.log");
+    return RegistryManager.getInstance().intValue("performance.watcher.unresponsive.max.attempts.before.log");
   }
 
   private void watchCodeCache(final MemoryPoolMXBean bean) {
@@ -217,7 +217,7 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private static int getSamplingInterval() {
-    return Registry.intValue("performance.watcher.sampling.interval.ms");
+    return RegistryManager.getInstance().intValue("performance.watcher.sampling.interval.ms");
   }
 
   static int getDumpInterval() {
@@ -225,11 +225,11 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   static int getUnresponsiveInterval() {
-    return Registry.intValue("performance.watcher.unresponsive.interval.ms");
+    return RegistryManager.getInstance().intValue("performance.watcher.unresponsive.interval.ms");
   }
 
   static int getMaxDumpDuration() {
-    return Registry.intValue("performance.watcher.dump.duration.s") * 1000;
+    return RegistryManager.getInstance().intValue("performance.watcher.dump.duration.s") * 1000;
   }
 
   private static String buildName() {
