@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -109,13 +109,13 @@ public class Replacer {
       final CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matcher.testFindMatches(sink, matchOptions);
 
-      final List<ReplacementInfo> resultPtrList = new SmartList<>();
+      final List<ReplacementInfo> replacements = new SmartList<>();
       for (final MatchResult result : sink.getMatches()) {
-        resultPtrList.add(replacer.buildReplacement(result));
+        replacements.add(replacer.buildReplacement(result));
       }
 
       int startOffset = firstElement.getTextRange().getStartOffset();
-      int endOffset = sourceIsFile ? 0 : parent.getTextLength() - lastElement.getTextRange().getEndOffset();
+      int endOffset = sourceIsFile ? 0 : (parent.getTextLength() - lastElement.getTextRange().getEndOffset());
 
       // get nodes from text may contain
       final PsiElement prevSibling = firstElement.getPrevSibling();
@@ -127,14 +127,12 @@ public class Replacer {
       if (nextSibling instanceof PsiWhiteSpace) {
         endOffset -= nextSibling.getTextLength() - 1;
       }
-
-      replacer.replaceAll(resultPtrList);
-
-      String result = parent.getText();
-      result = result.substring(startOffset);
-      result = result.substring(0,result.length() - endOffset);
-
-      return result;
+      replacer.replaceAll(replacements);
+      if (firstElement == lastElement && firstElement instanceof PsiFile) {
+        return firstElement.getText();
+      }
+      final String result = parent.getText();
+      return result.substring(startOffset, result.length() - endOffset);
     }
     catch (RuntimeException e) {
       throw e;

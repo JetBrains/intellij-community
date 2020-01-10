@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +24,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ import java.util.List;
 public abstract class StructuralSearchProfile {
   public static final ExtensionPointName<StructuralSearchProfile> EP_NAME =
     ExtensionPointName.create("com.intellij.structuralsearch.profile");
-  protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
+  @NonNls protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
 
   public abstract void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor);
 
@@ -68,12 +68,15 @@ public abstract class StructuralSearchProfile {
                                         boolean physical) {
     final String strContext = getContext(text, language, contextId);
 
-    final String patternInContext = strContext.replace(PATTERN_PLACEHOLDER, text);
+    final String patternInContext = (context == PatternTreeContext.File) ? text : strContext.replace(PATTERN_PLACEHOLDER, text);
 
-    final String name = "__dummy." + fileType.getDefaultExtension();
+    @NonNls final String name = "__dummy." + fileType.getDefaultExtension();
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(name, language, patternInContext, physical, true);
     if (file == null) {
       return PsiElement.EMPTY_ARRAY;
+    }
+    if (context == PatternTreeContext.File) {
+      return new PsiElement[] {file};
     }
 
     final int offset = strContext.indexOf(PATTERN_PLACEHOLDER);
@@ -108,27 +111,6 @@ public abstract class StructuralSearchProfile {
     }
 
     return result.toArray(PsiElement.EMPTY_ARRAY);
-  }
-
-  /**
-   * @deprecated Use
-   * {@link StructuralSearchProfile#createPatternTree(String, PatternTreeContext, LanguageFileType, Language, String, Project, boolean)}
-   * instead.
-   */
-  @Deprecated
-  @NotNull
-  public PsiElement[] createPatternTree(@NotNull String text,
-                                        @NotNull PatternTreeContext context,
-                                        @NotNull FileType fileType,
-                                        @NotNull Language language,
-                                        @Nullable String contextName,
-                                        @Nullable String extension,
-                                        @NotNull Project project,
-                                        boolean physical) {
-    if (!(fileType instanceof LanguageFileType)) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-    return createPatternTree(text, context, (LanguageFileType)fileType, language, contextName, project, physical);
   }
 
   @NotNull
