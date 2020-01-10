@@ -233,20 +233,11 @@ private fun startApp(app: ApplicationImpl,
       // not good, so force execution out of EDT
       nonEdtExecutor
     )
-    .thenRunAsync(
-      Runnable {
-        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-          starter.main(ArrayUtilRt.toStringArray(args))
-        }
-
-        if (PluginManagerCore.isRunningFromSources()) {
-          NonUrgentExecutor.getInstance().execute {
-            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
-          }
-        }
-      },
-      edtExecutor
-    )
+    .thenRunAsync(Runnable {
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        starter.main(ArrayUtilRt.toStringArray(args))
+      }
+    }, edtExecutor)
     .exceptionally {
       StartupAbortedException.processException(it)
       null
@@ -496,6 +487,12 @@ open class IdeStarter : ApplicationStarter {
     }
 
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+
+    if (PluginManagerCore.isRunningFromSources()) {
+      NonUrgentExecutor.getInstance().execute {
+        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+      }
+    }
   }
 
   private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
