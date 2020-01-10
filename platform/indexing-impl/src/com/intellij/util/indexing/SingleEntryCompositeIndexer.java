@@ -22,7 +22,10 @@ public abstract class SingleEntryCompositeIndexer<V, SubIndexerType, SubIndexerV
   @Override
   protected V computeValue(@NotNull FileContent inputData) {
     SubIndexerType subIndexerType = calculateSubIndexer(inputData);
-    return subIndexerType == null ? null : computeValue(inputData, ObjectUtils.notNull(subIndexerType));
+    if (subIndexerType == null && !InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) {
+      return null;
+    }
+    return computeValue(inputData, ObjectUtils.notNull(subIndexerType));
   }
 
   @Nullable
