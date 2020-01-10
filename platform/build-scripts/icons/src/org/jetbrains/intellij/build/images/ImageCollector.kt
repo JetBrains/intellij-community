@@ -61,8 +61,6 @@ internal class ImagePaths(val id: String,
     val result = Regex("to be removed in (?:IDEA )?([0-9.]+)").find(comment) ?: return@lazy "2020.1"
     val release = result.groupValues[1]
 
-    println(">> X $release")
-
     if (release == "2020")
       "2020.1"
     else
