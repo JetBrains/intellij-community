@@ -49,59 +49,10 @@ public class StatisticsEventLogUtil {
     return s1.equals(s2);
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static List<String> split(@NotNull String s, @NotNull String separator) {
-    if (separator.length() == 0) {
-      return Collections.singletonList(s);
-    }
-    List<String> result = new ArrayList<>();
-    int pos = 0;
-    while (true) {
-      int index = s.indexOf(separator, pos);
-      //int index = indexOf(s, separator, pos);
-      if (index == -1) break;
-      final int nextPos = index + separator.length();
-      String token = s.substring(pos, index);
-      if (token.length() != 0) {
-        result.add(token);
-      }
-      pos = nextPos;
-    }
-    if (pos < s.length()) {
-      result.add(s.substring(pos, s.length()));
-    }
-    return result;
-  }
-
-  public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2) {
-    if (a1.length == 0) {
-      return a2;
-    }
-    if (a2.length == 0) {
-      return a1;
-    }
-
-    final Class<T> class1 = getComponentType(a1);
-    final Class<T> class2 = getComponentType(a2);
-    final Class<T> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
-
-    T[] result = newArray(aClass, a1.length + a2.length);
+  public static String[] mergeArrays(@NotNull String[] a1, @NotNull String[] a2) {
+    String[] result = new String[a1.length + a2.length];
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;
-  }
-
-  @NotNull
-  public static <T> T[] newArray(@NotNull Class<T> type, int length) {
-    //noinspection unchecked
-    return (T[])Array.newInstance(type, length);
-  }
-
-
-  @NotNull
-  public static <T> Class<T> getComponentType(@NotNull T[] collection) {
-    //noinspection unchecked
-    return (Class<T>)collection.getClass().getComponentType();
   }
 }

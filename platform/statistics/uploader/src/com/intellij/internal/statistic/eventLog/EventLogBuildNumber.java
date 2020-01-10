@@ -2,10 +2,10 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
-import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,17 +29,48 @@ public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber
       return null;
     }
 
-    String code = removeProductCode(version);
-    int separator = code.indexOf('.');
+    String versionWithoutCode = removeProductCode(version);
+    int separator = versionWithoutCode.indexOf('.');
     if (separator > 0) {
-      List<String> components = StatisticsEventLogUtil.split(code, ".");
-      TIntArrayList intComponentsList = new TIntArrayList();
-      for (String component : components) {
-        intComponentsList.add(tryParseInt(component));
-      }
-      return new EventLogBuildNumber(intComponentsList.toNativeArray());
+      List<String> components = split(versionWithoutCode);
+      return new EventLogBuildNumber(toIntArray(components));
     }
-    return new EventLogBuildNumber(tryParseInt(code), 0);
+    return new EventLogBuildNumber(tryParseInt(versionWithoutCode), 0);
+  }
+
+  private static int[] toIntArray(List<String> components) {
+    int componentsSize = components.size();
+    int size = componentsSize != 1 ? componentsSize : 2;
+    int[] array = new int[size];
+    for (int i = 0; i < componentsSize; i++) {
+      String component = components.get(i);
+      array[i] = tryParseInt(component);
+    }
+
+    if (componentsSize < size) {
+      array[componentsSize] = 0;
+    }
+    return array;
+  }
+
+  private static List<String> split(String text) {
+    List<String> result = new ArrayList<>();
+    int pos = 0;
+    int index = text.indexOf('.', pos);
+    while (index > 0) {
+      final int nextPos = index + 1;
+      String token = text.substring(pos, index);
+      if (token.length() != 0) {
+        result.add(token);
+      }
+      pos = nextPos;
+      index = text.indexOf('.', pos);
+    }
+
+    if (pos < text.length()) {
+      result.add(text.substring(pos));
+    }
+    return result;
   }
 
   @NotNull
