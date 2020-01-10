@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
@@ -148,15 +147,14 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
-  public void checkSearchPattern(CompiledPattern pattern) {
-  }
+  public void checkSearchPattern(CompiledPattern pattern) {}
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
     final String fileType = StringUtil.toLowerCase(options.getMatchOptions().getFileType().getName());
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
   }
 
-  public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file, PatternContext context) {
+  public boolean shouldShowProblem(PsiErrorElement error) {
     return false;
   }
 
