@@ -43,10 +43,17 @@ public final class ImageEditorImpl implements ImageEditor {
   private boolean disposed;
 
   public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
+    this(project, file, false);
+  }
+
+    /**
+     * @param isEmbedded if it's true the toolbar and the image info are disabled and an image is left-side aligned
+     */
+  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file, boolean isEmbedded) {
     this.project = project;
     this.file = file;
 
-    editorUI = new ImageEditorUI(this);
+    editorUI = new ImageEditorUI(this, isEmbedded);
     Disposer.register(this, editorUI);
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
