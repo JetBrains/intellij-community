@@ -18,6 +18,7 @@
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
   <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
   <depends config-file="uidesigner-devkit.xml" optional="true">com.intellij.uiDesigner</depends>
+  <depends config-file="intellilang-devkit.xml" optional="true">org.intellij.intelliLang</depends>
 
   <resource-bundle>messages.DevKitBundle</resource-bundle>
 
