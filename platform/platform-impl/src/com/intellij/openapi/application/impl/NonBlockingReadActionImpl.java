@@ -10,6 +10,7 @@ import com.intellij.openapi.application.constraints.ExpirableConstrainedExecutio
 import com.intellij.openapi.application.constraints.Expiration;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -228,8 +229,15 @@ public class NonBlockingReadActionImpl<T>
 
     private void preventTooManySubmissions() {
       if (ourUnboundedSubmissionCount.incrementAndGet() % 107 == 0) {
+        String dump = "Thread dump:\n" + ThreadDumper.dumpThreadsToString();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(dump);
+        }
+        Attachment attachment = new Attachment("threadDump.txt", dump);
+        attachment.setIncluded(true);
         LOG.error("Too many non-blocking read actions submitted at once. " +
-                  "Please use coalesceBy, BoundedTaskExecutor or another way of limiting the number of concurrently running threads.");
+                  "Please use coalesceBy, BoundedTaskExecutor or another way of limiting the number of concurrently running threads.",
+                  attachment);
       }
     }
 
