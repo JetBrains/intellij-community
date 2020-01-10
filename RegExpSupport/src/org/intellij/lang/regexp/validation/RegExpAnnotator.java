@@ -272,7 +272,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     final RegExpPattern pattern = group.getPattern();
     if (pattern != null) {
       final RegExpBranch[] branches = pattern.getBranches();
-      if (isEmpty(branches)) {
+      if (isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {
         // catches "()" as well as "(|)"
         myHolder.newAnnotation(HighlightSeverity.WARNING, "Empty group").create();
       }
