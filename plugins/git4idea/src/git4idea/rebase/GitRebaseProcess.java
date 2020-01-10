@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -144,6 +145,7 @@ public class GitRebaseProcess {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
 
       GitRepository latestRepository = null;
+      StepsProgressIndicator indicator = new StepsProgressIndicator(myProgressManager.getProgressIndicator(), repositoriesToRebase.size());
       for (GitRepository repository : repositoriesToRebase) {
         GitRebaseResumeMode customMode = null;
         if (repository == myRebaseSpec.getOngoingRebase()) {
@@ -152,7 +154,8 @@ public class GitRebaseProcess {
 
         Hash startHash = getHead(repository);
 
-        GitRebaseStatus rebaseStatus = rebaseSingleRoot(repository, customMode, getSuccessfulRepositories(statuses));
+        GitRebaseStatus rebaseStatus = rebaseSingleRoot(repository, customMode, getSuccessfulRepositories(statuses), indicator);
+        indicator.nextStep();
         repository.update(); // make the repo state info actual ASAP
         if (customMode == GitRebaseResumeMode.CONTINUE) {
           myDirtyScopeManager.dirDirtyRecursively(repository.getRoot());
@@ -201,7 +204,8 @@ public class GitRebaseProcess {
   @NotNull
   private GitRebaseStatus rebaseSingleRoot(@NotNull GitRepository repository,
                                            @Nullable GitRebaseResumeMode customMode,
-                                           @NotNull Map<GitRepository, GitSuccessfulRebase> alreadyRebased) {
+                                           @NotNull Map<GitRepository, GitSuccessfulRebase> alreadyRebased,
+                                           @NotNull ProgressIndicator indicator) {
     VirtualFile root = repository.getRoot();
     String repoName = getShortRepositoryName(repository);
     LOG.info("Rebasing root " + repoName + ", mode: " + notNull(customMode, "standard"));
@@ -210,10 +214,18 @@ public class GitRebaseProcess {
     MultiMap<GitRepository, GitRebaseUtils.CommitInfo> allSkippedCommits = getSkippedCommits(alreadyRebased);
     boolean retryWhenDirty = false;
 
+    int commitsToRebase = 0;
+    try {
+      commitsToRebase = GitRebaseUtils.getNumberOfCommitsToRebase(repository);
+    }
+    catch (VcsException e) {
+      LOG.warn("Couldn't get the number of commits to rebase", e);
+    }
+    GitRebaseProgressListener progressListener = new GitRebaseProgressListener(commitsToRebase, indicator);
+
     while (true) {
       GitRebaseProblemDetector rebaseDetector = new GitRebaseProblemDetector();
       GitUntrackedFilesOverwrittenByOperationDetector untrackedDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
-      GitRebaseProgressListener progressListener = new GitRebaseProgressListener();
       GitRebaseCommandResult rebaseCommandResult = callRebase(repository, customMode, rebaseDetector, untrackedDetector, progressListener);
       GitCommandResult result = rebaseCommandResult.getCommandResult();
 
@@ -763,15 +775,29 @@ public class GitRebaseProcess {
   }
 
   private static class GitRebaseProgressListener implements GitLineHandlerListener {
-    private static final Pattern PROGRESS = Pattern.compile("^Rebasing \\((\\d+)/(\\d+)\\)$"); // `Rebasing (2/3)` means 2nd commit from 3
+    private static final Pattern REBASING_PATTERN = Pattern.compile("^Rebasing \\((\\d+)/(\\d+)\\)$");
+    private static final String APPLYING_PREFIX = "Applying: ";
+    private int currentCommit = 0;
 
-    private int currentCommit;
+    private final int myCommitsToRebase;
+    @NotNull private final ProgressIndicator myIndicator;
+
+    GitRebaseProgressListener(int commitsToRebase, @NotNull ProgressIndicator indicator) {
+      myCommitsToRebase = commitsToRebase;
+      myIndicator = indicator;
+    }
 
     @Override
     public void onLineAvailable(@NotNull String line, @NotNull Key outputType) {
-      Matcher matcher = PROGRESS.matcher(line);
+      Matcher matcher = REBASING_PATTERN.matcher(line);
       if (matcher.matches()) {
         currentCommit = Integer.parseInt(matcher.group(1));
+      }
+      else if (StringUtil.startsWith(line, APPLYING_PREFIX)) {
+        currentCommit++;
+      }
+      if (myCommitsToRebase != 0) {
+        myIndicator.setFraction((double)currentCommit / myCommitsToRebase);
       }
     }
   }

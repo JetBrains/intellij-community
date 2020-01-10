@@ -6,20 +6,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
+import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
@@ -241,6 +242,33 @@ public class GitRebaseUtils {
   @NotNull
   public static Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
     return GitUtil.getRepositoriesInState(project, Repository.State.REBASING);
+  }
+
+  public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository) throws VcsException {
+    return GitHistoryUtils.collectTimedCommits(
+      repository.getProject(),
+      repository.getRoot(),
+      getOntoHash(repository) + ".." + getRebasingBranchHash(repository)
+    ).size();
+  }
+
+  @NotNull
+  private static Hash getOntoHash(@NotNull GitRepository repository) throws VcsException {
+    return readHashFromFile(repository, "onto");
+  }
+
+  @NotNull
+  private static Hash getRebasingBranchHash(@NotNull GitRepository repository) throws VcsException {
+    return readHashFromFile(repository, "orig-head");
+  }
+
+  private static Hash readHashFromFile(@NotNull GitRepository repository, @NotNull String fileName) throws VcsException {
+    try {
+      return HashImpl.build(FileUtil.loadFile(new File(getRebaseDir(repository.getProject(), repository.getRoot()), fileName)).trim());
+    }
+    catch (IOException e) {
+      throw new VcsException("Couldn't read from file " + fileName, e);
+    }
   }
 
   /**
