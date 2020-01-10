@@ -543,11 +543,15 @@ public class HighlightControlFlowUtil {
                               (PsiMethod)codeBlock.getParent() : null;
         // assignment to final field in several constructors threatens us only if these are linked (there is this() call in the beginning)
         final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? JavaHighlightUtil.getChainedConstructors(ctr) : Collections.emptyList();
-        for (PsiMethod redirectedConstructor : redirectedConstructors) {
-          PsiCodeBlock body = redirectedConstructor.getBody();
-          if (body != null && variableDefinitelyAssignedIn(variable, body)) {
-            alreadyAssigned = true;
-            break;
+        if (!redirectedConstructors.isEmpty() && aClass.isRecord()) {
+          alreadyAssigned = true;
+        } else {
+          for (PsiMethod redirectedConstructor : redirectedConstructors) {
+            PsiCodeBlock body = redirectedConstructor.getBody();
+            if (body != null && variableDefinitelyAssignedIn(variable, body)) {
+              alreadyAssigned = true;
+              break;
+            }
           }
         }
       }
