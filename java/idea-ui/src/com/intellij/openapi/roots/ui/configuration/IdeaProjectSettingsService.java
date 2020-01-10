@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.actions.ArtifactAwareProjectSettingsService;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -136,9 +135,27 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     ModulesConfigurator.showDialog(myProject, moduleToSelect, editorNameToSelect);
   }
 
+  private Sdk myDeprecatedChosenSdk = null;
+
   @Override
   public Sdk chooseAndSetSdk() {
-    return JdkChooserPanel.chooseAndSetJDK(myProject);
+    //noinspection deprecation
+    super.chooseAndSetSdk();
+
+    if (myDeprecatedChosenSdk != null) {
+      Sdk chosenSdk = myDeprecatedChosenSdk;
+      myDeprecatedChosenSdk = null;
+      return chosenSdk;
+    }
+
+    SdkPopupFactory
+      .newBuilder()
+      .withProject(myProject)
+      .onSdkSelected(sdk -> myDeprecatedChosenSdk = sdk)
+      .updateProjectSdkFromSelection()
+      .showInFocusCenter();
+
+    return null;
   }
 
   @Override
