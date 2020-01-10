@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,34 +43,22 @@ public class AddAssertStatementFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+    PsiExpression element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiExpression.class);
+    if (element == null) return;
+    element = RefactoringUtil.ensureCodeBlock(element);
+    if (element == null) return;
     PsiElement anchorElement = RefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorElement != null);
-    final PsiElement tempParent = anchorElement.getParent();
-    if (tempParent instanceof PsiForStatement && !PsiTreeUtil.isAncestor(((PsiForStatement)tempParent).getBody(), anchorElement, false)) {
-      anchorElement = tempParent;
-    }
     PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       anchorElement = prev;
     }
 
-    try {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-      @NonNls String text = "assert " + myText + ";";
-      PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, element);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+    @NonNls String text = "assert " + myText + ";";
+    PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, element);
 
-      final PsiElement parent = anchorElement.getParent();
-      if (parent instanceof PsiCodeBlock) {
-        parent.addBefore(assertStatement, anchorElement);
-      }
-      else {
-        RefactoringUtil.putStatementInLoopBody(assertStatement, parent, anchorElement);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    anchorElement.getParent().addBefore(assertStatement, anchorElement);
   }
 
   @Override

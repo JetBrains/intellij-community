@@ -18,6 +18,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
 
@@ -94,7 +95,50 @@ class EnsureCodeBlockImpl {
     if (parent instanceof PsiReturnStatement && condition != null) {
       return replace(expression, parent, (oldParent, copy) -> splitReturn((PsiReturnStatement)oldParent, condition, operand));
     }
+    if (parent instanceof PsiTryStatement) {
+      PsiResourceVariable resourceVar = PsiTreeUtil.getParentOfType(expression, PsiResourceVariable.class);
+      if (resourceVar != null) {
+        PsiResourceList list = ObjectUtils.tryCast(resourceVar.getParent(), PsiResourceList.class);
+        if (list != null && list.getParent() == parent && list.iterator().next() != resourceVar) {
+          return replace(expression, parent, (oldParent, copy) -> splitTry((PsiTryStatement)oldParent, (PsiTryStatement)copy, resourceVar));
+        }
+      }
+    }
     return expression;
+  }
+
+  private static PsiElement splitTry(PsiTryStatement statement, PsiTryStatement copy, PsiResourceVariable var) {
+    PsiResourceList list = statement.getResourceList();
+    if (list == null) return statement;
+    PsiResourceList copyList = copy.getResourceList();
+    if (copyList == null) return statement;
+    PsiCodeBlock tryBlock = statement.getTryBlock();
+    if (tryBlock == null) return statement;
+    List<PsiResourceListElement> elementsToMove = StreamEx.of(list.iterator()).dropWhile(e -> e != var).toList();
+    for (PsiResourceListElement element : elementsToMove) {
+      element.delete();
+    }
+    for (PsiResourceListElement element : StreamEx.of(copyList.iterator()).limit(copyList.getResourceVariablesCount()-elementsToMove.size()).toList()) {
+      element.delete();
+    }
+    PsiElement[] children = copyList.getChildren();
+    if (children[0].textMatches("(") && children[1] instanceof PsiWhiteSpace) {
+      children[1].delete();
+    }
+    for (PsiCatchSection section : copy.getCatchSections()) {
+      section.delete();
+    }
+    PsiCodeBlock copyFinally = copy.getFinallyBlock();
+    if (copyFinally != null) {
+      PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsBackward(copyFinally);
+      if (element != null && element.textMatches(PsiKeyword.FINALLY)) {
+        element.delete();
+      }
+      copyFinally.delete();
+    }
+    PsiElement codeBlock = tryBlock.replace(JavaPsiFacade.getElementFactory(statement.getProject()).createCodeBlock());
+    codeBlock.add(copy);
+    return statement;
   }
 
   private static <T extends PsiElement> T replace(@NotNull T element, @NotNull PsiElement parent, BinaryOperator<PsiElement> replacer) {
