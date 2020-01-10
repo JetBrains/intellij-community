@@ -184,4 +184,10 @@ public class ID<K, V> extends IndexId<K,V> {
   protected static PluginId getCallerPluginId() {
     return PluginUtil.getInstance().getCallerPlugin(4);
   }
+
+  @ApiStatus.Internal
+  public static void clearIdRegistry() {
+    ourRegistry.clear();
+    ourIdToPluginId.clear();
+  }
 }
