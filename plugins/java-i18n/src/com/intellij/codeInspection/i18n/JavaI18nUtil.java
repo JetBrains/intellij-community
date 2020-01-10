@@ -216,11 +216,7 @@ public class JavaI18nUtil extends I18nUtil {
       while (containingClass != null) {
         PsiAnnotation classAnnotation = AnnotationUtil.findAnnotation(containingClass, AnnotationUtil.NON_NLS, AnnotationUtil.NLS);
         if (classAnnotation != null) {
-          if (classAnnotation.hasQualifiedName(annFqn)) {
-            processAnnotationAttributes(resourceBundleRef, classAnnotation);
-            return true;
-          }
-          return false;
+          return classAnnotation.hasQualifiedName(annFqn);
         }
         containingClass = containingClass.getContainingClass();
       }
@@ -232,11 +228,7 @@ public class JavaI18nUtil extends I18nUtil {
         if (aPackage != null) {
           final PsiAnnotation packageAnnotation = AnnotationUtil.findAnnotation(aPackage, AnnotationUtil.NON_NLS, AnnotationUtil.NLS);
           if (packageAnnotation != null) {
-            if (packageAnnotation.hasQualifiedName(annFqn)) {
-              processAnnotationAttributes(resourceBundleRef, packageAnnotation);
-              return true;
-            }
-            return false;
+            return packageAnnotation.hasQualifiedName(annFqn);
           }
         }
       }
