@@ -505,6 +505,7 @@ public class HighlightControlFlowUtil {
         break;
       }
     }
+    boolean canDefer = !inLoop;
 
     if (!alreadyAssigned) {
       if (!(variable instanceof PsiField)) return null;
@@ -555,6 +556,7 @@ public class HighlightControlFlowUtil {
           }
         }
       }
+      canDefer = !alreadyAssigned;
     }
 
     if (alreadyAssigned) {
@@ -563,7 +565,7 @@ public class HighlightControlFlowUtil {
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
       HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
-      if (!inLoop) {
+      if (canDefer) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
       }
       return highlightInfo;
