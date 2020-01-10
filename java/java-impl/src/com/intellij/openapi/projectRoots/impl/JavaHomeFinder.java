@@ -69,14 +69,16 @@ public abstract class JavaHomeFinder {
     return new DefaultFinder();
   }
 
-  protected void scanFolder(File folder, List<? super String> result) {
-    if (JdkUtil.checkForJdk(folder))
+  protected void scanFolder(@NotNull File folder, boolean includeNestDirs, @NotNull List<? super String> result) {
+    if (JdkUtil.checkForJdk(folder)) {
       result.add(folder.getAbsolutePath());
-
-    for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY)) {
-      file = adjustPath(file);
-      if (JdkUtil.checkForJdk(file)) {
-        result.add(file.getAbsolutePath());
+    }
+    else if (includeNestDirs) {
+      for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY)) {
+        file = adjustPath(file);
+        if (JdkUtil.checkForJdk(file)) {
+          result.add(file.getAbsolutePath());
+        }
       }
     }
   }
@@ -108,10 +110,10 @@ public abstract class JavaHomeFinder {
     public List<String> findExistingJdks() {
       List<String> result = new ArrayList<>();
       for (String path : myPaths) {
-        scanFolder(new File(path), result);
+        scanFolder(new File(path), true, result);
       }
       for (File dir : guessByPathVariable()) {
-        scanFolder(dir, result);
+        scanFolder(dir, false, result);
       }
       return result;
     }
@@ -119,13 +121,15 @@ public abstract class JavaHomeFinder {
     public Collection<File> guessByPathVariable() {
       String pathVarString = System.getenv("PATH");
       if (pathVarString == null || pathVarString.isEmpty()) return Collections.emptyList();
+      boolean isWindows = SystemInfo.isWindows;
+      String suffix = isWindows ? ".exe" : "";
       ArrayList<File> dirsToCheck = new ArrayList<>(1);
       String[] pathEntries = pathVarString.split(File.pathSeparator);
       for (String p : pathEntries) {
         File dir = new File(p);
-        if (StringUtilRt.equal(dir.getName(), "bin", !SystemInfo.isWindows)) {
-          File f1 = new File(p, "java");
-          File f2 = new File(p, "javac");
+        if (StringUtilRt.equal(dir.getName(), "bin", !isWindows)) {
+          File f1 = new File(p, "java" + suffix);
+          File f2 = new File(p, "javac" + suffix);
           if (f1.isFile() && f2.isFile()) {
             File f1c = canonize(f1);
             File f2c = canonize(f2);
