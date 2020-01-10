@@ -340,7 +340,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
+    @ScheduledForRemoval(inVersion = "2021.1")
     public static final Icon ShowViewer = load("/actions/showViewer.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.SetDefault */
@@ -1610,8 +1610,8 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020.2 - use Jsr45debugIcons.Jsr45 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Jsr45 = load("/nodes/jsr45.svg");
+    @ScheduledForRemoval(inVersion = "2020.2")
+    public static final Icon Jsr45 = load("/nodes/jsr45.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Package */
     @SuppressWarnings("unused")
