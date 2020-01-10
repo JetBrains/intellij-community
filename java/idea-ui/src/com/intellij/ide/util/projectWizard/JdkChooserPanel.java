@@ -286,6 +286,7 @@ public class JdkChooserPanel extends JPanel {
     myList.addListSelectionListener(listener);
   }
 
+  @Nullable
   private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {
     final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
     jdkChooserPanel.fillList(null, null);
@@ -309,6 +310,7 @@ public class JdkChooserPanel extends JPanel {
     return dialog.showAndGet() ? jdkChooserPanel.getChosenJdk() : null;
   }
 
+  @Nullable
   public static Sdk chooseAndSetJDK(@NotNull final Project project) {
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
