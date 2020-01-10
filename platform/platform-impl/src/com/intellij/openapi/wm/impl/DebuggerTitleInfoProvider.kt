@@ -7,12 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
+import com.intellij.openapi.wm.impl.simpleTitleParts.TitleInfoSubscription
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
 
-class DebuggerTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(project) {
+class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(TitleInfoSubscription.ALWAYS_ACTIVE, TitleInfoSubscription.ALWAYS_ACTIVE) {
   private var subscriptionDisposable: Disposable? = null
 
   private var debuggerSessionStarted = false
@@ -24,18 +25,19 @@ class DebuggerTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(proj
     }
 
   override fun updateSubscriptions() {
-    super.updateSubscriptions()
-
-    if (!enabled) {
+    if (!isEnabled()) {
       subscriptionDisposable?.let {
         if (!it.isDisposed) it.dispose()
         return
       }
+      return
     }
 
     if (subscriptionDisposable == null || subscriptionDisposable?.isDisposed == true) {
       subscriptionDisposable = addSubscription(project)
     }
+
+    super.updateSubscriptions()
   }
 
   private fun addSubscription(baseDisposable: Disposable): Disposable {
@@ -64,8 +66,6 @@ class DebuggerTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(proj
   override val isActive: Boolean
     get() = super.isActive && debuggerSessionStarted
   override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" ")
-  override val defaultRegistryKey: String? = null
-  override val borderlessRegistryKey: String? = null
   override val value: String = "[Debugger]"
 
 }

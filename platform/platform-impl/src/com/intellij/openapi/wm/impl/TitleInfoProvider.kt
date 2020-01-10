@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 
-public interface TitleInfoProvider {
+interface TitleInfoProvider {
   companion object {
     var EP: ExtensionPointName<TitleInfoProvider> = ExtensionPointName.create("com.intellij.titleInfoProvider")
 

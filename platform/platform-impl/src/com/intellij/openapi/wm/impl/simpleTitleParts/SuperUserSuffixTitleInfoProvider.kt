@@ -6,9 +6,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 
-class SuperUserSuffixTitleInfoProvider (project: Project) : SimpleTitleInfoProvider(project) {
-  override val defaultRegistryKey: String? = null
-  override val borderlessRegistryKey: String? = null
+class SuperUserSuffixTitleInfoProvider : SimpleTitleInfoProvider(TitleInfoSubscription.ALWAYS_ACTIVE, TitleInfoSubscription.ALWAYS_ACTIVE) {
   override val value: String = prepareValue()
   override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" - ")
 

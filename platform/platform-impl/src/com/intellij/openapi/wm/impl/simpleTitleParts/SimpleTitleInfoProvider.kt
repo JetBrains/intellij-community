@@ -2,62 +2,26 @@
 package com.intellij.openapi.wm.impl.simpleTitleParts
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.constraints.isDisposed
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.TitleInfoProvider
-import java.util.*
-import kotlin.collections.HashSet
 
-abstract class SimpleTitleInfoProvider(val project: Project) : TitleInfoProvider {
-  protected var enabled = false
+abstract class SimpleTitleInfoProvider(defaultSubscription: TitleInfoSubscription,
+                                       borderlessSubscription: TitleInfoSubscription) : TitleInfoProvider {
+  private var subscription: TitleInfoSubscription = if (IdeFrameDecorator.isCustomDecorationActive()) borderlessSubscription else defaultSubscription
 
-  private fun getRegisterKey(): String? {
-    return if(IdeFrameDecorator.isCustomDecorationActive()) borderlessRegistryKey else defaultRegistryKey
+  init {
+    subscription.listener = { updateSubscriptions() }
   }
 
   private var updateListener: HashSet<(() -> Unit)> = HashSet()
-  private var registryDisposable: Disposable? = null
-
-  private val registryListener = object : RegistryValueListener {
-    override fun afterValueChanged(value: RegistryValue) {
-      updateSubscriptions()
-    }
-  }
 
   override fun addUpdateListener(value: () -> Unit, disposable: Disposable?) {
     updateListener.add(value)
-    updateSubscriptions()
 
-    disposable?.let {
-      Disposer.register(it, Disposable{ updateSubscriptions() })
-    }
+    updateSubscriptions()
   }
 
   protected open fun updateSubscriptions() {
-    enabled = isEnabled() && updateListener.isNotEmpty()
-
-    getRegisterKey()?.let {key ->
-      if(updateListener.isNotEmpty()) {
-        if (registryDisposable == null || registryDisposable?.isDisposed == true) {
-          val rds = Disposer.newDisposable()
-          Disposer.register(project, rds)
-          Registry.get(key).addListener(registryListener, rds)
-
-          registryDisposable = rds
-        }
-        else {
-          registryDisposable?.let {
-            if (!it.isDisposed) it.dispose()
-          }
-        }
-      }
-    }
-
     updateValue()
   }
 
@@ -69,13 +33,7 @@ abstract class SimpleTitleInfoProvider(val project: Project) : TitleInfoProvider
   }
 
   protected open fun isEnabled(): Boolean {
-    return getRegisterKey()?.let {
-      try {
-        Registry.get(it).asBoolean()
-      } catch (e: MissingResourceException) {
-        false
-      }
-    } ?: true
+    return subscription.isActive && updateListener.isNotEmpty()
   }
 
   private fun updateNotify() {
@@ -83,8 +41,5 @@ abstract class SimpleTitleInfoProvider(val project: Project) : TitleInfoProvider
   }
 
   override val isActive: Boolean
-    get() = enabled
-
-  protected abstract val defaultRegistryKey: String?
-  protected abstract val borderlessRegistryKey: String?
+    get() = isEnabled()
 }

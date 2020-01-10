@@ -7,13 +7,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 
-class ProductTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(project) {
+class ProductTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(VMOSubscription( "ide.ui.version.in.title"), RegistrySubscription("ide.borderless.title.product", project)) {
   override fun isEnabled(): Boolean {
     return super.isEnabled() && if(IdeFrameDecorator.isCustomDecorationActive()) true else !SystemInfo.isMac && !SystemInfo.isGNOME
   }
 
-  override val defaultRegistryKey: String? = "ide.ui.version.in.title"
-  override val borderlessRegistryKey: String? = "ide.borderless.title.product"
   override val value: String = ApplicationNamesInfo.getInstance().fullProductName
   override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" - ")
 }

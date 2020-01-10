@@ -5,9 +5,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 
-class ProductVersionTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(project) {
-  override val defaultRegistryKey: String? = "ide.ui.version.in.title"
-  override val borderlessRegistryKey: String? = "ide.borderless.title.version"
+class ProductVersionTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(VMOSubscription( "ide.ui.version.in.title"), RegistrySubscription("ide.borderless.title.version", project)) {
   override val value: String =  ApplicationInfo.getInstance().fullVersion ?: ""
   override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" ")
 }
