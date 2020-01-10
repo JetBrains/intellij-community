@@ -107,10 +107,12 @@ public class JdkChooserPanel extends JPanel {
     myAllowedJdkTypes = allowedJdkTypes;
   }
 
+  @Nullable
   public Sdk getChosenJdk() {
     return myCurrentJdk;
   }
 
+  @NotNull
   public Object[] getAllJdks() {
     return myListModel.toArray();
   }

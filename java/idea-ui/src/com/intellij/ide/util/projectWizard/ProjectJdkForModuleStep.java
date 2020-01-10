@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,23 +34,25 @@ import java.awt.event.ActionListener;
  * @author Eugene Zhuravlev
  */
 public class ProjectJdkForModuleStep extends ModuleWizardStep {
-  private final JdkChooserPanel myJdkChooser;
-  private final JPanel myPanel;
-  private final WizardContext myContext;
-  private final SdkType myType;
-  private final String myHelpId;
+  @NotNull private final JdkChooserPanel myJdkChooser;
+  @NotNull private final JPanel myPanel;
+  @NotNull private final WizardContext myContext;
+  @Nullable private final SdkType myType;
+  @Nullable private final String myHelpId;
   private boolean myInitialized = false;
-  private final JButton mySetAsDefaultButton;
+  @NotNull private final JButton mySetAsDefaultButton;
 
-  public ProjectJdkForModuleStep(final WizardContext context, final SdkType type) {
+  public ProjectJdkForModuleStep(@NotNull final WizardContext context, @Nullable final SdkType type) {
     this(context, type, null);
   }
 
-  public ProjectJdkForModuleStep(final WizardContext context, final SdkType type, @Nullable @NonNls String helpId) {
+  public ProjectJdkForModuleStep(@NotNull final WizardContext context, @Nullable final SdkType type, @Nullable @NonNls String helpId) {
     myContext = context;
     myType = type;
     myHelpId = helpId;
-    myJdkChooser = new JdkChooserPanel(getProject(context, type));
+
+    Project project = getProject(context, type);
+    myJdkChooser = new JdkChooserPanel(project);
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -121,7 +124,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   }
 
   @Nullable
-  private static Project getProject(final WizardContext context, final SdkType type) {
+  private static Project getProject(@NotNull final WizardContext context, @Nullable  final SdkType type) {
     Project project = context.getProject();
     if (type != null && project == null) { //'module' step inside project creation
       project = ProjectManager.getInstance().getDefaultProject();
@@ -134,6 +137,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     return myJdkChooser.getPreferredFocusedComponent();
   }
 
+  @Nullable
   @Override
   public String getHelpId() {
     return myHelpId;
@@ -153,7 +157,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   public void updateStep() {
     if (!myInitialized) { //lazy default project initialization
       myJdkChooser.fillList(myType, null);
-      Sdk defaultJdk = getDefaultJdk(myContext);
+      Sdk defaultJdk = getDefaultJdk();
       if (defaultJdk != null) {
         myJdkChooser.selectJdk(defaultJdk);
       }
@@ -162,25 +166,28 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     }
   }
 
+  @Nullable
   public Sdk getJdk() {
     return myJdkChooser.getChosenJdk();
   }
 
+  @NotNull
   public Object[] getAllJdks() {
     return myJdkChooser.getAllJdks();
   }
 
+  @Nullable
   @Override
   public Icon getIcon() {
     return myContext.getStepIcon();
   }
 
   @Nullable
-  private static Sdk getDefaultJdk(WizardContext context) {
+  private Sdk getDefaultJdk() {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     Sdk sdk = ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk();
     if (sdk == null) {
-      sdk = AddModuleWizard.getMostRecentSuitableSdk(context);
+      sdk = AddModuleWizard.getMostRecentSuitableSdk(myContext);
     }
     return sdk;
   }
@@ -189,8 +196,12 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   public boolean validate() {
     final Sdk jdk = myJdkChooser.getChosenJdk();
     if (jdk == null) {
-      int result = Messages.showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
-                                               IdeBundle.message("title.no.jdk.specified"), Messages.getWarningIcon());
+      int result = Messages
+        .showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
+                            IdeBundle.message("title.no.jdk.specified"),
+                            Messages.getOkButton(),
+                            Messages.getCancelButton(),
+                            Messages.getWarningIcon(), null);
       if (result != Messages.OK) {
         return false;
       }
