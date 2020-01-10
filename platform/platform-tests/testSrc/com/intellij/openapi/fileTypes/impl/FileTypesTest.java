@@ -74,7 +74,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       FileTypeManagerImpl.reDetectAsync(false);
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       myFileTypeManager.clearForTests();
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.initializeComponent();
     }
     catch (Throwable e) {
@@ -84,6 +84,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       myFileTypeManager = null;
       super.tearDown();
     }
+  }
+
+  private void initStandardFileTypes() {
+    myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
+    myFileTypeManager.initStandardFileTypes();
   }
 
   public void testMaskExclude() {
@@ -362,14 +367,14 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   private void doReassignTest(FileType fileType, String extension) {
     try {
-      myFileTypeManager.getRegisteredFileTypes();
+      myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(fileType, "*." + extension));
 
       assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
 
       Element element = myFileTypeManager.getState();
 
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
@@ -395,7 +400,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Element state = myFileTypeManager.getState();
 
     myFileTypeManager.getRemovedMappingTracker().clear();
-    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.clearForTests();
+    initStandardFileTypes();
     myFileTypeManager.loadState(state);
     myFileTypeManager.initializeComponent();
 
@@ -421,7 +427,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Element state = myFileTypeManager.getState();
 
     myFileTypeManager.getRemovedMappingTracker().clear();
-    myFileTypeManager.initStandardFileTypes();
+    initStandardFileTypes();
     myFileTypeManager.loadState(state);
     myFileTypeManager.initializeComponent();
 
@@ -500,7 +506,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         consumer.consume(typeFromPlugin, "fromPlugin");
       }
     }, getTestRootDisposable());
-    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.getRegisteredFileTypes();
+    initStandardFileTypes();
     myFileTypeManager.loadState(element);
 
     myFileTypeManager.initializeComponent();
@@ -522,7 +529,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     try {
       myFileTypeManager.clearForTests();
       FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
@@ -535,7 +542,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       Disposer.dispose(disposable);
       disposable = null;
       myFileTypeManager.clearForTests();
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
@@ -545,7 +552,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       disposable = Disposer.newDisposable();
       FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
       myFileTypeManager.clearForTests();
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
@@ -562,7 +569,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   // IDEA-139409 Persistent message "File type recognized: File extension *.vm was reassigned to VTL"
   public void testReassign() throws Exception {
     myFileTypeManager.clearForTests();
-    myFileTypeManager.initStandardFileTypes();
+    initStandardFileTypes();
     myFileTypeManager.initializeComponent();
 
     Element element = JDOMUtil.load(
@@ -596,7 +603,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(idl, extension));
 
     myFileTypeManager.clearForTests();
-    myFileTypeManager.initStandardFileTypes();
+    initStandardFileTypes();
     myFileTypeManager.loadState(element);
     myFileTypeManager.initializeComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension(extension);
