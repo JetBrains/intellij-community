@@ -33,6 +33,7 @@ import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 import kotlin.math.min
 
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
@@ -164,21 +165,21 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
       it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
         override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-          updatePath()
+          updatePathLater()
         }
 
         override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          updatePath()
+          updatePathLater()
         }
 
         override fun selectionChanged(event: FileEditorManagerEvent) {
-          updatePath()
+          updatePathLater()
         }
       })
 
       it.messageBus.connect(disp).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
         override fun after(events: MutableList<out VFileEvent>) {
-            updatePath()
+          updatePathLater()
         }
       })
     }
@@ -187,6 +188,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     updatePath()
 
     getView().addComponentListener(resizedListener)
+  }
+
+  protected fun updatePathLater() {
+    SwingUtilities.invokeLater{updatePath()}
   }
 
   protected open fun unInstallListeners() {
