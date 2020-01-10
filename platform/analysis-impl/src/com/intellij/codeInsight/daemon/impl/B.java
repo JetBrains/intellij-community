@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -263,6 +264,9 @@ class B implements AnnotationBuilder {
     created = true;
     if (range == null) {
       range = myCurrentElement.getTextRange();
+    }
+    if (tooltip == null && message != null) {
+      tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
     }
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     if (needsUpdateOnTyping != null) {
