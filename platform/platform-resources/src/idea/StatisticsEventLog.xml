@@ -2,7 +2,6 @@
   <actions>
     <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true">
       <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction"/>
-      <action internal="true" id="CleanupEventLogStatistics" class="com.intellij.internal.statistic.actions.CleanupEventLogAction"/>
       <action internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.actions.OpenEventLogFileAction"/>
       <action internal="true" id="AddTestGroupToLocalWhitelistAction"
               class="com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction"/>
@@ -13,6 +12,9 @@
       <action internal="true" id="ShowStatisticsEventLogAction"
               class="com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction"/>
       <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"/>
+      <group id="CleanupEventLog" internal="true"
+             class="com.intellij.internal.statistic.groups.CleanupEventLogByIdActionGroup">
+      </group>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
   </actions>
