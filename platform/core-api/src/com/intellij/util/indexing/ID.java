@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,6 +38,7 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  */
 public class ID<K, V> extends IndexId<K,V> {
+  private static final Logger LOG = Logger.getInstance(ID.class);
   private static final IntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<>();
 
@@ -183,5 +185,15 @@ public class ID<K, V> extends IndexId<K,V> {
   @Nullable
   protected static PluginId getCallerPluginId() {
     return PluginUtil.getInstance().getCallerPlugin(4);
+  }
+
+  @ApiStatus.Internal
+  public synchronized static void unloadId(@NotNull ID<?, ?> id) {
+    LOG.assertTrue(id.equals(ourRegistry.remove(id.getUniqueId())));
+    ourIdToPluginId.remove(id);
+  }
+
+  public static void dump() {
+    Logger.getInstance(ID.class).info("ID registry: " + ourRegistry.toString());
   }
 }
