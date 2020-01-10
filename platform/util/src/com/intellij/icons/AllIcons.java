@@ -1490,7 +1490,6 @@ public class AllIcons {
       /** 16x16 */ public static final Icon Renderer = load("/nodes/jsf/renderer.svg");
 
     }
-    /** 16x16 */ public static final Icon Jsr45 = load("/nodes/jsr45.svg");
     /** 16x16 */ public static final Icon JunitTestMark = load("/nodes/junitTestMark.svg");
     /** 16x16 */ public static final Icon KeymapAnt = load("/nodes/keymapAnt.svg");
     /** 16x16 */ public static final Icon KeymapEditor = load("/nodes/keymapEditor.svg");
@@ -1607,6 +1606,12 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon JavaModuleRoot = load("/nodes/Module.svg");
+
+    /** @deprecated to be removed in IDEA 2020.2 - use Jsr45debugIcons.Jsr45 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
+    /** 16x16 */ public static final Icon Jsr45 = load("/nodes/jsr45.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Package */
     @SuppressWarnings("unused")
