@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,11 +12,12 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -24,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,12 +34,12 @@ import java.awt.event.ActionListener;
  * @author Eugene Zhuravlev
  */
 public class ProjectJdkForModuleStep extends ModuleWizardStep {
-  @NotNull private final JdkChooserPanel myJdkChooser;
+  @NotNull private final Project myProject;
+  @NotNull private final ProjectSdksModel mySdksModel;
+  @NotNull private final JdkComboBox myJdkChooser;
   @NotNull private final JPanel myPanel;
   @NotNull private final WizardContext myContext;
-  @Nullable private final SdkType myType;
   @Nullable private final String myHelpId;
-  private boolean myInitialized = false;
   @NotNull private final JButton mySetAsDefaultButton;
 
   public ProjectJdkForModuleStep(@NotNull final WizardContext context, @Nullable final SdkType type) {
@@ -48,60 +48,39 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
 
   public ProjectJdkForModuleStep(@NotNull final WizardContext context, @Nullable final SdkType type, @Nullable @NonNls String helpId) {
     myContext = context;
-    myType = type;
     myHelpId = helpId;
+    Project project = context.getProject();
+    myProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
 
-    Project project = getProject(context, type);
-    myJdkChooser = new JdkChooserPanel(project);
+    final ProjectStructureConfigurable projectConfig = ProjectStructureConfigurable.getInstance(myProject);
+    mySdksModel = projectConfig.getProjectJdksModel();
+    myJdkChooser = new JdkComboBox(myProject,
+                                   mySdksModel,
+                                   sdk -> sdk instanceof SdkType && (type == null || type.equals(sdk)),
+                                   null,
+                                   null,
+                                   null);
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
-    final JLabel label = new JLabel(IdeBundle.message("prompt.please.select.module.jdk", type.getPresentableName()));
+    final JLabel label = new JLabel(IdeBundle.message("prompt.please.select.module.jdk", type == null ? "SDK" : type.getPresentableName()));
     label.setUI(new MultiLineLabelUI());
-    myPanel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+    myPanel.add(label, new GridBagConstraints(0, 0, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                               GridBagConstraints.HORIZONTAL, JBInsets.create(8, 10), 0, 0));
 
     final JLabel jdkLabel = new JLabel(IdeBundle.message("label.project.jdk"));
     jdkLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
-    myPanel.add(jdkLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+    myPanel.add(jdkLabel, new GridBagConstraints(0, 1, 1, 1, 0, 0.0, GridBagConstraints.NORTHWEST,
                                                  GridBagConstraints.NONE, JBUI.insets(8, 10, 0, 10), 0, 0));
 
-    myPanel.add(myJdkChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                     GridBagConstraints.BOTH, JBUI.insets(2, 10, 10, 5), 0, 0));
-    JButton configureButton = new JButton(IdeBundle.message("button.configure"));
-    myPanel.add(configureButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                        GridBagConstraints.NONE, JBUI.insets(2, 0, 5, 5), 0, 0));
+    myPanel.add(myJdkChooser, new GridBagConstraints(1, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
+                                                     GridBagConstraints.HORIZONTAL, JBUI.insets(2, 10, 10, 5), 0, 0));
+
     mySetAsDefaultButton = new JButton("Set Default");
     mySetAsDefaultButton.setMnemonic('D');
-    myPanel.add(mySetAsDefaultButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                             GridBagConstraints.NONE, JBUI.insets(2, 0, 10, 5), 0, 0));
-
-    configureButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-
-        final Project project = getProject(context, type);
-        final ProjectStructureConfigurable projectConfig = ProjectStructureConfigurable.getInstance(project);
-        final JdkListConfigurable jdkConfig = JdkListConfigurable.getInstance(project);
-        final ProjectSdksModel projectJdksModel = projectConfig.getProjectJdksModel();
-        final boolean[] successfullyAdded = new boolean[1];
-        projectJdksModel.reset(project);
-        projectJdksModel.doAdd(myPanel, type, jdk -> {
-          successfullyAdded[0] = jdkConfig.addJdkNode(jdk, false);
-          myJdkChooser.updateList(jdk, type, projectJdksModel.getSdks());
-
-          if (!successfullyAdded[0]) {
-            try {
-              projectJdksModel.apply(jdkConfig);
-            }
-            catch (ConfigurationException e1) {
-              //name can't be wrong
-            }
-          }
-        });
-      }
-    });
+    myPanel.add(mySetAsDefaultButton, new GridBagConstraints(1, 2, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
+                                                             GridBagConstraints.NONE, JBUI.insets(2, 10, 10, 5), 0, 0));
 
     final Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     mySetAsDefaultButton.addActionListener(new ActionListener() {
@@ -115,26 +94,17 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
       }
     });
 
-    myJdkChooser.addSelectionListener(new ListSelectionListener() {
+    myJdkChooser.addActionListener(new ActionListener() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
+      public void actionPerformed(ActionEvent e) {
         mySetAsDefaultButton.setEnabled(getJdk() != ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk());
       }
     });
   }
 
-  @Nullable
-  private static Project getProject(@NotNull final WizardContext context, @Nullable  final SdkType type) {
-    Project project = context.getProject();
-    if (type != null && project == null) { //'module' step inside project creation
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return project;
-  }
-
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myJdkChooser.getPreferredFocusedComponent();
+    return myJdkChooser;
   }
 
   @Nullable
@@ -155,25 +125,27 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
 
   @Override
   public void updateStep() {
-    if (!myInitialized) { //lazy default project initialization
-      myJdkChooser.fillList(myType, null);
-      Sdk defaultJdk = getDefaultJdk();
-      if (defaultJdk != null) {
-        myJdkChooser.selectJdk(defaultJdk);
-      }
-      mySetAsDefaultButton.setEnabled(defaultJdk != null);
-      myInitialized = true;
+    mySdksModel.reset(myProject);
+    myJdkChooser.reloadModel();
+    Sdk defaultJdk = getDefaultJdk();
+    if (defaultJdk != null) {
+      myJdkChooser.setSelectedJdk(defaultJdk);
     }
+    mySetAsDefaultButton.setEnabled(defaultJdk != null);
   }
 
   @Nullable
   public Sdk getJdk() {
-    return myJdkChooser.getChosenJdk();
+    return myJdkChooser.getSelectedJdk();
   }
 
+  /**
+   * @deprecated this method does return an empty array
+   */
   @NotNull
+  @Deprecated
   public Object[] getAllJdks() {
-    return myJdkChooser.getAllJdks();
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Nullable
@@ -194,7 +166,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
 
   @Override
   public boolean validate() {
-    final Sdk jdk = myJdkChooser.getChosenJdk();
+    final Sdk jdk = myJdkChooser.getSelectedJdk();
     if (jdk == null) {
       int result = Messages
         .showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
@@ -206,6 +178,18 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
         return false;
       }
     }
+
+    try {
+      mySdksModel.apply(null, true);
+    } catch (ConfigurationException e) {
+      //IDEA-98382 We should allow Next step if user has wrong SDK
+      if (Messages.showDialog(e.getMessage() + "\n\nDo you want to proceed?",
+                              e.getTitle(),
+                              new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {
+        return false;
+      }
+    }
+
     return true;
   }
 }
