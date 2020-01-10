@@ -31,6 +31,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.file.PsiDirectoryImpl;
+import com.intellij.psi.impl.file.UpdateAddedFileProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -346,44 +348,52 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
     List<PsiFile> files = new ArrayList<>();
-    for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
-      final PsiFile psiFile = entry.getKey();
-      final PsiClass[] sources = entry.getValue();
-      if (psiFile instanceof PsiClassOwner && sources != null) {
-        final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
-        if (createdFile == null) {
-          //do not touch unmodified classes
-          for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
-            oldToNewMap.remove(aClass);
-          }
-          continue;
-        }
-
-        Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
-        for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
-          if (!isSynthetic(destination)) {
-            PsiClass source = findByName(sources, destination.getName());
-            if (source == null) {
-              WriteAction.run(() -> destination.delete());
+    try {
+      targetDirectory.putUserData(PsiDirectoryImpl.UPDATE_ADDED_FILE_KEY, false);
+      for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
+        final PsiFile psiFile = entry.getKey();
+        final PsiClass[] sources = entry.getValue();
+        if (psiFile instanceof PsiClassOwner && sources != null) {
+          final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
+          if (createdFile == null) {
+            //do not touch unmodified classes
+            for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
+              oldToNewMap.remove(aClass);
             }
-            else {
-              sourceToDestination.put(source, destination);
+            continue;
+          }
+  
+          Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
+          for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
+            if (!isSynthetic(destination)) {
+              PsiClass source = findByName(sources, destination.getName());
+              if (source == null) {
+                WriteAction.run(() -> destination.delete());
+              }
+              else {
+                sourceToDestination.put(source, destination);
+              }
             }
           }
+  
+          for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
+            final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
+            PsiElement newElement = WriteAction.compute(() -> classEntry.getValue().replace(copy));
+            oldToNewMap.put(classEntry.getKey(), newElement);
+          }
+          createdFiles.add(createdFile);
         }
-
-        for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
-          final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
-          PsiElement newElement = WriteAction.compute(() -> classEntry.getValue().replace(copy));
-          oldToNewMap.put(classEntry.getKey(), newElement);
+        else {
+          files.add(psiFile);
         }
-        createdFiles.add(createdFile);
-      }
-      else {
-        files.add(psiFile);
       }
     }
+    finally {
+      targetDirectory.putUserData(PsiDirectoryImpl.UPDATE_ADDED_FILE_KEY, null);
+    }
 
+    DumbService.getInstance(project).completeJustSubmittedTasks();
+    WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(createdFiles.toArray(PsiFile.EMPTY_ARRAY)));
 
     for (PsiFile file : files) {
       try {

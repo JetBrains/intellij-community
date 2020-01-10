@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -22,9 +23,6 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -41,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Queryable {
+  public static final Key<Boolean> UPDATE_ADDED_FILE_KEY = Key.create("UPDATE_ADDED_FILE_KEY");
   private static final Logger LOG = Logger.getInstance(PsiDirectoryImpl.class);
 
   private final PsiManagerImpl myManager;
@@ -355,29 +354,16 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
 
-      DumbService.getInstance(getProject()).completeJustSubmittedTasks();
-
       final PsiFile copyPsi = myManager.findFile(copyVFile);
       if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
-      updateAddedFile(copyPsi);
+      if (UPDATE_ADDED_FILE_KEY.get(this, true)) {
+        DumbService.getInstance(getProject()).completeJustSubmittedTasks();
+        UpdateAddedFileProcessor.updateAddedFiles(copyPsi);
+      }
       return copyPsi;
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e);
-    }
-  }
-
-  private static void updateAddedFile(@NotNull PsiFile copyPsi) throws IncorrectOperationException {
-    final UpdateAddedFileProcessor processor = UpdateAddedFileProcessor.forElement(copyPsi);
-    if (processor != null) {
-      final TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);
-      if (tree != null) {
-        ChangeUtil.encodeInformation(tree);
-      }
-      processor.update(copyPsi, null);
-      if (tree != null) {
-        ChangeUtil.decodeInformation(tree);
-      }
     }
   }
 
@@ -433,7 +419,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile == null) throw new IncorrectOperationException("Could not find file " + newVFile);
-        updateAddedFile(newFile);
+        UpdateAddedFileProcessor.updateAddedFiles(newFile);
         return newFile;
       }
       catch (IOException e) {
