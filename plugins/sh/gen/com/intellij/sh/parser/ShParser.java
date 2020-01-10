@@ -1176,7 +1176,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "function_definition")) return false;
     if (!nextTokenIs(b, "<function definition>", FUNCTION, WORD)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, FUNCTION_DEFINITION, "<function definition>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, FUNCTION_DEFINITION, "<function definition>");
     r = function_definition_0(b, l + 1);
     r = r && function_definition_inner(b, l + 1);
     exit_section_(b, l, m, r, false, null);
@@ -1206,7 +1206,7 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // word argument_list  newlines block
-  //                                      | function word argument_list? newlines block
+  //                                      | function (word | <<keywordsRemapped>>) argument_list? newlines block
   static boolean function_definition_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_definition_inner")) return false;
     if (!nextTokenIs(b, "", FUNCTION, WORD)) return false;
@@ -1232,18 +1232,30 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // function word argument_list? newlines block
+  // function (word | <<keywordsRemapped>>) argument_list? newlines block
   private static boolean function_definition_inner_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_definition_inner_1")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeTokens(b, 1, FUNCTION, WORD);
+    r = consumeToken(b, FUNCTION);
     p = r; // pin = function|argument_list
-    r = r && report_error_(b, function_definition_inner_1_2(b, l + 1));
+    r = r && report_error_(b, function_definition_inner_1_1(b, l + 1));
+    r = p && report_error_(b, function_definition_inner_1_2(b, l + 1)) && r;
     r = p && report_error_(b, newlines(b, l + 1)) && r;
     r = p && block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // word | <<keywordsRemapped>>
+  private static boolean function_definition_inner_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "function_definition_inner_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, WORD);
+    if (!r) r = keywordsRemapped(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   // argument_list?
@@ -2511,7 +2523,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // test simple_command_element+
+  // test simple_command_element*
   public static boolean test_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "test_command")) return false;
     if (!nextTokenIs(b, TEST)) return false;
@@ -2524,19 +2536,15 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // simple_command_element+
+  // simple_command_element*
   private static boolean test_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "test_command_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = simple_command_element(b, l + 1);
-    while (r) {
+    while (true) {
       int c = current_position_(b);
       if (!simple_command_element(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "test_command_1", c)) break;
     }
-    exit_section_(b, m, null, r);
-    return r;
+    return true;
   }
 
   /* ********************************************************** */

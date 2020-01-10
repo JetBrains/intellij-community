@@ -77,3 +77,8 @@ fi
 [[ ${osvers} -ge 7 ]]
 [[ (pwd) ]]
 [[ ${sss} -ge 7 ]]
+
+function test() {
+    echo my custom test function $3
+}
+test

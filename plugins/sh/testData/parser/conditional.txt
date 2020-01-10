@@ -915,3 +915,48 @@ SHELL_SCRIPT
               PsiElement(int)('7')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(function)('function')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('test')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          BLOCK
+            PsiElement({)('{')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('    ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('my')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('custom')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('test')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('function')
+                    PsiWhiteSpace(' ')
+                    VARIABLE
+                      PsiElement(var)('$3')
+              PsiElement(\n)('\n')
+            PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    TEST_COMMAND
+      PsiElement(test)('test')
