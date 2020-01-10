@@ -70,6 +70,8 @@
     <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
+
+    <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
   </extensions>
   
   <actions>

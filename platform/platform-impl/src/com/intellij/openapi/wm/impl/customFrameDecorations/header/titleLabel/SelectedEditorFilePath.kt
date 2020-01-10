@@ -154,8 +154,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       Registry.get("ide.borderless.title.project.path").addListener(registryListener, disp)
       Registry.get("ide.borderless.title.classpath").addListener(registryListener, disp)
 
-      simpleExtensions = getProviders(it)
-      simpleExtensions?.forEach { ext -> ext.addUpdateListener { update() } }
+      simpleExtensions = getProviders(it) { update() }
       simplePaths = simpleExtensions?.map { ex -> ex.borderlessTitlePart }
 
       val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)

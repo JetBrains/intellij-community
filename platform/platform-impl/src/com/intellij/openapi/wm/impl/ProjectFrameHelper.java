@@ -391,13 +391,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private void initTitleInfoProviders(@NotNull Project project) {
-    myTitleInfoExtensions = TitleInfoProvider.getProviders(project);
-    if (myTitleInfoExtensions != null && !myTitleInfoExtensions.isEmpty()) {
-      myTitleInfoExtensions.forEach(it -> it.addUpdateListener(() -> {
-        updateTitle();
-        return Unit.INSTANCE;
-      }));
-    }
+    myTitleInfoExtensions = TitleInfoProvider.getProviders(project, () -> {
+      updateTitle();
+      return Unit.INSTANCE;
+    });
   }
 
   private final Set<String> widgetIds = new THashSet<>();
