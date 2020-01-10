@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 
 public interface CompositeDataIndexer<K, V, SubIndexerType, SubIndexerVersion> extends DataIndexer<K, V, FileContent> {
@@ -41,7 +42,10 @@ public interface CompositeDataIndexer<K, V, SubIndexerType, SubIndexerVersion> e
   @Override
   default Map<K, V> map(@NotNull FileContent inputData) {
     SubIndexerType subIndexerType = calculateSubIndexer(inputData);
-    return subIndexerType == null ? Collections.emptyMap() : map(inputData, ObjectUtils.notNull(subIndexerType));
+    if (subIndexerType == null && !InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) {
+      return Collections.emptyMap();
+    }
+    return map(inputData, ObjectUtils.notNull(subIndexerType));
   }
 
   @NotNull
