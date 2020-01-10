@@ -411,4 +411,25 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testImportedTypedDict() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::doMultiFileTest);
   }
+
+  // PY-17877
+  public void testMetaclassHavingDunderCall() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("class MetaFoo(type):\n" +
+                         "  def __call__(cls, p3, p4):\n" +
+                         "    print(f'MetaFoo: {cls}, {p3}, {p4}')\n" +
+                         "\n" +
+                         "class Foo(metaclass=MetaFoo):\n" +
+                         "  pass\n" +
+                         "\n" +
+                         "class SubFoo(Foo):\n" +
+                         "  def __new__(self, p1, p2):\n" +
+                         "    # This never gets called\n" +
+                         "    print(f'Foo.__new__: {p1}, {p2}')\n" +
+                         "\n" +
+                         "sub = SubFoo(1<warning descr=\"Parameter 'p4' unfilled\">)</warning>\n" +
+                         "foo = Foo(3<warning descr=\"Parameter 'p4' unfilled\">)</warning>")
+    );
+  }
 }

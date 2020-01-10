@@ -75,6 +75,11 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertEquals(PyNames.INIT, ((PyFunction)target).getName());
   }
 
+  // PY-17877
+  public void testInitializingToMetaclassDunderCall() {
+    assertResolvesTo(LanguageLevel.getLatest(), PyFunction.class, PyNames.CALL);
+  }
+
   public void testInitOrNewReturnsInitWhenNewIsFirst() {
     doTestInitOrNewReturnsInit();
   }

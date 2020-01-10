@@ -10,6 +10,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -177,7 +178,7 @@ public class PyCallExpressionHelper {
     final PsiElement resolved = resolveResult.getElement();
 
     if (resolved instanceof PyClass) {
-      return ContainerUtil.map(((PyClass)resolved).multiFindInitOrNew(true, resolveContext.getTypeEvalContext()),
+      return ContainerUtil.map(resolveConstructors((PyClass)resolved, call, resolveContext.getTypeEvalContext(), true),
                                function -> new ClarifiedResolveResult(resolveResult, function, null, true));
     }
     else if (resolved instanceof PyCallExpression) { // foo = classmethod(foo)
@@ -850,6 +851,49 @@ public class PyCallExpressionHelper {
   @Nullable
   public static PyCallableParameter getMappedKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
     return mapping.values().stream().filter(p -> p.isKeywordContainer()).findFirst().orElse(null);
+  }
+
+  @NotNull
+  public static Collection<? extends PsiElement> resolveConstructors(@NotNull PyClass cls,
+                                                                     @NotNull PyExpression location,
+                                                                     @NotNull TypeEvalContext context,
+                                                                     boolean inherited) {
+    final List<PsiElement> constructors = resolveMetaclassDunderCall(cls, location, context);
+    return !constructors.isEmpty() ? constructors : preferInitOverNew(cls.multiFindInitOrNew(inherited, context));
+  }
+
+  @NotNull
+  private static Collection<? extends PyFunction> preferInitOverNew(@NotNull List<PyFunction> initAndNew) {
+    final MultiMap<String, PyFunction> functions = ContainerUtil.groupBy(initAndNew, PyFunction::getName);
+    return functions.containsKey(PyNames.INIT) ? functions.get(PyNames.INIT) : functions.values();
+  }
+
+  @NotNull
+  private static List<PsiElement> resolveMetaclassDunderCall(@NotNull PyClass cls,
+                                                            @Nullable PyExpression location,
+                                                            @NotNull TypeEvalContext context) {
+    final PyClassLikeType metaClassType = cls.getMetaClassType(true, context);
+    if (metaClassType == null) return Collections.emptyList();
+
+    final PyClassType typeType = PyBuiltinCache.getInstance(cls).getTypeType();
+    if (metaClassType == typeType) return Collections.emptyList();
+
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> results =
+      PyUtil.filterTopPriorityResults(resolveDunderCall(metaClassType, location, resolveContext));
+    if (results.isEmpty()) return Collections.emptyList();
+
+    final Set<PsiElement> typeDunderCall =
+      ContainerUtil.map2Set(resolveDunderCall(typeType, null, resolveContext), ResolveResult::getElement);
+    return StreamEx.of(results).map(ResolveResult::getElement).remove(it -> typeDunderCall.contains(it)).toList();
+  }
+
+  @NotNull
+  private static List<? extends RatedResolveResult> resolveDunderCall(@Nullable PyClassLikeType type,
+                                                                      @Nullable PyExpression location,
+                                                                      @NotNull PyResolveContext resolveContext) {
+    if (type == null) return Collections.emptyList();
+    return ObjectUtils.notNull(type.resolveMember(PyNames.CALL, location, AccessDirection.READ, resolveContext), Collections.emptyList());
   }
 
   @NotNull
