@@ -35,19 +35,19 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
+import org.junit.*
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotSame
+import kotlin.test.assertTrue
 
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
@@ -204,7 +204,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testIncorrectPath() {
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/file.zip")
-    val pseudoDir = File(file, "sub/zip")
+    val pseudoDir = File(file.parent, "sub/zip")
     refresh(root)
 
     watch(pseudoDir, false, checkRoots = !SystemInfo.isLinux)
@@ -359,38 +359,22 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     }
   }
 
-  /*
-  public void testSymlinkBelowWatchRoot() throws Exception {
-    final File targetDir = FileUtil.createTempDirectory("top.", null);
-    final File file = FileUtil.createTempFile(targetDir, "test.", ".txt");
-    final File linkDir = FileUtil.createTempDirectory("link.", null);
-    final File link = new File(linkDir, "link");
-    IoTestUtil.createTempLink(targetDir.getPath(), link.getPath());
-    final File fileLink = new File(link, file.getName());
-    refresh(targetDir);
-    refresh(linkDir);
+  @Ignore
+  @Test fun testSymlinkBelowWatchRoot() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
 
-    final LocalFileSystem.WatchRequest request = watch(linkDir);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileContentChangeEvent.class, fileLink.getPath());
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
+    val watchRoot = link.parentFile
+    val fileLink = File(link, "dir3/" + file.name)
+    refresh(top)
 
-      myAccept = true;
-      FileUtil.delete(file);
-      assertEvent(VFileDeleteEvent.class, fileLink.getPath());
-
-      myAccept = true;
-      FileUtil.writeToFile(file, "re-creation");
-      assertEvent(VFileCreateEvent.class, fileLink.getPath());
-    }
-    finally {
-      myFileSystem.removeWatchedRoot(request);
-      delete(linkDir);
-      delete(targetDir);
-    }
+    watch(watchRoot)
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U', file to 'U'))
+    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D', file to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C', file to 'C'))
   }
-*/
 
   @Test fun testSubst() {
     IoTestUtil.assumeWindows()
