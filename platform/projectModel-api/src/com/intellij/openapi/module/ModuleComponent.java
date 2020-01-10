@@ -5,18 +5,10 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.project.Project;
 
 /**
- * Base interface for module-level components. The constructor of the classes
- * implementing this interface can accept as parameters the module instance and
- * any application-, project- or module-level components this component depends on.
- *
- * <p>
- * <strong>Note that if you register a class as a module component it will be loaded, its instance will be created and
+ * @deprecated components are deprecated. If you register a class as a module component it will be loaded, its instance will be created and
  * {@link #initComponent()}, {@link #moduleAdded()} methods will be called for each module even if user doesn't use
- * any feature of your plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance
- * until user calls its actions explicitly.</strong>
- *
- * @deprecated Components are deprecated; please see http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for
- * guidelines on migrating to other APIs.
+ * any feature of your plugin. Also plugins which declare module components don't support dynamic loading. Please see
+ * http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for guidelines on migrating to other APIs.
  */
 public interface ModuleComponent extends BaseComponent {
   /**

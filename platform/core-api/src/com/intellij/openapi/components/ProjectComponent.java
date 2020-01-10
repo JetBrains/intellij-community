@@ -2,13 +2,10 @@
 package com.intellij.openapi.components;
 
 /**
- * <strong>Note that if you register a class as a project component it will be loaded, its instance will be created and
+ * @deprecated components are deprecated. If you register a class as a project component it will be loaded, its instance will be created and
  * {@link #initComponent()} and {@link #projectOpened()} methods will be called for each project even if user doesn't use any feature of your
- * plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance until user calls its
- * actions explicitly.</strong>
- *
- * @deprecated Components are deprecated; please see http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for
- * guidelines on migrating to other APIs.
+ * plugin. Also plugins which declare project components don't support dynamic loading. Please see
+ * http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for guidelines on migrating to other APIs.
  */
 @Deprecated
 public interface ProjectComponent extends BaseComponent {
