@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -153,7 +154,10 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
           unfoldCurrentLine(e);
           if (focusEditor) {
             IdeFocusManager.getInstance(project).requestFocus(e.getContentComponent(), true);
-            SwingUtilities.getWindowAncestor(e.getContentComponent()).toFront();
+            Window ancestor = SwingUtilities.getWindowAncestor(e.getContentComponent());
+            if (ancestor != null) {
+              ancestor.toFront();
+            }
           }
         });
       }
