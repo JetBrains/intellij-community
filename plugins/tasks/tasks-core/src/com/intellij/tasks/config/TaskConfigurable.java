@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.tasks.CommitPlaceholderProvider;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
@@ -30,7 +31,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -160,9 +160,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Tasks";
+    return TaskBundle.message("configurable.TaskConfigurable.display.name");
   }
 
   @Override

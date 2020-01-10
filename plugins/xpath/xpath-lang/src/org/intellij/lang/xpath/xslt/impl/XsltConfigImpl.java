@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -25,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,10 +78,9 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
     }
 
     @Override
-    @Nls
-    public String getDisplayName() {
-      return "XSLT";
-    }
+  public String getDisplayName() {
+    return IdeBundle.message("configurable.UIImpl.display.name");
+  }
 
     @Override
     @NotNull
