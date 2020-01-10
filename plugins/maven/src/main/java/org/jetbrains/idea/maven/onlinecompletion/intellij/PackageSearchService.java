@@ -16,6 +16,9 @@ import org.jetbrains.idea.reposearch.RepositoryArtifactData;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class PackageSearchService implements DependencySearchProvider {
@@ -123,11 +126,15 @@ public class PackageSearchService implements DependencySearchProvider {
         continue;
       }
 
-      MavenDependencyCompletionItem[] items = new MavenDependencyCompletionItem[resultModel.versions.length];
+      Set<String> versions = new HashSet<>();
+      ArrayList<MavenDependencyCompletionItem> itemList = new ArrayList<>();
       for (int i = 0; i < resultModel.versions.length; i++) {
-        items[i] = new MavenDependencyCompletionItem(resultModel.groupId, resultModel.artifactId, resultModel.versions[i],
-                                                     MavenDependencyCompletionItem.Type.REMOTE);
+        if (versions.add(resultModel.versions[i])) {
+          itemList.add(new MavenDependencyCompletionItem(resultModel.groupId, resultModel.artifactId, resultModel.versions[i],
+                                                         MavenDependencyCompletionItem.Type.REMOTE));
+        }
       }
+      MavenDependencyCompletionItem[] items = itemList.toArray(new MavenDependencyCompletionItem[0]);
       consumer.accept(new MavenRepositoryArtifactInfo(items[0].getGroupId(), items[0].getArtifactId(), items));
     }
   }
