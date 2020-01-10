@@ -10,6 +10,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -94,7 +95,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   public ColorAndFontOptions() {
     ColorAndFontDescriptorsProvider.EP_NAME.addExtensionPointListener(
-      () -> mySchemes.values().forEach(scheme -> initScheme(scheme)), myDisposable);
+      () -> mySchemes.values().forEach(scheme -> initScheme(scheme)), null);
   }
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
