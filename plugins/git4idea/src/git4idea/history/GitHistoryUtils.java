@@ -25,6 +25,7 @@ import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
@@ -271,18 +272,15 @@ public class GitHistoryUtils {
 
   @Nullable
   public static GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull String first,
-                                               @NotNull String second)
-    throws VcsException {
+                                               @NotNull String second) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.MERGE_BASE);
     h.setSilent(true);
     h.addParameters(first, second);
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow().trim();
-    if (output.length() == 0) {
-      return null;
-    }
-    else {
-      return GitRevisionNumber.resolve(project, root, output);
-    }
+    GitCommandResult result = Git.getInstance().runCommand(h);
+    if (!result.success()) return null;
+    String output = result.getOutputAsJoinedString().trim();
+    if (output.length() == 0) return null;
+    return GitRevisionNumber.resolve(project, root, output);
   }
 
   public static long getAuthorTime(@NotNull Project project, @NotNull VirtualFile root, @NotNull String commitsId) throws VcsException {
