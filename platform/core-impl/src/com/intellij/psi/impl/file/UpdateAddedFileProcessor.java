@@ -31,7 +31,7 @@ public abstract class UpdateAddedFileProcessor {
     return null;
   }
 
-  public static void updateAddedFiles(@NotNull PsiFile... copyPsis) throws IncorrectOperationException {
+  public static void updateAddedFiles(@NotNull Iterable<PsiFile> copyPsis) throws IncorrectOperationException {
     for (PsiFile copyPsi : copyPsis) {
       final UpdateAddedFileProcessor processor = forElement(copyPsi);
       if (processor != null) {

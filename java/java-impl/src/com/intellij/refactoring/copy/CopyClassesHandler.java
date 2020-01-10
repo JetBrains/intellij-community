@@ -348,8 +348,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
     List<PsiFile> files = new ArrayList<>();
-    try {
-      targetDirectory.putUserData(PsiDirectoryImpl.UPDATE_ADDED_FILE_KEY, false);
+    ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> {
       for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
         final PsiFile psiFile = entry.getKey();
         final PsiClass[] sources = entry.getValue();
@@ -362,7 +361,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
             }
             continue;
           }
-  
+
           Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
           for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
             if (!isSynthetic(destination)) {
@@ -375,7 +374,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
               }
             }
           }
-  
+
           for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
             final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
             PsiElement newElement = WriteAction.compute(() -> classEntry.getValue().replace(copy));
@@ -387,13 +386,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           files.add(psiFile);
         }
       }
-    }
-    finally {
-      targetDirectory.putUserData(PsiDirectoryImpl.UPDATE_ADDED_FILE_KEY, null);
-    }
+    });
 
     DumbService.getInstance(project).completeJustSubmittedTasks();
-    WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(createdFiles.toArray(PsiFile.EMPTY_ARRAY)));
+    WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(createdFiles));
 
     for (PsiFile file : files) {
       try {
