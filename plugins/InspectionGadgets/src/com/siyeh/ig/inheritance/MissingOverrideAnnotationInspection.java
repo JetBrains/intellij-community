@@ -52,10 +52,10 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
 
   /**
    * @deprecated
-   * Use {@link AnnotateMethodFix}. To be removed in 2019.1.
+   * Use {@link AnnotateMethodFix}. To be removed in 2021.1.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("unused")
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new InspectionGadgetsFix() {
@@ -76,20 +76,20 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
   }
 
   /**
-   * @deprecated To be removed in 2019.1.
+   * @deprecated To be removed in 2021.1.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("unused")
   protected String buildErrorString(Object... infos) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * @deprecated  To be removed in 2019.1.
+   * @deprecated  To be removed in 2021.1.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   protected BaseInspectionVisitor buildVisitor() {
     throw new UnsupportedOperationException();
   }
