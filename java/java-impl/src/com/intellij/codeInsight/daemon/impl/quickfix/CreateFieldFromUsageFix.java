@@ -55,7 +55,8 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     final List<PsiClass> targetClasses = new ArrayList<>();
     for (PsiClass psiClass : super.getTargetClasses(element)) {
       if (canModify(psiClass) &&
-          (!psiClass.isInterface() && !psiClass.isAnnotationType() || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
+          (!psiClass.isInterface() && !psiClass.isAnnotationType() && !psiClass.isRecord()
+           || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
         targetClasses.add(psiClass);
       }
     }
@@ -64,7 +65,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected boolean canBeTargetClass(PsiClass psiClass) {
-    return canModify(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
+    return canModify(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType() && !psiClass.isRecord();
   }
 
   @Override
