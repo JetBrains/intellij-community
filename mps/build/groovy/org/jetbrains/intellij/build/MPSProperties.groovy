@@ -1,5 +1,6 @@
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
 import java.util.function.Consumer
@@ -124,6 +125,8 @@ class MPSProperties extends ProductProperties {
 
         //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
         context.ant.move(file: "$targetDirectory/lib/annotations-java5.jar", tofile: "$targetDirectory/lib/annotations.jar")
+
+        BuildTasksImpl.generateBuildTxt(context, "$targetDirectory/lib")
     }
 
     @Override
