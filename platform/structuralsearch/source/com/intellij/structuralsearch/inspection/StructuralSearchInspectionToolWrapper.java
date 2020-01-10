@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWrapper {
-  StructuralSearchInspectionToolWrapper(Configuration configuration) {
+  public StructuralSearchInspectionToolWrapper(Configuration configuration) {
     super(new StructuralSearchFakeInspection(configuration.getName(), configuration.getUuid()));
   }
 
@@ -24,6 +24,23 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
   @Override
   public LocalInspectionToolWrapper createCopy() {
     return new StructuralSearchInspectionToolWrapper(new StructuralSearchFakeInspection((StructuralSearchFakeInspection)getTool()));
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return getTool().getDisplayName();
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public String getGroupDisplayName() {
+    return getTool().getGroupDisplayName();
   }
 
   public void setProfile(InspectionProfileImpl profile) {

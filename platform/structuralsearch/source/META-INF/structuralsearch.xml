@@ -9,7 +9,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="false" level="WARNING" dynamicGroup="true"
                      implementationClass="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.StructuralSearchPlugin"/>
@@ -23,7 +23,6 @@
     <documentationProvider implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider"/>
     <codeInsight.linkHandler prefix="#ssr_edit_filters/" handlerClass="com.intellij.structuralsearch.plugin.ui.filters.FilterTooltipLinkHandler"/>
     <daemon.highlightInfoFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter"/>
-    <postStartupActivity implementation="com.intellij.structuralsearch.inspection.InspectionProvider"/>
     <inspectionProfileActionProvider implementation="com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider"/>
   </extensions>
 

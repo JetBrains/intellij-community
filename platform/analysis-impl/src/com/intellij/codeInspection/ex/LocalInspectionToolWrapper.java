@@ -53,6 +53,10 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool() instanceof UnfairLocalInspectionTool : myEP.unfair;
   }
 
+  public boolean isDynamicGroup() {
+    return myEP == null ? getTool() instanceof DynamicGroupTool : myEP.dynamicGroup;
+  }
+
   @Override
   public String getID() {
     return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
