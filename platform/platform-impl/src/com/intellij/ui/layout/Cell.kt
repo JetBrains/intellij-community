@@ -133,15 +133,6 @@ interface CellBuilder<T : JComponent> {
   fun shouldSaveOnApply(): Boolean
 }
 
-interface CellBuilderPropertyEx<T : JComponent> : CellBuilder<T> {
-  fun withValidationOnProperty(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
-}
-
-fun <T : JComponent> CellBuilder<T>.withValidationOnProperty(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
-  (this as CellBuilderPropertyEx<T>).withValidationOnProperty(callback)
-  return this
-}
-
 internal interface CheckboxCellBuilder {
   fun actsAsLabel()
 }
