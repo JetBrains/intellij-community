@@ -337,7 +337,7 @@
 
     <extensionPoint dynamic="true" name="colorSettingsPage" interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
     <extensionPoint dynamic="true" name="colorAndFontPanelFactory" interface="com.intellij.application.options.colors.ColorAndFontPanelFactory"/>
-    <extensionPoint name="colorAndFontDescriptorProvider" interface="com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider"/>
+    <extensionPoint dynamic="true" name="colorAndFontDescriptorProvider" interface="com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider"/>
 
     <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.parameterInfo.ParameterInfoHandler"/>
