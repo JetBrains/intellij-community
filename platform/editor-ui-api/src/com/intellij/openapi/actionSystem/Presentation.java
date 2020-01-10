@@ -364,7 +364,7 @@ public final class Presentation implements Cloneable {
     if (presentation == this) return;
 
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
-    setDescription(() -> presentation.getDescription());
+    setDescription(presentation.myDescriptionSupplier);
     setIcon(presentation.getIcon());
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
