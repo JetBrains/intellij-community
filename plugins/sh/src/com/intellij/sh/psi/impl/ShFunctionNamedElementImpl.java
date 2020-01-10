@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.sh.psi.ShFunctionName;
 import com.intellij.sh.psi.ShFunctionNamedElement;
+import com.intellij.sh.psi.manipulator.ShElementGenerator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 

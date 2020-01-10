@@ -10,17 +10,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
-  private final PsiFile myFile;
-
   public ShFunctionReference(@NotNull PsiElement element) {
     super(element, TextRange.create(0, element.getTextLength()));
-    myFile = myElement.getContainingFile();
   }
 
   @Nullable
   @Override
   public PsiElement resolve() {
-    if (myFile == null) return null;
     return ResolveCache.getInstance(myElement.getProject()).resolveWithCaching(this, new ShFunctionResolver(), false, false);
   }
 

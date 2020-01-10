@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.psi.impl;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.sh.psi.manipulator;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -8,18 +8,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.psi.ShFunctionName;
 import com.intellij.sh.psi.ShLiteral;
-import com.intellij.sh.psi.ShSimpleCommandElement;
 import org.jetbrains.annotations.NotNull;
 
 public class ShElementGenerator {
-  @NotNull
-  public static ShSimpleCommandElement createSimpleCommand(@NotNull Project project, @NotNull String command) {
-    PsiFile file = createTempFile(project, "dummy " + command);
-    ShSimpleCommandElement simpleCommand = PsiTreeUtil.findChildOfType(file, ShSimpleCommandElement.class);
-    assert simpleCommand != null;
-    return simpleCommand;
-  }
-
   @NotNull
   public static ShLiteral createLiteral(@NotNull Project project, @NotNull String command) {
     PsiFile file = createTempFile(project, command);
