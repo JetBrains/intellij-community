@@ -8,6 +8,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.speedSearch.SpeedSearch
@@ -122,7 +123,6 @@ internal class FilteringBranchesTree(project: Project,
   : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, rootNode) {
 
   private val expandedPaths = SmartHashSet<TreePath>()
-  private var treeState: TreeState? = null
 
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
@@ -142,6 +142,7 @@ internal class FilteringBranchesTree(project: Project,
     runInEdt {
       PopupHandler.installPopupHandler(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup", ActionManager.getInstance())
       setupTreeExpansionListener()
+      project.service<BranchesTreeStateHolder>().setTree(this)
     }
   }
 
@@ -208,25 +209,27 @@ internal class FilteringBranchesTree(project: Project,
 
   override fun rebuildTree(initial: Boolean): Boolean {
     val rebuilded = buildTreeNodesIfNeeded()
+    val treeState = project.service<BranchesTreeStateHolder>()
     if (!initial) {
-       treeState = TreeState.createOn(tree, root)
+      treeState.createNewState()
     }
     searchModel.updateStructure()
     if (initial) {
-      TreeUtil.expand(tree, 2)
+      treeState.applyStateToTreeOrExpandAll()
     }
     else {
-      treeState?.applyTo(tree)
+      treeState.applyStateToTree()
     }
 
     return rebuilded
   }
 
   fun refreshTree() {
-    treeState = TreeState.createOn(tree, root)
+    val treeState = project.service<BranchesTreeStateHolder>()
+    treeState.createNewState()
     refreshTreeNodesFromModel()
     searchModel.updateStructure()
-    treeState?.applyTo(tree)
+    treeState.applyStateToTree()
   }
 
   private fun buildTreeNodesIfNeeded(): Boolean {
@@ -277,4 +280,45 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
   }
 
   override fun getSourceActions(c: JComponent) = COPY_OR_MOVE
+}
+
+@State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
+  private lateinit var branchesTree: FilteringBranchesTree
+  private lateinit var treeState: TreeState
+
+  override fun getState(): TreeState? {
+    createNewState()
+    if (::treeState.isInitialized) {
+      return treeState
+    }
+    return null
+  }
+
+  override fun loadState(state: TreeState) {
+    treeState = state
+  }
+
+  fun createNewState() {
+    if (::branchesTree.isInitialized) {
+      treeState = TreeState.createOn(branchesTree.tree, branchesTree.root)
+    }
+  }
+
+  fun applyStateToTree(ifNoStatePresent: () -> Unit = {}) {
+    if (!::branchesTree.isInitialized) return
+
+    if (::treeState.isInitialized) {
+      treeState.applyTo(branchesTree.tree)
+    }
+    else {
+      ifNoStatePresent()
+    }
+  }
+
+  fun applyStateToTreeOrExpandAll() = applyStateToTree { TreeUtil.expandAll(branchesTree.tree) }
+
+  fun setTree(tree: FilteringBranchesTree) {
+    branchesTree = tree
+  }
 }

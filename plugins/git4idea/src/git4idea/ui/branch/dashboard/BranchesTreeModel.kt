@@ -18,7 +18,12 @@ internal data class BranchInfo(val branchName: String,
   override fun toString() = branchName
 }
 
-internal data class BranchNodeDescriptor(val type: NodeType, val branchInfo: BranchInfo? = null)
+internal data class BranchNodeDescriptor(val type: NodeType, val branchInfo: BranchInfo? = null) {
+  override fun toString(): String {
+    val suffix = branchInfo?.branchName
+    return if (suffix != null) "$type:$suffix" else "$type"
+  }
+}
 
 internal enum class NodeType {
   ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH
