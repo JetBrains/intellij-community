@@ -228,17 +228,13 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      new SdkPopupFactory(
-        myProject,
-        getJdksTreeModel(),
-        new SdkListModelBuilder(
-          myProject,
-          getJdksTreeModel(),
-          notSimpleJavaSdkType(),
-          null,
-          sdk -> false)
-      ).createPopup(myTree, new SdkPopup.SdkPopupListener() { })
-       .showPopup(e);
+      SdkPopupFactory
+        .newBuilder()
+        .withProject(myProject)
+        .withProjectSdksModel(getJdksTreeModel())
+        .withSdkTypeFilter(notSimpleJavaSdkType())
+        .withSdkFilter(sdk -> false)
+        .showPopup(e);
     }
   }
 }

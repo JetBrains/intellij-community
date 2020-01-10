@@ -15,7 +15,6 @@ import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LoadingDecorator;
@@ -310,7 +309,11 @@ public class JdkChooserPanel extends JPanel {
     return dialog.showAndGet() ? jdkChooserPanel.getChosenJdk() : null;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.roots.ui.configuration.SdkPopupFactory}
+   */
   @Nullable
+  @Deprecated
   public static Sdk chooseAndSetJDK(@NotNull final Project project) {
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
