@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -13,13 +14,14 @@ import org.jetbrains.concurrency.resolvedPromise
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.function.BiConsumer
 import java.util.function.Consumer
+import kotlin.collections.LinkedHashSet
 
 typealias ResultConsumer = (RepositoryArtifactData) -> Unit
 
+@ApiStatus.Experimental
 class DependencySearchService(private val myProject: Project) {
   private val myExecutorService: ExecutorService
   private val cache: MutableMap<String, CompletableFuture<Collection<RepositoryArtifactData>>> = ContainerUtil.createConcurrentWeakKeyWeakValueMap()
@@ -67,16 +69,18 @@ class DependencySearchService(private val myProject: Project) {
       }
     }
 
-    val resultSet: MutableSet<RepositoryArtifactData> = ConcurrentHashMap.newKeySet()
-    localProviders.forEach { lp -> searchMethod(lp) { resultSet.add(it) } }
-    resultSet.forEach(consumer)
+    val localResultSet: MutableSet<RepositoryArtifactData> = LinkedHashSet()
+    localProviders.forEach { lp -> searchMethod(lp) { localResultSet.add(it) } }
+    localResultSet.forEach(consumer)
+
+
 
     if (parameters.isLocalOnly || remoteProviders.size == 0) {
       return resolvedPromise(0)
     }
 
     val promises: MutableList<Promise<Void>> = ArrayList(remoteProviders.size)
-
+    val resultSet = Collections.synchronizedSet(localResultSet);
     for (provider in remoteProviders) {
       val promise = AsyncPromise<Void>()
       promises.add(promise)

@@ -1,5 +1,8 @@
 package org.jetbrains.idea.reposearch;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Experimental
 public class SearchParameters {
 
   private final boolean myCache;
