@@ -22,10 +22,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
@@ -161,7 +158,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   @Nls
   @Override
   public String getDisplayName() {
-    return "Server Certificates";
+    return UIBundle.message("configurable.CertificateConfigurable.display.name");
   }
 
   @Nullable

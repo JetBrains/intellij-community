@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.module.PyContentEntriesEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -46,7 +47,7 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
 
   @Override
   public String getDisplayName() {
-    return "Project Structure";
+    return PyBundle.message("configurable.PyContentEntriesModuleConfigurable.display.name");
   }
 
   @Override

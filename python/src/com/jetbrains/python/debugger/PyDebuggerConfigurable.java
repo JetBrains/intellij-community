@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
 
   @Override
   public String getDisplayName() {
-    return "Python Debugger";
+    return PyBundle.message("configurable.PyDebuggerConfigurable.display.name");
   }
 
   @Override

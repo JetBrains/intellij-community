@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.settings;
 
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class DiffSettingsConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Diff & Merge";
+    return DiffBundle.message("configurable.DiffSettingsConfigurable.display.name");
   }
 
   @NotNull

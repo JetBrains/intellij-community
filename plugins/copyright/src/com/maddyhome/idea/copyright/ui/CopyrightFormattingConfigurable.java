@@ -2,6 +2,7 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -31,7 +32,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
   @Override
   @Nls
     public String getDisplayName() {
-    return "Formatting";
+    return IdeBundle.message("configurable.CopyrightFormattingConfigurable.display.name");
   }
 
   @Override

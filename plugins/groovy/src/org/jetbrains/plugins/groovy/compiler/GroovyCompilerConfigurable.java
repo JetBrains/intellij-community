@@ -30,9 +30,9 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -92,9 +92,8 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Groovy Compiler";
+    return GroovyBundle.message("configurable.GroovyCompilerConfigurable.display.name");
   }
 
   @Override

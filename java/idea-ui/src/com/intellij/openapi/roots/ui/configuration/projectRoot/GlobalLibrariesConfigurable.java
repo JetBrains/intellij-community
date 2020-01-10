@@ -38,7 +38,7 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return "Global Libraries";
+    return ProjectBundle.message("configurable.GlobalLibrariesConfigurable.display.name");
   }
 
   @Override
