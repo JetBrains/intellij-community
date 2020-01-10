@@ -43,6 +43,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -315,30 +316,18 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
                                         String contextId,
                                         @NotNull Project project,
                                         boolean physical) {
-    if (physical) {
-      throw new UnsupportedOperationException(getClass() + " cannot create physical PSI");
-    }
     if (MEMBER_CONTEXT.getId().equals(contextId)) {
       context = PatternTreeContext.Class;
     }
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if (context == PatternTreeContext.Block) {
-      final PsiCodeBlock codeBlock = elementFactory.createCodeBlockFromText("{\n" + text + "\n}", null);
-      PsiElement element = codeBlock.getFirstBodyElement();
-      if (element == null) return PsiElement.EMPTY_ARRAY;
-      final List<PsiElement> result = new SmartList<>();
-      final PsiElement lastBodyElement = codeBlock.getLastBodyElement();
-      while (element != null) {
-        if (!(element instanceof PsiWhiteSpace)) result.add(element);
-        if (element == lastBodyElement) break;
-        element = element.getNextSibling();
-      }
+      final PsiCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(text, null, physical);
+      final List<PsiElement> result = getNonWhitespaceChildren(fragment);
       if (result.isEmpty()) return PsiElement.EMPTY_ARRAY;
 
       if (shouldTryExpressionPattern(result)) {
         try {
           final PsiElement[] expressionPattern =
-            createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextId, project, false);
+            createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextId, project, physical);
           if (expressionPattern.length == 1) {
             return expressionPattern;
           }
@@ -346,36 +335,39 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
       else if (shouldTryClassPattern(result)) {
         final PsiElement[] classPattern =
-          createPatternTree(text, PatternTreeContext.Class, fileType, language, contextId, project, false);
+          createPatternTree(text, PatternTreeContext.Class, fileType, language, contextId, project, physical);
         if (classPattern.length <= result.size()) {
           return classPattern;
         }
       }
-      return result.toArray(PsiElement.EMPTY_ARRAY);
+      return PsiUtilCore.toPsiElementArray(result);
     }
     else if (context == PatternTreeContext.Class) {
-      final PsiClass clazz = elementFactory.createClassFromText(text, null);
-      PsiElement startChild = clazz.getLBrace();
-      if (startChild != null) startChild = startChild.getNextSibling();
-
-      PsiElement endChild = clazz.getRBrace();
-      if (endChild != null) endChild = endChild.getPrevSibling();
-      if (startChild == endChild) return PsiElement.EMPTY_ARRAY; // nothing produced
-
-      assert startChild != null;
-      final List<PsiElement> result = new SmartList<>();
-      for (PsiElement element = startChild.getNextSibling(); element != endChild && element != null; element = element.getNextSibling()) {
-        result.add(element);
-      }
+      final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createMemberCodeFragment(text, null, physical);
+      final List<PsiElement> result = getNonWhitespaceChildren(fragment);
 
       return PsiUtilCore.toPsiElementArray(result);
     }
     else if (context == PatternTreeContext.Expression) {
-      return new PsiElement[] {elementFactory.createExpressionFromText(text, null)};
+      final PsiExpressionCodeFragment fragment =
+        JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, null, null, physical);
+      return new PsiElement[] {fragment.getExpression()};
     }
     else {
-      return PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", JavaFileType.INSTANCE, text).getChildren();
+      return new PsiElement[] {PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", JavaFileType.INSTANCE, text)};
     }
+  }
+
+  private static List<PsiElement> getNonWhitespaceChildren(PsiElement fragment) {
+    PsiElement element = fragment.getFirstChild();
+    final List<PsiElement> result = new SmartList<>();
+    while (element != null) {
+      if (!(element instanceof PsiWhiteSpace)) {
+        result.add(element);
+      }
+      element = element.getNextSibling();
+    }
+    return result;
   }
 
   private static boolean shouldTryExpressionPattern(List<PsiElement> elements) {
@@ -1093,7 +1085,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         final PsiForStatement forStatement = (PsiForStatement)greatGrandParent;
         return forStatement.getInitialization() == grandParent || forStatement.getUpdate() == grandParent;
       }
-      return greatGrandParent instanceof PsiCodeBlock;
+      return greatGrandParent instanceof PsiCodeBlock || greatGrandParent instanceof PsiCodeFragment;
     }
     if (grandParent instanceof PsiReferenceList) {
       final PsiElement greatGrandParent = grandParent.getParent();
@@ -1135,7 +1127,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (aClass == null) {
       return false;
     }
-    final String name = aClass.getName();
+    @NonNls final String name = aClass.getName();
     return name != null && !"_Dummy_".equals(name);
   }
 

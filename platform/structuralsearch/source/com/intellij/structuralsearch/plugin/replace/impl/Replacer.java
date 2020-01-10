@@ -120,12 +120,12 @@ public class Replacer {
       // get nodes from text may contain
       final PsiElement prevSibling = firstElement.getPrevSibling();
       if (prevSibling instanceof PsiWhiteSpace) {
-        startOffset -= prevSibling.getTextLength() - 1;
+        startOffset -= prevSibling.getTextLength();
       }
 
       final PsiElement nextSibling = lastElement.getNextSibling();
       if (nextSibling instanceof PsiWhiteSpace) {
-        endOffset -= nextSibling.getTextLength() - 1;
+        endOffset -= nextSibling.getTextLength();
       }
       replacer.replaceAll(replacements);
       if (firstElement == lastElement && firstElement instanceof PsiFile) {

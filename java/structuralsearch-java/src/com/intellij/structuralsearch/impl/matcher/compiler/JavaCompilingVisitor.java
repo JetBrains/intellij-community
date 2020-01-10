@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -368,7 +367,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     final MatchingHandler handler = pattern.getHandlerSimple(parameter);
-    final String name = "__catch_" + parent.getTextOffset();
+    @NonNls final String name = "__catch_" + parent.getTextOffset();
     final SubstitutionHandler substitutionHandler =
       handler instanceof SubstitutionHandler
       ? new SubstitutionHandler(name, false, ((SubstitutionHandler)handler).getMinOccurs(), ((SubstitutionHandler)handler).getMaxOccurs(), true)
@@ -498,8 +497,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     final PsiElement child = expressionStatement.getLastChild();
     final PsiElement parent = expressionStatement.getParent();
-    if (!(child instanceof PsiJavaToken) && !(child instanceof PsiComment) &&
-        parent instanceof PsiCodeBlock && parent.getParent() instanceof JavaDummyHolder) {
+    if (!(child instanceof PsiJavaToken) && !(child instanceof PsiComment) && parent instanceof PsiCodeFragment) {
       // search for expression or symbol
       final PsiElement reference = expressionStatement.getFirstChild();
       final MatchingHandler referenceHandler = pattern.getHandler(reference);

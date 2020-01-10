@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.project.Project;
@@ -52,10 +52,10 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (element instanceof PsiParameter || element instanceof PsiClass) {
       return true;
     }
-     final PsiElement parent = element.getParent();
+    final PsiElement parent = element.getParent();
 
     return (parent instanceof PsiExpressionList && !parent.getClass().getSimpleName().startsWith("Jsp")) ||
-           parent instanceof PsiCodeBlock ||
+           parent instanceof PsiCodeBlock || parent instanceof PsiCodeFragment ||
            parent instanceof PsiClass ||
            parent instanceof PsiIfStatement && (((PsiIfStatement)parent).getThenBranch() == element ||
                                                 ((PsiIfStatement)parent).getElseBranch() == element) ||
