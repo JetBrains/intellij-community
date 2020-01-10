@@ -17,6 +17,8 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.hash.EqualityPolicy
+import com.intellij.util.containers.hash.LinkedHashMap
 import java.util.*
 import kotlin.Comparator
 import kotlin.math.max
@@ -83,7 +85,8 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
         classifier = classifier.next
       }
     }
-    val result: MutableMap<LookupElement, List<Pair<String, Any>>> = ContainerUtil.newIdentityHashMap()
+    @Suppress("UNCHECKED_CAST")
+    val result: MutableMap<LookupElement, List<Pair<String, Any>>> = LinkedHashMap(EqualityPolicy.IDENTITY as EqualityPolicy<in LookupElement>)
     val additional: Map<LookupElement, List<Pair<String, Any>>> = myFinalSorter.getRelevanceObjects(items)
     items.forEach { item ->
       val mainRelevance = map[item] ?: mutableListOf()
