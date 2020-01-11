@@ -149,6 +149,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     }
   }
 
+  var iconsFilter: (File) -> Boolean = { Icon(it).isValid }
+
   fun devChanges() = byDev.all()
   fun iconsChanges() = byDesigners.all()
 

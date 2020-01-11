@@ -116,15 +116,8 @@ private fun verifyDevIcons(context: Context, repos: Collection<File>) {
     context.verifyDevIcons(repos)
   }
   repos.forEach { repo ->
-    val status = gitStatus(repo)
-    if (status.isNotEmpty()) {
-      log("Staging ${status.joinToString("," + System.lineSeparator()) {
-        repo.resolve(it).toString()
-      }}")
-      status.forEach {
-        stageFiles(listOf(it), repo)
-      }
-      log("Staged: " + gitStage(repo))
+    gitStatus(repo).forEach {
+      stageFiles(listOf(it), repo)
     }
   }
 }

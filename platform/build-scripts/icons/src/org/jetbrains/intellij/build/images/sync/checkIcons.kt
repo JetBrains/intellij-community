@@ -129,9 +129,12 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
 
 private fun searchForChangedIconsByDesigners(context: Context) {
   if (!isUnderTeamCity()) gitPull(context.iconsRepo)
-  fun asIcons(files: Collection<String>) = files
+  fun asIcons(files: Collection<String>) = files.asSequence()
     .filter { ImageExtension.fromName(it) != null }
-    .map { context.iconsRepo.resolve(it).toRelativeString(context.iconsRepoDir) }
+    .map(context.iconsRepo::resolve)
+    .filter(context.iconsFilter)
+    .map { it.toRelativeString(context.iconsRepoDir) }
+    .toList()
   ArrayList(context.iconsCommitHashesToSync).map {
     commitInfo(context.iconsRepo, it) ?: error("Commit $it is not found in ${context.iconsRepoName}")
   }.sortedBy(CommitInfo::timestamp).forEach {
@@ -186,10 +189,7 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
 
 private fun readIconsRepo(context: Context) = protectStdErr {
   val (iconsRepo, iconsRepoDir) = context.iconsRepo to context.iconsRepoDir
-  listGitObjects(iconsRepo, iconsRepoDir) { file ->
-    // read icon hashes
-    Icon(file).isValid
-  }.also {
+  listGitObjects(iconsRepo, iconsRepoDir, context.iconsFilter).also {
     if (it.isEmpty()) log("${context.iconsRepoName} repo doesn't contain icons")
   }
 }

@@ -167,7 +167,7 @@ internal fun deleteBranch(repo: File, branch: String) {
   }
 }
 
-private fun push(repo: File, spec: String, user: String? = null, email: String? = null, force: Boolean = false) =
+internal fun push(repo: File, spec: String, user: String? = null, email: String? = null, force: Boolean = false) =
   retry(doRetry = { beforePushRetry(it, repo, spec, user, email) }) {
     var args = arrayOf("origin", spec)
     if (force) args += "--force"
