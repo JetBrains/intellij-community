@@ -395,8 +395,15 @@
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction"
               id="ShowHelpPageById"/>
 
-      <add-to-group group-id="Internal" anchor="last"/>
+      <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"
+              text="Analyze Unloadable Plugins"/>
+      <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"
+              text="Analyze EP Usage"/>
+      <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true"
+              class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction"
+              text="Analyze EP Usage (Do not Follow Safe Types)"/>
 
+      <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <action id="TestData.Navigate"
             class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
