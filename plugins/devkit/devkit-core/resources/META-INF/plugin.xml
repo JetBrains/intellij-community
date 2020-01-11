@@ -357,73 +357,36 @@
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
     </group>
 
-    <group id="DevkitNewActions" icon="AllIcons.Nodes.Plugin" popup="true"
-           class="com.intellij.ide.actions.NonTrivialActionGroup">
+    <group id="DevkitNewActions" icon="AllIcons.Nodes.Plugin" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
       <action class="org.jetbrains.idea.devkit.actions.NewActionAction" id="NewAction"/>
       <separator/>
-      <action id="NewApplicationService"
-              class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
-      <action id="NewProjectService"
-              class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
-      <action id="NewModuleService"
-              class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
+      <action id="NewApplicationService" class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
+      <action id="NewProjectService" class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
+      <action id="NewModuleService" class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
       <separator/>
-      <action id="DevKit.NewTheme"
-              class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
+      <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
-
-    <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction"
-            id="GenerateExternalization">
+    <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" id="GenerateExternalization">
       <add-to-group anchor="last" group-id="GenerateGroup"/>
     </action>
 
     <group id="Internal.DevKit" internal="true" popup="true">
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction"
-              id="ToggleHighlightingMarkup"/>
-
-      <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction"
-              id="ShuffleNamesAction"/>
-
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction"
-              id="ShowSerializedXml"/>
-
-      <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction"
-              id="GenerateDomModel"/>
-
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction"
-              id="ShowHelpPageById"/>
-
-      <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"
-              text="Analyze Unloadable Plugins"/>
-      <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"
-              text="Analyze EP Usage"/>
-      <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true"
-              class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction"
-              text="Analyze EP Usage (Do not Follow Safe Types)"/>
-
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction" id="ToggleHighlightingMarkup"/>
+      <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" id="ShuffleNamesAction"/>
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" id="ShowSerializedXml"/>
+      <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction" id="GenerateDomModel"/>
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" id="ShowHelpPageById"/>
+      <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"/>
+      <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"/>
+      <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
-    <action id="TestData.Navigate"
-            class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
-            use-shortcut-of="GotoRelated">
+
+    <action id="TestData.Navigate" class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction" use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
-    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
-      <add-to-group group-id="Internal.Dump"/>
-    </action>
-    <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction">
-      <add-to-group group-id="Internal.DevKit"/>
-    </action>
-
-    <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction">
-      <add-to-group group-id="Internal.DevKit"/>
-    </action>
-    <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction">
-      <add-to-group group-id="Internal.DevKit"/>
-    </action>
-
     <action id="UpdateIdeFromSources" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesAction">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
