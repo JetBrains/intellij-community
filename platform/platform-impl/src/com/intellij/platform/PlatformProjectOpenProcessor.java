@@ -29,6 +29,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -56,6 +57,7 @@ import java.util.EnumSet;
 
 public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance(PlatformProjectOpenProcessor.class);
+  public static final Key<Boolean> PROJECT_OPENED_BY_PLATFORM_PROCESSOR = Key.create("PROJECT_OPENED_BY_PLATFORM_PROCESSOR");
 
   public enum Option {
     FORCE_NEW_FRAME, TEMP_PROJECT
@@ -222,6 +224,11 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       if (project != null && file != baseDir && !Files.isDirectory(file)) {
         openFileFromCommandLine(project, file, options.line, options.column);
       }
+
+      if (project != null) {
+        project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
+      }
+
       return project;
     }
   }
