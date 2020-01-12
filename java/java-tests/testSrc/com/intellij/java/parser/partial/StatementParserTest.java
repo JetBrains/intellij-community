@@ -185,6 +185,9 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testWhileIncomplete4() { doParserTest("while(cond)"); }
   public void testWhileIncomplete5() { doParserTest("while() foo();"); }
 
+  public void testConstructorRef() { doParserTest("Foo::new"); }
+  public void testConstructorWithTypeParamsRef() { doParserTest("Foo<Integer>::new"); }
+
   private void doBlockParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true));
   }
