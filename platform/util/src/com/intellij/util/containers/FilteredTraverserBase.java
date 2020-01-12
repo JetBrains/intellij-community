@@ -582,7 +582,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
         TreeTraversal adjusted = meta == null ? this : (TreeTraversal)meta.interceptor.fun(original);
 
         tree = new MappedTree(tree, ((MappedTraversal)adjusted).map, meta);
-        roots = JBIterable.from(roots).map(((MappedTree)tree)::map);
+        // Must be a separate variable, otherwise javac 8u201 crashes when compiling this code
+        Function fn = ((MappedTree)tree)::map;
+        roots = JBIterable.from(roots).map(fn);
 
         Function tree0 = tree;
         Condition filter0 = filter;

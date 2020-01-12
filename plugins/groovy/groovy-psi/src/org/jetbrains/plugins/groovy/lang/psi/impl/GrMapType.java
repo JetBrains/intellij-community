@@ -94,7 +94,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   protected abstract LinkedHashMap<String, PsiType> getStringEntries();
 
   @Override
-  public PsiType @NotNull [] getParameters() {
+  public @Nullable PsiType @NotNull [] getParameters() {
     return myParameters.getValue();
   }
 

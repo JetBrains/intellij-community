@@ -6,6 +6,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
   }
 
   @Override
-  public PsiType @NotNull [] getParameters() {
+  public @Nullable PsiType @NotNull [] getParameters() {
     return myParameters.getValue();
   }
 

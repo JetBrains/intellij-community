@@ -115,7 +115,7 @@ public interface ModuleRootModel {
    * @see #getContentEntries()
    * @see #getSourceRoots(boolean)
    */
-  VirtualFile @NotNull [] getSourceRoots();
+  @NotNull VirtualFile @NotNull [] getSourceRoots();
 
   /**
    * Returns an array of source roots from all content entries.
