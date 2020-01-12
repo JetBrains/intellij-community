@@ -5,12 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 /**
  * @author yole
  */
-abstract class BoundConfigurable(private val displayName: String, private val helpTopic: String? = null) : Configurable {
+abstract class BoundConfigurable(@Nls private val displayName: String, @NonNls private val helpTopic: String? = null) : Configurable {
   var disposable: Disposable? = null
     private set
 
