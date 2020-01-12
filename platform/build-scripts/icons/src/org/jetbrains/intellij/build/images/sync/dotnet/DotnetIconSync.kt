@@ -82,10 +82,7 @@ internal object DotnetIconSync {
 
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconsClasses(context.devRepoDir.absolutePath) { module ->
-      // module containing directories in `sync`-list
-      module.name == "rider-icons"
-    }
+    generateIconsClasses(DotnetIconsClasses(context.devRepoDir.absolutePath))
   }
 
   private fun commitChanges(tmpCommit: CommitInfo) {
