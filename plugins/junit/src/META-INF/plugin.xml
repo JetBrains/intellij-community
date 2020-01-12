@@ -101,18 +101,18 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener"/>
-    <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer"/>
+    <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer" dynamic="true"/>
   </extensionPoints>
 
   <actions>
     <group>
-      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" text="Exclude from suite" id="excludeFromSuite"/>
+      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" text="Exclude from Suite" id="excludeFromSuite"/>
       <separator/>
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
     <group>
-      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to JUnit pattern suite"/>
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to JUnit Pattern Suite"/>
       <add-to-group anchor="last" group-id="RunContextGroup"/>
     </group>
   </actions>
