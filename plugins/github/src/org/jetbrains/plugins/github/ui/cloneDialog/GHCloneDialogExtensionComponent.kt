@@ -450,10 +450,15 @@ internal class GHCloneDialogExtensionComponent(
     selectedUrl = null
   }
 
-  private fun getGithubRepoPath(url: String): GHRepositoryCoordinates? {
-    try {
-      if (!url.endsWith(GitUtil.DOT_GIT, true)) return null
 
+  fun getGithubRepoPath(searchText: String): GHRepositoryCoordinates? {
+    val url = searchText
+      .trim()
+      .removePrefix("git clone")
+      .removeSuffix(".git")
+      .trim()
+
+    try {
       var serverPath = GithubServerPath.from(url)
       serverPath = GithubServerPath.from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: ""))
 
