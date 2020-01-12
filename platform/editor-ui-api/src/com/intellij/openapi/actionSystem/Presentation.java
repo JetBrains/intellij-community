@@ -235,7 +235,7 @@ public final class Presentation implements Cloneable {
     return myDescriptionSupplier.get();
   }
 
-  public void setDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) Supplier<String> dynamicDescription) {
+  public void setDescription(@NotNull Supplier<String> dynamicDescription) {
     Supplier<String> oldDescription = myDescriptionSupplier;
     myDescriptionSupplier = dynamicDescription;
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), myDescriptionSupplier.get());
