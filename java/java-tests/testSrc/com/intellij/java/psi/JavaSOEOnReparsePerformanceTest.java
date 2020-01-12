@@ -25,32 +25,12 @@ import org.intellij.lang.annotations.Language;
 
 @SkipSlowTestLocally
 public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase {
-  private StringBuilder myHugeExpr;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  private StringBuilder getHugeExpr() {
     int N = 100_000;
     String expr = "+\"b\"";
-    myHugeExpr = new StringBuilder(N * expr.length() + 10);
-    myHugeExpr.append("\"-\"");
-    myHugeExpr.append(StringUtil.repeat(expr, N));
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      if (myHugeExpr != null) {
-        myHugeExpr.setLength(0);
-        myHugeExpr = null;
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    return new StringBuilder(N * expr.length() + 10)
+    .append("\"-\"")
+    .append(StringUtil.repeat(expr, N));
   }
 
   public void testOnHugeBinaryExprInFile() {
@@ -70,11 +50,16 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
   private void doTest() {
     final int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
-    // replace small expression with huge binary one
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      getEditor().getDocument().replaceString(pos, pos + 2, myHugeExpr);
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    });
+    int hugeExprLength;
+    {
+      // replace small expression with huge binary one
+      CharSequence myHugeExpr = getHugeExpr();
+      hugeExprLength = myHugeExpr.length();
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        getEditor().getDocument().replaceString(pos, pos + 2, myHugeExpr);
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      });
+    }
     doTestConfiguredFile(false, false, null);
 
     // modify huge binary expression (1)
@@ -93,7 +78,7 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
 
     // replace huge binary expression with small one
     ApplicationManager.getApplication().runWriteAction(() -> {
-      getEditor().getDocument().replaceString(pos, pos + myHugeExpr.length(), "\".\"");
+      getEditor().getDocument().replaceString(pos, pos + hugeExprLength, "\".\"");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
     doTestConfiguredFile(false, false, null);
