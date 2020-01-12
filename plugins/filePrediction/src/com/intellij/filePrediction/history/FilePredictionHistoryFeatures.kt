@@ -13,8 +13,12 @@ class FilePredictionHistoryFeatures: FilePredictionFeatureProvider {
   override fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
     val history = FilePredictionHistory.getInstance(project)
-    result["position"] = numerical(history.position(newFile.url))
     result["size"] = numerical(history.size())
+
+    val (position, uniGram, biGram) = history.calcHistoryFeatures(newFile.url)
+    result["position"] = numerical(position)
+    result["unigram"] = numerical(uniGram)
+    result["bigram"] = numerical(biGram)
     return result
   }
 }
