@@ -98,7 +98,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     addLibrary("/content/anno");
   }
 
-  private void addLibrary(@NotNull final String... annotationsDirs) {
+  private void addLibrary(final String @NotNull ... annotationsDirs) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final ModifiableRootModel model = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
       final LibraryTable libraryTable = model.getModuleLibraryTable();

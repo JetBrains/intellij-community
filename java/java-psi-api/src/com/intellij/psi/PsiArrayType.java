@@ -18,7 +18,7 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
     this(componentType, TypeAnnotationProvider.EMPTY);
   }
 
-  public PsiArrayType(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
+  public PsiArrayType(@NotNull PsiType componentType, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myComponentType = componentType;
   }
@@ -84,8 +84,7 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     final PsiType[] superTypes = myComponentType.getSuperTypes();
     final PsiType[] result = createArray(superTypes.length);
     for (int i = 0; i < superTypes.length; i++) {

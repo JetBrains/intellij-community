@@ -48,11 +48,10 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
       }), "value"), new UastInjectionHostReferenceProvider() {
 
 
-      @NotNull
       @Override
-      public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
-                                                          @NotNull PsiLanguageInjectionHost host,
-                                                          @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                                    @NotNull PsiLanguageInjectionHost host,
+                                                                    @NotNull ProcessingContext context) {
         return new PsiReference[]{new ULiteralLanguageReference(uExpression, host)};
       }
     }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
@@ -62,9 +61,8 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
         return PsiUtilEx.isStringOrCharacterLiteral(expression);
       }
     }), new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull ProcessingContext context) {
         final PsiLiteralExpression expression = (PsiLiteralExpression)psiElement;
         final PsiModifierListOwner owner =
           AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);

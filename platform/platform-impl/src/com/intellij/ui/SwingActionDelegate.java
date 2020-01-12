@@ -69,7 +69,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
    * @param actions   a list of supported actions
    */
   @ApiStatus.Experimental
-  public static void configureMapping(@NotNull JComponent base, @NotNull JComponent dependant, @NotNull String... actions) {
+  public static void configureMapping(@NotNull JComponent base, @NotNull JComponent dependant, String @NotNull ... actions) {
     HashMap<String, JComponent> map = new HashMap<>();
     for (String action : actions) map.put(action, dependant);
     configureMapping(base, map::get);

@@ -58,7 +58,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
     super.visitVariableDeclaration(variableDeclaration);
   }
 
-  void checkTupleAssignment(@NotNull GrExpression initializer, @NotNull final PsiType[] types) {
+  void checkTupleAssignment(@NotNull GrExpression initializer, final PsiType @NotNull [] types) {
     if (initializer instanceof GrListOrMap && !((GrListOrMap)initializer).isMap()) {
 
       final GrListOrMap initializerList = (GrListOrMap)initializer;
@@ -86,7 +86,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   @Override
   protected void registerError(@NotNull final PsiElement location,
                                @NotNull final String description,
-                               @Nullable final LocalQuickFix[] fixes,
+                               final LocalQuickFix @Nullable [] fixes,
                                final ProblemHighlightType highlightType) {
     if (highlightType != ProblemHighlightType.GENERIC_ERROR) return;
     final List<IntentionAction> intentions = new ArrayList<>();
@@ -130,7 +130,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
 
   protected void registerError(@NotNull final PsiElement location,
                                @NotNull final String description,
-                               @Nullable final IntentionAction[] fixes,
+                               final IntentionAction @Nullable [] fixes,
                                final ProblemHighlightType highlightType) {
     if (highlightType != ProblemHighlightType.GENERIC_ERROR) return;
     AnnotationBuilder builder = myHolder.newAnnotation(HighlightSeverity.ERROR, description).range(location);

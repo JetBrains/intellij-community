@@ -459,7 +459,7 @@ class CollectMigration extends BaseStreamApiMigration {
      */
     @Nullable
     private static GroupingTerminal tryExtractJava7Style(@NotNull TerminalBlock terminalBlock,
-                                                         @NotNull PsiStatement[] statements,
+                                                         PsiStatement @NotNull [] statements,
                                                          @Nullable List<PsiVariable> nonFinalVariables) {
       if(nonFinalVariables != null && nonFinalVariables.size() != 1) return null;
       if (statements.length != 3) return null;

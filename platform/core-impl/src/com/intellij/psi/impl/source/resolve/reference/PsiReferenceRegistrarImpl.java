@@ -117,7 +117,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     }
   }
 
-  private void registerNamedReferenceProvider(@NotNull String[] names,
+  private void registerNamedReferenceProvider(String @NotNull [] names,
                                               final PsiNamePatternCondition<?> nameCondition,
                                               @NotNull Class scopeClass,
                                               final boolean caseSensitive,

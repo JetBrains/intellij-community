@@ -330,8 +330,7 @@ public class ControlFlowUtil {
     return array;
   }
 
-  @NotNull
-  public static PsiVariable[] getOutputVariables(@NotNull ControlFlow flow, int start, int end, @NotNull int[] exitPoints) {
+  public static PsiVariable @NotNull [] getOutputVariables(@NotNull ControlFlow flow, int start, int end, int @NotNull [] exitPoints) {
     Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, false);
     List<PsiVariable> array = new ArrayList<>();
     for (PsiVariable variable : writtenVariables) {
@@ -355,7 +354,7 @@ public class ControlFlowUtil {
   @NotNull
   public static Collection<PsiStatement> findExitPointsAndStatements(@NotNull ControlFlow flow, final int start, final int end,
                                                                      @NotNull IntArrayList exitPoints,
-                                                                     @NotNull Class<? extends PsiStatement>... classesFilter) {
+                                                                     Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
       return Collections.emptyList();
@@ -412,7 +411,7 @@ public class ControlFlowUtil {
                                   @NotNull IntArrayList exitPoints,
                                   @NotNull Collection<? super PsiStatement> exitStatements,
                                   @NotNull BranchingInstruction instruction,
-                                  final PsiStatement statement, @NotNull Class<? extends PsiStatement>... classesFilter) {
+                                  final PsiStatement statement, Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (statement == null) return;
     int gotoOffset = instruction.offset;
     if (start > gotoOffset || gotoOffset >= end || isElementOfClass(statement, classesFilter)) {
@@ -438,14 +437,14 @@ public class ControlFlowUtil {
 
   @SafeVarargs
   private static void processGotoStatement(@NotNull Collection<? super PsiStatement> exitStatements,
-                                           PsiStatement statement, @NotNull Class<? extends PsiStatement>... classesFilter) {
+                                           PsiStatement statement, Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (statement != null && isElementOfClass(statement, classesFilter)) {
       exitStatements.add(statement);
     }
   }
 
   @SafeVarargs
-  private static boolean isElementOfClass(@NotNull PsiElement element, @NotNull Class<? extends PsiStatement>... classesFilter) {
+  private static boolean isElementOfClass(@NotNull PsiElement element, Class<? extends PsiStatement> @NotNull ... classesFilter) {
     for (Class<? extends PsiStatement> aClassesFilter : classesFilter) {
       if (ReflectionUtil.isAssignable(aClassesFilter, element.getClass())) {
         return true;
@@ -505,7 +504,7 @@ public class ControlFlowUtil {
   public static boolean hasObservableThrowExitPoints(@NotNull final ControlFlow flow,
                                                      final int flowStart,
                                                      final int flowEnd,
-                                                     @NotNull PsiElement[] elements,
+                                                     PsiElement @NotNull [] elements,
                                                      @NotNull PsiElement enclosingCodeFragment) {
     final List<Instruction> instructions = flow.getInstructions();
     class Worker {
@@ -1338,8 +1337,7 @@ public class ControlFlowUtil {
       }
 
       @Override
-      @NotNull
-      public boolean[] getResult() {
+      public boolean @NotNull [] getResult() {
         return maybeUnassigned;
       }
     }
@@ -1779,7 +1777,7 @@ public class ControlFlowUtil {
       this(Collections.emptyList());
     }
 
-    CopyOnWriteList(@NotNull VariableInfo... infos) {
+    CopyOnWriteList(VariableInfo @NotNull ... infos) {
       this(Arrays.asList(infos));
     }
 
@@ -1826,7 +1824,7 @@ public class ControlFlowUtil {
     }
   }
 
-  private static void merge(int offset, CopyOnWriteList source, @NotNull CopyOnWriteList[] target) {
+  private static void merge(int offset, CopyOnWriteList source, CopyOnWriteList @NotNull [] target) {
     if (source != null) {
       CopyOnWriteList existing = target[offset];
       target[offset] = existing == null ? source : existing.addAll(source);
@@ -2160,7 +2158,7 @@ public class ControlFlowUtil {
   }
 
   private static boolean areInstructionsReachable(@NotNull final ControlFlow flow,
-                                                  @NotNull final int[] instructionOffsets,
+                                                  final int @NotNull [] instructionOffsets,
                                                   final int startOffset) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
       private boolean reachable;
@@ -2233,8 +2231,7 @@ public class ControlFlowUtil {
       }
     }
 
-    @NotNull
-    int[] getNextOffsets(int offset) {
+    int @NotNull [] getNextOffsets(int offset) {
       return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
@@ -2302,7 +2299,7 @@ public class ControlFlowUtil {
   }
 
   private static boolean areInstructionsReachableWithCalls(@NotNull final ControlFlow flow,
-                                                           @NotNull final int[] instructionOffsets,
+                                                           final int @NotNull [] instructionOffsets,
                                                            final int startOffset) {
     ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
       @Override

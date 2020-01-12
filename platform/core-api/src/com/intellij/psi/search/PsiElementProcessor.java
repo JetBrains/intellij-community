@@ -49,8 +49,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       myCollection = Collections.synchronizedCollection(collection);
     }
 
-    @NotNull
-    public PsiElement[] toArray() {
+    public PsiElement @NotNull [] toArray() {
       return PsiUtilCore.toPsiElementArray(myCollection);
     }
 
@@ -59,8 +58,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       return myCollection;
     }
 
-    @NotNull
-    public T[] toArray(T[] array) {
+    public T @NotNull [] toArray(T[] array) {
       return myCollection.toArray(array);
     }
 

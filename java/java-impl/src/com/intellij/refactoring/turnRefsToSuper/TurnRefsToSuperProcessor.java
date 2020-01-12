@@ -45,7 +45,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new RefsToSuperViewDescriptor(myClass, mySuper);
   }
 
@@ -55,8 +55,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(
       PsiReference.EMPTY_ARRAY);
 
@@ -67,7 +66,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   @Override
-  protected void refreshElements(@NotNull final PsiElement[] elements) {
+  protected void refreshElements(final PsiElement @NotNull [] elements) {
     LOG.assertTrue(elements.length == 2 && elements[0] instanceof PsiClass && elements[1] instanceof PsiClass);
     setClasses ((PsiClass) elements[0], (PsiClass) elements[1]);
   }
@@ -90,7 +89,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     try {
       final PsiClass aSuper = mySuper;
       processTurnToSuperRefs(usages, aSuper);

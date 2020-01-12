@@ -36,8 +36,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   @Override
-  @NotNull
-  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+  public Object @NotNull [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 

@@ -328,8 +328,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * Null is returned if at least one of this state classes contains values which do not belong to the same
    * class in that state
    */
-  @Nullable
-  private int[] getClassesMap(DfaMemoryStateImpl that) {
+  private int @Nullable [] getClassesMap(DfaMemoryStateImpl that) {
     List<EqClass> thisClasses = this.myEqClasses;
     List<EqClass> thatClasses = that.myEqClasses;
     int thisSize = thisClasses.size();

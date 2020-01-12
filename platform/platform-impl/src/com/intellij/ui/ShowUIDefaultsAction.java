@@ -458,8 +458,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   }
 
 
-  @NotNull
-  private static Object[][] getUIDefaultsData() {
+  private static Object[] @NotNull [] getUIDefaultsData() {
     final UIDefaults defaults = UIManager.getDefaults();
     Enumeration keys = defaults.keys();
     final Object[][] data = new Object[defaults.size()][2];

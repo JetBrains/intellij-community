@@ -136,8 +136,7 @@ public abstract class PsiDocumentManager {
    * @return the list of uncommitted documents.
    * @see #commitDocument(Document)
    */
-  @NotNull
-  public abstract Document[] getUncommittedDocuments();
+  public abstract Document @NotNull [] getUncommittedDocuments();
 
   /**
    * Checks if the specified document has been committed.

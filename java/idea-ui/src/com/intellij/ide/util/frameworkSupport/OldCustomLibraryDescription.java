@@ -45,7 +45,7 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
   private final DownloadableLibraryDescription myDownloadableDescription;
   private final List<? extends FrameworkVersion> myVersions;
 
-  public OldCustomLibraryDescription(@NotNull LibraryInfo[] libraryInfos, @NotNull String defaultLibraryName) {
+  public OldCustomLibraryDescription(LibraryInfo @NotNull [] libraryInfos, @NotNull String defaultLibraryName) {
     this(Collections.singletonList(new FrameworkVersion(defaultLibraryName, defaultLibraryName, libraryInfos, true)), defaultLibraryName);
   }
 

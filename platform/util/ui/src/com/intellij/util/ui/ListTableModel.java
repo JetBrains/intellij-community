@@ -15,19 +15,19 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
   private boolean myIsSortable = false;
   private SortOrder mySortOrder = SortOrder.ASCENDING;
 
-  public ListTableModel(@NotNull ColumnInfo... columnInfos) {
+  public ListTableModel(ColumnInfo @NotNull ... columnInfos) {
     this(columnInfos, new ArrayList<>(), 0, SortOrder.ASCENDING);
   }
 
-  public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn) {
+  public ListTableModel(ColumnInfo @NotNull [] columnNames, @NotNull List<Item> items, int selectedColumn) {
     this(columnNames, items, selectedColumn, SortOrder.ASCENDING);
   }
 
-  public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items) {
+  public ListTableModel(ColumnInfo @NotNull [] columnNames, @NotNull List<Item> items) {
     this(columnNames, items, 0);
   }
 
-  public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn, @NotNull SortOrder order) {
+  public ListTableModel(ColumnInfo @NotNull [] columnNames, @NotNull List<Item> items, int selectedColumn, @NotNull SortOrder order) {
     myColumnInfos = columnNames;
     myItems = items;
     mySortByColumn = selectedColumn;

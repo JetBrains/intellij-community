@@ -38,8 +38,7 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
     return className;
   }
 
-  @Nullable
-  public String[] getCategories() {
+  public String @Nullable [] getCategories() {
     if (categoryKey != null) {
       final String baseName = bundleName != null ? bundleName : getPluginDescriptor().getResourceBundleBaseName();
       if (baseName == null) {

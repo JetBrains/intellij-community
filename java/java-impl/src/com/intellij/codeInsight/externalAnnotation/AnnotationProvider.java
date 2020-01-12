@@ -16,8 +16,7 @@ public interface AnnotationProvider {
 
   boolean isAvailable(PsiModifierListOwner owner);
 
-  @NotNull
-  default String[] getAnnotationsToRemove(Project project) {
+  default String @NotNull [] getAnnotationsToRemove(Project project) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 

@@ -52,7 +52,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     this(psiElement, PsiElement.EMPTY_ARRAY, factory);
   }
 
-  public JavaFindUsagesHandler(@NotNull PsiElement psiElement, @NotNull PsiElement[] elementsToSearch, @NotNull JavaFindUsagesHandlerFactory factory) {
+  public JavaFindUsagesHandler(@NotNull PsiElement psiElement, PsiElement @NotNull [] elementsToSearch, @NotNull JavaFindUsagesHandlerFactory factory) {
     super(psiElement);
     myElementsToSearch = elementsToSearch;
     myFactory = factory;
@@ -88,8 +88,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                Messages.getQuestionIcon()) == Messages.OK;
   }
 
-  @NotNull
-  private static PsiElement[] getParameterElementsToSearch(@NotNull PsiParameter parameter, @NotNull PsiMethod method) {
+  private static PsiElement @NotNull [] getParameterElementsToSearch(@NotNull PsiParameter parameter, @NotNull PsiMethod method) {
     PsiMethod[] overrides = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     for (int i = 0; i < overrides.length; i++) {
       final PsiElement navigationElement = overrides[i].getNavigationElement();
@@ -124,8 +123,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
 
   @Override
-  @NotNull
-  public PsiElement[] getPrimaryElements() {
+  public PsiElement @NotNull [] getPrimaryElements() {
     final PsiElement element = getPsiElement();
     if (element instanceof PsiParameter) {
       final PsiParameter parameter = (PsiParameter)element;
@@ -150,8 +148,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getSecondaryElements() {
+  public PsiElement @NotNull [] getSecondaryElements() {
     PsiElement element = getPsiElement();
     if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
     if (element instanceof PsiField) {

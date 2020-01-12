@@ -263,9 +263,8 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   public static class Template implements SurroundDescriptor, Surrounder {
     private final Surrounder[] mySurrounders = {this};
 
-    @NotNull
     @Override
-    public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+    public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
       if (!PsiUtil.isLanguageLevel7OrHigher(file)) return PsiElement.EMPTY_ARRAY;
       PsiElement element = file.findElementAt(endOffset);
       PsiElement target = findExpression(element);
@@ -275,9 +274,8 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       return target != null ? new PsiElement[]{target} : PsiElement.EMPTY_ARRAY;
     }
 
-    @NotNull
     @Override
-    public Surrounder[] getSurrounders() {
+    public Surrounder @NotNull [] getSurrounders() {
       return mySurrounders;
     }
 
@@ -292,13 +290,13 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     }
 
     @Override
-    public boolean isApplicable(@NotNull PsiElement[] elements) {
+    public boolean isApplicable(PsiElement @NotNull [] elements) {
       return elements.length == 1 && (findExpression(elements[0]) != null || findVariable(elements[0]) != null);
     }
 
     @Nullable
     @Override
-    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) {
+    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
       if (elements.length == 1) {
         new SurroundAutoCloseableAction().invoke(project, editor, elements[0]);
       }

@@ -305,7 +305,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project,
-                         @NotNull CommonProblemDescriptor[] descriptors,
+                         CommonProblemDescriptor @NotNull [] descriptors,
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
       final List<PsiElement> elementsToFix = new ArrayList<>();

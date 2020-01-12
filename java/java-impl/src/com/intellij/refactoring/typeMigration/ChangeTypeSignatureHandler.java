@@ -54,7 +54,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
     final PsiElement element = elements[0];
     invokeOnElement(project, element);
@@ -86,7 +86,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   }
 
   private static void invoke(@NotNull Project project,
-                             @NotNull PsiElement[] roots,
+                             PsiElement @NotNull [] roots,
                              @Nullable Editor editor) {
     if (Util.canBeMigrated(roots)) {
       TypeMigrationDialog dialog = new TypeMigrationDialog.SingleElement(project, roots);
@@ -99,8 +99,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
 
   }
 
-  @NotNull
-  private static PsiElement[] extractReferencedVariables(@NotNull PsiTypeElement typeElement) {
+  private static PsiElement @NotNull [] extractReferencedVariables(@NotNull PsiTypeElement typeElement) {
     final PsiElement parent = typeElement.getParent();
     if (parent instanceof PsiVariable) {
       if (parent instanceof PsiField) {

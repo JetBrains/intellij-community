@@ -10,15 +10,13 @@ import com.intellij.sh.psi.ShVariable;
 import org.jetbrains.annotations.NotNull;
 
 public class ShPsiImplUtil {
-  @NotNull
-  static PsiReference[] getReferences(@NotNull ShLiteral o) {
+  static PsiReference @NotNull [] getReferences(@NotNull ShLiteral o) {
     return o instanceof ShString || o.getWord() != null
            ? ReferenceProvidersRegistry.getReferencesFromProviders(o)
            : PsiReference.EMPTY_ARRAY;
   }
 
-  @NotNull
-  static PsiReference[] getReferences(@NotNull ShVariable o) {
+  static PsiReference @NotNull [] getReferences(@NotNull ShVariable o) {
     return ShSupport.getInstance().getVariableReferences(o);
   }
 }

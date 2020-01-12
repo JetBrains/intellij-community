@@ -48,8 +48,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   }
 
   @Override
-  @NotNull
-  public String[] getSourceRootUrls(boolean includingTests) {
+  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
     return myDelegate.getSourceRootUrls(includingTests);
   }
 

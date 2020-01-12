@@ -93,11 +93,11 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return elementInRange;
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {
     return parseStringCharacters(chars, outChars, sourceOffsets, true, true, '"', '\'');
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets, boolean slashMustBeEscaped, boolean exitOnEscapingWrongSymbol, @NotNull char... endChars) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets, boolean slashMustBeEscaped, boolean exitOnEscapingWrongSymbol, char @NotNull ... endChars) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);

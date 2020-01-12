@@ -38,10 +38,10 @@ class UsageNodeTreeBuilder {
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
 
-  UsageNodeTreeBuilder(@NotNull UsageTarget[] targets,
-                       @NotNull UsageGroupingRule[] groupingRules,
-                       @NotNull UsageFilteringRule[] filteringRules,
-                       @NotNull GroupNode root, 
+  UsageNodeTreeBuilder(UsageTarget @NotNull [] targets,
+                       UsageGroupingRule @NotNull [] groupingRules,
+                       UsageFilteringRule @NotNull [] filteringRules,
+                       @NotNull GroupNode root,
                        @NotNull Project project) {
     myTargets = targets;
     myGroupingRules = groupingRules;
@@ -50,11 +50,11 @@ class UsageNodeTreeBuilder {
     myProject = project;
   }
 
-  public void setGroupingRules(@NotNull UsageGroupingRule[] rules) {
+  public void setGroupingRules(UsageGroupingRule @NotNull [] rules) {
     myGroupingRules = rules;
   }
 
-  void setFilteringRules(@NotNull UsageFilteringRule[] rules) {
+  void setFilteringRules(UsageFilteringRule @NotNull [] rules) {
     myFilteringRules = rules;
   }
 

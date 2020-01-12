@@ -48,14 +48,14 @@ public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
   }
 
   @Override
-  public FacetLibrariesValidator createLibrariesValidator(@NotNull final LibraryInfo[] libraries, final FacetLibrariesValidatorDescription description,
+  public FacetLibrariesValidator createLibrariesValidator(final LibraryInfo @NotNull [] libraries, final FacetLibrariesValidatorDescription description,
                                                           final FacetEditorContext context,
                                                           final FacetValidatorsManager validatorsManager) {
     return new FacetLibrariesValidatorImpl(libraries, description, new DelegatingLibrariesValidatorContext(context), validatorsManager);
   }
 
   @Override
-  public FacetLibrariesValidator createLibrariesValidator(@NotNull final LibraryInfo[] libraries, @NotNull final Module module, @NotNull final String libraryName) {
+  public FacetLibrariesValidator createLibrariesValidator(final LibraryInfo @NotNull [] libraries, @NotNull final Module module, @NotNull final String libraryName) {
     return new FacetLibrariesValidatorImpl(libraries, new FacetLibrariesValidatorDescription(libraryName), new LibrariesValidatorContextImpl(module), null);
   }
 

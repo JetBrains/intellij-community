@@ -46,10 +46,9 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
     myAcceptedFileTypes = ContainerUtil.map2Set(acceptedFileExtensions, fileTypeManager::getFileTypeByExtension);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element,
-                                               @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element,
+                                                         @NotNull ProcessingContext context) {
     final String value = ((XmlAttributeValue)element).getValue();
     if (mySupportCommaInValue && value.contains(",")) {
       int startIdx = 0;

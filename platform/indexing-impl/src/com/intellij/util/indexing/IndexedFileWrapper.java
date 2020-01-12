@@ -17,9 +17,8 @@ class IndexedFileWrapper implements FileContent {
         myFile = file;
     }
 
-    @NotNull
     @Override
-    public byte[] getContent() {
+    public byte @NotNull [] getContent() {
         throw new UnsupportedOperationException();
     }
 

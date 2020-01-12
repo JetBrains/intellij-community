@@ -54,7 +54,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     performInvoke(project, null, dataContext);
   }
 
@@ -130,8 +130,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     return ContainerUtil.find(references, JavaFxPropertyRenameHandler::isKnown);
   }
 
-  @NotNull
-  private static PsiReference[] getReferences(DataContext dataContext) {
+  private static PsiReference @NotNull [] getReferences(DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 

@@ -71,8 +71,7 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
     }
 
     @Override
-    @NotNull
-    public SuppressIntentionAction[] getSuppressActions(XPathInspection inspection) {
+    public SuppressIntentionAction @NotNull [] getSuppressActions(XPathInspection inspection) {
         final List<SuppressIntentionAction> actions = InspectionUtil.getSuppressActions(inspection, true);
         return actions.toArray(SuppressIntentionAction.EMPTY_ARRAY);
     }

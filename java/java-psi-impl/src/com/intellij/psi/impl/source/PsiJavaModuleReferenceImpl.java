@@ -28,9 +28,8 @@ public class PsiJavaModuleReferenceImpl extends PsiReferenceBase.Poly<PsiJavaMod
     return (PsiJavaModule)super.resolve();
   }
 
-  @NotNull
   @Override
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return ResolveCache.getInstance(getProject()).resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
   }
 
@@ -51,9 +50,8 @@ public class PsiJavaModuleReferenceImpl extends PsiReferenceBase.Poly<PsiJavaMod
   private static class Resolver implements ResolveCache.PolyVariantResolver<PsiJavaModuleReferenceImpl> {
     private static final ResolveCache.PolyVariantResolver<PsiJavaModuleReferenceImpl> INSTANCE = new Resolver();
 
-    @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull PsiJavaModuleReferenceImpl reference, boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull PsiJavaModuleReferenceImpl reference, boolean incompleteCode) {
       PsiJavaModuleReferenceElement refElement = reference.getElement();
       PsiFile file = refElement.getContainingFile();
       String moduleName = reference.getCanonicalText();

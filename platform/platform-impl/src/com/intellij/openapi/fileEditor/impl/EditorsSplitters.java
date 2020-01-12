@@ -292,8 +292,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     mySplittersElement = element;
   }
 
-  @NotNull
-  public VirtualFile[] getOpenFiles() {
+  public VirtualFile @NotNull [] getOpenFiles() {
     Set<VirtualFile> files = new ArrayListSet<>();
     for (EditorWindow myWindow : myWindows) {
       for (EditorWithProviderComposite editor : myWindow.getEditors()) {
@@ -303,8 +302,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
-  @NotNull
-  public VirtualFile[] getSelectedFiles() {
+  public VirtualFile @NotNull [] getSelectedFiles() {
     final Set<VirtualFile> files = new ArrayListSet<>();
     for (final EditorWindow window : myWindows) {
       final VirtualFile file = window.getSelectedFile();
@@ -326,8 +324,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return virtualFiles;
   }
 
-  @NotNull
-  public FileEditor[] getSelectedEditors() {
+  public FileEditor @NotNull [] getSelectedEditors() {
     Set<EditorWindow> windows = new THashSet<>(myWindows);
     final EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null) {
@@ -655,9 +652,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   /**
    * @deprecated Use {@link #getEditorComposites()}
    */
-  @NotNull
   @Deprecated
-  public EditorWithProviderComposite[] getEditorsComposites() {
+  public EditorWithProviderComposite @NotNull [] getEditorsComposites() {
     return getEditorComposites().toArray(new EditorWithProviderComposite[0]);
   }
 
@@ -695,8 +691,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return res;
   }
 
-  @NotNull
-  public EditorWindow [] getWindows() {
+  public EditorWindow @NotNull [] getWindows() {
     return myWindows.toArray(new EditorWindow[0]);
   }
 

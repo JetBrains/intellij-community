@@ -32,6 +32,6 @@ public interface PropertyCreationHandler {
                       @NotNull Collection<PropertiesFile> propertiesFiles,
                       @NotNull String key,
                       @NotNull String value,
-                      @NotNull PsiExpression[] parameters) throws IncorrectOperationException;
+                      PsiExpression @NotNull [] parameters) throws IncorrectOperationException;
 
 }

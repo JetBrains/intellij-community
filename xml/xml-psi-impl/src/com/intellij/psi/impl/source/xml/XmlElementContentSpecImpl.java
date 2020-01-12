@@ -84,8 +84,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 

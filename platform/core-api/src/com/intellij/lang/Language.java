@@ -57,11 +57,11 @@ public abstract class Language extends UserDataHolderBase {
     this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NonNls @NotNull String ID, @NonNls @NotNull String... mimeTypes) {
+  protected Language(@NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 
-  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls @NotNull String... mimeTypes) {
+  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
     if (baseLanguage instanceof MetaLanguage) {
       throw new ImplementationConflictException(
         "MetaLanguage cannot be a base language.\n" +
@@ -154,8 +154,7 @@ public abstract class Language extends UserDataHolderBase {
    *
    * @return The list of MIME types.
    */
-  @NotNull
-  public String[] getMimeTypes() {
+  public String @NotNull [] getMimeTypes() {
     return myMimeTypes;
   }
 

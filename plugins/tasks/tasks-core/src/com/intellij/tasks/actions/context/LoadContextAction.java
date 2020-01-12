@@ -189,9 +189,8 @@ public class LoadContextAction extends BaseTaskAction {
         loadAction.actionPerformed(e);
       }
 
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return new AnAction[]{loadAction,
           new AnAction("Remove") {
             @Override

@@ -35,9 +35,8 @@ public class PyLanguageInjectionSupport extends AbstractLanguageInjectionSupport
     return SUPPORT_ID;
   }
 
-  @NotNull
   @Override
-  public Class[] getPatternClasses() {
+  public Class @NotNull [] getPatternClasses() {
     return new Class[] { PythonPatterns.class };
   }
 

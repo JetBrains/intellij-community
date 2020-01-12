@@ -48,15 +48,14 @@ public class DomFileDescription<T> {
   private final Map<String, NotNullFunction<XmlTag, List<String>>> myNamespacePolicies =
     ContainerUtil.newConcurrentMap();
 
-  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls @NotNull String... allPossibleRootTagNamespaces) {
+  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls String @NotNull ... allPossibleRootTagNamespaces) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
     myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY
                                                                               : allPossibleRootTagNamespaces;
   }
 
-  @NotNull
-  public String[] getAllPossibleRootTagNamespaces() {
+  public String @NotNull [] getAllPossibleRootTagNamespaces() {
     return myAllPossibleRootTagNamespaces;
   }
 

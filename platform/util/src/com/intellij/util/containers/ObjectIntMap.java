@@ -35,8 +35,7 @@ public interface ObjectIntMap<K> {
 
   boolean isEmpty();
 
-  @NotNull
-  int[] values();
+  int @NotNull [] values();
 
   boolean containsValue(int value);
 

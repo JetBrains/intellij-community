@@ -59,9 +59,8 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
     return GrIntroduceParameterHandler.getRefactoringName();
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return ArrayUtilRt.toStringArray(mySuggestedNames);
   }
 

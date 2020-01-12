@@ -63,9 +63,8 @@ public class DirDiffDialog extends DialogWrapper {
     return myDiffPanel.getTable();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{};
   }
 

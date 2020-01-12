@@ -49,8 +49,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return an array with the root configurable group
    */
-  @NotNull
-  public static ConfigurableGroup[] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
+  public static ConfigurableGroup @NotNull [] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
     ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
     return new ConfigurableGroup[]{group};
   }
@@ -79,7 +78,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... groups) {
+  public void showSettingsDialog(@NotNull Project project, ConfigurableGroup @NotNull ... groups) {
     try {
       getDialog(project, Arrays.asList(groups), null).show();
     }

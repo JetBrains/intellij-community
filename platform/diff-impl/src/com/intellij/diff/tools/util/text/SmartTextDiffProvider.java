@@ -95,8 +95,8 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                 @NotNull Runnable rediff,
                                 @NotNull Disposable disposable,
                                 @NotNull DiffIgnoredRangeProvider ignoredRangeProvider,
-                                @NotNull IgnorePolicy[] ignorePolicies,
-                                @NotNull HighlightPolicy[] highlightPolicies) {
+                                IgnorePolicy @NotNull [] ignorePolicies,
+                                HighlightPolicy @NotNull [] highlightPolicies) {
     super(settings, rediff, disposable, ignorePolicies, highlightPolicies);
     myProject = project;
     myContent1 = content1;

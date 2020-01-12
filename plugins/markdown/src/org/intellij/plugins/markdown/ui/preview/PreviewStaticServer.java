@@ -32,8 +32,7 @@ public class PreviewStaticServer extends HttpRequestHandler {
   private static final Logger LOG = Logger.getInstance(PreviewStaticServer.class);
   private static final String PREFIX = "/4f800f8a-bbed-4dd8-b03c-00449c9f6698/";
 
-  @Nullable
-  private byte[] myInlineStyleBytes = null;
+  private byte @Nullable [] myInlineStyleBytes = null;
   private long myInlineStyleTimestamp = 0;
 
   public static PreviewStaticServer getInstance() {

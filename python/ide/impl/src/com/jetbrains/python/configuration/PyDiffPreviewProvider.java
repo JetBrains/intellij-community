@@ -25,9 +25,8 @@ import org.jetbrains.annotations.NotNull;
  * @author oleg
  */
 public class PyDiffPreviewProvider extends DiffPreviewProvider {
-  @NotNull
   @Override
-  public DiffContent[] createContents() {
+  public DiffContent @NotNull [] createContents() {
     return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, PythonFileType.INSTANCE);
   }
 

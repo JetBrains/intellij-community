@@ -41,7 +41,7 @@ public abstract class FindManager {
 
   public abstract void setPreviousFindModel(FindModel previousFindModel);
 
-  public abstract void showSettingsAndFindUsages(@NotNull NavigationItem[] targets);
+  public abstract void showSettingsAndFindUsages(NavigationItem @NotNull [] targets);
 
   /**
    * Returns the find manager instance for the specified project.

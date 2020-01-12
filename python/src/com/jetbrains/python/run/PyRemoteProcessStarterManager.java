@@ -47,7 +47,7 @@ public interface PyRemoteProcessStarterManager {
 
   @NotNull
   ProcessOutput executeRemoteProcess(@Nullable Project project,
-                                     @NotNull String[] command,
+                                     String @NotNull [] command,
                                      @Nullable String workingDir,
                                      @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
                                      @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;

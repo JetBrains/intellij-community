@@ -128,7 +128,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       registerProblem(branch, branch.getDefaultBranchMessage(), branch.newDeleteCaseFix(), branch.newMergeWithDefaultFix());
     }
 
-    private void registerProblem(@NotNull BranchBase duplicate, @NotNull String message, @NotNull LocalQuickFix... fixes) {
+    private void registerProblem(@NotNull BranchBase duplicate, @NotNull String message, LocalQuickFix @NotNull ... fixes) {
       ProblemDescriptor descriptor = InspectionManager.getInstance(myHolder.getProject())
         .createProblemDescriptor(duplicate.myStatements[0], duplicate.myStatements[duplicate.myStatements.length - 1],
                                  message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -465,12 +465,12 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
   private static abstract class BranchBase<T extends PsiSwitchLabelStatementBase> {
     @NotNull protected final T myLabel;
-    @NotNull protected final PsiStatement[] myStatements;
-    @NotNull protected final String[] myCommentTexts;
+    protected final PsiStatement @NotNull [] myStatements;
+    protected final String @NotNull [] myCommentTexts;
     private final boolean myIsDefault;
     private DuplicatesFinder myFinder;
 
-    BranchBase(@NotNull T[] labels, @NotNull PsiStatement[] statements, @NotNull String[] commentTexts) {
+    BranchBase(T @NotNull [] labels, PsiStatement @NotNull [] statements, String @NotNull [] commentTexts) {
       LOG.assertTrue(labels.length != 0, "labels.length");
       LOG.assertTrue(statements.length != 0, "statements.length");
 
@@ -538,7 +538,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    private static DuplicatesFinder createFinder(@NotNull PsiStatement[] statements) {
+    private static DuplicatesFinder createFinder(PsiStatement @NotNull [] statements) {
       Project project = statements[0].getProject();
       InputVariables noVariables = new InputVariables(Collections.emptyList(), project, new LocalSearchScope(statements), false, Collections.emptySet());
       return new DuplicatesFinder(statements, noVariables, null, Collections.emptyList());
@@ -624,7 +624,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       return Objects.hashCode(reference.getReferenceName()) * 31 + index;
     }
 
-    static int hashStatements(@NotNull PsiStatement[] statements) {
+    static int hashStatements(PsiStatement @NotNull [] statements) {
       int hash = statements.length;
       for (PsiStatement statement : statements) {
         hash = hash * 31 + hashElement(statement, 2); // Don't want to hash the whole PSI tree because it might be quite slow
@@ -638,7 +638,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     private final boolean myIsSimpleExit;
     private final boolean myCanFallThrough;
 
-    Branch(@NotNull PsiSwitchLabelStatement[] labels, @NotNull List<PsiStatement> statementList, boolean hasImplicitBreak, @NotNull String[] comments) {
+    Branch(PsiSwitchLabelStatement @NotNull [] labels, @NotNull List<PsiStatement> statementList, boolean hasImplicitBreak, String @NotNull [] comments) {
       super(labels, statementsWithoutTrailingBreak(statementList), comments);
 
       int lastIndex = statementList.size() - 1;
@@ -779,7 +779,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   private static class Rule extends BranchBase<PsiSwitchLabeledRuleStatement> {
     private final boolean myIsSimpleExit;
 
-    Rule(@NotNull PsiSwitchLabeledRuleStatement rule, @NotNull PsiStatement body, @NotNull String[] commentTexts) {
+    Rule(@NotNull PsiSwitchLabeledRuleStatement rule, @NotNull PsiStatement body, String @NotNull [] commentTexts) {
       super(new PsiSwitchLabeledRuleStatement[]{rule}, new PsiStatement[]{body}, commentTexts);
       myIsSimpleExit = body instanceof PsiExpressionStatement || body instanceof PsiThrowStatement;
     }

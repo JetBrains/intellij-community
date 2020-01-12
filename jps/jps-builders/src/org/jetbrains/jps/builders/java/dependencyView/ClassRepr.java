@@ -172,8 +172,7 @@ public class ClassRepr extends ClassFileRepr {
     };
   }
 
-  @NotNull
-  public int[] getSupers() {
+  public int @NotNull [] getSupers() {
     final int[] result = new int[myInterfaces.size() + 1];
 
     result[0] = mySuperClass.className;

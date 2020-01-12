@@ -192,14 +192,13 @@ public class JavaSharedImplUtil {
     private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;
 
-    private FilteringTypeAnnotationProvider(@NotNull PsiAnnotation[] candidates, @NotNull TypeAnnotationProvider originalProvider) {
+    private FilteringTypeAnnotationProvider(PsiAnnotation @NotNull [] candidates, @NotNull TypeAnnotationProvider originalProvider) {
       myCandidates = candidates;
       myOriginalProvider = originalProvider;
     }
 
-    @NotNull
     @Override
-    public PsiAnnotation[] getAnnotations() {
+    public PsiAnnotation @NotNull [] getAnnotations() {
       PsiAnnotation[] result = myCache;
       if (result == null) {
         List<PsiAnnotation> filtered = JBIterable.of(myCandidates)

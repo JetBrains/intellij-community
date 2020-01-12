@@ -260,7 +260,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   }
 
   @NotNull
-  private static <T> Set<T> remove(@NotNull Set<? extends T> original, @NotNull Set<T>... toRemove) {
+  private static <T> Set<T> remove(@NotNull Set<? extends T> original, Set<T> @NotNull ... toRemove) {
     Set<T> result = newHashSet(original);
     for (Set<T> set : toRemove) {
       result.removeAll(set);

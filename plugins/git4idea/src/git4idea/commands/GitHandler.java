@@ -191,7 +191,7 @@ public abstract class GitHandler {
     myWithNoTty = true;
   }
 
-  public void addParameters(@NonNls @NotNull String... parameters) {
+  public void addParameters(@NonNls String @NotNull ... parameters) {
     addParameters(Arrays.asList(parameters));
   }
 
@@ -217,7 +217,7 @@ public abstract class GitHandler {
     return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd");
   }
 
-  public void addRelativePaths(@NotNull FilePath... parameters) {
+  public void addRelativePaths(FilePath @NotNull ... parameters) {
     addRelativePaths(Arrays.asList(parameters));
   }
 

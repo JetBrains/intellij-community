@@ -26,7 +26,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     this(reference, level, collectAnnotations(reference));
   }
 
-  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull PsiAnnotation[] annotations) {
+  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, PsiAnnotation @NotNull [] annotations) {
     super(level, annotations);
     myReference = ClassReferencePointer.constant(reference);
   }
@@ -40,8 +40,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     myReference = reference;
   }
 
-  @NotNull
-  private static PsiAnnotation[] collectAnnotations(PsiJavaCodeReferenceElement reference) {
+  private static PsiAnnotation @NotNull [] collectAnnotations(PsiJavaCodeReferenceElement reference) {
     List<PsiAnnotation> result = null;
     for (PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiAnnotation) {
@@ -77,9 +76,8 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     return getReference().getResolveScope();
   }
 
-  @NotNull
   @Override
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     return getAnnotations(true);
   }
 
@@ -206,8 +204,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     return getReference().getTypeParameters();
   }
 

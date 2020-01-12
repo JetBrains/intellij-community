@@ -49,9 +49,8 @@ public class SerializableHasSerializationMethodsInspection extends SerializableI
     }
   }
 
-  @NotNull
   @Override
-  protected JComponent[] createAdditionalOptions() {
+  protected JComponent @NotNull [] createAdditionalOptions() {
     return new JComponent[] {new CheckBox(InspectionGadgetsBundle.message("serializable.has.serialization.methods.ignore.option"),
                                           this, "ignoreClassWithoutFields")};
   }

@@ -93,9 +93,8 @@ public class GitSmartOperationDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     if (myForceButton != null) {
       return new Action[]{new ForceCheckoutAction(myForceButton, myOperationTitle)};
     }

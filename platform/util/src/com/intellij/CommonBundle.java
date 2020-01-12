@@ -20,7 +20,7 @@ public final class CommonBundle extends BundleBase {
 
   @Nls
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return message(getCommonBundle(), key, params);
   }
 
@@ -34,7 +34,7 @@ public final class CommonBundle extends BundleBase {
   public static String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
                                         @Nullable String defaultValue,
-                                        @NotNull Object... params) {
+                                        Object @NotNull ... params) {
     if (bundle == null) {
       return defaultValue;
     }
@@ -46,12 +46,12 @@ public final class CommonBundle extends BundleBase {
 
   @Nls
   @NotNull
-  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, @NotNull Object... params) {
+  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return BundleBase.message(bundle, key, params);
   }
 
   @Nullable
-  public static String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key, @NotNull Object... params) {
+  public static String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     String value = messageOrDefault(bundle, key, key, params);
     if (key.equals(value)) return null;
     return value;

@@ -43,7 +43,7 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
 
   @NotNull
   @Override
-  public DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
+  public DirectoryProcessingResult detectRoots(@NotNull File dir, File @NotNull [] children, @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
     for (File child : children) {
       if (child.getName().equals("build.gradle")) return DirectoryProcessingResult.PROCESS_CHILDREN;

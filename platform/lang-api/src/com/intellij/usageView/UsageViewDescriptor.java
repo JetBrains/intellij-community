@@ -26,8 +26,7 @@ public interface UsageViewDescriptor {
   /**
    * @return an array of elements whose usages were searched or {@link com.intellij.psi.PsiElement#EMPTY_ARRAY} if not available
    */
-  @NotNull
-  PsiElement[] getElements();
+  PsiElement @NotNull [] getElements();
 
   String getProcessedElementsHeader();
 

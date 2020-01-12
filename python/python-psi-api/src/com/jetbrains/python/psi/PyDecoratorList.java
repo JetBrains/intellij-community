@@ -28,8 +28,7 @@ public interface PyDecoratorList extends PyElement, StubBasedPsiElement<PyDecora
   /**
    * @return decorators of function, in order of declaration (outermost first).
    */
-  @NotNull
-  PyDecorator[] getDecorators();
+  PyDecorator @NotNull [] getDecorators();
 
   @Nullable
   PyDecorator findDecorator(String name);

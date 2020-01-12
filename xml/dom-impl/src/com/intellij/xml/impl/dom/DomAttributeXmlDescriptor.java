@@ -76,8 +76,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
   }
 
   @Override
-  @Nullable
-  public String[] getEnumeratedValues() {
+  public String @Nullable [] getEnumeratedValues() {
     return null;
   }
 
@@ -144,9 +143,8 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
     throw new UnsupportedOperationException("Method init not implemented in " + getClass());
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies() {
+  public Object @NotNull [] getDependencies() {
     throw new UnsupportedOperationException("Method getDependencies not implemented in " + getClass());
   }
 }

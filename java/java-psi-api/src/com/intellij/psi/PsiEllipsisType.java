@@ -14,7 +14,7 @@ public class PsiEllipsisType extends PsiArrayType {
     super(componentType);
   }
 
-  public PsiEllipsisType(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
+  public PsiEllipsisType(@NotNull PsiType componentType, PsiAnnotation @NotNull [] annotations) {
     super(componentType, annotations);
   }
 

@@ -75,9 +75,8 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     return super.isReferenceTo(element);
   }
 
-  @NotNull
   @Override
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     PsiElement result = null;
     final ResolveResultList results = new ResolveResultList();
     if (myType instanceof PyClassType) {
@@ -100,9 +99,8 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     return results.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     // see PyDocstringCompletionContributor
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }

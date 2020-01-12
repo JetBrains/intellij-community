@@ -17,7 +17,7 @@ public class TwoStepConfirmationDialog extends MessageDialog {
 
   public TwoStepConfirmationDialog(String message,
                                    @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                   @NotNull String[] options,
+                                   String @NotNull [] options,
                                    String checkboxText,
                                    boolean checked,
                                    final int defaultOptionIndexed,

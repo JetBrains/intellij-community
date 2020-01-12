@@ -750,8 +750,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public final void setLineStyleAngled() {
   }
 
-  @NotNull
-  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<? super T> filter) {
+  public <T> T @NotNull [] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<? super T> filter) {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return ArrayUtil.newArray(nodeType, 0);
 

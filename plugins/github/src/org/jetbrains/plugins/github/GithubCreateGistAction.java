@@ -90,7 +90,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static void createGistAction(@NotNull final Project project,
                                        @Nullable final Editor editor,
                                        @Nullable final VirtualFile file,
-                                       @Nullable final VirtualFile[] files) {
+                                       final VirtualFile @Nullable [] files) {
     if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return;
     GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
     if (!authManager.ensureHasAccounts(project)) return;
@@ -147,7 +147,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String getFileName(@Nullable Editor editor, @Nullable VirtualFile[] files) {
+  private static String getFileName(@Nullable Editor editor, VirtualFile @Nullable [] files) {
     if (files != null && files.length == 1 && !files[0].isDirectory()) {
       return files[0].getName();
     }
@@ -161,7 +161,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   static List<FileContent> collectContents(@NotNull Project project,
                                            @Nullable Editor editor,
                                            @Nullable VirtualFile file,
-                                           @Nullable VirtualFile[] files) {
+                                           VirtualFile @Nullable [] files) {
     if (editor != null) {
       String content = getContentFromEditor(editor);
       if (content == null) {

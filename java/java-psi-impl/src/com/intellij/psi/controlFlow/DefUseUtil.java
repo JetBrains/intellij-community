@@ -269,13 +269,11 @@ public class DefUseUtil {
     return unusedDefs;
   }
 
-  @NotNull
-  public static PsiElement[] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
+  public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getDefs(body, def, ref, false);
   }
 
-  @NotNull
-  public static PsiElement[] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
+  public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
         private final IntArrayList[] myBackwardTraces = getBackwardTraces(instructions);
@@ -333,8 +331,7 @@ public class DefUseUtil {
     }
   }
 
-  @NotNull
-  public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
+  public static PsiElement @NotNull [] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getRefs(body, def, ref, false);
   }
 
@@ -404,8 +401,7 @@ public class DefUseUtil {
     protected abstract void processInstruction(@NotNull Set<? super PsiElement> res, @NotNull Instruction instruction, int index);
     protected abstract boolean defs ();
 
-    @NotNull
-    private PsiElement[] get(@NotNull PsiVariable def, @NotNull PsiElement refOrDef) {
+    private PsiElement @NotNull [] get(@NotNull PsiVariable def, @NotNull PsiElement refOrDef) {
       if (body == null) {
         return PsiElement.EMPTY_ARRAY;
       }
@@ -480,8 +476,7 @@ public class DefUseUtil {
   }
 
 
-  @NotNull
-  private static IntArrayList[] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
+  private static IntArrayList @NotNull [] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
     final IntArrayList[] states = new IntArrayList[instructions.size()];
     for (int i = 0; i < states.length; i++) {
       states[i] = new IntArrayList();

@@ -144,8 +144,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
   // The list starts with non-anonymous classes, ends with anonymous sub classes
   // Classes grouped by their FQN. (Because among the same-named subclasses we should return only the same-jar ones, or all of them if there were none)
-  @NotNull
-  private static PsiClass[] getOrCalculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+  private static PsiClass @NotNull [] getOrCalculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     ConcurrentMap<PsiClass, PsiClass[]> map = HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES;
     PsiClass[] cache = map.get(baseClass);
     if (cache != null) {
@@ -175,11 +174,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return ContainerUtil.process(collection, processor);
   }
 
-  @NotNull
-  private static PsiClass[] calculateDirectSubClasses(@NotNull Project project,
-                                                      @NotNull PsiClass baseClass,
-                                                      @NotNull String baseClassName,
-                                                      @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+  private static PsiClass @NotNull [] calculateDirectSubClasses(@NotNull Project project,
+                                                                @NotNull PsiClass baseClass,
+                                                                @NotNull String baseClassName,
+                                                                @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     SearchScope useScope;
     CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
     if (info == null) {

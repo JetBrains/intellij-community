@@ -36,9 +36,8 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     return "GrLightParameterListBuilder";
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getParameters() {
+  public GrParameter @NotNull [] getParameters() {
     if (myCachedParameters == null) {
       if (myParameters.isEmpty()) {
         myCachedParameters = GrParameter.EMPTY_ARRAY;

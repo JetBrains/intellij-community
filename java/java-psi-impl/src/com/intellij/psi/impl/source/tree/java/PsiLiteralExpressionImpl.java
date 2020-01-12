@@ -36,8 +36,7 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return ((CompositeElement)getNode()).getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
@@ -179,8 +178,7 @@ public class PsiLiteralExpressionImpl
     return PsiLiteralUtil.getTextBlockIndent(lines);
   }
 
-  @Nullable
-  public String[] getTextBlockLines() {
+  public String @Nullable [] getTextBlockLines() {
     String rawText = getText();
     if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
     int start = 3;
@@ -200,7 +198,7 @@ public class PsiLiteralExpressionImpl
     return success ? outChars.toString() : null;
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {
     return CodeInsightUtilCore.parseStringCharacters(chars, outChars, sourceOffsets);
   }
 
@@ -225,8 +223,7 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     IElementType type = getLiteralElementType();
     return ElementType.STRING_LITERALS.contains(type) || type == JavaTokenType.INTEGER_LITERAL  // int literals could refer to SQL parameters
            ? PsiReferenceService.getService().getContributedReferences(this)

@@ -36,7 +36,7 @@ abstract public class TransferableList<T> implements Transferable {
   private final List<T> myList;
 
   @SafeVarargs
-  public TransferableList(@NotNull T... array) {
+  public TransferableList(T @NotNull ... array) {
     this(Arrays.asList(array));
   }
 
@@ -44,9 +44,8 @@ abstract public class TransferableList<T> implements Transferable {
     myList = Collections.unmodifiableList(list);
   }
 
-  @NotNull
   @Override
-  public DataFlavor[] getTransferDataFlavors() {
+  public DataFlavor @NotNull [] getTransferDataFlavors() {
     return new DataFlavor[]{
       ALL_HTML_DATA_FLAVOR,//DataFlavor.allHtmlFlavor,
       PART_HTML_DATA_FLAVOR,//DataFlavor.fragmentHtmlFlavor,

@@ -37,9 +37,8 @@ public abstract class InheritedMembersNodeProvider<T extends TreeElement> implem
     return IdeBundle.message("file.structure.toggle.show.inherited");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     throw new IncorrectOperationException("see getActionIdForShortcut()");
   }
 

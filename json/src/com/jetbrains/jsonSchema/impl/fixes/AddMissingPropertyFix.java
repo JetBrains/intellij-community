@@ -173,7 +173,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
 
   @Override
   public void applyFix(@NotNull Project project,
-                       @NotNull CommonProblemDescriptor[] descriptors,
+                       CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
     List<Pair<AddMissingPropertyFix, PsiElement>> propFixes = new ArrayList<>();
@@ -191,7 +191,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
   }
 
   @Nullable
-  private static AddMissingPropertyFix getWorkingQuickFix(@NotNull QuickFix[] fixes) {
+  private static AddMissingPropertyFix getWorkingQuickFix(QuickFix @NotNull [] fixes) {
     for (QuickFix fix : fixes) {
       if (fix instanceof AddMissingPropertyFix) {
         return (AddMissingPropertyFix)fix;

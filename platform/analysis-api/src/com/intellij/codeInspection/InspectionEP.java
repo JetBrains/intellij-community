@@ -126,8 +126,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("groupPath")
   public String groupPath;
 
-  @Nullable
-  public String[] getGroupPath() {
+  public String @Nullable [] getGroupPath() {
     String name = getGroupDisplayName();
     if (name == null) return null;
     if (groupPath == null) {

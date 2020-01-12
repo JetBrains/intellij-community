@@ -201,7 +201,7 @@ public class SwingHelper {
     LOG.debug("DialogWrapper '" + dialogWrapper.getTitle() + "' has been re-sized (added width: " + dw + ", added height: " + dh + ")");
   }
 
-  public static void resizeDialogToFitTextFor(@NotNull final JComponent... components) {
+  public static void resizeDialogToFitTextFor(final JComponent @NotNull ... components) {
     if (components.length == 0) return;
     doWithDialogWrapper(components[0], dialogWrapper -> {
       if (dialogWrapper instanceof SettingsDialog || dialogWrapper instanceof SingleConfigurableEditor) {

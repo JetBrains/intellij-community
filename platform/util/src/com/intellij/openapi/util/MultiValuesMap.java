@@ -70,7 +70,7 @@ public class MultiValuesMap<K, V>{
     }
   }
 
-  public void putAll(K key, @NotNull V... values) {
+  public void putAll(K key, V @NotNull ... values) {
     for (V value : values) {
       put(key, value);
     }

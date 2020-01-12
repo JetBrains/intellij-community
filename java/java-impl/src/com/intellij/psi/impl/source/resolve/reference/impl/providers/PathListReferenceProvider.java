@@ -16,8 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class PathListReferenceProvider extends PsiReferenceProvider {
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     return getReferencesByElement(element);
   }
 
@@ -25,8 +24,7 @@ public class PathListReferenceProvider extends PsiReferenceProvider {
     return true;
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element) {
 
     PsiReference[] result = PsiReference.EMPTY_ARRAY;
     final TextRange range = ElementManipulators.getValueTextRange(element);
@@ -60,8 +58,7 @@ public class PathListReferenceProvider extends PsiReferenceProvider {
     return ',';
   }
 
-  @NotNull
-  protected PsiReference[] createReferences(@NotNull PsiElement element, String s, int offset, final boolean soft) {
+  protected PsiReference @NotNull [] createReferences(@NotNull PsiElement element, String s, int offset, final boolean soft) {
     int contentOffset = StringUtil.findFirst(s, CharFilter.NOT_WHITESPACE_FILTER);
     if (contentOffset >= 0) {
       offset += contentOffset;

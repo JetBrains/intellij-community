@@ -87,8 +87,7 @@ public class GrLabelReference implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final List<PsiElement> result = new ArrayList<>();
     PsiElement context = myStatement;
     while (context != null) {

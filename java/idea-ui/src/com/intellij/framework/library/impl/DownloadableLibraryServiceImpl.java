@@ -43,7 +43,7 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
 
   @NotNull
   @Override
-  public DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull final URL... localUrls) {
+  public DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, final URL @NotNull ... localUrls) {
     return new LibraryVersionsFetcher(groupId, localUrls) {
       //todo[nik] pull up this method after moving corresponding API to intellij.platform.lang
       @Override

@@ -102,5 +102,5 @@ public interface FileType extends Scheme {
    */
   @Nullable
   @NonNls
-  String getCharset(@NotNull VirtualFile file, @NotNull byte[] content);
+  String getCharset(@NotNull VirtualFile file, byte @NotNull [] content);
 }

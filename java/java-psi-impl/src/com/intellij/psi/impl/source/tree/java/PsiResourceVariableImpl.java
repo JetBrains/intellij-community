@@ -29,9 +29,8 @@ public class PsiResourceVariableImpl extends PsiLocalVariableImpl implements Psi
     super(JavaElementType.RESOURCE_VARIABLE);
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getDeclarationScope() {
+  public PsiElement @NotNull [] getDeclarationScope() {
     final PsiResourceList resourceList = (PsiResourceList)getParent();
     final PsiTryStatement tryStatement = (PsiTryStatement)resourceList.getParent();
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();

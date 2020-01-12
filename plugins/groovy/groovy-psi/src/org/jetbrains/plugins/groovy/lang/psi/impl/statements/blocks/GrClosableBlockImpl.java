@@ -75,9 +75,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return "Closable block";
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getParameters() {
+  public GrParameter @NotNull [] getParameters() {
     if (hasParametersSection()) {
       GrParameterListImpl parameterList = getParameterList();
       return parameterList.getParameters();
@@ -86,9 +85,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return GrParameter.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getAllParameters() {
+  public GrParameter @NotNull [] getAllParameters() {
     if (hasParametersSection()) return getParameters();
     return getSyntheticItParameter();
   }

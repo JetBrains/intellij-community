@@ -48,9 +48,8 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     return isLValue(this) && isIndexAccess() ? myLValueReference : null;
   }
 
-  @NotNull
   @Override
-  public GroovyReference[] getReferences() {
+  public GroovyReference @NotNull [] getReferences() {
     return referenceArray(getRValueReference(), getLValueReference());
   }
 

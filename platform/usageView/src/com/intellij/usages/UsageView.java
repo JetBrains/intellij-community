@@ -38,9 +38,9 @@ public interface UsageView extends Disposable {
 
   void appendUsage(@NotNull Usage usage);
   void removeUsage(@NotNull Usage usage);
-  void includeUsages(@NotNull Usage[] usages);
-  void excludeUsages(@NotNull Usage[] usages);
-  void selectUsages(@NotNull Usage[] usages);
+  void includeUsages(Usage @NotNull [] usages);
+  void excludeUsages(Usage @NotNull [] usages);
+  void selectUsages(Usage @NotNull [] usages);
 
   void close();
   boolean isSearchInProgress();

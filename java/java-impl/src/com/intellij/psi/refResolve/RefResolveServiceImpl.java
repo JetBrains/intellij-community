@@ -131,7 +131,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
   }
 
   @NotNull
-  private static List<VirtualFile> toVf(@NotNull int[] ids) {
+  private static List<VirtualFile> toVf(int @NotNull [] ids) {
     List<VirtualFile> res = new ArrayList<>();
     for (int id : ids) {
       VirtualFile file = PersistentFS.getInstance().findFileById(id);
@@ -143,7 +143,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
   }
 
   @NotNull
-  private static String toVfString(@NotNull int[] backIds) {
+  private static String toVfString(int @NotNull [] backIds) {
     List<VirtualFile> list = toVf(backIds);
     return toVfString(list);
   }
@@ -764,8 +764,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
   }
 
   @Override
-  @Nullable
-  public int[] getBackwardIds(@NotNull VirtualFileWithId file) {
+  public int @Nullable [] getBackwardIds(@NotNull VirtualFileWithId file) {
     if (!isUpToDate()) return null;
     int fileId = getAbsId((VirtualFile)file);
     return storage.get(fileId);

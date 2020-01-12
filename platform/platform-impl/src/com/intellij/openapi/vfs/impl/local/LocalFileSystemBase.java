@@ -123,9 +123,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return FileSystemUtil.resolveSymLink(file.getPath());
   }
 
-  @NotNull
   @Override
-  public String[] list(@NotNull VirtualFile file) {
+  public String @NotNull [] list(@NotNull VirtualFile file) {
     String[] names = myChildrenGetter.accessDiskWithCheckCanceled(convertToIOFile(file));
     return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
   }
@@ -389,8 +388,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     try (InputStream stream = new FileInputStream(convertToIOFileAndCheck(file))) {
       long l = file.getLength();
       if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
@@ -402,8 +400,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  @NotNull
-  private static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+  private static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
     byte[] bytes = new byte[length];
     int count = 0;
     while (count < length) {

@@ -64,8 +64,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   /**
    * Returns the list of default TO_DO patterns. Can be customized in other IDEs (and is customized in Rider).
    */
-  @NotNull
-  protected TodoPattern[] getDefaultPatterns() {
+  protected TodoPattern @NotNull [] getDefaultPatterns() {
     return new TodoPattern[]{
       new TodoPattern("\\b(todo|fixme)\\b.*", TodoAttributesUtil.createDefault(), false)
     };
@@ -78,21 +77,19 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     }
   }
 
-  @NotNull
-  public TodoPattern[] getTodoPatterns() {
+  public TodoPattern @NotNull [] getTodoPatterns() {
     return myTodoPatterns;
   }
 
-  @NotNull
-  public IndexPattern[] getIndexPatterns() {
+  public IndexPattern @NotNull [] getIndexPatterns() {
     return myIndexPatterns;
   }
 
-  public void setTodoPatterns(@NotNull TodoPattern[] todoPatterns) {
+  public void setTodoPatterns(TodoPattern @NotNull [] todoPatterns) {
     doSetTodoPatterns(todoPatterns, true);
   }
 
-  private void doSetTodoPatterns(@NotNull TodoPattern[] todoPatterns, final boolean shouldNotifyIndices) {
+  private void doSetTodoPatterns(TodoPattern @NotNull [] todoPatterns, final boolean shouldNotifyIndices) {
     TodoPattern[] oldTodoPatterns = myTodoPatterns;
     IndexPattern[] oldIndexPatterns = myIndexPatterns;
 
@@ -127,8 +124,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   /**
    * @return all {@code TodoFilter}s.
    */
-  @NotNull
-  public TodoFilter[] getTodoFilters() {
+  public TodoFilter @NotNull [] getTodoFilters() {
     return myTodoFilters;
   }
 
@@ -143,7 +139,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     }
   }
 
-  public void setTodoFilters(@NotNull TodoFilter[] filters) {
+  public void setTodoFilters(TodoFilter @NotNull [] filters) {
     TodoFilter[] oldFilters = myTodoFilters;
     myTodoFilters = filters;
     myTopic.propertyChange(new PropertyChangeEvent(this, PROP_TODO_FILTERS, oldFilters, filters));

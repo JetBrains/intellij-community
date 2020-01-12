@@ -30,8 +30,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
   }
 
   @Override
-  @NotNull
-  protected PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(final Project project, final PsiDirectory directory) {
     final MyInputValidator validator = new JavaNameValidator(project, directory);
 
     final MyContentPane contentPane = new MyContentPane();
@@ -172,8 +171,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
 
   @Override
-  @NotNull
-  protected PsiElement[] create(@NotNull final String newName, final PsiDirectory directory) throws IncorrectOperationException {
+  protected PsiElement @NotNull [] create(@NotNull final String newName, final PsiDirectory directory) throws IncorrectOperationException {
     PsiFile sourceFile = PsiFileFactory.getInstance(directory.getProject())
       .createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
     sourceFile = (PsiFile)directory.add(sourceFile);

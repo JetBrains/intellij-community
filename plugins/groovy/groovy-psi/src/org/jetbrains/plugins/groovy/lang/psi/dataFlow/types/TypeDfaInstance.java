@@ -30,7 +30,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final InferenceCache myCache;
   private final InitialTypeProvider myInitialTypeProvider;
 
-  TypeDfaInstance(@NotNull Instruction[] flow,
+  TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull Couple<Set<Instruction>> interesting,
                   @NotNull InferenceCache cache,
                   @NotNull InitialTypeProvider initialTypeProvider) {

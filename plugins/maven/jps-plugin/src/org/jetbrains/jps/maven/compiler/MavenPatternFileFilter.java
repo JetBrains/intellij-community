@@ -59,8 +59,7 @@ public class MavenPatternFileFilter implements FileFilter {
     return true;
   }
 
-  @NotNull
-  private static String[] normalizePatterns(@Nullable Collection<String> patterns) {
+  private static String @NotNull [] normalizePatterns(@Nullable Collection<String> patterns) {
     if (ContainerUtil.isEmpty(patterns)) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     String[] res = new String[patterns.size()];

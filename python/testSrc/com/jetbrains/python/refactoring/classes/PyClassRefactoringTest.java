@@ -105,7 +105,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
    * @param fileNamesNoExtensions file (module) names to add with out of extensions
    * @see #checkMultiFile(String...)
    */
-  protected void configureMultiFile(@NotNull final String... fileNamesNoExtensions) {
+  protected void configureMultiFile(final String @NotNull ... fileNamesNoExtensions) {
     final String baseName = getMultiFileBaseName() + "/";
 
     for (final String fileNameNoExtension : fileNamesNoExtensions) {
@@ -120,7 +120,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
    * @param fileNamesNoExtensions file names to check with out of extension
    * @see #configureMultiFile(String...)
    */
-  protected void checkMultiFile(@NotNull final String... fileNamesNoExtensions) {
+  protected void checkMultiFile(final String @NotNull ... fileNamesNoExtensions) {
     for (final String fileNameNoExtension : fileNamesNoExtensions) {
       final String fileNameAfter = String.format("%s.after.py", fileNameNoExtension);
       final String fileNameBefore = String.format("%s.py", fileNameNoExtension);

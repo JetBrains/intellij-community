@@ -40,9 +40,8 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
   public int limit = 10;
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope, @NotNull InspectionManager inspectionManager,
-                                                @NotNull GlobalInspectionContext globalInspectionContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope, @NotNull InspectionManager inspectionManager,
+                                                           @NotNull GlobalInspectionContext globalInspectionContext) {
     if (!(refEntity instanceof RefModule)) {
       return null;
     }

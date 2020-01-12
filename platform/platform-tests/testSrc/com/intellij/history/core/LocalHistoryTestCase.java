@@ -164,12 +164,12 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   @SafeVarargs
-  public static <T> T[] array(@NotNull T... objects) {
+  public static <T> T[] array(T @NotNull ... objects) {
     return objects;
   }
 
   @SafeVarargs
-  public static <T> List<T> list(@NotNull T... objects) {
+  public static <T> List<T> list(T @NotNull ... objects) {
     return Arrays.asList(objects);
   }
 

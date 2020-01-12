@@ -49,8 +49,8 @@ public class SerializedStubTree {
     myStubIndexesExternalizer = stubIndexesExternalizer;
   }
 
-  public SerializedStubTree(@NotNull byte[] treeBytes, int treeByteLength, @Nullable Stub stubElement,
-                            @NotNull byte[] indexedStubBytes, int indexedStubByteLength, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs) {
+  public SerializedStubTree(byte @NotNull [] treeBytes, int treeByteLength, @Nullable Stub stubElement,
+                            byte @NotNull [] indexedStubBytes, int indexedStubByteLength, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs) {
     myTreeBytes = treeBytes;
     myTreeByteLength = treeByteLength;
     myStubElement = stubElement;
@@ -238,8 +238,7 @@ public class SerializedStubTree {
   }
 
   private byte[] myTreeHash;
-  @NotNull
-  synchronized byte[] getTreeHash() {
+  synchronized byte @NotNull [] getTreeHash() {
     if (myTreeHash == null) {
       myTreeHash = DigestUtil.calculateContentHash(HASHER, myTreeBytes, 0, myTreeByteLength);
     }

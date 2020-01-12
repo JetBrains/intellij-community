@@ -9,13 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
 public interface GrTypeAnnotationOwner extends PsiAnnotationOwner {
-  @NotNull
   @Override
-  GrAnnotation[] getAnnotations();
+  GrAnnotation @NotNull [] getAnnotations();
 
-  @NotNull
   @Override
-  default GrAnnotation[] getApplicableAnnotations() {
+  default GrAnnotation @NotNull [] getApplicableAnnotations() {
     return getAnnotations();
   }
 

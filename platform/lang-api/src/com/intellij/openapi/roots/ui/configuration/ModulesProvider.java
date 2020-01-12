@@ -27,8 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public interface ModulesProvider extends RootModelProvider {
   ModulesProvider EMPTY_MODULES_PROVIDER = new ModulesProvider() {
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       return Module.EMPTY_ARRAY;
     }
     @Override

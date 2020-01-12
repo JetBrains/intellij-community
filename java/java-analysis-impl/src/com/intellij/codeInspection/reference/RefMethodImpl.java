@@ -278,8 +278,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  @NotNull
-  public synchronized RefParameter[] getParameters() {
+  public synchronized RefParameter @NotNull [] getParameters() {
     return ObjectUtils.notNull(myParameters, EMPTY_PARAMS_ARRAY);
   }
 
@@ -616,8 +615,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  @Nullable
-  public synchronized PsiClass[] getUnThrownExceptions() {
+  public synchronized PsiClass @Nullable [] getUnThrownExceptions() {
     if (getRefManager().isOfflineView()) {
       LOG.debug("Should not traverse graph offline");
     }

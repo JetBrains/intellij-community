@@ -39,13 +39,11 @@ public class ProjectRootUtil {
   private ProjectRootUtil() {
   }
 
-  @NotNull
-  private static PsiDirectory[] convertRoots(@NotNull Project project, @NotNull VirtualFile[] roots) {
+  private static PsiDirectory @NotNull [] convertRoots(@NotNull Project project, VirtualFile @NotNull [] roots) {
     return convertRoots(((PsiManagerImpl)PsiManager.getInstance(project)).getFileManager(), roots);
   }
 
-  @NotNull
-  private static PsiDirectory[] convertRoots(@NotNull FileManager fileManager, @NotNull VirtualFile[] roots) {
+  private static PsiDirectory @NotNull [] convertRoots(@NotNull FileManager fileManager, VirtualFile @NotNull [] roots) {
     List<PsiDirectory> dirs = new ArrayList<>();
 
     for (VirtualFile root : roots) {
@@ -61,14 +59,12 @@ public class ProjectRootUtil {
     return dirs.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiDirectory[] getSourceRootDirectories(@NotNull Project project) {
+  public static PsiDirectory @NotNull [] getSourceRootDirectories(@NotNull Project project) {
     VirtualFile[] files = OrderEnumerator.orderEntries(project).sources().usingCache().getRoots();
     return convertRoots(project, files);
   }
 
-  @NotNull
-  public static PsiDirectory[] getAllContentRoots(@NotNull Project project) {
+  public static PsiDirectory @NotNull [] getAllContentRoots(@NotNull Project project) {
     VirtualFile[] files = ProjectRootManager.getInstance(project).getContentRootsFromAllModules();
     return convertRoots(project, files);
   }

@@ -45,12 +45,10 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return this;
   }
 
-  @NotNull
-  protected abstract ResolveResult[] resolveInner();
+  protected abstract ResolveResult @NotNull [] resolveInner();
 
   @Override
-  @NotNull
-  public final ResolveResult[] multiResolve(final boolean incompleteCode) {
+  public final ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     PsiFile file = getContainingFile();
     return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MY_RESOLVER, true, false,file);
   }

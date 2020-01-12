@@ -112,9 +112,8 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
     return false; // Don't add references to all element to avoid performance problem.
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (!shouldAddReference(element)) {
       // Add reference to element with one child or leaf element only to avoid performance problem.
       return PsiReference.EMPTY_ARRAY;

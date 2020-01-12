@@ -80,7 +80,7 @@ public class GitUntrackedFilesHelper {
                                                        @NotNull String operation,
                                                        @Nullable String description,
                                                        @Nullable NotificationListener listener,
-                                                       @NotNull NotificationAction... actions) {
+                                                       NotificationAction @NotNull ... actions) {
 
     Notification notification = getUntrackedFilesOverwrittenByNotification(project, root, relativePaths, operation, description, listener);
     for (NotificationAction action : actions) {
@@ -172,9 +172,8 @@ public class GitUntrackedFilesHelper {
       init();
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction()};
     }
 

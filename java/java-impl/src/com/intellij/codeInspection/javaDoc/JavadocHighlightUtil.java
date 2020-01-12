@@ -105,7 +105,7 @@ public class JavadocHighlightUtil {
     holder.problem(toHighlight, message, holder.addJavadocFix(toHighlight));
   }
 
-  static void checkRequiredTags(@NotNull PsiDocTag[] tags,
+  static void checkRequiredTags(PsiDocTag @NotNull [] tags,
                                 @NotNull JavaDocLocalInspection.Options options,
                                 @NotNull PsiElement toHighlight,
                                 @NotNull ProblemHolder holder) {
@@ -133,7 +133,7 @@ public class JavadocHighlightUtil {
     }
   }
 
-  static void checkRequiredTagDescriptions(@NotNull PsiDocTag[] tags, @NotNull ProblemHolder holder) {
+  static void checkRequiredTagDescriptions(PsiDocTag @NotNull [] tags, @NotNull ProblemHolder holder) {
     for (PsiDocTag tag : tags) {
       String tagName = tag.getName();
       if (ArrayUtil.find(TAGS_TO_CHECK, tagName) >= 0 && emptyTag(tag)) {
@@ -143,7 +143,7 @@ public class JavadocHighlightUtil {
     }
   }
 
-  static void checkTagValues(@NotNull PsiDocTag[] tags, @Nullable PsiElement context, @NotNull ProblemHolder holder) {
+  static void checkTagValues(PsiDocTag @NotNull [] tags, @Nullable PsiElement context, @NotNull ProblemHolder holder) {
     JavadocManager docManager = JavadocManager.SERVICE.getInstance(holder.project());
     for (PsiDocTag tag : tags) {
       String tagName = tag.getName();
@@ -199,7 +199,7 @@ public class JavadocHighlightUtil {
     return false;
   }
 
-  static void checkInlineTags(@NotNull PsiElement[] elements, @NotNull ProblemHolder holder) {
+  static void checkInlineTags(PsiElement @NotNull [] elements, @NotNull ProblemHolder holder) {
     JavadocManager docManager = JavadocManager.SERVICE.getInstance(holder.project());
     for (PsiElement element : elements) {
       if (element instanceof PsiInlineDocTag) {
@@ -263,7 +263,7 @@ public class JavadocHighlightUtil {
     }
   }
 
-  static void checkDuplicateTags(@NotNull PsiDocTag[] tags, @NotNull ProblemHolder holder) {
+  static void checkDuplicateTags(PsiDocTag @NotNull [] tags, @NotNull ProblemHolder holder) {
     Set<String> documentedParamNames = null;
     Set<String> documentedExceptions = null;
     Set<String> uniqueTags = null;
@@ -328,7 +328,7 @@ public class JavadocHighlightUtil {
   }
 
   static void checkMissingTypeParamTags(@NotNull PsiTypeParameterListOwner owner,
-                                        @NotNull PsiDocTag[] tags,
+                                        PsiDocTag @NotNull [] tags,
                                         @NotNull PsiElement toHighlight,
                                         @NotNull ProblemHolder holder) {
     if (owner.hasTypeParameters()) {
@@ -353,7 +353,7 @@ public class JavadocHighlightUtil {
     }
   }
 
-  static void checkMissingReturnTag(@NotNull PsiDocTag[] tags,
+  static void checkMissingReturnTag(PsiDocTag @NotNull [] tags,
                                     @NotNull PsiMethod psiMethod,
                                     @NotNull PsiElement toHighlight,
                                     @NotNull ProblemHolder holder) {
@@ -366,7 +366,7 @@ public class JavadocHighlightUtil {
     }
   }
 
-  static void checkMissingParamTags(@NotNull PsiDocTag[] tags,
+  static void checkMissingParamTags(PsiDocTag @NotNull [] tags,
                                     @NotNull PsiMethod psiMethod,
                                     @NotNull PsiElement toHighlight,
                                     @NotNull ProblemHolder holder) {
@@ -390,7 +390,7 @@ public class JavadocHighlightUtil {
     }
   }
 
-  static void checkMissingThrowsTags(@NotNull PsiDocTag[] tags,
+  static void checkMissingThrowsTags(PsiDocTag @NotNull [] tags,
                                      @NotNull PsiMethod psiMethod,
                                      @NotNull PsiElement toHighlight,
                                      @NotNull ProblemHolder holder) {
@@ -437,7 +437,7 @@ public class JavadocHighlightUtil {
     }
   }
 
-  static void checkEmptyMethodTagsDescription(@NotNull PsiDocTag[] tags, @NotNull ProblemHolder holder) {
+  static void checkEmptyMethodTagsDescription(PsiDocTag @NotNull [] tags, @NotNull ProblemHolder holder) {
     for (PsiDocTag tag : tags) {
       if ("return".equals(tag.getName())) {
         if (emptyTag(tag)) {
@@ -494,7 +494,7 @@ public class JavadocHighlightUtil {
     return e.getText().chars().allMatch(c -> c <= ' ');
   }
 
-  public static boolean hasTagForParameter(@NotNull PsiDocTag[] tags, PsiElement param) {
+  public static boolean hasTagForParameter(PsiDocTag @NotNull [] tags, PsiElement param) {
     for (PsiDocTag tag : tags) {
       if ("param".equals(tag.getName())) {
         PsiDocTagValue value = tag.getValueElement();

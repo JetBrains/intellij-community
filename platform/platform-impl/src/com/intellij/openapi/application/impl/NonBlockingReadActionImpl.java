@@ -70,8 +70,8 @@ public class NonBlockingReadActionImpl<T>
 
   private NonBlockingReadActionImpl(@NotNull Callable<T> computation,
                                     @Nullable Pair<ModalityState, Consumer<T>> edtFinish,
-                                    @NotNull ContextConstraint[] constraints,
-                                    @NotNull BooleanSupplier[] cancellationConditions,
+                                    ContextConstraint @NotNull [] constraints,
+                                    BooleanSupplier @NotNull [] cancellationConditions,
                                     @NotNull Set<? extends Expiration> expirationSet,
                                     @Nullable List<Object> coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
@@ -84,8 +84,8 @@ public class NonBlockingReadActionImpl<T>
 
   @NotNull
   @Override
-  protected NonBlockingReadActionImpl<T> cloneWith(@NotNull ContextConstraint[] constraints,
-                                                   @NotNull BooleanSupplier[] cancellationConditions,
+  protected NonBlockingReadActionImpl<T> cloneWith(ContextConstraint @NotNull [] constraints,
+                                                   BooleanSupplier @NotNull [] cancellationConditions,
                                                    @NotNull Set<? extends Expiration> expirationSet) {
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, constraints, cancellationConditions, expirationSet,
                                            myCoalesceEquality, myProgressIndicator);
@@ -136,7 +136,7 @@ public class NonBlockingReadActionImpl<T>
   }
 
   @Override
-  public NonBlockingReadAction<T> coalesceBy(@NotNull Object... equality) {
+  public NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality) {
     if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
     if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
     if (equality.length == 1 && isTooCommon(equality[0])) {

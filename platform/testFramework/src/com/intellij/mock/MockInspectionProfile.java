@@ -58,8 +58,7 @@ public class MockInspectionProfile extends InspectionProfileImpl {
   }
 
   @Override
-  @NotNull
-  public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
+  public InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement element) {
     return myInspectionTools;
   }
 }

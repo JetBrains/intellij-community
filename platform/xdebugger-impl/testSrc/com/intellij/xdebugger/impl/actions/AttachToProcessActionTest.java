@@ -34,7 +34,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     return RecentItem.createRecentItem(LocalAttachHost.INSTANCE, info, group, debuggerName);
   }
 
-  private List<AttachToProcessItem> fixtureCollectAttachItems(ProcessInfo[] infos, @NotNull XAttachDebuggerProvider... providers) {
+  private List<AttachToProcessItem> fixtureCollectAttachItems(ProcessInfo[] infos, XAttachDebuggerProvider @NotNull ... providers) {
     List<ProcessInfo> infoList = ContainerUtil.newArrayList(infos);
     return doCollectAttachProcessItems(getProject(), LocalAttachHost.INSTANCE, infoList, DumbProgressIndicator.INSTANCE, Arrays.asList(providers));
   }
@@ -574,7 +574,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(20, group2, createDebuggers("gdb2", "lldb2")));
   }
 
-  private void assertItems(String expected, @NotNull XLocalAttachDebuggerProvider... providers) {
+  private void assertItems(String expected, XLocalAttachDebuggerProvider @NotNull ... providers) {
     ProcessInfo[] infos = {
       new ProcessInfo(1, "command line 1", "exec1", "args1"),
       new ProcessInfo(2, "command line 2", "exec2", "args2"),
@@ -582,7 +582,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     assertItems(expected, infos, providers);
   }
 
-  private void assertItems(String expected, ProcessInfo[] infos, @NotNull XLocalAttachDebuggerProvider... providers) {
+  private void assertItems(String expected, ProcessInfo[] infos, XLocalAttachDebuggerProvider @NotNull ... providers) {
     assertEquals(expected, printItems(fixtureCollectAttachItems(infos, providers)));
   }
 

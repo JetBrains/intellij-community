@@ -43,8 +43,7 @@ public class DefaultModulesProvider implements ModulesProvider {
   }
 
   @Override
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     return ModuleManager.getInstance(myProject).getModules();
   }
 

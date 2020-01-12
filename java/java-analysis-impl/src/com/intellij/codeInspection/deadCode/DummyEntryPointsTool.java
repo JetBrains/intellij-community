@@ -38,9 +38,8 @@ public class DummyEntryPointsTool extends UnusedDeclarationInspectionBase {
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
   }
 
-  @Nullable
   @Override
-  public JobDescriptor[] getAdditionalJobs(GlobalInspectionContext context) {
+  public JobDescriptor @Nullable [] getAdditionalJobs(GlobalInspectionContext context) {
     return JobDescriptor.EMPTY_ARRAY;
   }
 

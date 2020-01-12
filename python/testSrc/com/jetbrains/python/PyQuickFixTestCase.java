@@ -44,7 +44,7 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
-  protected void doMultifilesTest(@NotNull final Class inspectionClass, @NotNull final String hint, @NotNull final String[] files) {
+  protected void doMultifilesTest(@NotNull final Class inspectionClass, @NotNull final String hint, final String @NotNull [] files) {
     final String testFileName = getTestName(true);
     myFixture.enableInspections(inspectionClass);
     String [] filenames = Arrays.copyOf(files, files.length + 1);

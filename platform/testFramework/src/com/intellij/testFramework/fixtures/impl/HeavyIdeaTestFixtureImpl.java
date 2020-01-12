@@ -238,9 +238,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           if (contentRoots.length > 0) {
             final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
             return new IdeView() {
-              @NotNull
               @Override
-              public PsiDirectory[] getDirectories() {
+              public PsiDirectory @NotNull [] getDirectories() {
                 return new PsiDirectory[] {psiDirectory};
               }
 

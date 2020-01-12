@@ -40,8 +40,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   @Nullable
   protected abstract PsiClass getTargetClass(final ConvertContext context);
 
-  @NotNull
-  protected abstract PropertyMemberType[] getMemberTypes(final ConvertContext context);
+  protected abstract PropertyMemberType @NotNull [] getMemberTypes(final ConvertContext context);
 
   @NotNull
   protected PsiType getPsiType(final ConvertContext context) {

@@ -26,10 +26,9 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  */
 public final class CompoundFilter extends SerializationFilterBase {
-  @NotNull
-  private final SerializationFilter[] myFilters;
+  private final SerializationFilter @NotNull [] myFilters;
 
-  public CompoundFilter(@NotNull final SerializationFilter... filters) {
+  public CompoundFilter(final SerializationFilter @NotNull ... filters) {
     myFilters = filters.clone();
   }
 

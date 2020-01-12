@@ -112,7 +112,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
   @Override
   @Nullable
-  public String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
+  public String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
@@ -442,10 +442,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return Pair.create(callback, partialChanges);
   }
 
-  @NotNull
-  private static byte[] convertDocumentContentToBytes(@NotNull GitRepository repository,
-                                                      @NotNull String documentContent,
-                                                      @NotNull VirtualFile file) {
+  private static byte @NotNull [] convertDocumentContentToBytes(@NotNull GitRepository repository,
+                                                                @NotNull String documentContent,
+                                                                @NotNull VirtualFile file) {
     String text;
 
     String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, repository.getProject());

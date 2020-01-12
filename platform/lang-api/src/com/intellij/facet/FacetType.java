@@ -160,7 +160,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
    * @return editor
    */
   @Nullable
-  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, @NotNull FacetEditor[] editors) {
+  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, FacetEditor @NotNull [] editors) {
     return null;
   }
 }

@@ -41,8 +41,7 @@ class JavaSliceDereferenceUsage extends JavaSliceUsage {
 
     return new UsagePresentation() {
       @Override
-      @NotNull
-      public TextChunk[] getText() {
+      public TextChunk @NotNull [] getText() {
         return presentation.getText();
       }
 

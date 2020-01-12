@@ -313,8 +313,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         return index != -1 && list.isSelectedIndex(index);
     }
 
-    @NotNull
-    public VirtualFile[] getSelection() {
+    public VirtualFile @NotNull [] getSelection() {
         if (list != null) {
             Object[] selectedValues = list.getSelectedValues();
             if (selectedValues != null) {
@@ -571,8 +570,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
 
-    @NotNull
-    private PsiElement[] getSelectedElements() {
+    private PsiElement @NotNull [] getSelectedElements() {
         VirtualFile[] selectedFiles = getSelectedFiles();
         Set<PsiElement> psiElements = new HashSet<>(selectedFiles.length);
         PsiManager psiManager = PsiManager.getInstance(thumbnailView.getProject());
@@ -586,8 +584,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
       return PsiUtilCore.toPsiElementArray(psiElements);
     }
 
-    @NotNull
-    private VirtualFile[] getSelectedFiles() {
+    private VirtualFile @NotNull [] getSelectedFiles() {
         if (list != null) {
             Object[] selectedValues = list.getSelectedValues();
             if (selectedValues != null) {
@@ -707,9 +704,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         setPopup(true);
       }
 
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         if (e == null) return EMPTY_ARRAY;
         Project project = e.getProject();
         ImageTagManager tagManager = ImageTagManager.getInstance(project);

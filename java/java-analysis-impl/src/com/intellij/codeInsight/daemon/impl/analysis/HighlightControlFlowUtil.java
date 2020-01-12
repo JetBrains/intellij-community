@@ -159,7 +159,7 @@ public class HighlightControlFlowUtil {
 
   private static boolean isFieldInitializedInClassInitializer(@NotNull PsiField field,
                                                               boolean isFieldStatic,
-                                                              @NotNull PsiClassInitializer[] initializers) {
+                                                              PsiClassInitializer @NotNull [] initializers) {
     return ContainerUtil.find(initializers, initializer -> initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
                                                            && variableDefinitelyAssignedIn(field, initializer.getBody())) != null;
   }

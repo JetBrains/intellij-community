@@ -22,9 +22,8 @@ public class JavaCompiledPattern extends CompiledPattern {
     setStrategy(JavaMatchingStrategy.getInstance());
   }
 
-  @NotNull
   @Override
-  public String[] getTypedVarPrefixes() {
+  public String @NotNull [] getTypedVarPrefixes() {
     return new String[] {TYPED_VAR_PREFIX};
   }
 

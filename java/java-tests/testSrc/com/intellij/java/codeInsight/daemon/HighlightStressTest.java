@@ -58,9 +58,8 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     EntryPointsManagerBase.getInstance(getProject()).getAdditionalAnnotations();
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     if ("RandomEditingForUnused".equals(getTestName(false))) {
       return LocalInspectionTool.EMPTY_ARRAY;
     }

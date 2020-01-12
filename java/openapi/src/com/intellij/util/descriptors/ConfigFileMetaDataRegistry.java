@@ -23,6 +23,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ConfigFileMetaDataRegistry extends ConfigFileMetaDataProvider {
 
-  void registerMetaData(@NotNull ConfigFileMetaData... metaData);
+  void registerMetaData(ConfigFileMetaData @NotNull ... metaData);
 
 }

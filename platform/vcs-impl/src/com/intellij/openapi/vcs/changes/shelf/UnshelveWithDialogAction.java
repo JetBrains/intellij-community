@@ -101,7 +101,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                                                                              chooser.getSelectedList());
   }
 
-  private static boolean hasNotAllSelectedChanges(@NotNull ShelvedChangeList list, @Nullable Change[] changes) {
+  private static boolean hasNotAllSelectedChanges(@NotNull ShelvedChangeList list, Change @Nullable [] changes) {
     return changes != null && (Objects.requireNonNull(list.getChanges()).size() + list.getBinaryFiles().size()) != changes.length;
   }
 
@@ -116,7 +116,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                      @NotNull VirtualFile patchFile,
                      @NotNull ShelvedChangeList changeList,
                      @NotNull List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
-                     @Nullable Change[] preselectedChanges) {
+                     Change @Nullable [] preselectedChanges) {
       super(project, new UnshelvePatchDefaultExecutor(project, changeList), Collections.emptyList(), ApplyPatchMode.UNSHELVE, patchFile,
             null, getPredefinedChangeList(changeList, ChangeListManager.getInstance(project)), binaryShelvedPatches,
             hasNotAllSelectedChanges(changeList, preselectedChanges) ? Arrays.asList(preselectedChanges) : null,

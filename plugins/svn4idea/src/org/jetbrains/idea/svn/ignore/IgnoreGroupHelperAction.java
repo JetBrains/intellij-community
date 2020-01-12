@@ -50,8 +50,7 @@ public class IgnoreGroupHelperAction {
     e.getPresentation().setEnabledAndVisible(enabledAndVisible);
   }
 
-  @Nullable
-  private VirtualFile[] getSelectedFiles(@NotNull AnActionEvent e) {
+  private VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       Stream<VirtualFile> exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY);
       if (exactlySelectedFiles != null) {
@@ -61,7 +60,7 @@ public class IgnoreGroupHelperAction {
     return e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
   }
 
-  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     return ProjectLevelVcsManager.getInstance(vcs.getProject()).checkAllFilesAreUnder(vcs, files) &&
            Stream.of(files).allMatch(file -> isEnabled(vcs, file));
   }

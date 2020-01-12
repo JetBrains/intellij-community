@@ -34,8 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MappingsToRoots {
-  @NotNull
-  public static VirtualFile[] getRootsUnderVcs(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
+  public static VirtualFile @NotNull [] getRootsUnderVcs(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
     List<VirtualFile> mappings = new ArrayList<>(newMappings.getMappingsAsFilesUnderVcs(vcs));
 
     final AbstractVcs.RootsConvertor convertor = vcs.getCustomConvertor();

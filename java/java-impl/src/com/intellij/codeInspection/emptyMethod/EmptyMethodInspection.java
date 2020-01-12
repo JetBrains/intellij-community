@@ -48,12 +48,11 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(EmptyMethodInspection.class);
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext,
-                                                @NotNull ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext,
+                                                           @NotNull ProblemDescriptionsProcessor processor) {
     if (!(refEntity instanceof RefMethod)) {
       return null;
     }
@@ -351,7 +350,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project,
-                         @NotNull final CommonProblemDescriptor[] descriptors,
+                         final CommonProblemDescriptor @NotNull [] descriptors,
                          @NotNull final List<PsiElement> psiElementsToIgnore,
                          @Nullable final Runnable refreshViews) {
       for (CommonProblemDescriptor descriptor : descriptors) {

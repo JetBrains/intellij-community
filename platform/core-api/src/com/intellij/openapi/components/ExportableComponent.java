@@ -24,8 +24,7 @@ import java.io.File;
 public interface ExportableComponent {
   ExtensionPointName<ServiceBean> EXTENSION_POINT = new ExtensionPointName<>("com.intellij.exportable");
 
-  @NotNull
-  File[] getExportFiles();
+  File @NotNull [] getExportFiles();
 
   @NotNull
   String getPresentableName();

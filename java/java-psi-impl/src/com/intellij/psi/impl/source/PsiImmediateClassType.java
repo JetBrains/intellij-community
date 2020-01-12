@@ -89,7 +89,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   public PsiImmediateClassType(@NotNull PsiClass aClass,
                                @NotNull PsiSubstitutor substitutor,
                                @Nullable LanguageLevel level,
-                               @NotNull PsiAnnotation... annotations) {
+                               PsiAnnotation @NotNull ... annotations) {
     super(level, annotations);
     myClass = aClass;
     myManager = aClass.getManager();
@@ -130,8 +130,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     if (parameters.length == 0) {
       return PsiType.EMPTY_ARRAY;

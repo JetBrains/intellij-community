@@ -42,7 +42,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                   @PsiModifier.ModifierConstant String newVisibility,
                                   String newName,
                                   PsiType newType,
-                                  @NotNull ParameterInfoImpl[] parameterInfo) {
+                                  ParameterInfoImpl @NotNull [] parameterInfo) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
          parameterInfo, null, null, null);
@@ -69,7 +69,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                   @PsiModifier.ModifierConstant String newVisibility,
                                   String newName,
                                   CanonicalTypes.Type newType,
-                                  @NotNull ParameterInfoImpl[] parameterInfo,
+                                  ParameterInfoImpl @NotNull [] parameterInfo,
                                   ThrownExceptionInfo[] thrownExceptions,
                                   Set<PsiMethod> propagateParametersMethods,
                                   Set<PsiMethod> propagateExceptionsMethods) {
@@ -88,7 +88,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                                    @PsiModifier.ModifierConstant String newVisibility,
                                                    String newName,
                                                    CanonicalTypes.Type newType,
-                                                   @NotNull ParameterInfoImpl[] parameterInfo,
+                                                   ParameterInfoImpl @NotNull [] parameterInfo,
                                                    ThrownExceptionInfo[] thrownExceptions,
                                                    Set<PsiMethod> propagateParametersMethods,
                                                    Set<PsiMethod> propagateExceptionsMethods) {
@@ -115,7 +115,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new ChangeSignatureViewDescriptor(getChangeInfo().getMethod());
   }
 
@@ -125,7 +125,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
     getChangeInfo().updateMethod((PsiMethod) elements[0]);

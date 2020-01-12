@@ -61,8 +61,7 @@ final class PluginLoadingResult {
   /**
    * not null after initialization ({@link PluginManagerCore#initializePlugins})
    */
-  @NotNull
-  IdeaPluginDescriptorImpl[] getSortedPlugins() {
+  IdeaPluginDescriptorImpl @NotNull [] getSortedPlugins() {
     return sortedPlugins;
   }
 
@@ -81,8 +80,7 @@ final class PluginLoadingResult {
     return disabledRequiredIds;
   }
 
-  @NotNull
-  IdeaPluginDescriptorImpl[] finishLoading() {
+  IdeaPluginDescriptorImpl @NotNull [] finishLoading() {
     IdeaPluginDescriptorImpl[] enabledPlugins = plugins.values().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
     plugins.clear();
     Arrays.sort(enabledPlugins, Comparator.comparing(IdeaPluginDescriptorImpl::getPluginId));
@@ -104,7 +102,7 @@ final class PluginLoadingResult {
     return result;
   }
 
-  void finishInitializing(@NotNull IdeaPluginDescriptorImpl[] sortedPlugins,
+  void finishInitializing(IdeaPluginDescriptorImpl @NotNull [] sortedPlugins,
                           @NotNull List<IdeaPluginDescriptorImpl> sortedEnabledPlugins,
                           @NotNull Map<PluginId, String> disabledIds,
                           @NotNull Set<PluginId> disabledRequiredIds) {

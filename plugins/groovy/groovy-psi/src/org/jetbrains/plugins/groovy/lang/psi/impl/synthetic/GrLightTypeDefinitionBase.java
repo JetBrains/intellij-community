@@ -79,9 +79,8 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return getModifierList().hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public GrTypeParameter[] getTypeParameters() {
+  public GrTypeParameter @NotNull [] getTypeParameters() {
     return getTypeParameterList().getTypeParameters();
   }
 
@@ -100,9 +99,8 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return false;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getSupers(boolean includeSynthetic) {
+  public PsiClass @NotNull [] getSupers(boolean includeSynthetic) {
     return GrClassImplUtil.getSupers(this, includeSynthetic);
   }
 
@@ -112,9 +110,8 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getSuperTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getSuperTypes(boolean includeSynthetic) {
     return GrClassImplUtil.getSuperTypes(this, includeSynthetic);
   }
 
@@ -140,15 +137,13 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return "Light Groovy type definition: " + getName();
   }
 
-  @NotNull
   @Override
-  public GrClassInitializer[] getInitializers() {
+  public GrClassInitializer @NotNull [] getInitializers() {
     return GrClassInitializer.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public GrMembersDeclaration[] getMemberDeclarations() {
+  public GrMembersDeclaration @NotNull [] getMemberDeclarations() {
     return GrMembersDeclaration.EMPTY_ARRAY;
   }
 
@@ -176,15 +171,13 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return GrClassImplUtil.findFieldByName(this, name, checkBases, false);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findCodeMethodsByName(@NonNls String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findCodeMethodsByName(@NonNls String name, boolean checkBases) {
     return GrClassImplUtil.findCodeMethodsByName(this, name, checkBases);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
   }
 
@@ -205,27 +198,23 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return myTypeParameterList;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getInterfaces() {
+  public PsiClass @NotNull [] getInterfaces() {
     return GrClassImplUtil.getInterfaces(this);
   }
 
-  @NotNull
   @Override
-  public PsiField[] getAllFields() {
+  public PsiField @NotNull [] getAllFields() {
     return GrClassImplUtil.getAllFields(this);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getAllMethods() {
+  public PsiMethod @NotNull [] getAllMethods() {
     return GrClassImplUtil.getAllMethods(this);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getAllInnerClasses() {
+  public PsiClass @NotNull [] getAllInnerClasses() {
     return PsiClassImplUtil.getAllInnerClasses(this);
   }
 
@@ -241,15 +230,13 @@ public abstract class GrLightTypeDefinitionBase extends LightElement implements 
     return GrClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsByName(@NonNls String name, boolean checkBases) {
     return GrClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 

@@ -57,8 +57,7 @@ public abstract class DiffRequest {
   /**
    * @return contents to compare
    */
-  @NotNull
-  public abstract DiffContent[] getContents();
+  public abstract DiffContent @NotNull [] getContents();
 
   /**
    * @return contents names. Should have same length as {@link #getContents()}

@@ -260,9 +260,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     return getExtensionPoint(extensionPointName.getName());
   }
 
-  @NotNull
   @Override
-  public ExtensionPointImpl<?>[] getExtensionPoints() {
+  public ExtensionPointImpl<?> @NotNull [] getExtensionPoints() {
     return myExtensionPoints.values().toArray(new ExtensionPointImpl[0]);
   }
 

@@ -20,9 +20,8 @@ public class CreateResourceBundleAction extends CreateElementActionBase {
     super(PropertiesBundle.message("create.resource.bundle.dialog.action.title"), null, AllIcons.FileTypes.Properties);
   }
 
-  @NotNull
   @Override
-  protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
     if (project == null) return PsiElement.EMPTY_ARRAY;
     final CreateResourceBundleDialogComponent.Dialog dialog = new CreateResourceBundleDialogComponent.Dialog(project, directory, null);
     if (dialog.showAndGet()) {
@@ -33,9 +32,8 @@ public class CreateResourceBundleAction extends CreateElementActionBase {
     }
   }
 
-  @NotNull
   @Override
-  protected PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
     return PsiElement.EMPTY_ARRAY;
   }
 

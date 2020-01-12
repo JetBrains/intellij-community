@@ -40,7 +40,7 @@ public class SuggestIndexNameMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
     final Project project = context.getProject();

@@ -34,8 +34,7 @@ class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
 //    if(myMethodToReplaceIn.equals(myMethodToSearchFor)) {
 //      return new PsiElement[] {myMethodToReplaceIn};
 //    }

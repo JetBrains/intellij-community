@@ -47,9 +47,8 @@ public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
     myElement = e instanceof PsiFileSystemItem ? (PsiFileSystemItem)e : file;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getPrimaryElements() {
+  public PsiElement @NotNull [] getPrimaryElements() {
     return new PsiElement[] {myElement};
   }
 

@@ -25,9 +25,8 @@ public abstract class CoverageRunner {
   @NonNls
   public abstract String getDataFileExtension();
 
-  @NotNull
   @NonNls
-  public String[] getDataFileExtensions() {
+  public String @NotNull [] getDataFileExtensions() {
     return new String[]{getDataFileExtension()};
   }
 

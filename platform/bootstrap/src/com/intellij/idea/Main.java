@@ -131,7 +131,7 @@ public final class Main {
     return isCommandLine;
   }
 
-  public static void setFlags(@NotNull String[] args) {
+  public static void setFlags(String @NotNull [] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
     if (isHeadless) {
@@ -139,7 +139,7 @@ public final class Main {
     }
   }
 
-  public static boolean isHeadless(@NotNull String[] args) {
+  public static boolean isHeadless(String @NotNull [] args) {
     if (Boolean.valueOf(System.getProperty(AWT_HEADLESS))) {
       return true;
     }

@@ -571,7 +571,7 @@ public class SearchUtil {
   }
 
   @NotNull
-  public static List<Configurable> expand(@NotNull ConfigurableGroup[] groups) {
+  public static List<Configurable> expand(ConfigurableGroup @NotNull [] groups) {
     List<Configurable> result = new ArrayList<>();
     CollectConsumer<Configurable> consumer = new CollectConsumer<>(result);
     for (ConfigurableGroup group : groups) {

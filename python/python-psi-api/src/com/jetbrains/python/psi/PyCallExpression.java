@@ -84,8 +84,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   /**
    * @return the argument array used in the call, or an empty array if the call has no argument list.
    */
-  @NotNull
-  default PyExpression[] getArguments() {
+  default PyExpression @NotNull [] getArguments() {
     final PyArgumentList argList = getArgumentList();
     return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
   }
@@ -224,7 +223,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param nameCandidates names to check
    * @return true if matches, false otherwise
    */
-  default boolean isCalleeText(@NotNull String... nameCandidates) {
+  default boolean isCalleeText(String @NotNull ... nameCandidates) {
     final PyExpression callee = getCallee();
 
     return callee instanceof PyReferenceExpression &&
@@ -244,7 +243,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @deprecated use {@link com.jetbrains.extensions.python.PyCallExpressionExtKt#isCalleeName(PyCallExpression, FQNamesProvider...)}.
    */
   @Deprecated
-  default boolean isCallee(@NotNull FQNamesProvider... name) {
+  default boolean isCallee(FQNamesProvider @NotNull ... name) {
     final PyExpression callee = getCallee();
     return callee instanceof PyReferenceExpression && NameResolverTools.isName(callee, name);
   }

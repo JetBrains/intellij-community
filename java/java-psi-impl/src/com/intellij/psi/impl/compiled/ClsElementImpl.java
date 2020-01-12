@@ -75,8 +75,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return this;
   }
 
-  @NotNull
-  protected PsiElement[] getChildren(@Nullable PsiElement... children) {
+  protected PsiElement @NotNull [] getChildren(PsiElement @Nullable ... children) {
     if (children == null) {
       return PsiElement.EMPTY_ARRAY;
     }
@@ -195,8 +194,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     PsiElement mirror = getMirror();
     return mirror != null ? mirror.textToCharArray() : ArrayUtilRt.EMPTY_CHAR_ARRAY;
   }
@@ -273,7 +271,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     }
   }
 
-  protected static <T extends  PsiElement> void setMirrors(@NotNull T[] stubs, @NotNull T[] mirrors) throws InvalidMirrorException {
+  protected static <T extends  PsiElement> void setMirrors(T @NotNull [] stubs, T @NotNull [] mirrors) throws InvalidMirrorException {
     setMirrors(Arrays.asList(stubs), Arrays.asList(mirrors));
   }
 

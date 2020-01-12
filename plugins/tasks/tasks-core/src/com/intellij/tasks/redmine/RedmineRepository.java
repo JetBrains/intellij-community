@@ -249,7 +249,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   }
 
   @NotNull
-  private URIBuilder createUriBuilderWithApiKey(@NotNull Object... pathParts) throws URISyntaxException {
+  private URIBuilder createUriBuilderWithApiKey(Object @NotNull ... pathParts) throws URISyntaxException {
     final URIBuilder builder = new URIBuilder(getRestApiUrl(pathParts));
     if (isUseApiKeyAuthentication()) {
       builder.addParameter("key", myAPIKey);

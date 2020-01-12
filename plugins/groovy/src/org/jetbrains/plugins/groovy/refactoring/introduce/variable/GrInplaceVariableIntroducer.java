@@ -74,9 +74,8 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
     return GrIntroduceVariableHandler.getRefactoringNameText();
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return GroovyNameSuggestionUtil.suggestVariableNames(getContext().getExpression(), new GroovyVariableValidator(getContext()));
   }
 

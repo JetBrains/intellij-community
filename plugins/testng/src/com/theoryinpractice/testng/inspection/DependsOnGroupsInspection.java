@@ -72,8 +72,7 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
 
     if (!psiClass.getContainingFile().isWritable()) return null;
 

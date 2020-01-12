@@ -62,7 +62,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
     });
   }
 
-  public Self withAnyAttribute(@NotNull @NonNls final String... attributeNames) {
+  public Self withAnyAttribute(@NonNls final String @NotNull ... attributeNames) {
     return with(new PatternCondition<XmlTag>("withAnyAttribute") {
       @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {

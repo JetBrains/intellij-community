@@ -12,14 +12,11 @@ import javax.swing.tree.TreePath;
 * @author Konstantin Bulenkov
 */
 public interface TransferableWrapper extends FileFlavorProvider {
-  @Nullable
-  default TreePath[] getTreePaths() {
+  default TreePath @Nullable [] getTreePaths() {
     return TreePathUtil.toTreePaths(getTreeNodes());
   }
 
-  @Nullable
-  TreeNode[] getTreeNodes();
+  TreeNode @Nullable [] getTreeNodes();
 
-  @Nullable
-  PsiElement[] getPsiElements();
+  PsiElement @Nullable [] getPsiElements();
 }

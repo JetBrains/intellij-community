@@ -180,8 +180,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  @NotNull
-  public static File[] getBeforeTestFiles(@NotNull QuickFixTestCase testCase) {
+  public static File @NotNull [] getBeforeTestFiles(@NotNull QuickFixTestCase testCase) {
     assertNotNull("getBasePath() should not return null!", testCase.getBasePath());
 
     final String testDirPath = testCase.getTestDataPath().replace(File.separatorChar, '/') + testCase.getBasePath();

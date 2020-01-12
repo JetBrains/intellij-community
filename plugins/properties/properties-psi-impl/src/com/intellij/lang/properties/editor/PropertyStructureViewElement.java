@@ -74,13 +74,11 @@ public class PropertyStructureViewElement implements StructureViewTreeElement {
   }
 
   @Override
-  @NotNull
-  public StructureViewTreeElement[] getChildren() {
+  public StructureViewTreeElement @NotNull [] getChildren() {
     return EMPTY_ARRAY;
   }
 
-  @NotNull
-  public Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] getProblemDescriptors() {
+  public Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey> @NotNull [] getProblemDescriptors() {
     return myInspectedPropertyProblems == null ? new Pair[0] : myInspectedPropertyProblems.getDescriptors();
   }
 

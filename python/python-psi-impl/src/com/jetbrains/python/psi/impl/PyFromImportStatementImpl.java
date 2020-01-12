@@ -80,13 +80,11 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  @NotNull
-  public PyImportElement[] getImportElements() {
+  public PyImportElement @NotNull [] getImportElements() {
     return getImportElements(PyElementTypes.IMPORT_ELEMENT, PyTokenTypes.IMPORT_KEYWORD);
   }
 
-  @NotNull
-  final protected PyImportElement[] getImportElements(
+  final protected PyImportElement @NotNull [] getImportElements(
     @NotNull IElementType importElementType,
     @NotNull PyElementType importKeywordToken) {
     final PyFromImportStatementStub stub = getStub();

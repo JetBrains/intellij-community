@@ -43,9 +43,8 @@ public class OctalLiteralInspection extends BaseInspection {
     return true;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return new InspectionGadgetsFix[]{
       new ConvertOctalLiteralToDecimalFix(),
       new RemoveLeadingZeroFix()

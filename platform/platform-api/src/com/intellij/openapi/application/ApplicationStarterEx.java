@@ -27,7 +27,7 @@ public abstract class ApplicationStarterEx implements ApplicationStarter {
   @SuppressWarnings("unused")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
-  public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
+  public void processExternalCommandLine(String @NotNull [] args, @Nullable String currentDirectory) {
     throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLine()`");
   }
 }

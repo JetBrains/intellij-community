@@ -27,9 +27,8 @@ public class AnnotateMethodTest extends LightQuickFixParameterizedTestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/annotateMethod";
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new NullableStuffInspection()};
   }
 

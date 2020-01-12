@@ -76,8 +76,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     return myType.getAnnotations();
   }
 
@@ -93,8 +92,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return getAnnotations();
   }
 

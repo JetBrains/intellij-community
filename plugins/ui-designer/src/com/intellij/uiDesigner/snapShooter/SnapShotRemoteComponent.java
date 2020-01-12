@@ -65,8 +65,7 @@ public class SnapShotRemoteComponent {
     return myLayoutManager;
   }
 
-  @Nullable
-  public SnapShotRemoteComponent[] getChildren() {
+  public SnapShotRemoteComponent @Nullable [] getChildren() {
     return myChildren;
   }
 

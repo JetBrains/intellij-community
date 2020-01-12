@@ -34,7 +34,7 @@ abstract class PyTestsInSubFolderRunner<T extends PyScriptTestProcessRunner<?>> 
   /**
    * @param functionsToCheck name of functions that should be found in test tree and resolved
    */
-  PyTestsInSubFolderRunner(@NotNull final String... functionsToCheck) {
+  PyTestsInSubFolderRunner(final String @NotNull ... functionsToCheck) {
     super(functionsToCheck);
   }
 

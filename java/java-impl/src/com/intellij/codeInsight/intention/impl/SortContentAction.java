@@ -283,8 +283,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   private static abstract class Sortable<C> {
     abstract boolean isEnd(@NotNull PsiElement element);
 
-    @NotNull
-    abstract SortingStrategy[] sortStrategies();
+    abstract SortingStrategy @NotNull [] sortStrategies();
 
     /**
      * Extract context to use in consequent calls
@@ -620,9 +619,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE;
     }
 
-    @NotNull
     @Override
-    SortingStrategy[] sortStrategies() {
+    SortingStrategy @NotNull [] sortStrategies() {
       return Holder.EXPRESSION_SORTING_STRATEGIES;
     }
 
@@ -657,9 +655,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE;
     }
 
-    @NotNull
     @Override
-    SortingStrategy[] sortStrategies() {
+    SortingStrategy @NotNull [] sortStrategies() {
       return Holder.EXPRESSION_SORTING_STRATEGIES;
     }
 
@@ -722,9 +719,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RPARENTH;
     }
 
-    @NotNull
     @Override
-    SortingStrategy[] sortStrategies() {
+    SortingStrategy @NotNull [] sortStrategies() {
       return Holder.EXPRESSION_SORTING_STRATEGIES;
     }
 
@@ -758,10 +754,9 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return context.myVarargArguments.get(0);
     }
 
-    @Nullable
-    private static PsiExpression[] getVarargArguments(@NotNull PsiExpression[] arguments,
-                                                      @NotNull PsiElement originElement,
-                                                      @NotNull PsiParameter[] parameters) {
+    private static PsiExpression @Nullable [] getVarargArguments(PsiExpression @NotNull [] arguments,
+                                                                 @NotNull PsiElement originElement,
+                                                                 PsiParameter @NotNull [] parameters) {
       PsiParameter last = ArrayUtil.getLastElement(parameters);
       if (last == null) return null;
       if (!last.isVarArgs()) return null;
@@ -861,9 +856,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return false;
     }
 
-    @NotNull
     @Override
-    SortingStrategy[] sortStrategies() {
+    SortingStrategy @NotNull [] sortStrategies() {
       return new SortingStrategy[] {
         new EnumConstantDeclarationSortingStrategy()
       };

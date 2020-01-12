@@ -111,7 +111,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       replaceWithTextBlock(polyadicExpression.getOperands(), polyadicExpression);
     }
 
-    private static void replaceWithTextBlock(@NotNull PsiExpression[] operands, @NotNull PsiExpression toReplace) {
+    private static void replaceWithTextBlock(PsiExpression @NotNull [] operands, @NotNull PsiExpression toReplace) {
       String[] lines = getContentLines(operands);
       if (lines == null) return;
       String textBlock = getTextBlock(lines);
@@ -119,7 +119,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @NotNull
-    private static String getTextBlock(@NotNull String[] lines) {
+    private static String getTextBlock(String @NotNull [] lines) {
       lines = getTextBlockLines(lines);
       int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, true);
       // we need additional indent call only when significant trailing line is missing
@@ -127,8 +127,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       return "\"\"\"\n" + concatenateTextBlockLines(lines, indent) + "\"\"\"" + (indent > 0 ? ".indent(" + indent + ")" : "");
     }
 
-    @NotNull
-    private static String[] getTextBlockLines(@NotNull String[] lines) {
+    private static String @NotNull [] getTextBlockLines(String @NotNull [] lines) {
       StringBuilder blockLines = new StringBuilder();
       boolean escapeStartQuote = false;
       for (int i = 0; i < lines.length; i++) {
@@ -141,13 +140,12 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       return blockLines.toString().split("(?<=\n)");
     }
 
-    private static String concatenateTextBlockLines(@NotNull String[] lines, int indent) {
+    private static String concatenateTextBlockLines(String @NotNull [] lines, int indent) {
       if (indent <= 0) return StringUtil.join(lines);
       return Arrays.stream(lines).map(line -> indent < line.length() ? line.substring(indent) : line).collect(Collectors.joining());
     }
 
-    @Nullable
-    private static String[] getContentLines(@NotNull PsiExpression[] operands) {
+    private static String @Nullable [] getContentLines(PsiExpression @NotNull [] operands) {
       String[] lines = new String[operands.length];
       for (int i = 0; i < operands.length; i++) {
         PsiExpression operand = operands[i];

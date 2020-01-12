@@ -89,13 +89,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new ExtractMethodObjectViewDescriptor(getMethod());
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<>();
     final PsiClass containingClass = getMethod().getContainingClass();
     final SearchScope scope = PsiUtilCore.getVirtualFile(containingClass) == null
@@ -144,7 +143,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public void performRefactoring(@NotNull final UsageInfo[] usages) {
+  public void performRefactoring(final UsageInfo @NotNull [] usages) {
     try {
       if (isCreateInnerClass()) {
         myInnerClass = (PsiClass)addInnerClass(getMethod().getContainingClass(), myElementFactory.createClass(getInnerClassName()));

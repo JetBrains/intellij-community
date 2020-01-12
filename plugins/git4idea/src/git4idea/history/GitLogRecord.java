@@ -127,8 +127,7 @@ class GitLogRecord {
     return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
   }
 
-  @NotNull
-  String[] getParentsHashes() {
+  String @NotNull [] getParentsHashes() {
     final String parents = lookup(PARENTS);
     if (parents.trim().length() == 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return parents.split(" ");

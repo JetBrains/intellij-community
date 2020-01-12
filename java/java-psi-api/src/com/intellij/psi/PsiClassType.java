@@ -46,7 +46,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     this(languageLevel, PsiAnnotation.EMPTY_ARRAY);
   }
 
-  protected PsiClassType(LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
+  protected PsiClassType(LanguageLevel languageLevel, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myLanguageLevel = languageLevel;
   }
@@ -83,8 +83,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
    *
    * @return the array of type arguments, or an empty array if the type does not point to a generic class or interface.
    */
-  @NotNull
-  public abstract PsiType[] getParameters();
+  public abstract PsiType @NotNull [] getParameters();
 
   public int getParameterCount() {
     return getParameters().length;
@@ -175,8 +174,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     ClassResolveResult resolveResult = resolveGenerics();
     PsiClass aClass = resolveResult.getElement();
     if (aClass == null) return EMPTY_ARRAY;
@@ -334,7 +332,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
   }
 
   public abstract static class Stub extends PsiClassType {
-    protected Stub(LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
+    protected Stub(LanguageLevel languageLevel, PsiAnnotation @NotNull [] annotations) {
       super(languageLevel, annotations);
     }
 

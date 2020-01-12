@@ -90,9 +90,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return getShortName();
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element == null) {
       return SuppressQuickFix.EMPTY_ARRAY;
     }
@@ -252,8 +251,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#groupPath
    */
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  public String[] getGroupPath() {
+  public String @NotNull [] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
     if (groupDisplayName.isEmpty()) {
       groupDisplayName = getGeneralGroupName();

@@ -214,9 +214,8 @@ public class GitMergeProvider implements MergeProvider2 {
       }
     }
 
-    @NotNull
     @Override
-    public ColumnInfo[] getMergeInfoColumns() {
+    public ColumnInfo @NotNull [] getMergeInfoColumns() {
       return new ColumnInfo[]{new StatusColumn(false, currentBranchName), new StatusColumn(true, mergeHeadBranchName)};
     }
 

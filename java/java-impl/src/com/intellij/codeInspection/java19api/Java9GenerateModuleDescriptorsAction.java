@@ -566,8 +566,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return builder.toString();
     }
 
-    @NotNull
-    static String[] splitByDots(@NotNull String text) {
+    static String @NotNull [] splitByDots(@NotNull String text) {
       return SINGLE_DOT.split(text);
     }
   }

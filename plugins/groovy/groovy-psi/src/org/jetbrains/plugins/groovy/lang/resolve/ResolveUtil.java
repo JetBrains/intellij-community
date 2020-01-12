@@ -595,7 +595,7 @@ public class ResolveUtil {
 
   public static GroovyResolveResult[] getAllClassConstructors(@NotNull PsiClass psiClass,
                                                               @NotNull PsiSubstitutor substitutor,
-                                                              @Nullable PsiType[] argTypes,
+                                                              PsiType @Nullable [] argTypes,
                                                               @NotNull PsiElement place) {
     final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, argTypes, PsiType.EMPTY_ARRAY);
     final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
@@ -653,20 +653,18 @@ public class ResolveUtil {
   }
 
 
-  @NotNull
-  public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
-                                                          @Nullable String methodName,
-                                                          @NotNull PsiElement place,
-                                                          @Nullable PsiType... argumentTypes) {
+  public static GroovyResolveResult @NotNull [] getMethodCandidates(@NotNull PsiType thisType,
+                                                                    @Nullable String methodName,
+                                                                    @NotNull PsiElement place,
+                                                                    PsiType @Nullable ... argumentTypes) {
     return getMethodCandidates(thisType, methodName, place, false, argumentTypes);
   }
 
-  @NotNull
-  public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
-                                                          @Nullable String methodName,
-                                                          @NotNull PsiElement place,
-                                                          boolean allVariants,
-                                                          @Nullable PsiType... argumentTypes) {
+  public static GroovyResolveResult @NotNull [] getMethodCandidates(@NotNull PsiType thisType,
+                                                                    @Nullable String methodName,
+                                                                    @NotNull PsiElement place,
+                                                                    boolean allVariants,
+                                                                    PsiType @Nullable ... argumentTypes) {
     if (methodName == null) return GroovyResolveResult.EMPTY_ARRAY;
     thisType = TypesUtil.boxPrimitiveType(thisType, place.getManager(), place.getResolveScope());
     MethodResolverProcessor processor =
@@ -736,7 +734,7 @@ public class ResolveUtil {
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
-  private static boolean isApplicableClosureType(@Nullable PsiType type, @Nullable PsiType[] argTypes, @NotNull PsiElement place) {
+  private static boolean isApplicableClosureType(@Nullable PsiType type, PsiType @Nullable [] argTypes, @NotNull PsiElement place) {
     if (!(type instanceof GrClosureType)) return false;
     if (argTypes == null) return true;
 
@@ -850,10 +848,10 @@ public class ResolveUtil {
 
   @NotNull
   public static List<Pair<PsiParameter, PsiType>> collectExpectedParamsByArg(@NotNull PsiElement place,
-                                                                             @NotNull GroovyResolveResult[] variants,
-                                                                             @NotNull GrNamedArgument[] namedArguments,
-                                                                             @NotNull GrExpression[] expressionArguments,
-                                                                             @NotNull GrClosableBlock[] closureArguments,
+                                                                             GroovyResolveResult @NotNull [] variants,
+                                                                             GrNamedArgument @NotNull [] namedArguments,
+                                                                             GrExpression @NotNull [] expressionArguments,
+                                                                             GrClosableBlock @NotNull [] closureArguments,
                                                                              @NotNull GrExpression arg) {
     List<Pair<PsiParameter, PsiType>> expectedParams = new ArrayList<>();
 

@@ -35,11 +35,9 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
   private final Project myProject;
 
   @Tag("arguments")
-  @Nullable
-  private String[] myArguments;
+  private String @Nullable [] myArguments;
   @Tag("runOnlyEnvs")
-  @Nullable
-  private String[] myRunOnlyEnvs;
+  private String @Nullable [] myRunOnlyEnvs;
 
   PyToxConfiguration(@NotNull final PyToxConfigurationFactory factory, @NotNull final Project project) {
     super(project, factory);
@@ -54,21 +52,19 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
     return true;
   }
 
-  @NotNull
-  String[] getRunOnlyEnvs() {
+  String @NotNull [] getRunOnlyEnvs() {
     return (myRunOnlyEnvs == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());
   }
 
-  void setRunOnlyEnvs(@NotNull final String... tests) {
+  void setRunOnlyEnvs(final String @NotNull ... tests) {
     myRunOnlyEnvs = tests.clone();
   }
 
-  @NotNull
-  String[] getArguments() {
+  String @NotNull [] getArguments() {
     return (myArguments == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myArguments.clone());
   }
 
-  void setArguments(@NotNull final String... arguments) {
+  void setArguments(final String @NotNull ... arguments) {
     myArguments = arguments.clone();
   }
 

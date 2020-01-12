@@ -34,12 +34,12 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
     private final boolean myApproximate;
 
     @SafeVarargs
-    public Parameters(final PsiClass annotationClass, final SearchScope scope, @NotNull Class<? extends PsiModifierListOwner>... types) {
+    public Parameters(final PsiClass annotationClass, final SearchScope scope, Class<? extends PsiModifierListOwner> @NotNull ... types) {
       this(annotationClass, scope, false, types);
     }
 
     @SafeVarargs
-    public Parameters(final PsiClass annotationClass, final SearchScope scope, boolean approximate, @NotNull Class<? extends PsiModifierListOwner>... types) {
+    public Parameters(final PsiClass annotationClass, final SearchScope scope, boolean approximate, Class<? extends PsiModifierListOwner> @NotNull ... types) {
       myAnnotationClass = annotationClass;
       myScope = scope;
       myTypes = types;
@@ -54,8 +54,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
       return myScope;
     }
 
-    @NotNull
-    public Class<? extends PsiModifierListOwner>[] getTypes() {
+    public Class<? extends PsiModifierListOwner> @NotNull [] getTypes() {
       return myTypes;
     }
 
@@ -69,7 +68,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
   }
 
   @SafeVarargs
-  public static <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, @NotNull Class<? extends T>... types) {
+  public static <T extends PsiModifierListOwner> Query<T> searchElements(@NotNull PsiClass annotationClass, @NotNull SearchScope scope, Class<? extends T> @NotNull ... types) {
     //noinspection unchecked
     return (Query<T>)searchElements(new Parameters(annotationClass, scope, types));
   }

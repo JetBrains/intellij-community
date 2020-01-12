@@ -25,7 +25,7 @@ public interface AnnotationPackageSupport {
    */
   @Nullable
   default NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                        @NotNull PsiAnnotation.TargetType[] types,
+                                                                        PsiAnnotation.TargetType @NotNull [] types,
                                                                         boolean superPackage) {
     return null;
   }
@@ -43,8 +43,7 @@ public interface AnnotationPackageSupport {
    * @param manager manager which wants to register annotations
    * @return array of available annotation packages
    */
-  @NotNull
-  static AnnotationPackageSupport[] getAnnotationPackages(@NotNull NullableNotNullManager manager) {
+  static AnnotationPackageSupport @NotNull [] getAnnotationPackages(@NotNull NullableNotNullManager manager) {
     AnnotationPackageSupport[] extensions = {
       new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
       new Jsr305Support(manager), new CheckerFrameworkSupport()

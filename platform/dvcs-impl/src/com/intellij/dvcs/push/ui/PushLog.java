@@ -394,7 +394,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Integer> getSortedRows(@NotNull int[] rows) {
+  private static List<Integer> getSortedRows(int @NotNull [] rows) {
     List<Integer> sorted = new ArrayList<>();
     for (int row : rows) {
       sorted.add(row);

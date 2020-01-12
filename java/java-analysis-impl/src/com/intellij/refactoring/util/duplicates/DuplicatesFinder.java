@@ -44,7 +44,7 @@ import java.util.*;
 public class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance(DuplicatesFinder.class);
   public static final Key<Parameter> PARAMETER = Key.create("PARAMETER");
-  @NotNull private final PsiElement[] myPattern;
+  private final PsiElement @NotNull [] myPattern;
   private final InputVariables myParameters;
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
@@ -56,7 +56,7 @@ public class DuplicatesFinder {
   private ComplexityHolder myPatternComplexityHolder;
   private ComplexityHolder myCandidateComplexityHolder;
 
-  public DuplicatesFinder(@NotNull PsiElement[] pattern,
+  public DuplicatesFinder(PsiElement @NotNull [] pattern,
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters,
@@ -103,7 +103,7 @@ public class DuplicatesFinder {
     myParameters = parameters;
   }
 
-  public DuplicatesFinder(@NotNull PsiElement[] pattern,
+  public DuplicatesFinder(PsiElement @NotNull [] pattern,
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters) {
@@ -121,8 +121,7 @@ public class DuplicatesFinder {
     return myParameters;
   }
 
-  @NotNull
-  public PsiElement[] getPattern() {
+  public PsiElement @NotNull [] getPattern() {
     return myPattern;
   }
 
@@ -715,8 +714,8 @@ public class DuplicatesFinder {
     return contextClass == (candidateQualifier != null ? candidateQualifier.resolve() : RefactoringChangeUtil.getThisClass(candidate));
   }
 
-  private boolean matchChildren(@NotNull PsiElement[] children1,
-                                @NotNull PsiElement[] children2,
+  private boolean matchChildren(PsiElement @NotNull [] children1,
+                                PsiElement @NotNull [] children2,
                                 @NotNull List<PsiElement> candidates,
                                 @NotNull Match match) {
     if (children1.length != children2.length) return false;
@@ -931,14 +930,12 @@ public class DuplicatesFinder {
     return false;
   }
 
-  @NotNull
-  public static PsiElement[] getFilteredChildren(@NotNull PsiElement element) {
+  public static PsiElement @NotNull [] getFilteredChildren(@NotNull PsiElement element) {
     PsiElement[] children = element.getChildren();
     return getDeeplyFilteredElements(children);
   }
 
-  @NotNull
-  public static PsiElement[] getDeeplyFilteredElements(@NotNull PsiElement[] children) {
+  public static PsiElement @NotNull [] getDeeplyFilteredElements(PsiElement @NotNull [] children) {
     ArrayList<PsiElement> array = new ArrayList<>();
     for (PsiElement child : children) {
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiEmptyStatement) {

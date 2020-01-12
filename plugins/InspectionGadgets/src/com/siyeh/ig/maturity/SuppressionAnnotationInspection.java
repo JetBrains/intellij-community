@@ -48,9 +48,8 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final boolean suppressionIdPresent = ((Boolean)infos[1]).booleanValue();
     if (infos[0] instanceof PsiAnnotation) {
       final PsiAnnotation annotation = (PsiAnnotation)infos[0];
@@ -77,9 +76,8 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     return false;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     return SuppressQuickFix.EMPTY_ARRAY;
   }
 

@@ -166,7 +166,7 @@ public class JavaDocInfoGenerator {
     return getTagByName(tags, name);
   }
 
-  private static PsiDocTag getTagByName(@NotNull PsiDocTag[] tags, String name) {
+  private static PsiDocTag getTagByName(PsiDocTag @NotNull [] tags, String name) {
     for (PsiDocTag tag : tags) {
       PsiDocTagValue value = tag.getValueElement();
       if (value != null) {

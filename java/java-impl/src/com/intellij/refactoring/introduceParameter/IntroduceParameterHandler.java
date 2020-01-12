@@ -301,7 +301,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     // Never called
     /* do nothing */
   }
@@ -510,7 +510,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   @VisibleForTesting
-  public boolean introduceStrategy(@NotNull Project project, final Editor editor, @NotNull PsiFile file, @NotNull final PsiElement[] elements) {
+  public boolean introduceStrategy(@NotNull Project project, final Editor editor, @NotNull PsiFile file, final PsiElement @NotNull [] elements) {
     if (elements.length > 0) {
       final AbstractInplaceIntroducer inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup) {
@@ -576,13 +576,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return false;
   }
 
-  @NotNull
-  public static PsiElement[] getElementsInCopy(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement[] elements) {
+  public static PsiElement @NotNull [] getElementsInCopy(@NotNull Project project, @NotNull PsiFile file, PsiElement @NotNull [] elements) {
     return getElementsInCopy(project, file, elements, true);
   }
 
-  @NotNull
-  public static PsiElement[] getElementsInCopy(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement[] elements, boolean reuseNonPhysical) {
+  public static PsiElement @NotNull [] getElementsInCopy(@NotNull Project project, @NotNull PsiFile file, PsiElement @NotNull [] elements, boolean reuseNonPhysical) {
     final PsiElement[] elementsCopy;
     if (reuseNonPhysical && !elements[0].isPhysical()) {
       elementsCopy = elements;

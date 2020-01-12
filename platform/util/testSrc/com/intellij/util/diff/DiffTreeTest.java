@@ -33,11 +33,10 @@ import java.util.List;
 public class DiffTreeTest extends TestCase {
   private static class Node {
     private final int myStartOffset;
-    @NotNull
-    private final Node[] myChildren;
+    private final Node @NotNull [] myChildren;
     private final int myId;
 
-    Node(final int id, int startOffset, @NotNull Node... children) {
+    Node(final int id, int startOffset, Node @NotNull ... children) {
       myStartOffset = startOffset;
       myChildren = children;
       myId = id;
@@ -48,8 +47,7 @@ public class DiffTreeTest extends TestCase {
       return myId + myChildren.length; // This is intentionally bad hashcode
     }
 
-    @NotNull
-    public Node[] getChildren() {
+    public Node @NotNull [] getChildren() {
       return myChildren;
     }
 

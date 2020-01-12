@@ -199,9 +199,8 @@ public class PluginConflictDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
 

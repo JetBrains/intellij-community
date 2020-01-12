@@ -41,14 +41,11 @@ public abstract class FacetTypeRegistry {
   @Deprecated
   public abstract void unregisterFacetType(FacetType facetType);
 
-  @NotNull
-  public abstract FacetTypeId[] getFacetTypeIds();
+  public abstract FacetTypeId @NotNull [] getFacetTypeIds();
 
-  @NotNull
-  public abstract FacetType[] getFacetTypes();
+  public abstract FacetType @NotNull [] getFacetTypes();
 
-  @NotNull
-  public abstract FacetType[] getSortedFacetTypes();
+  public abstract FacetType @NotNull [] getSortedFacetTypes();
 
   @Nullable
   public abstract FacetType findFacetType(String id);

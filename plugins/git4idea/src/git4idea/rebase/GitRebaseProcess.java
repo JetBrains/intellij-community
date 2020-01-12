@@ -295,7 +295,7 @@ public class GitRebaseProcess {
   @NotNull
   private GitRebaseCommandResult callRebase(@NotNull GitRepository repository,
                                             @Nullable GitRebaseResumeMode mode,
-                                            @NotNull GitLineHandlerListener... listeners) {
+                                            GitLineHandlerListener @NotNull ... listeners) {
     if (mode == null) {
       GitRebaseParams params = assertNotNull(myRebaseSpec.getParams());
       return myGit.rebase(repository, params, listeners);

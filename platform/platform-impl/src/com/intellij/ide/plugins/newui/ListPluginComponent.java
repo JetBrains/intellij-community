@@ -795,7 +795,7 @@ public class ListPluginComponent extends JPanel {
   public static class ButtonAnAction extends DumbAwareAction {
     private final JButton[] myButtons;
 
-    ButtonAnAction(@NotNull JButton... buttons) {
+    ButtonAnAction(JButton @NotNull ... buttons) {
       super(buttons[0].getText());
       myButtons = buttons;
       setShortcutSet(CommonShortcuts.ENTER);

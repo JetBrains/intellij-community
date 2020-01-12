@@ -88,9 +88,8 @@ public class EditorConfigNavigationActionsFactory {
       myChildActions = actions;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return myChildActions;
     }
   }

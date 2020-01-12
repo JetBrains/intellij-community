@@ -107,7 +107,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   @NotNull
-  public Document createDocument(@NotNull char[] text) {
+  public Document createDocument(char @NotNull [] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 
@@ -233,8 +233,7 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @Override
-  @NotNull
-  public Editor[] getEditors(@NotNull Document document, Project project) {
+  public Editor @NotNull [] getEditors(@NotNull Document document, Project project) {
     List<Editor> list = null;
     for (Editor editor : myEditors) {
       if (editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject()))) {
@@ -246,8 +245,7 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @Override
-  @NotNull
-  public Editor[] getAllEditors() {
+  public Editor @NotNull [] getAllEditors() {
     return myEditors.toArray(Editor.EMPTY_ARRAY);
   }
 

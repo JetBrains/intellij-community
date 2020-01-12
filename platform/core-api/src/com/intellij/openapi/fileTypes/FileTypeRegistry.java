@@ -73,8 +73,7 @@ public abstract class FileTypeRegistry {
    *
    * @return The list of file types.
    */
-  @NotNull
-  public abstract FileType[] getRegisteredFileTypes();
+  public abstract FileType @NotNull [] getRegisteredFileTypes();
 
   /**
    * Returns the file type for the specified file.
@@ -93,7 +92,7 @@ public abstract class FileTypeRegistry {
    * @return The file type instance.
    */
   @NotNull
-  public FileType getFileTypeByFile(@NotNull VirtualFile file, @Nullable byte[] content) {
+  public FileType getFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
     return getFileTypeByFile(file);
   }
 

@@ -689,9 +689,8 @@ public class FSRecords {
 
   private static final int ROOT_RECORD_ID = 1;
 
-  @NotNull
   @TestOnly
-  static int[] listRoots() {
+  static int @NotNull [] listRoots() {
     return readAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
         TIntArrayList result = new TIntArrayList();
@@ -872,8 +871,7 @@ public class FSRecords {
     });
   }
 
-  @NotNull
-  static int[] list(int id) {
+  static int @NotNull [] list(int id) {
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
         if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
@@ -919,8 +917,7 @@ public class FSRecords {
   }
 
   // returns NameId[] sorted by NameId.id
-  @NotNull
-  public static NameId[] listAll(int parentId) {
+  public static NameId @NotNull [] listAll(int parentId) {
     assert parentId > 0 : parentId;
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(parentId, ourChildrenAttr)) {
@@ -988,7 +985,7 @@ public class FSRecords {
     }
   }
 
-  static void updateList(int id, @NotNull int[] childIds) {
+  static void updateList(int id, int @NotNull [] childIds) {
     assert id > 0 : id;
     Arrays.sort(childIds);
     writeAndHandleErrors(() -> {

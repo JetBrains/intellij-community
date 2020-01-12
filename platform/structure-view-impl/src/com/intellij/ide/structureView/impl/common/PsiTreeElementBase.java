@@ -94,14 +94,12 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return element != null ? element.toString() : "";
   }
 
-  @NotNull
   @Override
-  public final StructureViewTreeElement[] getChildren() {
+  public final StructureViewTreeElement @NotNull [] getChildren() {
     return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren);
   }
 
-  @NotNull
-  private StructureViewTreeElement[] doGetChildren() {
+  private StructureViewTreeElement @NotNull [] doGetChildren() {
     final T element = getElement();
     if (element == null) return EMPTY_ARRAY;
     return mergeWithExtensions(element, getChildrenBase());
@@ -148,9 +146,8 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   }
 
   /** @return element base children merged with children provided by extensions */
-  @NotNull
-  public static StructureViewTreeElement[] mergeWithExtensions(@NotNull PsiElement element,
-                                                               @NotNull Collection<StructureViewTreeElement> baseChildren) {
+  public static StructureViewTreeElement @NotNull [] mergeWithExtensions(@NotNull PsiElement element,
+                                                                         @NotNull Collection<StructureViewTreeElement> baseChildren) {
     List<StructureViewTreeElement> result = new ArrayList<>(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
     StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstanceEx(element.getProject());
     Class<? extends PsiElement> aClass = element.getClass();

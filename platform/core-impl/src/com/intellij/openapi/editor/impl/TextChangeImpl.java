@@ -104,8 +104,7 @@ public class TextChangeImpl implements TextChange {
    * @return    stored change text as a char array
    */
   @Override
-  @NotNull
-  public char[] getChars() {
+  public char @NotNull [] getChars() {
     char[] chars = myChars;
     if (chars == null) {
       myChars = chars = CharArrayUtil.fromSequence(myText);

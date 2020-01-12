@@ -30,8 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FileLookupInfoProvider {
   public static final ExtensionPointName<FileLookupInfoProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileLookupInfoProvider");
 
-  @NotNull
-  public abstract FileType[] getFileTypes();
+  public abstract FileType @NotNull [] getFileTypes();
 
   @Nullable
   public abstract Pair<String, String> getLookupInfo(@NotNull final VirtualFile file, Project project);

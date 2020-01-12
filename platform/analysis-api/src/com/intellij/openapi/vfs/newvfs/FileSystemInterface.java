@@ -19,7 +19,7 @@ public interface FileSystemInterface {
 
   boolean exists(@NotNull VirtualFile file);
 
-  @NotNull String[] list(@NotNull VirtualFile file);
+  String @NotNull [] list(@NotNull VirtualFile file);
 
   boolean isDirectory(@NotNull VirtualFile file);
 
@@ -41,7 +41,7 @@ public interface FileSystemInterface {
 
   @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
 
-  @NotNull byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
+  byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
 
   /** Does NOT strip the BOM from the beginning of the stream, unlike the {@link VirtualFile#getInputStream()} */
   @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException;

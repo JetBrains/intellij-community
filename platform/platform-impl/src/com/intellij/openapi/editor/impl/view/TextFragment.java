@@ -10,8 +10,7 @@ import java.util.function.Consumer;
  * Fragment of text using a common font
  */
 abstract class TextFragment implements LineFragment {
-  @NotNull
-  final float[] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
+  final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
   
   TextFragment(int charCount) {
     assert charCount > 0;

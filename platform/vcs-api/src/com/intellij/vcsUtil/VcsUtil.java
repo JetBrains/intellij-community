@@ -210,8 +210,7 @@ public class VcsUtil {
     });
   }
 
-  @Nullable
-  public static byte[] getFileByteContent(@NotNull File file) {
+  public static byte @Nullable [] getFileByteContent(@NotNull File file) {
     try {
       return FileUtil.loadFileBytes(file);
     }
@@ -356,8 +355,7 @@ public class VcsUtil {
    * @return {@code VirtualFile}s available in the current context.
    *         Returns empty array if there are no available files.
    */
-  @NotNull
-  public static VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
+  public static VirtualFile @NotNull [] getVirtualFiles(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return files == null ? VirtualFile.EMPTY_ARRAY : files;
   }

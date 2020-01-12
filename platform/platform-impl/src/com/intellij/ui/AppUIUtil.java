@@ -475,9 +475,8 @@ public final class AppUIUtil {
         return ui.getComponent();
       }
 
-      @NotNull
       @Override
-      protected Action[] createActions() {
+      protected Action @NotNull [] createActions() {
         if (consents.size() > 1) {
           Action[] actions = super.createActions();
           setOKButtonText("Save");

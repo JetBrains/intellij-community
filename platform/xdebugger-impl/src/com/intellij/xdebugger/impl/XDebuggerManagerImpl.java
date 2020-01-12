@@ -289,8 +289,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   }
 
   @Override
-  @NotNull
-  public XDebugSession[] getDebugSessions() {
+  public XDebugSession @NotNull [] getDebugSessions() {
     // ConcurrentHashMap.values().toArray(new T[0]) guaranteed to return array with no nulls
     return mySessions.values().toArray(new XDebugSessionImpl[0]);
   }

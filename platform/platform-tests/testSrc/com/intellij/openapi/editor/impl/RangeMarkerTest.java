@@ -1424,8 +1424,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private void checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(@NotNull VirtualFile vf,
-                                                                         @NotNull RangeMarker[] marker,
-                                                                         @NotNull RangeMarker[] persistentMarker) {
+                                                                         RangeMarker @NotNull [] marker,
+                                                                         RangeMarker @NotNull [] persistentMarker) {
     Reference<RangeMarker> markerRef = new WeakReference<>(marker[0]);
     Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker[0]);
     marker[0] = null;

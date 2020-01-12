@@ -34,9 +34,8 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer;
 import java.util.*;
 
 public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool {
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, final boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, final boolean isOnTheFly) {
     if (!JavaFxFileTypeFactory.isFxml(file)) return null;
     final XmlDocument document = ((XmlFile)file).getDocument();
     if (document == null) return null;

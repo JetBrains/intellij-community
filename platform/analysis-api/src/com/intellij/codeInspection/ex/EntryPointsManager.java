@@ -38,8 +38,7 @@ public abstract class EntryPointsManager implements Disposable {
 
   public abstract void removeEntryPoint(@NotNull RefElement anEntryPoint);
 
-  @NotNull
-  public abstract RefElement[] getEntryPoints(RefManager refManager);
+  public abstract RefElement @NotNull [] getEntryPoints(RefManager refManager);
 
   public abstract void cleanup();
 

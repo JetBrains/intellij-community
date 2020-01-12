@@ -70,7 +70,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
   }
 
   @Override
-  public void getChars(int start, int end, @NotNull char[] dest, int destPos) {
+  public void getChars(int start, int end, char @NotNull [] dest, int destPos) {
     assert end - start <= myEnd - myStart;
     CharArrayUtil.getChars(myChars, dest, start + myStart, destPos, end - start);
   }

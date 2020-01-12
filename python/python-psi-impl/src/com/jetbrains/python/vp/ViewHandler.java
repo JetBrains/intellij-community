@@ -56,15 +56,14 @@ class ViewHandler<C> implements InvocationHandler {
   private static class Invoker implements Runnable {
     @NotNull
     private final Method method;
-    @Nullable
-    private final Object[] args;
+    private final Object @Nullable [] args;
     @NotNull
     private final Object target;
 
     private InvocationTargetException exception;
     private Object result;
 
-    private Invoker(@NotNull Object target, @NotNull Method method, @Nullable Object[] args) {
+    private Invoker(@NotNull Object target, @NotNull Method method, Object @Nullable [] args) {
       this.target = target;
       this.method = method;
       this.args = args;

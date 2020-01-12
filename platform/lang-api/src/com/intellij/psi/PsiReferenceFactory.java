@@ -23,5 +23,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PsiReferenceFactory {
   
-  @NotNull PsiReference[] getReferencesByElement(PsiElement element);
+  PsiReference @NotNull [] getReferencesByElement(PsiElement element);
 }

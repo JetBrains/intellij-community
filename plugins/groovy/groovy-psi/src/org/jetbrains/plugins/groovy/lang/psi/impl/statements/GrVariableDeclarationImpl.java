@@ -172,8 +172,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   }
 
   @Override
-  @NotNull
-  public GrVariable[] getVariables() {
+  public GrVariable @NotNull [] getVariables() {
     return getStubOrPsiChildren(TokenSets.VARIABLES, GrVariable.ARRAY_FACTORY);
   }
 

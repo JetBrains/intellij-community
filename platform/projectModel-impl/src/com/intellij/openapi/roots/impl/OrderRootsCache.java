@@ -73,14 +73,12 @@ public class OrderRootsCache {
     return cached == EMPTY ? null : cached;
   }
 
-  @NotNull
-  VirtualFile[] getOrComputeRoots(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
+  VirtualFile @NotNull [] getOrComputeRoots(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
     VirtualFilePointerContainer container = getOrComputeContainer(rootType, flags, computer);
     return container == null ? VirtualFile.EMPTY_ARRAY : container.getFiles();
   }
 
-  @NotNull
-  String[] getOrComputeUrls(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
+  String @NotNull [] getOrComputeUrls(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
     VirtualFilePointerContainer container = getOrComputeContainer(rootType, flags, computer);
     return container == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : container.getUrls();
   }

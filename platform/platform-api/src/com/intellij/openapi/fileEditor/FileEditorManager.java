@@ -26,8 +26,7 @@ public abstract class FileEditorManager {
    *             Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    * @return array of opened editors
    */
-  @NotNull
-  public abstract FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor);
+  public abstract FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor);
 
 
   /**
@@ -38,8 +37,7 @@ public abstract class FileEditorManager {
    * @param focusEditor {@code true} if need to focus
    * @return array of opened editors
    */
-  @NotNull
-  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
+  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -85,8 +83,7 @@ public abstract class FileEditorManager {
   /**
    * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
    */
-  @NotNull
-  public abstract VirtualFile[] getOpenFiles();
+  public abstract VirtualFile @NotNull [] getOpenFiles();
 
   public boolean hasOpenFiles() {
     return getOpenFiles().length > 0;
@@ -96,14 +93,12 @@ public abstract class FileEditorManager {
    * @return files currently selected. The method returns empty array if there are no selected files.
    * If more than one file is selected (split), the file with most recent focused editor is returned first.
    */
-  @NotNull
-  public abstract VirtualFile[] getSelectedFiles();
+  public abstract VirtualFile @NotNull [] getSelectedFiles();
 
   /**
    * @return editors currently selected. The method returns empty array if no editors are open.
    */
-  @NotNull
-  public abstract FileEditor[] getSelectedEditors();
+  public abstract FileEditor @NotNull [] getSelectedEditors();
 
   /**
    * @return currently selected file editor or {@code null} if there is no selected editor at all.
@@ -124,20 +119,17 @@ public abstract class FileEditorManager {
   /**
    * @return current editors for the specified {@code file}
    */
-  @NotNull
-  public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
+  public abstract FileEditor @NotNull [] getEditors(@NotNull VirtualFile file);
 
   /**
    * @return all editors for the specified {@code file}
    */
-  @NotNull
-  public abstract FileEditor[] getAllEditors(@NotNull VirtualFile file);
+  public abstract FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file);
 
   /**
    * @return all open editors
    */
-  @NotNull
-  public abstract FileEditor[] getAllEditors();
+  public abstract FileEditor @NotNull [] getAllEditors();
 
   /**
    * Adds the specified component above the editor and paints a separator line below it.

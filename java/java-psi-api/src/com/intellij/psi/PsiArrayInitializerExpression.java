@@ -28,6 +28,5 @@ public interface PsiArrayInitializerExpression extends PsiExpression {
    *
    * @return the array of member initializer expressions.
    */
-  @NotNull
-  PsiExpression[] getInitializers();
+  PsiExpression @NotNull [] getInitializers();
 }

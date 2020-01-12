@@ -26,9 +26,8 @@ public class GrTupleImpl extends GroovyPsiElementImpl implements GrTuple {
     return ArrayUtilRt.find(children, element);
   }
 
-  @NotNull
   @Override
-  public GrReferenceExpression[] getExpressions() {
+  public GrReferenceExpression @NotNull [] getExpressions() {
     return findChildrenByClass(GrReferenceExpression.class);
   }
 

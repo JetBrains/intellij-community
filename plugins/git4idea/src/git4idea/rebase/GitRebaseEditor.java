@@ -375,7 +375,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       return columnIndex == ACTION_COLUMN;
     }
 
-    public void moveRows(@NotNull int[] rows, @NotNull MoveDirection direction) {
+    public void moveRows(int @NotNull [] rows, @NotNull MoveDirection direction) {
       myCommitsTable.removeEditor();
 
       final ContiguousIntIntervalTracker selectionInterval = new ContiguousIntIntervalTracker();

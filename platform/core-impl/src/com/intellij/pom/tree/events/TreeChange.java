@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface TreeChange {
 
-  @NotNull
-  ASTNode[] getAffectedChildren();
+  ASTNode @NotNull [] getAffectedChildren();
 
   ChangeInfo getChangeByChild(ASTNode child);
 

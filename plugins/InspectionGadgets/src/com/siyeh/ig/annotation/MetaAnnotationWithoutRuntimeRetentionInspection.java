@@ -24,9 +24,8 @@ public class MetaAnnotationWithoutRuntimeRetentionInspection extends AbstractBas
     ourAnnotations.add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!aClass.isAnnotationType()) {
       return null;
     }

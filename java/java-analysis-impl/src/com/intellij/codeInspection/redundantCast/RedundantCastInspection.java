@@ -50,8 +50,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
     List<ProblemDescriptor> descriptions = new ArrayList<>(redundantCasts.size());

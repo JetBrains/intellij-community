@@ -57,9 +57,8 @@ public class GitContentRevision implements ByteBackedContentRevision {
     return ContentRevisionCache.getAsString(bytes, myFile, myCharset);
   }
 
-  @Nullable
   @Override
-  public byte[] getContentAsBytes() throws VcsException {
+  public byte @Nullable [] getContentAsBytes() throws VcsException {
     if (myFile.isDirectory()) {
       return null;
     }
@@ -71,8 +70,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     }
   }
 
-  @NotNull
-  private byte[] loadContent() throws VcsException {
+  private byte @NotNull [] loadContent() throws VcsException {
     VirtualFile root = GitUtil.getRepositoryForFile(myProject, myFile).getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
   }

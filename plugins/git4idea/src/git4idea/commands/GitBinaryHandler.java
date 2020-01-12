@@ -117,8 +117,7 @@ public class GitBinaryHandler extends GitHandler {
    * @return the binary data
    * @throws VcsException in case of the problem with running git
    */
-  @NotNull
-  public byte[] run() throws VcsException {
+  public byte @NotNull [] run() throws VcsException {
     Project project = project();
     GitVcsConsoleWriter vcsConsoleWriter = project != null
                                            ? GitVcsConsoleWriter.getInstance(project)

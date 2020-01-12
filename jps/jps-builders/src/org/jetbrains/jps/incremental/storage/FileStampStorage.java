@@ -57,8 +57,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     update(path, updateFilesStamp(getState(path), targetId, stamp));
   }
 
-  @NotNull
-  private static HashStampPerTarget[] updateFilesStamp(HashStampPerTarget[] oldState, final int targetId, FileStamp stamp) {
+  private static HashStampPerTarget @NotNull [] updateFilesStamp(HashStampPerTarget[] oldState, final int targetId, FileStamp stamp) {
     final HashStampPerTarget newItem = new HashStampPerTarget(targetId, stamp.myBytes);
     if (oldState == null) {
       return new HashStampPerTarget[]{newItem};
@@ -109,8 +108,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     return FileStamp.EMPTY;
   }
 
-  @Nullable
-  public byte[] getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
+  public byte @Nullable [] getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
     HashStampPerTarget[] state = getState(relativePath(file));
     if (state == null) return null;
     int targetId = myTargetsState.getBuildTargetId(target);

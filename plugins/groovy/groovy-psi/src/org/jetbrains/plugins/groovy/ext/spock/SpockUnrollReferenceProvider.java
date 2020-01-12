@@ -25,9 +25,8 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
   private static final Pattern PATTERN = Pattern.compile("\\#([\\w_]+)");
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     GrAnnotationNameValuePair nvp = (GrAnnotationNameValuePair)element.getParent();
 
     String name = nvp.getName();
@@ -90,9 +89,8 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
       return descriptor.getVariable();
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       Map<String, SpockVariableDescriptor> variableMap = SpockUtils.getVariableMap(myMethod);
 
       Object[] res = new Object[variableMap.size()];

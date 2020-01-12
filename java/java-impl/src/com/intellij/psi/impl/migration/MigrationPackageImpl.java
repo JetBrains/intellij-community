@@ -52,9 +52,8 @@ public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] occursInPackagePrefixes() {
+  public VirtualFile @NotNull [] occursInPackagePrefixes() {
     return VirtualFile.EMPTY_ARRAY;
   }
 

@@ -53,19 +53,17 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     return null;
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     Document document = getDocument(file);
 
     return document != null ? checkFile(file, document, manager, isOnTheFly) : null;
   }
 
-  @Nullable
-  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
-                                          @NotNull Document document,
-                                          @NotNull InspectionManager manager,
-                                          boolean isOnTheFly) {
+  protected ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file,
+                                                     @NotNull Document document,
+                                                     @NotNull InspectionManager manager,
+                                                     boolean isOnTheFly) {
     return null;
   }
 
@@ -77,7 +75,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
                                                int line,
                                                int rightMargin,
                                                @NotNull String problemText,
-                                               @NotNull LocalQuickFix... fixes) {
+                                               LocalQuickFix @NotNull ... fixes) {
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
 

@@ -22,12 +22,11 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
     return "Blank line between subject and body";
   }
 
-  @Nullable
   @Override
-  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
-                                          @NotNull Document document,
-                                          @NotNull InspectionManager manager,
-                                          boolean isOnTheFly) {
+  protected ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file,
+                                                     @NotNull Document document,
+                                                     @NotNull InspectionManager manager,
+                                                     boolean isOnTheFly) {
     ProblemDescriptor descriptor = document.getLineCount() > 1
                                    ? checkRightMargin(file, document, manager, isOnTheFly, 1, 0,
                                                       "Missing blank line between subject and body", new AddBlankLineQuickFix(),

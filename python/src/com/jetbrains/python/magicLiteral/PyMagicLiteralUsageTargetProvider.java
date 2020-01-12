@@ -20,9 +20,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  */
 class PyMagicLiteralUsageTargetProvider implements UsageTargetProvider {
-  @Nullable
   @Override
-  public UsageTarget[] getTargets(@NotNull final Editor editor, @NotNull final PsiFile file) {
+  public UsageTarget @Nullable [] getTargets(@NotNull final Editor editor, @NotNull final PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element != null) {
       final PyStringLiteralExpression literal = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);

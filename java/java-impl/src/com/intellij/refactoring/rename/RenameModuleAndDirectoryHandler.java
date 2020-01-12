@@ -69,7 +69,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
     final PsiElement element = elements.length == 1 ? elements[0] : PsiElementRenameHandler.getElement(dataContext);
@@ -123,7 +123,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
           ) {
 
             @Override
-            public void performRefactoring(@NotNull UsageInfo[] usages) {
+            public void performRefactoring(UsageInfo @NotNull [] usages) {
               renameModule(myModule, newName);
               super.performRefactoring(usages);
             }

@@ -118,7 +118,7 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
     }
   }
 
-  public void setText(@NotNull final String... text) {
+  public void setText(final String @NotNull ... text) {
     myText.removeAll();
     for (int i = 0; i < text.length; i++) {
       final JLabel eachLabel = new JLabel(text[i], SwingConstants.CENTER);

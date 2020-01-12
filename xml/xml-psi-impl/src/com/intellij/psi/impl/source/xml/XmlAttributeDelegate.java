@@ -116,13 +116,13 @@ public abstract class XmlAttributeDelegate {
 
   static class VolatileState {
     @NotNull final String myDisplayText;
-    @NotNull final int[] myGapDisplayStarts;
-    @NotNull final int[] myGapPhysicalStarts;
+    final int @NotNull [] myGapDisplayStarts;
+    final int @NotNull [] myGapPhysicalStarts;
     @NotNull final TextRange myValueTextRange; // text inside quotes, if there are any
 
     VolatileState(@NotNull final String displayText,
-                  @NotNull int[] gapDisplayStarts,
-                  @NotNull int[] gapPhysicalStarts,
+                  int @NotNull [] gapDisplayStarts,
+                  int @NotNull [] gapPhysicalStarts,
                   @NotNull TextRange valueTextRange) {
       myDisplayText = displayText;
       myGapDisplayStarts = gapDisplayStarts;
@@ -212,8 +212,7 @@ public abstract class XmlAttributeDelegate {
     return entityRef.getText();
   }
 
-  @NotNull
-  PsiReference[] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
+  PsiReference @NotNull [] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
     if (hints.offsetInElement != null) {
       XmlElement nameElement = myAttribute.getNameElement();
       if (nameElement == null || hints.offsetInElement > nameElement.getStartOffsetInParent() + nameElement.getTextLength()) {

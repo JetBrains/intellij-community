@@ -62,8 +62,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     return new PsiClassReferenceListStubImpl(type, parentStub, getTexts(tree, node));
   }
 
-  @NotNull
-  private static String[] getTexts(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
+  private static String @NotNull [] getTexts(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
     List<LighterASTNode> refs = LightTreeUtil.getChildrenOfType(tree, node, JavaElementType.JAVA_CODE_REFERENCE);
     String[] texts = ArrayUtil.newStringArray(refs.size());
     for (int i = 0; i < refs.size(); i++) {

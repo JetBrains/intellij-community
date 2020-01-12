@@ -38,8 +38,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     myReverse = reverse;
   }
 
-  @Nullable
-  protected abstract Change[] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate);
+  protected abstract Change @Nullable [] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate);
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

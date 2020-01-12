@@ -93,13 +93,11 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return myCoverageProvider;
   }
 
-  @Nullable
-  public ClassFilter[] getCoveragePatterns() {
+  public ClassFilter @Nullable [] getCoveragePatterns() {
     return myCoveragePatterns;
   }
 
-  @Nullable
-  public String [] getPatterns() {
+  public String @Nullable [] getPatterns() {
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {
@@ -110,8 +108,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return null;
   }
 
-  @Nullable
-  public String [] getExcludePatterns() {
+  public String @Nullable [] getExcludePatterns() {
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {

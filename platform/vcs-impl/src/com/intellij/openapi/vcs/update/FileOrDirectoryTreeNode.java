@@ -71,7 +71,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   }
 
   @Override
-  public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+  public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
     if (!getFilePointer().isValid()) {
       AbstractTreeNode parent = (AbstractTreeNode)getParent();
       if (parent != null && parent.getSupportsDeletion()) {

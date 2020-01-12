@@ -92,7 +92,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   @NotNull
-  public Self andOr(@NotNull ElementPattern... patterns) {
+  public Self andOr(ElementPattern @NotNull ... patterns) {
     ElementPattern or = StandardPatterns.or(patterns);
     return and(or);
   }

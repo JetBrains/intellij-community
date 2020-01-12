@@ -130,7 +130,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     processUsages(project, scope, usageInfos);
   }
 
-  protected void processUsages(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull UsageInfo[] usageInfos) {
+  protected void processUsages(@NotNull Project project, @NotNull AnalysisScope scope, UsageInfo @NotNull [] usageInfos) {
     if (usageInfos.length < 5) {
       applyRunnable(project, () -> usageInfos).run();
     }
@@ -173,10 +173,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     return false;
   }
 
-  @Nullable
-  protected UsageInfo[] findUsages(@NotNull final Project project,
-                                 @NotNull final AnalysisScope scope,
-                                 final int fileCount) {
+  protected UsageInfo @Nullable [] findUsages(@NotNull final Project project,
+                                              @NotNull final AnalysisScope scope,
+                                              final int fileCount) {
     final NullityInferrer inferrer = new NullityInferrer(isAnnotateLocalVariables(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
     final Runnable searchForUsages = () -> scope.accept(new PsiElementVisitor() {
@@ -282,9 +281,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   @NotNull
   private Factory<UsageSearcher> rerunFactory(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     return () -> new UsageInfoSearcherAdapter() {
-      @NotNull
       @Override
-      protected UsageInfo[] findUsages() {
+      protected UsageInfo @NotNull [] findUsages() {
         return ObjectUtils.notNull(InferNullityAnnotationsAction.this.findUsages(project, scope, scope.getFileCount()), UsageInfo.EMPTY_ARRAY);
       }
 

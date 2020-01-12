@@ -92,9 +92,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return GlobalSearchScope.allScope(myManager.getProject());
   }
 
-  @NotNull
   @Override
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return new PsiType[]{getJavaLangObject(myManager, getResolveScope())};
   }
 
@@ -425,8 +424,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
   }
 
-  @NotNull
-  private static PsiTypeParameter[] getAllTypeParams(PsiTypeParameterListOwner listOwner, PsiClass containingClass) {
+  private static PsiTypeParameter @NotNull [] getAllTypeParams(PsiTypeParameterListOwner listOwner, PsiClass containingClass) {
     Set<PsiTypeParameter> params = new LinkedHashSet<>();
     Collections.addAll(params, containingClass.getTypeParameters());
     if (listOwner != null) {

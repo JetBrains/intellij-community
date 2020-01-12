@@ -209,15 +209,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
    * @deprecated use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
    */
   @Deprecated
-  @NotNull
   @Override
-  public final PsiReference[] getReferences() {
+  public final PsiReference @NotNull [] getReferences() {
     return getReferences(PsiReferenceService.Hints.NO_HINTS);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences(@NotNull PsiReferenceService.Hints hints) {
+  public PsiReference @NotNull [] getReferences(@NotNull PsiReferenceService.Hints hints) {
     return getImpl().getDefaultReferences(hints);
   }
 

@@ -123,8 +123,7 @@ public class StringRef {
     return nameId != 0 ? store.valueOf(nameId) : null;
   }
 
-  @NotNull
-  public static StringRef[] createArray(int count) {
+  public static StringRef @NotNull [] createArray(int count) {
     return count == 0 ? EMPTY_ARRAY : new StringRef[count];
   }
 }

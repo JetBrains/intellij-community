@@ -57,8 +57,7 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
    * @param checkIncludes   deprecated, no longer used
    * @return the list of PsiClass or PsiPackage elements for the imports.
    */
-  @NotNull
-  PsiElement[] getOnDemandImports(boolean includeImplicit, @Deprecated boolean checkIncludes);
+  PsiElement @NotNull [] getOnDemandImports(boolean includeImplicit, @Deprecated boolean checkIncludes);
 
   /**
    * Returns the list of classes which have been imported as
@@ -67,8 +66,7 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
    * @param checkIncludes deprecated, no longer used.
    * @return the list of PsiClass elements for the import.
    */
-  @NotNull
-  PsiClass[] getSingleClassImports(@Deprecated boolean checkIncludes);
+  PsiClass @NotNull [] getSingleClassImports(@Deprecated boolean checkIncludes);
 
   /**
    * Returns the list of names of implicitly imported packages
@@ -76,8 +74,7 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
    *
    * @return the list of implicitly imported package names.
    */
-  @NotNull
-  String[] getImplicitlyImportedPackages();
+  String @NotNull [] getImplicitlyImportedPackages();
 
   /**
    * returns the list of reference elements for the
@@ -85,8 +82,7 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
    *
    * @return the list of implicitly imported package reference elements.
    */
-  @NotNull
-  PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences();
+  PsiJavaCodeReferenceElement @NotNull [] getImplicitlyImportedPackageReferences();
 
   /**
    * Returns the single-class import statement which references

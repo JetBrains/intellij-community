@@ -172,7 +172,7 @@ public class IntToIntBtree {
   private int myOptimizedInserts;
   private boolean myCanUseLastKey;
 
-  public boolean get(int key, @NotNull int[] result) {
+  public boolean get(int key, int @NotNull [] result) {
     if (key == 0) {
       if (hasZeroKey) {
         result[0] = zeroKeyValue;

@@ -50,8 +50,7 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final PsiElement element = resolve();
     if (element != null) {
       return new ResolveResult[]{new PsiElementResolveResult(element)};
@@ -74,9 +73,8 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
     }
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public LocalQuickFix @Nullable [] getQuickFixes() {
     return new LocalQuickFix[] { new CreateTemplateFix(myAttribute.getParent(), myName) };
   }
 

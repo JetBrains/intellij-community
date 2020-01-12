@@ -137,9 +137,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     }, consumer, false);
   }
 
-  @NotNull
   @Override
-  public ChangeListColumn[] getColumns() {
+  public ChangeListColumn @NotNull [] getColumns() {
     return new ChangeListColumn[]{ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 

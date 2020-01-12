@@ -76,7 +76,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     public void registerProblem(@NotNull PsiElement highlightElement,
                                 @NotNull ProblemHighlightType highlightType,
                                 @NotNull String message,
-                                @NotNull LocalQuickFix... fixes) {
+                                LocalQuickFix @NotNull ... fixes) {
       GroovyTypeCheckVisitor.this.registerError(highlightElement, message, fixes, highlightType);
     }
   };
@@ -480,7 +480,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                              @NotNull PsiElement elementToHighlight,
                              @NotNull PsiType lType,
                              @NotNull PsiType rType,
-                             @NotNull LocalQuickFix[] fixes) {
+                             LocalQuickFix @NotNull [] fixes) {
     if (result == ConversionResult.OK) return;
     registerError(
       elementToHighlight,
@@ -512,7 +512,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   protected void registerError(@NotNull PsiElement location,
                                @NotNull String description,
-                               @Nullable LocalQuickFix[] fixes,
+                               LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
     if (PsiUtil.isCompileStatic(location)) {
       // filter all errors here, error will be highlighted by annotator

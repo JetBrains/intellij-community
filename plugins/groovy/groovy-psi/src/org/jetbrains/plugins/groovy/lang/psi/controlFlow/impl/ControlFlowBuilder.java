@@ -238,7 +238,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     addReadFromNestedControlFlow(closure, reads);
   }
 
-  private void addReadFromNestedControlFlow(@NotNull PsiElement anchor, @NotNull ReadWriteVariableInstruction[] reads) {
+  private void addReadFromNestedControlFlow(@NotNull PsiElement anchor, ReadWriteVariableInstruction @NotNull [] reads) {
     for (ReadWriteVariableInstruction read : reads) {
       PsiElement element = read.getElement();
       if (!(element instanceof GrReferenceExpression) || myPolicy.isReferenceAccepted((GrReferenceExpression)element)) {

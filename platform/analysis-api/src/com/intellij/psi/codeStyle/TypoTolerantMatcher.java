@@ -942,9 +942,8 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     }
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static char[] insert(@NotNull char[] array, int index, char value) {
+  public static char @NotNull [] insert(char @NotNull [] array, int index, char value) {
     char[] result = new char[array.length + 1];
     System.arraycopy(array, 0, result, 0, index);
     result[index] = value;

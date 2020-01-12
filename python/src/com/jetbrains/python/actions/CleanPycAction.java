@@ -72,7 +72,7 @@ public class CleanPycAction extends AnAction {
     e.getPresentation().setEnabled(isAllDirectories(elements));
   }
 
-  private static boolean isAllDirectories(@Nullable PsiElement[] elements) {
+  private static boolean isAllDirectories(PsiElement @Nullable [] elements) {
     if (elements == null || elements.length == 0) return false;
     for (PsiElement element : elements) {
       if (!(element instanceof PsiDirectory) || FileIndexFacade.getInstance(element.getProject())

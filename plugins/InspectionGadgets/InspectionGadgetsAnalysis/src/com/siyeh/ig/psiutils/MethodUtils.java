@@ -113,7 +113,7 @@ public class MethodUtils {
     @NonNls @Nullable String containingClassName,
     @Nullable PsiType returnType,
     @Nullable Pattern methodNamePattern,
-    @Nullable PsiType... parameterTypes) {
+    PsiType @Nullable ... parameterTypes) {
     if (methodNamePattern != null) {
       final String name = method.getName();
       final Matcher matcher = methodNamePattern.matcher(name);
@@ -141,7 +141,7 @@ public class MethodUtils {
     @NonNls @Nullable String containingClassName,
     @Nullable PsiType returnType,
     @NonNls @Nullable String methodName,
-    @Nullable PsiType... parameterTypes) {
+    PsiType @Nullable ... parameterTypes) {
     final String name = method.getName();
     if (methodName != null && !methodName.equals(name)) {
       return false;
@@ -152,7 +152,7 @@ public class MethodUtils {
   private static boolean methodMatches(@NotNull PsiMethod method,
                                        @NonNls @Nullable String containingClassName,
                                        @Nullable PsiType returnType,
-                                       @Nullable PsiType... parameterTypes) {
+                                       PsiType @Nullable ... parameterTypes) {
     if (parameterTypes != null) {
       final PsiParameterList parameterList = method.getParameterList();
       if (parameterList.getParametersCount() != parameterTypes.length) {
@@ -190,7 +190,7 @@ public class MethodUtils {
     @NonNls @Nullable String containingClassName,
     @NonNls @Nullable String returnTypeString,
     @NonNls @Nullable String methodName,
-    @NonNls @Nullable String... parameterTypeStrings) {
+    @NonNls String @Nullable ... parameterTypeStrings) {
     final Project project = method.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -340,7 +340,7 @@ public class MethodUtils {
     return true;
   }
 
-  public static boolean hasInThrows(@NotNull PsiMethod method, @NotNull String... exceptions) {
+  public static boolean hasInThrows(@NotNull PsiMethod method, String @NotNull ... exceptions) {
     if (exceptions.length == 0) {
       throw new IllegalArgumentException("no exceptions specified");
     }

@@ -89,9 +89,8 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
       return false;
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final PsiClass exactTagClass = JavaFxPsiUtil.getTagClass(myXmlAttributeValue);
       final PsiClass guessedTagClass = exactTagClass == null ? getGuessedTagClass() : null;
 

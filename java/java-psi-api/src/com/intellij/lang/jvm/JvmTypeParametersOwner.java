@@ -27,6 +27,5 @@ public interface JvmTypeParametersOwner extends JvmMember {
   /**
    * @see java.lang.reflect.GenericDeclaration#getTypeParameters
    */
-  @NotNull
-  JvmTypeParameter[] getTypeParameters();
+  JvmTypeParameter @NotNull [] getTypeParameters();
 }

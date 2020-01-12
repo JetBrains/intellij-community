@@ -132,8 +132,7 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     return isApplicationLibraryTable(libraryTable) || isProjectLibraryTable(libraryTable);
   }
 
-  @NotNull
-  protected Library[] getLibraries(@NotNull LibraryTable table) {
+  protected Library @NotNull [] getLibraries(@NotNull LibraryTable table) {
     return table.getLibraries();
   }
 }

@@ -59,14 +59,12 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     }
 
   @Override
-  @NotNull
-    public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
+  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
     @Override
-    @NotNull
-    public AnAction[] createGroupingActions(@NotNull UsageView view) {
+    public AnAction @NotNull [] createGroupingActions(@NotNull UsageView view) {
         return AnAction.EMPTY_ARRAY;
     }
 
@@ -154,7 +152,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     private static class TemplateUsageGroupingRule extends SingleParentUsageGroupingRule {
         @Nullable
         @Override
-        protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+        protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
             if (usage instanceof UsageInfo2UsageAdapter) {
                 final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
                 final UsageInfo usageInfo = u.getUsageInfo();

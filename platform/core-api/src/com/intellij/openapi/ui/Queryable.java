@@ -33,11 +33,11 @@ public interface Queryable {
       this(null, null);
     }
 
-    public PrintInfo(@Nullable String[] idKeys) {
+    public PrintInfo(String @Nullable [] idKeys) {
       this(idKeys, null);
     }
 
-    public PrintInfo(@Nullable String[] idKeys, @Nullable String[] infoKeys) {
+    public PrintInfo(String @Nullable [] idKeys, String @Nullable [] infoKeys) {
       myIdKeys = idKeys;
       myInfoKeys = infoKeys;
     }

@@ -197,23 +197,20 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   }
 
 
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     ClassMember[] allMembers = getAllOriginalMembers(aClass);
     return chooseMembers(allMembers, false, false, project, null);
   }
 
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
     return chooseOriginalMembers(aClass, project);
   }
 
-  @Nullable
-  protected ClassMember[] chooseMembers(ClassMember[] members,
-                                        boolean allowEmptySelection,
-                                        boolean copyJavadocCheckbox,
-                                        Project project,
-                                        @Nullable Editor editor) {
+  protected ClassMember @Nullable [] chooseMembers(ClassMember[] members,
+                                                   boolean allowEmptySelection,
+                                                   boolean copyJavadocCheckbox,
+                                                   Project project,
+                                                   @Nullable Editor editor) {
     MemberChooser<ClassMember> chooser = createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project);
     if (editor != null) {
       final int offset = editor.getCaretModel().getOffset();
@@ -261,8 +258,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return null;
   }
 
-  @Nullable
-  protected JComponent[] getOptionControls() {
+  protected JComponent @Nullable [] getOptionControls() {
     return null;
   }
 

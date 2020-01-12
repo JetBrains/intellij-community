@@ -28,7 +28,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   protected abstract boolean accept(@NotNull Configurable configurable);
 
   @Nullable
-  public final Configurable find(@NotNull ConfigurableGroup... groups) {
+  public final Configurable find(ConfigurableGroup @NotNull ... groups) {
     return find(this, Arrays.asList(groups));
   }
 
@@ -54,7 +54,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   }
 
   @Nullable
-  public static Configurable find(@NotNull Predicate<Configurable> visitor, @NotNull Configurable[] configurables) {
+  public static Configurable find(@NotNull Predicate<Configurable> visitor, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       if (visitor.test(configurable)) {
         return configurable;
@@ -88,7 +88,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   }
 
   @ApiStatus.Internal
-  public static void collect(@NotNull Consumer<Configurable> visitor, @NotNull Configurable[] configurables) {
+  public static void collect(@NotNull Consumer<Configurable> visitor, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       visitor.accept(configurable);
       if (configurable instanceof Configurable.Composite) {

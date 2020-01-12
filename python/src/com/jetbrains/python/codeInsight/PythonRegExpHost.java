@@ -83,9 +83,8 @@ public class PythonRegExpHost implements RegExpLanguageHost {
     return myPropertiesProvider.isValidCategory(category);
   }
 
-  @NotNull
   @Override
-  public String[][] getAllKnownProperties() {
+  public String[] @NotNull [] getAllKnownProperties() {
     return myPropertiesProvider.getAllKnownProperties();
   }
 
@@ -95,9 +94,8 @@ public class PythonRegExpHost implements RegExpLanguageHost {
     return myPropertiesProvider.getPropertyDescription(name);
   }
 
-  @NotNull
   @Override
-  public String[][] getKnownCharacterClasses() {
+  public String[] @NotNull [] getKnownCharacterClasses() {
     return myPropertiesProvider.getKnownCharacterClasses();
   }
 

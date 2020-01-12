@@ -36,7 +36,6 @@ public interface BatchSuppressableTool {
    *                Inspections tool window
    * @return the list of suppression actions.
    */
-  @NotNull
-  SuppressQuickFix[] getBatchSuppressActions(@Nullable final PsiElement element);
+  SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable final PsiElement element);
 
 }

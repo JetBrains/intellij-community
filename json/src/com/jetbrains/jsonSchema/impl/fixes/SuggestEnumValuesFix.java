@@ -95,7 +95,7 @@ public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<Common
 
   @Override
   public void applyFix(@NotNull Project project,
-                       @NotNull CommonProblemDescriptor[] descriptors,
+                       CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();

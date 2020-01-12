@@ -77,7 +77,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     mySupportId = id;
   }
 
-  public BaseInjection(@NotNull String supportId, @NotNull String injectedLanguageId, @NotNull String prefix, @NotNull String suffix, @NotNull InjectionPlace... places) {
+  public BaseInjection(@NotNull String supportId, @NotNull String injectedLanguageId, @NotNull String prefix, @NotNull String suffix, InjectionPlace @NotNull ... places) {
     mySupportId = supportId;
     myInjectedLanguageId = injectedLanguageId;
     myPrefix = prefix;
@@ -90,15 +90,13 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return InjectedLanguage.findLanguageById(myInjectedLanguageId);
   }
 
-  @NotNull
-  private InjectionPlace[] myPlaces = InjectionPlace.EMPTY_ARRAY;
+  private InjectionPlace @NotNull [] myPlaces = InjectionPlace.EMPTY_ARRAY;
 
-  @NotNull
-  public InjectionPlace[] getInjectionPlaces() {
+  public InjectionPlace @NotNull [] getInjectionPlaces() {
     return myPlaces;
   }
 
-  public void setInjectionPlaces(@NotNull InjectionPlace... places) {
+  public void setInjectionPlaces(InjectionPlace @NotNull ... places) {
     myPlaces = places;
   }
 

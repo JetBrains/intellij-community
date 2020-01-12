@@ -36,9 +36,8 @@ public class SourceItemsTreeRoot extends SourceItemNodeBase {
     return null;
   }
 
-  @NotNull
   @Override
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[]{"root"};
   }
 

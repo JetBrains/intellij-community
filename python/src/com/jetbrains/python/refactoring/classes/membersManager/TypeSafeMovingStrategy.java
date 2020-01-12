@@ -33,7 +33,7 @@ class TypeSafeMovingStrategy<T extends PyElement> {
   @NotNull private final PyClass myFrom;
   @NotNull private final MembersManager<T> myManager;
   @NotNull private final Collection<PyMemberInfo<T>> myMemberInfoCollection;
-  @NotNull private final PyClass[] myTo;
+  private final PyClass @NotNull [] myTo;
 
   /**
    * Move members.
@@ -46,7 +46,7 @@ class TypeSafeMovingStrategy<T extends PyElement> {
   static void moveCheckingTypesAtRunTime(@NotNull final PyClass from,
                    @NotNull final MembersManager<?> manager,
                    @NotNull final Collection<? extends PyMemberInfo<PyElement>> memberInfoCollection,
-                   @NotNull final PyClass... to) {
+                   final PyClass @NotNull ... to) {
     manager.checkElementTypes((Collection)MembersManager.fetchElements(memberInfoCollection));
     new TypeSafeMovingStrategy(from, manager, memberInfoCollection, to).moveTyped();
   }
@@ -54,7 +54,7 @@ class TypeSafeMovingStrategy<T extends PyElement> {
   private TypeSafeMovingStrategy(@NotNull final PyClass from,
                                  @NotNull final MembersManager<T> manager,
                                  @NotNull final Collection<PyMemberInfo<T>> memberInfoCollection,
-                                 @NotNull final PyClass[] to) {
+                                 final PyClass @NotNull [] to) {
     myFrom = from;
     myManager = manager;
     myMemberInfoCollection = new ArrayList<>(memberInfoCollection);

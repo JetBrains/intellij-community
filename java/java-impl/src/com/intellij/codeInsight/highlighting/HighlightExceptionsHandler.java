@@ -57,7 +57,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(myClassTypes, myEditor, CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")) {
       @Override
-      protected void selected(@NotNull PsiClass... classes) {
+      protected void selected(PsiClass @NotNull ... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();

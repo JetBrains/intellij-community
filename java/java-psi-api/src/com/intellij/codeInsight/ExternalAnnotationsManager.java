@@ -54,8 +54,7 @@ public abstract class ExternalAnnotationsManager {
   // Method used in Kotlin plugin
   public abstract boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
-  @Nullable
-  public abstract PsiAnnotation[] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
+  public abstract PsiAnnotation @Nullable [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
 
   /**
    * Returns external annotations associated with default
@@ -97,7 +96,7 @@ public abstract class ExternalAnnotationsManager {
   public abstract void annotateExternally(@NotNull PsiModifierListOwner listOwner,
                                           @NotNull String annotationFQName,
                                           @NotNull PsiFile fromFile,
-                                          @Nullable PsiNameValuePair[] value) throws CanceledConfigurationException;
+                                          PsiNameValuePair @Nullable [] value) throws CanceledConfigurationException;
 
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
   public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) { }
@@ -105,7 +104,7 @@ public abstract class ExternalAnnotationsManager {
   // Method used in Kotlin plugin when it is necessary to leave external annotation, but modify its arguments
   public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                                  @NotNull String annotationFQN,
-                                                 @Nullable PsiNameValuePair[] value);
+                                                 PsiNameValuePair @Nullable [] value);
 
   @NotNull
   public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);

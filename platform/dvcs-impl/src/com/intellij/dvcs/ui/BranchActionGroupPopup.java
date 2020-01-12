@@ -84,9 +84,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private void createTitlePanelToolbar(@NotNull String dimensionKey) {
     ActionGroup actionGroup = new LightActionGroup() {
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return myToolbarActions.toArray(AnAction.EMPTY_ARRAY);
       }
     };
@@ -104,9 +103,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     ActionGroup settingsGroup = new ActionGroup("Settings", true) {
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return mySettingsActions.toArray(AnAction.EMPTY_ARRAY);
       }
 

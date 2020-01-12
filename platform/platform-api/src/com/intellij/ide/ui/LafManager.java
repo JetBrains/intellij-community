@@ -16,8 +16,7 @@ public abstract class LafManager {
     return ApplicationManager.getApplication().getComponent(LafManager.class);
   }
 
-  @NotNull
-  public abstract UIManager.LookAndFeelInfo[] getInstalledLookAndFeels();
+  public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
   @ApiStatus.Internal
   public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel();

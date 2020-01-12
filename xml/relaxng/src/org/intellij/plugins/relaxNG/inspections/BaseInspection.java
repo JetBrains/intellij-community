@@ -72,9 +72,8 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     return false;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {
       return ArrayUtil.mergeArrays(new SuppressQuickFix[] {
               new SuppressAction("Define") {

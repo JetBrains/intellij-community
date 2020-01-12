@@ -100,8 +100,7 @@ public final class Properties {
     return null;
   }
 
-  @Nullable
-  public IntEnumEditor.Pair[] getEnumPairs(final Class aClass, final String name) {
+  public IntEnumEditor.Pair @Nullable [] getEnumPairs(final Class aClass, final String name) {
     for (Class c = aClass; c != null; c = c.getSuperclass()) {
       final Map<String, IntEnumEditor.Pair[]> map = myClass2EnumProperties.get(c.getName());
       if (map != null) {

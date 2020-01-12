@@ -56,9 +56,8 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
       new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
-      @NotNull
       @Override
-      protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
+      protected InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
         return myInspectionToolWrappers;
       }
     });

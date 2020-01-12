@@ -67,7 +67,7 @@ public class MappedFileInputStream extends InputStream {
   }
 
   @Override
-  public int read(@NotNull byte[] b, int offset, int length ) throws IOException
+  public int read(byte @NotNull [] b, int offset, int length ) throws IOException
   {
       //only allow a read of the amount available.
       if( length > available() )

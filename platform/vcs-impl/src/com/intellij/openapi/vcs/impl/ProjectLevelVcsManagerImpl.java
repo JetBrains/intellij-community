@@ -280,9 +280,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return myMappings.haveActiveVcs(vcsName);
   }
 
-  @NotNull
   @Override
-  public AbstractVcs[] getAllActiveVcss() {
+  public AbstractVcs @NotNull [] getAllActiveVcss() {
     return myMappings.getActiveVcses();
   }
 
@@ -572,8 +571,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs) {
+  public VirtualFile @NotNull [] getRootsUnderVcs(@NotNull AbstractVcs vcs) {
     return MappingsToRoots.getRootsUnderVcs(myProject, myMappings, vcs);
   }
 
@@ -593,8 +591,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  @NotNull
-  public VcsRoot[] getAllVcsRoots() {
+  public VcsRoot @NotNull [] getAllVcsRoots() {
     List<VcsRoot> vcsRoots = new ArrayList<>();
     final AbstractVcs[] vcses = myMappings.getActiveVcses();
     for (AbstractVcs vcs : vcses) {
@@ -742,19 +739,19 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @CalledInAwt
-  boolean isBackgroundTaskRunning(@NotNull Object... keys) {
+  boolean isBackgroundTaskRunning(Object @NotNull ... keys) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myBackgroundRunningTasks.contains(new ActionKey(keys));
   }
 
   @CalledInAwt
-  void startBackgroundTask(@NotNull Object... keys) {
+  void startBackgroundTask(Object @NotNull ... keys) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(myBackgroundRunningTasks.add(new ActionKey(keys)));
   }
 
   @CalledInAwt
-  void stopBackgroundTask(@NotNull Object... keys) {
+  void stopBackgroundTask(Object @NotNull ... keys) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));
   }
@@ -857,7 +854,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   private static class ActionKey {
     private final Object[] myObjects;
 
-    ActionKey(@NotNull Object... objects) {
+    ActionKey(Object @NotNull ... objects) {
       myObjects = objects;
     }
 

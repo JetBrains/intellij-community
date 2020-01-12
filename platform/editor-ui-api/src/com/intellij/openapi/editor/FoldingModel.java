@@ -65,8 +65,7 @@ public interface FoldingModel {
    *
    * @return the array of fold regions, or an empty array if folding is currently disabled.
    */
-  @NotNull
-  FoldRegion[] getAllFoldRegions();
+  FoldRegion @NotNull [] getAllFoldRegions();
 
   /**
    * Checks if the specified offset in the document belongs to a folded region. The region must contain given offset or be located right

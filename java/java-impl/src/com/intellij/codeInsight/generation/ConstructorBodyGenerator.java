@@ -29,8 +29,8 @@ public interface ConstructorBodyGenerator {
   LanguageExtension<ConstructorBodyGenerator> INSTANCE = new LanguageExtension<>("com.intellij.constructorBodyGenerator");
 
   default void generateFieldInitialization(@NotNull StringBuilder buffer,
-                                           @NotNull PsiField[] fields,
-                                           @NotNull PsiParameter[] parameters,
+                                           PsiField @NotNull [] fields,
+                                           PsiParameter @NotNull [] parameters,
                                            @NotNull Collection<String> existingNames) {
     for (int i = 0, length = fields.length; i < length; i++) {
       String fieldName = fields[i].getName();
@@ -50,11 +50,11 @@ public interface ConstructorBodyGenerator {
    * @deprecated use {@link #generateFieldInitialization(StringBuilder, PsiField[], PsiParameter[], Collection)}
    */
   @Deprecated
-  default void generateFieldInitialization(@NotNull StringBuilder buffer, @NotNull PsiField[] fields, @NotNull PsiParameter[] parameters) {}
+  default void generateFieldInitialization(@NotNull StringBuilder buffer, PsiField @NotNull [] fields, PsiParameter @NotNull [] parameters) {}
 
   default void appendSemicolon(@NotNull StringBuilder buffer) {}
 
-  default void generateSuperCallIfNeeded(@NotNull StringBuilder buffer, @NotNull PsiParameter[] parameters) {
+  default void generateSuperCallIfNeeded(@NotNull StringBuilder buffer, PsiParameter @NotNull [] parameters) {
     if (parameters.length > 0) {
       buffer.append("super(");
       for (int j = 0; j < parameters.length; j++) {
@@ -68,7 +68,7 @@ public interface ConstructorBodyGenerator {
     }
   }
 
-  default StringBuilder start(StringBuilder buffer, @NotNull String name, @NotNull PsiParameter[] parameters) {
+  default StringBuilder start(StringBuilder buffer, @NotNull String name, PsiParameter @NotNull [] parameters) {
     buffer.append("public ").append(name).append("(");
     for (PsiParameter parameter : parameters) {
       buffer.append(parameter.getType().getPresentableText()).append(' ').append(parameter.getName()).append(',');

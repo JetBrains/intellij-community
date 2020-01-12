@@ -28,7 +28,7 @@ public class XmlErrorBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.XmlErrorBundle";
   private static final XmlErrorBundle ourInstance = new XmlErrorBundle();
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 

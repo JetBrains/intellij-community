@@ -92,8 +92,7 @@ abstract class FileIndexBase implements FileIndex {
            isInSourceContent(file);
   }
 
-  @NotNull
-  static VirtualFile[][] getModuleContentAndSourceRoots(@NotNull Module module) {
+  static VirtualFile[] @NotNull [] getModuleContentAndSourceRoots(@NotNull Module module) {
     return new VirtualFile[][]{ModuleRootManager.getInstance(module).getContentRoots(),
       ModuleRootManager.getInstance(module).getSourceRoots()};
   }

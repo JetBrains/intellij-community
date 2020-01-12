@@ -44,8 +44,7 @@ public abstract class XDebuggerManager {
   public abstract XBreakpointManager getBreakpointManager();
 
 
-  @NotNull
-  public abstract XDebugSession[] getDebugSessions();
+  public abstract XDebugSession @NotNull [] getDebugSessions();
 
   @Nullable
   public abstract XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole);

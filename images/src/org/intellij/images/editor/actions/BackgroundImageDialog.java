@@ -109,9 +109,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     pack();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return ArrayUtil.append(super.createActions(), new AbstractAction("Clear and Close") {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -171,7 +171,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
     assertFalse(new UiActivity("root", "folder2").isSameOrGeneralFor(new UiActivity("anotherRoot")));
   }
 
-  private void assertReady(@Nullable Project key, @NotNull UiActivity ... activities) {
+  private void assertReady(@Nullable Project key, UiActivity @NotNull ... activities) {
     UIUtil.dispatchAllInvocationEvents();
     BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key, activities) : myMonitor.getBusy(activities));
     assertTrue("Must be READY, but was: BUSY", busy.isReady());
@@ -182,7 +182,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
     assertTrue(done[0]);
   }
 
-  private void assertBusy(@Nullable Project key, @NotNull UiActivity ... activities) {
+  private void assertBusy(@Nullable Project key, UiActivity @NotNull ... activities) {
     UIUtil.dispatchAllInvocationEvents();
     BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key, activities) : myMonitor.getBusy(activities));
     assertFalse("Must be BUSY, but was: READY", busy.isReady());

@@ -15,15 +15,13 @@ public class SuppressManagerImpl extends SuppressManager implements RedundantSup
   private static final Logger LOG = Logger.getInstance(SuppressManager.class);
 
   @Override
-  @NotNull
-  public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
+  public SuppressIntentionAction @NotNull [] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
     SuppressQuickFix[] batchSuppressActions = createBatchSuppressActions(displayKey);
     return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions);
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+  public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
     final HighlightDisplayKey displayKey = HighlightDisplayKey.findById(toolId);
     LOG.assertTrue(displayKey != null, "Display key is null for `" + toolId + "` tool");
     return createBatchSuppressActions(displayKey);

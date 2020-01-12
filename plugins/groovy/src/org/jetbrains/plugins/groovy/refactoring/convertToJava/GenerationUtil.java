@@ -118,9 +118,9 @@ public class GenerationUtil {
 
   public static void invokeMethodByName(@Nullable GrExpression caller,
                                         @NotNull String methodName,
-                                        @NotNull GrExpression[] exprs,
-                                        @NotNull GrNamedArgument[] namedArgs,
-                                        @NotNull GrClosableBlock[] closureArgs,
+                                        GrExpression @NotNull [] exprs,
+                                        GrNamedArgument @NotNull [] namedArgs,
+                                        GrClosableBlock @NotNull [] closureArgs,
                                         @NotNull ExpressionGenerator expressionGenerator,
                                         @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = resolveMethod(caller, methodName, exprs, namedArgs, closureArgs, psiContext);
@@ -130,9 +130,9 @@ public class GenerationUtil {
   @NotNull
   public static GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
                                                    @NotNull String methodName,
-                                                   @NotNull GrExpression[] exprs,
-                                                   @NotNull GrNamedArgument[] namedArgs,
-                                                   @NotNull GrClosableBlock[] closureArgs,
+                                                   GrExpression @NotNull [] exprs,
+                                                   GrNamedArgument @NotNull [] namedArgs,
+                                                   GrClosableBlock @NotNull [] closureArgs,
                                                    @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = EmptyGroovyResolveResult.INSTANCE;
 
@@ -154,9 +154,9 @@ public class GenerationUtil {
   public static void invokeMethodByResolveResult(@Nullable GrExpression caller,
                                                  @NotNull GroovyResolveResult resolveResult,
                                                  @NotNull String methodName,
-                                                 @NotNull GrExpression[] exprs,
-                                                 @NotNull GrNamedArgument[] namedArgs,
-                                                 @NotNull GrClosableBlock[] closureArgs,
+                                                 GrExpression @NotNull [] exprs,
+                                                 GrNamedArgument @NotNull [] namedArgs,
+                                                 GrClosableBlock @NotNull [] closureArgs,
                                                  @NotNull ExpressionGenerator expressionGenerator,
                                                  @NotNull GroovyPsiElement psiContext) {
     final PsiElement resolved = resolveResult.getElement();
@@ -258,7 +258,7 @@ public class GenerationUtil {
   }
 
   static void writeParameterList(@NotNull StringBuilder text,
-                                 @NotNull PsiParameter[] parameters,
+                                 PsiParameter @NotNull [] parameters,
                                  @NotNull final ClassNameProvider classNameProvider,
                                  @Nullable ExpressionContext context) {
     Set<String> usedNames = new HashSet<>();

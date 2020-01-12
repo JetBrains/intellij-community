@@ -22,9 +22,8 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class StreamToLoopInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     StreamToLoopInspection inspection = new StreamToLoopInspection();
     inspection.SUPPORT_UNKNOWN_SOURCES = true;
     return new LocalInspectionTool[]{inspection};

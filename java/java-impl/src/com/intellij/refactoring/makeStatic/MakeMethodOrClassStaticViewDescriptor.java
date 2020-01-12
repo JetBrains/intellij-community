@@ -38,8 +38,7 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return new PsiElement[]{myMember};
   }
 

@@ -28,6 +28,5 @@ import org.jetbrains.annotations.NotNull;
 public interface ConsoleFilterProvider {
   ExtensionPointName<ConsoleFilterProvider> FILTER_PROVIDERS = ExtensionPointName.create("com.intellij.consoleFilterProvider");
 
-  @NotNull
-  Filter[] getDefaultFilters(@NotNull Project project);
+  Filter @NotNull [] getDefaultFilters(@NotNull Project project);
 }

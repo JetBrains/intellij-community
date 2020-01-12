@@ -210,8 +210,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
 
     // return modules to compile before run. Null or empty list to build project
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
         return getModule() != null ? new Module[]{ getModule() } : Module.EMPTY_ARRAY;
     }
 

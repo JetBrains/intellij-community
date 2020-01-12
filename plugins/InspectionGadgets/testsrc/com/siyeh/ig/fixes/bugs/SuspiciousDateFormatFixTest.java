@@ -9,9 +9,8 @@ import com.siyeh.ig.bugs.SuspiciousDateFormatInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class SuspiciousDateFormatFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new SuspiciousDateFormatInspection()};
   }
 

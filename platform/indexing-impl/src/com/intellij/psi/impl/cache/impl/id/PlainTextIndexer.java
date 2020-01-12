@@ -17,7 +17,7 @@ public class PlainTextIndexer implements IdIndexer {
     final CharSequence chars = inputData.getContentAsText();
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
       @Override
-      public void run(final CharSequence chars11, @Nullable char[] charsArray, final int start, final int end) {
+      public void run(final CharSequence chars11, char @Nullable [] charsArray, final int start, final int end) {
         if (charsArray != null) {
           consumer.addOccurrence(charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
         }

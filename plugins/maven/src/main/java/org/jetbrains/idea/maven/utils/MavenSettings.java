@@ -89,9 +89,8 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     myConfigurable.disposeUIResources();
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     return myChildren.toArray(new Configurable[0]);
   }
 

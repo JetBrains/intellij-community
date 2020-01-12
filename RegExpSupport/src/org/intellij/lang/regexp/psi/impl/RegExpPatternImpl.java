@@ -38,8 +38,7 @@ public class RegExpPatternImpl extends RegExpElementImpl implements RegExpPatter
     }
 
     @Override
-    @NotNull
-    public RegExpBranch[] getBranches() {
+    public RegExpBranch @NotNull [] getBranches() {
         final ASTNode[] nodes = getNode().getChildren(BRANCH);
         final RegExpBranch[] branches = new RegExpBranch[nodes.length];
         for (int i = 0; i < branches.length; i++) {
@@ -48,9 +47,8 @@ public class RegExpPatternImpl extends RegExpElementImpl implements RegExpPatter
         return branches;
     }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

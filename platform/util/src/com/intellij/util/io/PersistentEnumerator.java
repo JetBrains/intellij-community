@@ -206,7 +206,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     return (hashcode >>> (byteN * BITS_PER_LEVEL)) & LEVEL_MASK;
   }
 
-  private int allocVector(@NotNull final byte[] empty) throws IOException {
+  private int allocVector(final byte @NotNull [] empty) throws IOException {
     final int pos = (int)myStorage.length();
     myStorage.put(pos, empty, 0, empty.length);
     return pos;
@@ -233,9 +233,8 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
       return (int)enumerator.myStorage.length();
     }
 
-    @NotNull
     @Override
-    byte[] getRecordBuffer(PersistentEnumerator t) {
+    byte @NotNull [] getRecordBuffer(PersistentEnumerator t) {
       return myBuffer;
     }
 

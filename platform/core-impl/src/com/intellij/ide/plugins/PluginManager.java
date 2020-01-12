@@ -107,8 +107,7 @@ public final class PluginManager {
     return PluginManagerCore.getPlugin(id);
   }
 
-  @NotNull
-  public static IdeaPluginDescriptor[] getPlugins() {
+  public static IdeaPluginDescriptor @NotNull [] getPlugins() {
     return PluginManagerCore.getPlugins();
   }
 

@@ -70,7 +70,7 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   @Override
-  public String getCharset(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull final VirtualFile file, final byte @NotNull [] content) {
     LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
     String charset =
       guessed.hardCodedCharset != null

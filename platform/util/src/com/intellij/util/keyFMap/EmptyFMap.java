@@ -46,9 +46,8 @@ class EmptyFMap implements KeyFMap {
     return 0;
   }
 
-  @NotNull
   @Override
-  public Key[] getKeys() {
+  public Key @NotNull [] getKeys() {
     return EMPTY_KEYS_ARRAY;
   }
 

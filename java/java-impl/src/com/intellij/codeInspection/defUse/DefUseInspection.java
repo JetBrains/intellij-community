@@ -194,7 +194,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     }
   }
 
-  private static boolean isAssignedInAllConstructors(@NotNull PsiField field, @NotNull PsiMethod[] constructors) {
+  private static boolean isAssignedInAllConstructors(@NotNull PsiField field, PsiMethod @NotNull [] constructors) {
     if (constructors.length == 0 || field.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }

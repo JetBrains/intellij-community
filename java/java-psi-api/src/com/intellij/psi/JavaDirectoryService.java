@@ -53,8 +53,7 @@ public abstract class JavaDirectoryService {
    *
    * @return the array of classes.
    */
-  @NotNull
-  public abstract PsiClass[] getClasses(@NotNull PsiDirectory dir);
+  public abstract PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir);
 
   /**
    * Creates a class with the specified name in the directory.

@@ -35,7 +35,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   // required for com.google.gct.core
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
-                         @NotNull XExpression[] expressions) {
+                         XExpression @NotNull [] expressions) {
     this(tree, watchesView, Arrays.asList(expressions), null, false);
   }
 

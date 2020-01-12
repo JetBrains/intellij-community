@@ -96,8 +96,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return new PsiInvalidElementAccessException(node, message);
   }
 
-  @NotNull
-  private static Attachment[] createAttachments(@Nullable Object trace) {
+  private static Attachment @NotNull [] createAttachments(@Nullable Object trace) {
     return trace == null
            ? Attachment.EMPTY_ARRAY
            : new Attachment[]{trace instanceof Throwable ? new Attachment("invalidation", (Throwable)trace)
@@ -147,9 +146,8 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return myMessage;
   }
 
-  @NotNull
   @Override
-  public Attachment[] getAttachments() {
+  public Attachment @NotNull [] getAttachments() {
     return myDiagnostic;
   }
 

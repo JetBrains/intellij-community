@@ -60,7 +60,7 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
 
   @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibrary(String libraryName, @NotNull String... classPath) {
+  public JavaModuleFixtureBuilder addLibrary(String libraryName, String @NotNull ... classPath) {
     for (String path : classPath) {
       if (!new File(path).exists()) {
         System.out.println(path + " does not exist");
@@ -80,7 +80,7 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
 
   @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibraryJars(String libraryName, @NotNull String basePath, @NotNull String... jars) {
+  public JavaModuleFixtureBuilder addLibraryJars(String libraryName, @NotNull String basePath, String @NotNull ... jars) {
     if (!basePath.endsWith("/")) {
       basePath += "/";
     }

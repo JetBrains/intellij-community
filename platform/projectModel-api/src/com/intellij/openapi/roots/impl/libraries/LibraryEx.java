@@ -52,15 +52,13 @@ public interface LibraryEx extends Library {
    * won't be counted as belonging to this library so they won't be indexed.
    * @return URLs of excluded directories
    */
-  @NotNull
-  String[] getExcludedRootUrls();
+  String @NotNull [] getExcludedRootUrls();
 
   /**
    * @see #getExcludedRootUrls()
    * @return excluded directories
    */
-  @NotNull
-  VirtualFile[] getExcludedRoots();
+  VirtualFile @NotNull [] getExcludedRoots();
 
   @Nullable("will return non-null value only for module level libraries")
   Module getModule();
@@ -91,7 +89,6 @@ public interface LibraryEx extends Library {
 
     boolean removeExcludedRoot(@NotNull String url);
 
-    @NotNull
-    String[] getExcludedRootUrls();
+    String @NotNull [] getExcludedRootUrls();
   }
 }

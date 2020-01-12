@@ -21,7 +21,7 @@ public abstract class HotSwapUI {
   public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap,
                                             @Nullable HotSwapStatusListener callback);
 
-  public abstract void compileAndReload(@NotNull DebuggerSession session, @NotNull VirtualFile... files);
+  public abstract void compileAndReload(@NotNull DebuggerSession session, VirtualFile @NotNull ... files);
 
   public abstract void addListener(HotSwapVetoableListener listener);
 

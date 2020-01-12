@@ -28,9 +28,9 @@ public enum GitResetMode {
 
   @NotNull private final String myName;
   @NotNull private final String myArgument;
-  @NotNull private final String[] myDescription;
+  private final String @NotNull [] myDescription;
 
-  GitResetMode(@NotNull String name, @NotNull String argument, @NotNull String... description) {
+  GitResetMode(@NotNull String name, @NotNull String argument, String @NotNull ... description) {
     myName = name;
     myArgument = argument;
     myDescription = description;
@@ -51,8 +51,7 @@ public enum GitResetMode {
     return myArgument;
   }
 
-  @NotNull
-  public String[] getDescription() {
+  public String @NotNull [] getDescription() {
     return myDescription;
   }
 

@@ -20,8 +20,7 @@ public abstract class SimpleVariableContext implements VariableContext<String> {
     }
 
     @Override
-    @NotNull
-    public IntentionAction[] getUnresolvedVariableFixes(XPathVariableReference reference) {
+    public IntentionAction @NotNull [] getUnresolvedVariableFixes(XPathVariableReference reference) {
         return IntentionAction.EMPTY_ARRAY;
     }
 

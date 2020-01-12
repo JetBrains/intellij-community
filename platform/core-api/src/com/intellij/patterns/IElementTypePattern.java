@@ -28,7 +28,7 @@ public class IElementTypePattern extends ObjectPattern<IElementType, IElementTyp
     super(IElementType.class);
   }
 
-  public IElementTypePattern or(@NotNull final IElementType... types){
+  public IElementTypePattern or(final IElementType @NotNull ... types){
     return tokenSet(TokenSet.create(types));
   }
 

@@ -78,20 +78,20 @@ public abstract class ProjectTaskManager {
    *
    * @param modules modules to build
    */
-  public abstract Promise<Result> build(@NotNull Module... modules);
+  public abstract Promise<Result> build(Module @NotNull ... modules);
 
-  public abstract Promise<Result> rebuild(@NotNull Module... modules);
+  public abstract Promise<Result> rebuild(Module @NotNull ... modules);
 
   /**
    * Compile a set of files.
    *
    * @param files a list of files to compile. If a VirtualFile is a directory, all containing files should be processed.
    */
-  public abstract Promise<Result> compile(@NotNull VirtualFile... files);
+  public abstract Promise<Result> compile(VirtualFile @NotNull ... files);
 
-  public abstract Promise<Result> build(@NotNull ProjectModelBuildableElement... buildableElements);
+  public abstract Promise<Result> build(ProjectModelBuildableElement @NotNull ... buildableElements);
 
-  public abstract Promise<Result> rebuild(@NotNull ProjectModelBuildableElement... buildableElements);
+  public abstract Promise<Result> rebuild(ProjectModelBuildableElement @NotNull ... buildableElements);
 
   public abstract ProjectTask createAllModulesBuildTask(boolean isIncrementalBuild, Project project);
 
@@ -154,7 +154,7 @@ public abstract class ProjectTaskManager {
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
-  public abstract void build(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback);
+  public abstract void build(Module @NotNull [] modules, @Nullable ProjectTaskNotification callback);
 
   /**
    * @param modules  modules to rebuild
@@ -163,7 +163,7 @@ public abstract class ProjectTaskManager {
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
-  public abstract void rebuild(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback);
+  public abstract void rebuild(Module @NotNull [] modules, @Nullable ProjectTaskNotification callback);
 
   /**
    * Compile a set of files.
@@ -174,20 +174,20 @@ public abstract class ProjectTaskManager {
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
-  public abstract void compile(@NotNull VirtualFile[] files, @Nullable ProjectTaskNotification callback);
+  public abstract void compile(VirtualFile @NotNull [] files, @Nullable ProjectTaskNotification callback);
 
   /**
    * @deprecated use {@link #build(ProjectModelBuildableElement[])}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
-  public abstract void build(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback);
+  public abstract void build(ProjectModelBuildableElement @NotNull [] buildableElements, @Nullable ProjectTaskNotification callback);
 
   /**
    * @deprecated use {@link #rebuild(ProjectModelBuildableElement[])}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
-  public abstract void rebuild(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback);
+  public abstract void rebuild(ProjectModelBuildableElement @NotNull [] buildableElements, @Nullable ProjectTaskNotification callback);
   //</editor-fold>
 }

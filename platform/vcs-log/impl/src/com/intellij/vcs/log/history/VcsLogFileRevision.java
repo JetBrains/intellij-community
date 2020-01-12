@@ -41,7 +41,7 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
   @NotNull private final String myFullMessage;
   private final boolean myIsDeleted;
 
-  @Nullable private byte[] myContent = null;
+  private byte @Nullable [] myContent = null;
 
   public VcsLogFileRevision(@NotNull VcsCommitMetadata commitMetadata,
                             @NotNull ContentRevision revision,
@@ -122,9 +122,8 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     return myContent;
   }
 
-  @Nullable
   @Override
-  public byte[] getContent() {
+  public byte @Nullable [] getContent() {
     return myContent;
   }
 

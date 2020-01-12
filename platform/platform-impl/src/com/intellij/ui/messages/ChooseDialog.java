@@ -28,9 +28,9 @@ public class ChooseDialog extends MessageDialog {
                       String message,
                       @Nls(capitalization = Nls.Capitalization.Title) String title,
                       @Nullable Icon icon,
-                      @NotNull String[] values,
+                      String @NotNull [] values,
                       String initialValue,
-                      @NotNull String[] options,
+                      String @NotNull [] options,
                       int defaultOption) {
     super(project, message, title, options, defaultOption, icon, true);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
@@ -59,9 +59,8 @@ public class ChooseDialog extends MessageDialog {
     myComboBox.setSelectedItem(initialValue);
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     final Action[] actions = new Action[myOptions.length];
     for (int i = 0; i < myOptions.length; i++) {
       String option = myOptions[i];

@@ -46,7 +46,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
 
   ChangeTypeArgumentsFix(@NotNull PsiMethod targetMethod,
                          PsiClass psiClass,
-                         @NotNull PsiExpression[] expressions,
+                         PsiExpression @NotNull [] expressions,
                          @NotNull PsiElement context) {
     myTargetMethod = targetMethod;
     myPsiClass = psiClass;
@@ -133,7 +133,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
   }
 
 
-  public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
+  public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList list,
                                         @Nullable HighlightInfo highlightInfo,
                                         PsiClass psiClass) {
@@ -144,7 +144,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
     }
   }
 
-  private static void registerIntention(@NotNull PsiExpression[] expressions,
+  private static void registerIntention(PsiExpression @NotNull [] expressions,
                                         @Nullable HighlightInfo highlightInfo,
                                         PsiClass psiClass,
                                         @NotNull JavaResolveResult candidate,

@@ -150,9 +150,8 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     return PsiPolyadicExpressionImpl.processDeclarations(this, processor, state, lastParent, place);
   }
 
-  @NotNull
   @Override
-  public PsiExpression[] getOperands() {
+  public PsiExpression @NotNull [] getOperands() {
     PsiExpression rOperand = getROperand();
     return rOperand == null ? new PsiExpression[]{getLOperand()} : new PsiExpression[]{getLOperand(), rOperand};
   }

@@ -143,9 +143,8 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       return panel;
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getCancelAction()};
     }
   }

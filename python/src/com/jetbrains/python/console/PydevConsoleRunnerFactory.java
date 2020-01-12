@@ -37,7 +37,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     @NotNull PyConsoleType myConsoleType;
     @NotNull PyConsoleOptions.PyConsoleSettings mySettingsProvider;
     @NotNull Consumer<String> myRerunAction;
-    @NotNull String[] mySetupFragment;
+    String @NotNull [] mySetupFragment;
 
     public ConsoleParameters(@NotNull Project project,
                              @Nullable Sdk sdk,
@@ -46,7 +46,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                              @NotNull PyConsoleType consoleType,
                              @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                              @NotNull Consumer<String> rerunAction,
-                             @NotNull String[] setupFragment) {
+                             String @NotNull [] setupFragment) {
       myProject = project;
       mySdk = sdk;
       myWorkingDir = workingDir;
@@ -173,7 +173,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                                    @NotNull PyConsoleType consoleType,
                                                    @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                                    @NotNull Consumer<? super String> rerunAction,
-                                                   @NotNull String... setupFragment) {
+                                                   String @NotNull ... setupFragment) {
     return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, rerunAction, setupFragment);
   }
 

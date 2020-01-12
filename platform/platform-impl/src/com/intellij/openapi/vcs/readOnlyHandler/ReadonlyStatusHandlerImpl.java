@@ -198,7 +198,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     private final VirtualFile[] myReadonlyFiles;
     @NotNull private final String myReadOnlyReason;
 
-    OperationStatusImpl(@NotNull VirtualFile[] readonlyFiles) {
+    OperationStatusImpl(VirtualFile @NotNull [] readonlyFiles) {
       this(readonlyFiles,"");
     }
 
@@ -208,8 +208,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getReadonlyFiles() {
+    public VirtualFile @NotNull [] getReadonlyFiles() {
       return myReadonlyFiles;
     }
 

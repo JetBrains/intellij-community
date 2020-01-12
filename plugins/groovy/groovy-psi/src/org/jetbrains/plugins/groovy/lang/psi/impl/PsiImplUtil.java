@@ -284,7 +284,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiMethod extractUniqueElement(@NotNull GroovyResolveResult[] results) {
+  public static PsiMethod extractUniqueElement(GroovyResolveResult @NotNull [] results) {
     if (results.length != 1) return null;
     final PsiElement element = results[0].getElement();
     return element instanceof PsiMethod ? (PsiMethod) element : null;
@@ -296,7 +296,7 @@ public class PsiImplUtil {
   }
 
   @NotNull
-  public static GroovyResolveResult extractUniqueResult(@NotNull GroovyResolveResult[] results) {
+  public static GroovyResolveResult extractUniqueResult(GroovyResolveResult @NotNull [] results) {
     if (results.length != 1) return EmptyGroovyResolveResult.INSTANCE;
     return results[0];
   }
@@ -447,7 +447,7 @@ public class PsiImplUtil {
 
     private final boolean mySkipWhiteSpace;
 
-    public GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, @Nullable char[] buffer) {
+    public GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
       super(skipWhitespace, skipComments, offset, buffer);
       mySkipWhiteSpace = skipWhitespace;
     }

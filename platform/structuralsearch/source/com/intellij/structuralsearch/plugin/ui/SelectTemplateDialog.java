@@ -229,7 +229,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     }
   }
 
-  @NotNull public Configuration[] getSelectedConfigurations() {
+  public Configuration @NotNull [] getSelectedConfigurations() {
     if (showHistory) {
       final List<Configuration> selectedValues = existingTemplatesComponent.getHistoryList().getSelectedValuesList();
       return selectedValues.toArray(Configuration.EMPTY_ARRAY);

@@ -90,8 +90,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     if (TreeStructureUtil.isInStructureViewPopup(this)) {
       return Sorter.EMPTY_ARRAY;  // because in popup there's no option to disable sorter
     }

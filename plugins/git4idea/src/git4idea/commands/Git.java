@@ -70,7 +70,7 @@ public interface Git {
   GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler);
 
   @NotNull
-  GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
+  GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, GitLineHandlerListener @NotNull ... listeners);
 
   @Deprecated
   @NotNull
@@ -104,7 +104,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName,
-                         @NotNull GitLineHandlerListener... progressListeners);
+                         GitLineHandlerListener @NotNull ... progressListeners);
 
   @NotNull
   GitCommandResult config(@NotNull GitRepository repository, String... params);
@@ -114,7 +114,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @Nullable List<String> additionalParams,
-                         @NotNull GitLineHandlerListener... listeners);
+                         GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult checkout(@NotNull GitRepository repository,
@@ -122,7 +122,7 @@ public interface Git {
                             @Nullable String newBranch,
                             boolean force,
                             boolean detach,
-                            @NotNull GitLineHandlerListener... listeners);
+                            GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
    GitCommandResult checkout(@NotNull GitRepository repository,
@@ -131,7 +131,7 @@ public interface Git {
                                     boolean force,
                                     boolean detach,
                                     boolean withReset,
-                                    @NotNull GitLineHandlerListener... listeners);
+                                    GitLineHandlerListener @NotNull ... listeners);
   @NotNull
   GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                      @Nullable GitLineHandlerListener listener);
@@ -142,11 +142,11 @@ public interface Git {
 
   @NotNull
   GitCommandResult deleteTag(@NotNull GitRepository repository, @NotNull String tagName,
-                             @NotNull GitLineHandlerListener... listeners);
+                             GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force,
-                                @NotNull GitLineHandlerListener... listeners);
+                                GitLineHandlerListener @NotNull ... listeners);
 
   /**
    * Create branch without checking it out: <br/>
@@ -163,11 +163,11 @@ public interface Git {
   GitCommandResult renameBranch(@NotNull GitRepository repository,
                                 @NotNull String currentName,
                                 @NotNull String newName,
-                                @NotNull GitLineHandlerListener... listeners);
+                                GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
-                         @NotNull GitLineHandlerListener... listeners);
+                         GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult resetMerge(@NotNull GitRepository repository, @Nullable String revision);
@@ -177,7 +177,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
-                        boolean updateTracking, @NotNull GitLineHandlerListener... listeners);
+                        boolean updateTracking, GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult push(@NotNull GitRepository repository,
@@ -185,7 +185,7 @@ public interface Git {
                         GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params);
+  GitCommandResult show(@NotNull GitRepository repository, String @NotNull ... params);
 
   /**
    * @deprecated Use {@link #cherryPick(GitRepository, String, boolean, boolean, GitLineHandlerListener...)}
@@ -193,14 +193,14 @@ public interface Git {
   @Deprecated
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
-                              @NotNull GitLineHandlerListener... listeners);
+                              GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository,
                               @NotNull String hash,
                               boolean autoCommit,
                               boolean addCherryPickedFromSuffix,
-                              @NotNull GitLineHandlerListener... listeners);
+                              GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository);
@@ -213,7 +213,7 @@ public interface Git {
   GitCommandResult stashSave(@NotNull GitRepository repository, @NotNull String message);
 
   @NotNull
-  GitCommandResult stashPop(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+  GitCommandResult stashPop(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult fetch(@NotNull GitRepository repository,
@@ -255,22 +255,22 @@ public interface Git {
   @NotNull
   GitRebaseCommandResult rebase(@NotNull GitRepository repository,
                                 @NotNull GitRebaseParams parameters,
-                                @NotNull GitLineHandlerListener... listeners);
+                                GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
-  GitRebaseCommandResult rebaseAbort(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+  GitRebaseCommandResult rebaseAbort(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
-  GitRebaseCommandResult rebaseContinue(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+  GitRebaseCommandResult rebaseContinue(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
-  GitRebaseCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+  GitRebaseCommandResult rebaseSkip(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult revert(@NotNull GitRepository repository,
                           @NotNull String commit,
                           boolean autoCommit,
-                          @NotNull GitLineHandlerListener... listeners);
+                          GitLineHandlerListener @NotNull ... listeners);
 
   @Nullable
   Hash resolveReference(@NotNull GitRepository repository, @NotNull String reference);

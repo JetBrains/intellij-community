@@ -38,9 +38,8 @@ public interface GroovyReference extends PsiPolyVariantReference {
   /**
    * Either this or {@link #resolve(boolean)} must be implemented.
    */
-  @NotNull
   @Override
-  default GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  default GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return resolve(incompleteCode).toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 

@@ -41,16 +41,14 @@ public abstract class InspectionElementsMerger {
    * 
    * when one of toolNames doesn't present in the profile, default settings for that tool are expected, e.g. by default the result would be enabled with min severity WARNING
    */
-  @NotNull
-  public abstract String[] getSourceToolNames();
+  public abstract String @NotNull [] getSourceToolNames();
 
   /**
    * The ids to check for suppression.
    * If this returns an empty string array, the result of getSourceToolNames() is used instead.
    * @return the suppressIds of the merged inspections.
    */
-  @NotNull
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 

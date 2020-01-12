@@ -41,7 +41,7 @@ public class HashSerializeTest {
   }
 
   @NotNull
-  private static File writeToTempFile(@NotNull HashImpl... hashes) throws IOException {
+  private static File writeToTempFile(HashImpl @NotNull ... hashes) throws IOException {
     File file = FileUtil.createTempFile("", "");
     try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
       for (HashImpl hash : hashes) {

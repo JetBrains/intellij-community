@@ -23,7 +23,7 @@ import java.awt.*;
 
 public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> {
   boolean couldShowInLookup();
-  @Nullable Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context);
+  Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context);
 
   /**
    * <p>Find psiElement for parameter info should also set ItemsToShow in context and may set highlighted element</p>
@@ -82,7 +82,7 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
 
   /** @deprecated not used */
   @Deprecated
-  default @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
+  default Object @Nullable [] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
   /** @deprecated not used */
   @Deprecated
   default @Nullable String getParameterCloseChars() { return null; }

@@ -56,9 +56,8 @@ public class MavenContextlessPropertyReference extends PsiReferenceBase<PsiEleme
     return null;
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     String skippedPropertyName = null;
 
     XmlTag xmlTag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class, false);

@@ -19,9 +19,8 @@ import java.util.List;
 import static com.intellij.remoteServer.impl.runtime.ui.RemoteServersServiceViewContributor.addNewRemoteServer;
 
 public class AddCloudConnectionActionGroup extends ActionGroup {
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<ServerType> serverTypes = ContainerUtil.filter(ServerType.EP_NAME.getExtensionList(),
                                                         type -> type.getCustomToolWindowId() == null &&
                                                                 type.createDefaultConfiguration().getCustomToolWindowId() == null);

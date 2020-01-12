@@ -216,10 +216,9 @@ public class GitMergeUtil {
     }
   }
 
-  @NotNull
-  private static byte[] loadOriginalContent(@NotNull Project project,
-                                            @NotNull VirtualFile root,
-                                            @NotNull FilePath path) {
+  private static byte @NotNull [] loadOriginalContent(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      @NotNull FilePath path) {
     try {
       return loadRevisionContent(project, root, path, ORIGINAL_REVISION_NUM);
     }
@@ -244,11 +243,10 @@ public class GitMergeUtil {
     }
   }
 
-  @NotNull
-  private static byte[] loadRevisionCatchingErrors(@NotNull Project project,
-                                                   @NotNull VirtualFile root,
-                                                   @NotNull FilePath path,
-                                                   int stageNum) throws VcsException {
+  private static byte @NotNull [] loadRevisionCatchingErrors(@NotNull Project project,
+                                                             @NotNull VirtualFile root,
+                                                             @NotNull FilePath path,
+                                                             int stageNum) throws VcsException {
     try {
       return loadRevisionContent(project, root, path, stageNum);
     }
@@ -267,11 +265,10 @@ public class GitMergeUtil {
     }
   }
 
-  @NotNull
-  private static byte[] loadRevisionContent(@NotNull Project project,
-                                            @NotNull VirtualFile root,
-                                            @NotNull FilePath path,
-                                            int stageNum) throws VcsException {
+  private static byte @NotNull [] loadRevisionContent(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      @NotNull FilePath path,
+                                                      int stageNum) throws VcsException {
     return GitFileUtils.getFileContent(project, root, ":" + stageNum, VcsFileUtil.relativePath(root, path));
   }
 

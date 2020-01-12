@@ -22,14 +22,14 @@ public class CountingInputStream extends InputStream {
   }
 
   @Override
-  public int read(@NotNull byte[] b) throws IOException {
+  public int read(byte @NotNull [] b) throws IOException {
     int bytesRead = myInputStream.read(b);
     myBytesRead += bytesRead;
     return bytesRead;
   }
 
   @Override
-  public int read(@NotNull byte[] b, int off, int len) throws IOException {
+  public int read(byte @NotNull [] b, int off, int len) throws IOException {
     int bytesRead = myInputStream.read(b, off, len);
     myBytesRead += bytesRead;
     return bytesRead;

@@ -49,8 +49,7 @@ public interface ConsoleView extends ExecutionConsole {
 
   boolean canPause();
 
-  @NotNull
-  AnAction[] createConsoleActions();
+  AnAction @NotNull [] createConsoleActions();
 
   void allowHeavyFilters();
 }

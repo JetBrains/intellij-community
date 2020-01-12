@@ -49,8 +49,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.java.net/browse/JDK-6260652),
   // but instead returns Object[], so, we cannot use toArray() anymore.
   // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
-  @Nullable
-  private volatile T[] myExtensionsCacheAsArray;
+  private volatile T @Nullable [] myExtensionsCacheAsArray;
 
   private ComponentManager myComponentManager;
 
@@ -62,8 +61,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private boolean myAdaptersIsSorted = true;
 
   @SuppressWarnings("unchecked")
-  @NotNull
-  private ExtensionPointListener<T>[] myListeners = ExtensionPointListener.EMPTY_ARRAY; // guarded by this
+  private ExtensionPointListener<T> @NotNull [] myListeners = ExtensionPointListener.EMPTY_ARRAY; // guarded by this
 
   @Nullable
   Class<T> myExtensionClass;
@@ -238,8 +236,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Override
-  @NotNull
-  public T[] getExtensions() {
+  public T @NotNull [] getExtensions() {
     T[] array = myExtensionsCacheAsArray;
     if (array == null) {
       synchronized (this) {
@@ -364,8 +361,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return adapters;
   }
 
-  @NotNull
-  private T[] processAdapters() {
+  private T @NotNull [] processAdapters() {
     assertNotReadOnlyMode();
 
     // check before to avoid any "restore" work if already cancelled
@@ -424,8 +420,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   @Nullable
   private T processAdapter(@NotNull ExtensionComponentAdapter adapter,
-                           @Nullable ExtensionPointListener<T>[] listeners,
-                           @Nullable T[] result,
+                           ExtensionPointListener<T> @Nullable [] listeners,
+                           T @Nullable [] result,
                            @Nullable OpenTHashSet<T> duplicates,
                            @Nullable Class<T> extensionClassForCheck,
                            @Nullable List<? extends ExtensionComponentAdapter> adapters) {
@@ -619,13 +615,13 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull T extensionObject,
                                @NotNull PluginDescriptor pluginDescriptor,
-                               @NotNull ExtensionPointListener<T>[] listeners) {
+                               ExtensionPointListener<T> @NotNull [] listeners) {
     notifyListeners(event, () -> Collections.singletonList(Pair.create(extensionObject, pluginDescriptor)), listeners);
   }
 
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull List<? extends ExtensionComponentAdapter> adapters,
-                               @NotNull ExtensionPointListener<T>[] listeners) {
+                               ExtensionPointListener<T> @NotNull [] listeners) {
     notifyListeners(event, () -> ContainerUtil.mapNotNull(adapters, adapter ->
       adapter.isInstanceCreated() ? Pair.create(adapter.createInstance(myComponentManager), adapter.getPluginDescriptor()) : null
     ), listeners);
@@ -633,7 +629,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull NotNullFactory<List<Pair<T, PluginDescriptor>>> extensions,
-                               @NotNull ExtensionPointListener<T>[] listeners) {
+                               ExtensionPointListener<T> @NotNull [] listeners) {
     List<Pair<T, PluginDescriptor>> extensionsList = null;
     for (ExtensionPointListener<T> listener : listeners) {
       if (listener instanceof ExtensionPointAdapter) {
@@ -982,7 +978,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     };
   }
 
-  private static boolean isInsideClassInitializer(@NotNull StackTraceElement[] trace) {
+  private static boolean isInsideClassInitializer(StackTraceElement @NotNull [] trace) {
     //noinspection SpellCheckingInspection
     return Arrays.stream(trace).anyMatch(s -> "<clinit>".equals(s.getMethodName()));
   }

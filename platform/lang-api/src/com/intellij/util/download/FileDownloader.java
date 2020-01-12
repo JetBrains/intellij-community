@@ -74,8 +74,7 @@ public interface FileDownloader {
    * @deprecated use {@link #downloadFilesWithProgress} instead
    */
   @Deprecated
-  @Nullable
-  VirtualFile[] download();
+  VirtualFile @Nullable [] download();
 
   /**
    * @deprecated use {@link #downloadWithProgress} instead

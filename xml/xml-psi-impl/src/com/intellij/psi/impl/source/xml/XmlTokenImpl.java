@@ -67,8 +67,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     final IElementType elementType = getElementType();
 
     if (elementType == XmlTokenType.XML_DATA_CHARACTERS ||

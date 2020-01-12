@@ -66,9 +66,9 @@ public final class SystemShortcuts {
   public static final class ConflictItem {
     final @NotNull String mySysActionDesc;
     final @NotNull KeyStroke mySysKeyStroke;
-    final @NotNull String[] myActionIds;
+    final String @NotNull [] myActionIds;
 
-    public ConflictItem(@NotNull KeyStroke sysKeyStroke, @NotNull String sysActionDesc, @NotNull String[] actionIds) {
+    public ConflictItem(@NotNull KeyStroke sysKeyStroke, @NotNull String sysActionDesc, String @NotNull [] actionIds) {
       mySysKeyStroke = sysKeyStroke;
       mySysActionDesc = sysActionDesc;
       myActionIds = actionIds;
@@ -80,8 +80,7 @@ public final class SystemShortcuts {
     @NotNull
     public KeyStroke getSysKeyStroke() { return mySysKeyStroke; }
 
-    @NotNull
-    public String[] getActionIds() { return myActionIds; }
+    public String @NotNull [] getActionIds() { return myActionIds; }
 
     @Nullable
     String getUnmutedActionId(@NotNull MuteConflictsSettings settings) {
@@ -207,7 +206,7 @@ public final class SystemShortcuts {
     return result;
   }
 
-  public void onUserPressedShortcut(@NotNull Keymap keymap, @NotNull String[] actionIds, @NotNull KeyboardShortcut ksc) {
+  public void onUserPressedShortcut(@NotNull Keymap keymap, String @NotNull [] actionIds, @NotNull KeyboardShortcut ksc) {
     if (myNotifyCount > 0 || actionIds.length == 0) {
       return;
     }

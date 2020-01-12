@@ -26,7 +26,7 @@ public class DiffIterableUtil {
    * Compare two integer arrays
    */
   @NotNull
-  public static FairDiffIterable diff(@NotNull int[] data1, @NotNull int[] data2, @NotNull ProgressIndicator indicator)
+  public static FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull ProgressIndicator indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 
@@ -44,7 +44,7 @@ public class DiffIterableUtil {
    * Compare two arrays, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull T[] data1, @NotNull T[] data2, @NotNull ProgressIndicator indicator)
+  public static <T> FairDiffIterable diff(T @NotNull [] data1, T @NotNull [] data2, @NotNull ProgressIndicator indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 

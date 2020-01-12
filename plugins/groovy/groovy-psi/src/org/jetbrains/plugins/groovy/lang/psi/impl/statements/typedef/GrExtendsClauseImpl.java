@@ -40,9 +40,8 @@ public class GrExtendsClauseImpl extends GrReferenceListImpl implements GrExtend
     return "Extends clause";
   }
 
-  @NotNull
   @Override
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 

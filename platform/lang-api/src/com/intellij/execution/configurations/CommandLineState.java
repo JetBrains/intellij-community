@@ -83,13 +83,11 @@ public abstract class CommandLineState implements RunProfileState {
   @NotNull
   protected abstract ProcessHandler startProcess() throws ExecutionException;
 
-  @NotNull
-  protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler) {
+  protected AnAction @NotNull [] createActions(final ConsoleView console, final ProcessHandler processHandler) {
     return createActions(console, processHandler, null);
   }
 
-  @NotNull
-  protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler, Executor executor) {
+  protected AnAction @NotNull [] createActions(final ConsoleView console, final ProcessHandler processHandler, Executor executor) {
     return AnAction.EMPTY_ARRAY;
   }
 

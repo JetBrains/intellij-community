@@ -53,8 +53,7 @@ public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsC
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     PsiClassType[] types = getReferencedTypes();
     if (types.length == 0) return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
 

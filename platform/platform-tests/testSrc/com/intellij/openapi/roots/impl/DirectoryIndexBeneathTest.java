@@ -75,7 +75,7 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
                           Arrays.asList(root, excluded1, eTxt, excluded, subExcluded));
   }
 
-  private void checkIterate(@NotNull VirtualFile file, @NotNull VirtualFile... expectToIterate) {
+  private void checkIterate(@NotNull VirtualFile file, VirtualFile @NotNull ... expectToIterate) {
     final List<VirtualFile> collected = new ArrayList<>();
     myFileIndex.iterateContentUnderDirectory(file, fileOrDir -> collected.add(fileOrDir));
     assertSameElements(collected, expectToIterate);

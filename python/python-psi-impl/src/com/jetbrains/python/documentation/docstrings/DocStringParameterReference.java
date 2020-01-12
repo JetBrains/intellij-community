@@ -121,9 +121,8 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     return null;
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     // see PyDocstringCompletionContributor
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }

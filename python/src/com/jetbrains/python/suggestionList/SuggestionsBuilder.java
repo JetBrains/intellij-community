@@ -65,7 +65,7 @@ public class SuggestionsBuilder {
   /**
    * @param words words to add to current group
    */
-  public final SuggestionsBuilder add(@NotNull final String... words) {
+  public final SuggestionsBuilder add(final String @NotNull ... words) {
     return add(Arrays.asList(words));
   }
 

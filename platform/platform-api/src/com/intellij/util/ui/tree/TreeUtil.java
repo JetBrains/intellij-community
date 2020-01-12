@@ -206,7 +206,7 @@ public final class TreeUtil {
     return true;
   }
 
-  private static boolean isDescendants(@NotNull final TreePath path, @NotNull final TreePath[] paths) {
+  private static boolean isDescendants(@NotNull final TreePath path, final TreePath @NotNull [] paths) {
     for (final TreePath ancestor : paths) {
       if (isAncestor(ancestor, path)) return true;
     }
@@ -219,8 +219,7 @@ public final class TreeUtil {
     return new TreePath(path);
   }
 
-  @NotNull
-  private static TreeNode[] getPathFromRootTo(@Nullable TreeNode root, @NotNull TreeNode node, boolean includeRoot) {
+  private static TreeNode @NotNull [] getPathFromRootTo(@Nullable TreeNode root, @NotNull TreeNode node, boolean includeRoot) {
     int height = 0;
     for (TreeNode n = node; n != root; n = n.getParent()) {
       height++;
@@ -288,7 +287,7 @@ public final class TreeUtil {
   @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static TreePath findCommonPath(@NotNull final TreePath[] treePaths) {
+  public static TreePath findCommonPath(final TreePath @NotNull [] treePaths) {
     LOG.assertTrue(areComponentsEqual(treePaths, 0));
     TreePath result = new TreePath(treePaths[0].getPathComponent(0));
     int pathIndex = 1;
@@ -348,7 +347,7 @@ public final class TreeUtil {
   }
 
 
-  private static boolean areComponentsEqual(@NotNull final TreePath[] paths, final int componentIndex) {
+  private static boolean areComponentsEqual(final TreePath @NotNull [] paths, final int componentIndex) {
     if (paths[0].getPathCount() <= componentIndex) return false;
     final Object pathComponent = paths[0].getPathComponent(componentIndex);
     for (final TreePath treePath : paths) {
@@ -358,8 +357,7 @@ public final class TreeUtil {
     return true;
   }
 
-  @NotNull
-  private static TreePath[] removeDuplicates(@NotNull final TreePath[] paths) {
+  private static TreePath @NotNull [] removeDuplicates(final TreePath @NotNull [] paths) {
     final ArrayList<TreePath> result = new ArrayList<>();
     for (final TreePath path : paths) {
       if (!result.contains(path)) result.add(path);
@@ -370,10 +368,9 @@ public final class TreeUtil {
   /**
    * @deprecated use TreeCollector.TreePathRoots#collect(TreePath...) instead
    */
-  @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static TreePath[] selectMaximals(@Nullable final TreePath[] paths) {
+  public static TreePath @NotNull [] selectMaximals(final TreePath @Nullable [] paths) {
     if (paths == null) return EMPTY_TREE_PATH;
     final TreePath[] noDuplicates = removeDuplicates(paths);
     final ArrayList<TreePath> result = new ArrayList<>();
@@ -450,7 +447,7 @@ public final class TreeUtil {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static void selectPaths(@NotNull JTree tree, @NotNull TreePath... paths) {
+  public static void selectPaths(@NotNull JTree tree, TreePath @NotNull ... paths) {
     if (paths.length == 0) return;
     for (TreePath path : paths) {
       tree.makeVisible(path);
@@ -1527,7 +1524,7 @@ public final class TreeUtil {
     internalSelect(tree, paths.toArray(EMPTY_TREE_PATH));
   }
 
-  private static void internalSelect(@NotNull JTree tree, @NotNull TreePath... paths) {
+  private static void internalSelect(@NotNull JTree tree, TreePath @NotNull ... paths) {
     assert EventQueue.isDispatchThread();
     if (paths.length == 0) return;
     tree.setSelectionPaths(paths);

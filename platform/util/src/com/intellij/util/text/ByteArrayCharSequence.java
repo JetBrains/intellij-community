@@ -32,10 +32,10 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   private transient int hash;
   private final byte[] myChars;
 
-  public ByteArrayCharSequence(@NotNull byte[] chars) {
+  public ByteArrayCharSequence(byte @NotNull [] chars) {
     this(chars, 0, chars.length);
   }
-  public ByteArrayCharSequence(@NotNull byte[] chars, int start, int end) {
+  public ByteArrayCharSequence(byte @NotNull [] chars, int start, int end) {
     myChars = chars;
     myStart = start;
     myEnd = end;
@@ -94,13 +94,11 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
     return bytes == null ? string : new ByteArrayCharSequence(bytes);
   }
 
-  @NotNull
-  byte[] getBytes() {
+  byte @NotNull [] getBytes() {
     return myStart == 0 && myEnd == myChars.length ? myChars : Arrays.copyOfRange(myChars, myStart , myEnd);
   }
 
-  @Nullable
-  static byte[] toBytesIfPossible(@NotNull CharSequence seq) {
+  static byte @Nullable [] toBytesIfPossible(@NotNull CharSequence seq) {
     if (seq instanceof ByteArrayCharSequence) {
       return ((ByteArrayCharSequence)seq).getBytes();
     }

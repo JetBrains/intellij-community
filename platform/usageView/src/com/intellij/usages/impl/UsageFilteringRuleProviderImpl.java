@@ -43,8 +43,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   private final ReadWriteState myReadWriteState = new ReadWriteState();
 
   @Override
-  @NotNull
-  public UsageFilteringRule[] getActiveRules(@NotNull Project project) {
+  public UsageFilteringRule @NotNull [] getActiveRules(@NotNull Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<>();
 
     if (!myReadWriteState.isShowReadAccess()) {
@@ -57,8 +56,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   }
 
   @Override
-  @NotNull
-  public AnAction[] createFilteringActions(@NotNull UsageView view) {
+  public AnAction @NotNull [] createFilteringActions(@NotNull UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
     if (!view.getPresentation().isCodeUsages()) {
       return AnAction.EMPTY_ARRAY;

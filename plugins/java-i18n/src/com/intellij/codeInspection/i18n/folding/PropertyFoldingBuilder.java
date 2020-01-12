@@ -52,8 +52,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
 
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
     if (!(element instanceof PsiFile) || quick || !isFoldingsOn()) {
       return FoldingDescriptor.EMPTY;
     }

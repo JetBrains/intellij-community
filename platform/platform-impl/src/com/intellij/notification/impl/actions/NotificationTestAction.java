@@ -69,15 +69,13 @@ public class NotificationTestAction extends AnAction implements DumbAware {
       return panel;
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
-    @NotNull
     @Override
-    protected Action[] createLeftSideActions() {
+    protected Action @NotNull [] createLeftSideActions() {
       Action balloon = new AbstractAction("Balloon Examples") {
         @Override
         public void actionPerformed(ActionEvent e) {

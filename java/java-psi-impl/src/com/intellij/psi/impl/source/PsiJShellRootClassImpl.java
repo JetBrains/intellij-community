@@ -106,15 +106,13 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType @NotNull [] getExtendsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getImplementsListTypes() {
+  public PsiClassType @NotNull [] getImplementsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
@@ -124,69 +122,58 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getInterfaces() {
+  public PsiClass @NotNull [] getInterfaces() {
     return PsiClass.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getSupers() {
+  public PsiClass @NotNull [] getSupers() {
     return PsiClass.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getSuperTypes() {
+  public PsiClassType @NotNull [] getSuperTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiField[] getFields() {
+  public PsiField @NotNull [] getFields() {
     return findChildren(PsiField.class, PsiField.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getMethods() {
+  public PsiMethod @NotNull [] getMethods() {
     return findChildren(PsiMethod.class, PsiMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getConstructors() {
+  public PsiMethod @NotNull [] getConstructors() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getInnerClasses() {
+  public PsiClass @NotNull [] getInnerClasses() {
     return findChildren(PsiClass.class, PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiClassInitializer[] getInitializers() {
+  public PsiClassInitializer @NotNull [] getInitializers() {
     return findChildren(PsiClassInitializer.class, PsiClassInitializer.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiField[] getAllFields() {
+  public PsiField @NotNull [] getAllFields() {
     return PsiClassImplUtil.getAllFields(this);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getAllMethods() {
+  public PsiMethod @NotNull [] getAllMethods() {
     return PsiClassImplUtil.getAllMethods(this);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getAllInnerClasses() {
+  public PsiClass @NotNull [] getAllInnerClasses() {
     return PsiClassImplUtil.getAllInnerClasses(this);
   }
 
@@ -202,15 +189,13 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
@@ -292,9 +277,8 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
@@ -321,8 +305,7 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return null;
   }
 
-  @NotNull
-  private <T extends PsiElement> T[] findChildren(final Class<T> memberClass, final T[] emptyArray) {
+  private <T extends PsiElement> T @NotNull [] findChildren(final Class<T> memberClass, final T[] emptyArray) {
     final T[] members = PsiTreeUtil.getChildrenOfType(this, memberClass);
     return members != null ? members : emptyArray;
   }

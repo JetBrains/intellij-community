@@ -250,7 +250,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     OverrideImplementsAnnotationsHandler.repeatAnnotationsFromSource(overridden, targetClass, method);
   }
 
-  public static void annotate(@NotNull PsiMethod result, @NotNull String fqn, @NotNull String... annosToRemove) throws IncorrectOperationException {
+  public static void annotate(@NotNull PsiMethod result, @NotNull String fqn, String @NotNull ... annosToRemove) throws IncorrectOperationException {
     Project project = result.getProject();
     AddAnnotationFix fix = new AddAnnotationFix(fqn, result, annosToRemove);
     if (fix.isAvailable(project, null, result.getContainingFile())) {

@@ -47,7 +47,7 @@ public class FormFileErrorCollector extends FormErrorCollector {
                        @NotNull final IComponent component,
                        @Nullable IProperty prop,
                        @NotNull String errorMessage,
-                       @NotNull EditorQuickFixProvider... editorQuickFixProviders) {
+                       EditorQuickFixProvider @NotNull ... editorQuickFixProviders) {
     final ProblemDescriptor problemDescriptor = myManager.createProblemDescriptor(myFile, JDOMUtil.escapeText(errorMessage),
                                                                                   (LocalQuickFix)null,
                                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);

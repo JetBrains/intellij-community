@@ -65,8 +65,7 @@ public class PsiUtilCore {
     }
 
     @Override
-    @NotNull
-    public PsiElement[] getChildren() {
+    public PsiElement @NotNull [] getChildren() {
       throw createException();
     }
 
@@ -141,8 +140,7 @@ public class PsiUtilCore {
     }
 
     @Override
-    @NotNull
-    public char[] textToCharArray() {
+    public char @NotNull [] textToCharArray() {
       throw createException();
     }
 
@@ -262,8 +260,7 @@ public class PsiUtilCore {
     }
 
     @Override
-    @NotNull
-    public PsiReference[] getReferences() {
+    public PsiReference @NotNull [] getReferences() {
       throw createException();
     }
 
@@ -338,8 +335,7 @@ public class PsiUtilCore {
     }
   }
 
-  @NotNull
-  public static PsiElement[] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
+  public static PsiElement @NotNull [] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
     return collection.isEmpty() ? PsiElement.EMPTY_ARRAY : collection.toArray(PsiElement.EMPTY_ARRAY);
   }
 
@@ -420,8 +416,7 @@ public class PsiUtilCore {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
-  @NotNull
-  public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
+  public static PsiFile @NotNull [] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
     if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
     return collection.toArray(PsiFile.EMPTY_ARRAY);
   }
@@ -642,9 +637,8 @@ public class PsiUtilCore {
       throw createException();
     }
 
-    @NotNull
     @Override
-    public PsiFile[] getPsiRoots() {
+    public PsiFile @NotNull [] getPsiRoots() {
       throw createException();
     }
 

@@ -18,8 +18,7 @@ public class Place implements ComparableObject {
   private LinkedHashMap<String, Object> myPath = new LinkedHashMap<>();
 
   @Override
-  @NotNull
-  public final Object[] getEqualityObjects() {
+  public final Object @NotNull [] getEqualityObjects() {
     return new Object[] {myPath};
   }
 

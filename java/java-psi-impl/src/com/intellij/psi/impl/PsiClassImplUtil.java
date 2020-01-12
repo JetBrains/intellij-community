@@ -53,20 +53,17 @@ public class PsiClassImplUtil {
 
   private PsiClassImplUtil() { }
 
-  @NotNull
-  public static PsiField[] getAllFields(@NotNull PsiClass aClass) {
+  public static PsiField @NotNull [] getAllFields(@NotNull PsiClass aClass) {
     List<PsiField> map = getAllByMap(aClass, MemberType.FIELD);
     return map.toArray(PsiField.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiMethod[] getAllMethods(@NotNull PsiClass aClass) {
+  public static PsiMethod @NotNull [] getAllMethods(@NotNull PsiClass aClass) {
     List<PsiMethod> methods = getAllByMap(aClass, MemberType.METHOD);
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiClass[] getAllInnerClasses(@NotNull PsiClass aClass) {
+  public static PsiClass @NotNull [] getAllInnerClasses(@NotNull PsiClass aClass) {
     List<PsiClass> classes = getAllByMap(aClass, MemberType.CLASS);
     return classes.toArray(PsiClass.EMPTY_ARRAY);
   }
@@ -77,8 +74,7 @@ public class PsiClassImplUtil {
     return byMap.isEmpty() ? null : (PsiField)byMap.get(0);
   }
 
-  @NotNull
-  public static PsiMethod[] findMethodsByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
+  public static PsiMethod @NotNull [] findMethodsByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
     List<PsiMember> methods = findByMap(aClass, name, checkBases, MemberType.METHOD);
     //noinspection SuspiciousToArrayCall
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
@@ -92,8 +88,7 @@ public class PsiClassImplUtil {
 
   // ----------------------------- findMethodsBySignature -----------------------------------
 
-  @NotNull
-  public static PsiMethod[] findMethodsBySignature(@NotNull PsiClass aClass, @NotNull PsiMethod patternMethod, final boolean checkBases) {
+  public static PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiClass aClass, @NotNull PsiMethod patternMethod, final boolean checkBases) {
     List<PsiMethod> methods = findMethodsBySignature(aClass, patternMethod, checkBases, false);
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
@@ -730,8 +725,7 @@ public class PsiClassImplUtil {
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(className, psiClass.getResolveScope());
   }
 
-  @NotNull
-  public static PsiClass[] getSupers(@NotNull PsiClass psiClass) {
+  public static PsiClass @NotNull [] getSupers(@NotNull PsiClass psiClass) {
     final PsiClass[] supers = getSupersInner(psiClass);
     for (final PsiClass aSuper : supers) {
       LOG.assertTrue(aSuper != null);
@@ -739,8 +733,7 @@ public class PsiClassImplUtil {
     return supers;
   }
 
-  @NotNull
-  private static PsiClass[] getSupersInner(@NotNull PsiClass psiClass) {
+  private static PsiClass @NotNull [] getSupersInner(@NotNull PsiClass psiClass) {
     PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
 
     if (psiClass.isInterface()) {
@@ -782,8 +775,7 @@ public class PsiClassImplUtil {
     return types;
   }
 
-  @NotNull
-  public static PsiClassType[] getSuperTypes(@NotNull PsiClass psiClass) {
+  public static PsiClassType @NotNull [] getSuperTypes(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassType.resolve();
@@ -842,8 +834,7 @@ public class PsiClassImplUtil {
     return superType;
   }
 
-  @NotNull
-  public static PsiClass[] getInterfaces(@NotNull PsiTypeParameter typeParameter) {
+  public static PsiClass @NotNull [] getInterfaces(@NotNull PsiTypeParameter typeParameter) {
     final PsiClassType[] referencedTypes = typeParameter.getExtendsListTypes();
     if (referencedTypes.length == 0) {
       return PsiClass.EMPTY_ARRAY;
@@ -858,8 +849,7 @@ public class PsiClassImplUtil {
     return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiClass[] getInterfaces(@NotNull PsiClass psiClass) {
+  public static PsiClass @NotNull [] getInterfaces(@NotNull PsiClass psiClass) {
     if (psiClass.isInterface()) {
       return resolveClassReferenceList(psiClass.getExtendsListTypes(), psiClass, false);
     }
@@ -874,10 +864,9 @@ public class PsiClassImplUtil {
     return resolveClassReferenceList(implementsListTypes, psiClass, false);
   }
 
-  @NotNull
-  private static PsiClass[] resolveClassReferenceList(@NotNull PsiClassType[] listOfTypes,
-                                                      @NotNull PsiClass psiClass,
-                                                      boolean includeObject) {
+  private static PsiClass @NotNull [] resolveClassReferenceList(PsiClassType @NotNull [] listOfTypes,
+                                                                @NotNull PsiClass psiClass,
+                                                                boolean includeObject) {
     PsiClass objectClass = null;
     if (includeObject) {
       objectClass = findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
@@ -938,8 +927,7 @@ public class PsiClassImplUtil {
     });
   }
 
-  @NotNull
-  public static PsiClassType[] getExtendsListTypes(@NotNull PsiClass psiClass) {
+  public static PsiClassType @NotNull [] getExtendsListTypes(@NotNull PsiClass psiClass) {
     if (psiClass.isEnum()) {
       PsiClassType enumSuperType = getEnumSuperType(psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()));
       return enumSuperType == null ? PsiClassType.EMPTY_ARRAY : new PsiClassType[]{enumSuperType};
@@ -979,8 +967,7 @@ public class PsiClassImplUtil {
     return PsiClassType.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public static PsiClassType[] getImplementsListTypes(@NotNull PsiClass psiClass) {
+  public static PsiClassType @NotNull [] getImplementsListTypes(@NotNull PsiClass psiClass) {
     final PsiReferenceList extendsList = psiClass.getImplementsList();
     if (extendsList != null) {
       return extendsList.getReferencedTypes();

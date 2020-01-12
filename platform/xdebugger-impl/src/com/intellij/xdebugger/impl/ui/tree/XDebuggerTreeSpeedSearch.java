@@ -92,9 +92,8 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     return null;
   }
 
-  @NotNull
   @Override
-  protected Object[] getAllElements() {
+  protected Object @NotNull [] getAllElements() {
     XDebuggerTreeNode root = ObjectUtils.tryCast(myComponent.getModel().getRoot(), XDebuggerTreeNode.class);
     int initialLevel = root != null ? root.getPath().getPathCount() : 0;
 

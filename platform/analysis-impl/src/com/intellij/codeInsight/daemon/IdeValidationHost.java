@@ -23,5 +23,5 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public interface IdeValidationHost extends Validator.ValidationHost {
-  void addMessageWithFixes(PsiElement context, String message, @NotNull ErrorType type, @NotNull IntentionAction... fixes);
+  void addMessageWithFixes(PsiElement context, String message, @NotNull ErrorType type, IntentionAction @NotNull ... fixes);
 }

@@ -40,9 +40,8 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     return NonClasspathClassFinder.addNonClasspathScope(psiPackage.getProject(), globalSearchScope);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] occursInPackagePrefixes(@NotNull PsiPackage psiPackage) {
+  public VirtualFile @NotNull [] occursInPackagePrefixes(@NotNull PsiPackage psiPackage) {
     List<VirtualFile> result = new ArrayList<>();
     final Module[] modules = ModuleManager.getInstance(psiPackage.getProject()).getModules();
 
@@ -131,8 +130,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
   }
 
-  @NotNull
-  private static PsiDirectory[] suggestMostAppropriateDirectories(@NotNull PsiPackage psiPackage) {
+  private static PsiDirectory @NotNull [] suggestMostAppropriateDirectories(@NotNull PsiPackage psiPackage) {
     final Project project = psiPackage.getProject();
     PsiDirectory[] directories = null;
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -170,9 +168,8 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     return PackagePrefixElementFinder.getInstance(psiPackage.getProject()).packagePrefixExists(psiPackage.getQualifiedName());
   }
 
-  @NotNull
   @Override
-  public Object[] getDirectoryCachedValueDependencies(@NotNull PsiPackage psiPackage) {
+  public Object @NotNull [] getDirectoryCachedValueDependencies(@NotNull PsiPackage psiPackage) {
     return new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootManager.getInstance(psiPackage.getProject()) };
   }
 }

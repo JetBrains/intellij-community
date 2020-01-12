@@ -127,8 +127,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final TargetResolver.Result result = doResolve(getCanonicalText());
     if (result == null) {
       return EMPTY_ARRAY;

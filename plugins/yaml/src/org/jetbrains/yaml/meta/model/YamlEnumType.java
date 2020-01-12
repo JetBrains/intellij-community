@@ -103,8 +103,7 @@ public class YamlEnumType extends YamlScalarType {
   }
 
 
-  @NotNull
-  private static String[] cloneArray(@NotNull String[] array) {
+  private static String @NotNull [] cloneArray(String @NotNull [] array) {
     return array.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : array.clone();
   }
 }

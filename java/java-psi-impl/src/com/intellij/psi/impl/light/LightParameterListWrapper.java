@@ -41,8 +41,7 @@ public class LightParameterListWrapper extends LightElement implements PsiParame
   }
 
   @Override
-  @NotNull
-  public PsiParameter[] getParameters() {
+  public PsiParameter @NotNull [] getParameters() {
     return mySubstitutor == PsiSubstitutor.EMPTY
            ? myDelegate.getParameters()
            : ContainerUtil.map2Array(myDelegate.getParameters(), PsiParameter.class,

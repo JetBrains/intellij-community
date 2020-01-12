@@ -68,8 +68,7 @@ public interface InspectionProfile extends Comparable {
    * @param element context element
    * @return all (both enabled and disabled) tools
    */
-  @NotNull
-  InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element);
+  InspectionToolWrapper @NotNull [] getInspectionTools(@Nullable PsiElement element);
 
   boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element);
 

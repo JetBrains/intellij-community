@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ComparableObject {
   Object[] NONE = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
-  @NotNull
-  Object[] getEqualityObjects();
+  Object @NotNull [] getEqualityObjects();
 
   class Impl implements ComparableObject {
     private final Object[] myObjects;
@@ -17,13 +16,12 @@ public interface ComparableObject {
       this(NONE);
     }
 
-    public Impl(@NotNull Object... objects) {
+    public Impl(Object @NotNull ... objects) {
       myObjects = objects;
     }
 
-    @NotNull
     @Override
-    public Object[] getEqualityObjects() {
+    public Object @NotNull [] getEqualityObjects() {
       return myObjects;
     }
 

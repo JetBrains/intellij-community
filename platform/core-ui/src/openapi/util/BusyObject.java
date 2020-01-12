@@ -68,8 +68,7 @@ public interface BusyObject {
       }
     }
 
-    @NotNull
-    private ActionCallback[] getReadyCallbacks() {
+    private ActionCallback @NotNull [] getReadyCallbacks() {
       synchronized (myReadyCallbacks) {
         ActionCallback[] result = myReadyCallbacks.values().toArray(new ActionCallback[0]);
         myReadyCallbacks.clear();

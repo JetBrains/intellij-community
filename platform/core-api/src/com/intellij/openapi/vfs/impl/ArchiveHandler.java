@@ -71,8 +71,7 @@ public abstract class ArchiveHandler {
     }
   }
 
-  @NotNull
-  public String[] list(@NotNull String relativePath) {
+  public String @NotNull [] list(@NotNull String relativePath) {
     EntryInfo entry = getEntryInfo(relativePath);
     if (entry == null || !entry.isDirectory) return ArrayUtilRt.EMPTY_STRING_ARRAY;
 
@@ -252,8 +251,7 @@ public abstract class ArchiveHandler {
     return Trinity.create(parentName, shortName, entryName);
   }
 
-  @NotNull
-  public abstract byte[] contentsToByteArray(@NotNull String relativePath) throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException;
 
   @NotNull
   public InputStream getInputStream(@NotNull String relativePath) throws IOException {

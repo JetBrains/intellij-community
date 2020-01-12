@@ -17,7 +17,7 @@ import java.util.Iterator;
 public class ArrayQuery<T> implements Query<T> {
   private final T[] myArray;
 
-  public ArrayQuery(@NotNull T... array) {
+  public ArrayQuery(T @NotNull ... array) {
     myArray = array;
   }
 
@@ -44,9 +44,8 @@ public class ArrayQuery<T> implements Query<T> {
   }
 
 
-  @NotNull
   @Override
-  public T[] toArray(@NotNull final T[] a) {
+  public T @NotNull [] toArray(final T @NotNull [] a) {
     return myArray;
   }
 

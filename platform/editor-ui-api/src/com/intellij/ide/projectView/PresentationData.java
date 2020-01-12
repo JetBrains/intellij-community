@@ -268,8 +268,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   @Override
-  @NotNull
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[]{myIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
       myLocationString, mySeparatorAbove, myLocationPrefix, myLocationSuffix};
   }

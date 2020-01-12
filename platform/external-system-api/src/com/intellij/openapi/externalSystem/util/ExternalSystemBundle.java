@@ -27,7 +27,7 @@ public class ExternalSystemBundle extends DynamicBundle {
   @NonNls public static final String PATH_TO_BUNDLE = "messages.ExternalSystemBundle";
   private static final ExternalSystemBundle BUNDLE = new ExternalSystemBundle();
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return BUNDLE.getMessage(key, params);
   }
 

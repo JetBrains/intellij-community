@@ -32,8 +32,7 @@ class MemoryAgentOperations {
     return LongValueParser.INSTANCE.parse(result);
   }
 
-  @NotNull
-  static long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
+  static long @NotNull [] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
     throws EvaluateException {
     ArrayReference array = wrapWithArray(evaluationContext, references);
     Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE, Collections.singletonList(array));
@@ -157,8 +156,7 @@ class MemoryAgentOperations {
     return result;
   }
 
-  @NotNull
-  private static byte[] readUtilityClass() {
+  private static byte @NotNull [] readUtilityClass() {
     return new ProxyExtractor().extractProxy();
   }
 

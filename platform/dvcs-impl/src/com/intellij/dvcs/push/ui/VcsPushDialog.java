@@ -165,8 +165,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     final List<Action> actions = new ArrayList<>();
     myPushAction = new ComplexPushAction(myAdditionalActions);
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
@@ -343,9 +342,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       }
     }
 
-    @NotNull
     @Override
-    public Action[] getOptions() {
+    public Action @NotNull [] getOptions() {
       return myAdditionalActions.toArray(new ActionWrapper[0]);
     }
   }

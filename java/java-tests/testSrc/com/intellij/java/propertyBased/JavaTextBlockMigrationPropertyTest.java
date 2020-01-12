@@ -123,7 +123,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
   }
 
   @Nullable
-  private static String getConcatenationText(@NotNull PsiExpression[] operands) {
+  private static String getConcatenationText(PsiExpression @NotNull [] operands) {
     String[] lines = new String[operands.length];
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
@@ -150,8 +150,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     return StringUtil.join(lines);
   }
 
-  @Nullable
-  private static String[] getTextBlockLines(@NotNull String[] lines) {
+  private static String @Nullable [] getTextBlockLines(String @NotNull [] lines) {
     String[] blockLines = new String[lines.length];
     boolean escapeStartQuote = false;
     for (int i = 0; i < lines.length; i++) {

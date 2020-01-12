@@ -50,9 +50,8 @@ class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinaryExpress
     return StringUtil.join(myLOperand.getText(), " ", myOperator.getText(), " ", myROperand.getText());
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return new PsiElement[]{myLOperand, myOperator, myROperand};
   }
 
@@ -105,9 +104,8 @@ class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinaryExpress
     return myLOperand.getType();
   }
 
-  @NotNull
   @Override
-  public PsiExpression[] getOperands() {
+  public PsiExpression @NotNull [] getOperands() {
     return new PsiExpression[]{getLOperand(), getROperand()};
   }
 

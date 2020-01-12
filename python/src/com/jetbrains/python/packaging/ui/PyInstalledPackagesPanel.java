@@ -194,8 +194,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   }
 
   @Override
-  @NotNull
-  protected ToggleActionButton[] getExtraActions() {
+  protected ToggleActionButton @NotNull [] getExtraActions() {
     final ToggleActionButton useCondaButton = new DumbAwareToggleActionButton("Use Conda Package Manager", PythonIcons.Python.Anaconda) {
       @Override
       public boolean isSelected(AnActionEvent e) {

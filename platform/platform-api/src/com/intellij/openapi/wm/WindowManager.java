@@ -84,8 +84,7 @@ public abstract class WindowManager {
    */
   public abstract boolean isInsideScreenBounds(int x, int y, int width);
 
-  @NotNull
-  public abstract IdeFrame[] getAllProjectFrames();
+  public abstract IdeFrame @NotNull [] getAllProjectFrames();
 
   public abstract JFrame findVisibleFrame();
 

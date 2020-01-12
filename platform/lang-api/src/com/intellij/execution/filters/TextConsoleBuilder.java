@@ -32,7 +32,7 @@ public abstract class TextConsoleBuilder {
   public abstract void setViewer(boolean isViewer);
 
   @NotNull
-  public TextConsoleBuilder filters(@NotNull Filter... filters) {
+  public TextConsoleBuilder filters(Filter @NotNull ... filters) {
     for (Filter filter : filters) {
       addFilter(filter);
     }

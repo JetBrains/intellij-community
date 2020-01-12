@@ -40,7 +40,7 @@ public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresen
   }
 
   @Override
-  public CrumbPresentation[] getCrumbPresentations(@NotNull PsiElement[] elements) {
+  public CrumbPresentation[] getCrumbPresentations(PsiElement @NotNull [] elements) {
     if (elements.length == 0 || !isMyContext(elements[elements.length - 1])) {
       return null;
     }

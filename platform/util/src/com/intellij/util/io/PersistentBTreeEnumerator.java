@@ -530,7 +530,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     private byte[] myBuffer;
 
     @Override
-    int recordWriteOffset(@NotNull PersistentBTreeEnumerator enumerator, @NotNull byte[] buf) {
+    int recordWriteOffset(@NotNull PersistentBTreeEnumerator enumerator, byte @NotNull [] buf) {
       if (enumerator.myFirstPageStart == -1) {
         enumerator.myFirstPageStart = enumerator.myDataPageStart = enumerator.allocPage();
         int existingOffset = enumerator.myDataPageStart % INTERNAL_PAGE_SIZE;
@@ -551,9 +551,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       return recordWriteOffset + enumerator.myDataPageStart;
     }
 
-    @NotNull
     @Override
-    byte[] getRecordBuffer(@NotNull PersistentBTreeEnumerator enumerator) {
+    byte @NotNull [] getRecordBuffer(@NotNull PersistentBTreeEnumerator enumerator) {
       if (myBuffer == null) {
         myBuffer = enumerator.myInlineKeysNoMapping ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[RECORD_SIZE];
       }

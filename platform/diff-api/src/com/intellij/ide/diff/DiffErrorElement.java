@@ -71,9 +71,8 @@ public class DiffErrorElement extends DiffElement {
     return EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public byte[] getContent() {
+  public byte @Nullable [] getContent() {
     return null;
   }
 

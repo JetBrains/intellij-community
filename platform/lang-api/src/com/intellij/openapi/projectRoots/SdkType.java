@@ -172,7 +172,7 @@ public abstract class SdkType implements SdkTypeId {
   public FileChooserDescriptor getHomeChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
           String selectedPath = files[0].getPath();
           boolean valid = isValidSdkHome(selectedPath);
@@ -205,8 +205,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
-  @NotNull
-  public static SdkType[] getAllTypes() {
+  public static SdkType @NotNull [] getAllTypes() {
     //noinspection deprecation
     SdkType[] components = ApplicationManager.getApplication().getComponents(SdkType.class);
     List<SdkType> list1 = components.length == 0 ? Collections.emptyList() : Arrays.asList(components);

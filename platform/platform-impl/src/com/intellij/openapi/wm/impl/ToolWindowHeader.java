@@ -166,7 +166,7 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
     clearCaches();
   }
 
-  void setTabActions(@NotNull AnAction[] actions) {
+  void setTabActions(AnAction @NotNull [] actions) {
     if (myToolbarWest == null) {
       initWestToolBar(myWestPanel);
     }
@@ -180,7 +180,7 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
     }
   }
 
-  void setAdditionalTitleActions(@NotNull AnAction[] actions) {
+  void setAdditionalTitleActions(AnAction @NotNull [] actions) {
     myActionGroup.removeAll();
     myActionGroup.addAll(actions);
     if (actions.length > 0) {

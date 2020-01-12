@@ -159,8 +159,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
-  @NotNull
-  public String[] getUrls(@NotNull OrderRootType rootType) {
+  public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
     checkDisposed();
 
     VirtualFilePointerContainer result = myRoots.get(rootType);
@@ -168,8 +167,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
+  public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType) {
     checkDisposed();
 
     VirtualFilePointerContainer container = myRoots.get(rootType);
@@ -459,15 +457,13 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return false;
   }
 
-  @NotNull
   @Override
-  public String[] getExcludedRootUrls() {
+  public String @NotNull [] getExcludedRootUrls() {
     return myExcludedRoots != null ? myExcludedRoots.getUrls() : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getExcludedRoots() {
+  public VirtualFile @NotNull [] getExcludedRoots() {
     return myExcludedRoots != null ? myExcludedRoots.getFiles() : VirtualFile.EMPTY_ARRAY;
   }
 

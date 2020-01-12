@@ -476,8 +476,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     return null;
   }
 
-  @NotNull
-  private Navigatable[] getNavigatableArray() {
+  private Navigatable @NotNull [] getNavigatableArray() {
     Project project = myModel.getProject();
     List<DirDiffElementImpl> elements = myModel.getSelectedElements();
     List<Navigatable> navigatables = new ArrayList<>();

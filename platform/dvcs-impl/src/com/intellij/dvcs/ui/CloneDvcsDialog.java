@@ -509,8 +509,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       }
     }
 
-    @NotNull
-    private static Action[] getActionsAfterFirst(@NotNull List<Action> actions) {
+    private static Action @NotNull [] getActionsAfterFirst(@NotNull List<Action> actions) {
       if (actions.size() <= 1) {
         return new Action[0];
       }

@@ -43,9 +43,8 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
     return myDescriptor.getValueDeclaration(getElement(), getValue());
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     if (myDescriptor.isFixed()) {
       String defaultValue = myDescriptor.getDefaultValue();
       return defaultValue == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : new Object[] {defaultValue};

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReadAccessFilteringRule implements UsageFilteringRule{
   @Override
-  public boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  public boolean isVisible(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof ReadWriteAccessUsage) {
       final ReadWriteAccessUsage readWriteAccessUsage = (ReadWriteAccessUsage)usage;
       final boolean isForReadingOnly = readWriteAccessUsage.isAccessedForReading() && !readWriteAccessUsage.isAccessedForWriting();

@@ -24,8 +24,7 @@ public abstract class RefResolveService {
     return project.getComponent(RefResolveService.class);
   }
 
-  @Nullable("null means the service has not resolved all files and is not ready yet")
-  public abstract int[] getBackwardIds(@NotNull VirtualFileWithId file);
+  public abstract int @Nullable("null means the service has not resolved all files and is not ready yet") [] getBackwardIds(@NotNull VirtualFileWithId file);
 
   /**
    * @return subset of scope containing only files which reference the virtualFile

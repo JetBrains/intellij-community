@@ -44,7 +44,7 @@ public class FrameworkVersion {
     this(versionName, libraryName, libraries, false);
   }
 
-  public FrameworkVersion(@NotNull String versionName, @NotNull String libraryName, @NotNull LibraryInfo[] libraries, boolean aDefault) {
+  public FrameworkVersion(@NotNull String versionName, @NotNull String libraryName, LibraryInfo @NotNull [] libraries, boolean aDefault) {
     myVersionName = versionName;
     myLibraryName = libraryName;
     myLibraries = libraries;

@@ -43,9 +43,8 @@ public abstract class InstancesWindowBase extends DialogWrapper {
     return "#org.jetbrains.debugger.memory.view.InstancesWindow";
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{new DialogWrapperExitAction("Close", CLOSE_EXIT_CODE)};
   }
 }

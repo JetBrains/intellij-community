@@ -61,7 +61,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
 
   private static final VirtualFilePointerListener tellAllProjectsTheirRootsAreGoingToChange = new VirtualFilePointerListener() {
     @Override
-    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+    public void beforeValidityChanged(VirtualFilePointer @NotNull [] pointers) {
       //todo check if this sdk is really used in the project
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
@@ -70,7 +70,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     }
 
     @Override
-    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+    public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
       //todo check if this sdk is really used in the project
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
@@ -268,14 +268,12 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
     @Override
-    @NotNull
-    public String[] getUrls(@NotNull OrderRootType rootType) {
+    public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
       return myRoots.getUrls(rootType);
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getFiles(@NotNull final OrderRootType rootType) {
+    public VirtualFile @NotNull [] getFiles(@NotNull final OrderRootType rootType) {
       return myRoots.getFiles(rootType);
     }
 
@@ -315,15 +313,13 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     myAdditionalData = data;
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
+  public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) {
     return myRoots.getFiles(rootType);
   }
 
-  @NotNull
   @Override
-  public String[] getUrls(@NotNull OrderRootType rootType) {
+  public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
     return myRoots.getUrls(rootType);
   }
 

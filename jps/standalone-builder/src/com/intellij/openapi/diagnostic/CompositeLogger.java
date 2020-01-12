@@ -107,7 +107,7 @@ public class CompositeLogger extends Logger {
   }
 
   @Override
-  public void error(@NonNls String message, @Nullable Throwable t, @NonNls @NotNull String... details) {
+  public void error(@NonNls String message, @Nullable Throwable t, @NonNls String @NotNull ... details) {
     for (Logger logger : myLoggers) {
       logger.error(message, t, details);
     }

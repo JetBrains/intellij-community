@@ -26,8 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class JspSupportProxy {
 
-  @NotNull
-  public abstract String[] getPossibleTldUris(final Module module);
+  public abstract String @NotNull [] getPossibleTldUris(final Module module);
 
   private static JspSupportProxy ourInstance;
   private static boolean isInitialized;

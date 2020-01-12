@@ -75,7 +75,7 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
    * @param maxArguments maximum argument allowed
    * @param arguments arguments
    */
-  public KnownArgumentsInfo(final int minArguments, final int maxArguments, @NotNull final Argument... arguments) {
+  public KnownArgumentsInfo(final int minArguments, final int maxArguments, final Argument @NotNull ... arguments) {
     this(Arrays.asList(arguments), minArguments, maxArguments);
   }
 

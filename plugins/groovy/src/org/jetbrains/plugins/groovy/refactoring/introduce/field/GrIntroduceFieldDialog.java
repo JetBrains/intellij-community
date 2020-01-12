@@ -244,7 +244,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return true;
   }
 
-  private static boolean allOccurrencesInOneMethod(@NotNull PsiElement[] occurrences, PsiElement scope) {
+  private static boolean allOccurrencesInOneMethod(PsiElement @NotNull [] occurrences, PsiElement scope) {
     if (occurrences.length == 0) return true;
     GrMember container = GrIntroduceFieldHandler.getContainer(occurrences[0], scope);
     if (container == null) return false;

@@ -128,9 +128,8 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     myDescriptorTag = (XmlTag) element;
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies(){
+  public Object @NotNull [] getDependencies(){
     return new Object[]{myDescriptorTag};
   }
 

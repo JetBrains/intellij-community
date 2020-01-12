@@ -43,14 +43,14 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
   @NotNull private final List<DiffContent> myContents;
 
   @NotNull private final List<byte[]> myByteContents;
-  @NotNull private final byte[] myOriginalContent;
+  private final byte @NotNull [] myOriginalContent;
 
   @Nullable private final String myTitle;
   @NotNull private final List<String> myTitles;
 
   public BinaryMergeRequestImpl(@Nullable Project project,
                                 @NotNull FileContent file,
-                                @NotNull byte[] originalContent,
+                                byte @NotNull [] originalContent,
                                 @NotNull List<DiffContent> contents,
                                 @NotNull List<byte[]> byteContents,
                                 @Nullable String title,

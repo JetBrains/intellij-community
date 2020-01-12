@@ -65,11 +65,10 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
       .registerUastReferenceProvider(registrar, UastPatterns.injectionHostUExpression(), new UastInjectionHostReferenceProvider() {
       private final ResourceBundleReferenceProvider myUnderlying = new ResourceBundleReferenceProvider();
 
-      @NotNull
       @Override
-      public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
-                                                          @NotNull PsiLanguageInjectionHost host,
-                                                          @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                                    @NotNull PsiLanguageInjectionHost host,
+                                                                    @NotNull ProcessingContext context) {
         final UElement parent = uExpression.getUastParent();
         if (!(parent instanceof UField)) {
           return PsiReference.EMPTY_ARRAY;
@@ -113,9 +112,8 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
     }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
     registrar.registerReferenceProvider(PsiJavaPatterns.psiElement(PropertyValueImpl.class), new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         String text = element.getText();
         String[] words = text.split("\\s");
         if (words.length != 1) return PsiReference.EMPTY_ARRAY;

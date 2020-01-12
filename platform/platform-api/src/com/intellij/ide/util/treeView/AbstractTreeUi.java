@@ -597,7 +597,7 @@ public class AbstractTreeUi {
   }
 
   @Nullable
-  public final DefaultMutableTreeNode getNodeForPath(@NotNull Object[] path) {
+  public final DefaultMutableTreeNode getNodeForPath(Object @NotNull [] path) {
     DefaultMutableTreeNode node = null;
     for (final Object pathElement : path) {
       node = node == null ? getFirstNode(pathElement) : findNodeForChildElement(node, pathElement);
@@ -630,7 +630,7 @@ public class AbstractTreeUi {
     }
   }
 
-  public final void buildNodeForPath(@NotNull Object[] path) {
+  public final void buildNodeForPath(Object @NotNull [] path) {
     getUpdater().performUpdate();
     DefaultMutableTreeNode node = null;
     for (final Object pathElement : path) {
@@ -3638,19 +3638,19 @@ public class AbstractTreeUi {
     return myRootNodeWasQueuedToInitialize && myRootNodeInitialized;
   }
 
-  public void select(@NotNull final Object[] elements, @Nullable final Runnable onDone) {
+  public void select(final Object @NotNull [] elements, @Nullable final Runnable onDone) {
     select(elements, onDone, false);
   }
 
-  public void select(@NotNull final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
+  public void select(final Object @NotNull [] elements, @Nullable final Runnable onDone, boolean addToSelection) {
     select(elements, onDone, addToSelection, false);
   }
 
-  public void select(@NotNull final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection, boolean deferred) {
+  public void select(final Object @NotNull [] elements, @Nullable final Runnable onDone, boolean addToSelection, boolean deferred) {
     _select(elements, onDone, addToSelection, true, false, true, deferred, false, false);
   }
 
-  void _select(@NotNull final Object[] elements,
+  void _select(final Object @NotNull [] elements,
                final Runnable onDone,
                final boolean addToSelection,
                final boolean checkIfInStructure) {
@@ -3658,17 +3658,17 @@ public class AbstractTreeUi {
     _select(elements, onDone, addToSelection, true, checkIfInStructure, true, false, false, false);
   }
 
-  void _select(@NotNull final Object[] elements,
+  void _select(final Object @NotNull [] elements,
                @NotNull Runnable onDone) {
 
     _select(elements, onDone, false, true, true, false, false, false, false);
   }
 
-  public void userSelect(@NotNull final Object[] elements, final Runnable onDone, final boolean addToSelection, boolean scroll) {
+  public void userSelect(final Object @NotNull [] elements, final Runnable onDone, final boolean addToSelection, boolean scroll) {
     _select(elements, onDone, addToSelection, true, false, scroll, false, true, true);
   }
 
-  void _select(@NotNull final Object[] elements,
+  void _select(final Object @NotNull [] elements,
                final Runnable onDone,
                final boolean addToSelection,
                final boolean checkCurrentSelection,
@@ -3807,7 +3807,7 @@ public class AbstractTreeUi {
   }
 
 
-  private void addToDeferred(@NotNull final Object[] elementsToSelect, final Runnable onDone, final boolean addToSelection) {
+  private void addToDeferred(final Object @NotNull [] elementsToSelect, final Runnable onDone, final boolean addToSelection) {
     if (!addToSelection) {
       myDeferredSelections.clear();
     }
@@ -3850,7 +3850,7 @@ public class AbstractTreeUi {
   }
 
 
-  private void addNext(@NotNull final Object[] elements,
+  private void addNext(final Object @NotNull [] elements,
                        final int i,
                        @Nullable final Runnable onDone,
                        final int[] originalRows,
@@ -4108,16 +4108,16 @@ public class AbstractTreeUi {
     expand(new Object[]{element}, onDone);
   }
 
-  public void expand(@NotNull final Object[] element, @Nullable final Runnable onDone) {
+  public void expand(final Object @NotNull [] element, @Nullable final Runnable onDone) {
     expand(element, onDone, false);
   }
 
 
-  void expand(@NotNull final Object[] element, @Nullable final Runnable onDone, boolean checkIfInStructure) {
+  void expand(final Object @NotNull [] element, @Nullable final Runnable onDone, boolean checkIfInStructure) {
     _expand(element, onDone == null ? new EmptyRunnable() : onDone, checkIfInStructure);
   }
 
-  private void _expand(@NotNull final Object[] elements,
+  private void _expand(final Object @NotNull [] elements,
                        @NotNull final Runnable onDone,
                        final boolean checkIfInStructure) {
 
@@ -4154,7 +4154,7 @@ public class AbstractTreeUi {
     }
   }
 
-  private void expandNext(@NotNull final Object[] elements,
+  private void expandNext(final Object @NotNull [] elements,
                           final int index,
                           final boolean parentsOnly,
                           final boolean checkIfInStricture,
@@ -4805,7 +4805,7 @@ public class AbstractTreeUi {
     private final Map<Object, NodeDescriptor> myDescriptors = new HashMap<>();
     private final Map<NodeDescriptor, Boolean> myChanges = new HashMap<>();
 
-    LoadedChildren(@Nullable Object[] elements) {
+    LoadedChildren(Object @Nullable [] elements) {
       myElements = Arrays.asList(elements != null ? elements : ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     }
 

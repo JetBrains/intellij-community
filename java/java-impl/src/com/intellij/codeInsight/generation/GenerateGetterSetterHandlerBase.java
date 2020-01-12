@@ -151,8 +151,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
   }
 
   @Override
-  @Nullable
-  protected ClassMember[] getAllOriginalMembers(final PsiClass aClass) {
+  protected ClassMember @Nullable [] getAllOriginalMembers(final PsiClass aClass) {
     final List<EncapsulatableClassMember> list = GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass);
     if (list.isEmpty()) {
       return null;

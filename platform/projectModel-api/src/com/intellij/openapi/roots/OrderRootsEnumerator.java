@@ -34,14 +34,12 @@ public interface OrderRootsEnumerator {
   /**
    * @return all roots processed by this enumerator
    */
-  @NotNull
-  VirtualFile[] getRoots();
+  VirtualFile @NotNull [] getRoots();
 
   /**
    * @return urls of all roots processed by this enumerator
    */
-  @NotNull
-  String[] getUrls();
+  String @NotNull [] getUrls();
 
   /**
    * @return list of path to all roots processed by this enumerator

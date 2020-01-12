@@ -143,7 +143,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }
     });
 
-    private void setModuleGroupPath(@NotNull ModifiableModuleModel model, @NotNull Module module, @Nullable String[] group) {
+    private void setModuleGroupPath(@NotNull ModifiableModuleModel model, @NotNull Module module, String @Nullable [] group) {
       String[] cached = group == null ? null : paths.get(group);
       if (cached == null && group != null) {
         cached = new String[group.length];
@@ -551,8 +551,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   }
 
   @Override
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     ModuleModelImpl model = myModuleModel;
     if (model.myIsWritable) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -565,8 +564,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   private volatile Graph<Module> myCachedModuleTestGraph;
 
   @Override
-  @NotNull
-  public Module[] getSortedModules() {
+  public Module @NotNull [] getSortedModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     deliverPendingEvents();
     Module[] sortedModules = myCachedSortedModules;
@@ -708,8 +706,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
 
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       Module[] cache = myModulesCache;
       if (cache == null) {
         Collection<Module> modules = myModules.values();
@@ -718,8 +715,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       return cache;
     }
 
-    @NotNull
-    private Module[] getSortedModules() {
+    private Module @NotNull [] getSortedModules() {
       Module[] allModules = getModules().clone();
       Arrays.sort(allModules, moduleDependencyComparator());
       return allModules;
@@ -984,7 +980,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
 
     @Override
-    public void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath) {
+    public void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath) {
       if (myModuleGroupPath == null) {
         myModuleGroupPath = new THashMap<>();
       }
@@ -1190,7 +1186,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     UnloadedModulesListStorage.getInstance(myProject).setUnloadedModuleNames(unloadedModuleNames);
   }
 
-  public void setModuleGroupPath(@NotNull Module module, @Nullable String[] groupPath) {
+  public void setModuleGroupPath(@NotNull Module module, String @Nullable [] groupPath) {
     myModuleModel.setModuleGroupPath(module, groupPath);
   }
 }

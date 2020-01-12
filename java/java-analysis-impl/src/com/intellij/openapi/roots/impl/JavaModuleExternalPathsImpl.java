@@ -50,38 +50,35 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     mySource.copyContainersFrom(this);
   }
 
-  @NotNull
   @Override
-  public String[] getJavadocUrls() {
+  public String @NotNull [] getJavadocUrls() {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(JavadocOrderRootType.getInstance());
     return container != null ? container.getUrls() : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getExternalAnnotationsRoots() {
+  public VirtualFile @NotNull [] getExternalAnnotationsRoots() {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(AnnotationOrderRootType.getInstance());
     return container != null ? container.getFiles() : VirtualFile.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public String[] getExternalAnnotationsUrls() {
+  public String @NotNull [] getExternalAnnotationsUrls() {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(AnnotationOrderRootType.getInstance());
     return container != null ? container.getUrls() : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
-  public void setJavadocUrls(@NotNull String[] urls) {
+  public void setJavadocUrls(String @NotNull [] urls) {
     setRootUrls(JavadocOrderRootType.getInstance(), urls);
   }
 
   @Override
-  public void setExternalAnnotationUrls(@NotNull String[] urls) {
+  public void setExternalAnnotationUrls(String @NotNull [] urls) {
     setRootUrls(AnnotationOrderRootType.getInstance(), urls);
   }
 
-  private void setRootUrls(final OrderRootType orderRootType, @NotNull final String[] urls) {
+  private void setRootUrls(final OrderRootType orderRootType, final String @NotNull [] urls) {
     VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
     if (container == null) {
       if (urls.length == 0) {

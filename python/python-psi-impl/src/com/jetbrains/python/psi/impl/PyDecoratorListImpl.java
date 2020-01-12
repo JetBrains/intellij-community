@@ -30,8 +30,7 @@ public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> 
   }
 
   @Override
-  @NotNull
-  public PyDecorator[] getDecorators() {
+  public PyDecorator @NotNull [] getDecorators() {
     final PyDecorator[] decoarray = new PyDecorator[0];
     return getStubOrPsiChildren(PyElementTypes.DECORATOR_CALL, decoarray);
     //return decoarray;

@@ -46,7 +46,7 @@ import javax.swing.*;
 public class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
   @Nullable
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
     }

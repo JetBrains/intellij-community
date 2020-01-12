@@ -39,9 +39,8 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     return myRootElement;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull final Object element){
+  public Object @NotNull [] getChildElements(@NotNull final Object element){
     if(element==myRootElement){
       ArrayList<Object> elements = new ArrayList<>();
       final RadRootContainer rootContainer=myEditor.getRootContainer();

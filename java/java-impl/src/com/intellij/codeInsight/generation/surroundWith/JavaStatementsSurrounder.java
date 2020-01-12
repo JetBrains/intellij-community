@@ -17,14 +17,14 @@ import org.jetbrains.annotations.Nullable;
 
 abstract class JavaStatementsSurrounder implements Surrounder {
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     return ContainerUtil.find(elements, PsiSwitchLabelStatementBase.class::isInstance) == null;
   }
 
   @Override
   @Nullable public TextRange surroundElements(@NotNull Project project,
                                               @NotNull Editor editor,
-                                              @NotNull PsiElement[] elements) throws IncorrectOperationException {
+                                              PsiElement @NotNull [] elements) throws IncorrectOperationException {
     PsiElement container = elements[0].getParent();
     if (container == null) return null;
     return surroundStatements (project, editor, container, elements);

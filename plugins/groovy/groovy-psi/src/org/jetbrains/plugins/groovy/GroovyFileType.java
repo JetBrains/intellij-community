@@ -22,8 +22,7 @@ public class GroovyFileType extends LanguageFileType {
     GROOVY_FILE_TYPES.add(this);
   }
 
-  @NotNull
-  public static FileType[] getGroovyEnabledFileTypes() {
+  public static FileType @NotNull [] getGroovyEnabledFileTypes() {
     return GROOVY_FILE_TYPES.toArray(FileType.EMPTY_ARRAY);
   }
 

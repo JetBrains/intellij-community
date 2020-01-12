@@ -25,9 +25,8 @@ public class PyNonlocalStatementImpl extends PyElementImpl implements PyNonlocal
     visitor.visitPyNonlocalStatement(this);
   }
 
-  @NotNull
   @Override
-  public PyTargetExpression[] getVariables() {
+  public PyTargetExpression @NotNull [] getVariables() {
     return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
   }
 

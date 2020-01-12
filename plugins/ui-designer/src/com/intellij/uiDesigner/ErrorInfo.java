@@ -37,7 +37,7 @@ public final class ErrorInfo {
   private String myInspectionId;
 
   public ErrorInfo(IComponent component, @NonNls final String propertyName, @NotNull final String description,
-                   @NotNull HighlightDisplayLevel highlightDisplayLevel, @NotNull final QuickFix[] fixes) {
+                   @NotNull HighlightDisplayLevel highlightDisplayLevel, final QuickFix @NotNull [] fixes) {
     myComponent = component instanceof RadComponent ? (RadComponent) component : null;
     myHighlightDisplayLevel = highlightDisplayLevel;
     myPropertyName = propertyName;

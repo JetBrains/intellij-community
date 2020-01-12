@@ -150,11 +150,11 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  public final void addFile(@NotNull String entryName, @NotNull byte[] content) throws IOException {
+  public final void addFile(@NotNull String entryName, byte @NotNull [] content) throws IOException {
     addFile(entryName, content, -1);
   }
 
-  public final void addFile(@NotNull String entryName, @NotNull byte[] content, long timestamp) throws IOException {
+  public final void addFile(@NotNull String entryName, byte @NotNull [] content, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accepts(entryName, null)) {
       writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));

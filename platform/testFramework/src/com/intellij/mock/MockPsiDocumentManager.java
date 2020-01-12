@@ -80,8 +80,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  @NotNull
-  public Document[] getUncommittedDocuments() {
+  public Document @NotNull [] getUncommittedDocuments() {
     throw new UnsupportedOperationException("Method getUncommittedDocuments is not yet implemented in " + getClass().getName());
   }
 

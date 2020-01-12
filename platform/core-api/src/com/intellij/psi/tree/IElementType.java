@@ -42,8 +42,7 @@ public class IElementType {
   private static final short MAX_INDEXED_TYPES = 15000;
 
   private static short size; // guarded by lock
-  @NotNull
-  private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
+  private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
   @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
   private static final Object lock = new String("registry lock");
 
@@ -54,8 +53,7 @@ public class IElementType {
     push(init);
   }
 
-  @NotNull
-  static IElementType[] push(@NotNull IElementType[] types) {
+  static IElementType @NotNull [] push(IElementType @NotNull [] types) {
     synchronized (lock) {
       IElementType[] oldRegistry = ourRegistry;
       ourRegistry = types;
@@ -214,8 +212,7 @@ public class IElementType {
    * @param p the predicate which should be matched by the element types.
    * @return the array of matching element types.
    */
-  @NotNull
-  public static IElementType[] enumerate(@NotNull Predicate p) {
+  public static IElementType @NotNull [] enumerate(@NotNull Predicate p) {
     List<IElementType> matches = new ArrayList<>();
     for (IElementType value : ourRegistry) {
       if (value != null && p.matches(value)) {

@@ -72,14 +72,12 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
     return getElement().toString();
   }
 
-  @NotNull
   @Override
-  public final StructureViewTreeElement[] getChildren() {
+  public final StructureViewTreeElement @NotNull [] getChildren() {
     return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren);
   }
 
-  @NotNull
-  private StructureViewTreeElement[] doGetChildren() {
+  private StructureViewTreeElement @NotNull [] doGetChildren() {
     return PsiTreeElementBase.mergeWithExtensions(getElement(), getChildrenBase());
   }
 

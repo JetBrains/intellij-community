@@ -86,8 +86,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSelection() {
+  public VirtualFile @NotNull [] getSelection() {
     if (isVisible()) {
       return getUI().getSelection();
     }
@@ -135,9 +134,8 @@ final class ThumbnailViewImpl implements ThumbnailView {
     updateUI();
   }
 
-  @Nullable
   @Override
-  public TagFilter[] getTagFilters() {
+  public TagFilter @Nullable [] getTagFilters() {
     return myTagFilters;
   }
 

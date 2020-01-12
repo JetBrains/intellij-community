@@ -251,8 +251,7 @@ public class URLUtil {
    * @param dataUrl data:URL-like string (may be quoted)
    * @return extracted byte array or {@code null} if it cannot be extracted.
    */
-  @Nullable
-  public static byte[] getBytesFromDataUri(@NotNull String dataUrl) {
+  public static byte @Nullable [] getBytesFromDataUri(@NotNull String dataUrl) {
     Matcher matcher = DATA_URI_PATTERN.matcher(StringUtil.unquoteString(dataUrl));
     if (matcher.matches()) {
       try {

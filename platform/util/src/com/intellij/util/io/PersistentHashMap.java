@@ -68,8 +68,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private static final long USED_LONG_VALUE_MASK = 1L << 62;
   private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
-  @NotNull private final byte[] myRecordBuffer;
-  @NotNull private final byte[] mySmallRecordBuffer;
+  private final byte @NotNull [] myRecordBuffer;
+  private final byte @NotNull [] mySmallRecordBuffer;
   private final boolean myIntMapping;
   private final boolean myDirectlyStoreLongFileOffsetMode;
   private final boolean myCanReEnumerate;
@@ -176,14 +176,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         return recordHandler.recordWriteOffset(enumerator, buf);
       }
 
-      @NotNull
       @Override
-      byte[] getRecordBuffer(PersistentEnumeratorBase enumerator) {
+      byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase enumerator) {
         return myIntAddressForNewRecord ? mySmallRecordBuffer : myRecordBuffer;
       }
 
       @Override
-      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, @NotNull byte[] buf) {
+      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte @NotNull [] buf) {
         recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
         for (int i = myParentValueRefOffset; i < buf.length; i++) {
           buf[i] = 0;

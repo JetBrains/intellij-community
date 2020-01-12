@@ -26,7 +26,7 @@ public class FilePathInterner extends WeakInterner<CharSequence> {
     private final int[] nameIds;
     private transient int hash;
 
-    private FileSeparatedCharSequence(@NotNull int[] nameIds) {
+    private FileSeparatedCharSequence(int @NotNull [] nameIds) {
       this.nameIds = nameIds;
     }
 

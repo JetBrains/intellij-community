@@ -555,9 +555,8 @@ public class XmlUtil {
     return (XmlTag)parent.add(child);
   }
 
-  @Nullable
   @NonNls
-  public static String[][] getDefaultNamespaces(final XmlDocument document) {
+  public static String[] @Nullable [] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = getContainingFile(document);
 
     final XmlTag tag = document.getRootTag();
@@ -1161,7 +1160,7 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(@NotNull byte[] content) {
+  public static String extractXmlEncodingFromProlog(byte @NotNull [] content) {
     return XmlCharsetDetector.extractXmlEncodingFromProlog(content);
   }
 
@@ -1171,14 +1170,14 @@ public class XmlUtil {
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
-                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @NonNls String @Nullable [] attributeNames,
                                                                 @Nullable ElementFilter elementFilter,
                                                                 @NotNull PsiReferenceProvider provider) {
     registerXmlAttributeValueReferenceProvider(registrar, attributeNames, elementFilter, true, provider);
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
-                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @NonNls String @Nullable [] attributeNames,
                                                                 @Nullable ElementFilter elementFilter,
                                                                 boolean caseSensitive,
                                                                 @NotNull PsiReferenceProvider provider) {
@@ -1187,7 +1186,7 @@ public class XmlUtil {
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
-                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @NonNls String @Nullable [] attributeNames,
                                                                 @Nullable ElementFilter elementFilter,
                                                                 boolean caseSensitive,
                                                                 @NotNull PsiReferenceProvider provider,

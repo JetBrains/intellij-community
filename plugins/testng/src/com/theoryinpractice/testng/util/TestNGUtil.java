@@ -350,8 +350,7 @@ public class TestNGUtil {
                      .toList();
   }
 
-  @Nullable
-  public static PsiClass[] getAllTestClasses(final TestClassFilter filter, boolean sync) {
+  public static PsiClass @Nullable [] getAllTestClasses(final TestClassFilter filter, boolean sync) {
     final PsiClass[][] holder = new PsiClass[1][];
     final Runnable process = () -> {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();

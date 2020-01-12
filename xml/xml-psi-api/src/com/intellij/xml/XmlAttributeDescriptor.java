@@ -43,8 +43,7 @@ public interface XmlAttributeDescriptor extends PsiMetaData {
 
   //todo: refactor to hierarchy of value descriptor?
   boolean isEnumerated();
-  @Nullable
-  String[] getEnumeratedValues();
+  String @Nullable [] getEnumeratedValues();
 
   @Nullable
   String validateValue(XmlElement context, String value);

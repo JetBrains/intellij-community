@@ -67,8 +67,7 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
   }
 
   @Override
-  @NotNull
-  public Class<?>[] getPatternClasses() {
+  public Class<?> @NotNull [] getPatternClasses() {
     return new Class[] { PsiJavaPatterns.class };
   }
 

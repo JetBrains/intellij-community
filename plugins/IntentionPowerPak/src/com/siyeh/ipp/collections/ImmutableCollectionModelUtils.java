@@ -225,8 +225,7 @@ class ImmutableCollectionModelUtils {
       return ObjectUtils.tryCast(BlockUtils.addBefore(usage, declaration), PsiDeclarationStatement.class);
     }
 
-    @NotNull
-    private String[] getNameSuggestions(@NotNull PsiMethodCallExpression call, @NotNull PsiType type) {
+    private String @NotNull [] getNameSuggestions(@NotNull PsiMethodCallExpression call, @NotNull PsiType type) {
       String propertyName = getPropertyName(call, type);
       SuggestedNameInfo nameInfo = myCodeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, propertyName, call, type);
       return myCodeStyleManager.suggestUniqueVariableName(nameInfo, call, true).names;
@@ -334,7 +333,7 @@ class ImmutableCollectionModelUtils {
     }
 
     static void rename(@NotNull PsiNamedElement elementToRename,
-                       @NotNull String[] names,
+                       String @NotNull [] names,
                        @NotNull Editor editor,
                        @NotNull PsiElement anchor) {
       PsiDocumentManager.getInstance(elementToRename.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());

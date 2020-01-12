@@ -36,8 +36,7 @@ public interface ColorAndFontDescriptorsProvider {
    *
    * @return the list of attribute descriptors.
    */
-  @NotNull
-  AttributesDescriptor[] getAttributeDescriptors();
+  AttributesDescriptor @NotNull [] getAttributeDescriptors();
 
   /**
    * Returns the list of descriptors specifying the {@link com.intellij.openapi.editor.colors.ColorKey}
@@ -46,8 +45,7 @@ public interface ColorAndFontDescriptorsProvider {
    *
    * @return the list of color descriptors.
    */
-  @NotNull
-  ColorDescriptor[] getColorDescriptors();
+  ColorDescriptor @NotNull [] getColorDescriptors();
 
   /**
    * Returns the title of the page, shown as text in the dialog tab.

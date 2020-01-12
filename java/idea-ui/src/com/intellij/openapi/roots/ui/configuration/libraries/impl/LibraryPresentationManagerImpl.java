@@ -55,8 +55,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
     return result;
   }
 
-  @NotNull
-  private static VirtualFile[] getLibraryFiles(@NotNull Library library, @Nullable StructureConfigurableContext context) {
+  private static VirtualFile @NotNull [] getLibraryFiles(@NotNull Library library, @Nullable StructureConfigurableContext context) {
     if (((LibraryEx)library).isDisposed()) {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -152,7 +151,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @NotNull
   @Override
-  public List<String> getDescriptions(@NotNull VirtualFile[] classRoots, final Set<? extends LibraryKind> excludedKinds) {
+  public List<String> getDescriptions(VirtualFile @NotNull [] classRoots, final Set<? extends LibraryKind> excludedKinds) {
     final SmartList<String> result = new SmartList<>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(classRoots), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override

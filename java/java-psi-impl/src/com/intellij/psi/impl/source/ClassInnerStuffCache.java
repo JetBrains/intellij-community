@@ -32,28 +32,23 @@ public class ClassInnerStuffCache {
     myClass = aClass;
   }
 
-  @NotNull
-  public PsiMethod[] getConstructors() {
+  public PsiMethod @NotNull [] getConstructors() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(PsiImplUtil.getConstructors(myClass))));
   }
 
-  @NotNull
-  public PsiField[] getFields() {
+  public PsiField @NotNull [] getFields() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcFields())));
   }
 
-  @NotNull
-  public PsiMethod[] getMethods() {
+  public PsiMethod @NotNull [] getMethods() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcMethods())));
   }
 
-  @NotNull
-  public PsiClass[] getInnerClasses() {
+  public PsiClass @NotNull [] getInnerClasses() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcInnerClasses())));
   }
 
-  @NotNull
-  public PsiRecordComponent[] getRecordComponents() {
+  public PsiRecordComponent @NotNull [] getRecordComponents() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcRecordComponents())));
   }
 
@@ -67,8 +62,7 @@ public class ClassInnerStuffCache {
     }
   }
 
-  @NotNull
-  public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsByName(String name, boolean checkBases) {
     if (checkBases) {
       return PsiClassImplUtil.findMethodsByName(myClass, name, true);
     }
@@ -105,29 +99,25 @@ public class ClassInnerStuffCache {
     return CachedValueProvider.Result.create(value, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
   }
 
-  @NotNull
-  private PsiField[] calcFields() {
+  private PsiField @NotNull [] calcFields() {
     List<PsiField> own = myClass.getOwnFields();
     List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class);
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private PsiMethod[] calcMethods() {
+  private PsiMethod @NotNull [] calcMethods() {
     List<PsiMethod> own = myClass.getOwnMethods();
     List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class);
     return ArrayUtil.mergeCollections(own, ext, PsiMethod.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private PsiClass[] calcInnerClasses() {
+  private PsiClass @NotNull [] calcInnerClasses() {
     List<PsiClass> own = myClass.getOwnInnerClasses();
     List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class);
     return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private PsiRecordComponent[] calcRecordComponents() {
+  private PsiRecordComponent @NotNull [] calcRecordComponents() {
     PsiRecordHeader header = myClass.getRecordHeader();
     return header == null ? PsiRecordComponent.EMPTY_ARRAY : header.getRecordComponents();
   }

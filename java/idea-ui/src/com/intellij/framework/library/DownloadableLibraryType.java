@@ -48,7 +48,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   protected DownloadableLibraryType(@NotNull String libraryCategoryName,
                                @NotNull String libraryTypeId,
                                @NotNull String groupId,
-                               @NotNull URL... localUrls) {
+                               URL @NotNull ... localUrls) {
     this(libraryCategoryName, libraryTypeId, groupId, null, localUrls);
   }
 
@@ -60,7 +60,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
                                  @NotNull String libraryTypeId,
                                  @NotNull String groupId,
                                  @Nullable Icon icon,
-                                 @NotNull URL... localUrls) {
+                                 URL @NotNull ... localUrls) {
     super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId) {
       @NotNull
       @Override
@@ -128,8 +128,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
     return getLibraryTypeIcon();
   }
 
-  @NotNull
-  protected abstract String[] getDetectionClassNames();
+  protected abstract String @NotNull [] getDetectionClassNames();
 
   @Override
   public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {

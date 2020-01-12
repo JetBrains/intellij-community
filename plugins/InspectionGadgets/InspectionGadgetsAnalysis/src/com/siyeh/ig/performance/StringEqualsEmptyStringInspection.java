@@ -57,9 +57,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final boolean useIsEmpty = ((Boolean)infos[0]).booleanValue();
     final boolean addNullCheck = ((Boolean)infos[1]).booleanValue();
     StringEqualsEmptyStringFix mainFix = new StringEqualsEmptyStringFix(useIsEmpty, addNullCheck);

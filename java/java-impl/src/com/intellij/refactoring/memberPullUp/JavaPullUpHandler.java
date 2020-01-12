@@ -81,7 +81,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     myProject = project;
     PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
     invoke(project, dataContext, aClass, elements);

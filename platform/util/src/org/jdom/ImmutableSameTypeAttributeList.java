@@ -13,7 +13,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
   private final AttributeType myType;
   private final Namespace myNs;
 
-  ImmutableSameTypeAttributeList(@NotNull String[] nameValues, AttributeType type, @NotNull Namespace ns) {
+  ImmutableSameTypeAttributeList(String @NotNull [] nameValues, AttributeType type, @NotNull Namespace ns) {
     myNameValues = nameValues.length == 0 ? EMPTY_STRING_ARRAY : nameValues;
     myType = type;
     myNs = ns;
@@ -164,15 +164,13 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
     return indexOf(o) != -1;
   }
 
-  @NotNull
   @Override
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     return toList().toArray(new Attribute[0]);
   }
 
-  @NotNull
   @Override
-  public <T> T[] toArray(@NotNull T[] a) {
+  public <T> T @NotNull [] toArray(T @NotNull [] a) {
     return (T[])toArray();
   }
 

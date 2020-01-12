@@ -52,9 +52,8 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
     getOKAction().setEnabled(mySettings.getOutputDestination().trim().length() > 0);
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[]{
             myAdvancedAction
     };

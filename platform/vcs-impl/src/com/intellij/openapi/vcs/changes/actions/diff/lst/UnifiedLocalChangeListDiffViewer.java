@@ -114,7 +114,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     @NotNull
     @Override
     public Runnable done(boolean isContentsEqual,
-                         @NotNull CharSequence[] texts,
+                         CharSequence @NotNull [] texts,
                          @NotNull List<? extends LineFragment> fragments,
                          @NotNull List<LocalTrackerDiffUtil.LineFragmentData> fragmentsData) {
       UnifiedFragmentBuilder builder = ReadAction.compute(() -> {

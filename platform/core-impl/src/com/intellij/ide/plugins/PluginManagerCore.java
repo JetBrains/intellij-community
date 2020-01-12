@@ -146,8 +146,7 @@ public final class PluginManagerCore {
    * <p>
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
-  @NotNull
-  public static IdeaPluginDescriptor[] getPlugins() {
+  public static IdeaPluginDescriptor @NotNull [] getPlugins() {
     IdeaPluginDescriptor[] result = ourPlugins;
     if (result == null) {
       loadAndInitializePlugins(null);
@@ -182,7 +181,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static synchronized void setPlugins(@NotNull IdeaPluginDescriptor[] descriptors) {
+  public static synchronized void setPlugins(IdeaPluginDescriptor @NotNull [] descriptors) {
     //noinspection SuspiciousToArrayCall
     IdeaPluginDescriptorImpl[] copy = Arrays.asList(descriptors).toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
     ourPlugins = copy;
@@ -602,7 +601,7 @@ public final class PluginManagerCore {
   }
 
   @NotNull
-  private static ClassLoader createPluginClassLoader(@NotNull ClassLoader[] parentLoaders, @NotNull IdeaPluginDescriptorImpl descriptor, @NotNull UrlClassLoader.Builder urlLoaderBuilder) {
+  private static ClassLoader createPluginClassLoader(ClassLoader @NotNull [] parentLoaders, @NotNull IdeaPluginDescriptorImpl descriptor, @NotNull UrlClassLoader.Builder urlLoaderBuilder) {
     List<Path> classPath = descriptor.jarFiles;
     if (classPath == null) {
       classPath = descriptor.collectClassPath();
@@ -653,7 +652,7 @@ public final class PluginManagerCore {
     ourDisabledPlugins = null;
   }
 
-  private static void logPlugins(@NotNull IdeaPluginDescriptorImpl[] plugins) {
+  private static void logPlugins(IdeaPluginDescriptorImpl @NotNull [] plugins) {
     StringBuilder bundled = new StringBuilder();
     StringBuilder disabled = new StringBuilder();
     StringBuilder custom = new StringBuilder();
@@ -1696,8 +1695,7 @@ public final class PluginManagerCore {
     }
   }
 
-  @NotNull
-  private static IdeaPluginDescriptorImpl[] getTopologicallySorted(@NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph) {
+  private static IdeaPluginDescriptorImpl @NotNull [] getTopologicallySorted(@NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph) {
     DFSTBuilder<IdeaPluginDescriptorImpl> requiredOnlyGraph = new DFSTBuilder<>(GraphGenerator.generate(graph));
     IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
     Arrays.sort(sortedRequired, requiredOnlyGraph.comparator());

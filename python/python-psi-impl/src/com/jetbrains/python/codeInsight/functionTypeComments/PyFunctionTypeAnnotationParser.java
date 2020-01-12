@@ -117,7 +117,7 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
       listMark.done(PyFunctionTypeAnnotationElementTypes.PARAMETER_TYPE_LIST);
     }
 
-    private void recoverUntilMatches(@NotNull String errorMessage, @NotNull IElementType... types) {
+    private void recoverUntilMatches(@NotNull String errorMessage, IElementType @NotNull ... types) {
       final PsiBuilder.Marker errorMarker = myBuilder.mark();
       boolean hasNonWhitespaceTokens = false;
       while (!(atAnyOfTokens(types) || myBuilder.eof())) {

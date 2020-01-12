@@ -143,8 +143,7 @@ public class JsonValidationError {
     return myFixableIssueKind;
   }
 
-  @NotNull
-  public LocalQuickFix[] createFixes(@Nullable JsonLikeSyntaxAdapter quickFixAdapter) {
+  public LocalQuickFix @NotNull [] createFixes(@Nullable JsonLikeSyntaxAdapter quickFixAdapter) {
     if (quickFixAdapter == null) return LocalQuickFix.EMPTY_ARRAY;
     switch (myFixableIssueKind) {
       case MissingProperty:

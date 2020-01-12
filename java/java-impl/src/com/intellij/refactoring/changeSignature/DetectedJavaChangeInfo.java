@@ -49,7 +49,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
   DetectedJavaChangeInfo(@PsiModifier.ModifierConstant @NotNull String newVisibility,
                          PsiMethod method,
                          CanonicalTypes.Type newType,
-                         @NotNull ParameterInfoImpl[] newParms,
+                         ParameterInfoImpl @NotNull [] newParms,
                          ThrownExceptionInfo[] newExceptions,
                          String newName, String oldName, final boolean delegate) {
     super(newVisibility, method, newName, newType, newParms, newExceptions, delegate, new HashSet<>(), new HashSet<>(), oldName);
@@ -184,7 +184,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       }
     }) {
       @Override
-      protected void performRefactoring(@NotNull UsageInfo[] usages) {
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
         super.performRefactoring(usages);
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
         final PsiParameter[] parameters = method.getParameterList().getParameters();

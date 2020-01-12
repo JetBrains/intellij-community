@@ -224,8 +224,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     final PsiElement dtdUrlElement = getDtdUrlElement();
 
     PsiReference uriRef = null;

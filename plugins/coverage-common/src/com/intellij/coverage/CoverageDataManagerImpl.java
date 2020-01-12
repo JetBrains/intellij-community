@@ -248,8 +248,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   @Override
-  @NotNull
-  public CoverageSuite[] getSuites() {
+  public CoverageSuite @NotNull [] getSuites() {
     return myCoverageSuites.toArray(new CoverageSuite[0]);
   }
 

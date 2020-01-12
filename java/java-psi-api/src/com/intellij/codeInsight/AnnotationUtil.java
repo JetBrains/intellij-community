@@ -41,12 +41,12 @@ public class AnnotationUtil {
   public static final String LANGUAGE = "org.intellij.lang.annotations.Language";
 
   @Nullable
-  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull String... annotationNames) {
+  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, String @NotNull ... annotationNames) {
     return findAnnotation(listOwner, false, annotationNames);
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, boolean skipExternal, @NotNull String... annotationNames) {
+  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, boolean skipExternal, String @NotNull ... annotationNames) {
     if (annotationNames.length == 0) return null;
     Set<String> set = annotationNames.length == 1 ? Collections.singleton(annotationNames[0]) : ContainerUtil.newHashSet(annotationNames);
     return findAnnotation(listOwner, set, skipExternal);
@@ -170,8 +170,7 @@ public class AnnotationUtil {
     return map.get(annotationNames);
   }
 
-  @NotNull
-  public static PsiAnnotation[] findAnnotations(@Nullable PsiModifierListOwner modifierListOwner, @NotNull Collection<String> annotationNames) {
+  public static PsiAnnotation @NotNull [] findAnnotations(@Nullable PsiModifierListOwner modifierListOwner, @NotNull Collection<String> annotationNames) {
     if (modifierListOwner == null) return PsiAnnotation.EMPTY_ARRAY;
     final PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (modifierList == null) return PsiAnnotation.EMPTY_ARRAY;
@@ -432,17 +431,15 @@ public class AnnotationUtil {
     return null;
   }
 
-  @NotNull
-  public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
-                                                  boolean inHierarchy,
-                                                  @Nullable Set<? super PsiModifierListOwner> visited) {
+  public static PsiAnnotation @NotNull [] getAllAnnotations(@NotNull PsiModifierListOwner owner,
+                                                            boolean inHierarchy,
+                                                            @Nullable Set<? super PsiModifierListOwner> visited) {
     return getAllAnnotations(owner, inHierarchy, visited, true);
   }
 
-  @NotNull
-  public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
-                                                  boolean inHierarchy,
-                                                  @Nullable Set<? super PsiModifierListOwner> visited, boolean withInferred) {
+  public static PsiAnnotation @NotNull [] getAllAnnotations(@NotNull PsiModifierListOwner owner,
+                                                            boolean inHierarchy,
+                                                            @Nullable Set<? super PsiModifierListOwner> visited, boolean withInferred) {
     final PsiModifierList list = owner.getModifierList();
     PsiAnnotation[] annotations = PsiAnnotation.EMPTY_ARRAY;
     if (list != null) {
@@ -659,7 +656,7 @@ public class AnnotationUtil {
   /**
    * Ignores Override and SuppressWarnings annotations.
    */
-  public static boolean equal(@NotNull PsiAnnotation[] annotations1, @NotNull PsiAnnotation[] annotations2) {
+  public static boolean equal(PsiAnnotation @NotNull [] annotations1, PsiAnnotation @NotNull [] annotations2) {
     final Map<String, PsiAnnotation> map1 = buildAnnotationMap(annotations1);
     final Map<String, PsiAnnotation> map2 = buildAnnotationMap(annotations2);
     if (map1.size() != map2.size()) {
@@ -674,7 +671,7 @@ public class AnnotationUtil {
   }
 
   @NotNull
-  private static Map<String, PsiAnnotation> buildAnnotationMap(@NotNull PsiAnnotation[] annotations) {
+  private static Map<String, PsiAnnotation> buildAnnotationMap(PsiAnnotation @NotNull [] annotations) {
     final Map<String, PsiAnnotation> map = new HashMap<>();
     for (PsiAnnotation annotation : annotations) {
       map.put(annotation.getQualifiedName(), annotation);

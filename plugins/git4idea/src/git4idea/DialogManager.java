@@ -25,7 +25,7 @@ public class DialogManager {
 
   public static int showMessage(@NotNull final String description,
                                 @NotNull final String title,
-                                @NotNull final String[] options,
+                                final String @NotNull [] options,
                                 final int defaultButtonIndex,
                                 final int focusedButtonIndex,
                                 @Nullable final Icon icon,
@@ -59,7 +59,7 @@ public class DialogManager {
   protected int showMessageDialog(@NotNull Project project,
                                   @NotNull String message,
                                   @NotNull String title,
-                                  @NotNull String[] options,
+                                  String @NotNull [] options,
                                   int defaultButtonIndex,
                                   @Nullable Icon icon) {
     return Messages.showDialog(project, message, title, options, defaultButtonIndex, icon);
@@ -68,7 +68,7 @@ public class DialogManager {
   protected int showMessageDialog(@NotNull Project project,
                                   @NotNull String message,
                                   @NotNull String title,
-                                  @NotNull String[] options,
+                                  String @NotNull [] options,
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
                                   @Nullable Icon icon) {
@@ -77,7 +77,7 @@ public class DialogManager {
 
   protected int showMessageDialog(@NotNull String description,
                                   @NotNull String title,
-                                  @NotNull String[] options,
+                                  String @NotNull [] options,
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
                                   @Nullable Icon icon,

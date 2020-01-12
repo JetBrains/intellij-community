@@ -75,7 +75,7 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
 
   @Contract(pure = true)
   private static boolean isAvailable(@NotNull PackagingSourceItem item, @NotNull ArtifactEditorContext context,
-                                     @NotNull PackagingSourceItemFilter[] filters) {
+                                     PackagingSourceItemFilter @NotNull [] filters) {
     for (PackagingSourceItemFilter filter : filters) {
       if (!filter.isAvailable(item, context)) {
         return false;

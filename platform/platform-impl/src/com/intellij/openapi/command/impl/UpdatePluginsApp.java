@@ -36,7 +36,7 @@ public class UpdatePluginsApp implements ApplicationStarter {
   }
 
   @Override
-  public void main(@NotNull String[] args) {
+  public void main(String @NotNull [] args) {
     if (Boolean.getBoolean(Main.FORCE_PLUGIN_UPDATES)) {
       log("Updates applied.");
       System.exit(0);

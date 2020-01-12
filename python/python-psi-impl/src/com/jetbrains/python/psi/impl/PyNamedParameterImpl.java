@@ -49,9 +49,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     super(stub, nodeType);
   }
 
-  @NotNull
   @Override
-  public final PsiReference[] getReferences() {
+  public final PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 

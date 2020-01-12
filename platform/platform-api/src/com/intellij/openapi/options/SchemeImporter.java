@@ -16,8 +16,7 @@ public interface SchemeImporter <T extends Scheme> {
   /**
    * @return An extension of a source file which can be imported, for example, "xml".
    */
-  @NotNull
-  String[] getSourceExtensions();
+  String @NotNull [] getSourceExtensions();
 
   /**
    * Import a scheme from the given virtual file

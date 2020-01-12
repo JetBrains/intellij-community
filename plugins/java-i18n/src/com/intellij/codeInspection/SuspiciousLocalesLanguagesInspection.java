@@ -76,9 +76,8 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
     return new MyOptions().getComponent();
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
     if (propertiesFile == null) {
       return null;

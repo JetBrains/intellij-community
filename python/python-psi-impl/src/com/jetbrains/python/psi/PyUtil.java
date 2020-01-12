@@ -524,7 +524,7 @@ public class PyUtil {
   }
 
   @NotNull
-  public static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
+  public static List<PsiElement> filterTopPriorityResults(ResolveResult @NotNull [] resolveResults) {
     if (resolveResults.length == 0) return Collections.emptyList();
 
     final int maxRate = getMaxRate(Arrays.asList(resolveResults));

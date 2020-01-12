@@ -197,7 +197,7 @@ public final class ComponentTree extends Tree implements DataProvider {
    *
    * @return currently selected components.
    */
-  @NotNull public RadComponent[] getSelectedComponents() {
+  public RadComponent @NotNull [] getSelectedComponents() {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) {
       return RadComponent.EMPTY_ARRAY;

@@ -486,7 +486,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   private static class ReplaceWithMagicConstantFix extends LocalQuickFixOnPsiElement {
     private final List<SmartPsiElementPointer<PsiAnnotationMemberValue>> myMemberValuePointers;
 
-    ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, @NotNull PsiAnnotationMemberValue... values) {
+    ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, PsiAnnotationMemberValue @NotNull ... values) {
       super(argument);
       myMemberValuePointers =
         ContainerUtil.map(values, SmartPointerManager.getInstance(argument.getProject())::createSmartPsiElementPointer);

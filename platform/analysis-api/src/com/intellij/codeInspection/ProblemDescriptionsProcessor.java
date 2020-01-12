@@ -20,8 +20,7 @@ public interface ProblemDescriptionsProcessor {
    * @param refEntity the reference graph node.
    * @return the problems found for the specified node.
    */
-  @Nullable
-  default CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
+  default CommonProblemDescriptor @Nullable [] getDescriptions(@NotNull RefEntity refEntity) {
     return CommonProblemDescriptor.EMPTY_ARRAY;
   }
 
@@ -41,7 +40,7 @@ public interface ProblemDescriptionsProcessor {
    * @param refEntity                the reference graph node.
    * @param commonProblemDescriptors the descriptors for the problems to register.
    */
-  default void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
+  default void addProblemElement(@Nullable RefEntity refEntity, CommonProblemDescriptor @NotNull ... commonProblemDescriptors) {
   }
 
   default RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {

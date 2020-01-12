@@ -45,8 +45,7 @@ public class IdRefProvider extends PsiReferenceProvider {
   public static final HasIdTypeCondition HAS_ID_TYPE = new HasIdTypeCondition();
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue value = (XmlAttributeValue)element;
 
     if (hasIdRefType(value)) {
@@ -104,8 +103,7 @@ public class IdRefProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final ProcessingContext context = new ProcessingContext();
       context.put(VARIANTS, new HashSet<>());
 

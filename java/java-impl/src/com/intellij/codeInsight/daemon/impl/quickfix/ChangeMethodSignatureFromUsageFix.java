@@ -61,7 +61,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   private static final Logger LOG = Logger.getInstance(ChangeMethodSignatureFromUsageFix.class);
 
   public ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
-                                           @NotNull PsiExpression[] expressions,
+                                           PsiExpression @NotNull [] expressions,
                                            @NotNull PsiSubstitutor substitutor,
                                            @NotNull PsiElement context,
                                            boolean changeAllUsages, int minUsagesNumberToShowDialog) {
@@ -215,13 +215,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                             method.getReturnType(),
                             newParametersInfo){
         @Override
-        @NotNull
-        protected UsageInfo[] findUsages() {
+        protected UsageInfo @NotNull [] findUsages() {
           return changeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
         }
 
         @Override
-        protected void performRefactoring(@NotNull UsageInfo[] usages) {
+        protected void performRefactoring(UsageInfo @NotNull [] usages) {
           CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
           super.performRefactoring(usages);
           if (callback  != null) {
@@ -255,23 +254,21 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     return null;
   }
 
-  @Nullable
-  protected ParameterInfoImpl[] getNewParametersInfo(PsiExpression[] expressions,
-                                                     PsiMethod targetMethod,
-                                                     PsiSubstitutor substitutor) {
+  protected ParameterInfoImpl @Nullable [] getNewParametersInfo(PsiExpression[] expressions,
+                                                                PsiMethod targetMethod,
+                                                                PsiSubstitutor substitutor) {
     return getNewParametersInfo(expressions, targetMethod, substitutor, new StringBuilder(), new HashSet<>(),
                                 new HashSet<>(),
                                 new HashSet<>());
   }
 
-  @Nullable
-  private ParameterInfoImpl[] getNewParametersInfo(PsiExpression[] expressions,
-                                                   PsiMethod targetMethod,
-                                                   PsiSubstitutor substitutor,
-                                                   final StringBuilder buf,
-                                                   final HashSet<? super ParameterInfoImpl> newParams,
-                                                   final HashSet<? super ParameterInfoImpl> removedParams,
-                                                   final HashSet<? super ParameterInfoImpl> changedParams) {
+  private ParameterInfoImpl @Nullable [] getNewParametersInfo(PsiExpression[] expressions,
+                                                              PsiMethod targetMethod,
+                                                              PsiSubstitutor substitutor,
+                                                              final StringBuilder buf,
+                                                              final HashSet<? super ParameterInfoImpl> newParams,
+                                                              final HashSet<? super ParameterInfoImpl> removedParams,
+                                                              final HashSet<? super ParameterInfoImpl> changedParams) {
     PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
     List<ParameterInfoImpl> result = new ArrayList<>();
     if (expressions.length < parameters.length) {

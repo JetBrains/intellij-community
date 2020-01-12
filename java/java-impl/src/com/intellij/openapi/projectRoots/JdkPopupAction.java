@@ -87,9 +87,8 @@ public class JdkPopupAction extends AnAction {
                              JComponent component) {
     ActionPopupMenu menu =
       ActionManager.getInstance().createActionPopupMenu(e.getPlace(), new ActionGroup() {
-        @NotNull
         @Override
-        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           List<AnAction> result = new ArrayList<>();
           for (final Pair<File, String> homes : jdkLocations) {
             result.add(new FileChooserAction("", null, null) {

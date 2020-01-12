@@ -39,9 +39,8 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     super(element, textRange, true);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final PyKeywordArgument originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
     if (originalElement != null) {
       final List<LookupElement> ret = new ArrayList<>();
@@ -53,9 +52,8 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  @NotNull
   @Override
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final String keyword = myElement.getKeyword();
     if (keyword == null) {
       return ResolveResult.EMPTY_ARRAY;

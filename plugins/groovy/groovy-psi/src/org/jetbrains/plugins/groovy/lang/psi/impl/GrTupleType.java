@@ -43,8 +43,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     return myParameters.getValue();
   }
 
@@ -102,8 +101,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return myComponents.getValue();
   }
 
-  @NotNull
-  public final PsiType[] getComponentTypesArray() {
+  public final PsiType @NotNull [] getComponentTypesArray() {
     return getComponentTypes().toArray(PsiType.EMPTY_ARRAY);
   }
 

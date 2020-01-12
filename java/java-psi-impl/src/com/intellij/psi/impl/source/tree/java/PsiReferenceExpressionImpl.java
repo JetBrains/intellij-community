@@ -181,9 +181,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   public static final class OurGenericsResolver implements ResolveCache.PolyVariantContextResolver<PsiJavaReference> {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull PsiJavaReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull PsiJavaReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
       PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)ref;
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
@@ -265,8 +264,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
-  @NotNull
-  private JavaResolveResult[] resolve(IElementType parentType, @NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolve(IElementType parentType, @NotNull PsiFile containingFile) {
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
       JavaResolveResult[] variable = null;
       JavaResolveResult[] result = resolveToVariable(containingFile);
@@ -318,8 +316,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return resolveToVariable(containingFile);
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveToMethod(@NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolveToMethod(@NotNull PsiFile containingFile) {
     final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)getParent();
     final MethodResolverProcessor processor = new MethodResolverProcessor(methodCall, containingFile);
     try {
@@ -331,8 +328,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return processor.getResult();
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveToPackage(@NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolveToPackage(@NotNull PsiFile containingFile) {
     final String packageName = getCachedNormalizedText();
     Project project = containingFile.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -350,8 +346,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY, this, false)};
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveToClass(@NotNull PsiElement classNameElement, @NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolveToClass(@NotNull PsiElement classNameElement, @NotNull PsiFile containingFile) {
     final String className = classNameElement.getText();
 
     final ClassResolverProcessor processor = new ClassResolverProcessor(className, this, containingFile);
@@ -359,16 +354,14 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return processor.getResult();
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveToVariable(@NotNull PsiFile containingFile) {
+  private JavaResolveResult @NotNull [] resolveToVariable(@NotNull PsiFile containingFile) {
     final VariableResolverProcessor processor = new VariableResolverProcessor(this, containingFile);
     PsiScopesUtil.resolveAndWalk(processor, this, null);
     return processor.getResult();
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return PsiImplUtil.multiResolveImpl(this, incompleteCode, OurGenericsResolver.INSTANCE);
   }
 
@@ -609,9 +602,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return PsiTreeUtil.getChildOfType(this, PsiReferenceParameterList.class);
   }
 
-  @NotNull
   @Override
-  public PsiType[] getTypeParameters() {
+  public PsiType @NotNull [] getTypeParameters() {
     PsiReferenceParameterList parameterList = getParameterList();
     return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
   }

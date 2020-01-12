@@ -148,7 +148,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
    */
   @NotNull
   public static PyTestSharedForm create(@NotNull final PyAbstractTestConfiguration configuration,
-                                        @NotNull final CustomOption... customOptions) {
+                                        final CustomOption @NotNull ... customOptions) {
     final PyTestSharedForm form = new PyTestSharedForm(configuration.getModule(), configuration);
 
     for (final PyRunTargetVariant testTargetType : PyRunTargetVariant.values()) {
@@ -175,7 +175,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     return form;
   }
 
-  private void addCustomOptions(@NotNull final CustomOption... customOptions) {
+  private void addCustomOptions(final CustomOption @NotNull ... customOptions) {
     if (customOptions.length == 0) {
       return;
     }
@@ -285,7 +285,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     private final EnumSet<PyRunTargetVariant> mySupportedTypes;
 
     CustomOption(@NotNull final String name,
-                 @NotNull final PyRunTargetVariant... supportedTypes) {
+                 final PyRunTargetVariant @NotNull ... supportedTypes) {
       myName = name;
       mySupportedTypes = EnumSet.copyOf(Arrays.asList(supportedTypes));
     }

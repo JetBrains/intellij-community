@@ -69,8 +69,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     return newAnnotation == null && (annotation == null || annotation.surroundWithTag());
   }
 
-  @NotNull
-  private Class<?>[] getElementTypes() {
+  private Class<?> @NotNull [] getElementTypes() {
     if (newAnnotation != null) {
       return newAnnotation.elementTypes();
     }

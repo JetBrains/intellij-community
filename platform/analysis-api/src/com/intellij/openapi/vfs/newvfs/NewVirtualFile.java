@@ -39,8 +39,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     throw new IOException("Cannot get content of " + this);
   }
 

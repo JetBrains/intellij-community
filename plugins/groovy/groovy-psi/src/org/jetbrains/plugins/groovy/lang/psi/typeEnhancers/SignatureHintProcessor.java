@@ -34,7 +34,7 @@ public abstract class SignatureHintProcessor {
   @NotNull
   public abstract List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
                                                           @NotNull PsiSubstitutor substitutor,
-                                                          @NotNull String[] options);
+                                                          String @NotNull [] options);
 
   @Nullable
   public static SignatureHintProcessor getHintProcessor(@NotNull String hint) {

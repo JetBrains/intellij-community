@@ -69,8 +69,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated use <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extensions_and_extension_points.html">extension points</a> instead
    */
   @Deprecated
-  @NotNull
-  default <T> T[] getComponents(@NotNull Class<T> baseClass) {
+  default <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
     return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass, false), baseClass);
   }
 
@@ -103,9 +102,8 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * @deprecated Use {@link ExtensionPointName#getExtensionList(AreaInstance)}
    */
-  @NotNull
   @Deprecated
-  default <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
+  default <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return getExtensionArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 

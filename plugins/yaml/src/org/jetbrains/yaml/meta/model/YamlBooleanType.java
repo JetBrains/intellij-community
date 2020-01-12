@@ -61,7 +61,7 @@ public class YamlBooleanType extends YamlEnumType {
   public static class LiteralBuilder {
     private final Set<String> myResult = new LinkedHashSet<>();
 
-    public LiteralBuilder withAllCasesOf(@NotNull String... literals) {
+    public LiteralBuilder withAllCasesOf(String @NotNull ... literals) {
       for (String next : literals) {
         if (next != null) {
           withLiteral(next, LiteralBuilder::lower, LiteralBuilder::CAPS, LiteralBuilder::First);

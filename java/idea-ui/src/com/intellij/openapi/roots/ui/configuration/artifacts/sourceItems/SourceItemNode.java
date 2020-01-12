@@ -36,9 +36,8 @@ public class SourceItemNode extends SourceItemNodeBase {
     mySourceItem = sourceItem;
   }
 
-  @NotNull
   @Override
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[]{mySourceItem};
   }
 

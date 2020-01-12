@@ -39,15 +39,13 @@ public class RootsAsVirtualFilePointers implements RootProvider {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
+  public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
     VirtualFilePointerContainer container = myRoots.get(type);
     return container == null ? VirtualFile.EMPTY_ARRAY : container.getFiles();
   }
 
   @Override
-  @NotNull
-  public String[] getUrls(@NotNull OrderRootType type) {
+  public String @NotNull [] getUrls(@NotNull OrderRootType type) {
     VirtualFilePointerContainer container = myRoots.get(type);
     return container == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : container.getUrls();
   }

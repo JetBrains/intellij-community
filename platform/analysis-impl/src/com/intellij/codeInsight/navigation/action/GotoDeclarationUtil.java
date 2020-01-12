@@ -15,10 +15,9 @@ public final class GotoDeclarationUtil {
 
   private static final Logger LOG = Logger.getInstance(GotoDeclarationUtil.class);
 
-  @Nullable
-  public static PsiElement[] findTargetElementsFromProviders(@NotNull Editor editor,
-                                                             int offset,
-                                                             PsiFile file) {
+  public static PsiElement @Nullable [] findTargetElementsFromProviders(@NotNull Editor editor,
+                                                                        int offset,
+                                                                        PsiFile file) {
     PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
     for (GotoDeclarationHandler handler : GotoDeclarationHandler.EP_NAME.getExtensionList()) {
       PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
@@ -30,7 +29,7 @@ public final class GotoDeclarationUtil {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  private static boolean assertNotNullElements(@NotNull PsiElement[] result, Class<?> clazz) {
+  private static boolean assertNotNullElements(PsiElement @NotNull [] result, Class<?> clazz) {
     for (PsiElement element : result) {
       if (element == null) {
         PluginException.logPluginError(LOG,

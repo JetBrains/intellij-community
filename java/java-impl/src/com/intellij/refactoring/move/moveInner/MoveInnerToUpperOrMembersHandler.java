@@ -90,7 +90,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
 
   @Nullable
   @Override
-  public String getActionName(@NotNull PsiElement[] elements) {
+  public String getActionName(PsiElement @NotNull [] elements) {
     return "Move Inner Class...";
   }
 

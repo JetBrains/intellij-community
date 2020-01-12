@@ -33,7 +33,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private UsageTargetNode[] myTargetNodes;
   private final String myTargetsNodeText;
 
-  public UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, @NotNull UsageTarget[] targets) {
+  public UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, UsageTarget @NotNull [] targets) {
     super(GroupNode.createRoot());
     myRootNode = (GroupNode.Root)root;
     myTargetsNodeText = presentation.getTargetsNodeText();

@@ -199,7 +199,7 @@ public abstract class DumbService {
    * @see #isDumbAware(Object)
    */
   @NotNull
-  public <T> List<T> filterByDumbAwareness(@NotNull T[] array) {
+  public <T> List<T> filterByDumbAwareness(T @NotNull [] array) {
     return filterByDumbAwareness(Arrays.asList(array));
   }
 

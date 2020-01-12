@@ -13,8 +13,7 @@ import java.util.Set;
 
 @TestOnly
 public final class SdkLeakTracker {
-  @NotNull
-  private final Sdk[] oldSdks;
+  private final Sdk @NotNull [] oldSdks;
 
   public SdkLeakTracker() {
     ProjectJdkTable table = ProjectJdkTable.getInstance();

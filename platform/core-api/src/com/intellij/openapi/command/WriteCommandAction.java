@@ -61,7 +61,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     private boolean myGlobalUndoAction;
     private boolean myShouldRecordActionForActiveDocument = true;
 
-    private BuilderImpl(Project project, @NotNull PsiFile... files) {
+    private BuilderImpl(Project project, PsiFile @NotNull ... files) {
       myProject = project;
       myFiles = files;
     }
@@ -153,13 +153,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(@NotNull PsiFile first, @NotNull PsiFile... others) {
+  public static Builder writeCommandAction(@NotNull PsiFile first, PsiFile @NotNull ... others) {
     return new BuilderImpl(first.getProject(), ArrayUtil.prepend(first, others));
   }
 
   @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(Project project, @NotNull PsiFile... files) {
+  public static Builder writeCommandAction(Project project, PsiFile @NotNull ... files) {
     return new BuilderImpl(project, files);
   }
 
@@ -172,7 +172,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .run()} instead
    */
   @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @NotNull PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, PsiFile @NotNull ... files) {
     this(project, DEFAULT_COMMAND_NAME, files);
   }
 
@@ -180,7 +180,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).run()} instead
    */
   @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @NotNull PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, PsiFile @NotNull ... files) {
     this(project, commandName, DEFAULT_GROUP_ID, files);
   }
 
@@ -191,7 +191,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   protected WriteCommandAction(@Nullable Project project,
                                @Nullable String commandName,
                                @Nullable String groupID,
-                               @NotNull PsiFile... files) {
+                               PsiFile @NotNull ... files) {
     myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
@@ -352,7 +352,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
                                            @Nullable final String commandName,
                                            @Nullable final String groupID,
                                            @NotNull final Runnable runnable,
-                                           @NotNull PsiFile... files) {
+                                           PsiFile @NotNull ... files) {
     writeCommandAction(project, files).withName(commandName).withGroupId(groupID).run(() -> runnable.run());
   }
 

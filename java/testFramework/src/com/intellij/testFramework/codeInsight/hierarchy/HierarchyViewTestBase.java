@@ -31,13 +31,13 @@ public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
   protected abstract String getBasePath();
 
   protected void doHierarchyTest(@NotNull Computable<? extends HierarchyTreeStructure> treeStructureComputable,
-                                 @NotNull String... fileNames) throws IOException {
+                                 String @NotNull ... fileNames) throws IOException {
     configure(fileNames);
     String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
     HierarchyViewTestFixture.doHierarchyTest(treeStructureComputable.compute(), new File(verificationFilePath));
   }
 
-  private void configure(@NotNull String[] fileNames) {
+  private void configure(String @NotNull [] fileNames) {
     final String[] relFilePaths = new String[fileNames.length];
     for (int i = 0; i < fileNames.length; i++) {
       relFilePaths[i] = "/" + getBasePath() + "/" + fileNames[i];

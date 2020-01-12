@@ -45,8 +45,7 @@ public abstract class ExecutionManager {
    *
    * @return the list of processes.
    */
-  @NotNull
-  public abstract ProcessHandler[] getRunningProcesses();
+  public abstract ProcessHandler @NotNull [] getRunningProcesses();
 
   /**
    * Prepares the run or debug tab for running the specified process and calls a callback to start it.

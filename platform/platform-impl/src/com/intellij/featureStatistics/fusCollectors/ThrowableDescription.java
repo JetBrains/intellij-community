@@ -14,7 +14,7 @@ public final class ThrowableDescription {
   private static final String THIRD_PARTY = "third.party";
 
   @Nullable private final Throwable myThrowable;
-  @Nullable private final StackTraceElement[] myStacktrace;
+  private final StackTraceElement @Nullable [] myStacktrace;
 
   public ThrowableDescription(@Nullable Throwable throwable) {
     myThrowable = throwable != null ? getCause(throwable) : null;

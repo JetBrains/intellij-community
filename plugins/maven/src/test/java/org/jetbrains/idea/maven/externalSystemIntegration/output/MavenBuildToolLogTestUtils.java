@@ -67,8 +67,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     myTaskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "project");
   }
 
-  @NotNull
-  protected static String[] fromFile(String resource) throws IOException {
+  protected static String @NotNull [] fromFile(String resource) throws IOException {
     try (InputStream stream = ResourceUtil.getResourceAsStream(MavenBuildToolLogTestUtils.class, "", resource);
          Scanner scanner = new Scanner(stream)) {
       List<String> result = new ArrayList<>();

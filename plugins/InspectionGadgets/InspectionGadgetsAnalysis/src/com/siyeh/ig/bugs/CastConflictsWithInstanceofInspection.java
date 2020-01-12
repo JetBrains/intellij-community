@@ -37,9 +37,8 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
       "cast.conflicts.with.instanceof.problem.descriptor",  referenceExpression.getText());
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(final Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(final Object... infos) {
     final String castExpressionType = ((PsiTypeElement)infos[1]).getText();
     final String instanceofType = ((PsiTypeElement)infos[2]).getText();
     return new InspectionGadgetsFix[]{

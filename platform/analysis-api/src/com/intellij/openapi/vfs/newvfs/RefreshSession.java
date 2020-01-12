@@ -35,7 +35,7 @@ public abstract class RefreshSession {
 
   public abstract void addAllFiles(@NotNull Collection<? extends VirtualFile> files);
 
-  public void addAllFiles(@NotNull VirtualFile... files) {
+  public void addAllFiles(VirtualFile @NotNull ... files) {
     addAllFiles(Arrays.asList(files));
   }
 

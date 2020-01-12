@@ -29,7 +29,7 @@ public class TableUtil {
     return removeSelectedItems(table, null);
   }
 
-  public static void selectRows(@NotNull JTable table, @NotNull int[] viewRows) {
+  public static void selectRows(@NotNull JTable table, int @NotNull [] viewRows) {
     ListSelectionModel selectionModel = table.getSelectionModel();
     selectionModel.clearSelection();
     int count = table.getRowCount();

@@ -59,8 +59,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
     return new PsiClassType[]{createEnumType()};
   }
 
@@ -131,9 +130,8 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     });
   }
 
-  @NotNull
   @Override
-  public GrEnumConstant[] getEnumConstants() {
+  public GrEnumConstant @NotNull [] getEnumConstants() {
     GrEnumDefinitionBody body = getBody();
     return body == null ? GrEnumConstant.EMPTY_ARRAY : body.getEnumConstants();
   }

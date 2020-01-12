@@ -174,8 +174,7 @@ public class UserDefinedJsonSchemaConfiguration {
     return ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
   }
 
-  @NotNull
-  private static String[] pathToParts(@NotNull String path) {
+  private static String @NotNull [] pathToParts(@NotNull String path) {
     return ArrayUtilRt.toStringArray(pathToPartsList(path));
   }
 

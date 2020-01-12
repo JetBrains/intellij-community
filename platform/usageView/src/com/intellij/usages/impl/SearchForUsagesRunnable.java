@@ -79,7 +79,7 @@ class SearchForUsagesRunnable implements Runnable {
                           @NotNull Project project,
                           @NotNull AtomicReference<UsageViewEx> usageViewRef,
                           @NotNull UsageViewPresentation presentation,
-                          @NotNull UsageTarget[] searchFor,
+                          UsageTarget @NotNull [] searchFor,
                           @NotNull Factory<UsageSearcher> searcherFactory,
                           @NotNull FindUsagesProcessPresentation processPresentation,
                           @NotNull SearchScope searchScopeToWarnOfFallingOutOf,
@@ -96,7 +96,7 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String createOptionsHtml(@NonNls @NotNull UsageTarget[] searchFor) {
+  private static String createOptionsHtml(@NonNls UsageTarget @NotNull [] searchFor) {
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut(searchFor);
     String shortcutText = "";
     if (shortcut != null) {
@@ -234,7 +234,7 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private HyperlinkListener createGotToOptionsListener(@NotNull final UsageTarget[] targets) {
+  private HyperlinkListener createGotToOptionsListener(final UsageTarget @NotNull [] targets) {
     return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
@@ -259,7 +259,7 @@ class SearchForUsagesRunnable implements Runnable {
     };
   }
 
-  private static PsiElement getPsiElement(@NotNull UsageTarget[] searchFor) {
+  private static PsiElement getPsiElement(UsageTarget @NotNull [] searchFor) {
     final UsageTarget target = searchFor[0];
     if (!(target instanceof PsiElementUsageTarget)) return null;
     return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);

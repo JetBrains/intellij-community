@@ -22,7 +22,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 public class RunnerBundle extends DynamicBundle {
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 

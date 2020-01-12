@@ -51,7 +51,7 @@ public class ArrayUtilTest extends TestCase {
   }
 
   @SafeVarargs
-  private static <T> void assertEqualsArray(T[] actual, @NotNull T... expected) {
+  private static <T> void assertEqualsArray(T[] actual, T @NotNull ... expected) {
     assertEquals(expected.length, actual.length);
     for (int i = 0; i < actual.length; i++) {
       assertEquals(expected[i], actual[i]);

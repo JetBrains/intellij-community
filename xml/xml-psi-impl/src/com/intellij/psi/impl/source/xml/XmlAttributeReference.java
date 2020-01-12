@@ -64,9 +64,8 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
     return myAttribute.getName();
   }
 
-  @NotNull
   @Override
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final XmlAttributeDescriptor descriptor = getDescriptor();
     return descriptor != null ? PsiElementResolveResult.createResults(descriptor.getDeclarations())
                               : ResolveResult.EMPTY_ARRAY;
@@ -104,8 +103,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;  // moved to XmlAttributeReferenceCompletionProvider
   }
 

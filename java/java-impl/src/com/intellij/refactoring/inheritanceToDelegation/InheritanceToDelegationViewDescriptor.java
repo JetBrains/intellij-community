@@ -33,8 +33,7 @@ public class InheritanceToDelegationViewDescriptor extends UsageViewDescriptorAd
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return new PsiElement[] { myClass };
   }
 

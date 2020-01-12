@@ -210,7 +210,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     }
   }
 
-  private void initDiff(@NotNull PsiElement[] pattern,
+  private void initDiff(PsiElement @NotNull [] pattern,
                         @NotNull ElementsRange patternReplacement,
                         @NotNull Document refactoredDocument,
                         @NotNull MethodNode methodNode,
@@ -422,8 +422,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     Messages.showErrorDialog(myProject, "Can't restore context for method extraction", "Failed to Re-Run Refactoring");
   }
 
-  @NotNull
-  private PsiElement[] getPatternElements() {
+  private PsiElement @NotNull [] getPatternElements() {
     PsiElement[] elements = ContainerUtil.map2Array(myPattern, PsiElement.EMPTY_ARRAY, SmartPsiElementPointer::getElement);
     if (ArrayUtil.contains(null, elements)) {
       return PsiElement.EMPTY_ARRAY;

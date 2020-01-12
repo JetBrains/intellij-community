@@ -149,7 +149,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   @NotNull
-  private static List<LinkController> filterLinkControllerListeners(@NotNull Object[] listeners) {
+  private static List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
     return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
   }
 

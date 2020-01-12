@@ -74,8 +74,7 @@ public class TestNGEntryPoint extends EntryPoint {
   }
 
   @Override
-  @Nullable
-  public String[] getIgnoreAnnotations() {
+  public String @Nullable [] getIgnoreAnnotations() {
     return TestNGUtil.CONFIG_ANNOTATIONS_FQN;
   }
 }

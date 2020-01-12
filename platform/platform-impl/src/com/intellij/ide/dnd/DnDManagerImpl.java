@@ -139,7 +139,7 @@ public final class DnDManagerImpl extends DnDManager {
     cleanup(null, target, component);
   }
 
-  private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, @Nullable DataFlavor[] flavors, @Nullable Transferable transferable) {
+  private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, DataFlavor @Nullable [] flavors, @Nullable Transferable transferable) {
     LOG.debug("updateCurrentEvent: " + aComponentOverDragging);
 
     DnDEventImpl currentEvent = myCurrentEvent;

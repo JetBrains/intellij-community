@@ -129,8 +129,7 @@ public class GithubRepository extends BaseRepository {
     return getIssues(query, offset, limit, withClosed);
   }
 
-  @NotNull
-  private Task[] getIssues(@Nullable String query, int max, boolean withClosed) throws Exception {
+  private Task @NotNull [] getIssues(@Nullable String query, int max, boolean withClosed) throws Exception {
     GithubApiRequestExecutor executor = getExecutor();
     ProgressIndicator indicator = getProgressIndicator();
     GithubServerPath server = getServer();
@@ -166,7 +165,7 @@ public class GithubRepository extends BaseRepository {
   private Task createTask(@NotNull GithubIssueBase issue, @NotNull List<GithubIssueCommentWithHtml> comments) {
     return new Task() {
       @NotNull private final String myRepoName = getRepoName();
-      @NotNull private final Comment[] myComments =
+      private final Comment @NotNull [] myComments =
         ContainerUtil.map2Array(comments, Comment.class, comment -> new GithubComment(comment.getCreatedAt(),
                                                                                       comment.getUser().getLogin(),
                                                                                       comment.getBodyHtml(),
@@ -200,9 +199,8 @@ public class GithubRepository extends BaseRepository {
         return issue.getBody();
       }
 
-      @NotNull
       @Override
-      public Comment[] getComments() {
+      public Comment @NotNull [] getComments() {
         return myComments;
       }
 

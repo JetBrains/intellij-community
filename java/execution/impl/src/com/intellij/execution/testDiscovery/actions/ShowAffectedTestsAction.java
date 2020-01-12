@@ -195,7 +195,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   public static void showDiscoveredTestsByChanges(@NotNull Project project,
-                                                  @NotNull Change[] changes,
+                                                  Change @NotNull [] changes,
                                                   @NotNull String title,
                                                   @NotNull DataContext dataContext) {
     DiscoveredTestsTree tree = showTree(project, dataContext, title);
@@ -208,8 +208,7 @@ public class ShowAffectedTestsAction extends AnAction {
     });
   }
 
-  @NotNull
-  public static PsiMethod[] findMethods(@NotNull Project project, @NotNull Change... changes) {
+  public static PsiMethod @NotNull [] findMethods(@NotNull Project project, Change @NotNull ... changes) {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
     return PsiDocumentManager.getInstance(project).commitAndRunReadAction(
@@ -365,7 +364,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   public static void processMethodsAsync(@NotNull Project project,
-                                         @NotNull PsiMethod[] methods,
+                                         PsiMethod @NotNull [] methods,
                                          @NotNull List<String> filePaths,
                                          @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
                                          @Nullable Runnable doWhenDone) {
@@ -379,7 +378,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   public static void processMethods(@NotNull Project project,
-                                    @NotNull PsiMethod[] methods,
+                                    PsiMethod @NotNull [] methods,
                                     @NotNull List<String> filePaths,
                                     @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
     List<Couple<String>> classesAndMethods =

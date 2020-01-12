@@ -134,7 +134,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
    * Marks members to be moved (sets checkbox on them)
    * @param memberNames names of members to check
    */
-  private void checkMembers(@NotNull final String... memberNames) {
+  private void checkMembers(final String @NotNull ... memberNames) {
     for (final String memberName : memberNames) {
       Iterables.find(myMemberInfos, new NamePredicate(memberName)).setChecked(true);
     }

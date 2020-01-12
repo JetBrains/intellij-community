@@ -238,9 +238,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     }
   }
 
-  @NotNull
   @Override
-  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return PsiImplUtil.multiResolveImpl(this, incompleteCode, RESOLVER);
   }
 
@@ -423,9 +422,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return advancedResolve(false).getElement();
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     // this reference's variants are rather obtained with processVariants()
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
@@ -458,9 +456,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return PsiTreeUtil.getChildOfType(this, PsiReferenceParameterList.class);
   }
 
-  @NotNull
   @Override
-  public PsiType[] getTypeParameters() {
+  public PsiType @NotNull [] getTypeParameters() {
     final PsiReferenceParameterList parameterList = getParameterList();
     return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
   }

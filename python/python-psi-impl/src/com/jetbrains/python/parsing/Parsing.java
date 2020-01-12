@@ -63,7 +63,7 @@ public class Parsing {
     return false;
   }
 
-  protected boolean parseIdentifierOrSkip(@NotNull IElementType... validSuccessiveTokens) {
+  protected boolean parseIdentifierOrSkip(IElementType @NotNull ... validSuccessiveTokens) {
     if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
       myBuilder.advanceLexer();
       return true;

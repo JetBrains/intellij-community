@@ -23,8 +23,7 @@ public interface ShSupport {
                                         @NotNull ExecutionEnvironment environment,
                                         @NotNull ShRunConfiguration configuration);
 
-  @NotNull
-  PsiReference[] getVariableReferences(@NotNull ShVariable v);
+  PsiReference @NotNull [] getVariableReferences(@NotNull ShVariable v);
   
   
   class Impl implements ShSupport {
@@ -42,9 +41,8 @@ public interface ShSupport {
       return new ShRunConfigurationProfileState(environment.getProject(), configuration);
     }
 
-    @NotNull
     @Override
-    public PsiReference[] getVariableReferences(@NotNull ShVariable v) {
+    public PsiReference @NotNull [] getVariableReferences(@NotNull ShVariable v) {
       return PsiReference.EMPTY_ARRAY;
     }
   }

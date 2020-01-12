@@ -92,8 +92,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * Returns all documents that have unsaved changes.
    * @return the documents that have unsaved changes.
    */
-  @NotNull
-  public abstract Document[] getUnsavedDocuments();
+  public abstract Document @NotNull [] getUnsavedDocuments();
 
   /**
    * Checks if the document has unsaved changes.
@@ -155,7 +154,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    *
    * @param files the files to discard the changes for.
    */
-  public abstract void reloadFiles(@NotNull VirtualFile... files);
+  public abstract void reloadFiles(VirtualFile @NotNull ... files);
 
   /**
    * Stores the write access status (true if the document has the write access; false otherwise)

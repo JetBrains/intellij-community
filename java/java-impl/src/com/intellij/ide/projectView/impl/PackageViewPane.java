@@ -119,9 +119,8 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return selected instanceof PackageElement ? (PackageElement)selected : null;
   }
 
-  @NotNull
   @Override
-  public PsiDirectory[] getSelectedDirectories() {
+  public PsiDirectory @NotNull [] getSelectedDirectories() {
     List<PsiDirectory> directories = new ArrayList<>();
     for (PackageElementNode node : getSelectedNodes(PackageElementNode.class)) {
       PackageElement packageElement = node.getValue();

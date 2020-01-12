@@ -54,9 +54,8 @@ public class InferenceVariable extends LightTypeParameter {
     myInstantiation = instantiation;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType @NotNull [] getExtendsListTypes() {
     final List<PsiClassType> result = new ArrayList<>();
     for (PsiType type : getBounds(InferenceBound.UPPER)) {
       if (type instanceof PsiClassType) {

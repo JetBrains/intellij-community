@@ -24,9 +24,8 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class XmlInspectionToolProvider implements InspectionToolProvider {
-  @NotNull
   @Override
-  public Class[] getInspectionClasses() {
+  public Class @NotNull [] getInspectionClasses() {
     return new Class[] {
       CheckTagEmptyBodyInspection.class,
       CheckDtdReferencesInspection.class,

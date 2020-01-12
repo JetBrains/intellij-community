@@ -33,8 +33,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getDeclaredElements() {
+  public PsiElement @NotNull [] getDeclaredElements() {
     return getChildrenAsPsiElements(DECLARED_ELEMENT_BIT_SET, PsiElement.ARRAY_FACTORY);
   }
 

@@ -151,8 +151,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  @NotNull
-  public PyExpression[] getSuperClassExpressions() {
+  public PyExpression @NotNull [] getSuperClassExpressions() {
     final PyArgumentList argList = getSuperClassExpressionList();
     if (argList != null) {
       return argList.getArguments();
@@ -302,9 +301,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
-  @NotNull
   @Override
-  public PyClass[] getSuperClasses(@Nullable TypeEvalContext context) {
+  public PyClass @NotNull [] getSuperClasses(@Nullable TypeEvalContext context) {
     final List<PyClassLikeType> superTypes = getSuperClassTypes(notNullizeContext(context));
     if (superTypes.isEmpty()) {
       return EMPTY_ARRAY;
@@ -473,8 +471,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  @NotNull
-  public PyFunction[] getMethods() {
+  public PyFunction @NotNull [] getMethods() {
     final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens();
     return getClassChildren(functionDeclarationTokens, PyFunction.class, PyFunction.ARRAY_FACTORY);
   }
@@ -491,10 +488,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return getClassChildren(TokenSet.create(PyElementTypes.CLASS_DECLARATION), PyClass.class, PyClass.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private <T extends StubBasedPsiElement<? extends StubElement<T>>> T[] getClassChildren(@NotNull TokenSet elementTypes,
-                                                                                         @NotNull Class<T> childrenClass,
-                                                                                         @NotNull ArrayFactory<T> factory) {
+  private <T extends StubBasedPsiElement<? extends StubElement<T>>> T @NotNull [] getClassChildren(@NotNull TokenSet elementTypes,
+                                                                                                   @NotNull Class<T> childrenClass,
+                                                                                                   @NotNull ArrayFactory<T> factory) {
     final List<T> result = new ArrayList<>();
     processClassLevelDeclarations(new PsiScopeProcessor() {
       @Override
@@ -564,13 +560,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @NotNull
     private final List<T> myResult;
 
-    @NotNull
-    private final String[] myNames;
+    private final String @NotNull [] myNames;
 
     @Nullable
     private PyClass myLastVisitedClass;
 
-    MultiNameFinder(@NotNull String... names) {
+    MultiNameFinder(String @NotNull ... names) {
       myResult = new ArrayList<>();
       myNames = names;
       myLastVisitedClass = null;

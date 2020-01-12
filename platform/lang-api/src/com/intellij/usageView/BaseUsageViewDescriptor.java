@@ -31,9 +31,8 @@ public class BaseUsageViewDescriptor implements UsageViewDescriptor {
     myElements = elements;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return myElements;
   }
 

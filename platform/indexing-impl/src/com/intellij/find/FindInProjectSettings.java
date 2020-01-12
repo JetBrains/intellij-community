@@ -34,11 +34,9 @@ public interface FindInProjectSettings {
 
   void addDirectory(@NotNull String s);
 
-  @NotNull
-  String[] getRecentFindStrings();
+  String @NotNull [] getRecentFindStrings();
 
-  @NotNull
-  String[] getRecentReplaceStrings();
+  String @NotNull [] getRecentReplaceStrings();
 
   @NotNull
   List<String> getRecentDirectories();

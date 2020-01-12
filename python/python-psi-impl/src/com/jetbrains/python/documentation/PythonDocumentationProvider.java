@@ -563,7 +563,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static void appendWithTags(@NotNull StringBuilder result, @NotNull String escapedContent, @NotNull String... tags) {
+  private static void appendWithTags(@NotNull StringBuilder result, @NotNull String escapedContent, String @NotNull ... tags) {
     for (String tag : tags) {
       result.append("<").append(tag).append(">");
     }

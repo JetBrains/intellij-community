@@ -19,7 +19,7 @@ class ElementsRange {
     myEnd = end;
   }
 
-  ElementsRange(@NotNull PsiElement[] elements) {
+  ElementsRange(PsiElement @NotNull [] elements) {
     myStart = elements[0];
     myEnd = elements[elements.length - 1];
   }

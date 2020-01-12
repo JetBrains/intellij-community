@@ -10,8 +10,7 @@ import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlAttributeValueGetter {
-  @NotNull
-  public static String[] getEnumeratedValues(XmlAttribute attribute) {
+  public static String @NotNull [] getEnumeratedValues(XmlAttribute attribute) {
     final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
     if (descriptor == null) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;

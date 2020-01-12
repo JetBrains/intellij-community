@@ -78,8 +78,7 @@ public class RefreshLogAction extends RefreshAction {
     e.getPresentation().setEnabledAndVisible(logManager != null && e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
   }
 
-  @NotNull
-  private static Attachment[] collectDiagnosticInformation(@Nullable Project project, @NotNull VcsLogManager logManager) {
+  private static Attachment @NotNull [] collectDiagnosticInformation(@Nullable Project project, @NotNull VcsLogManager logManager) {
     List<Attachment> result = new ArrayList<>();
     result.add(new Attachment("log-windows.txt", "Log Windows:\n" + logManager.getLogWindowsInformation()));
 

@@ -226,7 +226,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   private void analyzeReadsInScope(@NotNull String name,
                                    @NotNull ScopeOwner owner,
-                                   @NotNull Instruction[] instructions,
+                                   Instruction @NotNull [] instructions,
                                    int startInstruction,
                                    @Nullable PsiElement scopeAnchor) {
     // Check if the element is declared out of scope, mark all out of scope write accesses as used

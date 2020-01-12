@@ -69,7 +69,7 @@ public class PythonFileType extends LanguageFileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     if (CharsetToolkit.hasUTF8Bom(content)) {
       return CharsetToolkit.UTF8;
     }

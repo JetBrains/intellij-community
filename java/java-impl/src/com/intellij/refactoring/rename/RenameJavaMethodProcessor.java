@@ -42,7 +42,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   @Override
   public void renameElement(@NotNull final PsiElement psiElement,
                             @NotNull final String newName,
-                            @NotNull final UsageInfo[] usages,
+                            final UsageInfo @NotNull [] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiMethod method = (PsiMethod) psiElement;
     Set<PsiMethod> methodAndOverriders = new HashSet<>();

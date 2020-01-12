@@ -64,7 +64,7 @@ class MakePublicStaticVoidFix extends InspectionGadgetsFix {
         new ChangeSignatureProcessor(project, method, false, myNewVisibility, method.getName(), PsiType.VOID,
                                      new ParameterInfoImpl[0]) {
           @Override
-          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+          protected void performRefactoring(UsageInfo @NotNull [] usages) {
             super.performRefactoring(usages);
             PsiUtil.setModifierProperty(method, PsiModifier.STATIC, myMakeStatic);
           }

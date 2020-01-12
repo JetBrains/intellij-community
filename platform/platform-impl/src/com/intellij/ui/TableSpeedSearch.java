@@ -94,9 +94,8 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     return row > -1 && col > -1 ? row * myComponent.getColumnCount() + col : -1;
   }
 
-  @NotNull
   @Override
-  protected Object[] getAllElements() {
+  protected Object @NotNull [] getAllElements() {
     throw new UnsupportedOperationException("Not implemented");
   }
 

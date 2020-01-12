@@ -54,10 +54,9 @@ public class IgnoreFileDuplicateEntryInspection extends LocalInspectionTool {
    *                   otherwise
    * @return <code>null</code> if no problems found or not applicable at file level
    */
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager,
-                                       boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager,
+                                                  boolean isOnTheFly) {
     if (!(file instanceof IgnoreFile)) {
       return null;
     }

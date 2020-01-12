@@ -71,9 +71,8 @@ public class PyInheritedMembersFilter implements FileStructureFilter {
     return IdeBundle.message("file.structure.toggle.show.inherited");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     return getActiveKeymapShortcuts("FileStructurePopup").getShortcuts();
   }
 }

@@ -102,7 +102,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
                      @NotNull SmartPsiElementPointer<?> aClass,
                      @NotNull LanguageLevel languageLevel,
                      @NotNull Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> map,
-                     @NotNull SmartPsiElementPointer<?>[] annotations) {
+                     SmartPsiElementPointer<?> @NotNull [] annotations) {
       super(type);
       myClass = aClass;
       myLevel = languageLevel;

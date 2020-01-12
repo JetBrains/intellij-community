@@ -65,7 +65,7 @@ public abstract class ProjectTaskRunner {
    */
   public Promise<Result> run(@NotNull Project project,
                              @NotNull ProjectTaskContext context,
-                             @NotNull ProjectTask... tasks) {
+                             ProjectTask @NotNull ... tasks) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
     run(project, context, new ProjectTaskNotificationAdapter(promise), tasks);
     return promise;
@@ -137,7 +137,7 @@ public abstract class ProjectTaskRunner {
   public void run(@NotNull Project project,
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
-                  @NotNull ProjectTask... tasks) {
+                  ProjectTask @NotNull ... tasks) {
     if (!RECURSION_GUARD_KEY.get(context)) {
       RECURSION_GUARD_KEY.set(context, true);
       run(project, context, callback, Arrays.asList(tasks));

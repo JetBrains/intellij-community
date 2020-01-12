@@ -55,7 +55,7 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate {
     template.addVariable(VAR_NAME, nameMacro, nameMacro, true);
   }
 
-  private static void fill(@NotNull Template template, @NotNull PsiType[] suggestedTypes, @NotNull PsiElement context) {
+  private static void fill(@NotNull Template template, PsiType @NotNull [] suggestedTypes, @NotNull PsiElement context) {
     Set<LookupElement> itemSet = new LinkedHashSet<>();
     for (PsiType type : suggestedTypes) {
       itemSet.add(PsiTypeLookupItem.createLookupItem(type, null));

@@ -206,9 +206,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     super.exportResults(resultConsumer, refEntity, excludedDescriptions);
   }
 
-  @NotNull
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
+  public QuickFixAction @NotNull [] getQuickFixes(RefEntity @NotNull ... refElements) {
     return Arrays.stream(refElements).anyMatch(element -> element instanceof RefJavaElement && getFilter().accepts((RefJavaElement)element) && !myFixedElements.containsKey(element) && element.isValid())
            ? myQuickFixActions
            : QuickFixAction.EMPTY;
@@ -216,8 +215,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   final QuickFixAction[] myQuickFixActions;
 
-  @NotNull
-  private QuickFixAction[] createQuickFixes(@NotNull InspectionToolWrapper toolWrapper) {
+  private QuickFixAction @NotNull [] createQuickFixes(@NotNull InspectionToolWrapper toolWrapper) {
     return new QuickFixAction[]{new PermanentDeleteAction(toolWrapper), new CommentOutBin(toolWrapper), new MoveToEntries(toolWrapper)};
   }
 
@@ -228,7 +226,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(@NotNull final RefEntity[] refElements) {
+    protected boolean applyFix(final RefEntity @NotNull [] refElements) {
       if (!super.applyFix(refElements)) return false;
 
       //filter only elements applicable to be deleted (exclude entry points)
@@ -290,7 +288,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(@NotNull RefEntity[] refElements) {
+    protected boolean applyFix(RefEntity @NotNull [] refElements) {
       final EntryPointsManager entryPointsManager = getEntryPointsManager();
       for (RefEntity refElement : refElements) {
         if (refElement instanceof RefElement) {
@@ -309,7 +307,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected boolean applyFix(@NotNull RefEntity[] refElements) {
+    protected boolean applyFix(RefEntity @NotNull [] refElements) {
       if (!super.applyFix(refElements)) return false;
       List<RefElement> deletedRefs = new ArrayList<>(1);
       final RefFilter filter = getFilter();

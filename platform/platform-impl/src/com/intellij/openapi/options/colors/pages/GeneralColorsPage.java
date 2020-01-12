@@ -206,14 +206,12 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ATT_DESCRIPTORS;
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return COLOR_DESCRIPTORS;
   }
 

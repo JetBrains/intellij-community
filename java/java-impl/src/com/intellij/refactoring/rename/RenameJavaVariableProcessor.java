@@ -48,7 +48,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   @Override
   public void renameElement(@NotNull final PsiElement psiElement,
                             @NotNull final String newName,
-                            @NotNull final UsageInfo[] usages,
+                            final UsageInfo @NotNull [] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiVariable variable = (PsiVariable) psiElement;
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<>();

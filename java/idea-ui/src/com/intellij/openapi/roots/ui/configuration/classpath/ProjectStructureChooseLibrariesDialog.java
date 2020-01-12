@@ -75,9 +75,8 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     super.collectChildren(element, result);
   }
 
-  @NotNull
   @Override
-  protected Library[] getLibraries(@NotNull LibraryTable table) {
+  protected Library @NotNull [] getLibraries(@NotNull LibraryTable table) {
     if (table.getTableLevel().equals(LibraryTableImplUtil.MODULE_LEVEL)) {
       return myCreatedModuleLibraries.toArray(Library.EMPTY_ARRAY);
     }
@@ -111,9 +110,8 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     return library.getName();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (SystemInfo.isMac) {
       return new Action[]{getCancelAction(), new CreateNewLibraryAction(), getOKAction()};
     }

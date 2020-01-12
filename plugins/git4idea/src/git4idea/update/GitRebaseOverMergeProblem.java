@@ -51,8 +51,7 @@ public class GitRebaseOverMergeProblem {
       myButtonText = buttonText;
     }
 
-    @NotNull
-    private static String[] getButtonTitles() {
+    private static String @NotNull [] getButtonTitles() {
       return ContainerUtil.map2Array(values(), String.class, decision -> decision.myButtonText);
     }
 

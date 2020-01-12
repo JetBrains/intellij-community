@@ -127,7 +127,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new IntroduceParameterViewDescriptor(myMethodToSearchFor);
   }
 
@@ -151,8 +151,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     PsiMethod[] overridingMethods =
@@ -369,7 +368,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   @Nullable
   @Override
-  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     final PsiParameter parameter = JavaIntroduceParameterMethodUsagesProcessor.getAnchorParameter(myMethodToReplaceIn);
     final RefactoringEventData afterData = new RefactoringEventData();
     afterData.addElement(parameter);
@@ -377,7 +376,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     try {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
       PsiType initializerType = getInitializerType(myForcedType, myParameterInitializer, myLocalVariable);

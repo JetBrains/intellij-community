@@ -118,7 +118,7 @@ public class NavigationGutterIconBuilder<T> {
 
   @SafeVarargs
   @NotNull
-  public final NavigationGutterIconBuilder<T> setTargets(@NotNull T... targets) {
+  public final NavigationGutterIconBuilder<T> setTargets(T @NotNull ... targets) {
     return setTargets(Arrays.asList(targets));
   }
 

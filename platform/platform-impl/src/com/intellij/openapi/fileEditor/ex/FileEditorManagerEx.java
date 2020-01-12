@@ -93,8 +93,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public abstract boolean hasSplitOrUndockedWindows();
 
-  @NotNull
-  public abstract EditorWindow[] getWindows();
+  public abstract EditorWindow @NotNull [] getWindows();
 
   /**
    * @return arrays of all files (including {@code file} itself) that belong
@@ -102,8 +101,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    * is not open. The returned files have the same order as they have in the
    * tabbed container.
    */
-  @NotNull
-  public abstract VirtualFile[] getSiblings(@NotNull VirtualFile file);
+  public abstract VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file);
 
   public abstract void createSplitter(int orientation, @Nullable EditorWindow window);
 
@@ -131,14 +129,12 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract EditorsSplitters getSplitters();
 
   @Override
-  @NotNull
-  public FileEditor[] openFile(@NotNull final VirtualFile file, final boolean focusEditor) {
+  public FileEditor @NotNull [] openFile(@NotNull final VirtualFile file, final boolean focusEditor) {
     return openFileWithProviders(file, focusEditor, false).getFirst ();
   }
 
-  @NotNull
   @Override
-  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
+  public FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
     return openFileWithProviders(file, focusEditor, searchForOpen).getFirst();
   }
 

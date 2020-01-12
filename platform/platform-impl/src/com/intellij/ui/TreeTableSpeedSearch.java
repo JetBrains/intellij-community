@@ -47,9 +47,8 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
-  @NotNull
   @Override
-  protected Object[] getAllElements() {
+  protected Object @NotNull [] getAllElements() {
     TreePath[] paths = new TreePath[myComponent.getTree().getRowCount()];
     for(int i = 0; i < paths.length; i++){
       paths[i] = myComponent.getTree().getPathForRow(i);

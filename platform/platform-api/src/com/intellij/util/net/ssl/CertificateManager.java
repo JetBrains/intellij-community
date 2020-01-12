@@ -163,8 +163,7 @@ public final class CertificateManager implements PersistentStateComponent<Certif
    *
    * @return key managers or {@code null} in case of any error
    */
-  @Nullable
-  public static KeyManager[] getDefaultKeyManagers() {
+  public static KeyManager @Nullable [] getDefaultKeyManagers() {
     String keyStorePath = System.getProperty("javax.net.ssl.keyStore");
     if (keyStorePath != null) {
       LOG.info("Loading custom key store specified with VM options: " + keyStorePath);

@@ -70,8 +70,7 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (file.getViewProvider().getPsi(JavaLanguage.INSTANCE) == null) {
       return null;
     }

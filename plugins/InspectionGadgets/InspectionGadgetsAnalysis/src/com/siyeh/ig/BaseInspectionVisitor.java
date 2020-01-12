@@ -189,8 +189,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     holder.registerProblem(problemDescriptor);
   }
 
-  @NotNull
-  private LocalQuickFix[] createAndInitFixes(Object[] infos) {
+  private LocalQuickFix @NotNull [] createAndInitFixes(Object[] infos) {
     final InspectionGadgetsFix[] fixes = createFixes(infos);
     for (InspectionGadgetsFix fix : fixes) {
       fix.setOnTheFly(onTheFly);
@@ -198,8 +197,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     return fixes;
   }
 
-  @NotNull
-  private InspectionGadgetsFix[] createFixes(Object... infos) {
+  private InspectionGadgetsFix @NotNull [] createFixes(Object... infos) {
     if (!onTheFly && inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }

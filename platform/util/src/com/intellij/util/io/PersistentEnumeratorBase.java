@@ -85,8 +85,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase> {
     abstract int recordWriteOffset(T enumerator, byte[] buf);
-    @NotNull
-    abstract byte[] getRecordBuffer(T enumerator);
+    abstract byte @NotNull [] getRecordBuffer(T enumerator);
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
   }
 

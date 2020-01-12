@@ -316,7 +316,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       }
     }
 
-    private boolean hasHighSeverities(@NotNull int[] errorCount) {
+    private boolean hasHighSeverities(int @NotNull [] errorCount) {
       HighlightSeverity minSeverity = notNull(HighlightDisplayLevel.find("TYPO"), HighlightDisplayLevel.DO_NOT_SHOW).getSeverity();
 
       for (int i = 0; i < errorCount.length; i++) {

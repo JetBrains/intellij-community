@@ -233,7 +233,7 @@ public final class ImageLoader implements Serializable {
       return new ImageConverterChain();
     }
 
-    ImageConverterChain withFilter(@Nullable ImageFilter[] filters) {
+    ImageConverterChain withFilter(ImageFilter @Nullable [] filters) {
       if (filters == null) return this;
       ImageConverterChain chain = this;
       for (ImageFilter filter : filters) {
@@ -314,7 +314,7 @@ public final class ImageLoader implements Serializable {
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
   @Nullable
-  public static Image loadFromUrl(@NotNull URL url, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, @Nullable ImageFilter[] filters, ScaleContext scaleContext) {
+  public static Image loadFromUrl(@NotNull URL url, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, ImageFilter @Nullable [] filters, ScaleContext scaleContext) {
     return loadFromUrl(url.toString(), aClass, flags, filters, scaleContext);
   }
 
@@ -323,7 +323,7 @@ public final class ImageLoader implements Serializable {
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
   @Nullable
-  public static Image loadFromUrl(@NotNull String path, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, @Nullable ImageFilter[] filters, ScaleContext scaleContext) {
+  public static Image loadFromUrl(@NotNull String path, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, ImageFilter @Nullable [] filters, ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
     return ImageDescriptorList.create(path, flags, scaleContext).load(
@@ -408,7 +408,7 @@ public final class ImageLoader implements Serializable {
       .load(ImageConverterChain.create().withHiDPI(scaleContext), true, aClass);
   }
 
-  public static Image loadFromBytes(@NotNull final byte[] bytes) {
+  public static Image loadFromBytes(final byte @NotNull [] bytes) {
     return loadFromStream(new ByteArrayInputStream(bytes));
   }
 

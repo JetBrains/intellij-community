@@ -44,9 +44,8 @@ public class InstancesWindow extends InstancesWindowBase {
     return comp;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{new DialogWrapperExitAction("Close", CLOSE_EXIT_CODE)};
   }
 }

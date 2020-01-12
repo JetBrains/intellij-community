@@ -53,9 +53,8 @@ import org.junit.runners.Suite;
 })
 public class StreamApiMigrationInspectionTestSuite {
   public static abstract class StreamApiMigrationInspectionBaseTest extends LightQuickFixParameterizedTestCase {
-    @NotNull
     @Override
-    protected LocalInspectionTool[] configureLocalInspectionTools() {
+    protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
       StreamApiMigrationInspection inspection = new StreamApiMigrationInspection();
       inspection.SUGGEST_FOREACH = true;
       return new LocalInspectionTool[]{

@@ -83,8 +83,7 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
     return Promises.rejectedPromise();
   }
 
-  @NotNull
-  private JavaProjectModelModifier[] getModelModifiers() {
+  private JavaProjectModelModifier @NotNull [] getModelModifiers() {
     return JavaProjectModelModifier.EP_NAME.getExtensions(myProject);
   }
 }

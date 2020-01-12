@@ -37,8 +37,7 @@ public final class PyPsiUtils {
   private PyPsiUtils() {
   }
 
-  @NotNull
-  static <T extends PyElement> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
+  static <T extends PyElement> T @NotNull [] nodesToPsi(ASTNode[] nodes, T[] array) {
     T[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
     for (int i = 0; i < nodes.length; i++) {
       //noinspection unchecked
@@ -236,7 +235,7 @@ public final class PyPsiUtils {
     return null;
   }
 
-  public static void addBeforeInParent(@NotNull final PsiElement anchor, @NotNull final PsiElement... newElements) {
+  public static void addBeforeInParent(@NotNull final PsiElement anchor, final PsiElement @NotNull ... newElements) {
     final ASTNode anchorNode = anchor.getNode();
     LOG.assertTrue(anchorNode != null);
     for (PsiElement newElement : newElements) {
@@ -244,7 +243,7 @@ public final class PyPsiUtils {
     }
   }
 
-  public static void removeElements(@NotNull final PsiElement... elements) {
+  public static void removeElements(final PsiElement @NotNull ... elements) {
     final ASTNode parentNode = elements[0].getParent().getNode();
     LOG.assertTrue(parentNode != null);
     for (PsiElement element : elements) {

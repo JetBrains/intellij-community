@@ -20,7 +20,7 @@ import javax.swing.*;
 public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule {
   @Nullable
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof PsiElementUsage) {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
 
@@ -46,7 +46,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule {
   }
 
   @Nullable
-  private static UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
+  private static UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
     if (element == null) return null;
 
     if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null) { return UsageType.COMMENT_USAGE; }

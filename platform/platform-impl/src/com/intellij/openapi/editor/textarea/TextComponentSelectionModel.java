@@ -172,14 +172,12 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  @NotNull
-  public int[] getBlockSelectionStarts() {
+  public int @NotNull [] getBlockSelectionStarts() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  @NotNull
-  public int[] getBlockSelectionEnds() {
+  public int @NotNull [] getBlockSelectionEnds() {
     throw new UnsupportedOperationException("Not implemented");
   }
 

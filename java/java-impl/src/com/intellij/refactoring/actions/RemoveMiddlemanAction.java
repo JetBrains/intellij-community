@@ -43,7 +43,7 @@ public class RemoveMiddlemanAction extends BaseJavaRefactoringAction{
   }
 
   @Override
-  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  public boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return elements.length == 1 && PsiTreeUtil.getParentOfType(elements[0], PsiField.class, false) != null;
   }
 }

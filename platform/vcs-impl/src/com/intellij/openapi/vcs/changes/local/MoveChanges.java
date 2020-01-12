@@ -20,7 +20,7 @@ public class MoveChanges implements ChangeListCommand {
   private MultiMap<LocalChangeList, Change> myMovedFrom;
   private LocalChangeList myListCopy;
 
-  public MoveChanges(@NotNull String name, @NotNull Change[] changes) {
+  public MoveChanges(@NotNull String name, Change @NotNull [] changes) {
     myName = name;
     myChanges = ContainerUtil.skipNulls(Arrays.asList(changes));
   }

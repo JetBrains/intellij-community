@@ -71,8 +71,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   }
 
   @Override
-  @NotNull
-  public Library[] getLibraries() {
+  public Library @NotNull [] getLibraries() {
     final ArrayList<Library> result = new ArrayList<>();
     final Iterator<Library> libraryIterator = getLibraryIterator();
     ContainerUtil.addAll(result, libraryIterator);

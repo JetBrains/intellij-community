@@ -27,8 +27,7 @@ public abstract class Expression {
   @Nullable
   public abstract Result calculateQuickResult(ExpressionContext context);
 
-  @Nullable
-  public abstract LookupElement[] calculateLookupItems(ExpressionContext context);
+  public abstract LookupElement @Nullable [] calculateLookupItems(ExpressionContext context);
 
   @Nullable
   public String getAdvertisingText() {

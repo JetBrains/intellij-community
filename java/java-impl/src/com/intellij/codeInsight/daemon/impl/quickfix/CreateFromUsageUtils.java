@@ -489,8 +489,7 @@ public class CreateFromUsageUtils {
   }
 
   @SafeVarargs
-  @NotNull
-  public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, @NotNull Class<? extends PsiElement>... scopes) {
+  public static PsiReferenceExpression @NotNull [] collectExpressions(final PsiExpression expression, Class<? extends PsiElement> @NotNull ... scopes) {
     PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 
     final List<PsiReferenceExpression> result = new ArrayList<>();
@@ -523,8 +522,7 @@ public class CreateFromUsageUtils {
     return result.toArray(new PsiReferenceExpression[0]);
   }
 
-  @NotNull
-  static PsiVariable[] guessMatchingVariables(final PsiExpression expression) {
+  static PsiVariable @NotNull [] guessMatchingVariables(final PsiExpression expression) {
     List<ExpectedTypeInfo[]> typesList = new ArrayList<>();
     List<String> expectedMethodNames = new ArrayList<>();
     List<String> expectedFieldNames  = new ArrayList<>();
@@ -644,8 +642,7 @@ public class CreateFromUsageUtils {
     return compareMembers(c1, c2, expression);
   }
 
-  @NotNull
-  private static ExpectedTypeInfo[] equalsExpectedTypes(PsiMethodCallExpression methodCall) {
+  private static ExpectedTypeInfo @NotNull [] equalsExpectedTypes(PsiMethodCallExpression methodCall) {
     final PsiType[] argumentTypes = methodCall.getArgumentList().getExpressionTypes();
     if (argumentTypes.length != 1) {
       return ExpectedTypeInfo.EMPTY_ARRAY;
@@ -658,8 +655,7 @@ public class CreateFromUsageUtils {
     return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE)};
   }
 
-  @NotNull
-  public static ExpectedTypeInfo[] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
+  public static ExpectedTypeInfo @NotNull [] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
     PsiManager manager = expression.getManager();
     GlobalSearchScope resolveScope = expression.getResolveScope();
 
@@ -713,8 +709,7 @@ public class CreateFromUsageUtils {
   }
 
 
-  @NotNull
-  static PsiType[] guessType(PsiExpression expression, final boolean allowVoidType) {
+  static PsiType @NotNull [] guessType(PsiExpression expression, final boolean allowVoidType) {
     final PsiManager manager = expression.getManager();
     final GlobalSearchScope resolveScope = expression.getResolveScope();
 
@@ -1007,8 +1002,7 @@ public class CreateFromUsageUtils {
     }
 
     @Override
-    @NotNull
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+    public LookupElement @NotNull [] calculateLookupItems(ExpressionContext context) {
       Project project = context.getProject();
       int offset = context.getStartOffset();
       PsiDocumentManager.getInstance(project).commitAllDocuments();

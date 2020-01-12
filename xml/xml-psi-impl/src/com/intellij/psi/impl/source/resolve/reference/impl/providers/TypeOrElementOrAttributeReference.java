@@ -284,8 +284,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final XmlTag tag = PsiTreeUtil.getContextOfType(myElement, XmlTag.class, true);
     if (tag == null || myType == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 

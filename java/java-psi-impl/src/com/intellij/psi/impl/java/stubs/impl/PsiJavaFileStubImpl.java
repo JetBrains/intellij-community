@@ -53,9 +53,8 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     return JavaParserDefinition.JAVA_FILE;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getClasses() {
+  public PsiClass @NotNull [] getClasses() {
     return getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
   }
 

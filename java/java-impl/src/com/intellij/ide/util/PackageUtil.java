@@ -245,8 +245,7 @@ public class PackageUtil {
     return psiDirectory;
   }
 
-  @NotNull
-  private static PsiDirectory[] filterSourceDirectories(PsiDirectory baseDir, Project project, @NotNull PsiDirectory[] moduleDirectories) {
+  private static PsiDirectory @NotNull [] filterSourceDirectories(PsiDirectory baseDir, Project project, PsiDirectory @NotNull [] moduleDirectories) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInTestSourceContent(baseDir.getVirtualFile())) {
       List<PsiDirectory> result = new ArrayList<>();
@@ -260,8 +259,7 @@ public class PackageUtil {
     return moduleDirectories;
   }
 
-  @NotNull
-  private static PsiDirectory[] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {
+  private static PsiDirectory @NotNull [] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {
     return rootPackage.getDirectories(GlobalSearchScope.moduleScope(module));
   }
 

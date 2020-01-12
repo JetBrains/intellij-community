@@ -78,7 +78,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
 
 
   @Nullable("when failed to extract")
-  private static List<ComparisonBlock> extractComparisonChain(@NotNull PsiStatement[] statements,
+  private static List<ComparisonBlock> extractComparisonChain(PsiStatement @NotNull [] statements,
                                                               @NotNull PsiVariable first,
                                                               @NotNull PsiVariable second) {
     if (statements.length == 0) return null;

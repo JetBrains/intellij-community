@@ -67,8 +67,7 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
     }
   }
 
-  @NotNull
-  private PsiElement[] findSuperElements(@NotNull PsiFile file, int offset) {
+  private PsiElement @NotNull [] findSuperElements(@NotNull PsiFile file, int offset) {
     PsiElement element = getElement(file, offset);
     if (element == null) return PsiElement.EMPTY_ARRAY;
 

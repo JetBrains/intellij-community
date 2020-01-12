@@ -363,8 +363,7 @@ public class ClassUtils {
     return Objects.equals(toCmp1, toCmp2);
   }
 
-  @NotNull
-  private static PsiMethod[] getIfOnlyInvisibleConstructors(PsiClass aClass) {
+  private static PsiMethod @NotNull [] getIfOnlyInvisibleConstructors(PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
       return PsiMethod.EMPTY_ARRAY;

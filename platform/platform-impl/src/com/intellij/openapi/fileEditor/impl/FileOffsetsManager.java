@@ -31,7 +31,7 @@ public class FileOffsetsManager {
     private final int[] myConvertedLineOffsets;
     private final boolean myLineOffsetsAreTheSame;
 
-    LineOffsets(final long modificationStamp, @NotNull final int[] originalLineOffsets, @NotNull final int[] convertedLineOffsets) {
+    LineOffsets(final long modificationStamp, final int @NotNull [] originalLineOffsets, final int @NotNull [] convertedLineOffsets) {
       assert convertedLineOffsets.length > 0 && originalLineOffsets.length == convertedLineOffsets.length
         : originalLineOffsets.length + " " + convertedLineOffsets.length;
 
@@ -99,7 +99,7 @@ public class FileOffsetsManager {
 
   @NotNull
   // similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.convertBytes()
-  private static LineOffsets loadLineOffsets(@NotNull final byte[] bytes,
+  private static LineOffsets loadLineOffsets(final byte @NotNull [] bytes,
                                              @NotNull final Charset charset,
                                              final int startOffset,
                                              final long modificationStamp) {

@@ -287,9 +287,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       myActionNames = actionNames;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       List<AnAction> namedActions = new ArrayList<>();
       for (String actionName : myActionNames) {
         namedActions.add(createAction(actionName));

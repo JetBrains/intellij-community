@@ -51,8 +51,8 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
   }
 
   protected void doTest(@Nullable String returnType,
-                        @Nullable final String[] parameters,
-                        @Nullable final String[] exceptions,
+                        final String @Nullable [] parameters,
+                        final String @Nullable [] exceptions,
                         boolean delegate) {
     GenParams genParams = parameters == null ? new SimpleParameterGen() : method -> {
       ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];

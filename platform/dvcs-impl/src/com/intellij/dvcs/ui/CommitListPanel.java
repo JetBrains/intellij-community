@@ -131,8 +131,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
     myTable.setModelAndUpdateColumns(new ListTableModel<>(generateColumnsInfo(myCommits), myCommits, 0));
   }
 
-  @NotNull
-  private ColumnInfo[] generateColumnsInfo(@NotNull List<? extends VcsFullCommitDetails> commits) {
+  private ColumnInfo @NotNull [] generateColumnsInfo(@NotNull List<? extends VcsFullCommitDetails> commits) {
     ItemAndWidth hash = new ItemAndWidth("", 0);
     ItemAndWidth author = new ItemAndWidth("", 0);
     ItemAndWidth time = new ItemAndWidth("", 0);

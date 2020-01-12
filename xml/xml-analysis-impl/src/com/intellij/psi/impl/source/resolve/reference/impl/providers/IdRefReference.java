@@ -187,8 +187,7 @@ public class IdRefReference extends BasicAttributeValueReference {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final List<String> result = new LinkedList<>();
 
     process(new PsiElementProcessor<PsiElement>() {

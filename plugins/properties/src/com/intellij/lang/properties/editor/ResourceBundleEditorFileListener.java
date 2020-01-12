@@ -86,7 +86,7 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
     private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("rbe.vfs.listener.queue", 200, true, myEditor.getComponent(), myEditor, myEditor.getComponent(), false) {
         @Override
-        protected void execute(@NotNull Update[] updates) {
+        protected void execute(Update @NotNull [] updates) {
           final ReadTask task = new ReadTask() {
             final Set<EventWithType> myEvents = myEventQueue.getAndSet(ContainerUtil.newConcurrentSet());
 

@@ -127,7 +127,7 @@ class JsonSchemaAnnotatorChecker {
     myErrors.put(holder, new JsonValidationError(error, fixableIssueKind, data, priority));
   }
 
-  private void typeError(final @NotNull PsiElement value, @Nullable JsonSchemaType currentType, final @NotNull JsonSchemaType... allowedTypes) {
+  private void typeError(final @NotNull PsiElement value, @Nullable JsonSchemaType currentType, final JsonSchemaType @NotNull ... allowedTypes) {
     if (allowedTypes.length == 0) return;
     String currentTypeDesc = currentType == null ? "" : (" " + ACTUAL_PREFIX + currentType.getName() + ".");
     String prefix = "Incompatible types.\n";

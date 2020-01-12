@@ -49,7 +49,7 @@ public interface CheckinEnvironment {
   }
 
   @Nullable
-  default String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
+  default String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     return null;
   }
 

@@ -43,8 +43,7 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     if (myConstructor != null) {
       return new PsiElement[] {myConstructor};
     } else {

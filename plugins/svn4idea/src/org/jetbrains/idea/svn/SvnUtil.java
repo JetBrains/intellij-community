@@ -164,12 +164,11 @@ public class SvnUtil {
     ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
   }
 
-  @NotNull
-  public static File[] toIoFiles(@NotNull VirtualFile[] files) {
+  public static File @NotNull [] toIoFiles(VirtualFile @NotNull [] files) {
     return map2Array(files, File.class, VfsUtilCore::virtualToIoFile);
   }
 
-  public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
+  public static void doLockFiles(Project project, final SvnVcs activeVcs, final File @NotNull [] ioFiles) throws VcsException {
     final String lockMessage;
     final boolean force;
     // TODO[yole]: check for shift pressed
@@ -615,7 +614,7 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static String join(@NotNull final String... parts) {
+  public static String join(final String @NotNull ... parts) {
     return StringUtil.join(parts, "/");
   }
 

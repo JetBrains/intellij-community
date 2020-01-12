@@ -105,8 +105,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   @Override
-  @NotNull
-  public Library[] getLibraries() {
+  public Library @NotNull [] getLibraries() {
     return getLibrariesModifiableModel().getLibraries();
   }
 

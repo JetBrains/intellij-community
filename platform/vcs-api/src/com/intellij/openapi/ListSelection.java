@@ -51,7 +51,7 @@ public class ListSelection<T> {
   }
 
   @NotNull
-  public static <V> ListSelection<V> create(@NotNull V[] array, V selected) {
+  public static <V> ListSelection<V> create(V @NotNull [] array, V selected) {
     return create(Arrays.asList(array), selected);
   }
 

@@ -19,9 +19,8 @@ import java.util.List;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 
 public class HighlightersActionGroup extends ActionGroup implements DumbAware {
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> actions = new ArrayList<>();
 
     if (e != null) {

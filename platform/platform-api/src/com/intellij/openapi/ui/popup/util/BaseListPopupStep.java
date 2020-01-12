@@ -20,7 +20,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
   private int myDefaultOptionIndex = -1;
 
   @SafeVarargs
-  public BaseListPopupStep(@Nullable String title, @NotNull T... values) {
+  public BaseListPopupStep(@Nullable String title, T @NotNull ... values) {
     this(title, values, new Icon[]{});
   }
 

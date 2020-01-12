@@ -32,9 +32,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
+  public PsiAnnotation @NotNull [] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     List<PsiAnnotation> result = new ArrayList<>();
     for (InferredAnnotationProvider provider : InferredAnnotationProvider.EP_NAME.getExtensionList(myProject)) {
       List<PsiAnnotation> annotations = provider.findInferredAnnotations(listOwner);

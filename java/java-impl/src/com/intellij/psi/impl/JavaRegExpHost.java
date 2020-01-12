@@ -383,9 +383,8 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     }
   }
 
-  @NotNull
   @Override
-  public String[][] getAllKnownProperties() {
+  public String[] @NotNull [] getAllKnownProperties() {
     return myPropertyNames;
   }
 
@@ -403,9 +402,8 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     return null;
   }
 
-  @NotNull
   @Override
-  public String[][] getKnownCharacterClasses() {
+  public String[] @NotNull [] getKnownCharacterClasses() {
     return myPropertiesProvider.getKnownCharacterClasses();
   }
 }

@@ -24,9 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 abstract class JavaReflectionReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (element instanceof PsiLiteralExpression) {
       PsiLiteralExpression literal = (PsiLiteralExpression)element;
       if (literal.getValue() instanceof String) {
@@ -46,8 +45,7 @@ abstract class JavaReflectionReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @Nullable
-  protected abstract PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
-                                                          @NotNull PsiReferenceExpression methodReference,
-                                                          @NotNull ProcessingContext context);
+  protected abstract PsiReference @Nullable [] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
+                                                                     @NotNull PsiReferenceExpression methodReference,
+                                                                     @NotNull ProcessingContext context);
 }

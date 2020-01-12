@@ -55,9 +55,8 @@ public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element,
                                                    @NotNull OperationMode operationMode) {
     return new JavaFindUsagesHandler(element, this) {
-      @NotNull
       @Override
-      public PsiElement[] getSecondaryElements() {
+      public PsiElement @NotNull [] getSecondaryElements() {
         PsiElement element = getPsiElement();
         final PsiField field = (PsiField)element;
         PsiClass containingClass = field.getContainingClass();

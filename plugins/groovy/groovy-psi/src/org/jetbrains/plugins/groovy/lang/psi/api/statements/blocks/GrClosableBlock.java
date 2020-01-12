@@ -34,9 +34,8 @@ public interface GrClosableBlock extends GrFunctionalExpression, GrCodeBlock {
   @Nullable
   PsiType getReturnType();
 
-  @NotNull
   @Override
-  GrParameter[] getAllParameters();
+  GrParameter @NotNull [] getAllParameters();
 
   @Override
   @Nullable

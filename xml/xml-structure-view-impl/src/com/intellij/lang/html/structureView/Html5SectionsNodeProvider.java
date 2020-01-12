@@ -67,9 +67,8 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
     return "FileStructurePopup";
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     throw new IncorrectOperationException("see getActionIdForShortcut()");
   }
 

@@ -35,7 +35,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   private final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
-  public AnnotateMethodFix(@NotNull String fqn, @NotNull String... annotationsToRemove) {
+  public AnnotateMethodFix(@NotNull String fqn, String @NotNull ... annotationsToRemove) {
     myAnnotation = fqn;
     myAnnotationsToRemove = annotationsToRemove.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : annotationsToRemove;
     LOG.assertTrue(annotateSelf() || annotateOverriddenMethods(), "annotate method quick fix should not do nothing");

@@ -114,8 +114,7 @@ public class RemoteUtil {
     return remote;
   }
 
-  @Nullable
-  private static Object[] fixArgs(@Nullable Object[] args, @NotNull Method method) {
+  private static Object @Nullable [] fixArgs(Object @Nullable [] args, @NotNull Method method) {
     if (args == null) return null;
     if (method.getParameterCount() != args.length) return args;
     Object[] result = new Object[args.length];
@@ -158,7 +157,7 @@ public class RemoteUtil {
   private static Object invokeRemote(@NotNull Method localMethod,
                                      @NotNull Method remoteMethod,
                                      @NotNull Object remoteObj,
-                                     @Nullable Object[] args,
+                                     Object @Nullable [] args,
                                      @Nullable ClassLoader loader,
                                      boolean substituteClassLoader)
     throws Exception {

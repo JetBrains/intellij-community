@@ -50,8 +50,7 @@ public interface LayoutViewOptions {
   LayoutViewOptions setToFocus(@Nullable Content content, @NotNull String condition);
 
   AnAction getLayoutActions();
-  @NotNull
-  AnAction[] getLayoutActionsList();
+  AnAction @NotNull [] getLayoutActionsList();
 
   @NotNull
   LayoutViewOptions setTabPopupActions(@NotNull ActionGroup group);
@@ -59,6 +58,5 @@ public interface LayoutViewOptions {
   LayoutViewOptions setAdditionalFocusActions(@NotNull ActionGroup group);
 
   AnAction getSettingsActions();
-  @NotNull
-  AnAction[] getSettingsActionsList();
+  AnAction @NotNull [] getSettingsActionsList();
 }

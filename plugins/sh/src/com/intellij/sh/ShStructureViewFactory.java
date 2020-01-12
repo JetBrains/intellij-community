@@ -95,9 +95,8 @@ public class ShStructureViewFactory implements PsiStructureViewFactory {
       return this;
     }
 
-    @NotNull
     @Override
-    public TreeElement[] getChildren() {
+    public TreeElement @NotNull [] getChildren() {
       return SyntaxTraverser.psiTraverser(myElement)
           .children(myElement).flatMap(
               ch -> SyntaxTraverser.psiTraverser(ch).expand(psiElement -> !(psiElement instanceof ShFunctionDefinition))

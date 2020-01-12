@@ -156,9 +156,8 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
         ABC_MY_INTERFACE + '.' + fileType.getDefaultExtension(), fileType, source);
     }
 
-    @NotNull
     @Override
-    public PsiClass[] findClasses(@NotNull String qn, @NotNull GlobalSearchScope scope) {
+    public PsiClass @NotNull [] findClasses(@NotNull String qn, @NotNull GlobalSearchScope scope) {
       PsiClass psiClass = findClass(qn, scope);
       if (psiClass != null && psiClass == _myInterface) {
         return new PsiClass[]{psiClass};

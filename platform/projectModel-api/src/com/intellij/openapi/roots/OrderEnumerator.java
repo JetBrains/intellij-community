@@ -91,13 +91,11 @@ public abstract class OrderEnumerator {
     return withoutDepModules().withoutLibraries().withoutModuleSourceEntries();
   }
 
-  @NotNull
-  public VirtualFile[] getAllLibrariesAndSdkClassesRoots() {
+  public VirtualFile @NotNull [] getAllLibrariesAndSdkClassesRoots() {
     return withoutModuleSourceEntries().withoutDepModules().recursively().exportedOnly().classes().usingCache().getRoots();
   }
 
-  @NotNull
-  public VirtualFile[] getAllSourceRoots() {
+  public VirtualFile @NotNull [] getAllSourceRoots() {
     return recursively().exportedOnly().sources().usingCache().getRoots();
   }
 
@@ -175,16 +173,14 @@ public abstract class OrderEnumerator {
   /**
    * @return classes roots for all entries processed by this enumerator
    */
-  @NotNull
-  public VirtualFile[] getClassesRoots() {
+  public VirtualFile @NotNull [] getClassesRoots() {
     return classes().getRoots();
   }
 
   /**
    * @return source roots for all entries processed by this enumerator
    */
-  @NotNull
-  public VirtualFile[] getSourceRoots() {
+  public VirtualFile @NotNull [] getSourceRoots() {
     return sources().getRoots();
   }
 

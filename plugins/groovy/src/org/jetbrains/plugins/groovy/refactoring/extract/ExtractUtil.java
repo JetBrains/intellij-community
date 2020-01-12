@@ -85,8 +85,7 @@ public class ExtractUtil {
     return realStatement;
   }
 
-  @NotNull
-  private static GrStatement[] createResultStatement(ExtractInfoHelper helper) {
+  private static GrStatement @NotNull [] createResultStatement(ExtractInfoHelper helper) {
     VariableInfo[] outputVars = helper.getOutputVariableInfos();
 
     PsiType type = helper.getOutputType();
@@ -217,7 +216,7 @@ public class ExtractUtil {
   /*
   To declare or not a variable to which method call result will be assigned.
    */
-  private static List<VariableInfo> mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull VariableInfo[] vars) {
+  private static List<VariableInfo> mustAddVariableDeclaration(GrStatement @NotNull [] statements, VariableInfo @NotNull [] vars) {
     Map<String, VariableInfo> names = new HashMap<>();
     for (VariableInfo var : vars) {
       names.put(var.getName(), var);

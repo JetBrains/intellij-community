@@ -405,12 +405,11 @@ public class GenerateMembersUtil {
     }
   }
 
-  @NotNull
-  public static PsiParameter[] overriddenParameters(@NotNull PsiParameter[] parameters,
-                                                    @NotNull JVMElementFactory factory,
-                                                    @NotNull JavaCodeStyleManager codeStyleManager,
-                                                    @NotNull PsiSubstitutor substitutor,
-                                                    @Nullable PsiElement target) {
+  public static PsiParameter @NotNull [] overriddenParameters(PsiParameter @NotNull [] parameters,
+                                                              @NotNull JVMElementFactory factory,
+                                                              @NotNull JavaCodeStyleManager codeStyleManager,
+                                                              @NotNull PsiSubstitutor substitutor,
+                                                              @Nullable PsiElement target) {
     PsiParameter[] result = new PsiParameter[parameters.length];
     UniqueNameGenerator generator = new UniqueNameGenerator();
 

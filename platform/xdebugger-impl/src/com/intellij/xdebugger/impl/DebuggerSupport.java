@@ -41,8 +41,7 @@ public abstract class DebuggerSupport {
     }
   }
 
-  @NotNull
-  public static DebuggerSupport[] getDebuggerSupports() {
+  public static DebuggerSupport @NotNull [] getDebuggerSupports() {
     return EXTENSION_POINT.getExtensions();
   }
 

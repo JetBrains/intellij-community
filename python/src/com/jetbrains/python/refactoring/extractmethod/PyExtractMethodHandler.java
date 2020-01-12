@@ -53,7 +53,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
   }
 
   private static void invokeOnEditor(final Project project, final Editor editor, final PsiFile file) {

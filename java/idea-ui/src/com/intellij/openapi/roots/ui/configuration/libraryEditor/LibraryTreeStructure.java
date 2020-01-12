@@ -43,9 +43,8 @@ class LibraryTreeStructure extends AbstractTreeStructure {
     return myRootElementDescriptor;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
     if (element == myRootElementDescriptor) {
       List<LibraryTableTreeContentElement> elements = new ArrayList<>(3);

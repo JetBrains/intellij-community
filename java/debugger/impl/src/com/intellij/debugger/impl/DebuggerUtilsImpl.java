@@ -263,8 +263,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return StreamEx.empty();
   }
 
-  @Nullable
-  public static byte[] readBytesArray(Value bytesArray) {
+  public static byte @Nullable [] readBytesArray(Value bytesArray) {
     if (bytesArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)bytesArray).getValues();
       byte[] res = new byte[values.size()];

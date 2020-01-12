@@ -220,8 +220,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return c == '/' || c == File.separatorChar;
   }
 
-  @NotNull
-  private VirtualFileSystemEntry[] getArraySafely(boolean putToMemoryCache) {
+  private VirtualFileSystemEntry @NotNull [] getArraySafely(boolean putToMemoryCache) {
     return myData.getFileChildren(this, putToMemoryCache);
   }
 
@@ -345,8 +344,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getChildren() {
+  public VirtualFile @NotNull [] getChildren() {
     if (!isValid()) {
       return handleInvalidDirectory(EMPTY_ARRAY);
     }
@@ -357,8 +355,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return loadAllChildren();
   }
 
-  @NotNull
-  private VirtualFile[] loadAllChildren() {
+  private VirtualFile @NotNull [] loadAllChildren() {
     NewVirtualFileSystem delegate = getFileSystem();
     boolean caseSensitive = delegate.isCaseSensitive();
     synchronized (myData) {
@@ -491,9 +488,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, false, false, getFileSystem());
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     throw new IOException("Cannot get content of directory: " + this);
   }
 
@@ -691,7 +687,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return myData.getAdoptedNames();
   }
 
-  private int findIndex(@NotNull int[] ids, @NotNull CharSequence name, boolean caseSensitive) {
+  private int findIndex(int @NotNull [] ids, @NotNull CharSequence name, boolean caseSensitive) {
     return ObjectUtils.binarySearch(0, ids.length, mid -> compareNames(mySegment.vfsData.getNameByFileId(ids[mid]), name, caseSensitive));
   }
 

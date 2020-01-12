@@ -44,9 +44,8 @@ public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usag
   @Override
   public UsagePresentation getPresentation() {
     return new UsagePresentation() {
-      @NotNull
       @Override
-      public TextChunk[] getText() {
+      public TextChunk @NotNull [] getText() {
         return new TextChunk[] {new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), myExplanationText)};
       }
 

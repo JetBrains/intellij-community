@@ -355,9 +355,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
   }
 
-  @NotNull
   @Override
-  public RefElement[] getEntryPoints(RefManager refManager) {
+  public RefElement @NotNull [] getEntryPoints(RefManager refManager) {
     validateEntryPoints();
     List<RefElement> entries = new ArrayList<>();
     Collection<SmartRefElementPointer> collection = myPersistentEntryPoints.values();

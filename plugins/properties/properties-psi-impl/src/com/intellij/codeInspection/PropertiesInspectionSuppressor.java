@@ -31,8 +31,7 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
   private final static Logger LOG = Logger.getInstance(PropertiesInspectionSuppressor.class);
 
   @Override
-  @NotNull
-  public SuppressQuickFix[] getSuppressActions(final PsiElement element, @NotNull final String toolId) {
+  public SuppressQuickFix @NotNull [] getSuppressActions(final PsiElement element, @NotNull final String toolId) {
     return new SuppressQuickFix[] {new SuppressSinglePropertyFix(toolId), new SuppressForFile(toolId)};
   }
 

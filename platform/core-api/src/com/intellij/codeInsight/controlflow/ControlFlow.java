@@ -21,6 +21,5 @@ import org.jetbrains.annotations.NotNull;
  * @author oleg
  */
 public interface ControlFlow {
-  @NotNull
-  Instruction[] getInstructions();
+  Instruction @NotNull [] getInstructions();
 }

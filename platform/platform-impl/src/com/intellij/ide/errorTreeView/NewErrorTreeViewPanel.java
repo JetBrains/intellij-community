@@ -258,13 +258,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   @Override
-  public void addMessage(int type, @NotNull String[] text, @Nullable VirtualFile file, int line, int column, @Nullable Object data) {
+  public void addMessage(int type, String @NotNull [] text, @Nullable VirtualFile file, int line, int column, @Nullable Object data) {
     addMessage(type, text, null, file, line, column, data);
   }
 
   @Override
   public void addMessage(int type,
-                         @NotNull String[] text,
+                         String @NotNull [] text,
                          @Nullable VirtualFile underFileGroup,
                          @Nullable VirtualFile file,
                          int line,
@@ -307,7 +307,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   @Override
   public void addMessage(int type,
-                         @NotNull String[] text,
+                         String @NotNull [] text,
                          @Nullable String groupName,
                          @NotNull Navigatable navigatable,
                          @Nullable String exportTextPrefix,

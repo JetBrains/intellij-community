@@ -48,9 +48,8 @@ public class TooBroadCatchInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreThrown = false;
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[1];
     final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(context.getProject());
     final List<PsiType> maskedTypes = (List<PsiType>)infos[0];

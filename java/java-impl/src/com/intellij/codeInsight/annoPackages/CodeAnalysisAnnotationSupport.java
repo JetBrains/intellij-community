@@ -25,7 +25,7 @@ public class CodeAnalysisAnnotationSupport implements AnnotationPackageSupport {
   @Nullable
   @Override
   public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                       @NotNull PsiAnnotation.TargetType[] types,
+                                                                       PsiAnnotation.TargetType @NotNull [] types,
                                                                        boolean superPackage) {
     if (superPackage) return null;
     String name = anno.getQualifiedName();

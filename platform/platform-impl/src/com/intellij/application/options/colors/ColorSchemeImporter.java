@@ -36,9 +36,8 @@ public class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
   private final static String[] FILE_EXTENSIONS =
     new String[] {EditorColorsManager.COLOR_SCHEME_FILE_EXTENSION.substring(1), "jar"};
 
-  @NotNull
   @Override
-  public String[] getSourceExtensions() {
+  public String @NotNull [] getSourceExtensions() {
     return FILE_EXTENSIONS;
   }
 

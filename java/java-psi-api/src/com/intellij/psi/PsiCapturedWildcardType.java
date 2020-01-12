@@ -170,8 +170,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return myExistential.getSuperTypes();
   }
 

@@ -261,7 +261,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @return generated command line changed by patchers
    */
   @NotNull
-  public final GeneralCommandLine generateCommandLine(@Nullable CommandLinePatcher[] patchers) {
+  public final GeneralCommandLine generateCommandLine(CommandLinePatcher @Nullable [] patchers) {
     return applyPatchers(generateCommandLine(), patchers);
   }
 
@@ -273,7 +273,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @return command line changed by patchers
    */
   @NotNull
-  private static GeneralCommandLine applyPatchers(@NotNull GeneralCommandLine commandLine, @Nullable CommandLinePatcher[] patchers) {
+  private static GeneralCommandLine applyPatchers(@NotNull GeneralCommandLine commandLine, CommandLinePatcher @Nullable [] patchers) {
     if (patchers != null) {
       for (CommandLinePatcher patcher : patchers) {
         if (patcher != null) patcher.patchCommandLine(commandLine);

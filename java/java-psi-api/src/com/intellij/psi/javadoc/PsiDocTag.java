@@ -47,8 +47,7 @@ public interface PsiDocTag extends PsiElement, PsiNamedElement {
   /**
    * Returns the list of all elements representing the contents of a tag.
    */
-  @NotNull
-  PsiElement[] getDataElements();
+  PsiElement @NotNull [] getDataElements();
 
   /**
    * Returns the element specifying what exactly is being documented by this tag

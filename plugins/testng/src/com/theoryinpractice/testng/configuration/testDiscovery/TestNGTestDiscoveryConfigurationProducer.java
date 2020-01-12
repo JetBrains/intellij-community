@@ -49,7 +49,7 @@ public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfi
 
   @NotNull
   @Override
-  public RunProfileState createProfile(@NotNull Location<PsiMethod>[] testMethods,
+  public RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
                                        Module module,
                                        RunConfiguration configuration,
                                        ExecutionEnvironment environment) {

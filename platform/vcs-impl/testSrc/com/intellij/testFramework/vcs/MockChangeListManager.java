@@ -258,7 +258,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles) {
+  public void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles) {
     throw new UnsupportedOperationException();
   }
 
@@ -273,13 +273,12 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles) {
+  public void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public IgnoredFileBean[] getFilesToIgnore() {
+  public IgnoredFileBean @NotNull [] getFilesToIgnore() {
     throw new UnsupportedOperationException();
   }
 
@@ -369,7 +368,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
   }
 
   @Override

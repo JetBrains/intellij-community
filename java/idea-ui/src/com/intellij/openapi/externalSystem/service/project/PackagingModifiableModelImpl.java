@@ -136,8 +136,7 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
 
   private class MyModulesProvider implements ModulesProvider {
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       return myModelsProvider.getModules();
     }
 
@@ -160,8 +159,7 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
 
   private class MyFacetsProvider implements FacetsProvider {
     @Override
-    @NotNull
-    public Facet[] getAllFacets(Module module) {
+    public Facet @NotNull [] getAllFacets(Module module) {
       return myModelsProvider.getModifiableFacetModel(module).getAllFacets();
     }
 
@@ -238,9 +236,8 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
     public void dispose() {
     }
 
-    @NotNull
     @Override
-    public Artifact[] getArtifacts() {
+    public Artifact @NotNull [] getArtifacts() {
       return new Artifact[0];
     }
 

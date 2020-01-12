@@ -118,15 +118,13 @@ public class UrlFilter implements Filter, DumbAware {
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {
-    @NotNull
     @Override
-    public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public Filter @NotNull [] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
       return new Filter[]{new UrlFilter(project)};
     }
 
-    @NotNull
     @Override
-    public Filter[] getDefaultFilters(@NotNull Project project) {
+    public Filter @NotNull [] getDefaultFilters(@NotNull Project project) {
       return getDefaultFilters(project, GlobalSearchScope.allScope(project));
     }
   }

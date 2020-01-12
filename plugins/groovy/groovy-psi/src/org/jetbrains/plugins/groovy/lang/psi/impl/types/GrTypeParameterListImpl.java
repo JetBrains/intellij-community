@@ -42,9 +42,8 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
     return "Type parameter list";
   }
 
-  @NotNull
   @Override
-  public GrTypeParameter[] getTypeParameters() {
+  public GrTypeParameter @NotNull [] getTypeParameters() {
     return getStubOrPsiChildren(GroovyStubElementTypes.TYPE_PARAMETER, GrTypeParameter.ARRAY_FACTORY);
   }
 

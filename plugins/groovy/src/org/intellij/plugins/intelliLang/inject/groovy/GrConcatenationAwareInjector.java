@@ -46,7 +46,7 @@ import java.util.List;
 
 public final class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement... operands) {
+  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
     if (operands.length == 0) return;
 
     final PsiFile file = operands[0].getContainingFile();
@@ -96,7 +96,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     private boolean myShouldStop;
     private boolean myUnparsable;
 
-    InjectionProcessor(@NotNull Configuration configuration, @NotNull LanguageInjectionSupport support, @NotNull PsiElement... operands) {
+    InjectionProcessor(@NotNull Configuration configuration, @NotNull LanguageInjectionSupport support, PsiElement @NotNull ... operands) {
       myConfiguration = configuration;
       mySupport = support;
       myOperands = operands;

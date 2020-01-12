@@ -39,9 +39,8 @@ public class BuildoutCfgValueLine extends BuildoutCfgPsiElement {
     return "BuildoutCfgValue:" + getNode().getElementType().toString();
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     if (BuildoutPsiUtil.isInBuildoutSection(this) && BuildoutPsiUtil.isAssignedTo(this, "parts")) {
       List<BuildoutPartReference> refs = Lists.newArrayList();
       List<Pair<String, Integer>> names = StringUtil.getWordsWithOffset(getText());

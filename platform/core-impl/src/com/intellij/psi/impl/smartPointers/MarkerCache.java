@@ -80,8 +80,7 @@ class MarkerCache {
     return answer;
   }
 
-  @NotNull
-  private static ManualRangeMarker[] createMarkers(List<? extends SelfElementInfo> infos) {
+  private static ManualRangeMarker @NotNull [] createMarkers(List<? extends SelfElementInfo> infos) {
     ManualRangeMarker[] markers = new ManualRangeMarker[infos.size()];
     int i = 0;
     while (i < markers.length) {
@@ -225,7 +224,7 @@ class MarkerCache {
     UpdatedRanges(int eventCount,
                   @NotNull FrozenDocument resultDocument,
                   @NotNull List<SelfElementInfo> sortedInfos,
-                  @NotNull ManualRangeMarker[] markers) {
+                  ManualRangeMarker @NotNull [] markers) {
       myEventCount = eventCount;
       myResultDocument = resultDocument;
       mySortedInfos = sortedInfos;

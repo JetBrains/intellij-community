@@ -22,6 +22,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface RegExpIntersection extends RegExpClassElement {
 
-  @NotNull
-  RegExpClassElement[] getOperands();
+  RegExpClassElement @NotNull [] getOperands();
 }

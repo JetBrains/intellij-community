@@ -766,8 +766,7 @@ public final class UIUtil {
     WavePainter.forColor(g.getColor()).paint(g, (int)rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
   }
 
-  @NotNull
-  public static String[] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
+  public static String @NotNull [] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<>();
     StringBuilder currentLine = new StringBuilder();
     StringBuilder currentAtom = new StringBuilder();
@@ -1400,8 +1399,7 @@ public final class UIUtil {
     return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
-  @NotNull
-  public static String[] getValidFontNames(final boolean familyName) {
+  public static String @NotNull [] getValidFontNames(final boolean familyName) {
     Set<String> result = new TreeSet<>();
 
     // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
@@ -1425,8 +1423,7 @@ public final class UIUtil {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @NotNull
-  public static String[] getStandardFontSizes() {
+  public static String @NotNull [] getStandardFontSizes() {
     return STANDARD_FONT_SIZES;
   }
 
@@ -2799,7 +2796,7 @@ public final class UIUtil {
   }
 
   @Nullable
-  public static JComponent mergeComponentsWithAnchor(@NotNull PanelWithAnchor... panels) {
+  public static JComponent mergeComponentsWithAnchor(PanelWithAnchor @NotNull ... panels) {
     return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
 
@@ -3147,7 +3144,7 @@ public final class UIUtil {
    * Indicates whether the specified component is instance of one of the specified types
    * or it contains an instance of one of the specified types.
    */
-  public static boolean hasComponentOfType(@NotNull Component component, @NotNull Class<?>... types) {
+  public static boolean hasComponentOfType(@NotNull Component component, Class<?> @NotNull ... types) {
     for (Class<?> type : types) {
       if (type.isAssignableFrom(component.getClass())) {
         return true;

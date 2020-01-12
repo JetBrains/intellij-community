@@ -215,7 +215,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     );
   }
 
-  private void doTestProposedImportsOrdering(@NotNull String text, @NotNull String... expected) {
+  private void doTestProposedImportsOrdering(@NotNull String text, String @NotNull ... expected) {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText(text));
       assertNotNull(candidates);

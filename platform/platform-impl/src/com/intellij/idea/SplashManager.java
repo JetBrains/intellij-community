@@ -35,7 +35,7 @@ public final class SplashManager {
   private static JFrame PROJECT_FRAME;
   private static Splash SPLASH_WINDOW;
 
-  public static void show(@NotNull String[] args) {
+  public static void show(String @NotNull [] args) {
     if (Boolean.getBoolean(NO_SPLASH)) {
       return;
     }

@@ -35,11 +35,9 @@ public interface MethodSignature {
   /**
    * @return array of parameter types (already substituted)
    */
-  @NotNull
-  PsiType[] getParameterTypes();
+  PsiType @NotNull [] getParameterTypes();
 
-  @NotNull
-  PsiTypeParameter[] getTypeParameters();
+  PsiTypeParameter @NotNull [] getTypeParameters();
 
   boolean isRaw();
 

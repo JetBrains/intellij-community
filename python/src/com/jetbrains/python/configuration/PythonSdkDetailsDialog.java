@@ -164,7 +164,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
                                    @NotNull AnActionButtonRunnable addAction,
                                    @NotNull AnActionButtonRunnable editAction,
                                    @NotNull AnActionButtonRunnable removeAction,
-                                   @NotNull AnActionButton... extraActions) {
+                                   AnActionButton @NotNull ... extraActions) {
     return ToolbarDecorator.createDecorator(sdkList)
       .disableUpDownActions()
       .setAddAction(addAction)

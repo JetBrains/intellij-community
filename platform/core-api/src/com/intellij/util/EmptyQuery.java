@@ -37,9 +37,8 @@ public class EmptyQuery<R> implements Query<R> {
     return AsyncUtil.wrapBoolean(true);
   }
 
-  @NotNull
   @Override
-  public R[] toArray(@NotNull R[] a) {
+  public R @NotNull [] toArray(R @NotNull [] a) {
     return findAll().toArray(a);
   }
 

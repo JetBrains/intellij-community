@@ -41,11 +41,9 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract void clearIdCache();
 
-  @NotNull
-  public abstract String[] listPersisted(@NotNull VirtualFile parent);
+  public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
-  @NotNull
-  public abstract FSRecords.NameId[] listAll(@NotNull VirtualFile parent);
+  public abstract FSRecords.NameId @NotNull [] listAll(@NotNull VirtualFile parent);
 
   public abstract int getId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
 
@@ -67,13 +65,11 @@ public abstract class PersistentFS extends ManagingFS {
   @Nullable
   public abstract NewVirtualFile findFileByIdIfCached(int id);
 
-  public abstract int storeUnlinkedContent(@NotNull byte[] bytes);
+  public abstract int storeUnlinkedContent(byte @NotNull [] bytes);
 
-  @NotNull
-  public abstract byte[] contentsToByteArray(int contentId) throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray(int contentId) throws IOException;
 
-  @NotNull
-  public abstract byte[] contentsToByteArray(@NotNull VirtualFile file, boolean cacheContent) throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean cacheContent) throws IOException;
 
   public abstract int acquireContent(@NotNull VirtualFile file);
 

@@ -42,8 +42,7 @@ public interface IdeView {
    *
    * @return the list of directories, or an empty array if nothing is selected.
    */
-  @NotNull
-  PsiDirectory[] getDirectories();
+  PsiDirectory @NotNull [] getDirectories();
 
   /**
    * Returns the directory for the element currently selected in the view. If multiple directories

@@ -26,7 +26,7 @@ public interface MessagesService {
                         @Nullable Component parentComponent,
                         String message,
                         String title,
-                        @NotNull String[] options,
+                        String @NotNull [] options,
                         int defaultOptionIndex,
                         int focusedOptionIndex,
                         Icon icon,
@@ -54,8 +54,7 @@ public interface MessagesService {
 
   String showPasswordDialog(Project project, String message, String title, Icon icon, InputValidator validator);
 
-  @Nullable
-  char[] showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator);
+  char @Nullable [] showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator);
 
   String showInputDialog(@Nullable Project project,
                          @Nullable Component parentComponent,

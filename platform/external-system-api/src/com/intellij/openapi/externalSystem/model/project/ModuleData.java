@@ -33,7 +33,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String version;
   @Nullable private String description;
   @NotNull private List<File> artifacts;
-  @Nullable private String[] ideModuleGroup;
+  private String @Nullable [] ideModuleGroup;
   @Nullable private String sourceCompatibility;
   @Nullable private String targetCompatibility;
   @Nullable private String sdkName;
@@ -195,12 +195,11 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.artifacts = artifacts;
   }
 
-  @Nullable
-  public String[] getIdeModuleGroup() {
+  public String @Nullable [] getIdeModuleGroup() {
     return ideModuleGroup;
   }
 
-  public void setIdeModuleGroup(@Nullable String[] ideModuleGroup) {
+  public void setIdeModuleGroup(String @Nullable [] ideModuleGroup) {
     this.ideModuleGroup = ideModuleGroup;
   }
 

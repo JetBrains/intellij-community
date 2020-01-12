@@ -436,9 +436,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
       throw new UnsupportedOperationException(); // not supported for this editor
     }
 
-    @NotNull
     @Override
-    public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
+    public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) {
       final PathEditor editor = myPathEditors.get(rootType);
       if (editor == null) throw new IllegalStateException("no editor for root type " + rootType);
       return editor.getRoots();

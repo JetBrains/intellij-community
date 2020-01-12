@@ -138,7 +138,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
   }
 
-  public void enableRows(@NotNull IdeaPluginDescriptor[] ideaPluginDescriptors, @NotNull Boolean value) {
+  public void enableRows(IdeaPluginDescriptor @NotNull [] ideaPluginDescriptors, @NotNull Boolean value) {
     Map<PluginId, Boolean> tempEnabled = new HashMap<>(myEnabled);
     setNewEnabled(ideaPluginDescriptors, tempEnabled, value);
 
@@ -148,7 +148,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
   }
 
-  private static void setNewEnabled(@NotNull IdeaPluginDescriptor[] ideaPluginDescriptors,
+  private static void setNewEnabled(IdeaPluginDescriptor @NotNull [] ideaPluginDescriptors,
                                     @NotNull Map<PluginId, Boolean> enabledContainer,
                                     @NotNull Boolean value) {
     for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
@@ -172,7 +172,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return myEnabled;
   }
 
-  private boolean suggestToChangeDependencies(@NotNull IdeaPluginDescriptor[] descriptorsWithChangedEnabledState,
+  private boolean suggestToChangeDependencies(IdeaPluginDescriptor @NotNull [] descriptorsWithChangedEnabledState,
                                               @NotNull Map<PluginId, Boolean> enabledContainer,
                                               @NotNull Boolean newEnabledState) {
     List<IdeaPluginDescriptor> descriptorsToCheckDependencies = new ArrayList<>();

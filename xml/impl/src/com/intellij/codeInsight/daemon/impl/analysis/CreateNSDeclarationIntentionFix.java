@@ -252,7 +252,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
     IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
       @Override
-      public void run(final CharSequence chars, @Nullable char[] charsArray, int start, int end) {
+      public void run(final CharSequence chars, char @Nullable [] charsArray, int start, int end) {
         if (wordsFoundCount[0] == words.length) return;
         final int foundWordLen = end - start;
 
@@ -284,7 +284,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
 
-  public static void runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(@NotNull final String[] namespacesToChooseFrom,
+  public static void runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(final String @NotNull [] namespacesToChooseFrom,
                                                                                            final Project project, final StringToAttributeProcessor onSelection,
                                                                                            String title,
                                                                                            final IntentionAction requestor,

@@ -24,9 +24,8 @@ abstract class ConfigurablesGroupBase implements ConfigurableGroup {
     myConfigurablesExtensionPoint = configurablesExtensionPoint;
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     if (myChildren == null) {
       if (ApplicationManager.getApplication().isDisposed()) {
         return new Configurable[0];

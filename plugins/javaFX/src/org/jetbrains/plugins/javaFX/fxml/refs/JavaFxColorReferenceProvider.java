@@ -27,10 +27,9 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 
 class JavaFxColorReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                               @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                         @NotNull ProcessingContext context) {
     final XmlAttributeValue attributeValue = (XmlAttributeValue)element;
     final PsiElement parent = attributeValue.getParent();
     if (parent instanceof XmlAttribute) {

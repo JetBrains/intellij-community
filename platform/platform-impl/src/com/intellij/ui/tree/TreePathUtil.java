@@ -94,7 +94,7 @@ public class TreePathUtil {
    * or a path component is converted to {@code null}
    */
   @SafeVarargs
-  public static <T> TreePath convertArrayToTreePath(@NotNull T... array) {
+  public static <T> TreePath convertArrayToTreePath(T @NotNull ... array) {
     return convertArrayToTreePath(array, object -> object);
   }
 
@@ -106,7 +106,7 @@ public class TreePathUtil {
    * or a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> TreePath convertArrayToTreePath(@NotNull T[] array, @NotNull Function<? super T, Object> converter) {
+  public static <T> TreePath convertArrayToTreePath(T @NotNull [] array, @NotNull Function<? super T, Object> converter) {
     return array.length == 0 ? null : convertCollectionToTreePath(Arrays.asList(array), converter);
   }
 
@@ -192,8 +192,7 @@ public class TreePathUtil {
     return object == null ? null : converter.apply(object);
   }
 
-  @NotNull
-  public static TreePath[] toTreePathArray(@NotNull Collection<TreePath> collection) {
+  public static TreePath @NotNull [] toTreePathArray(@NotNull Collection<TreePath> collection) {
     return collection.isEmpty() ? EMPTY_TREE_PATH : collection.toArray(EMPTY_TREE_PATH);
   }
 

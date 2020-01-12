@@ -69,9 +69,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the array of child elements.
    */
-  @NotNull
   @Contract(pure=true)
-  PsiElement[] getChildren();
+  PsiElement @NotNull [] getChildren();
 
   /**
    * Returns the parent of the PSI element.
@@ -210,9 +209,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the element text as a character array.
    */
-  @NotNull
   @Contract(pure=true)
-  char[] textToCharArray();
+  char @NotNull [] textToCharArray();
 
   /**
    * Returns the PSI element which should be used as a navigation target
@@ -482,9 +480,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see PsiReferenceService#getReferences
    * @see com.intellij.psi.search.searches.ReferencesSearch
    */
-  @NotNull
   @Contract(pure=true)
-  PsiReference[] getReferences();
+  PsiReference @NotNull [] getReferences();
 
   /**
    * Returns a copyable user data object attached to this element.

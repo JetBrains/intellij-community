@@ -155,8 +155,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  @NotNull
-  public ProjectFrameHelper[] getAllProjectFrames() {
+  public ProjectFrameHelper @NotNull [] getAllProjectFrames() {
     return myProjectToFrame.values().toArray(new ProjectFrameHelper[0]);
   }
 

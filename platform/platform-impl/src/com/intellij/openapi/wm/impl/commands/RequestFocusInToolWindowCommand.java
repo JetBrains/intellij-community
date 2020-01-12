@@ -126,7 +126,7 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
    * @return first active window from hierarchy with specified roots. Returns {@code null}
    *         if there is no active window in the hierarchy.
    */
-  private static Window getActiveWindow(@NotNull Window[] windows) {
+  private static Window getActiveWindow(Window @NotNull [] windows) {
     for (Window window : windows) {
       if (window.isShowing() && window.isActive()) {
         return window;

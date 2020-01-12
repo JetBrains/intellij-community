@@ -54,8 +54,7 @@ public class WordCompletionTest extends JavaCompletionTestCase {
   public void testNoWordCompletionForNonSoftReference() throws Throwable {
     final PsiReferenceProvider softProvider = new PsiReferenceProvider() {
       @Override
-      @NotNull
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, true) {
           @Override
           public PsiElement resolve() {
@@ -63,8 +62,7 @@ public class WordCompletionTest extends JavaCompletionTestCase {
           }
 
           @Override
-          @NotNull
-          public Object[] getVariants() {
+          public Object @NotNull [] getVariants() {
             return new Object[]{"MySoftVariant"};
           }
         }};
@@ -72,8 +70,7 @@ public class WordCompletionTest extends JavaCompletionTestCase {
     };
     final PsiReferenceProvider hardProvider = new PsiReferenceProvider() {
       @Override
-      @NotNull
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, false) {
           @Override
           public PsiElement resolve() {
@@ -81,8 +78,7 @@ public class WordCompletionTest extends JavaCompletionTestCase {
           }
 
           @Override
-          @NotNull
-          public Object[] getVariants() {
+          public Object @NotNull [] getVariants() {
             return new Object[]{"MyHardVariant"};
           }
         }};

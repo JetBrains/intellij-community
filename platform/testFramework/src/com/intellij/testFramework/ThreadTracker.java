@@ -120,7 +120,7 @@ public class ThreadTracker {
   }
 
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
-  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, @NotNull final String... threadNamePrefixes) {
+  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, final String @NotNull ... threadNamePrefixes) {
     wellKnownOffenders.addAll(Arrays.asList(threadNamePrefixes));
     Disposer.register(parentDisposable, () -> wellKnownOffenders.removeAll(Arrays.asList(threadNamePrefixes)));
   }
@@ -204,7 +204,7 @@ public class ThreadTracker {
     return f.toString();
   }
 
-  private static boolean shouldIgnore(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+  private static boolean shouldIgnore(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     if (!thread.isAlive()) return true;
     if (isWellKnownOffender(thread.getName())) return true;
 
@@ -222,7 +222,7 @@ public class ThreadTracker {
   }
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
-  private static boolean isIdleApplicationPoolThread(@NotNull StackTraceElement[] stackTrace) {
+  private static boolean isIdleApplicationPoolThread(StackTraceElement @NotNull [] stackTrace) {
     //noinspection UnnecessaryLocalVariable
     boolean insideTPEGetTask = ContainerUtil.exists(stackTrace,
        element -> element.getMethodName().equals("getTask")
@@ -231,7 +231,7 @@ public class ThreadTracker {
     return insideTPEGetTask;
   }
 
-  private static boolean isIdleCommonPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+  private static boolean isIdleCommonPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
       return false;
     }
@@ -258,7 +258,7 @@ public class ThreadTracker {
   //	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
   //	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
   //	at java.lang.Thread.run(Thread.java:748)
-  private static boolean isFutureTaskAboutToFinish(@NotNull StackTraceElement[] stackTrace) {
+  private static boolean isFutureTaskAboutToFinish(StackTraceElement @NotNull [] stackTrace) {
     if (stackTrace.length < 5) {
       return false;
     }
@@ -269,7 +269,7 @@ public class ThreadTracker {
       && stackTrace[2].getMethodName().equals("finishCompletion");
   }
 
-  private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+  private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     if (!"kotlinx.coroutines.scheduling.CoroutineScheduler$Worker".equals(thread.getClass().getName())) {
       return false;
     }

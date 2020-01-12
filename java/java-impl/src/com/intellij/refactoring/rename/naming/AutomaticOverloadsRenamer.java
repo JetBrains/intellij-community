@@ -51,8 +51,7 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
     return true;
   }
 
-  @NotNull
-  protected PsiMethod[] getOverloads(@NotNull PsiMethod method) {
+  protected PsiMethod @NotNull [] getOverloads(@NotNull PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return PsiMethod.EMPTY_ARRAY;
     return containingClass.findMethodsByName(method.getName(), false);

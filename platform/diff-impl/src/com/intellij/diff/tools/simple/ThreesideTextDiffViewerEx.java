@@ -442,7 +442,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     private final MyPaintable myPaintable1 = new MyPaintable(0, 1);
     private final MyPaintable myPaintable2 = new MyPaintable(1, 2);
 
-    public MyFoldingModel(@Nullable Project project, @NotNull EditorEx[] editors, @NotNull Disposable disposable) {
+    public MyFoldingModel(@Nullable Project project, EditorEx @NotNull [] editors, @NotNull Disposable disposable) {
       super(project, editors, disposable);
       assert editors.length == 3;
     }

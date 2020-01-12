@@ -52,15 +52,12 @@ public interface ChooseByNameModel {
    * @return the names to show. All items in the returned array must be non-null.
    *
    */
-  @NotNull
-  String[] getNames(boolean checkBoxState);
-  @NotNull
-  Object[] getElementsByName(@NotNull String name, boolean checkBoxState, @NotNull String pattern);
+  String @NotNull [] getNames(boolean checkBoxState);
+  Object @NotNull [] getElementsByName(@NotNull String name, boolean checkBoxState, @NotNull String pattern);
   @Nullable
   String getElementName(@NotNull Object element);
 
-  @NotNull
-  String[] getSeparators();
+  String @NotNull [] getSeparators();
 
   @Nullable
   String getFullName(@NotNull Object element);

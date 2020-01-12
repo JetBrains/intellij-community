@@ -197,8 +197,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   protected AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(getAddText()) {
       @Override
-      @NotNull
-      public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
         return CreateNewLibraryAction.createActionOrGroup(getAddText(), BaseLibrariesConfigurable.this, myProject);
       }
     };

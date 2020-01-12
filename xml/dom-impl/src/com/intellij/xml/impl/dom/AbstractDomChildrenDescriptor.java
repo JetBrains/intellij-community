@@ -205,8 +205,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
       }
 
       @Override
-      @NotNull
-      public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
+      public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument document) {
         throw new UnsupportedOperationException("Method getRootElementsDescriptors not implemented in " + getClass());
       }
 
@@ -239,9 +238,8 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
         throw new UnsupportedOperationException("Method init not implemented in " + getClass());
       }
 
-      @NotNull
       @Override
-      public Object[] getDependencies() {
+      public Object @NotNull [] getDependencies() {
         throw new UnsupportedOperationException("Method getDependencies not implemented in " + getClass());
       }
     };
@@ -262,9 +260,8 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     throw new UnsupportedOperationException("Method init not implemented in " + getClass());
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies() {
+  public Object @NotNull [] getDependencies() {
     throw new UnsupportedOperationException("Method getDependencies not implemented in " + getClass());
   }
 

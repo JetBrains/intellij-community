@@ -76,15 +76,14 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return language instanceof XMLLanguage;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] createPatternTree(@NonNls @NotNull String text,
-                                        @NotNull PatternTreeContext context,
-                                        @NotNull LanguageFileType fileType,
-                                        @NotNull Language language,
-                                        String contextId,
-                                        @NotNull Project project,
-                                        boolean physical) {
+  public PsiElement @NotNull [] createPatternTree(@NonNls @NotNull String text,
+                                                  @NotNull PatternTreeContext context,
+                                                  @NotNull LanguageFileType fileType,
+                                                  @NotNull Language language,
+                                                  String contextId,
+                                                  @NotNull Project project,
+                                                  boolean physical) {
     text = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
     @NonNls final String fileName = "dummy." + fileType.getDefaultExtension();
     final PsiFile fileFromText =

@@ -83,9 +83,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     cacheNonNlsCommentPattern();
   }
 
-  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(PsiElement element) {
+  public SuppressIntentionAction @NotNull [] getSuppressActions(PsiElement element) {
     SuppressQuickFix[] suppressActions = getBatchSuppressActions(element);
 
     if (myCachedNonNlsPattern == null) {
@@ -369,9 +368,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     };
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(method)) {
       return null;
     }
@@ -390,9 +388,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return results.isEmpty() ? null : results.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkClass(@NotNull UClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull UClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(aClass)) {
       return null;
     }
@@ -421,9 +418,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(field)) {
       return null;
     }

@@ -175,8 +175,7 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     }
   }
 
-  @NotNull
-  private static byte[] loadContent(@NotNull FilePath path, @NotNull Label label) throws DiffRequestProducerException {
+  private static byte @NotNull [] loadContent(@NotNull FilePath path, @NotNull Label label) throws DiffRequestProducerException {
     ByteContent byteContent = label.getByteContent(path.getPath());
 
     if (byteContent == null || byteContent.isDirectory() || byteContent.getBytes() == null) {

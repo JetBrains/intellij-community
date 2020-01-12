@@ -51,8 +51,7 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
     }
   }
 
-  @Nullable
-  private static PsiElement[] getElements(DataContext dataContext) {
+  private static PsiElement @Nullable [] getElements(DataContext dataContext) {
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (!(psiFile instanceof XmlFile && AntDomFileDescription.isAntFile((XmlFile)psiFile))) {
       return null;
@@ -64,8 +63,7 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
     return getPsiElementsIn(editor);
   }
 
-  @Nullable
-  private static PsiElement[] getPsiElementsIn(final Editor editor) {
+  private static PsiElement @Nullable [] getPsiElementsIn(final Editor editor) {
     try {
       final PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (reference == null) {

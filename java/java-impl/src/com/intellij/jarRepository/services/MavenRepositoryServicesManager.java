@@ -47,8 +47,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
     return ServiceManager.getService(project, MavenRepositoryServicesManager.class);
   }
 
-  @NotNull
-  public static MavenRepositoryService[] getServices() {
+  public static MavenRepositoryService @NotNull [] getServices() {
     return new MavenRepositoryService[]{new NexusRepositoryService(), new ArtifactoryRepositoryService(), new BintrayRepositoryService()};
   }
 

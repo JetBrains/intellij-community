@@ -122,8 +122,7 @@ public interface PsiReference extends PsiSymbolReference {
    *
    * @return the array of available identifiers.
    */
-  @NotNull
-  default Object[] getVariants() {
+  default Object @NotNull [] getVariants() {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 

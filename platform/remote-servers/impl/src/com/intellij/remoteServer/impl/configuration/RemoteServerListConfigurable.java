@@ -241,9 +241,8 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       List<ServerType<?>> serverTypes = getDisplayedServerTypes();
       AnAction[] actions = new AnAction[serverTypes.size()];
       for (int i = 0; i < serverTypes.size(); i++) {

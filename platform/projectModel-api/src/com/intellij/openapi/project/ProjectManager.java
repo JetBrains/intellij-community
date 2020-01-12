@@ -75,8 +75,7 @@ public abstract class ProjectManager {
    * Returns the list of currently opened projects.
    * {@link Project#isDisposed()} must be checked for each project before use (if the whole operation is not under read action).
    */
-  @NotNull
-  public abstract Project[] getOpenProjects();
+  public abstract Project @NotNull [] getOpenProjects();
 
   /**
    * Returns the project which is used as a template for new projects. The template project

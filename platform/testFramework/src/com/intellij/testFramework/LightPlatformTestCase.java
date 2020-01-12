@@ -262,7 +262,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @NotNull
   public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
-                                                      @NotNull LocalInspectionTool[] localInspectionTools,
+                                                      LocalInspectionTool @NotNull [] localInspectionTools,
                                                       @NotNull Disposable parentDisposable) {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
@@ -333,7 +333,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return Pair.createNonNull(project, ourModule);
   }
 
-  protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
+  protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
@@ -345,8 +345,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
-  @NotNull
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return LocalInspectionTool.EMPTY_ARRAY;
   }
 

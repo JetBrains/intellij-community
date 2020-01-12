@@ -38,13 +38,13 @@ public interface JavaModuleFixtureBuilder<T extends ModuleFixture> extends Modul
   JavaModuleFixtureBuilder setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
   @NotNull
-  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NonNls @NotNull String... classPath);
+  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NonNls String @NotNull ... classPath);
 
   @NotNull
   JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NotNull Map<OrderRootType, String[]> roots);
 
   @NotNull
-  JavaModuleFixtureBuilder addLibraryJars(@NonNls String libraryName, @NonNls @NotNull String basePath, @NonNls @NotNull String... jarNames);
+  JavaModuleFixtureBuilder addLibraryJars(@NonNls String libraryName, @NonNls @NotNull String basePath, @NonNls String @NotNull ... jarNames);
 
   @NotNull
   JavaModuleFixtureBuilder addJdk(@NonNls @NotNull String jdkPath);

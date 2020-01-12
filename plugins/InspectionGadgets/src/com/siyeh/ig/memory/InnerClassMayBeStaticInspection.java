@@ -68,9 +68,8 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     return true;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     fixes.add(new InnerClassMayBeStaticFix());
     final PsiClass aClass = (PsiClass)infos[0];

@@ -35,7 +35,7 @@ public class ExpressionTypeMacro extends Macro {
 
   @Nullable
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length == 1) {
       Result result = params[0].calculateResult(context);
       if (result != null) {

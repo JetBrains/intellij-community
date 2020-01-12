@@ -568,9 +568,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @NotNull
   @Override
-  public String[] getActionIds(@NotNull String idPrefix) {
+  public String @NotNull [] getActionIds(@NotNull String idPrefix) {
     synchronized (myLock) {
       ArrayList<String> idList = new ArrayList<>();
       for (String id : myId2Action.keySet()) {
@@ -1263,9 +1262,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return Comparator.comparingInt(myId2Index::get);
   }
 
-  @NotNull
   @Override
-  public String[] getPluginActions(@NotNull PluginId pluginName) {
+  public String @NotNull [] getPluginActions(@NotNull PluginId pluginName) {
     return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
   }
 

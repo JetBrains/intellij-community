@@ -799,8 +799,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return TablePanelActionPolicy.ALL;
   }
 
-  @Nullable
-  public PropertyTableTab[] getPropertyTableTabs() {
+  public PropertyTableTab @Nullable [] getPropertyTableTabs() {
     return null;
   }
 

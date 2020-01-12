@@ -104,8 +104,7 @@ public class JarsBuilder {
     }
   }
 
-  @Nullable
-  private JarInfo[] sortJars() {
+  private JarInfo @Nullable [] sortJars() {
     final DFSTBuilder<JarInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new JarsGraph())));
     if (!builder.isAcyclic()) {
       final Pair<JarInfo, JarInfo> dependency = builder.getCircularDependency();

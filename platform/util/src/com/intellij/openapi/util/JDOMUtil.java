@@ -148,9 +148,8 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link Element#getChildren} instead
    */
-  @NotNull
   @Deprecated
-  public static Element[] getElements(@NotNull Element m) {
+  public static Element @NotNull [] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[0]);
   }
@@ -673,9 +672,9 @@ public final class JDOMUtil {
     return new ElementInfo(buf, hasNullAttributes);
   }
 
-  public static void updateFileSet(@NotNull File[] oldFiles,
-                                   @NotNull String[] newFilePaths,
-                                   @NotNull Document[] newFileDocuments,
+  public static void updateFileSet(File @NotNull [] oldFiles,
+                                   String @NotNull [] newFilePaths,
+                                   Document @NotNull [] newFileDocuments,
                                    String lineSeparator)
     throws IOException {
     getLogger().assertTrue(newFilePaths.length == newFileDocuments.length);

@@ -96,8 +96,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the array of modules.
    */
-  @NotNull
-  public abstract Module[] getModules();
+  public abstract Module @NotNull [] getModules();
 
   /**
    * Returns the project module with the specified name.
@@ -115,8 +114,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the sorted array of modules.
    */
-  @NotNull
-  public abstract Module[] getSortedModules();
+  public abstract Module @NotNull [] getSortedModules();
 
   /**
    * Returns the module comparator which can be used for sorting modules by dependency
@@ -183,8 +181,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @param module the module for which the path is requested.
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
-  @Nullable
-  public abstract String[] getModuleGroupPath(@NotNull Module module);
+  public abstract String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
   public abstract boolean hasModuleGroups();
 

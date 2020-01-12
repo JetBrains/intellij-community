@@ -180,9 +180,8 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     return getName();
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies() {
+  public Object @NotNull [] getDependencies() {
     return new Object[] { getDeclaration() };
   }
 }

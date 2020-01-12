@@ -43,7 +43,7 @@ public class UserScaleContext {
    * Creates a context with the provided scale factors (system scale is ignored)
    */
   @NotNull
-  public static UserScaleContext create(@NotNull Scale... scales) {
+  public static UserScaleContext create(Scale @NotNull ... scales) {
     UserScaleContext ctx = create();
     for (Scale s : scales) ctx.setScale(s);
     return ctx;

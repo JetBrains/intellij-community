@@ -459,7 +459,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   @NotNull
-  protected AddImportAction createAddImportAction(@NotNull PsiClass[] classes, @NotNull Project project, @NotNull Editor editor) {
+  protected AddImportAction createAddImportAction(PsiClass @NotNull [] classes, @NotNull Project project, @NotNull Editor editor) {
     return new AddImportAction(project, myRef, editor, classes) {
       @Override
       protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {

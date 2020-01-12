@@ -18,10 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PackageUtil {
-  @NotNull
-  static PsiPackage[] getSubpackages(@NotNull PsiPackage aPackage,
-                                     @Nullable Module module,
-                                     final boolean searchInLibraries) {
+  static PsiPackage @NotNull [] getSubpackages(@NotNull PsiPackage aPackage,
+                                               @Nullable Module module,
+                                               final boolean searchInLibraries) {
     final GlobalSearchScope scopeToShow = getScopeToShow(aPackage.getProject(), module, searchInLibraries);
     List<PsiPackage> result = new ArrayList<>();
     for (PsiPackage psiPackage : aPackage.getSubPackages(scopeToShow)) {
@@ -70,10 +69,9 @@ public class PackageUtil {
     return subPackages.length > 0;
   }
 
-  @NotNull
-  public static PsiDirectory[] getDirectories(@NotNull PsiPackage aPackage,
-                                              @Nullable Module module,
-                                              boolean inLibrary) {
+  public static PsiDirectory @NotNull [] getDirectories(@NotNull PsiPackage aPackage,
+                                                        @Nullable Module module,
+                                                        boolean inLibrary) {
     final GlobalSearchScope scopeToShow = getScopeToShow(aPackage.getProject(), module, inLibrary);
     return aPackage.getDirectories(scopeToShow);
   }

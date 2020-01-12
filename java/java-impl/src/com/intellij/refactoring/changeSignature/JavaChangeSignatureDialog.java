@@ -132,7 +132,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                             myMethodsToPropagateParameters,
                                             myMethodsToPropagateExceptions) {
           @Override
-          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+          protected void performRefactoring(UsageInfo @NotNull [] usages) {
             super.performRefactoring(usages);
             if (callback != null) {
               callback.consume(getParameters());

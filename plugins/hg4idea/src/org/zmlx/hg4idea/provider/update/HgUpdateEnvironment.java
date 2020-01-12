@@ -49,9 +49,9 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots,
-    UpdatedFiles updatedFiles, ProgressIndicator indicator,
-    @NotNull Ref<SequentialUpdatesContext> context) {
+  public UpdateSession updateDirectories(FilePath @NotNull [] contentRoots,
+                                         UpdatedFiles updatedFiles, ProgressIndicator indicator,
+                                         @NotNull Ref<SequentialUpdatesContext> context) {
 
     List<VcsException> exceptions = new LinkedList<>();
 

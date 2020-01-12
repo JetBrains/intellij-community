@@ -29,8 +29,7 @@ import java.util.Collection;
  */
 public interface FacetsProvider {
   
-  @NotNull
-  Facet[] getAllFacets(Module module);
+  Facet @NotNull [] getAllFacets(Module module);
 
   @NotNull
   <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type);

@@ -43,12 +43,11 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
     return new BodyLimitInspectionOptions(this);
   }
 
-  @Nullable
   @Override
-  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
-                                          @NotNull Document document,
-                                          @NotNull InspectionManager manager,
-                                          boolean isOnTheFly) {
+  protected ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file,
+                                                     @NotNull Document document,
+                                                     @NotNull InspectionManager manager,
+                                                     boolean isOnTheFly) {
     return range(1, document.getLineCount())
       .mapToObj(line -> checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
                                          format("Body lines should not exceed %d characters", RIGHT_MARGIN), new WrapLineQuickFix(),

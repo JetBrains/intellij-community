@@ -37,12 +37,11 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
     return new LocalMissingPackageInfoInspection(this);
   }
 
-  @Nullable
   @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext) {
     if (!(refEntity instanceof RefPackage)) {
       return null;
     }

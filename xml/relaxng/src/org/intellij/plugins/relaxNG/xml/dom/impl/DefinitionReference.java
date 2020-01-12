@@ -63,8 +63,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final RngGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
@@ -96,8 +95,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final RngGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;

@@ -31,8 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FindSuperElementsHelper {
-  @NotNull
-  public static PsiElement[] findSuperElements(@NotNull PsiElement element) {
+  public static PsiElement @NotNull [] findSuperElements(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass) element;
       List<PsiClass> allSupers = new ArrayList<>(Arrays.asList(aClass.getSupers()));

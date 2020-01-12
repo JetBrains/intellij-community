@@ -1504,7 +1504,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
                                               final boolean extractChainedConstructor,
-                                              @NotNull int... disabledParams) throws PrepareFailedException, IncorrectOperationException {
+                                              int @NotNull ... disabledParams) throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null, false, null, disabledParams);
   }
 
@@ -1517,7 +1517,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
                                               PsiType returnType,
                                               boolean makeStatic,
                                               String newNameOfFirstParam,
-                                              @NotNull int... disabledParams) throws PrepareFailedException, IncorrectOperationException {
+                                              int @NotNull ... disabledParams) throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, returnType, makeStatic,
                                 newNameOfFirstParam, null, null, disabledParams);
   }
@@ -1533,7 +1533,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
                                               String newNameOfFirstParam,
                                               PsiClass targetClass,
                                               @Nullable @PsiModifier.ModifierConstant String methodVisibility,
-                                              @NotNull int... disabledParams) throws PrepareFailedException, IncorrectOperationException {
+                                              int @NotNull ... disabledParams) throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 

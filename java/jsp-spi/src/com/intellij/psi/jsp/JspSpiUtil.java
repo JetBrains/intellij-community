@@ -66,8 +66,7 @@ public abstract class JspSpiUtil {
   @Nullable
   protected abstract PsiElement _resolveMethodPropertyReference(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable);
 
-  @NotNull
-  public static Object[] getMethodPropertyReferenceVariants(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable) {
+  public static Object @NotNull [] getMethodPropertyReferenceVariants(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable) {
     final JspSpiUtil util = getJspSpiUtil();
     return util == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : util._getMethodPropertyReferenceVariants(reference, resolvedClass, readable);
   }
@@ -104,8 +103,7 @@ public abstract class JspSpiUtil {
 
   protected abstract PsiFile[] _getIncludingFiles(@NotNull PsiFile file);
 
-  @NotNull
-  protected abstract PsiFile[] _getIncludedFiles(@NotNull final JspFile jspFile);
+  protected abstract PsiFile @NotNull [] _getIncludedFiles(@NotNull final JspFile jspFile);
 
   public static boolean isJavaContext(PsiElement position) {
     if(PsiTreeUtil.getContextOfType(position, JspClass.class, false) != null) return true;

@@ -79,9 +79,8 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     return myPackagingElements.size() == 1 ? myPackagingElements.get(0) : null;
   }
 
-  @NotNull
   @Override
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return ArrayUtil.toObjectArray(myPackagingElements);
   }
 

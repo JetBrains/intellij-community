@@ -131,7 +131,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return sb.toString();
   }
 
-  public static boolean parseCharacters(String s, StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseCharacters(String s, StringBuilder outChars, int @Nullable [] sourceOffsets) {
     assert sourceOffsets == null || sourceOffsets.length == s.length() + 1;
     int off = 0;
     int len = s.length();

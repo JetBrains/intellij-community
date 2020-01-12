@@ -32,7 +32,7 @@ public class CaretStateTransferableData implements TextBlockTransferableData {
   public final int[] startOffsets;
   public final int[] endOffsets;
 
-  public CaretStateTransferableData(@NotNull int[] startOffsets, @NotNull int[] endOffsets) {
+  public CaretStateTransferableData(int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
     this.startOffsets = startOffsets;
     this.endOffsets = endOffsets;
   }

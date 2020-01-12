@@ -129,7 +129,7 @@ public class PsiUtil {
     return false;
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
+  public static boolean isApplicable(PsiType @Nullable [] argumentTypes,
                                      @NotNull PsiMethod method,
                                      PsiSubstitutor substitutor,
                                      PsiElement place,
@@ -138,7 +138,7 @@ public class PsiUtil {
            Applicability.inapplicable;
   }
 
-  public static Applicability isApplicableConcrete(@Nullable PsiType[] argumentTypes,
+  public static Applicability isApplicableConcrete(PsiType @Nullable [] argumentTypes,
                                                    @NotNull PsiMethod method,
                                                    PsiSubstitutor substitutor,
                                                    PsiElement place,
@@ -159,13 +159,13 @@ public class PsiUtil {
     return Applicability.inapplicable;
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
+  public static boolean isApplicable(PsiType @Nullable [] argumentTypes,
                                      @NotNull GrClosureType type,
                                      @NotNull GroovyPsiElement context) {
     return isApplicableConcrete(argumentTypes, type, context) != Applicability.inapplicable;
   }
 
-  public static Applicability isApplicableConcrete(@Nullable PsiType[] argumentTypes,
+  public static Applicability isApplicableConcrete(PsiType @Nullable [] argumentTypes,
                                                    @NotNull GrClosureType type,
                                                    @NotNull GroovyPsiElement context) {
     if (argumentTypes == null) return Applicability.canBeApplicable;
@@ -188,15 +188,13 @@ public class PsiUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiType[] getArgumentTypes(@Nullable PsiElement place, boolean nullAsBottom) {
+  public static PsiType @Nullable [] getArgumentTypes(@Nullable PsiElement place, boolean nullAsBottom) {
     return getArgumentTypes(place, nullAsBottom, null);
   }
 
-  @Nullable
-  public static PsiType[] getArgumentTypes(@Nullable PsiElement place,
-                                           boolean nullAsBottom,
-                                           @Nullable GrExpression stopAt) {
+  public static PsiType @Nullable [] getArgumentTypes(@Nullable PsiElement place,
+                                                      boolean nullAsBottom,
+                                                      @Nullable GrExpression stopAt) {
     PsiElement parent = place instanceof GrEnumConstant ? place : place != null ? place.getParent() : null;
 
     if (parent instanceof GrIndexProperty) {
@@ -249,17 +247,15 @@ public class PsiUtil {
     return type != null || acceptNull ? type : TypesUtil.getJavaLangObject(context);
   }
 
-  @Nullable
-  public static PsiType[] getArgumentTypes(GrArgumentList argList) {
+  public static PsiType @Nullable [] getArgumentTypes(GrArgumentList argList) {
     return getArgumentTypes(argList, false, null);
   }
 
-  @Nullable
-  public static PsiType[] getArgumentTypes(@NotNull GrNamedArgument[] namedArgs,
-                                           @NotNull GrExpression[] expressions,
-                                           @NotNull GrClosableBlock[] closures,
-                                           boolean nullAsBottom,
-                                           @Nullable GrExpression stopAt) {
+  public static PsiType @Nullable [] getArgumentTypes(GrNamedArgument @NotNull [] namedArgs,
+                                                      GrExpression @NotNull [] expressions,
+                                                      GrClosableBlock @NotNull [] closures,
+                                                      boolean nullAsBottom,
+                                                      @Nullable GrExpression stopAt) {
     List<PsiType> result = new ArrayList<>();
 
     if (namedArgs.length > 0) {
@@ -818,10 +814,9 @@ public class PsiUtil {
     return false;
   }
 
-  @NotNull
-  public static GroovyResolveResult[] getConstructorCandidates(@NotNull PsiElement place,
-                                                               @NotNull GroovyResolveResult classCandidate,
-                                                               @Nullable PsiType[] argTypes) {
+  public static GroovyResolveResult @NotNull [] getConstructorCandidates(@NotNull PsiElement place,
+                                                                         @NotNull GroovyResolveResult classCandidate,
+                                                                         PsiType @Nullable [] argTypes) {
     final PsiElement element = classCandidate.getElement();
     if (!(element instanceof PsiClass)) return GroovyResolveResult.EMPTY_ARRAY;
 

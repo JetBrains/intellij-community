@@ -577,7 +577,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     exit(flags, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  public void restart(int flags, @NotNull String[] beforeRestart) {
+  public void restart(int flags, String @NotNull [] beforeRestart) {
     exit(flags, true, beforeRestart);
   }
 
@@ -586,7 +586,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  private void exit(int flags, boolean restart, @NotNull String[] beforeRestart) {
+  private void exit(int flags, boolean restart, String @NotNull [] beforeRestart) {
     if (!BitUtil.isSet(flags, FORCE_EXIT) &&
         (myExitInProgress || (!BitUtil.isSet(flags, EXIT_CONFIRMED) && getDefaultModalityState() != ModalityState.NON_MODAL))) {
       return;

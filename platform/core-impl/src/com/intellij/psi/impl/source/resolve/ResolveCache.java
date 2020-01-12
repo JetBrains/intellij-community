@@ -66,8 +66,7 @@ public class ResolveCache implements Disposable {
   @FunctionalInterface
   public interface PolyVariantResolver<T extends PsiPolyVariantReference> extends AbstractResolver<T,ResolveResult[]> {
     @Override
-    @NotNull
-    ResolveResult[] resolve(@NotNull T t, boolean incompleteCode);
+    ResolveResult @NotNull [] resolve(@NotNull T t, boolean incompleteCode);
   }
 
   /**
@@ -75,8 +74,7 @@ public class ResolveCache implements Disposable {
    */
   @FunctionalInterface
   public interface PolyVariantContextResolver<T extends PsiPolyVariantReference> {
-    @NotNull
-    ResolveResult[] resolve(@NotNull T ref, @NotNull PsiFile containingFile, boolean incompleteCode);
+    ResolveResult @NotNull [] resolve(@NotNull T ref, @NotNull PsiFile containingFile, boolean incompleteCode);
   }
 
   /**
@@ -161,29 +159,26 @@ public class ResolveCache implements Disposable {
     return result;
   }
 
-  @NotNull
-  public <T extends PsiPolyVariantReference> ResolveResult[] resolveWithCaching(@NotNull T ref,
-                                                                                @NotNull PolyVariantResolver<T> resolver,
-                                                                                boolean needToPreventRecursion,
-                                                                                boolean incompleteCode) {
+  public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull T ref,
+                                                                                          @NotNull PolyVariantResolver<T> resolver,
+                                                                                          boolean needToPreventRecursion,
+                                                                                          boolean incompleteCode) {
     return resolveWithCaching(ref, resolver, needToPreventRecursion, incompleteCode, ref.getElement().getContainingFile());
   }
-  @NotNull
-  public <T extends PsiPolyVariantReference> ResolveResult[] resolveWithCaching(@NotNull T ref,
-                                                                                @NotNull PolyVariantResolver<T> resolver,
-                                                                                boolean needToPreventRecursion,
-                                                                                boolean incompleteCode,
-                                                                                @NotNull PsiFile containingFile) {
+  public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull T ref,
+                                                                                          @NotNull PolyVariantResolver<T> resolver,
+                                                                                          boolean needToPreventRecursion,
+                                                                                          boolean incompleteCode,
+                                                                                          @NotNull PsiFile containingFile) {
     ResolveResult[] result = resolve(ref, resolver, needToPreventRecursion, incompleteCode, true, containingFile.isPhysical());
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
-  @NotNull
-  public <T extends PsiPolyVariantReference> ResolveResult[] resolveWithCaching(@NotNull final T ref,
-                                                                                @NotNull final PolyVariantContextResolver<T> resolver,
-                                                                                boolean needToPreventRecursion,
-                                                                                final boolean incompleteCode,
-                                                                                @NotNull final PsiFile containingFile) {
+  public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull final T ref,
+                                                                                          @NotNull final PolyVariantContextResolver<T> resolver,
+                                                                                          boolean needToPreventRecursion,
+                                                                                          final boolean incompleteCode,
+                                                                                          @NotNull final PsiFile containingFile) {
     ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -221,8 +216,8 @@ public class ResolveCache implements Disposable {
     }
   }
 
-  @Nullable // null means not cached
-  public <T extends PsiPolyVariantReference> ResolveResult[] getCachedResults(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
+  // null means not cached
+  public <T extends PsiPolyVariantReference> ResolveResult @Nullable [] getCachedResults(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
     Map<T, ResolveResult[]> map = getMap(physical, getIndex(incompleteCode, isPoly));
     return map.get(ref);
   }

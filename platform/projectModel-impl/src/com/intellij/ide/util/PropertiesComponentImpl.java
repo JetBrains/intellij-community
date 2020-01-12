@@ -130,9 +130,8 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
     return myMap.containsKey(name);
   }
 
-  @Nullable
   @Override
-  public String[] getValues(@NotNull @NonNls String name) {
+  public String @Nullable [] getValues(@NotNull @NonNls String name) {
     final String value = getValue(name);
     return value != null ? value.split("\n") : null;
   }

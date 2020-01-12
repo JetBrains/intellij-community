@@ -46,8 +46,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
     PyDataView.getInstance(project).show(debugValue);
   }
 
-  @Nullable
-  private static TreePath[] getSelectedPaths(DataContext dataContext) {
+  private static TreePath @Nullable [] getSelectedPaths(DataContext dataContext) {
     XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
     return tree == null ? null : tree.getSelectionPaths();
   }

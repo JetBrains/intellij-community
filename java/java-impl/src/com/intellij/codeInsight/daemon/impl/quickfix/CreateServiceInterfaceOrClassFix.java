@@ -166,9 +166,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(moduleRootDirs));
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 

@@ -91,7 +91,7 @@ public class CommonRefactoringUtil {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"));
   }
 
-  public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement... elements) {
+  public static boolean checkReadOnlyStatus(@NotNull Project project, PsiElement @NotNull ... elements) {
     return checkReadOnlyStatus(project, Collections.emptySet(), Arrays.asList(elements), RefactoringBundle.message("refactoring.cannot.be.performed"), true);
   }
 

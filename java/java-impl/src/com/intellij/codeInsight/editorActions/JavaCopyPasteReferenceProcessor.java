@@ -85,11 +85,10 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   }
 
 
-  @NotNull
   @Override
-  protected PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
-                                                                       RangeMarker bounds,
-                                                                       ReferenceData[] referenceData) {
+  protected PsiJavaCodeReferenceElement @NotNull [] findReferencesToRestore(PsiFile file,
+                                                                            RangeMarker bounds,
+                                                                            ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper helper = facade.getResolveHelper();

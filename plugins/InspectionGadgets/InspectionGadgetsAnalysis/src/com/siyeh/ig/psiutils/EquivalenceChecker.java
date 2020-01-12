@@ -1032,7 +1032,7 @@ public class EquivalenceChecker {
     return EXACT_MISMATCH;
   }
 
-  protected Match expressionsAreEquivalent(@Nullable PsiExpression[] expressions1, @Nullable PsiExpression[] expressions2, boolean inAnyOrder) {
+  protected Match expressionsAreEquivalent(PsiExpression @Nullable [] expressions1, PsiExpression @Nullable [] expressions2, boolean inAnyOrder) {
     if (expressions1 == null || expressions2 == null) {
       return Match.exact(expressions1 == expressions2);
     }

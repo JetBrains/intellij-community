@@ -62,9 +62,8 @@ public class FileTreeStructure extends AbstractTreeStructure {
     return myRootElement;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object nodeElement) {
+  public Object @NotNull [] getChildElements(@NotNull Object nodeElement) {
     if (!(nodeElement instanceof FileElement)) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }

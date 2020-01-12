@@ -73,9 +73,8 @@ public class PyManagePackagesDialog extends DialogWrapper {
     return "PyManagePackagesDialog";
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[0];
   }
 }

@@ -34,16 +34,16 @@ public abstract class UsageViewManager {
   }
 
   @NotNull
-  public abstract UsageView createUsageView(@NotNull UsageTarget[] targets, @NotNull Usage[] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
+  public abstract UsageView createUsageView(UsageTarget @NotNull [] targets, Usage @NotNull [] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
 
   @NotNull
-  public abstract UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory);
+  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory);
 
   @NotNull
-  public abstract UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation);
+  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation);
 
   @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
-  public abstract UsageView searchAndShowUsages(@NotNull UsageTarget[] searchFor,
+  public abstract UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
                                                 @NotNull Factory<UsageSearcher> searcherFactory,
                                                 boolean showPanelIfOnlyOneUsage,
                                                 boolean showNotFoundMessage,
@@ -55,7 +55,7 @@ public abstract class UsageViewManager {
     void findingUsagesFinished(@Nullable UsageView usageView);
   }
 
-  public abstract void searchAndShowUsages(@NotNull UsageTarget[] searchFor,
+  public abstract void searchAndShowUsages(UsageTarget @NotNull [] searchFor,
                                            @NotNull Factory<UsageSearcher> searcherFactory,
                                            @NotNull FindUsagesProcessPresentation processPresentation,
                                            @NotNull UsageViewPresentation presentation,
@@ -64,7 +64,7 @@ public abstract class UsageViewManager {
   @Nullable
   public abstract UsageView getSelectedUsageView();
 
-  public static boolean isSelfUsage(@NotNull final Usage usage, @NotNull final UsageTarget[] searchForTarget) {
+  public static boolean isSelfUsage(@NotNull final Usage usage, final UsageTarget @NotNull [] searchForTarget) {
     if (!(usage instanceof PsiElementUsage)) return false;
     return ReadAction.compute(() -> {
       final PsiElement element = ((PsiElementUsage)usage).getElement();

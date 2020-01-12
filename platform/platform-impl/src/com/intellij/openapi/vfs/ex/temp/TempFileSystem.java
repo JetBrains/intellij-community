@@ -151,8 +151,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   }
 
   @Override
-  @NotNull
-  public String[] list(@NotNull final VirtualFile file) {
+  public String @NotNull [] list(@NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
     return fsItem.list();
@@ -198,8 +197,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     if (fsItem == null) throw new FileNotFoundException("Cannot find temp for " + file.getPath());
     assert fsItem instanceof FSFile : fsItem;
@@ -271,8 +269,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       return myParent;
     }
 
-    @NotNull
-    public String[] list() {
+    public String @NotNull [] list() {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
@@ -311,9 +308,8 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       myChildren.remove(fsItem.myName);
     }
 
-    @NotNull
     @Override
-    public String[] list() {
+    public String @NotNull [] list() {
       return ArrayUtilRt.toStringArray(myChildren.keySet());
     }
   }

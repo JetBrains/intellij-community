@@ -96,8 +96,7 @@ public abstract class AddDomElementAction extends AnAction {
     }
   }
 
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     Project project = e == null ? null : e.getProject();
     if (project == null) return AnAction.EMPTY_ARRAY;
 
@@ -122,8 +121,7 @@ public abstract class AddDomElementAction extends AnAction {
     if (actions.size() > 1 && showAsPopup()) {
       ActionGroup group = new ActionGroup() {
         @Override
-        @NotNull
-        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           return actions.toArray(AnAction.EMPTY_ARRAY);
         }
       };
@@ -143,8 +141,7 @@ public abstract class AddDomElementAction extends AnAction {
                                                  final Type type,
                                                  final DomCollectionChildDescription description);
 
-  @NotNull
-  protected abstract DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e);
+  protected abstract DomCollectionChildDescription @NotNull [] getDomCollectionChildDescriptions(final AnActionEvent e);
 
   @Nullable
   protected abstract DomElement getParentDomElement(final AnActionEvent e);

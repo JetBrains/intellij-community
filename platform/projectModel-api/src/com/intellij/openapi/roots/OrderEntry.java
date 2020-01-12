@@ -46,8 +46,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @return list of virtual files.
    * @see #getUrls(OrderRootType)
    */
-  @NotNull
-  VirtualFile[] getFiles(@NotNull OrderRootType type);
+  VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type);
 
   /**
    * Returns list of roots of given type for this entry. To validate returned roots,
@@ -58,8 +57,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @param rootType the type of roots which should be returned.
    * @return the list of roots of the specified type.
    */
-  @NotNull
-  String[] getUrls(@NotNull OrderRootType rootType);
+  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
   /**
    * Returns the user-visible name of this OrderEntry.

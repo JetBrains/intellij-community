@@ -59,8 +59,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
 

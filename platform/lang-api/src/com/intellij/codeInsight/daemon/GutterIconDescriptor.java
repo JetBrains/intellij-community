@@ -52,8 +52,7 @@ public abstract class GutterIconDescriptor {
     return getClass().getName();
   }
 
-  @NotNull
-  public Option[] getOptions() {
+  public Option @NotNull [] getOptions() {
     return Option.NO_OPTIONS;
   }
 

@@ -27,6 +27,5 @@ public abstract class BreadcrumbsPresentationProvider {
   public static final ExtensionPointName<BreadcrumbsPresentationProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.breadcrumbsPresentationProvider");
 
-  @Nullable
-  public abstract CrumbPresentation[] getCrumbPresentations(@NotNull PsiElement[] element);
+  public abstract CrumbPresentation @Nullable [] getCrumbPresentations(PsiElement @NotNull [] element);
 }

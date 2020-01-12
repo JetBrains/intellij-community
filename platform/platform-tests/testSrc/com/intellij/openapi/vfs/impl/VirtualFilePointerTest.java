@@ -108,13 +108,13 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     final List<String> log = new ArrayList<>();
 
     @Override
-    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+    public void beforeValidityChanged(VirtualFilePointer @NotNull [] pointers) {
       verifyPointersInCorrectState(pointers);
       log.add(buildMessage("before", pointers));
     }
 
     @Override
-    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+    public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
       verifyPointersInCorrectState(pointers);
       log.add(buildMessage("after", pointers));
     }

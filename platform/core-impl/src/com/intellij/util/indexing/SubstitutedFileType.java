@@ -68,7 +68,7 @@ public class SubstitutedFileType extends LanguageFileType{
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return myFileType.getCharset(file, content);
   }
 

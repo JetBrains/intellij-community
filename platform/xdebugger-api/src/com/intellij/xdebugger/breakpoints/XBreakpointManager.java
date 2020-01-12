@@ -35,8 +35,7 @@ public interface XBreakpointManager {
 
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
-  @NotNull
-  XBreakpoint<?>[] getAllBreakpoints();
+  XBreakpoint<?> @NotNull [] getAllBreakpoints();
 
   @NotNull
   <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull XBreakpointType<B, ?> type);

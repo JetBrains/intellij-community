@@ -96,15 +96,13 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
     ExtensionPoint<UsageGroupingRuleProvider> point = UsageGroupingRuleProvider.EP_NAME.getPoint(null);
     UsageGroupingRuleProvider provider = new UsageGroupingRuleProvider() {
-      @NotNull
       @Override
-      public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
+      public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return rules;
       }
 
-      @NotNull
       @Override
-      public AnAction[] createGroupingActions(@NotNull UsageView view) {
+      public AnAction @NotNull [] createGroupingActions(@NotNull UsageView view) {
         return AnAction.EMPTY_ARRAY;
       }
     };
@@ -134,7 +132,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
   private static class LogGroupingRule extends SingleParentUsageGroupingRule {
     @Nullable
     @Override
-    protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       return new LogUsageGroup(usage.toString().length());
     }
   }
@@ -269,7 +267,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
     @Nullable
     @Override
-    protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       MockUsage mockUsage = (MockUsage)usage;
 
       if (mockUsage.getId() > 1000) return null;
@@ -294,8 +292,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     public UsagePresentation getPresentation() {
       return new UsagePresentation() {
         @Override
-        @NotNull
-        public TextChunk[] getText() {
+        public TextChunk @NotNull [] getText() {
           return TextChunk.EMPTY_ARRAY;
         }
 

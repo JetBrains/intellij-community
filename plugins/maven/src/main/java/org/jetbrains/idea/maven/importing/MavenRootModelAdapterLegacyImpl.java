@@ -121,8 +121,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   @Override
-  @NotNull
-  public String[] getSourceRootUrls(boolean includingTests) {
+  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
     return myRootModelModuleExtension.getSourceRootUrls(includingTests);
   }
 

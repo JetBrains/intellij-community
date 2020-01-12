@@ -87,8 +87,7 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     return SyntaxHighlighterBase.pack(keys1.get(tokenType), keys2.get(tokenType));
   }
 

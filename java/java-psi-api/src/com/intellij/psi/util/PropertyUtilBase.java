@@ -107,8 +107,7 @@ public class PropertyUtilBase {
     return ContainerUtil.concat(getGetters(psiClass, propertyName), getSetters(psiClass, propertyName));
   }
 
-  @NotNull
-  public static String[] getReadableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
+  public static String @NotNull [] getReadableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
     List<String> result = new ArrayList<>();
 
     PsiMethod[] methods = includeSuperClass ? aClass.getAllMethods() : aClass.getMethods();
@@ -124,8 +123,7 @@ public class PropertyUtilBase {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @NotNull
-  public static String[] getWritableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
+  public static String @NotNull [] getWritableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
     List<String> result = new ArrayList<>();
 
     PsiMethod[] methods = includeSuperClass ? aClass.getAllMethods() : aClass.getMethods();
@@ -382,8 +380,7 @@ public class PropertyUtilBase {
   }
 
   @NonNls
-  @NotNull
-  public static String[] suggestGetterNames(@NotNull String propertyName) {
+  public static String @NotNull [] suggestGetterNames(@NotNull String propertyName) {
     final String str = StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName));
     return new String[]{IS_PREFIX + str, GET_PREFIX + str};
   }

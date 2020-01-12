@@ -129,8 +129,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getContentRoots() {
+  public VirtualFile @NotNull [] getContentRoots() {
     final List<VirtualFile> result = new ArrayList<>();
     Module[] modules = getModuleManager().getModules();
     for (Module module : modules) {
@@ -144,9 +143,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getContentSourceRoots() {
+  public VirtualFile @NotNull [] getContentSourceRoots() {
     final List<VirtualFile> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
@@ -177,9 +175,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return new ModulesOrderEnumerator(modules);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getContentRootsFromAllModules() {
+  public VirtualFile @NotNull [] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<>();
     final Module[] modules = getModuleManager().getSortedModules();
     for (Module module : modules) {
@@ -489,10 +486,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private static class ListenerContainer<T> {
     private final Set<T> myListeners = new LinkedHashSet<>();
-    @NotNull private final T[] myEmptyArray;
+    private final T @NotNull [] myEmptyArray;
     private T[] myListenersArray;
 
-    private ListenerContainer(@NotNull T[] emptyArray) {
+    private ListenerContainer(T @NotNull [] emptyArray) {
       myEmptyArray = emptyArray;
     }
 
@@ -507,8 +504,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       return myListeners.isEmpty();
     }
 
-    @NotNull
-    synchronized T[] getListeners() {
+    synchronized T @NotNull [] getListeners() {
       if (myListenersArray == null) {
         myListenersArray = myListeners.toArray(myEmptyArray);
       }

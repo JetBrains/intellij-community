@@ -248,7 +248,7 @@ public class VfsUtilCore {
   }
 
   @NotNull
-  public static InputStream byteStreamSkippingBOM(@NotNull byte[] buf, @NotNull VirtualFile file) throws IOException {
+  public static InputStream byteStreamSkippingBOM(byte @NotNull [] buf, @NotNull VirtualFile file) throws IOException {
     BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
     return inputStreamSkippingBOM(stream, file);
   }
@@ -382,15 +382,13 @@ public class VfsUtilCore {
     }
   }
 
-  @NotNull
-  public static byte[] loadBytes(@NotNull VirtualFile file) throws IOException {
+  public static byte @NotNull [] loadBytes(@NotNull VirtualFile file) throws IOException {
     return FileUtilRt.isTooLarge(file.getLength()) ?
            FileUtil.loadFirstAndClose(file.getInputStream(), FileUtilRt.LARGE_FILE_PREVIEW_SIZE) :
            file.contentsToByteArray();
   }
 
-  @NotNull
-  public static VirtualFile[] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
+  public static VirtualFile @NotNull [] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
     return files.isEmpty() ? VirtualFile.EMPTY_ARRAY : files.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
@@ -676,8 +674,7 @@ public class VfsUtilCore {
    * @param file the file
    * @return virtual files that represents paths from root to the passed file
    */
-  @NotNull
-  static VirtualFile[] getPathComponents(@NotNull VirtualFile file) {
+  static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
     List<VirtualFile> componentsList = new ArrayList<>();
     while (file != null) {
       componentsList.add(file);
@@ -720,7 +717,7 @@ public class VfsUtilCore {
       super(virtualFiles);
     }
 
-    public DistinctVFilesRootsCollection(@NotNull VirtualFile[] collection) {
+    public DistinctVFilesRootsCollection(VirtualFile @NotNull [] collection) {
       super(collection);
     }
 

@@ -55,8 +55,7 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     // handled in XPathCompletionData
     return EMPTY_ARRAY;
   }

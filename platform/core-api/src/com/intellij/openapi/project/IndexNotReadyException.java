@@ -63,9 +63,8 @@ public class IndexNotReadyException extends RuntimeException implements Exceptio
     myStartTrace = startTrace;
   }
 
-  @NotNull
   @Override
-  public Attachment[] getAttachments() {
+  public Attachment @NotNull [] getAttachments() {
     return myStartTrace == null
            ? Attachment.EMPTY_ARRAY
            : new Attachment[]{new Attachment("indexingStart", myStartTrace)};

@@ -314,7 +314,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
-  private void doTestWithLocations(@Nullable String[][] resources, String ext) {
+  private void doTestWithLocations(String[] @Nullable [] resources, String ext) {
     doConfigureWithLocations(resources, ext);
     doDoTest(true,false);
   }

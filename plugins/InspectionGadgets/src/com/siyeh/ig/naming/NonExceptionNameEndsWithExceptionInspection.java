@@ -32,8 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final String name = (String)infos[0];
     final Boolean onTheFly = (Boolean)infos[1];
     if (onTheFly.booleanValue()) {

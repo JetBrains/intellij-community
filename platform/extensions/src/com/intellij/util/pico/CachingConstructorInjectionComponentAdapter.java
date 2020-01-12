@@ -99,8 +99,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
     }
   }
 
-  @NotNull
-  private Object[] getConstructorArguments(PicoContainer container, @NotNull Constructor<?> ctor) {
+  private Object @NotNull [] getConstructorArguments(PicoContainer container, @NotNull Constructor<?> ctor) {
     if (ctor.getParameterCount() == 0) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -206,8 +205,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
     return matchingConstructors;
   }
 
-  @NotNull
-  private Constructor<?>[] getConstructors() {
+  private Constructor<?> @NotNull [] getConstructors() {
     return AccessController.doPrivileged((PrivilegedAction<Constructor<?>[]>)() -> getComponentImplementation().getDeclaredConstructors());
   }
 }

@@ -246,9 +246,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> actions = new ArrayList<>();
     actions.add(new AbstractAddGroup("Add") {
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return AddFacetOfTypeAction.createAddFacetActions(FacetStructureConfigurable.this);
       }
     });

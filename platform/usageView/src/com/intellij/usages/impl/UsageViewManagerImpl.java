@@ -53,8 +53,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   @NotNull
-  public UsageViewEx createUsageView(@NotNull UsageTarget[] targets,
-                                     @NotNull Usage[] usages,
+  public UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
+                                     Usage @NotNull [] usages,
                                      @NotNull UsageViewPresentation presentation,
                                      Factory<UsageSearcher> usageSearcherFactory) {
     for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
@@ -80,8 +80,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   @NotNull
-  public UsageView showUsages(@NotNull UsageTarget[] searchedFor,
-                              @NotNull Usage[] foundUsages,
+  public UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                              Usage @NotNull [] foundUsages,
                               @NotNull UsageViewPresentation presentation,
                               Factory<UsageSearcher> factory) {
     UsageViewEx usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
@@ -99,7 +99,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   @NotNull
-  public UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation) {
+  public UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation) {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
@@ -118,7 +118,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @Override
-  public UsageView searchAndShowUsages(@NotNull final UsageTarget[] searchFor,
+  public UsageView searchAndShowUsages(final UsageTarget @NotNull [] searchFor,
                                        @NotNull final Factory<UsageSearcher> searcherFactory,
                                        final boolean showPanelIfOnlyOneUsage,
                                        final boolean showNotFoundMessage,
@@ -131,7 +131,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return doSearchAndShow(searchFor, searcherFactory, presentation, processPresentation, listener);
   }
 
-  private UsageView doSearchAndShow(@NotNull final UsageTarget[] searchFor,
+  private UsageView doSearchAndShow(final UsageTarget @NotNull [] searchFor,
                                     @NotNull final Factory<UsageSearcher> searcherFactory,
                                     @NotNull final UsageViewPresentation presentation,
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
@@ -164,7 +164,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @NotNull
-  SearchScope getMaxSearchScopeToWarnOfFallingOutOf(@NotNull UsageTarget[] searchFor) {
+  SearchScope getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
     if (target instanceof TypeSafeDataProvider) {
       final SearchScope[] scope = new SearchScope[1];
@@ -180,7 +180,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @Override
-  public void searchAndShowUsages(@NotNull UsageTarget[] searchFor,
+  public void searchAndShowUsages(UsageTarget @NotNull [] searchFor,
                                   @NotNull Factory<UsageSearcher> searcherFactory,
                                   @NotNull FindUsagesProcessPresentation processPresentation,
                                   @NotNull UsageViewPresentation presentation,

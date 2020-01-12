@@ -62,9 +62,9 @@ public abstract class NullableNotNullManager {
     return isNullable(owner, false) || isNotNull(owner, false);
   }
 
-  public abstract void setNotNulls(@NotNull String... annotations);
+  public abstract void setNotNulls(String @NotNull ... annotations);
 
-  public abstract void setNullables(@NotNull String... annotations);
+  public abstract void setNullables(String @NotNull ... annotations);
 
   @NotNull
   public abstract String getDefaultNullable();
@@ -413,7 +413,7 @@ public abstract class NullableNotNullManager {
   }
 
   @Nullable
-  private NullabilityAnnotationInfo findNullityDefaultOnPackage(@NotNull PsiAnnotation.TargetType[] placeTargetTypes,
+  private NullabilityAnnotationInfo findNullityDefaultOnPackage(PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
                                                                 @Nullable PsiPackage psiPackage,
                                                                 PsiModifierListOwner owner) {
     boolean superPackage = false;
@@ -428,7 +428,7 @@ public abstract class NullableNotNullManager {
 
   @Nullable
   abstract NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
-                                                       @NotNull PsiAnnotation.TargetType[] placeTargetTypes,
+                                                       PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
                                                        PsiModifierListOwner owner, boolean superPackage);
 
   @NotNull

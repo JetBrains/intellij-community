@@ -44,7 +44,7 @@ public interface MoveClassToInnerHandler {
 
   void retargetClassRefsInMoved(@NotNull Map<PsiElement, PsiElement> mapping);
 
-  void retargetNonCodeUsages(@NotNull final Map<PsiElement, PsiElement> oldToNewElementMap, @NotNull NonCodeUsageInfo[] myNonCodeUsages);
+  void retargetNonCodeUsages(@NotNull final Map<PsiElement, PsiElement> oldToNewElementMap, NonCodeUsageInfo @NotNull [] myNonCodeUsages);
 
   void removeRedundantImports(PsiFile targetClassFile);
 }

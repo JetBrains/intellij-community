@@ -52,9 +52,8 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     return String.format(templateUrl, recorderId);
   }
 
-  @NotNull
   @Override
-  public String[] getAttributeNames() {
+  public String @NotNull [] getAttributeNames() {
     return ArrayUtil.mergeArrays(super.getAttributeNames(), PERCENT_TRAFFIC, APPROVED_GROUPS_SERVICE, DICTIONARY_SERVICE);
   }
 

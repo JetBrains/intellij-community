@@ -72,8 +72,7 @@ public class ParametersListUtil {
   /**
    * @see #parse(String)
    */
-  @NotNull
-  public static String[] parseToArray(@NotNull final String string) {
+  public static String @NotNull [] parseToArray(@NotNull final String string) {
     final List<String> params = parse(string);
     return ArrayUtilRt.toStringArray(params);
   }

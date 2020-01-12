@@ -57,10 +57,9 @@ public class IgnoreReferenceContributor extends PsiReferenceContributor {
      * @param processingContext context
      * @return {@link PsiReference} list
      */
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement,
-                                                 @NotNull ProcessingContext processingContext) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement,
+                                                           @NotNull ProcessingContext processingContext) {
       String text = psiElement.getText();
       if (psiElement instanceof IgnoreEntry && !shouldSkipCompletion(text)) {
         return new IgnoreReferenceSet((IgnoreEntry)psiElement).getAllReferences();

@@ -162,7 +162,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
-                       @NotNull UsageTarget[] targets,
+                       UsageTarget @NotNull [] targets,
                        Factory<UsageSearcher> usageSearcherFactory) {
     // fire events every 50 ms, not more often to batch requests
     myFireEventsFuture = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::fireEvents, 50, 50, TimeUnit.MILLISECONDS);
@@ -648,8 +648,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  @NotNull
-  private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
+  private static UsageFilteringRule @NotNull [] getActiveFilteringRules(final Project project) {
     final List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
     for (UsageFilteringRuleProvider provider : providers) {
@@ -658,8 +657,7 @@ public class UsageViewImpl implements UsageViewEx {
     return list.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project, @NotNull UsageViewSettings usageViewSettings) {
+  private static UsageGroupingRule @NotNull [] getActiveGroupingRules(@NotNull final Project project, @NotNull UsageViewSettings usageViewSettings) {
     final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<UsageGroupingRule> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
@@ -803,8 +801,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  @NotNull
-  protected AnAction[] createActions() {
+  protected AnAction @NotNull [] createActions() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final TreeExpander treeExpander = new TreeExpander() {
       @Override
@@ -880,7 +877,7 @@ public class UsageViewImpl implements UsageViewEx {
     return target instanceof ConfigurableUsageTarget;
   }
 
-  private static ConfigurableUsageTarget getConfigurableTarget(@NotNull UsageTarget[] targets) {
+  private static ConfigurableUsageTarget getConfigurableTarget(UsageTarget @NotNull [] targets) {
     ConfigurableUsageTarget configurableUsageTarget = null;
     if (targets.length != 0) {
       NavigationItem target = targets[0];
@@ -891,8 +888,7 @@ public class UsageViewImpl implements UsageViewEx {
     return configurableUsageTarget;
   }
 
-  @NotNull
-  private AnAction[] createGroupingActions() {
+  private AnAction @NotNull [] createGroupingActions() {
     final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<AnAction> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
@@ -1048,7 +1044,7 @@ public class UsageViewImpl implements UsageViewEx {
     return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
   }
 
-  static KeyboardShortcut getShowUsagesWithSettingsShortcut(@NotNull UsageTarget[] targets) {
+  static KeyboardShortcut getShowUsagesWithSettingsShortcut(UsageTarget @NotNull [] targets) {
     ConfigurableUsageTarget configurableTarget = getConfigurableTarget(targets);
     return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
@@ -1253,13 +1249,13 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public void includeUsages(@NotNull Usage[] usages) {
+  public void includeUsages(Usage @NotNull [] usages) {
     usagesToNodes(Arrays.stream(usages))
       .forEach(myExclusionHandler::includeNode);
   }
 
   @Override
-  public void excludeUsages(@NotNull Usage[] usages) {
+  public void excludeUsages(Usage @NotNull [] usages) {
     usagesToNodes(Arrays.stream(usages))
       .forEach(myExclusionHandler::excludeNode);
   }
@@ -1272,7 +1268,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public void selectUsages(@NotNull Usage[] usages) {
+  public void selectUsages(Usage @NotNull [] usages) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath[] paths = usagesToNodes(Arrays.stream(usages))
       .map(node -> new TreePath(node.getPath()))
@@ -1660,8 +1656,7 @@ public class UsageViewImpl implements UsageViewEx {
     return node instanceof Node ? (Node)node : null;
   }
 
-  @Nullable
-  private Node[] getSelectedNodes() {
+  private Node @Nullable [] getSelectedNodes() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath[] leadSelectionPath = myTree.getSelectionPaths();
     if (leadSelectionPath == null || leadSelectionPath.length == 0) return null;
@@ -1735,8 +1730,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  @Nullable
-  private UsageTarget[] getSelectedUsageTargets() {
+  private UsageTarget @Nullable [] getSelectedUsageTargets() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) return null;
@@ -2132,8 +2126,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myBuilder != null && myBuilder.isVisible(usage);
   }
 
-  @NotNull
-  public UsageTarget[] getTargets() {
+  public UsageTarget @NotNull [] getTargets() {
     return myTargets;
   }
 

@@ -35,7 +35,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
                                @NotNull String descriptionTemplate,
-                               @Nullable LocalQuickFix[] fixes,
+                               LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
@@ -274,9 +274,8 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return ProblemDescriptorUtil.renderDescriptionMessage(this, element);
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getFixes() {
+  public LocalQuickFix @Nullable [] getFixes() {
     return (LocalQuickFix[])super.getFixes();
   }
 }

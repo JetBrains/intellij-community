@@ -47,26 +47,24 @@ public class StructureViewModelBase extends TextEditorBasedStructureViewModel {
   }
 
   @NotNull
-  public StructureViewModelBase withSorters(@NotNull Sorter... sorters) {
+  public StructureViewModelBase withSorters(Sorter @NotNull ... sorters) {
     mySorters = sorters;
     return this;
   }
 
   @NotNull
-  public StructureViewModelBase withSuitableClasses(@NotNull Class... suitableClasses) {
+  public StructureViewModelBase withSuitableClasses(Class @NotNull ... suitableClasses) {
     mySuitableClasses = suitableClasses;
     return this;
   }
 
-  @NotNull
   @Override
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return mySorters;
   }
 
-  @NotNull
   @Override
-  protected Class[] getSuitableClasses() {
+  protected Class @NotNull [] getSuitableClasses() {
     if (mySuitableClasses != null) {
       return mySuitableClasses;
     }

@@ -34,9 +34,8 @@ import java.util.Set;
 
 public class ClassOnlyUsedInOnePackageInspection extends BaseGlobalInspection {
 
-  @Nullable
   @Override
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope scope,
     @NotNull InspectionManager manager,

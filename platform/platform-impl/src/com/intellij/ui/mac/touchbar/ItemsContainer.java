@@ -96,7 +96,7 @@ class ItemsContainer {
     }
   }
 
-  @NotNull String[] getVisibleIds() {
+  String @NotNull [] getVisibleIds() {
     final String[] ids = new String[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
@@ -106,7 +106,7 @@ class ItemsContainer {
     return c == myItems.size() ? ids : Arrays.copyOf(ids, c);
   }
 
-  @NotNull ID[] getVisibleNativePeers() {
+  ID @NotNull [] getVisibleNativePeers() {
     final ID[] ids = new ID[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {

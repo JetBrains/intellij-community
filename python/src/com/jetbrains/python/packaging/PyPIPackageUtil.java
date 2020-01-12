@@ -268,7 +268,7 @@ public class PyPIPackageUtil {
         }
 
         @Override
-        public void handleText(@NotNull char[] data, int pos) {
+        public void handleText(char @NotNull [] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
             final String artifactName = String.valueOf(data);
             final String version = extractVersionFromArtifactName(artifactName, packageName);
@@ -337,7 +337,7 @@ public class PyPIPackageUtil {
         }
 
         @Override
-        public void handleText(@NotNull char[] data, int pos) {
+        public void handleText(char @NotNull [] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
             packages.add(String.valueOf(data));
           }

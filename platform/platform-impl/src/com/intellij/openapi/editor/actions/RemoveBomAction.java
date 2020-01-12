@@ -108,7 +108,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     return CharsetToolkit.getMandatoryBom(file.getCharset()) != null;
   }
 
-  private static void doRemoveBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] bom) {
+  private static void doRemoveBOM(@NotNull VirtualFile virtualFile, byte @NotNull [] bom) {
     virtualFile.setBOM(null);
     NewVirtualFile file = (NewVirtualFile)virtualFile;
     try {
@@ -130,7 +130,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
    * @return collection of detected files with defined {@link VirtualFile#getBOM() BOM} if any; empty collection otherwise
    */
   @NotNull
-  private static List<VirtualFile> getFilesWithBom(@NotNull VirtualFile[] roots) {
+  private static List<VirtualFile> getFilesWithBom(VirtualFile @NotNull [] roots) {
     List<VirtualFile> result = new ArrayList<>();
     for (VirtualFile root : roots) {
       getFilesWithBom(root, result);

@@ -41,8 +41,7 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return myTargetVariable == null ? new PsiElement[] {myTargetClass} : new PsiElement[] {myMethod, myTargetVariable, myTargetClass};
   }
 

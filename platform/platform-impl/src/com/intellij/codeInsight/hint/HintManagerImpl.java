@@ -164,8 +164,7 @@ public class HintManagerImpl extends HintManager {
     myRequestFocusForNextHint = requestFocus;
   }
 
-  @NotNull
-  private HintInfo[] getHintsStackArray() {
+  private HintInfo @NotNull [] getHintsStackArray() {
     return myHintsStack.toArray(new HintInfo[0]);
   }
 

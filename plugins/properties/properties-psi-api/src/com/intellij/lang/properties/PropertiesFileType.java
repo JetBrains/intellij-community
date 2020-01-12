@@ -64,7 +64,7 @@ public class PropertiesFileType extends LanguageFileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
     Charset charset = guessed.hardCodedCharset == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed.hardCodedCharset;
     if (charset == null) {

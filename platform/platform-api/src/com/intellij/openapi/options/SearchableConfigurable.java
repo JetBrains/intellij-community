@@ -90,9 +90,8 @@ public interface SearchableConfigurable extends Configurable {
         myKids = null;
       }
 
-      @NotNull
       @Override
-      public final Configurable[] getConfigurables() {
+      public final Configurable @NotNull [] getConfigurables() {
         if (myKids != null) return myKids;
         myKids = buildConfigurables();
         return myKids;

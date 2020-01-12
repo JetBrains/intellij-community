@@ -34,8 +34,7 @@ public class CompositeLanguage extends Language {
     return myFilters.remove(filter);
   }
 
-  @NotNull
-  public Language[] getLanguageExtensionsForFile(@NotNull PsiFile psi) {
+  public Language @NotNull [] getLanguageExtensionsForFile(@NotNull PsiFile psi) {
     final List<Language> extensions = new ArrayList<>(1);
     for (LanguageFilter filter : myFilters) {
       if (filter.isRelevantForFile(psi)) extensions.add(filter.getLanguage());
@@ -43,8 +42,7 @@ public class CompositeLanguage extends Language {
     return extensions.toArray(new Language[0]);
   }
 
-  @NotNull
-  public LanguageFilter[] getLanguageExtensions() {
+  public LanguageFilter @NotNull [] getLanguageExtensions() {
     return myFilters.toArray(new LanguageFilter[0]);
   }
 }

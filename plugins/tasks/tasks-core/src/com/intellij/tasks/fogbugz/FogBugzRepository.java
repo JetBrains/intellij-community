@@ -132,10 +132,9 @@ public class FogBugzRepository extends BaseRepositoryImpl {
         return null;
       }
 
-      @NotNull
       @Override
       @SuppressWarnings("unchecked")
-      public Comment[] getComments() {
+      public Comment @NotNull [] getComments() {
         List<Element> nodes;
         try {
           nodes = commentPath.selectNodes(element);

@@ -132,20 +132,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  @NotNull
-  public String[] list(@NotNull VirtualFile file) {
+  public String @NotNull [] list(@NotNull VirtualFile file) {
     FSRecords.NameId[] nameIds = listAll(file);
     return ContainerUtil.map2Array(nameIds, String.class, id -> id.name.toString());
   }
 
   @Override
-  @NotNull
-  public String[] listPersisted(@NotNull VirtualFile parent) {
+  public String @NotNull [] listPersisted(@NotNull VirtualFile parent) {
     return listPersisted(FSRecords.list(getFileId(parent)));
   }
 
-  @NotNull
-  private static String[] listPersisted(@NotNull int[] childrenIds) {
+  private static String @NotNull [] listPersisted(int @NotNull [] childrenIds) {
     String[] names = ArrayUtil.newStringArray(childrenIds.length);
     for (int i = 0; i < childrenIds.length; i++) {
       names[i] = FSRecords.getName(childrenIds[i]);
@@ -153,8 +150,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return names;
   }
 
-  @NotNull
-  private static FSRecords.NameId[] persistAllChildren(@NotNull VirtualFile file, int id, @NotNull FSRecords.NameId[] current) {
+  private static FSRecords.NameId @NotNull [] persistAllChildren(@NotNull VirtualFile file, int id, FSRecords.NameId @NotNull [] current) {
     final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
 
     String[] delegateNames = VfsUtil.filterNames(fs.list(file));
@@ -196,8 +192,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  @NotNull
-  public FSRecords.NameId[] listAll(@NotNull VirtualFile file) {
+  public FSRecords.NameId @NotNull [] listAll(@NotNull VirtualFile file) {
     int id = getFileId(file);
 
     FSRecords.NameId[] nameIds = FSRecords.listAll(id);
@@ -244,7 +239,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public int storeUnlinkedContent(@NotNull byte[] bytes) {
+  public int storeUnlinkedContent(byte @NotNull [] bytes) {
     return FSRecords.storeUnlinkedContent(bytes);
   }
 
@@ -389,7 +384,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static int findExistingId(@NotNull String childName,
-                                    @NotNull int[] childIds,
+                                    int @NotNull [] childIds,
                                     @NotNull NewVirtualFileSystem fs) {
     if (childIds.length > 0) {
       // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing non-cached children
@@ -486,14 +481,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     return contentsToByteArray(file, true);
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray(@NotNull VirtualFile file, boolean cacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean cacheContent) throws IOException {
     InputStream contentStream = null;
     boolean reloadFromDelegate;
     boolean outdated;
@@ -550,8 +543,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray(int contentId) throws IOException {
+  public byte @NotNull [] contentsToByteArray(int contentId) throws IOException {
     final DataInputStream stream = readContentById(contentId);
     return FileUtil.loadBytes(stream);
   }
@@ -603,7 +595,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void storeContentToStorage(long fileLength,
                                      @NotNull VirtualFile file,
-                                     boolean readOnly, @NotNull byte[] bytes, int bytesLength) {
+                                     boolean readOnly, byte @NotNull [] bytes, int bytesLength) {
     synchronized (myInputLock) {
       if (bytesLength == fileLength) {
         writeContent(file, new ByteArraySequence(bytes, 0, bytesLength), readOnly);
@@ -615,8 +607,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  @Nullable
-  public byte[] getContentHashIfStored(@NotNull VirtualFile file) {
+  public byte @Nullable [] getContentHashIfStored(@NotNull VirtualFile file) {
     return FSRecords.getContentHash(getFileId(file));
   }
 
@@ -1248,15 +1239,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getRoots() {
+  public VirtualFile @NotNull [] getRoots() {
     Collection<VirtualFileSystemEntry> roots = myRoots.values();
     return VfsUtilCore.toVirtualFileArray(roots); // ConcurrentHashMap.keySet().toArray(new T[0]) guaranteed to return array with no nulls
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getRoots(@NotNull NewVirtualFileSystem fs) {
+  public VirtualFile @NotNull [] getRoots(@NotNull NewVirtualFileSystem fs) {
     final List<VirtualFile> roots = new ArrayList<>();
 
     for (NewVirtualFile root : myRoots.values()) {
@@ -1269,8 +1258,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getLocalRoots() {
+  public VirtualFile @NotNull [] getLocalRoots() {
     List<VirtualFile> roots = new SmartList<>();
 
     for (NewVirtualFile root : myRoots.values()) {

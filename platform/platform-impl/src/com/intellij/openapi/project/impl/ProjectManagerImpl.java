@@ -75,7 +75,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private static final ExtensionPointName<ProjectCloseHandler> CLOSE_HANDLER_EP = new ExtensionPointName<>("com.intellij.projectCloseHandler");
 
-  private @NotNull Project[] myOpenProjects = {}; // guarded by lock
+  private Project @NotNull [] myOpenProjects = {}; // guarded by lock
   private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
   private final Object lock = new Object();
 
@@ -377,8 +377,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public Project[] getOpenProjects() {
+  public Project @NotNull [] getOpenProjects() {
     synchronized (lock) {
       return myOpenProjects;
     }
@@ -977,8 +976,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public String[] getAllExcludedUrls() {
+  public String @NotNull [] getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
   }
 }

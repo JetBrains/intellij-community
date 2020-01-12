@@ -67,9 +67,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     return getTestName(false).contains("UnusedInspection");
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new SillyAssignmentInspection(),
       new AccessStaticViaInstance(),

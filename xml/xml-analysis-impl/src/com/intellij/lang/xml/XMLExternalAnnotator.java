@@ -87,7 +87,7 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
                                          final String message,
                                          @NotNull final Validator.ValidationHost.ErrorType type,
                                          AnnotationHolder myHolder,
-                                         @NotNull final IntentionAction... fixes) {
+                                         final IntentionAction @NotNull ... fixes) {
     if (message != null && !message.isEmpty()) {
       HighlightSeverity severity = type == Validator.ValidationHost.ErrorType.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
       if (context instanceof XmlTag) {
@@ -104,7 +104,7 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
   private static void addMessagesForTreeChild(final PsiElement token,
                                               final HighlightSeverity type,
                                               final String message,
-                                              AnnotationHolder myHolder, @NotNull IntentionAction... actions) {
+                                              AnnotationHolder myHolder, IntentionAction @NotNull ... actions) {
     if (token != null) {
       AnnotationBuilder builder = myHolder.newAnnotation(type, message).range(token);
 

@@ -15,9 +15,8 @@ import java.util.Map;
 public class FSCache {
 
   public static final FSCache NO_CACHE = new FSCache() {
-    @Nullable
     @Override
-    public File[] getChildren(File file) {
+    public File @Nullable [] getChildren(File file) {
       return file.listFiles();
     }
   };
@@ -26,8 +25,7 @@ public class FSCache {
   private static final File[] EMPTY_FILE_ARRAY = new File[0];
   private final Map<File, File[]> myMap = Collections.synchronizedMap(new THashMap<>());
 
-  @Nullable
-  public File[] getChildren(File file) {
+  public File @Nullable [] getChildren(File file) {
     final File[] children = myMap.get(file);
     if (children != null) {
       return children == NULL_VALUE? null : children;

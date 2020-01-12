@@ -47,9 +47,8 @@ public class ManifestSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       return new ManifestLexer();
     }
 
-    @NotNull
     @Override
-    public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+    public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
       return pack(myAttributes.get(tokenType));
     }
   };

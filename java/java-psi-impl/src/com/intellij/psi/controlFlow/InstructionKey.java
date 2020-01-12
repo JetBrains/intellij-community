@@ -14,7 +14,7 @@ class InstructionKey implements Comparable<InstructionKey> {
   private final int myOffset;
   private final int[] myCallStack; // shared between instructions on the same stack level
 
-  private InstructionKey(int offset, @NotNull int[] callStack) {
+  private InstructionKey(int offset, int @NotNull [] callStack) {
     myOffset = offset;
     myCallStack = callStack;
   }
@@ -50,8 +50,7 @@ class InstructionKey implements Comparable<InstructionKey> {
     return myOffset;
   }
 
-  @NotNull
-  int[] getCallStack() {
+  int @NotNull [] getCallStack() {
     return myCallStack;
   }
 

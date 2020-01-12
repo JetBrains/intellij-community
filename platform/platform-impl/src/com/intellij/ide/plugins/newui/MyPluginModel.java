@@ -766,7 +766,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     changeEnableDisable(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin));
   }
 
-  public void changeEnableDisable(@NotNull IdeaPluginDescriptor[] plugins, boolean state) {
+  public void changeEnableDisable(IdeaPluginDescriptor @NotNull [] plugins, boolean state) {
     enableRows(plugins, state);
     updateAfterEnableDisable();
     runInvalidFixCallback();

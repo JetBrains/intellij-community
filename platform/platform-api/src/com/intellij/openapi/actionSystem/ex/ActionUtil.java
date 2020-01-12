@@ -48,7 +48,7 @@ public final class ActionUtil {
   private ActionUtil() {
   }
 
-  public static void showDumbModeWarning(@NotNull AnActionEvent... events) {
+  public static void showDumbModeWarning(AnActionEvent @NotNull ... events) {
     Project project = null;
     List<String> actionNames = new ArrayList<>();
     for (final AnActionEvent event : events) {

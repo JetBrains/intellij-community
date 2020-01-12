@@ -70,16 +70,14 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     return buf.toString();
   }
 
-  @Nullable
   @Override
-  public TextRange[] pasteFromClipboard(@NotNull Editor editor) throws TooLargeContentException {
+  public TextRange @Nullable [] pasteFromClipboard(@NotNull Editor editor) throws TooLargeContentException {
     Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(null);
     return transferable == null ? null : pasteTransferable(editor, transferable);
   }
 
-  @Nullable
   @Override
-  public TextRange[] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException {
+  public TextRange @Nullable [] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException {
     String text = EditorModificationUtil.getStringContent(content);
     if (text == null) return null;
 

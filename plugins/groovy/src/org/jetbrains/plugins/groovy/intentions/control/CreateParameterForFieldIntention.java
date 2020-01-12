@@ -148,7 +148,7 @@ public class CreateParameterForFieldIntention extends Intention {
     final String finalParameterName = parameterName;
     final GrChangeSignatureProcessor processor = new GrChangeSignatureProcessor(project, grChangeInfo) {
       @Override
-      protected void performRefactoring(@NotNull UsageInfo[] usages) {
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
         super.performRefactoring(usages);
 
         final GrOpenBlock block = constructor.getBlock();

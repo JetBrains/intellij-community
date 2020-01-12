@@ -75,8 +75,7 @@ class StartUseVcsDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  @NotNull
-  private String[] prepareComboData() {
+  private String @NotNull [] prepareComboData() {
     ArrayList<String> keys = new ArrayList<>(myData.getVcses().keySet());
     Collections.sort(keys, (String o1, String o2) -> {
       if (o1.equals(o2)) return 0;
@@ -93,7 +92,7 @@ class StartUseVcsDialog extends DialogWrapper {
   }
 
   private static class VcsCombo extends JComboBox<String> {
-    private VcsCombo(@NotNull String[] items) {
+    private VcsCombo(String @NotNull [] items) {
       super(items);
       setSelectedIndex(0);
       setEditable(false);

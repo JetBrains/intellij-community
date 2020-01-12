@@ -591,7 +591,7 @@ public class ExpectedHighlightingData {
   public static String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
                                    @NotNull Collection<? extends HighlightInfo> infos,
                                    @NotNull String text,
-                                   @NotNull ResourceBundle... messageBundles) {
+                                   ResourceBundle @NotNull ... messageBundles) {
     // filter highlighting data and map each highlighting to a tag name
     List<Pair<String, ? extends HighlightInfo>> list = infos.stream()
       .map(info -> pair(findTag(types, info), info))

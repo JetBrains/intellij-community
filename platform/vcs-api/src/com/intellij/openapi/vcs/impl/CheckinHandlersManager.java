@@ -20,5 +20,5 @@ public abstract class CheckinHandlersManager {
    * @return the list of registered factories
    */
   @NotNull
-  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(@NotNull AbstractVcs[] vcses);
+  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs @NotNull [] vcses);
 }

@@ -44,15 +44,13 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
     myEditor = editor;
   }
 
-  @NotNull
   @Override
-  public HighlightingPass[] createPassesForEditor() {
+  public HighlightingPass @NotNull [] createPassesForEditor() {
     return new HighlightingPass[]{new ResourceBundleEditorHighlightingPass(myEditor)};
   }
 
-  @NotNull
   @Override
-  public HighlightingPass[] createPassesForVisibleArea() {
+  public HighlightingPass @NotNull [] createPassesForVisibleArea() {
     throw new UnsupportedOperationException();
   }
 

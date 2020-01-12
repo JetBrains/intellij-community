@@ -99,20 +99,17 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   }
 
   @Override
-  @NotNull
-  public Grouper[] getGroupers() {
+  public Grouper @NotNull [] getGroupers() {
     return new Grouper[]{myByWordPrefixesGrouper};
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return new Sorter[] {Sorter.ALPHA_SORTER, KIND_SORTER};
   }
 
   @Override
-  @NotNull
-  protected Class[] getSuitableClasses() {
+  protected Class @NotNull [] getSuitableClasses() {
     return new Class[] {Property.class};
   }
 

@@ -915,9 +915,8 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
    *
    * @return an enumeration of the keys in this table
    */
-  @NotNull
   @Override
-  public long[] keys() {
+  public long @NotNull [] keys() {
     Object[] entries = new EntrySetView<>(this).toArray();
     long[] result = new long[entries.length];
     for (int i = 0; i < entries.length; i++) {
@@ -2454,9 +2453,8 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
     private static final String oomeMsg = "Required array size too large";
 
-    @NotNull
     @Override
-    public final Object[] toArray() {
+    public final Object @NotNull [] toArray() {
       long sz = map.mappingCount();
       if (sz > MAX_ARRAY_SIZE) {
         throw new OutOfMemoryError(oomeMsg);
@@ -2482,10 +2480,9 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
       return (i == n) ? r : Arrays.copyOf(r, i);
     }
 
-    @NotNull
     @Override
     @SuppressWarnings("unchecked")
-    public final <T> T[] toArray(@NotNull T[] a) {
+    public final <T> T @NotNull [] toArray(T @NotNull [] a) {
       long sz = map.mappingCount();
       if (sz > MAX_ARRAY_SIZE) {
         throw new OutOfMemoryError(oomeMsg);

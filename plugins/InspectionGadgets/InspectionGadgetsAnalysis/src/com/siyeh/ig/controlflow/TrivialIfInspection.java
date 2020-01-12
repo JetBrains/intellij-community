@@ -70,9 +70,8 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     return InspectionGadgetsBundle.message("trivial.if.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     boolean chainedIf = (boolean)infos[0];
     if (chainedIf) {
       return new InspectionGadgetsFix[]{

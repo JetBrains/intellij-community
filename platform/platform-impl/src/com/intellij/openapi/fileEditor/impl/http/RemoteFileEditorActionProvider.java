@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class RemoteFileEditorActionProvider {
   public static final ExtensionPointName<RemoteFileEditorActionProvider> EP_NAME = ExtensionPointName.create("com.intellij.http.fileEditorActionProvider");
 
-  @NotNull
-  public abstract AnAction[] createToolbarActions(@NotNull Project project, @NotNull HttpVirtualFile file);
+  public abstract AnAction @NotNull [] createToolbarActions(@NotNull Project project, @NotNull HttpVirtualFile file);
 
 }

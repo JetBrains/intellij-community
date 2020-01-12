@@ -108,8 +108,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
     return Collections.singletonList(file);
   }
 
-  @NotNull
-  private PsiAnnotation[] getAnnotations(@NotNull Project project, PsiModifierListOwner owner) {
+  private PsiAnnotation @NotNull [] getAnnotations(@NotNull Project project, PsiModifierListOwner owner) {
     PsiAnnotation[] annotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(owner);
     if (annotations == null) {
       return PsiAnnotation.EMPTY_ARRAY;

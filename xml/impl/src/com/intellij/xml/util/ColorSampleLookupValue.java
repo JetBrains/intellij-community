@@ -78,8 +78,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return true;
   }
 
-  @NotNull
-  public static ColorSampleLookupValue[] getColors() {
+  public static ColorSampleLookupValue @NotNull [] getColors() {
     if (ourColors == null) {
       synchronized (ColorSampleLookupValue.class) {
         if (ourColors == null) {

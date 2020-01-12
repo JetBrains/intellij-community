@@ -55,14 +55,14 @@ public class ProblemsHolder {
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                              @Nullable LocalQuickFix... fixes) {
+                              LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                               @NotNull ProblemHighlightType highlightType,
-                              @Nullable LocalQuickFix... fixes) {
+                              LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
   }
 
@@ -117,7 +117,7 @@ public class ProblemsHolder {
   public void registerProblemForReference(@NotNull PsiReference reference,
                                           @NotNull ProblemHighlightType highlightType,
                                           @NotNull String descriptionTemplate,
-                                          @Nullable LocalQuickFix... fixes) {
+                                          LocalQuickFix @Nullable ... fixes) {
     ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(),
                                                                      descriptionTemplate, highlightType, myOnTheFly, fixes);
     registerProblem(descriptor);
@@ -154,7 +154,7 @@ public class ProblemsHolder {
   public void registerProblem(@NotNull PsiElement psiElement,
                               @Nullable TextRange rangeInElement,
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                              @Nullable LocalQuickFix... fixes) {
+                              LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
   }
 
@@ -171,7 +171,7 @@ public class ProblemsHolder {
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                               @NotNull ProblemHighlightType highlightType,
                               @Nullable TextRange rangeInElement,
-                              @Nullable LocalQuickFix... fixes) {
+                              LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, myOnTheFly, fixes));
   }
 
@@ -180,8 +180,7 @@ public class ProblemsHolder {
     return myProblems;
   }
 
-  @NotNull
-  public ProblemDescriptor[] getResultsArray() {
+  public ProblemDescriptor @NotNull [] getResultsArray() {
     final List<ProblemDescriptor> problems = getResults();
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }

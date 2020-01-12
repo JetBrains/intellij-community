@@ -390,11 +390,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return new DfaCallArguments(qualifier, argValues, !instruction.shouldFlushFields());
   }
 
-  @Nullable
-  private DfaValue[] popCallArguments(MethodCallInstruction instruction,
-                                      DfaValueFactory factory,
-                                      DfaMemoryState memState,
-                                      MutationSignature sig) {
+  private DfaValue @Nullable [] popCallArguments(MethodCallInstruction instruction,
+                                                 DfaValueFactory factory,
+                                                 DfaMemoryState memState,
+                                                 MutationSignature sig) {
     final int argCount = instruction.getArgCount();
 
     PsiMethod method = instruction.getTargetMethod();
@@ -781,11 +780,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  @NotNull
-  private DfaInstructionState[] handleAndOrBinop(BinopInstruction instruction,
-                                                 DataFlowRunner runner,
-                                                 DfaMemoryState memState,
-                                                 DfaValue dfaRight, DfaValue dfaLeft) {
+  private DfaInstructionState @NotNull [] handleAndOrBinop(BinopInstruction instruction,
+                                                           DataFlowRunner runner,
+                                                           DfaMemoryState memState,
+                                                           DfaValue dfaRight, DfaValue dfaLeft) {
     IElementType opSign = instruction.getOperationSign();
     List<DfaInstructionState> result = new ArrayList<>(2);
     if (opSign == JavaTokenType.AND || opSign == JavaTokenType.OR) {
@@ -825,13 +823,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return factory.fromDfType(SpecialField.STRING_LENGTH.asDfType(DfTypes.intRange(resultRange), stringType));
   }
 
-  @NotNull
-  private DfaInstructionState[] handleRelationBinop(BinopInstruction instruction,
-                                                    DataFlowRunner runner,
-                                                    DfaMemoryState memState,
-                                                    DfaValue dfaRight,
-                                                    DfaValue dfaLeft,
-                                                    RelationType relationType) {
+  private DfaInstructionState @NotNull [] handleRelationBinop(BinopInstruction instruction,
+                                                              DataFlowRunner runner,
+                                                              DfaMemoryState memState,
+                                                              DfaValue dfaRight,
+                                                              DfaValue dfaLeft,
+                                                              RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
        instruction.getOperationSign() != BinopInstruction.STRING_EQUALITY_BY_CONTENT &&
@@ -875,8 +872,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static RelationType[] splitRelation(RelationType relationType) {
+  private static RelationType @NotNull [] splitRelation(RelationType relationType) {
     switch (relationType) {
       case LT:
       case LE:

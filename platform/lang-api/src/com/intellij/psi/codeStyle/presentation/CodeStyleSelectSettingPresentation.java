@@ -22,16 +22,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CodeStyleSelectSettingPresentation extends CodeStyleSettingPresentation {
 
-  @NotNull
-  protected int[] myValues;
-  @NotNull
-  protected String[] myValueUiNames;
+  protected int @NotNull [] myValues;
+  protected String @NotNull [] myValueUiNames;
 
   protected int myLowerBound;
   protected int myUpperBound;
 
   public CodeStyleSelectSettingPresentation(@NotNull String fieldName, @NotNull String uiName,
-                                            @NotNull int[] values, @NotNull String[] valueUiNames) {
+                                            int @NotNull [] values, String @NotNull [] valueUiNames) {
     super(fieldName, uiName);
 
     assert(values.length == valueUiNames.length);
@@ -69,13 +67,11 @@ public class CodeStyleSelectSettingPresentation extends CodeStyleSettingPresenta
     return myUpperBound;
   }
 
-  @NotNull
-  public int[] getValues() {
+  public int @NotNull [] getValues() {
     return myValues;
   }
 
-  @NotNull
-  public String[] getOptions() {
+  public String @NotNull [] getOptions() {
     return myValueUiNames;
   }
 }

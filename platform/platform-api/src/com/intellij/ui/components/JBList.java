@@ -49,13 +49,13 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     init();
   }
 
-  public JBList(@NotNull E... listData) {
+  public JBList(E @NotNull ... listData) {
     super(createDefaultListModel(listData));
     init();
   }
 
   @NotNull
-  public static <T> DefaultListModel<T> createDefaultListModel(@NotNull T... items) {
+  public static <T> DefaultListModel<T> createDefaultListModel(T @NotNull ... items) {
     return createDefaultListModel(Arrays.asList(items));
   }
 

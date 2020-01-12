@@ -76,8 +76,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     return super.isAvailable(project, editor, file) && getPossibleTargets(getRefElement()).length > 0;
   }
 
-  @NotNull
-  private static PsiClass[] getPossibleTargets(final PsiJavaCodeReferenceElement element) {
+  private static PsiClass @NotNull [] getPossibleTargets(final PsiJavaCodeReferenceElement element) {
     List<PsiClass> result = new ArrayList<>();
     PsiElement run = element;
     PsiMember contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);

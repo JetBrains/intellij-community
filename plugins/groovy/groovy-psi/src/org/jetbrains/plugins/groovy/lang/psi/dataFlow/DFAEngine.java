@@ -24,7 +24,7 @@ public class DFAEngine<E> {
 
   private WorkCounter myCounter = null;
 
-  public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<? super E> dfa, @NotNull Semilattice<E> semilattice) {
+  public DFAEngine(Instruction @NotNull [] flow, @NotNull DfaInstance<? super E> dfa, @NotNull Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
@@ -92,8 +92,7 @@ public class DFAEngine<E> {
     return info;
   }
 
-  @NotNull
-  private int[] getFlowOrder() {
+  private int @NotNull [] getFlowOrder() {
     if (myDfa.isForward()) {
       return reversedPostOrder(myFlow, myDfa.isReachable());
     }

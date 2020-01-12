@@ -90,8 +90,7 @@ public class IntIntMultiMap {
     };
   }
 
-  @NotNull
-  public int[] getAsArray(int key) {
+  public int @NotNull [] getAsArray(int key) {
     int[] result = myKeyToArrayMap.get(key);
     if (result == null) {
       return EMPTY;
@@ -109,8 +108,7 @@ public class IntIntMultiMap {
     return myKeyToArrayMap.containsKey(key);
   }
 
-  @NotNull
-  public int[] keys() {
+  public int @NotNull [] keys() {
     return myKeyToArrayMap.keys();
   }
 

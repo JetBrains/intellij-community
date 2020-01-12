@@ -1332,7 +1332,7 @@ public class PluginManagerConfigurable
     }
   }
 
-  public static void showPluginConfigurableAndEnable(@Nullable Project project, @NotNull IdeaPluginDescriptor... descriptors) {
+  public static void showPluginConfigurableAndEnable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
       configurable.getPluginModel().changeEnableDisable(descriptors, true);
@@ -1340,7 +1340,7 @@ public class PluginManagerConfigurable
     });
   }
 
-  public static void showPluginConfigurable(@Nullable Project project, @NotNull IdeaPluginDescriptor... descriptors) {
+  public static void showPluginConfigurable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
   }
@@ -1665,7 +1665,7 @@ public class PluginManagerConfigurable
     return myPluginModel;
   }
 
-  public void select(@NotNull IdeaPluginDescriptor... descriptors) {
+  public void select(IdeaPluginDescriptor @NotNull ... descriptors) {
     if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
       myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
     }

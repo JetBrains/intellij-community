@@ -104,8 +104,7 @@ public abstract class VcsTaskHandler {
   /**
    * @return currently active (checked out) tasks (branches)
    */
-  @NotNull
-  public abstract TaskInfo[] getCurrentTasks();
+  public abstract TaskInfo @NotNull [] getCurrentTasks();
 
   /**
    * @return all existing tasks (branches)

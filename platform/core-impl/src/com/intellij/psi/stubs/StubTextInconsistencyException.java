@@ -62,9 +62,8 @@ public class StubTextInconsistencyException extends RuntimeException implements 
     return myStubsFromPsi;
   }
 
-  @NotNull
   @Override
-  public Attachment[] getAttachments() {
+  public Attachment @NotNull [] getAttachments() {
     return new Attachment[]{
       new Attachment(myFileName, myFileText), 
       new Attachment("stubsRestoredFromText.txt", myStubsFromText), 

@@ -31,11 +31,11 @@ import org.jetbrains.annotations.Nullable;
 public class AstBufferUtil {
   private AstBufferUtil() { }
 
-  public static int toBuffer(@NotNull ASTNode element, @Nullable char[] buffer, int offset) {
+  public static int toBuffer(@NotNull ASTNode element, char @Nullable [] buffer, int offset) {
     return toBuffer(element, buffer, offset, false);
   }
 
-  public static int toBuffer(@NotNull ASTNode element, @Nullable char[] buffer, int offset, boolean skipWhitespaceAndComments) {
+  public static int toBuffer(@NotNull ASTNode element, char @Nullable [] buffer, int offset, boolean skipWhitespaceAndComments) {
     BufferVisitor visitor = new BufferVisitor(skipWhitespaceAndComments, skipWhitespaceAndComments, offset, buffer);
     ((TreeElement)element).acceptTree(visitor);
     return visitor.end;
@@ -61,7 +61,7 @@ public class AstBufferUtil {
       ((TreeElement)element.getNode()).acceptTree(this);
     }
 
-    public BufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, @Nullable char[] buffer) {
+    public BufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
       super(false);
 
       this.skipWhitespace = skipWhitespace;
@@ -75,8 +75,7 @@ public class AstBufferUtil {
       return end;
     }
 
-    @NotNull
-    public char[] getBuffer() {
+    public char @NotNull [] getBuffer() {
       assert buffer != null;
       return buffer;
     }

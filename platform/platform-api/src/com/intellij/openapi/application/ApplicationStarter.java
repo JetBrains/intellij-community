@@ -31,7 +31,7 @@ public interface ApplicationStarter {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  default void premain(@SuppressWarnings("unused") @NotNull String[] args) { }
+  default void premain(@SuppressWarnings("unused") String @NotNull [] args) { }
 
   /**
    * Called before application initialization. Invoked in event dispatch thread.
@@ -48,7 +48,7 @@ public interface ApplicationStarter {
    *
    * @param args program arguments (including the selector)
    */
-  void main(@NotNull String[] args);
+  void main(String @NotNull [] args);
 
   /**
    * Applications that are incapable of working in a headless mode should override the method and return {@code false}.

@@ -277,15 +277,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    * @deprecated already handled by {@link com.intellij.execution.runners.RunContentBuilder#createDescriptor()}
    */
   @Deprecated
-  @NotNull
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public AnAction[] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
+  public AnAction @NotNull [] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
     return AnAction.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public AnAction[] createConsoleActions() {
+  public AnAction @NotNull [] createConsoleActions() {
     return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
   }
 

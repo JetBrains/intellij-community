@@ -34,9 +34,8 @@ public class StatisticsConnectionService extends SettingsConnectionService {
     super(settingsUrl, defaultServiceUrl);
   }
 
-  @NotNull
   @Override
-  public String[] getAttributeNames() {
+  public String @NotNull [] getAttributeNames() {
     return ArrayUtil.mergeArrays(super.getAttributeNames(), PERMISSION_ATTR_NAME);
   }
 

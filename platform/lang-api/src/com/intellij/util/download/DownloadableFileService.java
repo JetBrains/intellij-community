@@ -43,7 +43,7 @@ public abstract class DownloadableFileService {
    */
   @NotNull
   public abstract DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
-                                                                                                    @NotNull URL... localUrls);
+                                                                                                    URL @NotNull ... localUrls);
 
   @NotNull
   public abstract FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description);

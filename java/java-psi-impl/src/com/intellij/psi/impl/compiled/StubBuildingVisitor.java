@@ -180,7 +180,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  private static void newReferenceList(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull String[] types) {
+  private static void newReferenceList(@NotNull JavaClassReferenceListElementType type, StubElement parent, String @NotNull [] types) {
     new PsiClassReferenceListStubImpl(type, parent, types);
   }
 

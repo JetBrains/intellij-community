@@ -158,9 +158,8 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     return component;
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return ContainerUtil.ar(new AbstractAction(IdeBundle.message("updates.ignore.update.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -171,9 +170,8 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     });
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getCancelAction());
 

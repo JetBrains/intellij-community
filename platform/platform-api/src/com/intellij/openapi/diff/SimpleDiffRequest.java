@@ -34,8 +34,7 @@ public class SimpleDiffRequest extends DiffRequest {
   }
 
   @Override
-  @NotNull
-  public DiffContent[] getContents() { return myContents; }
+  public DiffContent @NotNull [] getContents() { return myContents; }
 
   @Override
   public String[] getContentTitles() { return myContentTitles; }
@@ -80,8 +79,7 @@ public class SimpleDiffRequest extends DiffRequest {
     }
 
     @Override
-    @NotNull
-    public DiffContent[] getContents() {
+    public DiffContent @NotNull [] getContents() {
       return new DiffContent[]{
         DiffContent.fromFile(getProject(), myVirtualFiles[0]),
         DiffContent.fromFile(getProject(), myVirtualFiles[1])

@@ -34,8 +34,7 @@ public abstract class PersistentLibraryKind<P extends LibraryProperties> extends
   @NotNull
   public abstract P createDefaultProperties();
 
-  @NotNull
-  public OrderRootType[] getAdditionalRootTypes() {
+  public OrderRootType @NotNull [] getAdditionalRootTypes() {
     return new OrderRootType[0];
   }
 }

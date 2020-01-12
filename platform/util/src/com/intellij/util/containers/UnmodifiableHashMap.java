@@ -25,7 +25,7 @@ import java.util.function.Consumer;
  */
 public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   private final @NotNull TObjectHashingStrategy<K> strategy;
-  private final @NotNull Object[] data;
+  private final Object @NotNull [] data;
   private final @Nullable K k1, k2, k3;
   private final @Nullable V v1, v2, v3;
   private final int size;
@@ -114,7 +114,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
     return new UnmodifiableHashMap<>(strategy, newData, null, null, null, null, null, null);
   }
 
-  private UnmodifiableHashMap(@NotNull TObjectHashingStrategy<K> strategy, @NotNull Object[] data, @Nullable K k1, @Nullable V v1,
+  private UnmodifiableHashMap(@NotNull TObjectHashingStrategy<K> strategy, Object @NotNull [] data, @Nullable K k1, @Nullable V v1,
                               @Nullable K k2, @Nullable V v2, @Nullable K k3, @Nullable V v3) {
     this.strategy = strategy;
     this.data = data;

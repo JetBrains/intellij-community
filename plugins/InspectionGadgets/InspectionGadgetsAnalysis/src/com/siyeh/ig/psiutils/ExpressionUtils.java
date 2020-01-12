@@ -1200,8 +1200,7 @@ public class ExpressionUtils {
    * @return an array or null if array could be modified after initialization
    * (empty array means that the initializer is known to be an empty array).
    */
-  @Nullable
-  public static PsiExpression[] getConstantArrayElements(PsiVariable array) {
+  public static PsiExpression @Nullable [] getConstantArrayElements(PsiVariable array) {
     PsiExpression initializer = array.getInitializer();
     if (initializer instanceof PsiNewExpression) initializer = ((PsiNewExpression)initializer).getArrayInitializer();
     if (!(initializer instanceof PsiArrayInitializerExpression)) return null;

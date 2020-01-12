@@ -32,9 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public class I18nQuickFixTest extends LightQuickFixParameterizedTestCase {
   private boolean myMustBeAvailableAfterInvoke;
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new I18nInspection()};
   }
 

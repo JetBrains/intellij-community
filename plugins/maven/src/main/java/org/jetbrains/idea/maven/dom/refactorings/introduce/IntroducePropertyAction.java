@@ -56,7 +56,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
   }
 
@@ -231,7 +231,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     }
 
     private static class MyUsageSearcherFactory implements Factory<UsageSearcher> {

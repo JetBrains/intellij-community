@@ -16,8 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class CvsRevisionNumber implements VcsRevisionNumber, LongRevisionNumber {
 
   private final String myStringRepresentation;
-  @Nullable
-  private final int[] mySubRevisions;
+  private final int @Nullable [] mySubRevisions;
   private final DateOrRevisionSettings myDateOrRevision;
 
   public static CvsRevisionNumber EMPTY = new CvsRevisionNumber("", ArrayUtilRt.EMPTY_INT_ARRAY) {
@@ -64,7 +63,7 @@ public class CvsRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
     return mySubRevisions[mySubRevisions.length - 1];
   }
 
-  private CvsRevisionNumber(String stringRepresentation, @NotNull int[] subRevisions) {
+  private CvsRevisionNumber(String stringRepresentation, int @NotNull [] subRevisions) {
     myStringRepresentation = stringRepresentation;
     mySubRevisions = subRevisions;
     myDateOrRevision = null;
@@ -172,8 +171,7 @@ public class CvsRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
     return myDateOrRevision;
   }
 
-  @Nullable
-  public int[] getSubRevisions() {
+  public int @Nullable [] getSubRevisions() {
     return mySubRevisions;
   }
 }

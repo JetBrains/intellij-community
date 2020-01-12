@@ -79,7 +79,7 @@ public class ArrangementUtil {
   //endregion
 
   @NotNull
-  public static ArrangementMatchCondition combine(@NotNull ArrangementMatchCondition... nodes) {
+  public static ArrangementMatchCondition combine(ArrangementMatchCondition @NotNull ... nodes) {
     final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition();
     final ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override

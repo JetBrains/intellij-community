@@ -33,8 +33,7 @@ public interface JavadocManager {
     }
   }
 
-  @NotNull
-  JavadocTagInfo[] getTagInfos(PsiElement context);
+  JavadocTagInfo @NotNull [] getTagInfos(PsiElement context);
 
   @Nullable
   JavadocTagInfo getTagInfo(String name);

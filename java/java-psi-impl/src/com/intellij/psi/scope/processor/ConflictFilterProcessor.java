@@ -40,7 +40,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
 
   public ConflictFilterProcessor(String name,
                                  @NotNull ElementFilter filter,
-                                 @NotNull PsiConflictResolver[] resolvers,
+                                 PsiConflictResolver @NotNull [] resolvers,
                                  @NotNull List<CandidateInfo> container,
                                  @NotNull PsiElement place,
                                  PsiFile placeFile) {
@@ -84,8 +84,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     }
   }
 
-  @NotNull
-  public JavaResolveResult[] getResult() {
+  public JavaResolveResult @NotNull [] getResult() {
     JavaResolveResult[] cachedResult = myCachedResult;
     if (cachedResult == null) {
       List<CandidateInfo> conflicts = getResults();

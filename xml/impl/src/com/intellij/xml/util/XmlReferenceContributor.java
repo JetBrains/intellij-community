@@ -112,10 +112,9 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(xmlAttributeValue().withLocalName("source")
                                           .withSuperParent(2, xmlTag().withLocalName("documentation").withNamespace(XmlUtil.SCHEMA_URIS)),
                                         new PsiReferenceProvider() {
-                                          @NotNull
                                           @Override
-                                          public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                                                                       @NotNull ProcessingContext context) {
+                                          public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                                                                 @NotNull ProcessingContext context) {
                                             return new PsiReference[] { new WebReference(element) };
                                           }
                                         });

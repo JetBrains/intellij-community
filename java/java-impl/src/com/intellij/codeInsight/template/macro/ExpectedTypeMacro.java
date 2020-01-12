@@ -50,14 +50,14 @@ public class ExpectedTypeMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length == 0) return null;
     return new PsiTypeResult(types[0], context.getProject());
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length < 2) return null;
     Set<LookupElement> set = new LinkedHashSet<>();
@@ -67,8 +67,7 @@ public class ExpectedTypeMacro extends Macro {
     return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static PsiType[] getExpectedTypes(Expression[] params, final ExpressionContext context) {
+  private static PsiType @Nullable [] getExpectedTypes(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
     final Project project = context.getProject();

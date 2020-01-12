@@ -176,7 +176,7 @@ public class TaskUtil {
     return true;
   }
 
-  public static boolean tasksEqual(@NotNull Task[] task1, @NotNull Task[] task2) {
+  public static boolean tasksEqual(Task @NotNull [] task1, Task @NotNull [] task2) {
     return tasksEqual(Arrays.asList(task1), Arrays.asList(task2));
   }
 

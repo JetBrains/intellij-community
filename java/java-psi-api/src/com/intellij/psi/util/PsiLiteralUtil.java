@@ -379,14 +379,14 @@ public class PsiLiteralUtil {
    *
    * @param lines text block content
    */
-  public static int getTextBlockIndent(@NotNull String[] lines) {
+  public static int getTextBlockIndent(String @NotNull [] lines) {
     return getTextBlockIndent(lines, false, false);
   }
 
   /**
    * @see #getTextBlockIndent(String[])
    */
-  public static int getTextBlockIndent(@NotNull String[] lines, boolean preserveContent, boolean ignoreLastLine) {
+  public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
     int prefix = Integer.MAX_VALUE;
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];

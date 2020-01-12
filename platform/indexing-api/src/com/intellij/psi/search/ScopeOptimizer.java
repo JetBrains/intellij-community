@@ -59,7 +59,7 @@ public interface ScopeOptimizer {
   }
 
   @Nullable
-  static SearchScope calculateOverallRestrictedUseScope(@NotNull ScopeOptimizer[] optimizers, @NotNull PsiElement element) {
+  static SearchScope calculateOverallRestrictedUseScope(ScopeOptimizer @NotNull [] optimizers, @NotNull PsiElement element) {
     return Stream
       .of(optimizers)
       .peek(optimizer -> ProgressManager.checkCanceled())

@@ -36,26 +36,22 @@ public class PsiSuperMethodImplUtil {
   private PsiSuperMethodImplUtil() {
   }
 
-  @NotNull
-  public static PsiMethod[] findSuperMethods(@NotNull PsiMethod method) {
+  public static PsiMethod @NotNull [] findSuperMethods(@NotNull PsiMethod method) {
     return findSuperMethods(method, null);
   }
 
-  @NotNull
-  public static PsiMethod[] findSuperMethods(@NotNull PsiMethod method, boolean checkAccess) {
+  public static PsiMethod @NotNull [] findSuperMethods(@NotNull PsiMethod method, boolean checkAccess) {
     if (!canHaveSuperMethod(method, checkAccess, false)) return PsiMethod.EMPTY_ARRAY;
     return findSuperMethodsInternal(method, null);
   }
 
-  @NotNull
-  public static PsiMethod[] findSuperMethods(@NotNull PsiMethod method, PsiClass parentClass) {
+  public static PsiMethod @NotNull [] findSuperMethods(@NotNull PsiMethod method, PsiClass parentClass) {
     if (!canHaveSuperMethod(method, true, false)) return PsiMethod.EMPTY_ARRAY;
     return findSuperMethodsInternal(method, parentClass);
   }
 
 
-  @NotNull
-  private static PsiMethod[] findSuperMethodsInternal(@NotNull PsiMethod method, PsiClass parentClass) {
+  private static PsiMethod @NotNull [] findSuperMethodsInternal(@NotNull PsiMethod method, PsiClass parentClass) {
     List<MethodSignatureBackedByPsiMethod> outputMethods = findSuperMethodSignatures(method, parentClass, false);
 
     return MethodSignatureUtil.convertMethodSignaturesToMethods(outputMethods);
@@ -89,8 +85,7 @@ public class PsiSuperMethodImplUtil {
     return DeepestSuperMethodsSearch.search(method).findFirst();
   }
 
-  @NotNull
-  public static PsiMethod[] findDeepestSuperMethods(@NotNull PsiMethod method) {
+  public static PsiMethod @NotNull [] findDeepestSuperMethods(@NotNull PsiMethod method) {
     if (!canHaveSuperMethod(method, true, false)) return PsiMethod.EMPTY_ARRAY;
     Collection<PsiMethod> collection = DeepestSuperMethodsSearch.search(method).findAll();
     return collection.toArray(PsiMethod.EMPTY_ARRAY);

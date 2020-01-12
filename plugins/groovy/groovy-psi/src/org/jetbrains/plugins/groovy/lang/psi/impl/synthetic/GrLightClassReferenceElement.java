@@ -60,9 +60,8 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return clazz == null ? Collections.emptyList() : Collections.singletonList(new ElementResolveResult<>(clazz));
   }
 
-  @NotNull
   @Override
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     return PsiType.EMPTY_ARRAY;
   }
 
@@ -156,9 +155,8 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return CodeReferenceKind.REFERENCE;
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return GrAnnotation.EMPTY_ARRAY;
   }
 }

@@ -50,8 +50,7 @@ public abstract class XDebugProcess {
   /**
    * @return breakpoint handlers which will be used to set/clear breakpoints in the underlying debugging process
    */
-  @NotNull
-  public XBreakpointHandler<?>[] getBreakpointHandlers() {
+  public XBreakpointHandler<?> @NotNull [] getBreakpointHandlers() {
     return XBreakpointHandler.EMPTY_ARRAY;
   }
 

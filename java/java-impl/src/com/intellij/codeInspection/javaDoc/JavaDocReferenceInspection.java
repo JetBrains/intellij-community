@@ -62,7 +62,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     return getResolveErrorMessage(resolved, context, referenceText);
   }
 
-  private String getResolveErrorMessage(@NotNull ResolveResult[] resolveResults, @NotNull PsiElement context, CharSequence referenceText) {
+  private String getResolveErrorMessage(ResolveResult @NotNull [] resolveResults, @NotNull PsiElement context, CharSequence referenceText) {
     if (resolveResults.length == 0) {
       return InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
     }

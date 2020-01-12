@@ -83,8 +83,7 @@ public interface RunnerLayoutUi {
 
   void updateActionsNow();
 
-  @NotNull
-  Content[] getContents();
+  Content @NotNull [] getContents();
 
   abstract class Factory {
     protected Factory() {

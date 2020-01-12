@@ -112,8 +112,8 @@ class VfsEventGenerationHelper {
   }
 
   // scan all children of "root" (except excluded dirs) recursively and return them in the ChildInfo[] array
-  @Nullable // null means error during scan
-  private static ChildInfo[] scanChildren(@NotNull Path root, @NotNull Path[] excluded, @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
+  // null means error during scan
+  private static ChildInfo @Nullable [] scanChildren(@NotNull Path root, Path @NotNull [] excluded, @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
     ChildInfo fakeRoot = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, "", null, null, null);

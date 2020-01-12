@@ -30,13 +30,13 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                                                                  @Nullable QuickFix... fixes);
+                                                                  QuickFix @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
   public abstract ModuleProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                                   @NotNull Module module,
-                                                                  @Nullable QuickFix... fixes);
+                                                                  QuickFix @Nullable ... fixes);
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
@@ -66,7 +66,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                                                            @Nullable LocalQuickFix[] fixes,
+                                                            LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             boolean isAfterEndOfLine);

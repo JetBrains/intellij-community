@@ -356,8 +356,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     List<Object> result = new ArrayList<>();
     collectVariants(result, new THashSet<>());
     return ArrayUtil.toObjectArray(result);
@@ -569,9 +568,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     T process(@NotNull String property, XmlElementDescriptor descriptor);
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public LocalQuickFix @Nullable [] getQuickFixes() {
     return new LocalQuickFix[] {new LocalQuickFixBase(MavenDomBundle.message("fix.ignore.unresolved.maven.property")) {
 
       @Override

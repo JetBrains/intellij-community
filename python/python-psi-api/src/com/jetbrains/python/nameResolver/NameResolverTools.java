@@ -65,7 +65,7 @@ public final class NameResolverTools {
    * @return true if element's fqn is one of names, provided by provider
    */
   public static boolean isElementWithName(@NotNull final Collection<? extends PyElement> elements,
-                                          @NotNull final FQNamesProvider... namesProviders) {
+                                          final FQNamesProvider @NotNull ... namesProviders) {
     for (final PyElement element : elements) {
       if (isName(element, namesProviders)) {
         return true;
@@ -78,7 +78,7 @@ public final class NameResolverTools {
    * Same as {@link #isName(PyElement, FQNamesProvider...)} for named elements, but only checks name.
    * Aliases not supported, but much lighter that way
    */
-  public static boolean isNameShortCut(@NotNull PyElement element, @NotNull FQNamesProvider... namesProviders) {
+  public static boolean isNameShortCut(@NotNull PyElement element, FQNamesProvider @NotNull ... namesProviders) {
     String name = element.getName();
     if (name == null) {
       return false;
@@ -95,7 +95,7 @@ public final class NameResolverTools {
    * @param namesProviders some enum that has one or more names
    * @return true if element's fqn is one of names, provided by provider
    */
-  public static boolean isName(@NotNull final PyElement element, @NotNull final FQNamesProvider... namesProviders) {
+  public static boolean isName(@NotNull final PyElement element, final FQNamesProvider @NotNull ... namesProviders) {
     assert element.isValid();
     final Pair<String, String> qualifiedAndClassName = RecursionManager.doPreventingRecursion(element, false,
                                                                                               () -> QUALIFIED_AND_CLASS_NAME
@@ -143,7 +143,7 @@ public final class NameResolverTools {
    * @return true if callee is correct
    */
   public static boolean isCalleeShortCut(@NotNull final PyCallExpression call,
-                                         @NotNull final FQNamesProvider... function) {
+                                         final FQNamesProvider @NotNull ... function) {
     final PyExpression callee = call.getCallee();
     if (callee == null) {
       return false;

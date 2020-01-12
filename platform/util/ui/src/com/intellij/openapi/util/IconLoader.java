@@ -708,8 +708,7 @@ public final class IconLoader {
       return myDarkOverridden == null ? ourTransform.get().isDark() : myDarkOverridden;
     }
 
-    @Nullable
-    private ImageFilter[] getFilters() {
+    private ImageFilter @Nullable [] getFilters() {
       ImageFilter global = ourTransform.get().getFilter();
       ImageFilter local = myLocalFilterSupplier != null ? myLocalFilterSupplier.get() : null;
       if (global != null && local != null) {
@@ -1141,10 +1140,10 @@ public final class IconLoader {
    */
   private static final class IconTransform {
     private final boolean myDark;
-    private final @NotNull IconPathPatcher[] myPatchers;
+    private final IconPathPatcher @NotNull [] myPatchers;
     private final @Nullable ImageFilter myFilter;
 
-    private IconTransform(boolean dark, @NotNull IconPathPatcher[] patchers, @Nullable ImageFilter filter) {
+    private IconTransform(boolean dark, IconPathPatcher @NotNull [] patchers, @Nullable ImageFilter filter) {
       myDark = dark;
       myPatchers = patchers;
       myFilter = filter;

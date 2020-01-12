@@ -171,7 +171,7 @@ public class ComplementaryFontsRegistry {
    * pass not-null correct {@link FontRenderContext} to this method.
    */
   @NotNull
-  public static FontInfo getFontAbleToDisplay(@NotNull char[] text, int start, int end, 
+  public static FontInfo getFontAbleToDisplay(char @NotNull [] text, int start, int end,
                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
     assert 0 <= start && start < end && end <= text.length : "Start: " + start + ", end: " + end + ", length: " + text.length;
@@ -188,9 +188,9 @@ public class ComplementaryFontsRegistry {
     return getFontAbleToDisplay(firstCodePoint, text, secondOffset, end, style, preferences, context);
   }
   
-  private static FontInfo getFontAbleToDisplay(int codePoint, @NotNull char[] remainingText, int start, int end, 
-                                              @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
-                                              FontRenderContext context) {
+  private static FontInfo getFontAbleToDisplay(int codePoint, char @NotNull [] remainingText, int start, int end,
+                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
+                                               FontRenderContext context) {
     boolean tryDefaultFallback = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     boolean useLigatures = !Patches.TEXT_LAYOUT_IS_SLOW && preferences.useLigatures();

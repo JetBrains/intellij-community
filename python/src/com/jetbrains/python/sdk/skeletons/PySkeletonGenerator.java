@@ -165,7 +165,7 @@ public class PySkeletonGenerator {
     }
 
     @NotNull
-    public Builder extraArgs(@NotNull String... args) {
+    public Builder extraArgs(String @NotNull ... args) {
       return extraArgs(Arrays.asList(args));
     }
 
@@ -397,7 +397,7 @@ public class PySkeletonGenerator {
   }
 
   protected ProcessOutput getProcessOutput(String homePath,
-                                           @NotNull String[] commandLine,
+                                           String @NotNull [] commandLine,
                                            @Nullable String stdin,
                                            Map<String, String> extraEnv,
                                            int timeout) throws InvalidSdkException {

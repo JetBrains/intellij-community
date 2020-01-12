@@ -93,8 +93,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue<List<File>> genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<List<File>> genericDomValue, PsiElement element, ConvertContext context) {
     final GenericAttributeValue attributeValue = (GenericAttributeValue)genericDomValue;
 
     final String cpString = genericDomValue.getRawText();

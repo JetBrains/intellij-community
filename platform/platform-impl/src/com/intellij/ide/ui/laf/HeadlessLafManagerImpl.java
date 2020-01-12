@@ -15,9 +15,8 @@ public class HeadlessLafManagerImpl extends LafManager {
     UIManager.getLookAndFeelDefaults().put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
   }
 
-  @NotNull
   @Override
-  public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
+  public UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
   }
 

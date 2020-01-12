@@ -34,21 +34,21 @@ public interface PsiImportList extends PsiElement {
    *
    * @return the array of non-static import statements.
    */
-  @NotNull PsiImportStatement[] getImportStatements();
+  PsiImportStatement @NotNull [] getImportStatements();
 
   /**
    * Returns the static import statements contained in the list.
    *
    * @return the array of static import statements.
    */
-  @NotNull PsiImportStaticStatement[] getImportStaticStatements();
+  PsiImportStaticStatement @NotNull [] getImportStaticStatements();
 
   /**
    * Returns all import statements contained in the list.
    *
    * @return the array of import statements.
    */
-  @NotNull PsiImportStatementBase[] getAllImportStatements();
+  PsiImportStatementBase @NotNull [] getAllImportStatements();
 
   /**
    * Searches the list for a single-class import statement importing the specified class.

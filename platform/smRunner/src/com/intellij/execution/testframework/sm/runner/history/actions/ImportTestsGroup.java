@@ -43,9 +43,8 @@ public class ImportTestsGroup extends ActionGroup {
     myProperties = properties;
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     final Project project = e.getProject();
     if (project == null) return EMPTY_ARRAY;

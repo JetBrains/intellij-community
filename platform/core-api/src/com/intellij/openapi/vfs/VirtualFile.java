@@ -532,15 +532,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return getStoredCharset() != null;
   }
 
-  public final void setBinaryContent(@NotNull byte[] content) throws IOException {
+  public final void setBinaryContent(byte @NotNull [] content) throws IOException {
     setBinaryContent(content, -1, -1);
   }
 
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
     setBinaryContent(content, newModificationStamp, newTimeStamp, this);
   }
 
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
@@ -591,8 +591,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see #contentsToByteArray(boolean)
    * @see #getInputStream()
    */
-  @NotNull
-  public abstract byte[] contentsToByteArray() throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray() throws IOException;
 
   /**
    * Returns file content as an array of bytes.
@@ -602,8 +601,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray()
    */
-  @NotNull
-  public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(boolean cacheContent) throws IOException {
     return contentsToByteArray();
   }
 
@@ -688,12 +686,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract InputStream getInputStream() throws IOException;
 
-  @Nullable
-  public byte[] getBOM() {
+  public byte @Nullable [] getBOM() {
     return getUserData(BOM_KEY);
   }
 
-  public void setBOM(@Nullable byte[] BOM) {
+  public void setBOM(byte @Nullable [] BOM) {
     putUserData(BOM_KEY, BOM);
   }
 

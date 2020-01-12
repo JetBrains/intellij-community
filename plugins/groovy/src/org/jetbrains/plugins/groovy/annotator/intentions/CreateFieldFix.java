@@ -29,9 +29,9 @@ public class CreateFieldFix {
   }
 
   protected void doFix(@NotNull Project project,
-                       @NotNull @GrModifier.ModifierConstant String[] modifiers,
+                       @GrModifier.ModifierConstant String @NotNull [] modifiers,
                        @NotNull @NonNls String fieldName,
-                       @NotNull TypeConstraint[] typeConstraints,
+                       TypeConstraint @NotNull [] typeConstraints,
                        @NotNull PsiElement context) throws IncorrectOperationException {
     JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
     if (factory == null) return;

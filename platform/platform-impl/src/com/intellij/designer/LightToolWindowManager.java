@@ -163,7 +163,7 @@ public abstract class LightToolWindowManager implements Disposable {
                                                 @NotNull JComponent component,
                                                 @NotNull JComponent focusedComponent,
                                                 int defaultWidth,
-                                                @Nullable AnAction[] actions) {
+                                                AnAction @Nullable [] actions) {
     return new LightToolWindow(content,
                                title,
                                icon,

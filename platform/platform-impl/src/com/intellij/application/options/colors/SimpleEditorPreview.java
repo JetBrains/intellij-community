@@ -328,7 +328,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   @NotNull
   private List<HighlightData> setupRainbowHighlighting(@NotNull final RainbowColorSettingsPage page,
                                                        @NotNull final List<HighlightData> initialMarkup,
-                                                       @NotNull final TextAttributesKey[] rainbowTempKeys,
+                                                       final TextAttributesKey @NotNull [] rainbowTempKeys,
                                                        boolean isRainbowOn) {
     int colorCount = rainbowTempKeys.length;
     if (colorCount == 0) {
@@ -391,7 +391,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   }
 
   @NotNull
-  private HighlightData getRainbowTemp(@NotNull TextAttributesKey[] rainbowTempKeys,
+  private HighlightData getRainbowTemp(TextAttributesKey @NotNull [] rainbowTempKeys,
                                        int startOffset, int endOffset) {
     String id = myEditor.getDocument().getText(TextRange.create(startOffset, endOffset));
     int index = UsedColors.getOrAddColorIndex((EditorImpl)myEditor, id, rainbowTempKeys.length);

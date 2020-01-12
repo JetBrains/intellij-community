@@ -320,10 +320,9 @@ class TreeHasherBase extends AbstractTreeHasher {
     }
   }
 
-  @NotNull
-  private TreeHashResult[] computeHashesForChildren(PsiElement element,
-                                                    PsiFragment parentFragment,
-                                                    NodeSpecificHasher nodeSpecificHasher) {
+  private TreeHashResult @NotNull [] computeHashesForChildren(PsiElement element,
+                                                              PsiFragment parentFragment,
+                                                              NodeSpecificHasher nodeSpecificHasher) {
     final List<TreeHashResult> result = new ArrayList<>();
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -333,10 +332,9 @@ class TreeHasherBase extends AbstractTreeHasher {
     return result.toArray(new TreeHashResult[0]);
   }
 
-  @NotNull
-  private TreeHashResult[] computeHashes(PsiElement[] elements,
-                                         PsiFragment parentFragment,
-                                         NodeSpecificHasher nodeSpecificHasher) {
+  private TreeHashResult @NotNull [] computeHashes(PsiElement[] elements,
+                                                   PsiFragment parentFragment,
+                                                   NodeSpecificHasher nodeSpecificHasher) {
     TreeHashResult[] result = new TreeHashResult[elements.length];
 
     for (int i = 0; i < elements.length; i++) {

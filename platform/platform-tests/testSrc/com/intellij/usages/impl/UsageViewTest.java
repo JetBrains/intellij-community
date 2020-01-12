@@ -240,7 +240,7 @@ public class UsageViewTest extends BasePlatformTestCase {
   }
 
   @NotNull
-  private UsageViewImpl createUsageView(@NotNull Usage... usages) {
+  private UsageViewImpl createUsageView(Usage @NotNull ... usages) {
     UsageViewImpl usageView =
       (UsageViewImpl)UsageViewManager.getInstance(getProject())
         .createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);

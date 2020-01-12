@@ -155,8 +155,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
    */
   protected abstract int getSelectedIndex();
 
-  @NotNull
-  protected abstract Object[] getAllElements();
+  protected abstract Object @NotNull [] getAllElements();
 
   @Nullable
   protected abstract String getElementText(Object element);

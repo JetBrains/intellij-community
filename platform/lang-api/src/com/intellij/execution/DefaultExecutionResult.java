@@ -42,7 +42,7 @@ public class DefaultExecutionResult implements ExecutionResult {
     this(null, processHandler, AnAction.EMPTY_ARRAY);
   }
 
-  public DefaultExecutionResult(ExecutionConsole console, @NotNull ProcessHandler processHandler, @NotNull AnAction... actions) {
+  public DefaultExecutionResult(ExecutionConsole console, @NotNull ProcessHandler processHandler, AnAction @NotNull ... actions) {
     myConsole = console;
     myProcessHandler = processHandler;
     myActions = actions;
@@ -53,31 +53,28 @@ public class DefaultExecutionResult implements ExecutionResult {
     return myConsole;
   }
 
-  @NotNull
   @Override
-  public AnAction[] getActions() {
+  public AnAction @NotNull [] getActions() {
     return myActions;
   }
 
-  public void setActions(@NotNull AnAction... actions) {
+  public void setActions(AnAction @NotNull ... actions) {
     myActions = actions;
   }
 
-  @NotNull
-  public AnAction[] getRestartActions() {
+  public AnAction @NotNull [] getRestartActions() {
     return myRestartActions;
   }
 
-  public void setRestartActions(@NotNull AnAction... restartActions) {
+  public void setRestartActions(AnAction @NotNull ... restartActions) {
     myRestartActions = restartActions;
   }
 
   /**
    * @deprecated unused
    */
-  @NotNull
   @Deprecated
-  public AnAction[] getAdditionalStopActions() {
+  public AnAction @NotNull [] getAdditionalStopActions() {
     return AnAction.EMPTY_ARRAY;
   }
 

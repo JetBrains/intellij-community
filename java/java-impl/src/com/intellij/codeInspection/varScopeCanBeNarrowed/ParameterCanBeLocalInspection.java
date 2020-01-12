@@ -177,7 +177,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
           }
 
           @Override
-          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+          protected void performRefactoring(UsageInfo @NotNull [] usages) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
             newDeclaration = moveDeclaration(elementFactory, localName, parameter, initializer, action, references);
             super.performRefactoring(usages);

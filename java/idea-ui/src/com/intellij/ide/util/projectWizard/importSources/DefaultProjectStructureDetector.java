@@ -30,7 +30,7 @@ public class DefaultProjectStructureDetector extends ProjectStructureDetector {
   @NotNull
   @Override
   public DirectoryProcessingResult detectRoots(@NotNull File dir,
-                                               @NotNull File[] children,
+                                               File @NotNull [] children,
                                                @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
     result.add(new DetectedContentRoot(dir, "Content", WebModuleTypeBase.getInstance()));

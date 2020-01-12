@@ -44,8 +44,7 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
     return ContainerUtil.newHashSet(FRAMEWORK_NAMES);
   }
 
-  @NotNull
-  public static String[] getFrameworkNamesArray() {
+  public static String @NotNull [] getFrameworkNamesArray() {
     return FRAMEWORK_NAMES.clone();
   }
 

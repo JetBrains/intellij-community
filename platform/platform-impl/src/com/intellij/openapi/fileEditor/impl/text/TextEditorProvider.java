@@ -174,8 +174,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
     return new EditorWrapper(editor);
   }
 
-  @Nullable
-  public static Document[] getDocuments(@NotNull FileEditor editor) {
+  public static Document @Nullable [] getDocuments(@NotNull FileEditor editor) {
     if (editor instanceof DocumentsEditor) {
       DocumentsEditor documentsEditor = (DocumentsEditor)editor;
       Document[] documents = documentsEditor.getDocuments();

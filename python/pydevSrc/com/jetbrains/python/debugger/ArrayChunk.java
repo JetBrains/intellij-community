@@ -46,7 +46,7 @@ public class ArrayChunk {
                     String min,
                     String format,
                     String type,
-                    @Nullable Object[][] data, List<String> labels, List<ColHeader> headers) {
+                    Object[] @Nullable [] data, List<String> labels, List<ColHeader> headers) {
     myValue = value;
     mySlicePresentation = slicePresentation;
     myRows = rows;

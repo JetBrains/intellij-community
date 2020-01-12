@@ -35,8 +35,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   }
 
   @Override
-  @NotNull
-  public PsiFile[] getFilesWithTodoItems() {
+  public PsiFile @NotNull [] getFilesWithTodoItems() {
     if (myProject.isDefault()) {
       return PsiFile.EMPTY_ARRAY;
     }

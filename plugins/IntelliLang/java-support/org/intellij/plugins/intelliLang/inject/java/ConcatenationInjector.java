@@ -51,7 +51,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
   }
 
   @Override
-  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
+  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, PsiElement @NotNull ... operands) {
     if (operands.length == 0) return;
     boolean hasLiteral = false;
     InjectedLanguage tempInjectedLanguage = null;
@@ -74,7 +74,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
 
   private void processOperandsInjection(@NotNull MultiHostRegistrar registrar,
                                         @NotNull PsiFile containingFile, @Nullable InjectedLanguage tempInjectedLanguage,
-                                        @NotNull PsiElement[] operands) {
+                                        PsiElement @NotNull [] operands) {
     Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
     LanguageInjectionSupport injectionSupport = tempLanguage == null
                                                 ? InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)

@@ -112,7 +112,7 @@ public class Util {
   @NotNull
   public static TIntArrayList findParametersToRemove(@NotNull PsiMethod method,
                                                      @NotNull final PsiExpression expr,
-                                                     @Nullable final PsiExpression[] occurences) {
+                                                     final PsiExpression @Nullable [] occurences) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return new TIntArrayList();
 

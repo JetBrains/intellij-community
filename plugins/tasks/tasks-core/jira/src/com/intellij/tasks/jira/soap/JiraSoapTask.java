@@ -113,8 +113,7 @@ class JiraSoapTask extends JiraTask {
   }
 
   @Override
-  @NotNull
-  public Comment[] getComments() {
+  public Comment @NotNull [] getComments() {
     return myComments.toArray(Comment.EMPTY_ARRAY);
   }
 

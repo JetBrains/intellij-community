@@ -22,9 +22,8 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class Anonymous2LambdaInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new AnonymousCanBeLambdaInspection(),
     };

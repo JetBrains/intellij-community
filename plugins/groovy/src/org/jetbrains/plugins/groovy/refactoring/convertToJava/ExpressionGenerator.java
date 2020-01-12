@@ -542,9 +542,9 @@ public class ExpressionGenerator extends Generator {
 
   private void writeAssignmentWithSetter(@Nullable GrExpression qualifier,
                                          @NotNull PsiMethod method,
-                                         @NotNull GrExpression[] exprs,
-                                         @NotNull GrNamedArgument[] namedArgs,
-                                         @NotNull GrClosableBlock[] closures,
+                                         GrExpression @NotNull [] exprs,
+                                         GrNamedArgument @NotNull [] namedArgs,
+                                         GrClosableBlock @NotNull [] closures,
                                          @NotNull PsiSubstitutor substitutor,
                                          @NotNull GrAssignmentExpression assignment) {
     if (PsiUtil.isExpressionUsed(assignment)) {
@@ -1301,9 +1301,9 @@ public class ExpressionGenerator extends Generator {
 
   public void invokeMethodOn(@NotNull PsiMethod method,
                              @Nullable GrExpression caller,
-                             @NotNull GrExpression[] exprs,
-                             @NotNull GrNamedArgument[] namedArgs,
-                             @NotNull GrClosableBlock[] closures,
+                             GrExpression @NotNull [] exprs,
+                             GrNamedArgument @NotNull [] namedArgs,
+                             GrClosableBlock @NotNull [] closures,
                              @NotNull PsiSubstitutor substitutor,
                              @NotNull GroovyPsiElement context) {
     if (method instanceof GrGdkMethod) {

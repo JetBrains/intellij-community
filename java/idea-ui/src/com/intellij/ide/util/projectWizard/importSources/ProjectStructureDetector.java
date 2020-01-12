@@ -58,7 +58,7 @@ public abstract class ProjectStructureDetector {
    *   </li>
    */
   @NotNull
-  public abstract DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
+  public abstract DirectoryProcessingResult detectRoots(@NotNull File dir, File @NotNull [] children, @NotNull File base,
                                                         @NotNull List<DetectedProjectRoot> result);
 
   /**

@@ -98,8 +98,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   @FunctionalInterface
   private interface IfStatementInspector {
     @Nullable IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
-                                         @NotNull PsiStatement[] thenBranch,
-                                         @NotNull PsiStatement[] elseBranch,
+                                         PsiStatement @NotNull [] thenBranch,
+                                         PsiStatement @NotNull [] elseBranch,
                                          boolean isOnTheFly,
                                          boolean highlightWhenLastStatementIsCall);
   }
@@ -543,7 +543,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
    */
   @Nullable
   private static ImplicitElseData getIfWithImplicitElse(@NotNull PsiIfStatement ifStatement,
-                                                        @NotNull PsiStatement[] thenStatements,
+                                                        PsiStatement @NotNull [] thenStatements,
                                                         boolean returnsNothing) {
     int statementsLength = thenStatements.length;
     if (statementsLength == 0) return null;
@@ -606,8 +606,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
   }
 
-  @NotNull
-  private static PsiStatement[] unwrap(@Nullable PsiStatement statement) {
+  private static PsiStatement @NotNull [] unwrap(@Nullable PsiStatement statement) {
     PsiBlockStatement block = tryCast(statement, PsiBlockStatement.class);
     if (block != null) {
       return Arrays.stream(block.getCodeBlock().getStatements()).filter(IfStatementWithIdenticalBranchesInspection::isMeaningful).collect(Collectors.toList())
@@ -624,8 +623,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Nullable
-    static ImplicitElse from(@NotNull PsiStatement[] thenBranch,
-                             @NotNull PsiStatement[] elseBranch,
+    static ImplicitElse from(PsiStatement @NotNull [] thenBranch,
+                             PsiStatement @NotNull [] elseBranch,
                              @NotNull PsiIfStatement ifStatement) {
       if (elseBranch.length != 0 || thenBranch.length == 0) return null;
       PsiStatement lastThenStatement = thenBranch[thenBranch.length - 1];
@@ -660,8 +659,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
-                                         @NotNull PsiStatement[] thenBranch,
-                                         @NotNull PsiStatement[] elseBranch,
+                                         PsiStatement @NotNull [] thenBranch,
+                                         PsiStatement @NotNull [] elseBranch,
                                          boolean isOnTheFly,
                                                 boolean highlightWhenLastStatementIsCall) {
       ImplicitElse implicitElse = from(thenBranch, elseBranch, ifStatement);
@@ -775,8 +774,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
     @Nullable
     static ThenElse from(@NotNull PsiIfStatement ifStatement,
-                         @NotNull PsiStatement[] thenBranch,
-                         @NotNull PsiStatement[] elseBranch,
+                         PsiStatement @NotNull [] thenBranch,
+                         PsiStatement @NotNull [] elseBranch,
                          boolean isOnTheFly) {
       LocalEquivalenceChecker equivalence = getChecker(thenBranch, elseBranch);
 
@@ -849,8 +848,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
 
     @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
-                                                @NotNull PsiStatement[] thenBranch,
-                                                @NotNull PsiStatement[] elseBranch,
+                                                PsiStatement @NotNull [] thenBranch,
+                                                PsiStatement @NotNull [] elseBranch,
                                                 boolean isOnTheFly,
                                                 boolean highlightWhenLastStatementIsCall) {
       ThenElse thenElse = from(ifStatement, thenBranch, elseBranch, isOnTheFly);
@@ -890,8 +889,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     private static void extractTailCommonParts(@NotNull PsiIfStatement ifStatement,
-                                               @NotNull PsiStatement[] thenBranch,
-                                               @NotNull PsiStatement[] elseBranch,
+                                               PsiStatement @NotNull [] thenBranch,
+                                               PsiStatement @NotNull [] elseBranch,
                                                LocalEquivalenceChecker equivalence,
                                                int thenLen,
                                                int elseLen,
@@ -917,8 +916,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       }
     }
 
-    private static void extractHeadCommonParts(@NotNull PsiStatement[] thenBranch,
-                                               @NotNull PsiStatement[] elseBranch,
+    private static void extractHeadCommonParts(PsiStatement @NotNull [] thenBranch,
+                                               PsiStatement @NotNull [] elseBranch,
                                                boolean isOnTheFly,
                                                LocalEquivalenceChecker equivalence,
                                                int minStmtCount,
@@ -956,13 +955,13 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     /**
      * Heuristic detecting that removing duplication can decrease beauty of the code
      */
-    private static boolean isSimilarHeadStatements(@NotNull PsiStatement[] thenBranch) {
+    private static boolean isSimilarHeadStatements(PsiStatement @NotNull [] thenBranch) {
       if (thenBranch.length <= SIMILAR_STATEMENTS_COUNT) return false;
       PsiExpressionStatement expressionStatement = tryCast(thenBranch[0], PsiExpressionStatement.class);
       return isSimilarStatements(thenBranch, expressionStatement);
     }
 
-    private static boolean isSimilarStatements(@NotNull PsiStatement[] branch, PsiExpressionStatement expressionStatement) {
+    private static boolean isSimilarStatements(PsiStatement @NotNull [] branch, PsiExpressionStatement expressionStatement) {
       if (expressionStatement == null) return false;
       PsiMethodCallExpression call = tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
       if (call == null) return false;
@@ -972,7 +971,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       return true;
     }
 
-    private static boolean isSimilarTailStatements(@NotNull PsiStatement[] thenBranch) {
+    private static boolean isSimilarTailStatements(PsiStatement @NotNull [] thenBranch) {
       if (thenBranch.length <= SIMILAR_STATEMENTS_COUNT) return false;
       PsiExpressionStatement expressionStatement = tryCast(thenBranch[thenBranch.length - 1], PsiExpressionStatement.class);
       return isSimilarStatements(thenBranch, expressionStatement);
@@ -1010,7 +1009,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
              EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(firstCurrent, secondCurrent);
     }
 
-    private static boolean uncommonElseStatementsContainsThenNames(@NotNull PsiStatement[] elseBranch,
+    private static boolean uncommonElseStatementsContainsThenNames(PsiStatement @NotNull [] elseBranch,
                                                                    int elseLen,
                                                                    List<ExtractionUnit> headCommonParts,
                                                                    List<PsiStatement> tailCommonParts,
@@ -1031,7 +1030,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
   }
 
-  private static boolean branchesAreEquivalent(@NotNull PsiStatement[] thenBranch,
+  private static boolean branchesAreEquivalent(PsiStatement @NotNull [] thenBranch,
                                                @NotNull List<? extends PsiStatement> statements,
                                                @NotNull EquivalenceChecker equivalence) {
     for (int i = 0, length = statements.size(); i < length; i++) {
@@ -1061,7 +1060,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Nullable
-    static ElseIf from(@NotNull PsiIfStatement ifStatement, @NotNull PsiStatement[] thenStatements) {
+    static ElseIf from(@NotNull PsiIfStatement ifStatement, PsiStatement @NotNull [] thenStatements) {
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if (ifStatement.getCondition() == null) return null;
       PsiIfStatement elseIf = tryCast(ControlFlowUtils.stripBraces(elseBranch), PsiIfStatement.class);
@@ -1083,8 +1082,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
     @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
-                                                @NotNull PsiStatement[] thenBranch,
-                                                @NotNull PsiStatement[] elseBranch,
+                                                PsiStatement @NotNull [] thenBranch,
+                                                PsiStatement @NotNull [] elseBranch,
                                                 boolean isOnTheFly,
                                                 boolean highlightWhenLastStatementIsCall) {
       ElseIf elseIf = from(ifStatement, thenBranch);

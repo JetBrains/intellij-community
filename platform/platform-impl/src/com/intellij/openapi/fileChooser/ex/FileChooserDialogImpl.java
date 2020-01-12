@@ -105,8 +105,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] choose(@Nullable final Project project, @NotNull final VirtualFile... toSelect) {
+  public VirtualFile @NotNull [] choose(@Nullable final Project project, final VirtualFile @NotNull ... toSelect) {
     init();
     if (myProject == null && project != null) {
       myProject = project;
@@ -127,9 +126,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
 
-  @NotNull
   @Override
-  public VirtualFile[] choose(@Nullable final VirtualFile toSelect, @Nullable final Project project) {
+  public VirtualFile @NotNull [] choose(@Nullable final VirtualFile toSelect, @Nullable final Project project) {
     if (toSelect == null) {
       return choose(project);
     }
@@ -176,8 +174,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     PropertiesComponent.getInstance().setValues(RECENT_FILES_KEY, ArrayUtilRt.toStringArray(files));
   }
 
-  @NotNull
-  private String[] getRecentFiles() {
+  private String @NotNull [] getRecentFiles() {
     final String[] recent = PropertiesComponent.getInstance().getValues(RECENT_FILES_KEY);
     if (recent != null) {
       if (recent.length > 0 && myPathTextField.getField().getText().replace('\\', '/').equals(recent[0])) {

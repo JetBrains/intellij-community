@@ -45,8 +45,7 @@ public interface ExtensionPoint<T> {
   /**
    * Prefer to use {@link #getExtensionList()}.
    */
-  @NotNull
-  T[] getExtensions();
+  T @NotNull [] getExtensions();
 
   @NotNull
   List<T> getExtensionList();

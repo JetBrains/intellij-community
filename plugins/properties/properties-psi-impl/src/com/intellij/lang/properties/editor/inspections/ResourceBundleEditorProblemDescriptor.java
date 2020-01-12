@@ -46,9 +46,8 @@ public class ResourceBundleEditorProblemDescriptor implements CommonProblemDescr
     return myDescriptionTemplate;
   }
 
-  @Nullable
   @Override
-  public QuickFix[] getFixes() {
+  public QuickFix @Nullable [] getFixes() {
     return myFixes;
   }
 }

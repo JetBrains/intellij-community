@@ -19,8 +19,7 @@ public class PyDictLiteralExpressionImpl extends PySequenceExpressionImpl implem
   }
 
   @Override
-  @NotNull
-  public PyKeyValueExpression[] getElements() {
+  public PyKeyValueExpression @NotNull [] getElements() {
     return childrenToPsi(KEY_VALUE_EXPRESSIONS, PyKeyValueExpression.EMPTY_ARRAY);
   }
 

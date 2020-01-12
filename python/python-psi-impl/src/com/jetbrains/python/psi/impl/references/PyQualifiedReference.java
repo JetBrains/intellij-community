@@ -257,9 +257,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
     ret.poke(docstring, RatedResolveResult.RATE_HIGH);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     PyExpression qualifier = myElement.getQualifier();
     if (qualifier != null) {
       qualifier = CompletionUtilCoreImpl.getOriginalOrSelf(qualifier);

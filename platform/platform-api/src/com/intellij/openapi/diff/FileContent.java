@@ -80,7 +80,7 @@ public class FileContent extends DiffContent {
     return !myFile.isDirectory() && myType.isBinary();
   }
 
-  public static FileContent createFromTempFile(Project project, String name, String ext, @NotNull byte[] content) throws IOException {
+  public static FileContent createFromTempFile(Project project, String name, String ext, byte @NotNull [] content) throws IOException {
     File tempFile = FileUtil.createTempFile(name, "." + ext);
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);

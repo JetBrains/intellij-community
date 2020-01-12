@@ -28,8 +28,7 @@ public class VFileCreateEvent extends VFileEvent {
                           @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
                           boolean isFromRefresh,
-                          @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
-                          ChildInfo[] children) {
+                          ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children) {
     super(requestor, isFromRefresh);
     myParent = parent;
     myDirectory = isDirectory;
@@ -85,8 +84,7 @@ public class VFileCreateEvent extends VFileEvent {
     return createdFile;
   }
 
-  @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
-  public ChildInfo[] getChildren() {
+  public ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] getChildren() {
     return myChildren;
   }
 

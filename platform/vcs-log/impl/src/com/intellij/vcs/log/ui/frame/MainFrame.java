@@ -449,7 +449,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
 
     @Override
-    protected void onSelection(@NotNull int[] selection) {
+    protected void onSelection(int @NotNull [] selection) {
       if (Registry.is("show.log.as.editor.tab")) {
         ChangesViewContentManager.getInstance(myLogData.getProject()).selectContent("Repository");
       }

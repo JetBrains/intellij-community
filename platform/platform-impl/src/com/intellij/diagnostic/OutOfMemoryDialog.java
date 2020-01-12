@@ -183,9 +183,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
     return myContentPane;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return myHeapDumpAction != null ? new Action[]{myShutdownAction, myContinueAction, myHeapDumpAction}
                                     : new Action[]{myShutdownAction, myContinueAction};
   }

@@ -159,8 +159,7 @@ public class SelectionModelImpl implements SelectionModel {
   }
 
   @Override
-  @NotNull
-  public int[] getBlockSelectionStarts() {
+  public int @NotNull [] getBlockSelectionStarts() {
     Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();
     int[] result = new int[carets.size()];
     int i = 0;
@@ -171,8 +170,7 @@ public class SelectionModelImpl implements SelectionModel {
   }
 
   @Override
-  @NotNull
-  public int[] getBlockSelectionEnds() {
+  public int @NotNull [] getBlockSelectionEnds() {
     Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();
     int[] result = new int[carets.size()];
     int i = 0;

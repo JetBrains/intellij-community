@@ -48,21 +48,18 @@ public class TestTreeModel implements StructureViewModel{
   }
 
   @Override
-  @NotNull
-  public Filter[] getFilters() {
+  public Filter @NotNull [] getFilters() {
     return myFilters.toArray(Filter.EMPTY_ARRAY);
   }
 
   @Override
-  @NotNull
-  public Grouper[] getGroupers() {
+  public Grouper @NotNull [] getGroupers() {
     return new Grouper[]{new TestGrouper(new String[]{"a", "b", "c"}),
                          new TestGrouper(new String[]{"d", "e", "f"})};
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return mySorters.toArray(Sorter.EMPTY_ARRAY);
   }
 
@@ -82,9 +79,8 @@ public class TestTreeModel implements StructureViewModel{
       myValue = value;
     }
 
-    @NotNull
     @Override
-    public StructureViewTreeElement[] getChildren() {
+    public StructureViewTreeElement @NotNull [] getChildren() {
       return myChildren.toArray(StructureViewTreeElement.EMPTY_ARRAY);
 
     }

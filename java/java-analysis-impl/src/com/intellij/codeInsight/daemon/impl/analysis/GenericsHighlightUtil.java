@@ -868,7 +868,7 @@ public class GenericsHighlightUtil {
     return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
   }
 
-  static HighlightInfo checkTypeParametersList(@NotNull PsiTypeParameterList list, @NotNull PsiTypeParameter[] parameters, @NotNull LanguageLevel level) {
+  static HighlightInfo checkTypeParametersList(@NotNull PsiTypeParameterList list, PsiTypeParameter @NotNull [] parameters, @NotNull LanguageLevel level) {
     final PsiElement parent = list.getParent();
     if (parent instanceof PsiClass && ((PsiClass)parent).isEnum()) {
       String description = JavaErrorBundle.message("generics.enum.may.not.have.type.parameters");

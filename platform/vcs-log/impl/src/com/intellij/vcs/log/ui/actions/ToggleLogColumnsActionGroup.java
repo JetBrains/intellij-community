@@ -29,9 +29,8 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> actions = new ArrayList<>();
     if (e != null && !isPopup(e)) {
       actions.add(Separator.create(NAME));

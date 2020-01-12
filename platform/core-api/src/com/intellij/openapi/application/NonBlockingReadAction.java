@@ -83,7 +83,7 @@ public interface NonBlockingReadAction<T> {
    * @return a copy of this builder which, when submitted, cancels previously submitted running computations with equal equality objects
    */
   @Contract(pure = true)
-  NonBlockingReadAction<T> coalesceBy(@NotNull Object... equality);
+  NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality);
 
   /**
    * Submit this computation to be performed in a non-blocking read action on background thread. The returned promise

@@ -408,8 +408,7 @@ public class ControlFlowUtils {
   }
 
 
-  @NotNull
-  public static PsiStatement[] unwrapBlock(@Nullable PsiStatement statement) {
+  public static PsiStatement @NotNull [] unwrapBlock(@Nullable PsiStatement statement) {
     PsiBlockStatement block = ObjectUtils.tryCast(statement, PsiBlockStatement.class);
     if (block != null) {
       return block.getCodeBlock().getStatements();

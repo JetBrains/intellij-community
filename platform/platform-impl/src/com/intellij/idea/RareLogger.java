@@ -147,7 +147,7 @@ public class RareLogger extends Logger {
   }
 
   @Override
-  public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
+  public void error(@NonNls String message, @Nullable Throwable t, @NonNls String @NotNull ... details) {
     process(Level.ERROR, message, t, details);
   }
 

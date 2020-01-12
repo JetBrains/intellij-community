@@ -195,7 +195,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiTypeParameter createTypeParameter(@NotNull String name, @NotNull PsiClassType[] superTypes) {
+  public PsiTypeParameter createTypeParameter(@NotNull String name, PsiClassType @NotNull [] superTypes) {
     StringBuilder builder = new StringBuilder();
     builder.append("def <").append(name);
     if (superTypes.length > 1 ||
@@ -219,7 +219,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers,
+  public GrVariableDeclaration createVariableDeclaration(String @Nullable [] modifiers,
                                                          @Nullable GrExpression initializer,
                                                          @Nullable PsiType type,
                                                          String... identifiers) {
@@ -242,7 +242,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers,
+  public GrVariableDeclaration createVariableDeclaration(String @Nullable [] modifiers,
                                                          @Nullable String initializer,
                                                          @Nullable PsiType type,
                                                          String... identifiers) {
@@ -294,7 +294,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrVariableDeclaration createFieldDeclaration(@NotNull String[] modifiers,
+  public GrVariableDeclaration createFieldDeclaration(String @NotNull [] modifiers,
                                                       @NotNull String identifier,
                                                       @Nullable GrExpression initializer,
                                                       @Nullable PsiType type) {
@@ -484,8 +484,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrMethod createConstructorFromText(@NotNull String constructorName,
-                                            @Nullable String[] paramTypes,
-                                            @NotNull String[] paramNames,
+                                            String @Nullable [] paramTypes,
+                                            String @NotNull [] paramNames,
                                             @Nullable String body,
                                             @Nullable PsiElement context) {
     final CharSequence text = generateMethodText(null, constructorName, null, paramTypes, paramNames, body, true);
@@ -786,8 +786,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private static CharSequence generateMethodText(@Nullable String modifier,
                                                  @NotNull String name,
                                                  @Nullable String type,
-                                                 @NotNull String[] paramTypes,
-                                                 @NotNull String[] paramNames,
+                                                 String @NotNull [] paramTypes,
+                                                 String @NotNull [] paramNames,
                                                  @Nullable String body,
                                                  boolean isConstructor) {
     StringBuilder builder = new StringBuilder();
@@ -836,7 +836,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrMethod createMethodFromText(@NotNull String modifier, @NotNull String name, @Nullable String type, @NotNull String[] paramTypes, PsiElement context) {
+  public GrMethod createMethodFromText(@NotNull String modifier, @NotNull String name, @Nullable String type, String @NotNull [] paramTypes, PsiElement context) {
     PsiType psiType;
     List<PsiType> res = new ArrayList<>();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
@@ -877,7 +877,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiReferenceList createThrownList(@NotNull PsiClassType[] exceptionTypes) {
+  public PsiReferenceList createThrownList(PsiClassType @NotNull [] exceptionTypes) {
     if (exceptionTypes.length == 0) {
       return createMethodFromText("def foo(){}", null).getThrowsList();
     }
@@ -1057,7 +1057,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiParameterList createParameterList(@NotNull @NonNls String[] names, @NotNull PsiType[] types) throws IncorrectOperationException {
+  public PsiParameterList createParameterList(@NonNls String @NotNull [] names, PsiType @NotNull [] types) throws IncorrectOperationException {
     final StringBuilder builder = new StringBuilder();
     builder.append("def foo(");
     for (int i = 0; i < names.length; i++) {

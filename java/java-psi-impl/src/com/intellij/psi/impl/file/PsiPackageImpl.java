@@ -90,9 +90,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     PsiPackageImplementationHelper.getInstance().handleQualifiedNameChange(this, newQualifiedName);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] occursInPackagePrefixes() {
+  public VirtualFile @NotNull [] occursInPackagePrefixes() {
     return PsiPackageImplementationHelper.getInstance().occursInPackagePrefixes(this);
   }
 
@@ -130,8 +129,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getClasses() {
+  public PsiClass @NotNull [] getClasses() {
     return getClasses(allScope());
   }
 
@@ -141,14 +139,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getClasses(@NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@NotNull GlobalSearchScope scope) {
     return getFacade().getClasses(this, scope);
   }
 
-  @NotNull
   @Override
-  public PsiFile[] getFiles(@NotNull GlobalSearchScope scope) {
+  public PsiFile @NotNull [] getFiles(@NotNull GlobalSearchScope scope) {
     return getFacade().getPackageFiles(this, scope);
   }
 
@@ -162,14 +158,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  @NotNull
-  public PsiPackage[] getSubPackages() {
+  public PsiPackage @NotNull [] getSubPackages() {
     return getSubPackages(allScope());
   }
 
   @Override
-  @NotNull
-  public PsiPackage[] getSubPackages(@NotNull GlobalSearchScope scope) {
+  public PsiPackage @NotNull [] getSubPackages(@NotNull GlobalSearchScope scope) {
     return getFacade().getSubPackages(this, scope);
   }
 
@@ -177,8 +171,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(getProject());
   }
 
-  @NotNull
-  private PsiClass[] getCachedClassesByName(@NotNull String name, GlobalSearchScope scope) {
+  private PsiClass @NotNull [] getCachedClassesByName(@NotNull String name, GlobalSearchScope scope) {
     if (DumbService.getInstance(getProject()).isDumb()) {
       return getCachedClassInDumbMode(name, scope);
     }
@@ -198,8 +191,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes;
   }
 
-  @NotNull
-  private PsiClass[] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
+  private PsiClass @NotNull [] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
     Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
     if (scopeMap == null) {
       myDumbModeFullCache = new SoftReference<>(scopeMap = ContainerUtil.newConcurrentMap());
@@ -224,8 +216,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes == null ? PsiClass.EMPTY_ARRAY : classes;
   }
 
-  @Nullable
-  private PsiClass[] findClassesHeuristically(final String name, GlobalSearchScope scope) {
+  private PsiClass @Nullable [] findClassesHeuristically(final String name, GlobalSearchScope scope) {
     if (findSubPackageByName(name) != null) {
       return PsiClass.EMPTY_ARRAY;
     }
@@ -253,9 +244,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getCachedClassesByName(name, new EverythingGlobalScope(getProject())).length > 0;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] findClassByShortName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClassByShortName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     PsiClass[] allClasses = getCachedClassesByName(name, scope);
     if (allClasses.length == 0) return allClasses;
     if (allClasses.length == 1) {
@@ -341,7 +331,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   private static boolean processClasses(@NotNull PsiScopeProcessor processor,
                                         @NotNull ResolveState state,
-                                        @NotNull PsiClass[] classes,
+                                        PsiClass @NotNull [] classes,
                                         @NotNull Condition<? super String> nameCondition) {
     for (PsiClass aClass : classes) {
       String name = aClass.getName();

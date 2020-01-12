@@ -131,8 +131,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     if (myCachedResult == null) {
       myCachedResult = innerResolve(incompleteCode);
     }

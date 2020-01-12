@@ -42,8 +42,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final String name = getName();
     if (name == null) return ResolveResult.EMPTY_ARRAY;
     ArrayList<GroovyResolveResult> candidates = new ArrayList<>();
@@ -130,8 +129,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final PsiElement owner = GrDocCommentUtil.findDocOwner(this);
     final PsiElement firstChild = getFirstChild();
     if (owner instanceof GrTypeParameterListOwner && firstChild != null) {

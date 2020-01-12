@@ -85,8 +85,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
   

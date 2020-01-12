@@ -43,9 +43,8 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     return ContentRevisionCache.getAsString(getContentAsBytes(), myFile, null);
   }
 
-  @NotNull
   @Override
-  public byte[] getContentAsBytes() throws VcsException {
+  public byte @NotNull [] getContentAsBytes() throws VcsException {
     try {
       if (myFile.getVirtualFile() == null) {
         LocalFileSystem.getInstance().refreshAndFindFileByPath(myFile.getPath());

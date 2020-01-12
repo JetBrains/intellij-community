@@ -109,8 +109,7 @@ class RestoreReferencesDialog extends DialogWrapper {
     return "#com.intellij.codeInsight.editorActions.RestoreReferencesDialog";
   }
 
-  @NotNull
-  public Object[] getSelectedElements(){
+  public Object @NotNull [] getSelectedElements(){
     return mySelectedElements;
   }
 }

@@ -96,10 +96,9 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     }
   }
 
-  @Nullable
-  private CommonProblemDescriptor[] getDescriptors(@NotNull InspectionManager manager,
-                                                   RefModule refModule,
-                                                   Module module) {
+  private CommonProblemDescriptor @Nullable [] getDescriptors(@NotNull InspectionManager manager,
+                                                              RefModule refModule,
+                                                              Module module) {
     VirtualFile[] givenRoots =
       ReadAction.compute(() -> OrderEnumerator.orderEntries(module).withoutSdk()
         .withoutModuleSourceEntries()
@@ -146,7 +145,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   }
 
   private static void appendUsedRootDependencies(@NotNull Set<VirtualFile> usedRoots,
-                                                 @NotNull VirtualFile[] givenRoots) {
+                                                 VirtualFile @NotNull [] givenRoots) {
     //classes per root
     Map<VirtualFile, Set<String>> fromClasses = new THashMap<>();
     //classes uses in root, ignoring self & jdk

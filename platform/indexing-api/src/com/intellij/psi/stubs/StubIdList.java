@@ -41,7 +41,7 @@ public final class StubIdList {
     myArray = null;
   }
 
-  public StubIdList(@NotNull int[] array, int size) {
+  public StubIdList(int @NotNull [] array, int size) {
     myArray = array;
     myData = size;
   }

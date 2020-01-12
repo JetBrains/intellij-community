@@ -30,9 +30,8 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String[] getExcludeUrlsForProject() {
+  public String @NotNull [] getExcludeUrlsForProject() {
     List<String> result = new ArrayList<>();
     for (VirtualFile root : ProjectRootManager.getInstance(myProject).getContentRoots()) {
       VirtualFile file = root.findChild(".tox");

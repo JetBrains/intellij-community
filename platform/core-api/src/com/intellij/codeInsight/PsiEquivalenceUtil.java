@@ -116,10 +116,9 @@ public class PsiEquivalenceUtil {
     return areElementsEquivalent(element1, element2, null, false);
   }
 
-  @NotNull
-  public static PsiElement[] getFilteredChildren(@NotNull final PsiElement element,
-                                                 @Nullable Condition<? super PsiElement> isElementSignificantCondition,
-                                                 boolean areCommentsSignificant) {
+  public static PsiElement @NotNull [] getFilteredChildren(@NotNull final PsiElement element,
+                                                           @Nullable Condition<? super PsiElement> isElementSignificantCondition,
+                                                           boolean areCommentsSignificant) {
     ASTNode[] children1 = element.getNode().getChildren(null);
     ArrayList<PsiElement> array = new ArrayList<>();
     for (ASTNode node : children1) {

@@ -100,7 +100,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
 
   @NotNull
   private static PsiExpression addFieldInitialization(@NotNull PsiMethod constructor,
-                                                      @NotNull LookupElement[] suggestedInitializers,
+                                                      LookupElement @NotNull [] suggestedInitializers,
                                                       @NotNull PsiField field,
                                                       @NotNull Project project) {
     PsiCodeBlock methodBody = constructor.getBody();
@@ -136,7 +136,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
   }
 
   @NotNull
-  private static List<PsiMethod> choose(@NotNull PsiMethod[] ctors, @NotNull final Project project) {
+  private static List<PsiMethod> choose(PsiMethod @NotNull [] ctors, @NotNull final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return Arrays.asList(ctors);
     }
@@ -159,8 +159,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static PsiMethodMember[] toPsiMethodMemberArray(@NotNull PsiMethod[] methods) {
+  private static PsiMethodMember @NotNull [] toPsiMethodMemberArray(PsiMethod @NotNull [] methods) {
     final PsiMethodMember[] result = new PsiMethodMember[methods.length];
     for (int i = 0; i < methods.length; i++) {
       result[i] = new PsiMethodMember(methods[i]);
@@ -168,8 +167,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
     return result;
   }
 
-  @NotNull
-  private static PsiMethod[] toPsiMethodArray(@NotNull List<? extends PsiMethodMember> methodMembers) {
+  private static PsiMethod @NotNull [] toPsiMethodArray(@NotNull List<? extends PsiMethodMember> methodMembers) {
     final PsiMethod[] result = new PsiMethod[methodMembers.size()];
     int i = 0;
     for (PsiMethodMember methodMember : methodMembers) {

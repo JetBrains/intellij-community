@@ -24,9 +24,8 @@ import java.util.Set;
  * @author Rustam Vishnyakov
  */
 public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleScheme>, EclipseXmlProfileElements {
-  @NotNull
   @Override
-  public String[] getSourceExtensions() {
+  public String @NotNull [] getSourceExtensions() {
     return new String[]{"xml"};
   }
 
@@ -52,8 +51,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
    * @return Either scheme name or null if the scheme doesn't have a name.
    * @throws SchemeImportException
    */
-  @NotNull
-  private static String[] readSchemeNames(@NotNull VirtualFile selectedFile) throws SchemeImportException {
+  private static String @NotNull [] readSchemeNames(@NotNull VirtualFile selectedFile) throws SchemeImportException {
     final Set<String> names = new HashSet<>();
     final EclipseXmlProfileReader reader = new EclipseXmlProfileReader(new EclipseXmlProfileReader.OptionHandler() {
       @Override

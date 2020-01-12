@@ -65,7 +65,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
   }
 
   @Override
-  protected void checkOccurrences(@NotNull PsiElement[] occurrences) {
+  protected void checkOccurrences(PsiElement @NotNull [] occurrences) {
     if (hasLhs(occurrences)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.variable.is.used.for.write"));
     }

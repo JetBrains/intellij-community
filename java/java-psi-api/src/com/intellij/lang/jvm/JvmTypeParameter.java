@@ -17,8 +17,7 @@ public interface JvmTypeParameter extends JvmTypeDeclaration {
    * @see java.lang.reflect.TypeVariable#getBounds
    * @see java.lang.reflect.TypeVariable#getAnnotatedBounds
    */
-  @NotNull
-  JvmReferenceType[] getBounds();
+  JvmReferenceType @NotNull [] getBounds();
 
   /**
    * @return the element which is parameterized by this type parameter

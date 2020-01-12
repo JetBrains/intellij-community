@@ -190,7 +190,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope union(@NotNull GlobalSearchScope[] scopes) {
+  public static GlobalSearchScope union(GlobalSearchScope @NotNull [] scopes) {
     if (scopes.length == 0) {
       throw new IllegalArgumentException("Empty scope array");
     }
@@ -482,7 +482,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final GlobalSearchScope[] myScopes;
 
     @NotNull
-    static GlobalSearchScope create(@NotNull GlobalSearchScope[] scopes) {
+    static GlobalSearchScope create(GlobalSearchScope @NotNull [] scopes) {
       Set<GlobalSearchScope> result = new THashSet<>(scopes.length);
       Project project = null;
       for (GlobalSearchScope scope : scopes) {
@@ -501,7 +501,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return new UnionScope(project, result.toArray(EMPTY_ARRAY));
     }
 
-    private UnionScope(Project project, @NotNull GlobalSearchScope[] scopes) {
+    private UnionScope(Project project, GlobalSearchScope @NotNull [] scopes) {
       super(project);
       myScopes = scopes;
     }
@@ -600,7 +600,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope getScopeRestrictedByFileTypes(@NotNull GlobalSearchScope scope, @NotNull FileType... fileTypes) {
+  public static GlobalSearchScope getScopeRestrictedByFileTypes(@NotNull GlobalSearchScope scope, FileType @NotNull ... fileTypes) {
     if (scope == EMPTY_SCOPE) {
       return EMPTY_SCOPE;
     }
@@ -611,7 +611,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   private static class FileTypeRestrictionScope extends DelegatingGlobalSearchScope {
     private final FileType[] myFileTypes;
 
-    private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, @NotNull FileType[] fileTypes) {
+    private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, FileType @NotNull [] fileTypes) {
       super(scope);
       myFileTypes = fileTypes;
     }

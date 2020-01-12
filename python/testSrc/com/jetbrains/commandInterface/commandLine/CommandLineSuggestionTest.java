@@ -47,7 +47,7 @@ public final class CommandLineSuggestionTest extends PyTestCase {
    * @param initialPositionText place to move cusor to
    * @param expectedSuggestions expected suggestions
    */
-  private void ensureSuggestions(@NotNull final String initialPositionText, @NotNull final String... expectedSuggestions) {
+  private void ensureSuggestions(@NotNull final String initialPositionText, final String @NotNull ... expectedSuggestions) {
     moveByText(initialPositionText);
     final Set<String> completions = new HashSet<>();
     for (final LookupElement element : myFixture.completeBasic()) {

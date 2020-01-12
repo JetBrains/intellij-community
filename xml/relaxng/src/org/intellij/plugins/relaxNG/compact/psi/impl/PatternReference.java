@@ -76,8 +76,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final RncGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
@@ -122,8 +121,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final RncGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
@@ -146,9 +144,8 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     return "Unresolved pattern reference ''{0}''";
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public LocalQuickFix @Nullable [] getQuickFixes() {
     if (getScope() != null) {
       return new LocalQuickFix[] { new CreatePatternFix(this) };
     }

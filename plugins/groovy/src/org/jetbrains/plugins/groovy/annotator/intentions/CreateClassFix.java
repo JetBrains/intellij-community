@@ -80,14 +80,13 @@ public abstract class CreateClassFix {
     };
   }
 
-  @Nullable
-  private static PsiType[] getArgTypes(GrReferenceElement refElement) {
+  private static PsiType @Nullable [] getArgTypes(GrReferenceElement refElement) {
     return ReadAction.compute(() -> PsiUtil.getArgumentTypes(refElement, false));
   }
 
   private static void generateConstructor(@NotNull PsiElement refElement,
                                           @NotNull String name,
-                                          @NotNull PsiType[] argTypes,
+                                          PsiType @NotNull [] argTypes,
                                           @NotNull GrTypeDefinition targetClass,
                                           @NotNull Project project) {
     WriteAction.run(() -> {

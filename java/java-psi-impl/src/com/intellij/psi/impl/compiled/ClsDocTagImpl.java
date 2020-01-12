@@ -53,8 +53,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return myNameElement.textToCharArray();
   }
 
@@ -80,8 +79,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return new PsiElement[]{myNameElement};
   }
 
@@ -100,9 +98,8 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     return myNameElement;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getDataElements() {
+  public PsiElement @NotNull [] getDataElements() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -142,14 +139,12 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     }
 
     @Override
-    @NotNull
-    public char[] textToCharArray() {
+    public char @NotNull [] textToCharArray() {
       return myText.toCharArray();
     }
 
     @Override
-    @NotNull
-    public PsiElement[] getChildren() {
+    public PsiElement @NotNull [] getChildren() {
       return PsiElement.EMPTY_ARRAY;
     }
 

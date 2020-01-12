@@ -32,9 +32,8 @@ public class CreateGetterFromUsageFix extends CreateMethodFromUsageFix implement
     super(refExpression);
   }
 
-  @NotNull
   @Override
-  protected TypeConstraint[] getReturnTypeConstraints() {
+  protected TypeConstraint @NotNull [] getReturnTypeConstraints() {
     return GroovyExpectedTypesProvider.calculateTypeConstraints(getRefExpr());
   }
 

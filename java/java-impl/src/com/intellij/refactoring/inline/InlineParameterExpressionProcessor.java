@@ -91,13 +91,12 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InlineViewDescriptor(myParameter);
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
 
     int parameterIndex = myMethod.getParameterList().getParameterIndex(myParameter);
     final Map<PsiVariable, PsiElement> localToParamRef = new HashMap<>();
@@ -250,7 +249,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownCheckedExceptions(myInitializer);
     final Set<PsiVariable> varsUsedInInitializer = new HashSet<>();
     final Set<PsiJavaCodeReferenceElement> paramRefsToInline = new HashSet<>();

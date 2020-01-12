@@ -59,7 +59,7 @@ public class GithubNotifications {
     VcsNotifier.getInstance(project).notifyImportantWarning(title, getErrorTextFromException(e));
   }
 
-  public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message, @Nullable AnAction... actions) {
+  public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message, AnAction @Nullable ... actions) {
     LOG.info(title + "; " + message);
     Notification notification =
       new Notification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, message, NotificationType.WARNING);

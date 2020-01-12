@@ -173,7 +173,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
 
       private final Set<PsiParameter> parameters;
 
-      private ParameterAccessVisitor(@NotNull PsiParameter[] parameters) {
+      private ParameterAccessVisitor(PsiParameter @NotNull [] parameters) {
         this.parameters = ContainerUtil.set(parameters);
       }
 

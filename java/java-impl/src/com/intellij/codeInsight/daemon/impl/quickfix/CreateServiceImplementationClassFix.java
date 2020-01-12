@@ -162,7 +162,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     private final JRadioButton myProviderButton = new JBRadioButton();
 
     protected CreateServiceImplementationDialog(@Nullable Project project,
-                                                @NotNull PsiDirectory[] psiRootDirs,
+                                                PsiDirectory @NotNull [] psiRootDirs,
                                                 @NotNull String superClassName) {
       super(project);
       setTitle("Create Service Implementation");
@@ -181,9 +181,8 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       init();
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 

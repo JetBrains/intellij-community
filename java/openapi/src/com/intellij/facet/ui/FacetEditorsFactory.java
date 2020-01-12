@@ -30,12 +30,12 @@ public abstract class FacetEditorsFactory {
   }
 
 
-  public abstract FacetLibrariesValidator createLibrariesValidator(@NotNull LibraryInfo[] libraries, 
+  public abstract FacetLibrariesValidator createLibrariesValidator(LibraryInfo @NotNull [] libraries,
                                                                    FacetLibrariesValidatorDescription description,
                                                                    FacetEditorContext context,
                                                                    final FacetValidatorsManager validatorsManager);
 
-  public abstract FacetLibrariesValidator createLibrariesValidator(@NotNull final LibraryInfo[] libraries,
+  public abstract FacetLibrariesValidator createLibrariesValidator(final LibraryInfo @NotNull [] libraries,
                                                                    @NotNull final Module module,
                                                                    @NotNull final String libraryName);
 

@@ -305,8 +305,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   @Override
-  @NotNull
-  public Facet[] getAllFacets(final Module module) {
+  public Facet @NotNull [] getAllFacets(final Module module) {
     return getFacetModel(module).getAllFacets();
   }
 

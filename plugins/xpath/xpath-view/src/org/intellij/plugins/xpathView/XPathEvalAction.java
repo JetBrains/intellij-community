@@ -436,8 +436,7 @@ public class XPathEvalAction extends XPathAction {
         }
 
         @Override
-        @Nullable
-        public VirtualFile[] getFiles() {
+        public VirtualFile @Nullable [] getFiles() {
             return null;
         }
 

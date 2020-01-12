@@ -78,7 +78,7 @@ public class MessagesToolWindowFixture extends ToolWindowFixture {
     public MessageFixture findMessageContainingText(@NotNull ErrorTreeElementKind kind, @NotNull final String text) {
       ErrorTreeElement element = doFindMessage(kind, new MessageMatcher() {
         @Override
-        protected boolean matches(@NotNull String[] lines) {
+        protected boolean matches(String @NotNull [] lines) {
           for (String s : lines) {
             if (s.contains(text)) {
               return true;
@@ -119,7 +119,7 @@ public class MessagesToolWindowFixture extends ToolWindowFixture {
 
     @Nullable
     private static ErrorTreeElement findMessage(@NotNull ErrorViewStructure errorView,
-                                                @NotNull ErrorTreeElement[] children,
+                                                ErrorTreeElement @NotNull [] children,
                                                 @NotNull MessageMatcher matcher,
                                                 @NotNull ErrorTreeElementKind kind) {
       for (ErrorTreeElement child : children) {
@@ -138,13 +138,13 @@ public class MessagesToolWindowFixture extends ToolWindowFixture {
   }
 
   public static abstract class MessageMatcher {
-    protected abstract boolean matches(@NotNull String[] text);
+    protected abstract boolean matches(String @NotNull [] text);
 
     @NotNull
     public static MessageMatcher firstLineStartingWith(@NotNull final String prefix) {
       return new MessageMatcher() {
         @Override
-        public boolean matches(@NotNull String[] text) {
+        public boolean matches(String @NotNull [] text) {
           assertThat(text).isNotEmpty();
           return text[0].startsWith(prefix);
         }

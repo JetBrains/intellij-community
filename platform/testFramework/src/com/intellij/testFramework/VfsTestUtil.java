@@ -52,7 +52,7 @@ public class VfsTestUtil {
   }
 
   @NotNull
-  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, @NotNull byte[] data) {
+  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, byte @NotNull [] data) {
     return createFileOrDir(root, relativePath, data, false);
   }
 
@@ -62,7 +62,7 @@ public class VfsTestUtil {
   }
 
   @NotNull
-  private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, @NotNull byte[] data, boolean dir) {
+  private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, byte @NotNull [] data, boolean dir) {
     try {
       return WriteAction.computeAndWait(() -> {
         VirtualFile parent = root;

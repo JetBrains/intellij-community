@@ -104,9 +104,8 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return false;
   }
   
-  @NotNull
   @Override
-  public ErrorTreeElement[] getChildElements(@NotNull Object element) {
+  public ErrorTreeElement @NotNull [] getChildElements(@NotNull Object element) {
     if (element == myRoot) {
       final List<ErrorTreeElement> children = new ArrayList<>();
       // simple messages
@@ -220,7 +219,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   public ErrorTreeElement addMessage(@NotNull ErrorTreeElementKind kind,
-                         @NotNull String[] text,
+                         String @NotNull [] text,
                          @Nullable VirtualFile underFileGroup,
                          @Nullable VirtualFile file,
                          int line,

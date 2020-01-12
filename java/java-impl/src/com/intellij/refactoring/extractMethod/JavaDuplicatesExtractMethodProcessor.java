@@ -37,11 +37,11 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     public void pass(ExtractMethodProcessor processor) {} // it's a dummy but it's required to select the target class
   };
 
-  public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @NotNull String refactoringName) {
+  public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @NotNull String refactoringName) {
     this(elements, null, refactoringName);
   }
 
-  public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @Nullable Editor editor, @Nullable String refactoringName) {
+  public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @Nullable Editor editor, @Nullable String refactoringName) {
     super(elements[0].getProject(), editor, elements, null, refactoringName, "", HelpID.EXTRACT_METHOD);
   }
 

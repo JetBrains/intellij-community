@@ -11,9 +11,8 @@ public class CatchMayIgnoreExceptionMerger extends InspectionElementsMergerBase 
     return "CatchMayIgnoreException";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {"EmptyCatchBlock", "UnusedCatchParameter"};
   }
 }

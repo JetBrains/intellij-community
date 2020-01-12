@@ -291,7 +291,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return getCurrentLayout().getNextContentActionName();
   }
 
-  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
+  public void setTabDoubleClickActions(AnAction @NotNull ... actions) {
     myTabsLayout.setTabDoubleClickActions(actions);
   }
 

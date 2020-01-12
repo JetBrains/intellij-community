@@ -21,8 +21,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
   }
 
   @Override
-  @NotNull
-  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
+  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     final Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     if (element instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)element;
@@ -44,16 +43,14 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  @NotNull
-  private static PsiClass[] getSupers(@NotNull PsiClass psiClass) {
+  private static PsiClass @NotNull [] getSupers(@NotNull PsiClass psiClass) {
     if (psiClass.isAnnotationType()) {
       return getMetaAnnotations(psiClass);
     }
     return psiClass.getSupers();
   }
 
-  @NotNull
-  private static PsiClass[] getMetaAnnotations(@NotNull PsiClass psiClass) {
+  private static PsiClass @NotNull [] getMetaAnnotations(@NotNull PsiClass psiClass) {
     Set<PsiClass> supers = new HashSet<>();
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList != null) {

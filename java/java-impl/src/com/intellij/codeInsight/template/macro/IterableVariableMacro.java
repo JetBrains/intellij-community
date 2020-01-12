@@ -47,8 +47,7 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
   }
 
   @Override
-  @Nullable
-  protected PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
+  protected PsiElement @Nullable [] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
     final List<PsiElement> result = new ArrayList<>();

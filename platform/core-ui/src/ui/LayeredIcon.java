@@ -44,7 +44,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     myVShifts = new int[layerCount];
   }
 
-  public LayeredIcon(@NotNull Icon... icons) {
+  public LayeredIcon(Icon @NotNull ... icons) {
     this(icons.length);
     for (int i = 0; i < icons.length; i++) {
       setIcon(icons[i], i);
@@ -80,8 +80,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return icon;
   }
 
-  @NotNull
-  private Icon[] myScaledIcons() {
+  private Icon @NotNull [] myScaledIcons() {
     if (myScaledIcons != null) {
       return myScaledIcons;
     }
@@ -133,8 +132,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return myIcons.length;
   }
 
-  @NotNull
-  public Icon[] getAllLayers() {
+  public Icon @NotNull [] getAllLayers() {
     return myIcons;
   }
 

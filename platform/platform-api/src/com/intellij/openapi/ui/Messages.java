@@ -199,7 +199,7 @@ public class Messages {
   public static int showDialog(@Nullable Project project,
                                String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
@@ -218,7 +218,7 @@ public class Messages {
       projectWindow != null ? projectWindow.getOwnedWindows() : Window.getWindows()));
   }
 
-  private static void makeCurrentMessageDialogGoAway(@NotNull Window[] checkWindows) {
+  private static void makeCurrentMessageDialogGoAway(Window @NotNull [] checkWindows) {
     for (Window w : checkWindows) {
       JDialog dialog = w instanceof JDialog ? (JDialog)w : null;
       if (dialog == null || !dialog.isModal()) continue;
@@ -238,7 +238,7 @@ public class Messages {
   public static int showDialog(@Nullable Project project,
                                String message,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -252,7 +252,7 @@ public class Messages {
   public static int showIdeaMessageDialog(@Nullable Project project,
                                           String message,
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                          @NotNull String[] options,
+                                          String @NotNull [] options,
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -275,7 +275,7 @@ public class Messages {
                                String message,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                @Nullable String moreInfo,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                Icon icon) {
@@ -290,7 +290,7 @@ public class Messages {
   public static int showDialog(@NotNull Component parent,
                                String message,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
@@ -305,7 +305,7 @@ public class Messages {
    */
   public static int showDialog(String message,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,
@@ -323,7 +323,7 @@ public class Messages {
    */
   public static int showDialog(String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -339,7 +339,7 @@ public class Messages {
    */
   public static int showDialog(String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return showDialog(message, title, options, defaultOptionIndex, icon, null);
@@ -806,7 +806,7 @@ public class Messages {
 
   public static int showCheckboxMessageDialog(String message,
                                               @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                              @NotNull String[] options,
+                                              String @NotNull [] options,
                                               String checkboxText,
                                               final boolean checked,
                                               final int defaultOptionIndex,
@@ -1357,7 +1357,7 @@ public class Messages {
                        @Nullable Icon icon,
                        @Nullable String initialValue,
                        @Nullable InputValidator validator,
-                       @NotNull String[] options,
+                       String @NotNull [] options,
                        int defaultOption,
                        @Nullable String comment) {
       super(project, true);
@@ -1374,7 +1374,7 @@ public class Messages {
                        @Nullable Icon icon,
                        @Nullable String initialValue,
                        @Nullable InputValidator validator,
-                       @NotNull String[] options,
+                       String @NotNull [] options,
                        int defaultOption) {
       this(project, message, title, icon, initialValue, validator, options, defaultOption, null);
     }
@@ -1417,9 +1417,8 @@ public class Messages {
       getOKAction().setEnabled(myValidator == null || myValidator.checkInput(myField.getText().trim()));
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       final Action[] actions = new Action[myOptions.length];
       for (int i = 0; i < myOptions.length; i++) {
         String option = myOptions[i];
@@ -1544,7 +1543,7 @@ public class Messages {
                                 @Nullable Icon icon,
                                 @Nullable String initialValue,
                                 @Nullable InputValidator validator,
-                                @NotNull String[] options,
+                                String @NotNull [] options,
                                 int defaultOption) {
       super(project, message, title, icon, initialValue, validator, options, defaultOption);
     }

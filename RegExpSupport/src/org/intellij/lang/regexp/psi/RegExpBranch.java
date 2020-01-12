@@ -25,6 +25,5 @@ public interface RegExpBranch extends RegExpElement {
      * Returns the atoms making up the branch.
      * @see org.intellij.lang.regexp.psi.RegExpAtom 
      */
-    @NotNull
-    RegExpAtom[] getAtoms();
+    RegExpAtom @NotNull [] getAtoms();
 }

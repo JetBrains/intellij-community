@@ -26,8 +26,7 @@ public interface TreeChangeEvent extends PomChangeSet {
   @NotNull
   ASTNode getRootElement();
 
-  @NotNull
-  ASTNode[] getChangedElements();
+  ASTNode @NotNull [] getChangedElements();
 
   TreeChange getChangesByElement(@NotNull ASTNode element);
 }

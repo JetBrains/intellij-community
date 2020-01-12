@@ -43,9 +43,8 @@ public final class CommandLineArgumentReference extends CommandLineElementRefere
   }
 
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final LookupWithIndentsBuilder builder = new LookupWithIndentsBuilder();
     final Argument argument = getElement().findRealArgument();
     final Option argumentOption = getElement().findOptionForOptionArgument();

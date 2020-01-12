@@ -92,8 +92,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 
@@ -236,9 +235,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return false;
   }
 
-  @NotNull
   @Override
-  public String[][] getAllKnownProperties() {
+  public String[] @NotNull [] getAllKnownProperties() {
     return DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties();
   }
 
@@ -248,9 +246,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return DefaultRegExpPropertiesProvider.getInstance().getPropertyDescription(name);
   }
 
-  @NotNull
   @Override
-  public String[][] getKnownCharacterClasses() {
+  public String[] @NotNull [] getKnownCharacterClasses() {
     return DefaultRegExpPropertiesProvider.getInstance().getKnownCharacterClasses();
   }
 }

@@ -23,7 +23,7 @@ class ByteArrayInterner {
   private final TObjectIntHashMap<byte[]> arrayToStart = new TObjectIntHashMap<>(BYTE_ARRAY_STRATEGY);
   final BufferExposingByteArrayOutputStream joinedBuffer = new BufferExposingByteArrayOutputStream();
 
-  int internBytes(@NotNull byte[] bytes) {
+  int internBytes(byte @NotNull [] bytes) {
     if (bytes.length == 0) return 0;
 
     int start = arrayToStart.get(bytes);

@@ -39,7 +39,7 @@ public class ControlFlowUtil {
   }
 
   @NotNull
-  public static Graph<Instruction> createGraph(@NotNull final Instruction[] flow) {
+  public static Graph<Instruction> createGraph(final Instruction @NotNull [] flow) {
     return new Graph<Instruction>() {
       @NotNull
       final private List<Instruction> myList = Arrays.asList(flow);
@@ -106,7 +106,7 @@ public class ControlFlowUtil {
   }
 
   public static void iteratePrev(final int startInstruction,
-                                 @NotNull final Instruction[] instructions,
+                                 final Instruction @NotNull [] instructions,
                                  @NotNull final Function<? super Instruction, Operation> closure) {
     iterate(startInstruction, instructions, closure, true);
   }
@@ -115,7 +115,7 @@ public class ControlFlowUtil {
    * Iterates over write instructions in CFG with reversed order
    */
   public static void iterate(final int startInstruction,
-                             @NotNull final Instruction[] instructions,
+                             final Instruction @NotNull [] instructions,
                              @NotNull final Function<? super Instruction, Operation> closure,
                              boolean prev) {
     final IntStack stack = new IntStack(instructions.length);

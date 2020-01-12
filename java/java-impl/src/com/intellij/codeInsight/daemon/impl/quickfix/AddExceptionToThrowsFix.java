@@ -110,8 +110,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     });
   }
 
-  @NotNull
-  private static PsiMethod[] getSuperMethods(@NotNull PsiMethod targetMethod) {
+  private static PsiMethod @NotNull [] getSuperMethods(@NotNull PsiMethod targetMethod) {
     List<PsiMethod> result = new ArrayList<>();
     collectSuperMethods(targetMethod, result);
     return result.toArray(PsiMethod.EMPTY_ARRAY);
@@ -125,7 +124,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     }
   }
 
-  private static boolean hasSuperMethodsWithoutExceptions(@NotNull PsiMethod[] superMethods, @NotNull Set<? extends PsiClassType> unhandledExceptions) {
+  private static boolean hasSuperMethodsWithoutExceptions(PsiMethod @NotNull [] superMethods, @NotNull Set<? extends PsiClassType> unhandledExceptions) {
     for (PsiMethod superMethod : superMethods) {
       PsiClassType[] referencedTypes = superMethod.getThrowsList().getReferencedTypes();
 

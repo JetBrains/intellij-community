@@ -261,8 +261,7 @@ public final class ProjectUtil {
     return path.contains("://") || path.contains("\\\\");
   }
 
-  @NotNull
-  public static Project[] getOpenProjects() {
+  public static Project @NotNull [] getOpenProjects() {
     ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
     return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
   }

@@ -65,7 +65,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   @Override
-  public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+  public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
     return flavors.length > 0 && ClipboardSynchronizer.getInstance().areDataFlavorsAvailable(flavors);
   }
 
@@ -248,9 +248,8 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return null;
   }
 
-  @NotNull
   @Override
-  public Transferable[] getAllContents() {
+  public Transferable @NotNull [] getAllContents() {
     String clipString = getContents(DataFlavor.stringFlavor);
     if (clipString != null && (myData.isEmpty() || !Comparing.equal(clipString, getStringContent(myData.get(0))))) {
       addToTheTopOfTheStack(new StringSelection(clipString));

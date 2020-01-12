@@ -89,9 +89,8 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
     return myContentPane;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{myShutdownAction, myIgnoreAction};
   }
 

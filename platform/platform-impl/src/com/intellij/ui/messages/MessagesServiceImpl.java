@@ -40,7 +40,7 @@ public class MessagesServiceImpl implements MessagesService {
                                @Nullable Component parentComponent,
                                String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,

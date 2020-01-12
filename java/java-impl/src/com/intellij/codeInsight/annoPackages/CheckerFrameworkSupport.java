@@ -26,7 +26,7 @@ class CheckerFrameworkSupport implements AnnotationPackageSupport {
   @Nullable
   @Override
   public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                       @NotNull PsiAnnotation.TargetType[] types,
+                                                                       PsiAnnotation.TargetType @NotNull [] types,
                                                                        boolean superPackage) {
     String qName = anno.getQualifiedName();
     if (DEFAULT_QUALIFIER.equals(qName)) {

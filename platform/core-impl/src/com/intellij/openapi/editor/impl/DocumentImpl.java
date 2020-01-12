@@ -271,7 +271,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret(s) being in the way
    */
-  boolean stripTrailingSpaces(@Nullable final Project project, boolean inChangedLinesOnly, @Nullable int[] caretOffsets) {
+  boolean stripTrailingSpaces(@Nullable final Project project, boolean inChangedLinesOnly, int @Nullable [] caretOffsets) {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
@@ -755,7 +755,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myFrozen = null;
   }
 
-  void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
+  void clearLineModificationFlagsExcept(int @NotNull [] caretLines) {
     IntArrayList modifiedLines = new IntArrayList(caretLines.length);
     LineSet lineSet = getLineSet();
     for (int line : caretLines) {
@@ -1016,8 +1016,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return lineCount;
   }
 
-  @NotNull
-  private DocumentListener[] getListeners() {
+  private DocumentListener @NotNull [] getListeners() {
     return myDocumentListeners.getArray();
   }
 
@@ -1205,9 +1204,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                                             : new Attachment[] {new Attachment("enteringTrace.txt", enteringTrace)};
     }
 
-    @NotNull
     @Override
-    public Attachment[] getAttachments() {
+    public Attachment @NotNull [] getAttachments() {
       return myAttachments;
     }
   }

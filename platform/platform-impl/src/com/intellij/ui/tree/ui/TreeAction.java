@@ -131,7 +131,7 @@ abstract class TreeAction extends AbstractAction implements UIResource {
   private final String name;
   private final List<KeyStroke> keys;
 
-  TreeAction(@NotNull String name, @NotNull KeyStroke... keys) {
+  TreeAction(@NotNull String name, KeyStroke @NotNull ... keys) {
     this.name = name;
     this.keys = asList(keys);
   }

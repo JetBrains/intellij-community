@@ -161,7 +161,7 @@ public class PluginManagerTest {
   }
 
   /** @noinspection unused */
-  private static String dumpDescriptors(@NotNull IdeaPluginDescriptorImpl[] descriptors) {
+  private static String dumpDescriptors(IdeaPluginDescriptorImpl @NotNull [] descriptors) {
     // place breakpoint in PluginManagerCore#loadDescriptors before sorting
     StringBuilder sb = new StringBuilder("<root>");
     Function<String, String> escape = s ->

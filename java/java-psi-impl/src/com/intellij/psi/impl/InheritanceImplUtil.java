@@ -154,7 +154,7 @@ public class InheritanceImplUtil {
   }
 
   private static boolean checkInheritor(@NotNull PsiManager manager,
-                                        @NotNull PsiClassType[] supers,
+                                        PsiClassType @NotNull [] supers,
                                         @NotNull PsiClass baseClass,
                                         @NotNull Set<PsiClass> checkedClasses) {
     for (PsiClassType aSuper : supers) {

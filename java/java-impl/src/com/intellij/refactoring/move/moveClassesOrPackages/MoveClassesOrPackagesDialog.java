@@ -76,7 +76,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
   public MoveClassesOrPackagesDialog(@NotNull Project project,
                                      boolean searchTextOccurrences,
-                                     @NotNull PsiElement[] elementsToMove,
+                                     PsiElement @NotNull [] elementsToMove,
                                      PsiElement initialTargetElement,
                                      MoveCallback moveCallback,
                                      @NotNull String targetPackageName,
@@ -398,7 +398,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
   //for scala plugin
   protected MoveClassesOrPackagesProcessor createMoveToPackageProcessor(@NotNull MoveDestination destination,
-                                                                        @NotNull PsiElement[] elementsToMove,
+                                                                        PsiElement @NotNull [] elementsToMove,
                                                                         MoveCallback callback) {
     return new MoveClassesOrPackagesProcessor(getProject(), elementsToMove, destination, isSearchInComments(), isSearchInNonJavaFiles(), callback);
   }
@@ -450,7 +450,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
   //for scala plugin
   protected MoveClassToInnerProcessor createMoveToInnerProcessor(@NotNull PsiClass destination,
-                                                                 @NotNull PsiClass[] classesToMove,
+                                                                 PsiClass @NotNull [] classesToMove,
                                                                  @Nullable MoveCallback callback) {
     return new MoveClassToInnerProcessor(getProject(), classesToMove, destination, isSearchInComments(), isSearchInNonJavaFiles(), callback);
   }

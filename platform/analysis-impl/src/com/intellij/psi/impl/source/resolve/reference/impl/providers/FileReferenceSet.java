@@ -55,7 +55,7 @@ public class FileReferenceSet {
   private final boolean myEndingSlashNotAllowed;
   private boolean myEmptyPathAllowed;
   @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
-  @Nullable private FileType[] mySuitableFileTypes;
+  private FileType @Nullable [] mySuitableFileTypes;
 
   public FileReferenceSet(@NotNull String str,
                           @NotNull PsiElement element,
@@ -63,7 +63,7 @@ public class FileReferenceSet {
                           PsiReferenceProvider provider,
                           boolean caseSensitive,
                           boolean endingSlashNotAllowed,
-                          @Nullable FileType[] suitableFileTypes) {
+                          FileType @Nullable [] suitableFileTypes) {
     this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, true);
   }
 
@@ -73,7 +73,7 @@ public class FileReferenceSet {
                           PsiReferenceProvider provider,
                           boolean caseSensitive,
                           boolean endingSlashNotAllowed,
-                          @Nullable FileType[] suitableFileTypes,
+                          FileType @Nullable [] suitableFileTypes,
                           boolean init) {
     myElement = element;
     myStartInElement = startInElement;
@@ -280,8 +280,7 @@ public class FileReferenceSet {
     return myReferences[index];
   }
 
-  @NotNull
-  public FileReference[] getAllReferences() {
+  public FileReference @NotNull [] getAllReferences() {
     return myReferences;
   }
 
@@ -620,8 +619,7 @@ public class FileReferenceSet {
     return true;
   }
 
-  @NotNull
-  public FileType[] getSuitableFileTypes() {
+  public FileType @NotNull [] getSuitableFileTypes() {
     return mySuitableFileTypes == null ? EMPTY_FILE_TYPES : mySuitableFileTypes;
   }
 

@@ -135,9 +135,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(@NotNull VirtualFile file) {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) {
     return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
@@ -167,9 +166,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return false;
   }
 
-  @NotNull
   @Override
-  public String[] list(@NotNull VirtualFile file) {
+  public String @NotNull [] list(@NotNull VirtualFile file) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 

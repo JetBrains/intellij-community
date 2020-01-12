@@ -44,7 +44,7 @@ public class LibraryUtil {
     return isClassAvailableInLibrary(library.getFiles(OrderRootType.CLASSES), fqn);
   }
 
-  public static boolean isClassAvailableInLibrary(@NotNull VirtualFile[] files, @NotNull String fqn) {
+  public static boolean isClassAvailableInLibrary(VirtualFile @NotNull [] files, @NotNull String fqn) {
     return isClassAvailableInLibrary(Arrays.asList(files), fqn);
   }
 
@@ -99,18 +99,15 @@ public class LibraryUtil {
     return libraryTable.createLibrary(name);
   }
 
-  @NotNull
-  public static VirtualFile[] getLibraryRoots(@NotNull Project project) {
+  public static VirtualFile @NotNull [] getLibraryRoots(@NotNull Project project) {
     return getLibraryRoots(project, true, true);
   }
 
-  @NotNull
-  public static VirtualFile[] getLibraryRoots(@NotNull Project project, final boolean includeSourceFiles, final boolean includeJdk) {
+  public static VirtualFile @NotNull [] getLibraryRoots(@NotNull Project project, final boolean includeSourceFiles, final boolean includeJdk) {
     return getLibraryRoots(ModuleManager.getInstance(project).getModules(), includeSourceFiles, includeJdk);
   }
 
-  @NotNull
-  public static VirtualFile[] getLibraryRoots(@NotNull Module[] modules, final boolean includeSourceFiles, final boolean includeJdk) {
+  public static VirtualFile @NotNull [] getLibraryRoots(Module @NotNull [] modules, final boolean includeSourceFiles, final boolean includeJdk) {
     Set<VirtualFile> roots = new HashSet<>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

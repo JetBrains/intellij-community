@@ -62,7 +62,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
   private static void invokeOnElements(@NotNull final Project project,
                                        @NotNull final Editor editor,
                                        @NotNull PsiFile file,
-                                       @NotNull PsiElement[] elements) {
+                                       PsiElement @NotNull [] elements) {
     if (elements.length == 0) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
@@ -144,7 +144,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     throw new UnsupportedOperationException();
   }
 }

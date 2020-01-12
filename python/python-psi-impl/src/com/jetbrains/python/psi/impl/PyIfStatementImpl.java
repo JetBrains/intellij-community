@@ -29,8 +29,7 @@ public class PyIfStatementImpl extends PyPartitionedElementImpl implements PyIfS
   }
 
   @Override
-  @NotNull
-  public PyIfPart[] getElifParts() {
+  public PyIfPart @NotNull [] getElifParts() {
     return childrenToPsi(PyElementTypes.ELIFS, PyIfPart.EMPTY_ARRAY);
   }
 

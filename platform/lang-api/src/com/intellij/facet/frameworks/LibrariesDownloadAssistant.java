@@ -26,8 +26,7 @@ public class LibrariesDownloadAssistant {
   private LibrariesDownloadAssistant() {
   }
 
-  @NotNull
-  public static Artifact[] getVersions(@NotNull String groupId, @NotNull URL... localUrls) {
+  public static Artifact @NotNull [] getVersions(@NotNull String groupId, URL @NotNull ... localUrls) {
     final Artifact[] versions;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       versions = getDownloadServiceVersions(groupId);
@@ -38,8 +37,7 @@ public class LibrariesDownloadAssistant {
     return versions == null ? getVersions(localUrls) : versions;
   }
 
-  @Nullable
-  private static Artifact[] getDownloadServiceVersions(@NotNull String id) {
+  private static Artifact @Nullable [] getDownloadServiceVersions(@NotNull String id) {
     final URL url = createVersionsUrl(id);
     if (url == null) return null;
     final Artifacts allArtifacts = deserialize(url);
@@ -67,8 +65,7 @@ public class LibrariesDownloadAssistant {
     return null;
   }
 
-  @NotNull
-  public static Artifact[] getVersions(@NotNull URL... urls) {
+  public static Artifact @NotNull [] getVersions(URL @NotNull ... urls) {
     Set<Artifact> versions = new HashSet<>();
     for (URL url : urls) {
       final Artifacts allArtifacts = deserialize(url);
@@ -101,23 +98,21 @@ public class LibrariesDownloadAssistant {
   }
 
   @Nullable
-  public static Artifact findVersion(@NotNull final String versionId, @NotNull final URL... urls) {
+  public static Artifact findVersion(@NotNull final String versionId, final URL @NotNull ... urls) {
     return findVersion(getVersions(urls), versionId);
   }
 
   @Nullable
-  private static Artifact findVersion(@Nullable Artifact[] versions, @NotNull final String versionId) {
+  private static Artifact findVersion(Artifact @Nullable [] versions, @NotNull final String versionId) {
     return versions == null ? null : ContainerUtil.find(versions, springVersion -> versionId.equals(springVersion.getVersion()));
   }
 
-  @NotNull
-  public static LibraryInfo[] getLibraryInfos(@NotNull final URL url, @NotNull final String versionId) {
+  public static LibraryInfo @NotNull [] getLibraryInfos(@NotNull final URL url, @NotNull final String versionId) {
     final Artifact version = findVersion(getVersions(url), versionId);
     return version != null ? getLibraryInfos(version) : LibraryInfo.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public static LibraryInfo[] getLibraryInfos(@Nullable Artifact version) {
+  public static LibraryInfo @NotNull [] getLibraryInfos(@Nullable Artifact version) {
     if (version == null) return LibraryInfo.EMPTY_ARRAY;
 
     final List<LibraryInfo> infos = convert(version.getUrlPrefix(), version.getItems());
@@ -126,7 +121,7 @@ public class LibrariesDownloadAssistant {
   }
 
   @NotNull
-  private static List<LibraryInfo> convert(final String urlPrefix, @NotNull ArtifactItem[] jars) {
+  private static List<LibraryInfo> convert(final String urlPrefix, ArtifactItem @NotNull [] jars) {
     return ContainerUtil.mapNotNull(jars, artifactItem -> {
       String downloadUrl = artifactItem.getUrl();
       if (urlPrefix != null) {

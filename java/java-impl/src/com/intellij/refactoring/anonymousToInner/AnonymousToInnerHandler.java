@@ -64,7 +64,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<>();
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
       invoke(project, CommonDataKeys.EDITOR.getData(dataContext), (PsiAnonymousClass)elements[0]);
     }

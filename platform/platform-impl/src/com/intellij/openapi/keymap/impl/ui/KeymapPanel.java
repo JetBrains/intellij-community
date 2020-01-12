@@ -252,7 +252,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
-  public void processCurrentKeymapChanged(@NotNull QuickList[] ids) {
+  public void processCurrentKeymapChanged(QuickList @NotNull [] ids) {
     myQuickLists = ids;
     currentKeymapChanged();
   }
@@ -475,7 +475,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                          @NotNull ShortcutRestrictions restrictions,
                                          @NotNull Keymap keymapSelected,
                                          @NotNull Component parent,
-                                         @NotNull QuickList... quickLists) {
+                                         QuickList @NotNull ... quickLists) {
     addKeyboardShortcut(actionId, restrictions, keymapSelected, parent, null, null, quickLists);
   }
 
@@ -485,7 +485,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                          @NotNull Component parent,
                                          @Nullable KeyboardShortcut selectedShortcut,
                                          @Nullable SystemShortcuts systemShortcuts,
-                                         @NotNull QuickList... quickLists) {
+                                         QuickList @NotNull ... quickLists) {
     if (!restrictions.allowKeyboardShortcut) return;
     KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent, restrictions.allowKeyboardSecondStroke, systemShortcuts == null ? null : systemShortcuts.createKeystroke2SysShortcutMap());
     KeyboardShortcut keyboardShortcut = dialog.showAndGet(actionId, keymapSelected, selectedShortcut, quickLists);
@@ -538,7 +538,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                        @NotNull ShortcutRestrictions restrictions,
                                        @NotNull Keymap keymapSelected,
                                        @NotNull Component parent,
-                                       @NotNull QuickList... quickLists) {
+                                       QuickList @NotNull ... quickLists) {
     if (!restrictions.allowMouseShortcut) return;
     MouseShortcutDialog dialog = new MouseShortcutDialog(parent, restrictions.allowMouseDoubleClick);
     MouseShortcut mouseShortcut = dialog.showAndGet(actionId, keymapSelected, quickLists);
@@ -629,8 +629,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   public void dispose() {
   }
 
-  @Nullable
-  public Shortcut[] getCurrentShortcuts(@NotNull String actionId) {
+  public Shortcut @Nullable [] getCurrentShortcuts(@NotNull String actionId) {
     Keymap keymap = myManager.getSelectedKeymap();
     return keymap == null ? null : keymap.getShortcuts(actionId);
   }

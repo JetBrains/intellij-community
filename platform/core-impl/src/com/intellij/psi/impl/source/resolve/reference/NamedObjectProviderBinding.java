@@ -26,7 +26,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMap = new THashMap<>(5);
   private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<>(5);
 
-  public void registerProvider(@NonNls @NotNull String[] names,
+  public void registerProvider(@NonNls String @NotNull [] names,
                                @NotNull ElementPattern filter,
                                boolean caseSensitive,
                                @NotNull PsiReferenceProvider provider,

@@ -29,8 +29,7 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
   }
 
   @Override
-  @NotNull
-  public PyTargetExpression[] getGlobals() {
+  public PyTargetExpression @NotNull [] getGlobals() {
     return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
   }
 

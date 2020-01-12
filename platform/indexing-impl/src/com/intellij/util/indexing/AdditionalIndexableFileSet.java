@@ -25,12 +25,12 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   private volatile Set<VirtualFile> cachedFiles;
   private volatile Set<VirtualFile> cachedDirectories;
 
-  public AdditionalIndexableFileSet(@NotNull Project project, @NotNull IndexableSetContributor... extensions) {
+  public AdditionalIndexableFileSet(@NotNull Project project, IndexableSetContributor @NotNull ... extensions) {
     myProject = project;
     myExtensions = () -> extensions;
   }
 
-  AdditionalIndexableFileSet(@NotNull IndexableSetContributor... extensions) {
+  AdditionalIndexableFileSet(IndexableSetContributor @NotNull ... extensions) {
     myProject = null;
     myExtensions = () -> extensions;
   }

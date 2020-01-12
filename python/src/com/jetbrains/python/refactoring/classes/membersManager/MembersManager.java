@@ -103,7 +103,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   public static void moveAllMembers(
     @NotNull final Collection<? extends PyMemberInfo<PyElement>> memberInfos,
     @NotNull final PyClass from,
-    @NotNull final PyClass... to
+    final PyClass @NotNull ... to
   ) {
     List<PyMemberInfo<PyElement>> memberInfosSorted = new ArrayList<>(memberInfos);
     Collections.sort(memberInfosSorted, (o1, o2) -> PyDependenciesComparator.INSTANCE.compare(o1.getMember(), o2.getMember()));
@@ -217,7 +217,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   protected abstract Collection<PyElement> moveMembers(
     @NotNull PyClass from,
     @NotNull Collection<PyMemberInfo<T>> members,
-    @NotNull PyClass... to);
+    PyClass @NotNull ... to);
 
 
   /**

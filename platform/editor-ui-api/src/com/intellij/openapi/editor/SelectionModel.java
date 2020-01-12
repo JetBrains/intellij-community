@@ -200,8 +200,7 @@ public interface SelectionModel {
    *
    * @return an array of start offsets, array size is equal to the number of carets existing in the editor currently.
    */
-  @NotNull
-  int[] getBlockSelectionStarts();
+  int @NotNull [] getBlockSelectionStarts();
 
   /**
    * Returns an array of end offsets in the document for ranges selected in the document currently. Works both for a single-caret and
@@ -209,8 +208,7 @@ public interface SelectionModel {
    *
    * @return an array of start offsets, array size is equal to the number of carets existing in the editor currently.
    */
-  @NotNull
-  int[] getBlockSelectionEnds();
+  int @NotNull [] getBlockSelectionEnds();
 
   /**
    * Returns visual representation of selection.

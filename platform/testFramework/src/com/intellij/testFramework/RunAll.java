@@ -22,7 +22,7 @@ public final class RunAll implements Runnable {
   private final List<? extends ThrowableRunnable<?>> myActions;
 
   @SafeVarargs
-  public RunAll(@NotNull ThrowableRunnable<Throwable>... actions) {
+  public RunAll(ThrowableRunnable<Throwable> @NotNull ... actions) {
     this(Arrays.asList(actions));
   }
 
@@ -31,13 +31,13 @@ public final class RunAll implements Runnable {
   }
 
   @SafeVarargs
-  public static void runAll(@NotNull ThrowableRunnable<Throwable>... actions) {
+  public static void runAll(ThrowableRunnable<Throwable> @NotNull ... actions) {
     CompoundRuntimeException.throwIfNotEmpty(collectExceptions(Arrays.asList(actions)));
   }
 
   @SafeVarargs
   @Contract(pure=true)
-  public final RunAll append(@NotNull ThrowableRunnable<Throwable>... actions) {
+  public final RunAll append(ThrowableRunnable<Throwable> @NotNull ... actions) {
     return new RunAll(ContainerUtil.concat(myActions, actions.length == 1 ? Collections.singletonList(actions[0]) : Arrays.asList(actions)));
   }
 

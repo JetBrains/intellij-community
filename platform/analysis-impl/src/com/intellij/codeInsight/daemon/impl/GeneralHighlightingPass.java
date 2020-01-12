@@ -107,8 +107,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
-  @NotNull
-  private HighlightVisitor[] cloneHighlightVisitors() {
+  private HighlightVisitor @NotNull [] cloneHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
     HighlightVisitor[] highlightVisitors = HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(myProject);
     if (oldCount != 0) {
@@ -124,8 +123,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return highlightVisitors;
   }
 
-  @NotNull
-  private HighlightVisitor[] filterVisitors(@NotNull HighlightVisitor[] highlightVisitors, @NotNull PsiFile psiFile) {
+  private HighlightVisitor @NotNull [] filterVisitors(HighlightVisitor @NotNull [] highlightVisitors, @NotNull PsiFile psiFile) {
     final List<HighlightVisitor> visitors = new ArrayList<>(highlightVisitors.length);
     List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
     for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(list)) {
@@ -151,8 +149,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myHighlightVisitorProducer = highlightVisitorProducer;
   }
 
-  @NotNull
-  HighlightVisitor[] getHighlightVisitors(@NotNull PsiFile psiFile) {
+  HighlightVisitor @NotNull [] getHighlightVisitors(@NotNull PsiFile psiFile) {
     return filterVisitors(myHighlightVisitorProducer.produce(), psiFile);
   }
 
@@ -267,7 +264,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull final List<? extends ProperTextRange> ranges1,
                                     @NotNull final List<? extends PsiElement> elements2,
                                     @NotNull final List<? extends ProperTextRange> ranges2,
-                                    @NotNull final HighlightVisitor[] visitors,
+                                    final HighlightVisitor @NotNull [] visitors,
                                     @NotNull final List<HighlightInfo> insideResult,
                                     @NotNull final List<? super HighlightInfo> outsideResult,
                                     final boolean forceHighlightParents) {
@@ -300,7 +297,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return success;
   }
 
-  private boolean analyzeByVisitors(@NotNull final HighlightVisitor[] visitors,
+  private boolean analyzeByVisitors(final HighlightVisitor @NotNull [] visitors,
                                     @NotNull final HighlightInfoHolder holder,
                                     final int i,
                                     @NotNull final Runnable action) {
@@ -324,7 +321,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                            @NotNull List<? super HighlightInfo> insideResult,
                            @NotNull List<? super HighlightInfo> outsideResult,
                            boolean forceHighlightParents,
-                           @NotNull HighlightVisitor[] visitors,
+                           HighlightVisitor @NotNull [] visitors,
                            @NotNull Stack<TextRange> nestedRange,
                            @NotNull Stack<List<HighlightInfo>> nestedInfos) {
     boolean failed = false;

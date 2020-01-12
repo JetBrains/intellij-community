@@ -157,8 +157,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  @NotNull
-  protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
+  protected char @NotNull [] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
     CharSequence name = getNameSequence();
 
     char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + name.length(), positionRef);
@@ -169,7 +168,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return chars;
   }
 
-  private static int copyString(@NotNull char[] chars, int pos, @NotNull CharSequence s) {
+  private static int copyString(char @NotNull [] chars, int pos, @NotNull CharSequence s) {
     int length = s.length();
     CharArrayUtil.getChars(s, chars, 0, pos, length);
     return pos + length;

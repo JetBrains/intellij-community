@@ -82,12 +82,11 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
     return canOpenFile(file, supported);
   }
 
-  @NotNull
-  private static VirtualFile[] getFileChildren(@NotNull VirtualFile file) {
+  private static VirtualFile @NotNull [] getFileChildren(@NotNull VirtualFile file) {
     return ObjectUtils.chooseNotNull(file.getChildren(), VirtualFile.EMPTY_ARRAY);
   }
 
-  protected static boolean canOpenFile(@NotNull VirtualFile file, @NotNull String[] supported) {
+  protected static boolean canOpenFile(@NotNull VirtualFile file, String @NotNull [] supported) {
     final String fileName = file.getName();
     for (String name : supported) {
       if (fileName.equals(name)) {
@@ -106,8 +105,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
     return doGetBuilder();
   }
 
-  @NotNull
-  public abstract String[] getSupportedExtensions();
+  public abstract String @NotNull [] getSupportedExtensions();
 
   @Override
   @Nullable

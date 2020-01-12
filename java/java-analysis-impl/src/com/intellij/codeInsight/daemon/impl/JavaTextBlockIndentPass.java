@@ -223,7 +223,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       }
 
       @Nullable
-      private static IndentType findIndentType(@NotNull String[] lines, int indent) {
+      private static IndentType findIndentType(String @NotNull [] lines, int indent) {
         IndentType indentType = null;
         for (int i = 0; i < lines.length; i++) {
           String line = lines[i];
@@ -243,7 +243,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
         return indentType;
       }
 
-      private static boolean isContentPart(@NotNull String[] lines, int i, String line) {
+      private static boolean isContentPart(String @NotNull [] lines, int i, String line) {
         return !line.isEmpty() && (i == lines.length - 1 || !line.chars().allMatch(Character::isWhitespace));
       }
 

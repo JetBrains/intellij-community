@@ -186,9 +186,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return true;
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = new Configurable[] { new TaskRepositoriesConfigurable(myProject) };
     }

@@ -390,7 +390,7 @@ public class PsiTypesUtil {
   }
 
   @NotNull
-  public static PsiType getParameterType(@NotNull PsiParameter[] parameters, int i, boolean varargs) {
+  public static PsiType getParameterType(PsiParameter @NotNull [] parameters, int i, boolean varargs) {
     final PsiParameter parameter = parameters[i < parameters.length ? i : parameters.length - 1];
     PsiType parameterType = parameter.getType();
     if (parameterType instanceof PsiEllipsisType && varargs) {
@@ -402,8 +402,7 @@ public class PsiTypesUtil {
     return parameterType;
   }
 
-  @NotNull
-  public static PsiTypeParameter[] filterUnusedTypeParameters(@NotNull PsiTypeParameter[] typeParameters, @NotNull PsiType... types) {
+  public static PsiTypeParameter @NotNull [] filterUnusedTypeParameters(PsiTypeParameter @NotNull [] typeParameters, PsiType @NotNull ... types) {
     if (typeParameters.length == 0) return PsiTypeParameter.EMPTY_ARRAY;
 
     TypeParameterSearcher searcher = new TypeParameterSearcher();
@@ -413,9 +412,8 @@ public class PsiTypesUtil {
     return searcher.getTypeParameters().toArray(PsiTypeParameter.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiTypeParameter[] filterUnusedTypeParameters(@NotNull PsiType superReturnTypeInBaseClassType,
-                                                              @NotNull PsiTypeParameter[] typeParameters) {
+  public static PsiTypeParameter @NotNull [] filterUnusedTypeParameters(@NotNull PsiType superReturnTypeInBaseClassType,
+                                                                        PsiTypeParameter @NotNull [] typeParameters) {
     return filterUnusedTypeParameters(typeParameters, superReturnTypeInBaseClassType);
   }
 

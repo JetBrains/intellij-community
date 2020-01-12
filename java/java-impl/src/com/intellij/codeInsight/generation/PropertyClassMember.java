@@ -24,13 +24,11 @@ public interface PropertyClassMember extends EncapsulatableClassMember {
    * @return PsiElement or TemplateGenerationInfo
    * @param aClass
    */
-  @Nullable
-  GenerationInfo[] generateGetters(PsiClass aClass) throws IncorrectOperationException;
+  GenerationInfo @Nullable [] generateGetters(PsiClass aClass) throws IncorrectOperationException;
 
   /**
    * @return PsiElement or TemplateGenerationInfo
    * @param aClass
    */
-  @Nullable
-  GenerationInfo[] generateSetters(PsiClass aClass) throws IncorrectOperationException;
+  GenerationInfo @Nullable [] generateSetters(PsiClass aClass) throws IncorrectOperationException;
 }

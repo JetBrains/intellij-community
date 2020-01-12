@@ -52,8 +52,7 @@ public class NewGantScriptAction extends NewGroovyActionBase {
   }
 
   @Override
-  @NotNull
-  protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] doCreate(String newName, PsiDirectory directory) throws Exception {
     PsiFile file = createGantScriptFromTemplate(directory, newName, GroovyTemplates.GANT_SCRIPT);
     PsiElement lastChild = file.getLastChild();
     PsiElement child = null;

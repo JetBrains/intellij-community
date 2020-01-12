@@ -153,7 +153,7 @@ public class OrderEntryUtil {
     rootModel.commit();
   }
 
-  private static int findLibraryOrderEntry(@NotNull OrderEntry[] entries, @NotNull Library library) {
+  private static int findLibraryOrderEntry(OrderEntry @NotNull [] entries, @NotNull Library library) {
     for (int i = 0; i < entries.length; i++) {
       OrderEntry entry = entries[i];
       if (entry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)entry).getLibrary())) {

@@ -134,12 +134,11 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull final RefEntity refEntity,
-                                                @NotNull final AnalysisScope scope,
-                                                @NotNull final InspectionManager manager,
-                                                @NotNull final GlobalInspectionContext globalContext,
-                                                @NotNull final ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
+                                                           @NotNull final AnalysisScope scope,
+                                                           @NotNull final InspectionManager manager,
+                                                           @NotNull final GlobalInspectionContext globalContext,
+                                                           @NotNull final ProblemDescriptionsProcessor processor) {
     if (!(refEntity instanceof RefJavaElement)) {
       return null;
     }
@@ -233,10 +232,9 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       .anyMatch(point -> point.keepVisibilityLevel(isEntryPointEnabled(point), refElement));
   }
 
-  @NotNull
-  private static CommonProblemDescriptor[] createDescriptions(RefElement refElement, String access,
-                                                              @NotNull InspectionManager manager,
-                                                              @NotNull GlobalInspectionContext globalContext) {
+  private static CommonProblemDescriptor @NotNull [] createDescriptions(RefElement refElement, String access,
+                                                                        @NotNull InspectionManager manager,
+                                                                        @NotNull GlobalInspectionContext globalContext) {
     final PsiElement element = refElement.getPsiElement();
     final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
     if (nameIdentifier != null) {

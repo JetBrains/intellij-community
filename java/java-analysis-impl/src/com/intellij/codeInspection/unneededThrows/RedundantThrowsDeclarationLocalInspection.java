@@ -39,15 +39,13 @@ public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaL
     return myGlobalTool.getShortName();
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return checkExceptionsNeverThrown(method, manager);
   }
 
-  @Nullable
-  private ProblemDescriptor[] checkExceptionsNeverThrown(PsiMethod method,
-                                                         InspectionManager inspectionManager) {
+  private ProblemDescriptor @Nullable [] checkExceptionsNeverThrown(PsiMethod method,
+                                                                    InspectionManager inspectionManager) {
     if (method instanceof SyntheticElement) return null;
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return null;

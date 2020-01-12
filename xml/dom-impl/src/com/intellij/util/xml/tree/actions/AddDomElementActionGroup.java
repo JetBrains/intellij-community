@@ -24,8 +24,7 @@ public class AddDomElementActionGroup extends ActionGroup {
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (myAction == null) {
       myAction = createChildAction();
     }

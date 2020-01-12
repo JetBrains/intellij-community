@@ -360,9 +360,8 @@ public class DfaPsiUtil {
             return typeContainers.contains(containingClass);
           }
 
-          @NotNull
           @Override
-          protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
             if (isCallExposingNonInitializedFields(instruction) ||
                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {

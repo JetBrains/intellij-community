@@ -9,13 +9,11 @@ import org.jetbrains.annotations.Nullable;
 
 public interface UsageTargetProvider {
 
-  @Nullable
-  default UsageTarget[] getTargets(@NotNull Editor editor, @NotNull PsiFile file) {
+  default UsageTarget @Nullable [] getTargets(@NotNull Editor editor, @NotNull PsiFile file) {
     return null;
   }
 
-  @Nullable
-  default UsageTarget[] getTargets(@NotNull PsiElement psiElement) {
+  default UsageTarget @Nullable [] getTargets(@NotNull PsiElement psiElement) {
     return null;
   }
 }

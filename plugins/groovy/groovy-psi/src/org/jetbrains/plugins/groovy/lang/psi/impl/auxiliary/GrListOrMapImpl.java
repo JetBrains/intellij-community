@@ -98,8 +98,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
   }
 
   @Override
-  @NotNull
-  public GrExpression[] getInitializers() {
+  public GrExpression @NotNull [] getInitializers() {
     GrExpression[] initializers = myInitializers;
     if (initializers == null) {
       initializers = PsiTreeUtil.getChildrenOfType(this, GrExpression.class);
@@ -110,8 +109,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
   }
 
   @Override
-  @NotNull
-  public GrNamedArgument[] getNamedArguments() {
+  public GrNamedArgument @NotNull [] getNamedArguments() {
     GrNamedArgument[] namedArguments = myNamedArguments;
     if (namedArguments == null) {
       namedArguments = PsiTreeUtil.getChildrenOfType(this, GrNamedArgument.class);

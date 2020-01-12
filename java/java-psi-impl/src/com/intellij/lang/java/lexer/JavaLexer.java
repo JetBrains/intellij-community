@@ -45,7 +45,7 @@ public class JavaLexer extends LexerBase {
 
   private final _JavaLexer myFlexLexer;
   private CharSequence myBuffer;
-  private @Nullable char[] myBufferArray;
+  private char @Nullable [] myBufferArray;
   private int myBufferIndex;
   private int myBufferEndOffset;
   private int myTokenEndOffset;  // positioned after the last symbol of the current token

@@ -125,8 +125,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   @Override
-  @NotNull
-  public abstract byte[] contentsToByteArray() throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray() throws IOException;
 
   @Override
   public long getModificationStamp() {

@@ -382,9 +382,8 @@ public class HgVFSListener extends VcsVFSListener {
       super(project, files, null, null, null, null, false);
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction()};
     }
   }

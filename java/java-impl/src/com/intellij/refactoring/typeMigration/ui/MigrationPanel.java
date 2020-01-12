@@ -356,8 +356,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       super(text);
     }
 
-    @Nullable
-    private TypeMigrationUsageInfo[] getUsages(AnActionEvent context) {
+    private TypeMigrationUsageInfo @Nullable [] getUsages(AnActionEvent context) {
       return context.getData(MIGRATION_USAGES_KEYS);
     }
 

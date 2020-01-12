@@ -76,8 +76,7 @@ public class RncDocument extends RncElementImpl implements XmlDocument {
   }
 
   @Override
-  @NotNull
-  protected <T> T[] findChildrenByClass(Class<T> aClass) {
+  protected <T> T @NotNull [] findChildrenByClass(Class<T> aClass) {
     return super.findChildrenByClass(aClass);
   }
 

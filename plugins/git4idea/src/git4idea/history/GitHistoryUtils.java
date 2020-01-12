@@ -58,7 +58,7 @@ public class GitHistoryUtils {
   public static void loadDetails(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
-                                 @NotNull String... parameters) throws VcsException {
+                                 String @NotNull ... parameters) throws VcsException {
     GitLogUtil.readFullDetails(project, root, commitConsumer, parameters);
   }
 
@@ -75,7 +75,7 @@ public class GitHistoryUtils {
   public static void loadTimedCommits(@NotNull Project project,
                                       @NotNull VirtualFile root,
                                       @NotNull Consumer<? super TimedVcsCommit> commitConsumer,
-                                      @NotNull String... parameters) throws VcsException {
+                                      String @NotNull ... parameters) throws VcsException {
     GitLogUtil.readTimedCommits(project, root, Arrays.asList(parameters), null, null, commitConsumer);
   }
 
@@ -91,7 +91,7 @@ public class GitHistoryUtils {
   @SuppressWarnings("unused")
   public static List<? extends TimedVcsCommit> collectTimedCommits(@NotNull Project project,
                                                                    @NotNull VirtualFile root,
-                                                                   @NotNull String... parameters) throws VcsException {
+                                                                   String @NotNull ... parameters) throws VcsException {
     List<TimedVcsCommit> commits = new ArrayList<>();
     loadTimedCommits(project, root, commits::add, parameters);
     return commits;
@@ -110,7 +110,7 @@ public class GitHistoryUtils {
   @Nullable
   public static List<? extends VcsCommitMetadata> collectCommitsMetadata(@NotNull Project project,
                                                                          @NotNull VirtualFile root,
-                                                                         @NotNull String... hashes)
+                                                                         String @NotNull ... hashes)
     throws VcsException {
     List<? extends VcsCommitMetadata> result = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root,
                                                                           Arrays.asList(hashes));
@@ -161,8 +161,7 @@ public class GitHistoryUtils {
    * @return a list of parameters that could be fed to a `git log` command
    * @throws VcsException if there is a problem with running git
    */
-  @NotNull
-  public static String[] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
+  public static String @NotNull [] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
     List<String> parameters = new ArrayList<>();
 
     parameters.add(GitLogUtil.getNoWalkParameter(vcs));
@@ -357,7 +356,7 @@ public class GitHistoryUtils {
   @Deprecated
   public static List<? extends VcsCommitMetadata> readLastCommits(@NotNull Project project,
                                                                   @NotNull VirtualFile root,
-                                                                  @NotNull String... hashes) throws VcsException {
+                                                                  String @NotNull ... hashes) throws VcsException {
     return collectCommitsMetadata(project, root, hashes);
   }
 }

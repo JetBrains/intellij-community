@@ -244,8 +244,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return TerminalOptionsProvider.getInstance().getShellPath();
   }
 
-  @NotNull
-  public static String[] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
+  public static String @NotNull [] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
     if (SystemInfo.isUnix) {
       List<String> command = Lists.newArrayList(shellPath.split(" "));
 

@@ -95,7 +95,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
                                                                       PsiType.VOID,
                                                                       ParameterInfoImpl.fromMethod(psiMethod)) {
       @Override
-      protected void performRefactoring(@NotNull UsageInfo[] usages) {
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
         super.performRefactoring(usages);
         for (final PsiMethod method: methodsToModify) {
           replaceReturnStatements(method);

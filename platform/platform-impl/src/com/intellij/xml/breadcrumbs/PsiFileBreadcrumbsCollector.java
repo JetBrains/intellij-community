@@ -115,8 +115,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     return result;
   }
 
-  @Nullable
-  private static CrumbPresentation[] getCrumbPresentations(final PsiElement[] elements) {
+  private static CrumbPresentation @Nullable [] getCrumbPresentations(final PsiElement[] elements) {
     for (BreadcrumbsPresentationProvider provider : BreadcrumbsPresentationProvider.EP_NAME.getExtensionList()) {
       final CrumbPresentation[] presentations = provider.getCrumbPresentations(elements);
       if (presentations != null) {
@@ -250,12 +249,11 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     return elements;
   }
 
-  @Nullable
-  public static PsiElement[] getLinePsiElements(Document document,
-                                                int offset,
-                                                VirtualFile file,
-                                                Project project,
-                                                BreadcrumbsProvider infoProvider) {
+  public static PsiElement @Nullable [] getLinePsiElements(Document document,
+                                                           int offset,
+                                                           VirtualFile file,
+                                                           Project project,
+                                                           BreadcrumbsProvider infoProvider) {
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs = getLineElements(document, offset, file, project, infoProvider, false);
     return pairs == null ? null : toPsiElementArray(pairs);
   }

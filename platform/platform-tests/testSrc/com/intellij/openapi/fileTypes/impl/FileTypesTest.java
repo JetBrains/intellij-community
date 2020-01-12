@@ -953,7 +953,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
       @Nullable
       @Override
-      public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+      public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
         return null;
       }
     };
@@ -1001,7 +1001,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     @Nullable
     @Override
-    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
       return null;
     }
   }

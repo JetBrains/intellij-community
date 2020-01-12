@@ -303,7 +303,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       @Override
-      public void consume(@NotNull final FileType fileType, @NotNull final FileNameMatcher... matchers) {
+      public void consume(@NotNull final FileType fileType, final FileNameMatcher @NotNull ... matchers) {
         register(fileType, new ArrayList<>(Arrays.asList(matchers)));
       }
 
@@ -719,7 +719,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   @NotNull
-  public FileType getFileTypeByFile(@NotNull VirtualFile file, @Nullable byte[] content) {
+  public FileType getFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
     FileType overriddenFileType = FileTypeOverrider.EP_NAME.computeSafeIfAny((overrider) -> overrider.getOverriddenFileType(file));
     if (overriddenFileType != null) {
       return overriddenFileType;
@@ -783,7 +783,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType getOrDetectFromContent(@NotNull VirtualFile file, @Nullable byte[] content) {
+  private FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
     if (!isDetectable(file)) return UnknownFileType.INSTANCE;
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
@@ -953,7 +953,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return file.getFileSystem() instanceof FileSystemInterface;
   }
 
-  private int readSafely(@NotNull InputStream stream, @NotNull byte[] buffer, int offset, int length) throws IOException {
+  private int readSafely(@NotNull InputStream stream, byte @NotNull [] buffer, int offset, int length) throws IOException {
     int n = stream.read(buffer, offset, length);
     if (n <= 0) {
       // maybe locked because someone else is writing to it
@@ -970,7 +970,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detectFromContentAndCache(@NotNull final VirtualFile file, @Nullable byte[] content) throws IOException {
+  private FileType detectFromContentAndCache(@NotNull final VirtualFile file, byte @Nullable [] content) throws IOException {
     long start = System.currentTimeMillis();
     FileType fileType = detectFromContent(file, content, FileTypeDetector.EP_NAME.getExtensionList());
 
@@ -983,7 +983,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detectFromContent(@NotNull VirtualFile file, @Nullable byte[] content, @NotNull Iterable<? extends FileTypeDetector> detectors) throws IOException {
+  private FileType detectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, @NotNull Iterable<? extends FileTypeDetector> detectors) throws IOException {
     FileType fileType;
     if (content != null) {
       fileType = detect(file, content, content.length, detectors);
@@ -1028,7 +1028,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detect(@NotNull VirtualFile file, @NotNull byte[] bytes, int length, @NotNull Iterable<? extends FileTypeDetector> detectors) {
+  private FileType detect(@NotNull VirtualFile file, byte @NotNull [] bytes, int length, @NotNull Iterable<? extends FileTypeDetector> detectors) {
     if (length <= 0) return UnknownFileType.INSTANCE;
 
     // use PlainTextFileType because it doesn't supply its own charset detector
@@ -1159,8 +1159,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  @NotNull
-  public FileType[] getRegisteredFileTypes() {
+  public FileType @NotNull [] getRegisteredFileTypes() {
     synchronized (PENDING_INIT_LOCK) {
       instantiatePendingFileTypes();
     }
@@ -1210,8 +1209,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  @NotNull
-  public String[] getAssociatedExtensions(@NotNull FileType type) {
+  public String @NotNull [] getAssociatedExtensions(@NotNull FileType type) {
     synchronized (PENDING_INIT_LOCK) {
       instantiatePendingFileTypeByName(type.getName());
 

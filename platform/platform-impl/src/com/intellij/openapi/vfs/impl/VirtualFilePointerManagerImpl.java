@@ -84,9 +84,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   private static class EventDescriptor {
     @NotNull private final VirtualFilePointerListener myListener;
-    @NotNull private final VirtualFilePointer[] myPointers;
+    private final VirtualFilePointer @NotNull [] myPointers;
 
-    private EventDescriptor(@NotNull VirtualFilePointerListener listener, @NotNull VirtualFilePointer[] pointers) {
+    private EventDescriptor(@NotNull VirtualFilePointerListener listener, VirtualFilePointer @NotNull [] pointers) {
       myListener = listener;
       myPointers = pointers;
       if (pointers.length == 0) throw new IllegalArgumentException();
@@ -101,8 +101,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  @NotNull
-  private static VirtualFilePointer[] toPointers(@NotNull Collection<? extends FilePointerPartNode> nodes) {
+  private static VirtualFilePointer @NotNull [] toPointers(@NotNull Collection<? extends FilePointerPartNode> nodes) {
     if (nodes.isEmpty()) return VirtualFilePointer.EMPTY_ARRAY;
     List<VirtualFilePointer> list = new ArrayList<>(nodes.size());
     for (FilePointerPartNode node : nodes) {
@@ -602,7 +601,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private void after(@NotNull MultiMap<VirtualFilePointerListener, FilePointerPartNode> toFireEvents,
                      @NotNull MultiMap<VirtualFilePointerListener, FilePointerPartNode> toUpdateUrls,
                      @NotNull List<? extends EventDescriptor> eventList,
-                     @NotNull VirtualFilePointer[] allPointers,
+                     VirtualFilePointer @NotNull [] allPointers,
                      long prepareElapsedMs,
                      int eventsSize) {
     long start = System.currentTimeMillis();

@@ -52,9 +52,8 @@ public class PsiReferenceWrapper implements PsiReference {
     return myOriginalPsiReference.isReferenceTo(element);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     return myOriginalPsiReference.getVariants();
   }
 

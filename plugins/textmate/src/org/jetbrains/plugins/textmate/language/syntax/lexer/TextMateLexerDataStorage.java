@@ -24,7 +24,7 @@ public class TextMateLexerDataStorage extends ShortBasedStorage {
     this.tokenTypes = tokenTypes;
   }
 
-  private TextMateLexerDataStorage(@NotNull short[] data,
+  private TextMateLexerDataStorage(short @NotNull [] data,
                                    @NotNull TObjectIntHashMap<TextMateElementType> tokenTypeMap,
                                    @NotNull List<TextMateElementType> tokenTypes) {
     super(data);

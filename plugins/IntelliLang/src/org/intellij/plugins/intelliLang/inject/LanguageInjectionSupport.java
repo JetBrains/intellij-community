@@ -35,8 +35,7 @@ public abstract class LanguageInjectionSupport {
   @NotNull
   public abstract String getId();
 
-  @NotNull
-  public abstract Class<?>[] getPatternClasses();
+  public abstract Class<?> @NotNull [] getPatternClasses();
 
   public abstract boolean isApplicableTo(PsiLanguageInjectionHost host);
 

@@ -36,14 +36,12 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 

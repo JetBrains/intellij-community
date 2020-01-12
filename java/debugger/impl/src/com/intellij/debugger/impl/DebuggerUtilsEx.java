@@ -964,8 +964,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  @NotNull
-  public static PsiParameter[] getParameters(PsiElement method) {
+  public static PsiParameter @NotNull [] getParameters(PsiElement method) {
     if (method instanceof PsiParameterListOwner) {
       return ((PsiParameterListOwner)method).getParameterList().getParameters();
     }

@@ -860,7 +860,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return file;
   }
 
-  public static void setContentOnDisk(@NotNull File file, @Nullable byte[] bom, @NotNull String content, @NotNull Charset charset)
+  public static void setContentOnDisk(@NotNull File file, byte @Nullable [] bom, @NotNull String content, @NotNull Charset charset)
     throws IOException {
     FileOutputStream stream = new FileOutputStream(file);
     if (bom != null) {
@@ -873,7 +873,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   @NotNull
   public VirtualFile createTempFile(@NonNls @NotNull String ext,
-                                    @Nullable byte[] bom,
+                                    byte @Nullable [] bom,
                                     @NonNls @NotNull String content,
                                     @NotNull Charset charset) throws IOException {
     File temp = FileUtil.createTempFile("copy", "." + ext);
@@ -977,7 +977,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+  public static void setBinaryContent(@NotNull final VirtualFile file, final byte @NotNull [] content) {
     try {
       WriteAction.runAndWait(() -> file.setBinaryContent(content));
     }
@@ -987,7 +987,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void setBinaryContent(@NotNull final VirtualFile file,
-                                      @NotNull final byte[] content,
+                                      final byte @NotNull [] content,
                                       final long newModificationStamp,
                                       final long newTimeStamp,
                                       final Object requestor) {

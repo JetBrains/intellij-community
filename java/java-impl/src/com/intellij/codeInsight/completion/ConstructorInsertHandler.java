@@ -359,7 +359,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     return false;
   }
 
-  private static void startTemplate(final PsiAnonymousClass aClass, final Editor editor, final Runnable runnable, @NotNull final PsiTypeElement[] parameters) {
+  private static void startTemplate(final PsiAnonymousClass aClass, final Editor editor, final Runnable runnable, final PsiTypeElement @NotNull [] parameters) {
     final Project project = aClass.getProject();
     WriteCommandAction.writeCommandAction(project).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());

@@ -29,9 +29,8 @@ public class LogEventException extends RuntimeException implements ExceptionWith
     return myLogMessage;
   }
 
-  @NotNull
   @Override
-  public Attachment[] getAttachments() {
+  public Attachment @NotNull [] getAttachments() {
     Object data = myLogMessage.getData();
     if (data instanceof LogMessageEx) {
       Attachment[] attachments = ((LogMessageEx)data).getAllAttachments().toArray(Attachment.EMPTY_ARRAY);

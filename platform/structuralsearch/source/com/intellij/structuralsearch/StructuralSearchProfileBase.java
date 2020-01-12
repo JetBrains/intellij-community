@@ -127,8 +127,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return true;
   }
 
-  @NotNull
-  protected abstract String[] getVarPrefixes();
+  protected abstract String @NotNull [] getVarPrefixes();
 
   @NotNull
   @Override
@@ -141,9 +140,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         return new MySubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
       }
 
-      @NotNull
       @Override
-      public String[] getTypedVarPrefixes() {
+      public String @NotNull [] getTypedVarPrefixes() {
         return getVarPrefixes();
       }
 

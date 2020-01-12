@@ -91,8 +91,7 @@ public final class ReflectionUtil {
     return null;
   }
 
-  @NotNull
-  public static Type[] getActualTypeArguments(@NotNull ParameterizedType parameterizedType) {
+  public static Type @NotNull [] getActualTypeArguments(@NotNull ParameterizedType parameterizedType) {
     return parameterizedType.getActualTypeArguments();
   }
 
@@ -162,7 +161,7 @@ public final class ReflectionUtil {
   }
 
   @Nullable
-  private static Field processInterfaces(@NotNull Class<?>[] interfaces,
+  private static Field processInterfaces(Class<?> @NotNull [] interfaces,
                                          @NotNull Set<Class<?>> visited,
                                          @NotNull java.util.function.Predicate<? super Field> checker) {
     for (Class<?> anInterface : interfaces) {
@@ -240,7 +239,7 @@ public final class ReflectionUtil {
   }
 
   @Nullable
-  public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, @NotNull Class<?>... parameters) {
+  public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, Class<?> @NotNull ... parameters) {
     for (final Method method : methods) {
       if (parameters.length == method.getParameterCount() && name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) {
         return makeAccessible(method);
@@ -255,7 +254,7 @@ public final class ReflectionUtil {
   }
 
   @Nullable
-  public static Method getMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, @NotNull Class<?>... parameters) {
+  public static Method getMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, Class<?> @NotNull ... parameters) {
     try {
       return makeAccessible(aClass.getMethod(name, parameters));
     }
@@ -265,7 +264,7 @@ public final class ReflectionUtil {
   }
 
   @Nullable
-  public static Method getDeclaredMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, @NotNull Class<?>... parameters) {
+  public static Method getDeclaredMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, Class<?> @NotNull ... parameters) {
     try {
       return makeAccessible(aClass.getDeclaredMethod(name, parameters));
     }
@@ -308,7 +307,7 @@ public final class ReflectionUtil {
   }
 
   @NotNull
-  private static List<Method> filterRealMethods(@NotNull Method[] methods) {
+  private static List<Method> filterRealMethods(Method @NotNull [] methods) {
     List<Method> result = new ArrayList<>();
     for (Method method : methods) {
       if (!method.isSynthetic()) {
@@ -319,7 +318,7 @@ public final class ReflectionUtil {
   }
 
   @Nullable
-  public static Class<?> getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String methodName, @NotNull Class<?>... parameters) {
+  public static Class<?> getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String methodName, Class<?> @NotNull ... parameters) {
     Method method = getMethod(instanceClass, methodName, parameters);
     return method == null ? null : method.getDeclaringClass();
   }
@@ -507,7 +506,7 @@ public final class ReflectionUtil {
   }
 
   @NotNull
-  public static <T> T createInstance(@NotNull Constructor<T> constructor, @NotNull Object... args) {
+  public static <T> T createInstance(@NotNull Constructor<T> constructor, Object @NotNull ... args) {
     try {
       return constructor.newInstance(args);
     }
@@ -533,11 +532,11 @@ public final class ReflectionUtil {
     return callerClass;
   }
 
-  public static void copyFields(@NotNull Field[] fields, @NotNull Object from, @NotNull Object to) {
+  public static void copyFields(Field @NotNull [] fields, @NotNull Object from, @NotNull Object to) {
     copyFields(fields, from, to, null);
   }
 
-  public static boolean copyFields(@NotNull Field[] fields, @NotNull Object from, @NotNull Object to, @Nullable DifferenceFilter<?> diffFilter) {
+  public static boolean copyFields(Field @NotNull [] fields, @NotNull Object from, @NotNull Object to, @Nullable DifferenceFilter<?> diffFilter) {
     Set<Field> sourceFields = ContainerUtil.newHashSet(from.getClass().getFields());
     boolean valuesChanged = false;
     for (Field field : fields) {

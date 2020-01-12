@@ -201,8 +201,7 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
   }
 
   @Override
-  @NotNull
-  public GrAccessorMethod[] getGetters() {
+  public GrAccessorMethod @NotNull [] getGetters() {
     return myField.getGetters();
   }
 

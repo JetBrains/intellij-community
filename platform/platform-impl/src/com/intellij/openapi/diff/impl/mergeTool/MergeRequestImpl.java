@@ -80,8 +80,7 @@ public class MergeRequestImpl extends MergeRequest {
   }
 
   @Override
-  @NotNull
-  public DiffContent[] getContents() {
+  public DiffContent @NotNull [] getContents() {
     return myDiffContents;
   }
 

@@ -221,7 +221,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @TestOnly
   public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file,
                                                       @NotNull Editor editor,
-                                                      @NotNull int[] toIgnore,
+                                                      int @NotNull [] toIgnore,
                                                       boolean canChangeDocument) {
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
@@ -448,14 +448,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void enableInspections(@NotNull InspectionProfileEntry... inspections) {
+  public void enableInspections(InspectionProfileEntry @NotNull ... inspections) {
     assertInitialized();
     InspectionsKt.enableInspectionTools(getProject(), myProjectFixture.getTestRootDisposable(), inspections);
   }
 
   @SafeVarargs
   @Override
-  public final void enableInspections(@NotNull Class<? extends LocalInspectionTool>... inspections) {
+  public final void enableInspections(Class<? extends LocalInspectionTool> @NotNull ... inspections) {
     enableInspections(Arrays.asList(inspections));
   }
 
@@ -466,12 +466,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void disableInspections(@NotNull InspectionProfileEntry... inspections) {
+  public void disableInspections(InspectionProfileEntry @NotNull ... inspections) {
     InspectionsKt.disableInspections(getProject(), inspections);
   }
 
   @Override
-  public void enableInspections(@NotNull InspectionToolProvider... providers) {
+  public void enableInspections(InspectionToolProvider @NotNull ... providers) {
     List<Class<? extends LocalInspectionTool>> classes = Stream.of(providers)
       .flatMap(p -> Stream.of(p.getInspectionClasses()))
       .filter(LocalInspectionTool.class::isAssignableFrom)
@@ -480,7 +480,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NotNull String... filePaths) {
+  public long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String @NotNull ... filePaths) {
     if (filePaths.length > 0) {
       configureByFilesInner(filePaths);
     }
@@ -488,7 +488,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NotNull String... paths) {
+  public long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String @NotNull ... paths) {
     return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, Stream.of(paths).map(this::copyFileToProject));
   }
 
@@ -496,7 +496,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public long testHighlightingAllFiles(boolean checkWarnings,
                                        boolean checkInfos,
                                        boolean checkWeakWarnings,
-                                       @NotNull VirtualFile... files) {
+                                       VirtualFile @NotNull ... files) {
     return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, Stream.of(files));
   }
 
@@ -539,7 +539,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public long testHighlighting(@NotNull String... filePaths) {
+  public long testHighlighting(String @NotNull ... filePaths) {
     return testHighlighting(true, false, true, filePaths);
   }
 
@@ -551,7 +551,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
-  public HighlightTestInfo testFile(@NotNull String... filePath) {
+  public HighlightTestInfo testFile(String @NotNull ... filePath) {
     return new HighlightTestInfo(myProjectFixture.getTestRootDisposable(), filePath) {
       @Override
       public HighlightTestInfo doTest() {
@@ -590,7 +590,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @Nullable
-  public PsiReference getReferenceAtCaretPosition(@NotNull final String... filePaths) {
+  public PsiReference getReferenceAtCaretPosition(final String @NotNull ... filePaths) {
     if (filePaths.length > 0) {
       configureByFilesInner(filePaths);
     }
@@ -599,7 +599,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
-  public PsiReference getReferenceAtCaretPositionWithAssertion(@NotNull final String... filePaths) {
+  public PsiReference getReferenceAtCaretPositionWithAssertion(final String @NotNull ... filePaths) {
     final PsiReference reference = getReferenceAtCaretPosition(filePaths);
     assertNotNull("no reference found at " + myEditor.getCaretModel().getLogicalPosition(), reference);
     return reference;
@@ -607,7 +607,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
-  public List<IntentionAction> getAvailableIntentions(@NotNull final String... filePaths) {
+  public List<IntentionAction> getAvailableIntentions(final String @NotNull ... filePaths) {
     if (filePaths.length > 0) {
       configureByFilesInner(filePaths);
     }
@@ -616,7 +616,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
-  public List<IntentionAction> getAllQuickFixes(@NotNull final String... filePaths) {
+  public List<IntentionAction> getAllQuickFixes(final String @NotNull ... filePaths) {
     if (filePaths.length != 0) {
       configureByFilesInner(filePaths);
     }
@@ -659,7 +659,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public IntentionAction getAvailableIntention(@NotNull final String intentionName, @NotNull final String... filePaths) {
+  public IntentionAction getAvailableIntention(@NotNull final String intentionName, final String @NotNull ... filePaths) {
     List<IntentionAction> intentions = getAvailableIntentions(filePaths);
     IntentionAction action = CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
     if (action == null) {
@@ -675,12 +675,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testCompletion(@NotNull String[] filesBefore, @NotNull @TestDataFile String fileAfter) {
+  public void testCompletion(String @NotNull [] filesBefore, @NotNull @TestDataFile String fileAfter) {
     testCompletionTyping(filesBefore, "", fileAfter);
   }
 
   @Override
-  public void testCompletionTyping(@NotNull final String[] filesBefore, @NotNull String toType, @NotNull final String fileAfter) {
+  public void testCompletionTyping(final String @NotNull [] filesBefore, @NotNull String toType, @NotNull final String fileAfter) {
     assertInitialized();
     configureByFiles(filesBefore);
     complete(CompletionType.BASIC);
@@ -702,7 +702,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void testCompletion(@NotNull String fileBefore,
                              @NotNull String fileAfter,
-                             @TestDataFile @NotNull String... additionalFiles) {
+                             @TestDataFile String @NotNull ... additionalFiles) {
     testCompletionTyping(fileBefore, "", fileAfter, additionalFiles);
   }
 
@@ -710,12 +710,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testCompletionTyping(@NotNull @TestDataFile String fileBefore,
                                    @NotNull String toType,
                                    @NotNull @TestDataFile String fileAfter,
-                                   @TestDataFile @NotNull String... additionalFiles) {
+                                   @TestDataFile String @NotNull ... additionalFiles) {
     testCompletionTyping(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)), toType, fileAfter);
   }
 
   @Override
-  public void testCompletionVariants(@NotNull final String fileBefore, @NotNull final String... expectedItems) {
+  public void testCompletionVariants(@NotNull final String fileBefore, final String @NotNull ... expectedItems) {
     assertInitialized();
     final List<String> result = getCompletionVariants(fileBefore);
     assertNotNull(result);
@@ -723,7 +723,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public List<String> getCompletionVariants(@NotNull final String... filesBefore) {
+  public List<String> getCompletionVariants(final String @NotNull ... filesBefore) {
     assertInitialized();
     configureByFiles(filesBefore);
     final LookupElement[] items = complete(CompletionType.BASIC);
@@ -747,7 +747,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testRename(@NotNull final String fileBefore,
                          @NotNull String fileAfter,
                          @NotNull String newName,
-                         @TestDataFile @NotNull String... additionalFiles) {
+                         @TestDataFile String @NotNull ... additionalFiles) {
     assertInitialized();
     configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)));
     testRename(fileAfter, newName);
@@ -757,7 +757,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testRenameUsingHandler(@NotNull String fileBefore,
                                      @NotNull String fileAfter,
                                      @NotNull String newName,
-                                     @NotNull String... additionalFiles) {
+                                     String @NotNull ... additionalFiles) {
     assertInitialized();
     configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)));
     testRenameUsingHandler(fileAfter, newName);
@@ -851,7 +851,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
-  public Collection<UsageInfo> testFindUsages(@NotNull final String... fileNames) {
+  public Collection<UsageInfo> testFindUsages(final String @NotNull ... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
     int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
@@ -862,7 +862,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
-  public Collection<Usage> testFindUsagesUsingAction(@NotNull String... fileNames) {
+  public Collection<Usage> testFindUsagesUsingAction(String @NotNull ... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
     EdtTestUtil.runInEdtAndWait(() -> {
@@ -942,9 +942,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return processor.getResults();
   }
 
-  @NotNull
   @Override
-  public RangeHighlighter[] testHighlightUsages(@NotNull final String... files) {
+  public RangeHighlighter @NotNull [] testHighlightUsages(final String @NotNull ... files) {
     configureByFiles(files);
     testAction(new HighlightUsagesAction());
     final Editor editor = getEditor();
@@ -955,7 +954,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void moveFile(@NotNull final String filePath, @NotNull final String to, @TestDataFile @NotNull final String... additionalFiles) {
+  public void moveFile(@NotNull final String filePath, @NotNull final String to, @TestDataFile final String @NotNull ... additionalFiles) {
     assertInitialized();
     final Project project = getProject();
     configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, filePath)));
@@ -1089,8 +1088,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  @Nullable
-  public LookupElement[] completeBasic() {
+  public LookupElement @Nullable [] completeBasic() {
     return myEditorTestFixture.completeBasic();
   }
 
@@ -1111,8 +1109,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  @Nullable
-  public LookupElement[] getLookupElements() {
+  public LookupElement @Nullable [] getLookupElements() {
     return myEditorTestFixture.getLookupElements();
   }
 
@@ -1285,8 +1282,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     EditorHistoryManager.getInstance(project).removeAllFiles();
   }
 
-  @NotNull
-  private PsiFile[] configureByFilesInner(@NotNull String... filePaths) {
+  private PsiFile @NotNull [] configureByFilesInner(String @NotNull ... filePaths) {
     assertInitialized();
     clearFileAndEditor();
     myAllPsiFiles = new PsiFile[filePaths.length];
@@ -1302,9 +1298,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getFile();
   }
 
-  @NotNull
   @Override
-  public PsiFile[] configureByFiles(@NotNull final String... files) {
+  public PsiFile @NotNull [] configureByFiles(final String @NotNull ... files) {
     return configureByFilesInner(files);
   }
 
@@ -1532,7 +1527,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myVirtualFileFilter = filter;
   }
 
-  public void setMessageBundles(@NotNull ResourceBundle... messageBundles) {
+  public void setMessageBundles(ResourceBundle @NotNull ... messageBundles) {
     myMessageBundles = messageBundles;
   }
 
@@ -1845,7 +1840,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void assertPreferredCompletionItems(final int selected, @NotNull final String... expected) {
+  public void assertPreferredCompletionItems(final int selected, final String @NotNull ... expected) {
     myEditorTestFixture.assertPreferredCompletionItems(selected, expected);
   }
 

@@ -43,8 +43,7 @@ public interface Query<Result> extends Iterable<Result> {
   @NotNull
   AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer);
 
-  @NotNull
-  Result[] toArray(@NotNull Result[] a);
+  Result @NotNull [] toArray(Result @NotNull [] a);
 
   /**
    * Checks whether predicate is satisfied for every result of this query.

@@ -22,8 +22,7 @@ public class PyRaiseStatementImpl extends PyElementImpl implements PyRaiseStatem
   }
 
   @Override
-  @NotNull
-  public PyExpression[] getExpressions() {
+  public PyExpression @NotNull [] getExpressions() {
     final PyExpression[] expressions = PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
     return expressions != null ? expressions : PyExpression.EMPTY_ARRAY;
   }

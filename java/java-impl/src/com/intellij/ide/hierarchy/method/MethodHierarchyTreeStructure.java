@@ -88,9 +88,8 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     return myMethod.getElement();
   }
 
-  @NotNull
   @Override
-  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
+  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     final PsiElement psiElement = ((MethodHierarchyNodeDescriptor)descriptor).getPsiClass();
     if (!(psiElement instanceof PsiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     final PsiClass psiClass = (PsiClass)psiElement;

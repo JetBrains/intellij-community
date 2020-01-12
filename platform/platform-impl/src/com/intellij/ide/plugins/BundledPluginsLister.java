@@ -27,7 +27,7 @@ final class BundledPluginsLister implements ApplicationStarter {
   }
 
   @Override
-  public void main(@NotNull String[] args) {
+  public void main(String @NotNull [] args) {
     try {
       OutputStream out;
       if (args.length == 2) {

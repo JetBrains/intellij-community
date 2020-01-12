@@ -10,6 +10,5 @@ public interface RowIcon extends CompositeIcon, DarkIconProvider {
 
   void setIcon(Icon icon, int i);
 
-  @NotNull
-  Icon[] getAllIcons();
+  Icon @NotNull [] getAllIcons();
 }

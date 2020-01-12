@@ -36,8 +36,7 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   @Nullable
   GrTypeElement getTypeElementGroovy();
 
-  @NotNull
-  GrVariable[] getVariables();
+  GrVariable @NotNull [] getVariables();
 
   void setType(@Nullable PsiType type);
 

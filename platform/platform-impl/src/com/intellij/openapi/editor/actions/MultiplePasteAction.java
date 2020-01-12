@@ -131,9 +131,8 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       setOKButtonMnemonic('P');
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getHelpAction(), getOKAction(), new PasteSimpleAction(), getCancelAction()};
     }
 

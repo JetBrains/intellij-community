@@ -30,8 +30,7 @@ public interface SdkModel {
    * Returns the list of SDKs in the table.
    * @return the SDK list.
    */
-  @NotNull
-  Sdk[] getSdks();
+  Sdk @NotNull [] getSdks();
 
   /**
    * Returns the SDK with the specified name, or null if one is not found.

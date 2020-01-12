@@ -332,7 +332,7 @@ class JavaLangReflectHandleInvocationChecker {
     return true;
   }
 
-  static boolean checkArgumentCount(@NotNull PsiExpression[] arguments,
+  static boolean checkArgumentCount(PsiExpression @NotNull [] arguments,
                                     int requiredArgumentCount,
                                     int argumentOffset,
                                     @NotNull PsiElement problemElement,

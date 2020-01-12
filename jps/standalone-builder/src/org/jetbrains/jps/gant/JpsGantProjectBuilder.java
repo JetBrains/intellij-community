@@ -354,7 +354,7 @@ public class JpsGantProjectBuilder {
     public Logger getLoggerInstance(@NotNull String category) {
       DefaultLogger antLogger = new DefaultLogger(category) {
         @Override
-        public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
+        public void error(@NonNls String message, @Nullable Throwable t, @NonNls String @NotNull ... details) {
           if (t != null) {
             ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t));
           }

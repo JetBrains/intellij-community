@@ -46,13 +46,12 @@ public class GenerateGetterSetterTest extends DaemonAnalyzerTestCase {
   protected void doTest() throws Exception {
     configureByFile("/generateGetterSetter/before" + getTestName(false) + ".java");
     new GenerateGetterAndSetterHandler() {
-      @Nullable
       @Override
-      protected ClassMember[] chooseMembers(ClassMember[] members,
-                                            boolean allowEmptySelection,
-                                            boolean copyJavadocCheckbox,
-                                            Project project,
-                                            @Nullable Editor editor) {
+      protected ClassMember @Nullable [] chooseMembers(ClassMember[] members,
+                                                       boolean allowEmptySelection,
+                                                       boolean copyJavadocCheckbox,
+                                                       Project project,
+                                                       @Nullable Editor editor) {
         return members;
       }
     }.invoke(getProject(), getEditor(), getFile());

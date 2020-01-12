@@ -24,8 +24,7 @@ import javax.swing.*;
  * @author max
  */
 public interface UsagePresentation {
-  @NotNull
-  TextChunk[] getText();
+  TextChunk @NotNull [] getText();
 
   /**
    * If the implementation caches or lazy-loades the text chunks internally, this method gives it a chance to avoid
@@ -34,8 +33,7 @@ public interface UsagePresentation {
    * The component using this presentation might call {@link UsagePresentation#updateCachedText()} in a background
    * thread and then use {@link UsagePresentation#getCachedText()} to draw the text.
    */
-  @Nullable
-  default TextChunk[] getCachedText() {
+  default TextChunk @Nullable [] getCachedText() {
     return getText();
   }
 

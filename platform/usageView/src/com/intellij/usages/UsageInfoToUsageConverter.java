@@ -43,22 +43,21 @@ public class UsageInfoToUsageConverter {
       this(new PsiElement[]{element});
     }
 
-    public TargetElementsDescriptor(@NotNull PsiElement[] primarySearchedElements) {
+    public TargetElementsDescriptor(PsiElement @NotNull [] primarySearchedElements) {
       this(primarySearchedElements, PsiElement.EMPTY_ARRAY);
     }
 
-    public TargetElementsDescriptor(@NotNull PsiElement[] primarySearchedElements, @NotNull PsiElement[] additionalSearchedElements) {
+    public TargetElementsDescriptor(PsiElement @NotNull [] primarySearchedElements, PsiElement @NotNull [] additionalSearchedElements) {
       myPrimarySearchedElements = convertToSmartPointers(primarySearchedElements);
       myAdditionalSearchedElements = convertToSmartPointers(additionalSearchedElements);
     }
 
-    @NotNull
-    private static PsiElement[] convertToPsiElements(@NotNull List<? extends SmartPsiElementPointer<PsiElement>> primary) {
+    private static PsiElement @NotNull [] convertToPsiElements(@NotNull List<? extends SmartPsiElementPointer<PsiElement>> primary) {
       return ContainerUtil.toArray(ContainerUtil.mapNotNull(primary, SmartPsiElementPointer::getElement), PsiElement.ARRAY_FACTORY);
     }
 
     @NotNull
-    private static List<SmartPsiElementPointer<PsiElement>> convertToSmartPointers(@NotNull PsiElement[] primaryElements) {
+    private static List<SmartPsiElementPointer<PsiElement>> convertToSmartPointers(PsiElement @NotNull [] primaryElements) {
       if (primaryElements.length == 0) return Collections.emptyList();
   
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(primaryElements[0].getProject());
@@ -73,13 +72,11 @@ public class UsageInfoToUsageConverter {
      *          the field searched is a primary target, and its accessor methods are non-primary targets, because
      *          for this particular search usages of getter/setter methods are to be considered as a usages of the corresponding field.
      */
-    @NotNull
-    public PsiElement[] getPrimaryElements() {
+    public PsiElement @NotNull [] getPrimaryElements() {
       return convertToPsiElements(myPrimarySearchedElements);
     }
 
-    @NotNull
-    public PsiElement[] getAdditionalElements() {
+    public PsiElement @NotNull [] getAdditionalElements() {
       return convertToPsiElements(myAdditionalSearchedElements);
     }
 
@@ -115,7 +112,7 @@ public class UsageInfoToUsageConverter {
   }
 
   @NotNull
-  public static Usage convert(@NotNull PsiElement[] primaryElements, @NotNull UsageInfo usageInfo) {
+  public static Usage convert(PsiElement @NotNull [] primaryElements, @NotNull UsageInfo usageInfo) {
     PsiElement usageElement = usageInfo.getElement();
     if (usageElement != null && primaryElements.length != 0) {
       ReadWriteAccessDetector.Access rwAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
@@ -128,8 +125,7 @@ public class UsageInfoToUsageConverter {
     return new UsageInfo2UsageAdapter(usageInfo);
   }
 
-  @NotNull
-  public static Usage[] convert(@NotNull TargetElementsDescriptor descriptor, @NotNull UsageInfo[] usageInfos) {
+  public static Usage @NotNull [] convert(@NotNull TargetElementsDescriptor descriptor, UsageInfo @NotNull [] usageInfos) {
     Usage[] usages = new Usage[usageInfos.length];
     for (int i = 0; i < usages.length; i++) {
       usages[i] = convert(descriptor, usageInfos[i]);
@@ -138,8 +134,7 @@ public class UsageInfoToUsageConverter {
   }
 
 
-  @NotNull
-  public static Usage[] convert(@NotNull final PsiElement[] primaryElements, @NotNull UsageInfo[] usageInfos) {
+  public static Usage @NotNull [] convert(final PsiElement @NotNull [] primaryElements, UsageInfo @NotNull [] usageInfos) {
     return ContainerUtil.map(usageInfos, info -> convert(primaryElements, info), new Usage[usageInfos.length]);
   }
 }

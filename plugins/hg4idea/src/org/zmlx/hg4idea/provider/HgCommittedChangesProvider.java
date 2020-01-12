@@ -155,9 +155,8 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return new Change(beforeRevision, afterRevision, aStatus);
   }
 
-  @NotNull
   @Override
-  public ChangeListColumn[] getColumns() {
+  public ChangeListColumn @NotNull [] getColumns() {
     return new ChangeListColumn[]{BRANCH_COLUMN, ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 

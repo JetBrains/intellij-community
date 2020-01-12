@@ -15,9 +15,8 @@ final class ProxyShortcutSet implements ShortcutSet {
     myActionId = actionId;
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcuts() {
+  public Shortcut @NotNull [] getShortcuts() {
     KeymapManager manager = KeymapManager.getInstance();
     return manager != null ? manager.getActiveKeymap().getShortcuts(myActionId) : Shortcut.EMPTY_ARRAY;
   }

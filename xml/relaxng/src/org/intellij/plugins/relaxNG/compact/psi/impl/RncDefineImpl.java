@@ -97,8 +97,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
         }
 
         @Override
-        @NotNull
-        public Object[] getVariants() {
+        public Object @NotNull [] getVariants() {
           final RncInclude parent = (RncInclude)getParent();
           final RncFile referencedFile = parent.getReferencedFile();
           if (referencedFile == null) {

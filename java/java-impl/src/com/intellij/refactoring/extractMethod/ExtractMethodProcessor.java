@@ -934,8 +934,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return 0;
   }
 
-  @NotNull
-  private PsiElement[] getFilteredElements() {
+  private PsiElement @NotNull [] getFilteredElements() {
     return StreamEx.of(myElements)
                    .filter(e -> !(e instanceof PsiWhiteSpace || e instanceof PsiComment || e instanceof PsiEmptyStatement))
                    .toArray(PsiElement.EMPTY_ARRAY);

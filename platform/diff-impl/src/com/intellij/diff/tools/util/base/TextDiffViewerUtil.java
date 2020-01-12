@@ -72,8 +72,7 @@ public class TextDiffViewerUtil {
     return settings;
   }
 
-  @NotNull
-  public static boolean[] checkForceReadOnly(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
+  public static boolean @NotNull [] checkForceReadOnly(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     List<DiffContent> contents = request.getContents();
     int contentCount = contents.size();
     boolean[] result = new boolean[contentCount];
@@ -207,9 +206,9 @@ public class TextDiffViewerUtil {
   }
 
   private static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
-    @NotNull private final T[] myPolicies;
+    private final T @NotNull [] myPolicies;
 
-    EnumPolicySettingAction(@NotNull T[] policies) {
+    EnumPolicySettingAction(T @NotNull [] policies) {
       assert policies.length > 0;
       myPolicies = policies;
     }
@@ -252,7 +251,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public HighlightPolicySettingAction(@NotNull TextDiffSettings settings,
-                                        @NotNull HighlightPolicy... policies) {
+                                        HighlightPolicy @NotNull ... policies) {
       super(policies);
       mySettings = settings;
     }
@@ -293,7 +292,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public IgnorePolicySettingAction(@NotNull TextDiffSettings settings,
-                                     @NotNull IgnorePolicy... policies) {
+                                     IgnorePolicy @NotNull ... policies) {
       super(policies);
       mySettings = settings;
     }

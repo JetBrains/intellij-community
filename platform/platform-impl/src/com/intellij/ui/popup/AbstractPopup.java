@@ -173,7 +173,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
 
-  private void debugState(@NotNull String message, @NotNull State... states) {
+  private void debugState(@NotNull String message, State @NotNull ... states) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(hashCode() + " - " + message);
       if (!ApplicationManager.getApplication().isDispatchThread()) {
@@ -217,7 +217,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                      @Nullable MaskProvider maskProvider,
                      boolean inStack,
                      boolean modalContext,
-                     @Nullable Component[] focusOwners,
+                     Component @Nullable [] focusOwners,
                      @Nullable String adText,
                      int adTextAlignment,
                      boolean headerAlwaysFocusable,
@@ -1764,7 +1764,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return isFocused(myFocusOwners);
   }
 
-  public static boolean isFocused(@Nullable Component[] components) {
+  public static boolean isFocused(Component @Nullable [] components) {
     if (components == null) return false;
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();

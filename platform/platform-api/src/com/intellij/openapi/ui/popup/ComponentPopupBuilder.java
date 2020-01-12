@@ -106,7 +106,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setModalContext(boolean modal);
 
   @NotNull
-  ComponentPopupBuilder setFocusOwners(@NotNull Component[] focusOwners);
+  ComponentPopupBuilder setFocusOwners(Component @NotNull [] focusOwners);
 
   /**
    * Adds "advertising" text to the bottom (e.g.: hints in code completion popup).

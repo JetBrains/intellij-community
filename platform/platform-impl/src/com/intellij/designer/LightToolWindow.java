@@ -77,7 +77,7 @@ public class LightToolWindow extends JPanel {
                          @NotNull Project project,
                          @NotNull String key,
                          int defaultWidth,
-                         @Nullable AnAction[] actions) {
+                         AnAction @Nullable [] actions) {
     super(new BorderLayout());
     myContent = content;
     myFocusedComponent = focusedComponent;

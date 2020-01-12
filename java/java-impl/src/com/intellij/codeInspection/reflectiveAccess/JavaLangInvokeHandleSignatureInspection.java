@@ -83,7 +83,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
 
   private static void checkHandleFactory(@NotNull String factoryMethodName,
                                          @NotNull PsiReferenceExpression factoryMethodExpression,
-                                         @NotNull PsiExpression[] arguments,
+                                         PsiExpression @NotNull [] arguments,
                                          @NotNull ProblemsHolder holder) {
     if (arguments.length == 2) {
       if (FIND_CONSTRUCTOR.equals(factoryMethodName)) {

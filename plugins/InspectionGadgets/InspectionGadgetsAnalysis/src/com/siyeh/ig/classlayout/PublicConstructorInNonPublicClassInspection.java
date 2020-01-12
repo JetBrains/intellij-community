@@ -46,8 +46,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public InspectionGadgetsFix[] buildFixes(Object... infos) {
+  public InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiMethod constructor = (PsiMethod)infos[0];
     final PsiClass aClass = constructor.getContainingClass();

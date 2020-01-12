@@ -42,9 +42,8 @@ public class ComparatorResultComparisonInspectionTest extends LightJavaInspectio
   }
 
   public static class ComparatorResultComparisonInspectionFixTest extends LightQuickFixParameterizedTestCase {
-    @NotNull
     @Override
-    protected LocalInspectionTool[] configureLocalInspectionTools() {
+    protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
       return new LocalInspectionTool[]{new ComparatorResultComparisonInspection()};
     }
 

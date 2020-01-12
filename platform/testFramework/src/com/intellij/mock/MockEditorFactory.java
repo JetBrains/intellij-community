@@ -75,14 +75,12 @@ public class MockEditorFactory extends EditorFactory {
   }
 
   @Override
-  @NotNull
-  public Editor[] getEditors(@NotNull Document document, Project project) {
+  public Editor @NotNull [] getEditors(@NotNull Document document, Project project) {
     return Editor.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public Editor[] getAllEditors() {
+  public Editor @NotNull [] getAllEditors() {
     return Editor.EMPTY_ARRAY;
   }
 
@@ -112,7 +110,7 @@ public class MockEditorFactory extends EditorFactory {
 
   @Override
   @NotNull
-  public Document createDocument(@NotNull char[] text) {
+  public Document createDocument(char @NotNull [] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 

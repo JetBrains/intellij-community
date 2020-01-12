@@ -72,8 +72,7 @@ public abstract class ActionManagerEx extends ActionManager {
   }
 
 
-  @NotNull
-  public abstract String[] getPluginActions(@NotNull PluginId pluginId);
+  public abstract String @NotNull [] getPluginActions(@NotNull PluginId pluginId);
 
   public abstract void queueActionPerformedEvent(@NotNull AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event);
 

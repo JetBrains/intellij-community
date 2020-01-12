@@ -45,7 +45,7 @@ public class ReachingDefinitionsCollector {
   public static FragmentVariableInfos obtainVariableFlowInformation(@NotNull final GrStatement first,
                                                                     @NotNull final GrStatement last,
                                                                     @NotNull final GrControlFlowOwner flowOwner,
-                                                                    @NotNull final Instruction[] flow) {
+                                                                    final Instruction @NotNull [] flow) {
 
     final DefinitionMap dfaResult = inferDfaResult(flowOwner, flow);
 
@@ -131,7 +131,7 @@ public class ReachingDefinitionsCollector {
   }
 
   @NotNull
-  private static DefinitionMap inferDfaResult(@NotNull GrControlFlowOwner owner, @NotNull Instruction[] flow) {
+  private static DefinitionMap inferDfaResult(@NotNull GrControlFlowOwner owner, Instruction @NotNull [] flow) {
     TObjectIntHashMap<VariableDescriptor> varIndexes = UtilKt.getVarIndexes(owner);
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
@@ -297,7 +297,7 @@ public class ReachingDefinitionsCollector {
     return result;
   }
 
-  private static Set<Integer> getFragmentOuterBound(@NotNull LinkedHashSet<Integer> fragmentInstructions, @NotNull Instruction[] flow) {
+  private static Set<Integer> getFragmentOuterBound(@NotNull LinkedHashSet<Integer> fragmentInstructions, Instruction @NotNull [] flow) {
     final Set<Integer> result = new HashSet<>();
     for (Integer num : fragmentInstructions) {
       for (Instruction successor : flow[num].allSuccessors()) {
@@ -432,7 +432,7 @@ public class ReachingDefinitionsCollector {
 
   @NotNull
   private static DefinitionMap postprocess(@NotNull final List<DefinitionMap> dfaResult,
-                                           @NotNull Instruction[] flow,
+                                           Instruction @NotNull [] flow,
                                            @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
     DefinitionMap result = new DefinitionMap();
     for (int i = 0; i < flow.length; i++) {

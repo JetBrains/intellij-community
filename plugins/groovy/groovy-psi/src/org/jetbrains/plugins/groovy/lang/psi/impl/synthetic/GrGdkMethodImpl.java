@@ -70,8 +70,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return myMethod.getTypeParameters();
   }
 

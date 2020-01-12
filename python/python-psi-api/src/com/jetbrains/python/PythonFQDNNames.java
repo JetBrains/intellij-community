@@ -30,17 +30,15 @@ public class PythonFQDNNames implements FQNamesProvider {
   public static final PythonFQDNNames DICT_CLASS = new PythonFQDNNames(true, "dict"); // TODO: Add other dict-like types
 
   private final boolean myIsClass;
-  @NotNull
-  private final String[] myNames;
+  private final String @NotNull [] myNames;
 
-  private PythonFQDNNames(final boolean isClass, @NotNull final String... names) {
+  private PythonFQDNNames(final boolean isClass, final String @NotNull ... names) {
     myIsClass = isClass;
     myNames = names;
   }
 
-  @NotNull
   @Override
-  public String[] getNames() {
+  public String @NotNull [] getNames() {
     return myNames.clone();
   }
 

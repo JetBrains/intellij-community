@@ -117,9 +117,8 @@ public class ChangesBrowserDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (myMode == Mode.Simple) {
       return new Action[] { getCancelAction() };
     }

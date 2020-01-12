@@ -46,8 +46,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     if (!myAllowRemoteResolve) {
       return RatedResolveResult.EMPTY_ARRAY;
     }
@@ -105,8 +104,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     Map<String, LookupElement> variants = Maps.newHashMap();
     try {
       final List<PydevCompletionVariant> completions = myCommunication.getCompletions(getText(), myPrefix);

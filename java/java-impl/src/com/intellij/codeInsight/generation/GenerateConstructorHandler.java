@@ -58,8 +58,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   }
 
   @Override
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     if (aClass instanceof PsiAnonymousClass) {
       Messages.showMessageDialog(project,
                                  CodeInsightBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),

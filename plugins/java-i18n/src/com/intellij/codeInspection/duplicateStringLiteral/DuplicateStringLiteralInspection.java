@@ -177,8 +177,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     holder.registerProblem(originalExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, array);
   }
 
-  @NotNull
-  private PsiExpression[] getDuplicateLiterals(@NotNull Project project, @NotNull PsiLiteralExpression place, boolean isOnTheFly) {
+  private PsiExpression @NotNull [] getDuplicateLiterals(@NotNull Project project, @NotNull PsiLiteralExpression place, boolean isOnTheFly) {
     Object value = place.getValue();
     if (!(value instanceof String)) return PsiExpression.EMPTY_ARRAY;
     if (!shouldCheck(place, IGNORE_PROPERTY_KEYS)) return PsiExpression.EMPTY_ARRAY;
@@ -199,7 +198,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 
-  private static void createReplaceFixes(@NotNull PsiExpression[] foundExpr, @NotNull PsiExpression originalExpression,
+  private static void createReplaceFixes(PsiExpression @NotNull [] foundExpr, @NotNull PsiExpression originalExpression,
                                          @NotNull Collection<? super LocalQuickFix> fixes) {
     for (PsiExpression expr : foundExpr) {
       if (expr == originalExpression) continue;
@@ -427,8 +426,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  @Nullable
-  private PsiExpression[] getDuplicateLiteralsUnderProgress(@NotNull PsiElement literalExpression) {
+  private PsiExpression @Nullable [] getDuplicateLiteralsUnderProgress(@NotNull PsiElement literalExpression) {
     if (!(literalExpression instanceof PsiLiteralExpression)) return null;
     Project project = literalExpression.getProject();
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -438,20 +436,18 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }, "Searching for Duplicates of '" + ((PsiLiteralExpression)literalExpression).getValue() + "'", true, project);
   }
 
-  private static void introduceConstant(@NotNull PsiExpression[] expressions, @NotNull Project project) {
+  private static void introduceConstant(PsiExpression @NotNull [] expressions, @NotNull Project project) {
     new IntroduceConstantHandler() {
       @Override
       protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
         return new BaseOccurrenceManager(occurrence -> true) {
-          @NotNull
           @Override
-          protected PsiExpression[] defaultOccurrences() {
+          protected PsiExpression @NotNull [] defaultOccurrences() {
             return expressions;
           }
 
-          @NotNull
           @Override
-          protected PsiExpression[] findOccurrences() {
+          protected PsiExpression @NotNull [] findOccurrences() {
             return expressions;
           }
         };

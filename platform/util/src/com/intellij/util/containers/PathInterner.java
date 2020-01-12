@@ -210,7 +210,7 @@ public class PathInterner {
     private final CharSegment[] myWrappers;
     private transient int hash;
 
-    private SegmentedCharSequence(@NotNull CharSegment[] wrappers) {
+    private SegmentedCharSequence(CharSegment @NotNull [] wrappers) {
       myWrappers = wrappers;
     }
 

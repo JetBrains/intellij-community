@@ -23,8 +23,7 @@ import java.util.List;
  */
 public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvider {
   @Override
-  @NotNull
-  public UsageFilteringRule[] getActiveRules(@NotNull final Project project) {
+  public UsageFilteringRule @NotNull [] getActiveRules(@NotNull final Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<>();
     if (!ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS) {
       rules.addAll(ImportFilteringRule.EP_NAME.getExtensionList());
@@ -33,8 +32,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
   }
 
   @Override
-  @NotNull
-  public AnAction[] createFilteringActions(@NotNull final UsageView view) {
+  public AnAction @NotNull [] createFilteringActions(@NotNull final UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
     if (view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();

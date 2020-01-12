@@ -33,10 +33,10 @@ class TerminalBlock {
   private static final Logger LOG = Logger.getInstance(TerminalBlock.class);
 
   private final @NotNull PsiVariable myVariable;
-  private final @NotNull Operation[] myOperations;
-  private final @NotNull PsiStatement[] myStatements;
+  private final Operation @NotNull [] myOperations;
+  private final PsiStatement @NotNull [] myStatements;
 
-  private TerminalBlock(@NotNull Operation[] operations, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
+  private TerminalBlock(Operation @NotNull [] operations, @NotNull PsiVariable variable, PsiStatement @NotNull ... statements) {
     // At least one operation is present (stream source)
     LOG.assertTrue(operations.length > 0);
     for(Operation operation : operations) Objects.requireNonNull(operation);
@@ -57,7 +57,7 @@ class TerminalBlock {
   private TerminalBlock(@Nullable TerminalBlock previousBlock,
                         @NotNull Operation operation,
                         @NotNull PsiVariable variable,
-                        @NotNull PsiStatement... statements) {
+                        PsiStatement @NotNull ... statements) {
     this(previousBlock == null ? new Operation[]{operation} : ArrayUtil.append(previousBlock.myOperations, operation), variable,
          statements);
   }
@@ -74,8 +74,7 @@ class TerminalBlock {
     return myStatements.length == 1 ? myStatements[0] : null;
   }
 
-  @NotNull
-  PsiStatement[] getStatements() {
+  PsiStatement @NotNull [] getStatements() {
     return myStatements;
   }
 
@@ -501,7 +500,7 @@ class TerminalBlock {
   }
 
   @NotNull
-  static TerminalBlock fromStatements(StreamSource source, @NotNull PsiStatement... statements) {
+  static TerminalBlock fromStatements(StreamSource source, PsiStatement @NotNull ... statements) {
     return new TerminalBlock(null, source, source.myVariable, statements).extractOperations().tryPeelLimit(false).tryExtractDistinct();
   }
 

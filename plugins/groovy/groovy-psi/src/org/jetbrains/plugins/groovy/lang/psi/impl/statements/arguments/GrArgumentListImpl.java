@@ -46,8 +46,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   }
 
   @Override
-  @NotNull
-  public GrNamedArgument[] getNamedArguments() {
+  public GrNamedArgument @NotNull [] getNamedArguments() {
     List<GrNamedArgument> result = new ArrayList<>();
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrNamedArgument) result.add((GrNamedArgument)cur);
@@ -61,8 +60,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   }
 
   @Override
-  @NotNull
-  public GrExpression[] getExpressionArguments() {
+  public GrExpression @NotNull [] getExpressionArguments() {
     List<GrExpression> result = new ArrayList<>();
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrExpression) result.add((GrExpression)cur);
@@ -70,9 +68,8 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     return result.toArray(GrExpression.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public GroovyPsiElement[] getAllArguments() {
+  public GroovyPsiElement @NotNull [] getAllArguments() {
     List<GroovyPsiElement> args = new ArrayList<>();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof GrNamedArgument || child instanceof GrExpression) args.add((GroovyPsiElement)child);
@@ -222,15 +219,13 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     super.deleteChildInternal(child);
   }
 
-  @NotNull
   @Override
-  public PsiExpression[] getExpressions() {
+  public PsiExpression @NotNull [] getExpressions() {
     return PsiExpression.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiType[] getExpressionTypes() {
+  public PsiType @NotNull [] getExpressionTypes() {
     return PsiType.EMPTY_ARRAY;
   }
 

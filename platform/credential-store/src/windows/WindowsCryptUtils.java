@@ -19,8 +19,7 @@ public class WindowsCryptUtils {
    * @param data the data to protect
    * @return the the protected form the data
    */
-  @NotNull
-  public static byte[] protect(@NotNull byte[] data) {
+  public static byte @NotNull [] protect(byte @NotNull [] data) {
     if (data.length == 0) return data;
     WinCrypt.DATA_BLOB in = prepareInput(data);
     WinCrypt.DATA_BLOB out = new WinCrypt.DATA_BLOB.ByReference();
@@ -34,8 +33,7 @@ public class WindowsCryptUtils {
    * @param data the data to protect
    * @return the the protected form the data
    */
-  @NotNull
-  public static byte[] unprotect(byte[] data) {
+  public static byte @NotNull [] unprotect(byte[] data) {
     if (data.length == 0) return data;
     WinCrypt.DATA_BLOB in = prepareInput(data);
     WinCrypt.DATA_BLOB out = new WinCrypt.DATA_BLOB.ByReference();

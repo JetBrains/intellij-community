@@ -136,8 +136,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
-  @Nullable
-  public PsiAnnotation[] findExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
+  public PsiAnnotation @Nullable [] findExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
     final List<AnnotationData> result = collectExternalAnnotations(listOwner);
     return result.isEmpty() ? null : ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY,
                                                              data -> data.getAnnotation(this));
@@ -384,7 +383,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   public void annotateExternally(@NotNull PsiModifierListOwner listOwner,
                                  @NotNull String annotationFQName,
                                  @NotNull PsiFile fromFile,
-                                 @Nullable PsiNameValuePair[] value) throws CanceledConfigurationException {
+                                 PsiNameValuePair @Nullable [] value) throws CanceledConfigurationException {
     throw new UnsupportedOperationException();
   }
 
@@ -396,7 +395,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Override
   public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                         @NotNull String annotationFQN,
-                                        @Nullable PsiNameValuePair[] value) {
+                                        PsiNameValuePair @Nullable [] value) {
     throw new UnsupportedOperationException();
   }
 

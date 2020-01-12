@@ -37,7 +37,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
   private final MyListTableModel model;
 
-  public TableModelEditor(@NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
+  public TableModelEditor(ColumnInfo @NotNull [] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
     this(Collections.emptyList(), columns, itemEditor, emptyText);
   }
 
@@ -46,7 +46,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
    *
    * Implement {@link DialogItemEditor} instead of {@link CollectionItemEditor} if you want provide dialog to edit.
    */
-  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
+  public TableModelEditor(@NotNull List<T> items, ColumnInfo @NotNull [] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
     super(itemEditor);
 
     model = new MyListTableModel(columns, new ArrayList<>(items));
@@ -173,7 +173,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     private List<T> items;
     private DataChangedListener<T> dataChangedListener;
 
-    MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items) {
+    MyListTableModel(ColumnInfo @NotNull [] columns, @NotNull List<T> items) {
       super(columns, items);
 
       this.items = items;

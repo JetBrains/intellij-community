@@ -39,16 +39,14 @@ public abstract class RecentProjectsManager {
   /**
    * @deprecated Use {@link RecentProjectListActionProvider#getActions}
    */
-  @NotNull
   @Deprecated
-  public abstract AnAction[] getRecentProjectsActions(boolean addClearListItem);
+  public abstract AnAction @NotNull [] getRecentProjectsActions(boolean addClearListItem);
 
   /**
    * @deprecated Use {@link RecentProjectListActionProvider#getActions}
    */
-  @NotNull
   @Deprecated
-  public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
+  public AnAction @NotNull [] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     return getRecentProjectsActions(addClearListItem);
   }
 

@@ -182,7 +182,7 @@ public final class Switcher extends AnAction implements DumbAware {
    */
   @Deprecated
   @Nullable
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean pinned, @Nullable final VirtualFile[] vFiles) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
     return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
 
@@ -1299,9 +1299,8 @@ public final class Switcher extends AnAction implements DumbAware {
                : myComponent.files.getModel().getSize() + myComponent.toolWindows.getSelectedIndex();
       }
 
-      @NotNull
       @Override
-      protected Object[] getAllElements() {
+      protected Object @NotNull [] getAllElements() {
         ListModel filesModel = myComponent.files.getModel();
         Object[] files = new Object[filesModel.getSize()];
         for (int i = 0; i < files.length; i++) {

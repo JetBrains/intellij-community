@@ -41,8 +41,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
   private static final Logger LOG = Logger.getInstance(PrefixReferenceProvider.class);
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue value = (XmlAttributeValue)element;
 
     final String s = value.getValue();
@@ -89,9 +88,8 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
       return super.isReferenceTo(element);
     }
 
-    @Nullable
     @Override
-    public LocalQuickFix[] getQuickFixes() {
+    public LocalQuickFix @Nullable [] getQuickFixes() {
       final PsiElement element = getElement();
       final XmlElementFactory factory = XmlElementFactory.getInstance(element.getProject());
       final String value = ((XmlAttributeValue)element).getValue();

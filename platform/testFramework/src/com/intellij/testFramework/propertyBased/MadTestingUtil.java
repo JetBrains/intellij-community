@@ -570,7 +570,7 @@ public final class MadTestingUtil {
       }
     }
 
-    private static int spin(@NotNull GenerationEnvironment data, @NotNull int[] weights) {
+    private static int spin(@NotNull GenerationEnvironment data, int @NotNull [] weights) {
       int totalWeight = Arrays.stream(weights).sum();
       if (totalWeight == 0) return -1;
       int value = data.generate(Generator.integers(0, totalWeight));

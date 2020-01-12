@@ -36,8 +36,7 @@ public interface HintedReferenceHost extends PsiElement {
    * @param hints the hints about the desired references
    * @return the array of references, or an empty array if the element has no associated references.
    */
-  @NotNull
-  PsiReference[] getReferences(@NotNull PsiReferenceService.Hints hints);
+  PsiReference @NotNull [] getReferences(@NotNull PsiReferenceService.Hints hints);
 
   /**
    * Normally in {@link PsiElement#findReferenceAt(int)}, all tree hierarchy is traversed bottom-up and each element is asked for references.

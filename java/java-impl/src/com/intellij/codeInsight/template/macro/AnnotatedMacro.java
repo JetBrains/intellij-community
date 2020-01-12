@@ -67,7 +67,7 @@ public class AnnotatedMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] expressions, ExpressionContext expressionContext) {
+  public Result calculateResult(Expression @NotNull [] expressions, ExpressionContext expressionContext) {
     final Query<PsiMember> psiMembers = findAnnotated(expressionContext, expressions);
 
     if (psiMembers != null) {
@@ -81,12 +81,12 @@ public class AnnotatedMacro extends Macro {
   }
 
   @Override
-  public Result calculateQuickResult(@NotNull Expression[] expressions, ExpressionContext expressionContext) {
+  public Result calculateQuickResult(Expression @NotNull [] expressions, ExpressionContext expressionContext) {
     return calculateResult(expressions, expressionContext);
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     final Query<PsiMember> query = findAnnotated(context, params);
 
     if (query != null) {

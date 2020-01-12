@@ -120,9 +120,8 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
     String name = getTestName(false);
     myFixture.configureByFile("before" + name + ".java");
     new GenerateConstructorHandler() {
-      @Nullable
       @Override
-      protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+      protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
         return new ClassMember[]{new RecordConstructorMember(aClass, compact)};
       }
     }.invoke(getProject(), getEditor(), getFile());

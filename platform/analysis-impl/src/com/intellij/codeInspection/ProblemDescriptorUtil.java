@@ -176,8 +176,7 @@ public class ProblemDescriptorUtil {
     }
     throw new RuntimeException("Cannot map " + highlightType);
   }
-  @NotNull
-  public static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
+  public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
     if (annotations.isEmpty()) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
@@ -207,7 +206,7 @@ public class ProblemDescriptorUtil {
                                                        int endOffset,
                                                        @NotNull String message,
                                                        boolean isAfterEndOfLine,
-                                                       @NotNull LocalQuickFix[] quickFixes) {
+                                                       LocalQuickFix @NotNull [] quickFixes) {
     if (severity == HighlightSeverity.INFORMATION ||
         startOffset == endOffset && !isAfterEndOfLine) {
       return null;
@@ -238,9 +237,8 @@ public class ProblemDescriptorUtil {
                                      false);
   }
 
-  @NotNull
-  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
-                                                   @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+  private static LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
+                                                             @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }

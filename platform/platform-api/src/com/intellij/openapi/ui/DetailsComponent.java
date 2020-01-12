@@ -122,14 +122,14 @@ public class DetailsComponent {
     myBannerLabel.forProject(project);
   }
 
-  public void setPrefix(@Nullable String... prefix) {
+  public void setPrefix(String @Nullable ... prefix) {
     myPrefix = prefix;
     if (myText != null) {
       setText(myText);
     }
   }
 
-  public void setText(@Nullable String... text) {
+  public void setText(String @Nullable ... text) {
     myText = text;
     update();
   }

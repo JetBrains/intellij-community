@@ -30,13 +30,13 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
 
   @NotNull private final String myProductCode;
-  @NotNull private final int[] myComponents;
+  private final int @NotNull [] myComponents;
 
   public BuildNumber(@NotNull String productCode, int baselineVersion, int buildNumber) {
     this(productCode, new int[]{baselineVersion, buildNumber});
   }
 
-  public BuildNumber(@NotNull String productCode, @NotNull int... components) {
+  public BuildNumber(@NotNull String productCode, int @NotNull ... components) {
     myProductCode = productCode;
     myComponents = components;
   }
@@ -50,8 +50,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return myComponents[0];
   }
 
-  @NotNull
-  public int[] getComponents() {
+  public int @NotNull [] getComponents() {
     return myComponents.clone();
   }
 

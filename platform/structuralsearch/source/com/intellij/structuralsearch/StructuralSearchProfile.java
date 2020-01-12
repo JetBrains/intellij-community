@@ -57,14 +57,13 @@ public abstract class StructuralSearchProfile {
 
   public abstract boolean isMyLanguage(@NotNull Language language);
 
-  @NotNull
-  public PsiElement[] createPatternTree(@NotNull String text,
-                                        @NotNull PatternTreeContext context,
-                                        @NotNull LanguageFileType fileType,
-                                        @NotNull Language language,
-                                        @Nullable String contextId,
-                                        @NotNull Project project,
-                                        boolean physical) {
+  public PsiElement @NotNull [] createPatternTree(@NotNull String text,
+                                                  @NotNull PatternTreeContext context,
+                                                  @NotNull LanguageFileType fileType,
+                                                  @NotNull Language language,
+                                                  @Nullable String contextId,
+                                                  @NotNull Project project,
+                                                  boolean physical) {
     final String strContext = getContext(text, language, contextId);
 
     final String patternInContext = (context == PatternTreeContext.File) ? text : strContext.replace(PATTERN_PLACEHOLDER, text);

@@ -123,8 +123,7 @@ public class StructuralSearchUtil {
     return getProfileByLanguage(fileType.getLanguage());
   }
 
-  @NotNull
-  public static LanguageFileType[] getSuitableFileTypes() {
+  public static LanguageFileType @NotNull [] getSuitableFileTypes() {
     final FileType[] types = FileTypeManager.getInstance().getRegisteredFileTypes();
     final Set<LanguageFileType> fileTypes = StreamEx.of(types).select(LanguageFileType.class).collect(Collectors.toSet());
     for (Language language : Language.getRegisteredLanguages()) {

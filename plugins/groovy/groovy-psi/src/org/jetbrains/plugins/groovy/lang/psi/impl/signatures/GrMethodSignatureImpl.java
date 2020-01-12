@@ -37,9 +37,8 @@ class GrMethodSignatureImpl implements GrSignature {
     return myMethod;
   }
 
-  @NotNull
   @Override
-  public GrClosureParameter[] getParameters() {
+  public GrClosureParameter @NotNull [] getParameters() {
     return ContainerUtil.map(
       myMethod.getParameterList().getParameters(),
       (parameter) -> new GrClosureParameterImpl(parameter, mySubstitutor, myEraseParameterTypes, myContext),

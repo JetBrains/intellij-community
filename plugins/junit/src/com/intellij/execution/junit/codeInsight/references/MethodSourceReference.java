@@ -78,8 +78,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final List<Object> list = new ArrayList<>();
     final PsiClass topLevelClass = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
     if (topLevelClass != null) {

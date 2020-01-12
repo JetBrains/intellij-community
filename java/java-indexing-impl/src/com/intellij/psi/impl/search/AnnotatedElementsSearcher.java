@@ -83,7 +83,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     });
   }
 
-  public static boolean isInstanceof(PsiElement owner, @NotNull Class<? extends PsiModifierListOwner>[] types) {
+  public static boolean isInstanceof(PsiElement owner, Class<? extends PsiModifierListOwner> @NotNull [] types) {
     for (Class<? extends PsiModifierListOwner> type : types) {
         if(type.isInstance(owner)) return true;
     }

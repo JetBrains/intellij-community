@@ -335,7 +335,7 @@ public class HotSwapUIImpl extends HotSwapUI {
   }
 
   @Override
-  public void compileAndReload(@NotNull DebuggerSession session, @NotNull VirtualFile... files) {
+  public void compileAndReload(@NotNull DebuggerSession session, VirtualFile @NotNull ... files) {
     dontAskHotswapAfterThisCompilation();
     ProjectTaskManager.getInstance(session.getProject()).compile(files);
   }

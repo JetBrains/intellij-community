@@ -22,6 +22,5 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public interface UsageInFiles {
-  @NotNull
-  VirtualFile[] getFiles();
+  VirtualFile @NotNull [] getFiles();
 }

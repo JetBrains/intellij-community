@@ -206,8 +206,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     }
   }
 
-  @Nullable
-  private PsiMethodMember[] chooseMethods(PsiElementClassMember targetMember, PsiFile file, Editor editor, Project project) {
+  private PsiMethodMember @Nullable [] chooseMethods(PsiElementClassMember targetMember, PsiFile file, Editor editor, Project project) {
     PsiClassType.ClassResolveResult resolveResult = null;
     final PsiDocCommentOwner target = targetMember.getElement();
     if (target instanceof PsiField) {
@@ -338,8 +337,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     return null;
   }
 
-  @Nullable
-  private static PsiElementClassMember[] getTargetElements(PsiFile file, Editor editor) {
+  private static PsiElementClassMember @Nullable [] getTargetElements(PsiFile file, Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;

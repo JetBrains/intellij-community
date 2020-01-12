@@ -304,7 +304,7 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   private void doTest(@Nullable Function<VirtualFile, Object> condition,
                       @Nullable Function<VirtualFile, Iterable<VirtualFile>> iterable,
                       @NotNull String expected,
-                      @NotNull VirtualFileVisitor.Option... options) {
+                      VirtualFileVisitor.Option @NotNull ... options) {
     MultiMap<VirtualFile, Pair<VirtualFile, String>> visitLog = MultiMap.create();
     Map<VirtualFile, String> backLog = new HashMap<>();
     try {

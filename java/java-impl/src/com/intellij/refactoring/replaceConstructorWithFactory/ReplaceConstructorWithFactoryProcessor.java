@@ -81,7 +81,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     if (myConstructor != null) {
       return new ReplaceConstructorWithFactoryViewDescriptor(myConstructor);
     }
@@ -93,8 +93,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   private List<PsiElement> myNonNewConstructorUsages;
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
 
     ArrayList<UsageInfo> usages = new ArrayList<>();
@@ -195,7 +194,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
 
     try {
       PsiReferenceExpression classReferenceExpression =

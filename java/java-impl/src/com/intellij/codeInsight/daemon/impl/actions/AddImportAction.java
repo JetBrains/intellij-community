@@ -52,7 +52,7 @@ public class AddImportAction implements QuestionAction {
   public AddImportAction(@NotNull Project project,
                          @NotNull PsiReference ref,
                          @NotNull Editor editor,
-                         @NotNull PsiClass... targetClasses) {
+                         PsiClass @NotNull ... targetClasses) {
     myProject = project;
     myReference = ref;
     myTargetClasses = targetClasses;

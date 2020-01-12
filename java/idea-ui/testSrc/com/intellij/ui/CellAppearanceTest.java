@@ -149,8 +149,7 @@ public class CellAppearanceTest extends JavaModuleTestCase {
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getFiles(@NotNull OrderRootType type) {
+    public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
       notImplemented();
       return null;
     }
@@ -182,8 +181,7 @@ public class CellAppearanceTest extends JavaModuleTestCase {
     }
 
     @Override
-    @NotNull
-    public String[] getUrls(@NotNull OrderRootType rootType) {
+    public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
       notImplemented();
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }

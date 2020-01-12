@@ -287,24 +287,24 @@ public class InferenceSession {
   }
 
 
-  PsiSubstitutor collectAdditionalAndInfer(@NotNull PsiParameter[] parameters,
-                                           @NotNull PsiExpression[] args,
+  PsiSubstitutor collectAdditionalAndInfer(PsiParameter @NotNull [] parameters,
+                                           PsiExpression @NotNull [] args,
                                            @NotNull MethodCandidateInfo properties,
                                            @NotNull PsiSubstitutor psiSubstitutor) {
     return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor, false);
   }
 
   @NotNull
-  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
-                              @Nullable PsiExpression[] args,
+  public PsiSubstitutor infer(PsiParameter @Nullable [] parameters,
+                              PsiExpression @Nullable [] args,
                               @Nullable PsiElement parent,
                               @Nullable MethodCandidateInfo currentMethod) {
     return performGuardedInference(parameters, args, parent, currentMethod, PsiSubstitutor.EMPTY, false);
   }
 
   @NotNull
-  PsiSubstitutor performGuardedInference(@Nullable PsiParameter[] parameters,
-                                         @Nullable PsiExpression[] args,
+  PsiSubstitutor performGuardedInference(PsiParameter @Nullable [] parameters,
+                                         PsiExpression @Nullable [] args,
                                          @Nullable PsiElement parent,
                                          @Nullable MethodCandidateInfo currentMethod,
                                          @NotNull PsiSubstitutor initialSubstitutor,
@@ -334,8 +334,8 @@ public class InferenceSession {
     }, prohibitCaching);
   }
 
-  private void doInfer(@Nullable PsiParameter[] parameters,
-                       @Nullable PsiExpression[] args,
+  private void doInfer(PsiParameter @Nullable [] parameters,
+                       PsiExpression @Nullable [] args,
                        @Nullable PsiElement parent,
                        @Nullable MethodCandidateInfo properties,
                        @NotNull PsiSubstitutor initialSubstitutor) {
@@ -595,7 +595,7 @@ public class InferenceSession {
 
   public InferenceVariable[] initBounds(PsiElement context,
                                         final PsiSubstitutor siteSubstitutor,
-                                        @NotNull PsiTypeParameter... typeParameters) {
+                                        PsiTypeParameter @NotNull ... typeParameters) {
     List<InferenceVariable> result = new ArrayList<>(typeParameters.length);
     for (PsiTypeParameter parameter : typeParameters) {
       String name = parameter.getName();

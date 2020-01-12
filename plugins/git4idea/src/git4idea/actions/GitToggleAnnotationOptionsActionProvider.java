@@ -43,9 +43,8 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
       myAnnotation = annotation;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (myAnnotation instanceof GitFileAnnotation) {
         return new AnAction[]{
           new ToggleIgnoreWhitespaces(myAnnotation.getProject()),

@@ -29,9 +29,8 @@ public class CallToSuspiciousStringMethodInspectionMerger extends InspectionElem
     return "CallToSuspiciousStringMethod";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       "StringEquals",
       "StringEqualsIgnoreCase",
@@ -39,9 +38,8 @@ public class CallToSuspiciousStringMethodInspectionMerger extends InspectionElem
     };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] {
       "CallToStringEquals",
       "CallToStringEqualsIgnoreCase",

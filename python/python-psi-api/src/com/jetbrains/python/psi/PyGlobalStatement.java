@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public interface PyGlobalStatement extends PyStatement, PyNamedElementContainer {
-  @NotNull PyTargetExpression[] getGlobals();
+  PyTargetExpression @NotNull [] getGlobals();
 
   void addGlobal(String name);
 }

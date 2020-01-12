@@ -206,8 +206,7 @@ public class GenericsUtil {
     return PsiWildcardType.createExtends(manager, getLeastUpperBound(type1, type2, compared, manager));
   }
 
-  @NotNull
-  public static PsiClass[] getLeastUpperClasses(PsiClass aClass, PsiClass bClass) {
+  public static PsiClass @NotNull [] getLeastUpperClasses(PsiClass aClass, PsiClass bClass) {
     if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) return new PsiClass[]{bClass};
     Set<PsiClass> supers = new LinkedHashSet<>();
     Set<PsiClass> visited = new HashSet<>();

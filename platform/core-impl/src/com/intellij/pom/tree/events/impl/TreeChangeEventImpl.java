@@ -54,8 +54,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   @Override
-  @NotNull
-  public ASTNode[] getChangedElements() {
+  public ASTNode @NotNull [] getChangedElements() {
     return myChangedElements.keySet().toArray(ASTNode.EMPTY_ARRAY);
   }
 

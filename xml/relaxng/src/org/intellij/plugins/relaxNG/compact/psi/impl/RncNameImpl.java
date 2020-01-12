@@ -152,9 +152,8 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return "Unresolved namespace prefix ''{0}''";
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public LocalQuickFix @Nullable [] getQuickFixes() {
     if (getPrefix() != null) {
       return new LocalQuickFix[] { new CreateDeclFix(this) };
     }

@@ -153,8 +153,7 @@ public final class InjectorUtils {
     return null;
   }
 
-  @NotNull
-  public static Class<?>[] getPatternClasses(@NotNull String supportId) {
+  public static Class<?> @NotNull [] getPatternClasses(@NotNull String supportId) {
     final LanguageInjectionSupport support = findInjectionSupport(supportId);
     return support == null ? ArrayUtil.EMPTY_CLASS_ARRAY : support.getPatternClasses();
   }

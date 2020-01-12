@@ -29,11 +29,10 @@ import java.util.Set;
  * @author ven
  */
 public abstract class VariableTypeMacroBase extends Macro {
-  @Nullable
-  protected abstract PsiElement[] getVariables(Expression[] params, final ExpressionContext context);
+  protected abstract PsiElement @Nullable [] getVariables(Expression[] params, final ExpressionContext context);
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
     Set<LookupElement> set = new LinkedHashSet<>();
@@ -44,7 +43,7 @@ public abstract class VariableTypeMacroBase extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length == 0) return null;
     return new JavaPsiElementResult(vars[0]);

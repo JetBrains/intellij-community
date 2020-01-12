@@ -32,7 +32,7 @@ public class PythonMockSdk {
   private PythonMockSdk() {
   }
 
-  public static Sdk create(final String version, @NotNull final VirtualFile... additionalRoots) {
+  public static Sdk create(final String version, final VirtualFile @NotNull ... additionalRoots) {
     final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
 
     String sdkHome = new File(mock_path, "bin/python" + version).getPath();

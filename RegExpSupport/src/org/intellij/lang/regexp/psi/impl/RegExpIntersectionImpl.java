@@ -33,8 +33,7 @@ public class RegExpIntersectionImpl extends RegExpElementImpl implements RegExpI
     }
 
     @Override
-    @NotNull
-    public RegExpClassElement[] getOperands() {
+    public RegExpClassElement @NotNull [] getOperands() {
         return findChildrenByClass(RegExpClassElement.class);
     }
 }

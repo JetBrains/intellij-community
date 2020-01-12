@@ -39,8 +39,7 @@ public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
   public int limit = 10;
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,

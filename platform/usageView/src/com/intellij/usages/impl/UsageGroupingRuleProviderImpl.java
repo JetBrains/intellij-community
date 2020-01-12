@@ -38,15 +38,13 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     return true;
   }
 
-  @NotNull
   @Override
-  public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
+  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
     return getActiveRules(project, UsageViewSettings.getInstance());
   }
 
   @Override
-  @NotNull
-  public UsageGroupingRule[] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
+  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
     List<UsageGroupingRule> rules = new ArrayList<>();
     if (supportsNonCodeRule()) {
       rules.add(new NonCodeUsageGroupingRule(project));
@@ -76,8 +74,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   }
 
   @Override
-  @NotNull
-  public AnAction[] createGroupingActions(@NotNull UsageView view) {
+  public AnAction @NotNull [] createGroupingActions(@NotNull UsageView view) {
     UsageViewImpl impl = (UsageViewImpl)view;
     JComponent component = impl.getComponent();
 

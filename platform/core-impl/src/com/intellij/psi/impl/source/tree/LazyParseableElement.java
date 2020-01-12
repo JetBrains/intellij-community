@@ -244,7 +244,7 @@ public class LazyParseableElement extends CompositeElement {
     return super.getLastChildNode();
   }
 
-  public int copyTo(@Nullable char[] buffer, int start) {
+  public int copyTo(char @Nullable [] buffer, int start) {
     CharSequence text = myText();
     if (text == null) return -1;
 

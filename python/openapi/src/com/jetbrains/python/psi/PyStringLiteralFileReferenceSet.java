@@ -49,7 +49,7 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
                                          @NotNull PyStringLiteralExpression element,
                                          int startInElement,
                                          PsiReferenceProvider provider,
-                                         boolean caseSensitive, boolean endingSlashNotAllowed, @Nullable FileType[] suitableFileTypes) {
+                                         boolean caseSensitive, boolean endingSlashNotAllowed, FileType @Nullable [] suitableFileTypes) {
     super(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed,
           suitableFileTypes);
     myStringLiteralExpression = element;

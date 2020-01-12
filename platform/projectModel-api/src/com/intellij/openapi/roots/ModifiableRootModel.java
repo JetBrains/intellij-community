@@ -105,7 +105,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    */
   void removeOrderEntry(@NotNull OrderEntry orderEntry);
 
-  void rearrangeOrderEntries(@NotNull OrderEntry[] newOrder);
+  void rearrangeOrderEntries(OrderEntry @NotNull [] newOrder);
 
   void clear();
 

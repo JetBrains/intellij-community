@@ -28,7 +28,7 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
   @Override
   public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
                                                  @NotNull final PsiSubstitutor substitutor,
-                                                 @NotNull String[] options) {
+                                                 String @NotNull [] options) {
     PsiElement context = createContext(method);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     return ContainerUtil.map(options, value -> {

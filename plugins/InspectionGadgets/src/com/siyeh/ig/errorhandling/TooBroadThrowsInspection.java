@@ -95,9 +95,8 @@ public class TooBroadThrowsInspection extends BaseInspection {
     return new AddThrowsClauseFix(maskedExceptions, originalNeeded.booleanValue());
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[2];
     final SuppressForTestsScopeFix suppressFix = SuppressForTestsScopeFix.build(this, context);
     if (suppressFix == null) {

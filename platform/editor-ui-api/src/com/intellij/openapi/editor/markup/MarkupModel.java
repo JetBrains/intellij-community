@@ -78,6 +78,5 @@ public interface MarkupModel extends UserDataHolder {
    *
    * @return the array of highlighter instances.
    */
-  @NotNull
-  RangeHighlighter[] getAllHighlighters();
+  RangeHighlighter @NotNull [] getAllHighlighters();
 }

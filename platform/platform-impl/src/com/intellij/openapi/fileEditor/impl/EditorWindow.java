@@ -469,8 +469,7 @@ public class EditorWindow {
     return comp == null ? null : comp.myEditor;
   }
 
-  @NotNull
-  public EditorWithProviderComposite[] getEditors() {
+  public EditorWithProviderComposite @NotNull [] getEditors() {
     final int tabCount = getTabCount();
     final EditorWithProviderComposite[] res = new EditorWithProviderComposite[tabCount];
     for (int i = 0; i != tabCount; ++i) {
@@ -479,8 +478,7 @@ public class EditorWindow {
     return res;
   }
 
-  @NotNull
-  public VirtualFile[] getFiles() {
+  public VirtualFile @NotNull [] getFiles() {
     final int tabCount = getTabCount();
     final VirtualFile[] res = new VirtualFile[tabCount];
     for (int i = 0; i != tabCount; ++i) {
@@ -635,7 +633,7 @@ public class EditorWindow {
    *
    * @param toSync    editor to setup caret and viewport for
    */
-  private void syncCaretIfPossible(@Nullable FileEditor[] toSync) {
+  private void syncCaretIfPossible(FileEditor @Nullable [] toSync) {
     if (toSync == null) {
       return;
     }

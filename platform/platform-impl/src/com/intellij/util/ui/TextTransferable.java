@@ -90,7 +90,7 @@ public class TextTransferable implements Transferable {
   public static class ColoredStringBuilder implements ColoredTextContainer {
     private final StringBuilder builder = new StringBuilder();
 
-    public void appendTo(@NotNull StringBuilder... subBuilders) {
+    public void appendTo(StringBuilder @NotNull ... subBuilders) {
       for (StringBuilder subBuilder : subBuilders) {
         subBuilder.append(builder);
       }

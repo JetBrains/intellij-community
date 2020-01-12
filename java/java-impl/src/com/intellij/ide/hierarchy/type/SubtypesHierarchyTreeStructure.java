@@ -32,8 +32,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   }
 
   @Override
-  @NotNull
-  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
+  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     final Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     if (!(element instanceof PsiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     final PsiClass psiClass = (PsiClass)element;

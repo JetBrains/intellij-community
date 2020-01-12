@@ -43,9 +43,8 @@ public class CollectionQuery<T> implements Query<T> {
     return AsyncUtil.wrapBoolean(forEach(consumer));
   }
 
-  @NotNull
   @Override
-  public T[] toArray(@NotNull final T[] a) {
+  public T @NotNull [] toArray(final T @NotNull [] a) {
     return findAll().toArray(a);
   }
 

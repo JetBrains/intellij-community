@@ -91,9 +91,8 @@ public class VcsContextWrapper implements VcsContext {
     return getSelectedFilesStream().findFirst().orElse(null);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getSelectedFiles() {
+  public VirtualFile @NotNull [] getSelectedFiles() {
     VirtualFile[] fileArray = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
     if (fileArray != null) {
       return Stream.of(fileArray).filter(VirtualFile::isInLocalFileSystem).toArray(VirtualFile[]::new);
@@ -137,9 +136,8 @@ public class VcsContextWrapper implements VcsContext {
     return file != null ? file : ArrayUtil.getFirstElement(VcsDataKeys.IO_FILE_ARRAY.getData(myContext));
   }
 
-  @Nullable
   @Override
-  public File[] getSelectedIOFiles() {
+  public File @Nullable [] getSelectedIOFiles() {
     File[] files = VcsDataKeys.IO_FILE_ARRAY.getData(myContext);
     if (!ArrayUtil.isEmpty(files)) return files;
 
@@ -157,9 +155,8 @@ public class VcsContextWrapper implements VcsContext {
     return Refreshable.PANEL_KEY.getData(myContext);
   }
 
-  @NotNull
   @Override
-  public FilePath[] getSelectedFilePaths() {
+  public FilePath @NotNull [] getSelectedFilePaths() {
     return getSelectedFilePathsStream().toArray(FilePath[]::new);
   }
 
@@ -182,15 +179,13 @@ public class VcsContextWrapper implements VcsContext {
     return ArrayUtil.getFirstElement(getSelectedFilePaths());
   }
 
-  @Nullable
   @Override
-  public ChangeList[] getSelectedChangeLists() {
+  public ChangeList @Nullable [] getSelectedChangeLists() {
     return VcsDataKeys.CHANGE_LISTS.getData(myContext);
   }
 
-  @Nullable
   @Override
-  public Change[] getSelectedChanges() {
+  public Change @Nullable [] getSelectedChanges() {
     return VcsDataKeys.CHANGES.getData(myContext);
   }
 }

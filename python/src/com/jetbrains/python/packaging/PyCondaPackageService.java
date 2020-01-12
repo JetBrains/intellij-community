@@ -215,7 +215,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @NotNull
-  private String runCondaPackagingHelper(@NotNull String... args) throws ExecutionException {
+  private String runCondaPackagingHelper(String @NotNull ... args) throws ExecutionException {
     final List<String> commandArgs = new ArrayList<>();
     commandArgs.add(PythonHelpersLocator.getHelperPath("conda_packaging_tool.py"));
     commandArgs.addAll(Arrays.asList(args));

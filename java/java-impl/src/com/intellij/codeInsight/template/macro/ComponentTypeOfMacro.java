@@ -25,7 +25,7 @@ public class ComponentTypeOfMacro extends Macro {
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length != 1) return null;
     LookupElement[] lookupItems = params[0].calculateLookupItems(context);
     if (lookupItems == null) return null;
@@ -45,7 +45,7 @@ public class ComponentTypeOfMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);
     if (result == null) return null;

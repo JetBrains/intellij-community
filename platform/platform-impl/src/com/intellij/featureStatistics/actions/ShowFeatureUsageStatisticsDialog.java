@@ -101,9 +101,8 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     return "#com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog";
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getCancelAction(), getHelpAction()};
   }
 

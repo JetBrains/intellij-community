@@ -71,7 +71,7 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull String methodText,
                                                                                  @NotNull PsiClass toClass,
-                                                                                 @NotNull String... exceptions);
+                                                                                 String @NotNull ... exceptions);
 
   /**
    * @param psiElement psiClass or enum constant without class initializer
@@ -139,7 +139,7 @@ public abstract class QuickFixFactory {
                                                                  @NotNull String name,
                                                                  @NotNull PsiType type,
                                                                  @NotNull PropertyMemberType targetMember,
-                                                                 @NotNull PsiAnnotation... annotations);
+                                                                 PsiAnnotation @NotNull ... annotations);
 
   @NotNull
   public abstract IntentionAction createAddExceptionToCatchFix();
@@ -288,14 +288,14 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
-                                                                          @NotNull PsiExpression[] expressions,
+                                                                          PsiExpression @NotNull [] expressions,
                                                                           @NotNull PsiSubstitutor substitutor,
                                                                           @NotNull PsiElement context,
                                                                           boolean changeAllUsages, int minUsagesNumberToShowDialog);
 
   @NotNull
   public abstract IntentionAction createChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
-                                                                                      @NotNull PsiExpression[] expressions,
+                                                                                      PsiExpression @NotNull [] expressions,
                                                                                       @NotNull PsiSubstitutor substitutor,
                                                                                       @NotNull PsiElement context,
                                                                                       boolean changeAllUsages,
@@ -421,7 +421,7 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
-                                                                                  @NotNull PsiMethod[] annotationMethods,
+                                                                                  PsiMethod @NotNull [] annotationMethods,
                                                                                   @NotNull Collection<String> missedElements);
 
   @NotNull

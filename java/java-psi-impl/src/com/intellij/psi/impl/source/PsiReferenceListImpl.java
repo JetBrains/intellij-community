@@ -35,14 +35,12 @@ public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceLi
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return calcTreeElement().getChildrenAsPsiElements(JavaElementType.JAVA_CODE_REFERENCE, PsiJavaCodeReferenceElement.ARRAY_FACTORY);
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     PsiClassReferenceListStub stub = getGreenStub();
     if (stub != null) {
       return stub.getReferencedTypes();

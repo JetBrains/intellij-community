@@ -27,9 +27,8 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     return CommonBundle.getCloseButtonText();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
 

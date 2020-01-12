@@ -176,7 +176,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     return envToConfMap;
   }
 
-  private Map<AbstractVcs, Collection<FilePath>> createVcsToFilesMap(@NotNull FilePath[] roots, @NotNull Project project) {
+  private Map<AbstractVcs, Collection<FilePath>> createVcsToFilesMap(FilePath @NotNull [] roots, @NotNull Project project) {
     MultiMap<AbstractVcs, FilePath> resultPrep = MultiMap.createSet();
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
@@ -196,8 +196,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     return result;
   }
 
-  @NotNull
-  private FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
+  private FilePath @NotNull [] filterRoots(FilePath[] roots, VcsContext vcsContext) {
     final ArrayList<FilePath> result = new ArrayList<>();
     final Project project = vcsContext.getProject();
     assert project != null;

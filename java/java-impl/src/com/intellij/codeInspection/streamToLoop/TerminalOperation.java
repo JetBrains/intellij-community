@@ -63,7 +63,7 @@ abstract class TerminalOperation extends Operation {
   abstract String generate(ChainVariable inVar, StreamToLoopReplacementContext context);
 
   @Nullable
-  static TerminalOperation createTerminal(@NotNull String name, @NotNull PsiExpression[] args,
+  static TerminalOperation createTerminal(@NotNull String name, PsiExpression @NotNull [] args,
                                           @NotNull PsiType elementType, @NotNull PsiType resultType, boolean isVoid) {
     if(isVoid) {
       if ((name.equals("forEach") || name.equals("forEachOrdered")) && args.length == 1) {

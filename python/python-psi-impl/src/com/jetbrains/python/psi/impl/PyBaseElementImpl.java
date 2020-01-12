@@ -80,8 +80,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     pyVisitor.visitPyElement(this);
   }
 
-  @NotNull
-  protected <T extends PyElement> T[] childrenToPsi(TokenSet filterSet, T[] array) {
+  protected <T extends PyElement> T @NotNull [] childrenToPsi(TokenSet filterSet, T[] array) {
     final ASTNode[] nodes = getNode().getChildren(filterSet);
     return PyPsiUtils.nodesToPsi(nodes, array);
   }

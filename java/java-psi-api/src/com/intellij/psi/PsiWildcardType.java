@@ -103,8 +103,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return new PsiType[]{getExtendsBound()};
   }
 

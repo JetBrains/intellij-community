@@ -123,9 +123,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     return true;
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> result = new ArrayList<>();
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();
@@ -165,7 +164,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     final IntroduceParameterData data = new IntroduceParameterDataAdapter();
 
     IntroduceParameterUtil.processUsages(usages, data);

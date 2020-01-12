@@ -44,14 +44,11 @@ public interface LibrariesContainer {
     }
   }
 
-  @NotNull
-  Library[] getLibraries(@NotNull LibraryLevel libraryLevel);
+  Library @NotNull [] getLibraries(@NotNull LibraryLevel libraryLevel);
 
-  @NotNull
-  Library[] getAllLibraries();
+  Library @NotNull [] getAllLibraries();
 
-  @NotNull
-  VirtualFile[] getLibraryFiles(@NotNull Library library, @NotNull OrderRootType rootType);
+  VirtualFile @NotNull [] getLibraryFiles(@NotNull Library library, @NotNull OrderRootType rootType);
 
   boolean canCreateLibrary(@NotNull LibraryLevel level);
 
@@ -59,7 +56,7 @@ public interface LibrariesContainer {
   List<LibraryLevel> getAvailableLevels();
 
   Library createLibrary(@NotNull @NonNls String name, @NotNull LibraryLevel level,
-                        @NotNull VirtualFile[] classRoots, @NotNull VirtualFile[] sourceRoots);
+                        VirtualFile @NotNull [] classRoots, VirtualFile @NotNull [] sourceRoots);
 
   Library createLibrary(@NotNull @NonNls String name, @NotNull LibraryLevel level,
                         @NotNull Collection<? extends OrderRoot> roots);

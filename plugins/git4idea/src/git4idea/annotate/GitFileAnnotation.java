@@ -118,9 +118,8 @@ public class GitFileAnnotation extends FileAnnotation {
     myLogSettings.removeChangeListener(myLogSettingChangeListener);
   }
 
-  @NotNull
   @Override
-  public LineAnnotationAspect[] getAspects() {
+  public LineAnnotationAspect @NotNull [] getAspects() {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
 

@@ -187,8 +187,7 @@ public class IdempotenceChecker {
     return msg == null ? null : appendDetail(msg, "which is " + field + " of " + existing + " and " + fresh);
   }
 
-  @Nullable
-  private static Object[] asArray(Object o) {
+  private static Object @Nullable [] asArray(Object o) {
     if (o instanceof Object[]) return (Object[])o;
     if (o instanceof Map.Entry) return new Object[]{((Map.Entry)o).getKey(), ((Map.Entry)o).getValue()};
     if (o instanceof Pair) return new Object[]{((Pair)o).first, ((Pair)o).second};

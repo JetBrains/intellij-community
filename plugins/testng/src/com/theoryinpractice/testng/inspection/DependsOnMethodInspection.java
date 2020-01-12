@@ -44,8 +44,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
 
     PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
     if (annotations.length == 0) return ProblemDescriptor.EMPTY_ARRAY;

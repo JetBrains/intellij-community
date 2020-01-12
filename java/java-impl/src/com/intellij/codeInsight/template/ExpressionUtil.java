@@ -35,8 +35,7 @@ import org.jetbrains.annotations.Nullable;
    private ExpressionUtil() {
    }
 
-   @Nullable
-   public static String[] getNames(final ExpressionContext context) {
+   public static String @Nullable [] getNames(final ExpressionContext context) {
      final Project project = context.getProject();
      final int offset = context.getStartOffset();
 
@@ -67,8 +66,7 @@ import org.jetbrains.annotations.Nullable;
      return names;
    }
 
-   @Nullable
-   private static String[] getNamesForIdentifier(Project project, PsiIdentifier identifier){
+   private static String @Nullable [] getNamesForIdentifier(Project project, PsiIdentifier identifier){
      if (identifier.getParent() instanceof PsiVariable){
        PsiVariable var = (PsiVariable)identifier.getParent();
        if (identifier.equals(var.getNameIdentifier())){

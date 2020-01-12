@@ -50,7 +50,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
 
   @Override
   public void applyFix(@NotNull Project project,
-                       @NotNull CommonProblemDescriptor[] descriptors,
+                       CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
     List<ReplacementBean> keyValuePairs = ContainerUtil.mapNotNull(descriptors, descriptor -> {

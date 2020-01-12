@@ -7,6 +7,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 public interface GrForClause extends GroovyPsiElement {
 
-  @NotNull
-  GrVariable[] getDeclaredVariables();
+  GrVariable @NotNull [] getDeclaredVariables();
 }

@@ -45,8 +45,7 @@ public class ExceptionInfoCache {
     return myProject;
   }
 
-  @NotNull
-  private PsiClass[] findClassesPreferringMyScope(String className) {
+  private PsiClass @NotNull [] findClassesPreferringMyScope(String className) {
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     PsiClass[] result = psiFacade.findClasses(className, mySearchScope);
     return result.length != 0 ? result : psiFacade.findClasses(className, GlobalSearchScope.allScope(myProject));

@@ -121,7 +121,7 @@ public class XmlStringUtil {
    * @return HTML where specified lines separated by &lt;br&gt; and each line wrapped in &lt;nobr&gt; to prevent breaking text inside
    */
   @NotNull
-  public static String wrapInHtmlLines(@NotNull CharSequence...lines) {
+  public static String wrapInHtmlLines(CharSequence @NotNull ... lines) {
     StringBuilder sb = new StringBuilder(HTML_START);
     for (int i = 0; i < lines.length; i++) {
       CharSequence sequence = lines[i];

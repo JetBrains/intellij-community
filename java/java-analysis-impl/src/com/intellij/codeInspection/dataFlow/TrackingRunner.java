@@ -89,9 +89,8 @@ public class TrackingRunner extends DataFlowRunner {
     return new TrackingDfaMemoryState(getFactory());
   }
 
-  @NotNull
   @Override
-  protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
     TrackingDfaMemoryState memState = (TrackingDfaMemoryState)instructionState.getMemoryState().createCopy();
     DfaInstructionState[] states = super.acceptInstruction(visitor, instructionState);
@@ -511,8 +510,7 @@ public class TrackingRunner extends DataFlowRunner {
     }
   }
 
-  @NotNull
-  private CauseItem[] findConstantValueCause(PsiExpression expression, MemoryStateChange history, Object expectedValue) {
+  private CauseItem @NotNull [] findConstantValueCause(PsiExpression expression, MemoryStateChange history, Object expectedValue) {
     if (expression instanceof PsiLiteralExpression) return new CauseItem[0];
     Object constantExpressionValue = ExpressionUtils.computeConstantExpression(expression);
     DfaValue value = history.myTopOfStack;
@@ -772,15 +770,13 @@ public class TrackingRunner extends DataFlowRunner {
     return "element";
   }
 
-  @NotNull
-  private CauseItem[] findRelationCause(RelationType relationType, MemoryStateChange leftChange, MemoryStateChange rightChange) {
+  private CauseItem @NotNull [] findRelationCause(RelationType relationType, MemoryStateChange leftChange, MemoryStateChange rightChange) {
     return findRelationCause(relationType, leftChange, leftChange.myTopOfStack, rightChange, rightChange.myTopOfStack);
   }
 
-  @NotNull
-  private CauseItem[] findRelationCause(RelationType relationType,
-                                        MemoryStateChange leftChange, DfaValue leftValue, 
-                                        MemoryStateChange rightChange, DfaValue rightValue) {
+  private CauseItem @NotNull [] findRelationCause(RelationType relationType,
+                                                  MemoryStateChange leftChange, DfaValue leftValue,
+                                                  MemoryStateChange rightChange, DfaValue rightValue) {
     ProgressManager.checkCanceled();
     FactDefinition<DfaNullability> leftNullability = leftChange.findFact(leftValue, FactExtractor.nullability());
     FactDefinition<DfaNullability> rightNullability = rightChange.findFact(rightValue, FactExtractor.nullability());

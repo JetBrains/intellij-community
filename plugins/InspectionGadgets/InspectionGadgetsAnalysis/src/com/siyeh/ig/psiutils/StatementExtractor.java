@@ -36,8 +36,7 @@ public class StatementExtractor {
    * @param root a root expression
    * @return an array of non-physical statements which represent the same logic as passed expressions
    */
-  @NotNull
-  public static PsiStatement[] generateStatements(List<? extends PsiExpression> expressionsToKeep, PsiExpression root) {
+  public static PsiStatement @NotNull [] generateStatements(List<? extends PsiExpression> expressionsToKeep, PsiExpression root) {
     String statementsCode = generateStatementsText(expressionsToKeep, root);
     if(statementsCode.isEmpty()) return PsiStatement.EMPTY_ARRAY;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(root.getProject());

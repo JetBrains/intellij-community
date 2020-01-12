@@ -365,7 +365,7 @@ public final class ErrorAnalyzer {
     return null;
   }
 
-  @NotNull public static ErrorInfo[] getAllErrorsForComponent(@NotNull IComponent component) {
+  public static ErrorInfo @NotNull [] getAllErrorsForComponent(@NotNull IComponent component) {
     List<ErrorInfo> result = new ArrayList<>();
     ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR);
     if (errorInfo != null) {

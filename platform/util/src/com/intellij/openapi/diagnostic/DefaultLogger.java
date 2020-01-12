@@ -45,7 +45,7 @@ public class DefaultLogger extends Logger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     t = checkException(t);
     message += attachmentsToString(t);
     dumpExceptionsToStderr(message, t, details);
@@ -58,7 +58,7 @@ public class DefaultLogger extends Logger {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void dumpExceptionsToStderr(String message,
                                             @Nullable Throwable t,
-                                            @NotNull String... details) {
+                                            String @NotNull ... details) {
     if (shouldDumpExceptionToStderr()) {
       System.err.println("ERROR: " + message);
       if (t != null) t.printStackTrace(System.err);

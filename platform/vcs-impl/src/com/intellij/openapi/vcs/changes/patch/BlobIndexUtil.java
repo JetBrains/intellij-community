@@ -32,7 +32,7 @@ public class BlobIndexUtil {
    * Generate sha1 for file content using git-like algorithm
    */
   @NotNull
-  public static String getSha1(@NotNull byte[] bytes) {
+  public static String getSha1(byte @NotNull [] bytes) {
     String prefix = "blob " + bytes.length + '\u0000';
     return Hashing.sha1().newHasher().putBytes(prefix.getBytes(Charsets.UTF_8)).putBytes(bytes).hash().toString();
   }
@@ -49,8 +49,7 @@ public class BlobIndexUtil {
     return new Couple<>(before, after);
   }
 
-  @NotNull
-  private static byte[] getContentBytes(@NotNull ContentRevision revision, @NotNull Charset charset) throws VcsException {
+  private static byte @NotNull [] getContentBytes(@NotNull ContentRevision revision, @NotNull Charset charset) throws VcsException {
     byte[] binaryContent;
     if (revision instanceof ByteBackedContentRevision) {
       binaryContent = ((ByteBackedContentRevision)revision).getContentAsBytes();

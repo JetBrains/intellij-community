@@ -137,7 +137,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
     @Nullable private final Project myProject;
 
-    CreateClassInPackageDialog(@Nullable Project project, @NotNull PsiDirectory[] rootDirs) {
+    CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
       setTitle("Create Class in Package");
@@ -152,9 +152,8 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       init();
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 

@@ -43,8 +43,7 @@ class ExtractClassUsageViewDescriptor implements UsageViewDescriptor {
     }
 
     @Override
-    @NotNull
-    public PsiElement[] getElements() {
+    public PsiElement @NotNull [] getElements() {
         return new PsiElement[]{aClass};
     }
 

@@ -87,7 +87,7 @@ public abstract class DataValidator<T> {
     }
 
     @Override
-    public T[] findInvalid(@NotNull final String dataId, @NotNull T[] array, @NotNull final Object dataSource) {
+    public T[] findInvalid(@NotNull final String dataId, T @NotNull [] array, @NotNull final Object dataSource) {
       for (T element : array) {
         if (element == null) {
           LOG.error("Data isn't valid. " + dataId + "=null Provided by: " + dataSource.getClass().getName() + " (" + dataSource.toString() + ")");

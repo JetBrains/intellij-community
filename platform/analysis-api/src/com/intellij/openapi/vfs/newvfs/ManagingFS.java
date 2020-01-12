@@ -65,14 +65,11 @@ public abstract class ManagingFS implements FileSystemInterface {
   @Nullable
   public abstract NewVirtualFile findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs);
 
-  @NotNull
-  public abstract VirtualFile[] getRoots();
+  public abstract VirtualFile @NotNull [] getRoots();
 
-  @NotNull
-  public abstract VirtualFile[] getRoots(@NotNull NewVirtualFileSystem fs);
+  public abstract VirtualFile @NotNull [] getRoots(@NotNull NewVirtualFileSystem fs);
 
-  @NotNull
-  public abstract VirtualFile[] getLocalRoots();
+  public abstract VirtualFile @NotNull [] getLocalRoots();
 
   @Nullable
   public abstract VirtualFile findFileById(int id);

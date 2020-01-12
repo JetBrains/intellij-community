@@ -45,9 +45,8 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement expression = (PsiElement)infos[0];
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());

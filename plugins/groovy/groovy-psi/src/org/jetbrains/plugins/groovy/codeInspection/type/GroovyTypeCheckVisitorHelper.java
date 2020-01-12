@@ -75,10 +75,9 @@ public class GroovyTypeCheckVisitorHelper {
     return TypesUtil.isNumericType(ltype) && (rtype == null || TypesUtil.isNumericType(rtype));
   }
 
-  @NotNull
-  public static LocalQuickFix[] genCastFixes(@NotNull GrSignature signature,
-                                             @NotNull PsiType[] argumentTypes,
-                                             @Nullable GrArgumentList argumentList) {
+  public static LocalQuickFix @NotNull [] genCastFixes(@NotNull GrSignature signature,
+                                                       PsiType @NotNull [] argumentTypes,
+                                                       @Nullable GrArgumentList argumentList) {
     if (argumentList == null) return LocalQuickFix.EMPTY_ARRAY;
     final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
     if (args == null) return LocalQuickFix.EMPTY_ARRAY;
@@ -110,7 +109,7 @@ public class GroovyTypeCheckVisitorHelper {
   }
 
   @NotNull
-  public static String buildArgTypesList(@NotNull PsiType[] argTypes) {
+  public static String buildArgTypesList(PsiType @NotNull [] argTypes) {
     StringBuilder builder = new StringBuilder();
     builder.append("(");
     for (int i = 0; i < argTypes.length; i++) {

@@ -283,8 +283,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return (List<T>)myChildDescription.getValues(myParentDomElement);
   }
 
-  @Nullable
-  protected AnAction[] createAdditionActions() {
+  protected AnAction @Nullable [] createAdditionActions() {
     return null;
   }
 
@@ -383,8 +382,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    @NotNull
-    protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
+    protected DomCollectionChildDescription @NotNull [] getDomCollectionChildDescriptions(final AnActionEvent e) {
       return new DomCollectionChildDescription[]{getDomCollectionControl(e).getChildDescription()};
     }
 
@@ -399,8 +397,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    @NotNull
-    public AnAction[] getChildren(final AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(final AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       AnAction[] actions = control.createAdditionActions();
       return actions == null ? super.getChildren(e) : actions;

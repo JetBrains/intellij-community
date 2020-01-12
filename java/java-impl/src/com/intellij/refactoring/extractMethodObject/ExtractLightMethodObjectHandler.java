@@ -314,8 +314,7 @@ public class ExtractLightMethodObjectHandler {
     return result[0];
   }
 
-  @Nullable
-  private static PsiElement[] completeToStatementArray(PsiCodeFragment fragment, PsiElementFactory elementFactory) {
+  private static PsiElement @Nullable [] completeToStatementArray(PsiCodeFragment fragment, PsiElementFactory elementFactory) {
     PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
     if (expression != null) {
       String completeExpressionText = null;

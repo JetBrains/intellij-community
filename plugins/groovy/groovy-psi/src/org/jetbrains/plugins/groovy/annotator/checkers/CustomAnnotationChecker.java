@@ -53,7 +53,7 @@ public abstract class CustomAnnotationChecker {
 
   public static Pair.NonNull<PsiElement, String> checkAnnotationArguments(@NotNull PsiClass annotation,
                                                                   @NotNull PsiElement refToHighlight,
-                                                                  @NotNull GrAnnotationNameValuePair[] attributes,
+                                                                  GrAnnotationNameValuePair @NotNull [] attributes,
                                                                   boolean checkMissedAttributes) {
     Set<String> usedAttrs = new HashSet<>();
 

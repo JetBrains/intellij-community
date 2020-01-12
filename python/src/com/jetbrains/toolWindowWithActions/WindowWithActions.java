@@ -58,7 +58,7 @@ public final class WindowWithActions {
                                             @NotNull final String title,
                                             @NotNull final Project project,
                                             @Nullable final Collection<? extends Runnable> closeListeners,
-                                            @NotNull final AnAction... customActions) {
+                                            final AnAction @NotNull ... customActions) {
     final ConsoleStopProcessAction stopProcessAction = new ConsoleStopProcessAction(consoleWithProcess);
 
     // Add "stop action" as action and as close listener to stop process when console is closing
@@ -86,7 +86,7 @@ public final class WindowWithActions {
                                  @NotNull final String title,
                                  @NotNull final Project project,
                                  @Nullable final Collection<? extends Runnable> closeListeners,
-                                 @NotNull final AnAction... customActions) {
+                                 final AnAction @NotNull ... customActions) {
     final AnAction[] actions = ArrayUtil.mergeArrays(customActions, consoleView.createConsoleActions());
     show(consoleView.getComponent(), actionListenerComponent, title, project, closeListeners, actions);
   }
@@ -107,7 +107,7 @@ public final class WindowWithActions {
                           @NotNull final String title,
                           @NotNull final Project project,
                           @Nullable final Collection<? extends Runnable> closeListeners,
-                          @NotNull final AnAction... customActions) {
+                          final AnAction @NotNull ... customActions) {
     final ToolWindowApi api = new ToolWindowApi(project, title);
 
     final Collection<Runnable> closeListenersToAdd = new ArrayList<>(Collections.singleton(new MyToolWindowCloser(api)));

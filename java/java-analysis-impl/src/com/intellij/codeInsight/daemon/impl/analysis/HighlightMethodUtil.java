@@ -720,7 +720,7 @@ public class HighlightMethodUtil {
   }
 
   static HighlightInfo checkAmbiguousMethodCallIdentifier(@NotNull PsiReferenceExpression referenceToMethod,
-                                                          @NotNull JavaResolveResult[] resolveResults,
+                                                          JavaResolveResult @NotNull [] resolveResults,
                                                           @NotNull PsiExpressionList list,
                                                           @Nullable PsiElement element,
                                                           @NotNull JavaResolveResult resolveResult,
@@ -787,7 +787,7 @@ public class HighlightMethodUtil {
   }
 
   static HighlightInfo checkAmbiguousMethodCallArguments(@NotNull PsiReferenceExpression referenceToMethod,
-                                                         @NotNull JavaResolveResult[] resolveResults,
+                                                         JavaResolveResult @NotNull [] resolveResults,
                                                          @NotNull PsiExpressionList list,
                                                          final PsiElement element,
                                                          @NotNull JavaResolveResult resolveResult,
@@ -861,7 +861,7 @@ public class HighlightMethodUtil {
   }
 
   @NotNull
-  private static Pair<MethodCandidateInfo, MethodCandidateInfo> findCandidates(@NotNull JavaResolveResult[] resolveResults) {
+  private static Pair<MethodCandidateInfo, MethodCandidateInfo> findCandidates(JavaResolveResult @NotNull [] resolveResults) {
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
     for (JavaResolveResult result : resolveResults) {
@@ -880,8 +880,7 @@ public class HighlightMethodUtil {
     return Pair.pair(methodCandidate1, methodCandidate2);
   }
 
-  @NotNull
-  private static MethodCandidateInfo[] toMethodCandidates(@NotNull JavaResolveResult[] resolveResults) {
+  private static MethodCandidateInfo @NotNull [] toMethodCandidates(JavaResolveResult @NotNull [] resolveResults) {
     List<MethodCandidateInfo> candidateList = new ArrayList<>(resolveResults.length);
     for (JavaResolveResult result : resolveResults) {
       if (!(result instanceof MethodCandidateInfo)) continue;
@@ -951,7 +950,7 @@ public class HighlightMethodUtil {
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(candidates, methodCall, highlightInfo);
   }
 
-  private static void registerMethodAccessLevelIntentions(@NotNull CandidateInfo[] methodCandidates,
+  private static void registerMethodAccessLevelIntentions(CandidateInfo @NotNull [] methodCandidates,
                                                           @NotNull PsiMethodCallExpression methodCall,
                                                           @NotNull PsiExpressionList exprList,
                                                           @Nullable HighlightInfo highlightInfo) {
@@ -964,7 +963,7 @@ public class HighlightMethodUtil {
   }
 
   @NotNull
-  private static String createAmbiguousMethodHtmlTooltip(@NotNull MethodCandidateInfo[] methodCandidates) {
+  private static String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo @NotNull [] methodCandidates) {
     return JavaErrorBundle.message("ambiguous.method.html.tooltip",
                                      methodCandidates[0].getElement().getParameterList().getParametersCount() + 2,
                                    createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
@@ -1011,7 +1010,7 @@ public class HighlightMethodUtil {
   @NotNull
   private static String createMismatchedArgumentsHtmlTooltip(@NotNull PsiExpressionList list,
                                                              @Nullable MethodCandidateInfo info,
-                                                             @NotNull PsiParameter[] parameters,
+                                                             PsiParameter @NotNull [] parameters,
                                                              @NotNull PsiSubstitutor substitutor) {
     PsiExpression[] expressions = list.getExpressions();
     if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) &&
@@ -1110,8 +1109,8 @@ public class HighlightMethodUtil {
   }
 
   private static boolean assignmentCompatible(int i,
-                                              @NotNull PsiParameter[] parameters,
-                                              @NotNull PsiExpression[] expressions,
+                                              PsiParameter @NotNull [] parameters,
+                                              PsiExpression @NotNull [] expressions,
                                               @NotNull PsiSubstitutor substitutor, 
                                               boolean varargs) {
     PsiExpression expression = i < expressions.length ? expressions[i] : null;
@@ -1765,8 +1764,8 @@ public class HighlightMethodUtil {
                                                             @Nullable PsiJavaCodeReferenceElement classReference,
                                                             @NotNull PsiExpressionList list,
                                                             @NotNull PsiClass aClass,
-                                                            @NotNull PsiMethod[] constructors,
-                                                            @NotNull JavaResolveResult[] results,
+                                                            PsiMethod @NotNull [] constructors,
+                                                            JavaResolveResult @NotNull [] results,
                                                             @NotNull PsiElement infoElement,
                                                             @NotNull final HighlightInfo info) {
     QuickFixAction.registerQuickFixActions(
@@ -1853,7 +1852,7 @@ public class HighlightMethodUtil {
     }
   }
 
-  private static void registerChangeMethodSignatureFromUsageIntentions(@NotNull JavaResolveResult[] candidates,
+  private static void registerChangeMethodSignatureFromUsageIntentions(JavaResolveResult @NotNull [] candidates,
                                                                        @NotNull PsiExpressionList list,
                                                                        @Nullable HighlightInfo highlightInfo,
                                                                        @Nullable TextRange fixRange) {
@@ -1864,7 +1863,7 @@ public class HighlightMethodUtil {
     }
   }
 
-  private static void registerChangeMethodSignatureFromUsageIntention(@NotNull PsiExpression[] expressions,
+  private static void registerChangeMethodSignatureFromUsageIntention(PsiExpression @NotNull [] expressions,
                                                                       @Nullable HighlightInfo highlightInfo,
                                                                       @Nullable TextRange fixRange,
                                                                       @NotNull JavaResolveResult candidate,

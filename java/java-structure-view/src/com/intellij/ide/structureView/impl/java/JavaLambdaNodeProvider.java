@@ -48,9 +48,8 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
     return IdeBundle.message("file.structure.toggle.show.collapse.show.lambdas");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta L" : "control L")};
   }
 

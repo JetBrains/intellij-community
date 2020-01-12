@@ -79,9 +79,8 @@ public class IOUtil {
   }
 
   private static final ThreadLocalCachedValue<byte[]> ourReadWriteBuffersCache = new ThreadLocalCachedValue<byte[]>() {
-    @NotNull
     @Override
-    protected byte[] create() {
+    protected byte @NotNull [] create() {
       return allocReadWriteUTFBuffer();
     }
   };
@@ -94,12 +93,11 @@ public class IOUtil {
     return readUTFFast(ourReadWriteBuffersCache.getValue(), storage);
   }
 
-  @NotNull
-  public static byte[] allocReadWriteUTFBuffer() {
+  public static byte @NotNull [] allocReadWriteUTFBuffer() {
     return new byte[STRING_LENGTH_THRESHOLD + STRING_HEADER_SIZE];
   }
 
-  public static void writeUTFFast(@NotNull byte[] buffer, @NotNull DataOutput storage, @NotNull String value) throws IOException {
+  public static void writeUTFFast(byte @NotNull [] buffer, @NotNull DataOutput storage, @NotNull String value) throws IOException {
     int len = value.length();
     if (len < STRING_LENGTH_THRESHOLD) {
       buffer[0] = (byte)len;
@@ -128,7 +126,7 @@ public class IOUtil {
     }
   }
 
-  public static String readUTFFast(@NotNull byte[] buffer, @NotNull DataInput storage) throws IOException {
+  public static String readUTFFast(byte @NotNull [] buffer, @NotNull DataInput storage) throws IOException {
     int len = 0xFF & (int)storage.readByte();
     if (len == 0xFF) {
       String result = storage.readUTF();

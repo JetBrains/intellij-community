@@ -40,7 +40,7 @@ public class ResolveAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) {
     boolean hasDirs = exists(files, VirtualFile::isDirectory);
     List<VirtualFile> fileList = new ArrayList<>();
     if (!hasDirs) {

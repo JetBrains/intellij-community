@@ -110,7 +110,7 @@ public abstract class PsiNameHelper {
   }
 
   @NotNull
-  public static String getPresentableText(@Nullable String refName, @NotNull PsiAnnotation[] annotations, @NotNull PsiType[] types) {
+  public static String getPresentableText(@Nullable String refName, PsiAnnotation @NotNull [] annotations, PsiType @NotNull [] types) {
     if (types.length == 0 && annotations.length == 0) {
       return refName != null ? refName : "";
     }
@@ -176,8 +176,7 @@ public abstract class PsiNameHelper {
    * @param referenceText the text of the reference to calculate type parameters for.
    * @return the calculated array of type parameters.
    */
-  @NotNull
-  public static String[] getClassParametersText(@NotNull String referenceText) {
+  public static String @NotNull [] getClassParametersText(@NotNull String referenceText) {
     if (referenceText.indexOf('<') < 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     final char[] chars = referenceText.toCharArray();
     int afterLastDotIndex = 0;
@@ -249,7 +248,7 @@ public abstract class PsiNameHelper {
            subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
   }
 
-  public static void appendTypeArgs(@NotNull StringBuilder sb, @NotNull PsiType[] types, boolean canonical, boolean annotated) {
+  public static void appendTypeArgs(@NotNull StringBuilder sb, PsiType @NotNull [] types, boolean canonical, boolean annotated) {
     if (types.length == 0) return;
 
     sb.append('<');
@@ -269,7 +268,7 @@ public abstract class PsiNameHelper {
     sb.append('>');
   }
 
-  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull PsiAnnotation[] annotations, boolean canonical) {
+  public static boolean appendAnnotations(@NotNull StringBuilder sb, PsiAnnotation @NotNull [] annotations, boolean canonical) {
     return appendAnnotations(sb, Arrays.asList(annotations), canonical);
   }
 

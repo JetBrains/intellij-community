@@ -68,7 +68,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Nullable
-  private static Operation convertToOperation(@NotNull String name, @NotNull PsiType type, @NotNull PsiExpression[] args) {
+  private static Operation convertToOperation(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
     Operation operation = IntermediateOperation.create(name, args);
     if (operation != null) return operation;
     operation = TerminalOperation.create(name, args);
@@ -130,7 +130,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Nullable
-  static List<Instruction> createInstructions(@NotNull PsiStatement[] statements) {
+  static List<Instruction> createInstructions(PsiStatement @NotNull [] statements) {
     List<Instruction> instructions = new ArrayList<>(statements.length);
     for (PsiStatement statement : statements) {
       Instruction instruction = Instruction.create(statement);
@@ -140,10 +140,9 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     return instructions;
   }
 
-  @NotNull
-  private static PsiStatement[] addStatements(@NotNull PsiElementFactory factory,
-                                              @NotNull PsiStatement chainStatement,
-                                              @NotNull String code) {
+  private static PsiStatement @NotNull [] addStatements(@NotNull PsiElementFactory factory,
+                                                        @NotNull PsiStatement chainStatement,
+                                                        @NotNull String code) {
     PsiStatement[] statements = ControlFlowUtils.unwrapBlock(factory.createStatementFromText("{" + code + "}", chainStatement));
     PsiElement parent = chainStatement.getParent();
     return ContainerUtil.map(statements, s -> (PsiStatement)parent.addBefore(s, chainStatement), PsiStatement.EMPTY_ARRAY);

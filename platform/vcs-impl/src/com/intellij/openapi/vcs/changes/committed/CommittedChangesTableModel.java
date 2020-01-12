@@ -23,7 +23,7 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
     myAsynchLoad = asynchLoad;
   }
 
-  public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, @NotNull ChangeListColumn[] columns, boolean asynchLoad) {
+  public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, ChangeListColumn @NotNull [] columns, boolean asynchLoad) {
     super(buildColumnInfos(columns), changeLists, 0);
     myAsynchLoad = asynchLoad;
   }
@@ -37,8 +37,7 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
     return mySortKey;
   }
 
-  @NotNull
-  private static ColumnInfo[] buildColumnInfos(@NotNull ChangeListColumn[] columns) {
+  private static ColumnInfo @NotNull [] buildColumnInfos(ChangeListColumn @NotNull [] columns) {
     ColumnInfo[] result = new ColumnInfo[columns.length];
     for (int i = 0; i < columns.length; i++) {
       result[i] = new ColumnInfoAdapter(columns[i]);

@@ -144,8 +144,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
   }
 
-  @Nullable
-  private static File[] getTraceFiles(Project project) {
+  private static File @Nullable [] getTraceFiles(Project project) {
     final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
     if (currentSuite == null) return null;
     final List<File> files = new ArrayList<>();
@@ -588,7 +587,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   @NotNull
-  public List<PsiElement> findTestsByNames(@NotNull String[] testNames, @NotNull Project project) {
+  public List<PsiElement> findTestsByNames(String @NotNull [] testNames, @NotNull Project project) {
     final List<PsiElement> elements = new ArrayList<>();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (String testName : testNames) {

@@ -20,7 +20,7 @@ import java.util.List;
 public class TypeExpression extends Expression {
   private final LinkedHashSet<SmartTypePointer> myItems = new LinkedHashSet<>();
 
-  public TypeExpression(@NotNull Project project, @NotNull PsiType[] types) {
+  public TypeExpression(@NotNull Project project, PsiType @NotNull [] types) {
     final SmartTypePointerManager manager = SmartTypePointerManager.getInstance(project);
     for (PsiType type : types) {
       myItems.add(manager.createSmartTypePointer(type));

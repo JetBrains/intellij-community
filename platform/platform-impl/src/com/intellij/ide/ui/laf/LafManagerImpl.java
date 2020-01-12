@@ -317,9 +317,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return element;
   }
 
-  @NotNull
   @Override
-  public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
+  public UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels() {
     return myLaFs.getValue().toArray(new UIManager.LookAndFeelInfo[0]);
   }
 

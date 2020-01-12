@@ -503,11 +503,11 @@ public class DataFlowRunner {
 
   private void handleStepOutOfLoop(@NotNull final Instruction prevInstruction,
                                    @NotNull Instruction nextInstruction,
-                                   @NotNull final int[] loopNumber,
+                                   final int @NotNull [] loopNumber,
                                    @NotNull MultiMap<BranchingInstruction, DfaMemoryState> processedStates,
                                    @NotNull MultiMap<BranchingInstruction, DfaMemoryState> incomingStates,
                                    @NotNull List<DfaInstructionState> inFlightStates,
-                                   @NotNull DfaInstructionState[] afterStates,
+                                   DfaInstructionState @NotNull [] afterStates,
                                    @NotNull StateQueue queue) {
     if (loopNumber[prevInstruction.getIndex()] == 0 || inSameLoop(prevInstruction, nextInstruction, loopNumber)) {
       return;
@@ -547,12 +547,11 @@ public class DataFlowRunner {
     }
   }
 
-  private static boolean inSameLoop(@NotNull Instruction prevInstruction, @NotNull Instruction nextInstruction, @NotNull int[] loopNumber) {
+  private static boolean inSameLoop(@NotNull Instruction prevInstruction, @NotNull Instruction nextInstruction, int @NotNull [] loopNumber) {
     return loopNumber[nextInstruction.getIndex()] == loopNumber[prevInstruction.getIndex()];
   }
 
-  @NotNull
-  protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
     DfaInstructionState[] states = instruction.accept(this, instructionState.getMemoryState(), visitor);
 
@@ -607,8 +606,7 @@ public class DataFlowRunner {
     return new DfaMemoryStateImpl(myValueFactory);
   }
 
-  @NotNull
-  public Instruction[] getInstructions() {
+  public Instruction @NotNull [] getInstructions() {
     return myInstructions;
   }
 

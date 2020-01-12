@@ -243,9 +243,8 @@ class ActivityMonitorAction extends DumbAwareAction {
         return "Performance.Activity.Monitor";
       }
 
-      @NotNull
       @Override
-      protected Action[] createActions() {
+      protected Action @NotNull [] createActions() {
         return new Action[]{getOKAction()};
       }
     };

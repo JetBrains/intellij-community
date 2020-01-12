@@ -71,7 +71,7 @@ public abstract class VirtualFileVisitor<T> {
   private Stack<T> myValueStack;
   private T myValue;
 
-  protected VirtualFileVisitor(@NotNull Option... options) {
+  protected VirtualFileVisitor(Option @NotNull ... options) {
     for (Option option : options) {
       if (option == NO_FOLLOW_SYMLINKS) {
         myFollowSymLinks = false;

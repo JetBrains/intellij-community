@@ -50,6 +50,5 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
     }
   }
 
-  @NotNull
-  protected abstract UsageInfo[] findUsages();
+  protected abstract UsageInfo @NotNull [] findUsages();
 }

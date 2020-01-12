@@ -55,8 +55,7 @@ public class CommonProcessors {
       return true;
     }
 
-    @NotNull
-    public T[] toArray(@NotNull T[] a) {
+    public T @NotNull [] toArray(T @NotNull [] a) {
       return myCollection.toArray(a);
     }
 
@@ -85,8 +84,7 @@ public class CommonProcessors {
       return true;
     }
 
-    @NotNull
-    public T[] toArray(@NotNull T[] a) {
+    public T @NotNull [] toArray(T @NotNull [] a) {
       return myCollection.toArray(a);
     }
 

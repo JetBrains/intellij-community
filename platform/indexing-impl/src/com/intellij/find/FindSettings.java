@@ -92,16 +92,14 @@ public abstract class FindSettings {
   /**
    * @deprecated use {@link FindInProjectSettings#getRecentFindStrings()}
    */
-  @NotNull
   @Deprecated
-  public abstract String[] getRecentFindStrings();
+  public abstract String @NotNull [] getRecentFindStrings();
 
   /**
    * @deprecated use {@link FindInProjectSettings#getRecentReplaceStrings()}
    */
-  @NotNull
   @Deprecated
-  public abstract String[] getRecentReplaceStrings();
+  public abstract String @NotNull [] getRecentReplaceStrings();
 
   /**
    * Returns the list of file masks used by the user in the "File name filter"
@@ -109,8 +107,7 @@ public abstract class FindSettings {
    *
    * @return the recent file masks list
    */
-  @NotNull
-  public abstract String[] getRecentFileMasks();
+  public abstract String @NotNull [] getRecentFileMasks();
 
   public abstract void setWithSubdirectories(boolean b);
 

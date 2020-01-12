@@ -33,8 +33,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   /**
    * Prefer to use {@link #getExtensionList()}.
    */
-  @NotNull
-  public T[] getExtensions() {
+  public T @NotNull [] getExtensions() {
     return getPointImpl(null).getExtensions();
   }
 
@@ -92,8 +91,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   /**
    * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
    */
-  @NotNull
-  public T[] getExtensions(@Nullable AreaInstance areaInstance) {
+  public T @NotNull [] getExtensions(@Nullable AreaInstance areaInstance) {
     return getPointImpl(areaInstance).getExtensions();
   }
 

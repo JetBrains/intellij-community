@@ -44,8 +44,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   }
 
   @Override
-  @NotNull
-  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
+  public JobDescriptor @NotNull [] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     return context.getStdJobDescriptors().LOCAL_ANALYSIS_ARRAY;
   }
 

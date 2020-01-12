@@ -133,8 +133,7 @@ public abstract class PythonRemoteInterpreterManager {
                                                                       @Nullable PyRemotePathMapper pathMapper,
                                                                       @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider);
 
-  @NotNull
-  public abstract String[] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
+  public abstract String @NotNull [] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
     throws ExecutionException, InterruptedException;
 
   public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;

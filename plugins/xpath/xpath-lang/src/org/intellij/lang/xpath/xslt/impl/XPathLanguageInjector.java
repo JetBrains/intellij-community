@@ -43,8 +43,7 @@ public class XPathLanguageInjector implements MultiHostInjector {
     public XPathLanguageInjector() {
     }
 
-    @Nullable
-    private static TextRange[] getCachedRanges(XmlAttribute attribute) {
+    private static TextRange @Nullable [] getCachedRanges(XmlAttribute attribute) {
         Pair<String, TextRange[]> pair;
         if ((pair = attribute.getUserData(CACHED_FILES)) != null) {
             if (!attribute.getValue().equals(pair.getFirst())) {
@@ -70,8 +69,7 @@ public class XPathLanguageInjector implements MultiHostInjector {
         }
     }
 
-    @NotNull
-    private synchronized TextRange[] getInjectionRanges(final XmlAttribute attribute, XsltChecker.LanguageLevel languageLevel) {
+    private synchronized TextRange @NotNull [] getInjectionRanges(final XmlAttribute attribute, XsltChecker.LanguageLevel languageLevel) {
       final TextRange[] cachedFiles = getCachedRanges(attribute);
       if (cachedFiles != null) {
         return cachedFiles;

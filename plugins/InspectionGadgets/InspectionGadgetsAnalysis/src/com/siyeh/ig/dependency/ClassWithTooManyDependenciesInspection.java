@@ -35,12 +35,11 @@ public class ClassWithTooManyDependenciesInspection extends BaseGlobalInspection
   @SuppressWarnings({"PublicField"})
   public int limit = 10;
 
-  @Nullable
   @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefClass) {
       RefClass refClass = (RefClass)refEntity;
       if (refClass.getOwner() instanceof RefClass) {

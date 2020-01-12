@@ -101,9 +101,8 @@ public class FileReferenceUtil {
       return result;
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final Object[] variants = super.getVariants();
       return ContainerUtil.findAll(variants, o -> {
         /*if (o instanceof CandidateInfo) {

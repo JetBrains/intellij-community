@@ -59,8 +59,7 @@ public abstract class FrameworkSupportProvider {
     return null;
   }
 
-  @NotNull
-  public String[] getProjectCategories() {
+  public String @NotNull [] getProjectCategories() {
     return getGroupId() == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : new String[] { getGroupId() };
   }
 

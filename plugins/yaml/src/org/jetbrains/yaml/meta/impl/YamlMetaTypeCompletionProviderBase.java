@@ -247,7 +247,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     //System.err.println(getClass().getSimpleName() + ":" + text);
   }
 
-  private static boolean isOfType(@Nullable PsiElement psi, @NotNull IElementType... types) {
+  private static boolean isOfType(@Nullable PsiElement psi, IElementType @NotNull ... types) {
     if (psi == null) return false;
     IElementType actual = psi.getNode().getElementType();
     return ContainerUtil.exists(types, actual::equals);

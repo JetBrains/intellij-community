@@ -50,7 +50,7 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
   @NotNull
   @Override
   public DirectoryProcessingResult detectRoots(@NotNull File dir,
-                                               @NotNull File[] children,
+                                               File @NotNull [] children,
                                                @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
     detectApplicationRoot(dir, result);
@@ -92,7 +92,7 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
 
   private DirectoryProcessingResult detectJavaRoots(String javaSourceRootTypeName,
                                                     @NotNull File dir,
-                                                    @NotNull File[] children,
+                                                    File @NotNull [] children,
                                                     @NotNull File base,
                                                     @NotNull List<? super DetectedProjectRoot> result) {
     List<DetectedProjectRoot> detectedJavaRoots = new ArrayList<>();

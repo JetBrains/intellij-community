@@ -85,8 +85,7 @@ public abstract class AbstractConvertContext extends ConvertContext {
     return scope; // ??? scope == null ? GlobalSearchScope.allScope(getProject()) : scope; ???
   }
 
-  @NotNull
-  private Module[] getConvertContextModules() {
+  private Module @NotNull [] getConvertContextModules() {
     Module[] modules = ModuleContextProvider.getModules(getFile());
     if (modules.length > 0) return modules;
 

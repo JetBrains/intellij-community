@@ -42,8 +42,7 @@ public interface CustomizableReferenceProvider {
   @Nullable
   Map<CustomizationKey, Object> getOptions();
 
-  @NotNull
-  PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context);
+  PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context);
 
 
   final class CustomizationKey<T> {

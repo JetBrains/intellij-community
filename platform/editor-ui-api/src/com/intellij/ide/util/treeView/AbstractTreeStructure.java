@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractTreeStructure {
   @NotNull
   public abstract Object getRootElement();
-  @NotNull
-  public abstract Object[] getChildElements(@NotNull Object element);
+  public abstract Object @NotNull [] getChildElements(@NotNull Object element);
   @Nullable
   public abstract Object getParentElement(@NotNull Object element);
 

@@ -377,9 +377,8 @@ public class GitSSHGUIHandler {
     /**
      * {@inheritDoc}
      */
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 

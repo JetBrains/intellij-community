@@ -59,8 +59,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
    */
   public abstract void setValue(@NotNull String name, boolean value, boolean defaultValue);
 
-  @Nullable
-  public abstract String[] getValues(@NonNls @NotNull String name);
+  public abstract String @Nullable [] getValues(@NonNls @NotNull String name);
 
   public abstract void setValues(@NonNls @NotNull String name, String[] values);
 

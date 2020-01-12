@@ -76,11 +76,11 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     return detectInnerClass(file, null);
   }
 
-  public static boolean isInnerClass(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public static boolean isInnerClass(@NotNull VirtualFile file, byte @NotNull [] content) {
     return detectInnerClass(file, content);
   }
 
-  private static boolean detectInnerClass(VirtualFile file, @Nullable byte[] content) {
+  private static boolean detectInnerClass(VirtualFile file, byte @Nullable [] content) {
     String name = file.getNameWithoutExtension();
     int p = name.lastIndexOf('$', name.length() - 2);
     if (p <= 0) return false;

@@ -68,9 +68,8 @@ class VcsConfirmationDialog extends OptionsDialog {
     return myDoNotShowMessage;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     final AbstractAction okAction = new AbstractAction(myOkText) {
       {
         putValue(DEFAULT_ACTION, Boolean.TRUE);

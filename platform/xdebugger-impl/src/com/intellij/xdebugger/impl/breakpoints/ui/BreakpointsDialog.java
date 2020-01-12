@@ -179,9 +179,8 @@ public class BreakpointsDialog extends DialogWrapper {
     return getClass().getName();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getHelpAction()};
   }
 
@@ -256,13 +255,11 @@ public class BreakpointsDialog extends DialogWrapper {
 
     tree.setHorizontalAutoScrollingEnabled(false);
     PopupHandler.installPopupHandler(tree, new ActionGroup() {
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         ActionGroup group = new ActionGroup("Move to group", true) {
-          @NotNull
           @Override
-          public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
             Set<String> groups = getBreakpointManager().getAllGroups();
             AnAction[] res = new AnAction[groups.size()+3];
             int i = 0;

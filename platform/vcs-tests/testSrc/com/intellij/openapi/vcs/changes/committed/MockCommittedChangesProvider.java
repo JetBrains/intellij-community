@@ -71,9 +71,8 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
     return myRefreshCount;
   }
 
-  @NotNull
   @Override
-  public ChangeListColumn[] getColumns() {
+  public ChangeListColumn @NotNull [] getColumns() {
     return new ChangeListColumn[0];
   }
 

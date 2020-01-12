@@ -36,9 +36,8 @@ public class ConvertFieldToLocalTest extends LightQuickFixParameterizedTestCase 
     settings.GENERATE_FINAL_LOCALS = StringUtil.containsIgnoreCase(getTestName(true), "final");
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
     return new LocalInspectionTool[] { inspection };

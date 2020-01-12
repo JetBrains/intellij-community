@@ -95,9 +95,8 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     final AbstractAction globalSettingsAction = new AbstractAction(CvsBundle.message("button.text.global.settings")) {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -312,7 +312,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) {
+    public int read(byte @NotNull [] b, int off, int len) {
       return len;
     }
   }

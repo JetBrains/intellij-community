@@ -490,8 +490,7 @@ public class LambdaUtil {
     return false;
   }
 
-  @Nullable
-  private static JavaResolveResult[] getConstructorCandidates(PsiConstructorCall parentCall) {
+  private static JavaResolveResult @Nullable [] getConstructorCandidates(PsiConstructorCall parentCall) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(parentCall.getProject());
     PsiExpressionList argumentList = parentCall.getArgumentList();
     if (argumentList != null) {
@@ -563,8 +562,7 @@ public class LambdaUtil {
            typeByExpression instanceof PsiLambdaParameterType;
   }
 
-  @NotNull
-  public static PsiReturnStatement[] getReturnStatements(PsiLambdaExpression lambdaExpression) {
+  public static PsiReturnStatement @NotNull [] getReturnStatements(PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
     return body instanceof PsiCodeBlock ? PsiUtil.findReturnStatements((PsiCodeBlock)body) : PsiReturnStatement.EMPTY_ARRAY;
   }

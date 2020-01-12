@@ -157,8 +157,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @Override
-  @NotNull
-  public GrAccessorMethod[] getGetters() {
+  public GrAccessorMethod @NotNull [] getGetters() {
     return GrClassImplUtil.findGetters(this);
   }
 

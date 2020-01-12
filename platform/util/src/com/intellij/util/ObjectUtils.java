@@ -84,7 +84,7 @@ public class ObjectUtils {
     return notNull(t);
   }
 
-  public static <T> void assertAllElementsNotNull(@NotNull T[] array) {
+  public static <T> void assertAllElementsNotNull(T @NotNull [] array) {
     for (int i = 0; i < array.length; i++) {
       T t = array[i];
       if (t == null) {

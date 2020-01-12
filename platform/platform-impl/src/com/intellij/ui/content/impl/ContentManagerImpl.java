@@ -293,8 +293,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  @NotNull
-  public Content[] getContents() {
+  public Content @NotNull [] getContents() {
     return myContents.toArray(new Content[0]);
   }
 
@@ -409,8 +408,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  @NotNull
-  public Content[] getSelectedContents() {
+  public Content @NotNull [] getSelectedContents() {
     return mySelection.toArray(new Content[0]);
   }
 

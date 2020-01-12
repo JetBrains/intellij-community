@@ -9,9 +9,8 @@ import com.siyeh.ig.controlflow.SwitchStatementsWithoutDefaultInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateDefaultBranchFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new SwitchStatementsWithoutDefaultInspection[]{new SwitchStatementsWithoutDefaultInspection()};
   }
 

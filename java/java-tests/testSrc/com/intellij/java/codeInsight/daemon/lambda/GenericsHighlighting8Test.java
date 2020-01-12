@@ -47,9 +47,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedImportInspection());
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UncheckedWarningLocalInspection()};
   }
 

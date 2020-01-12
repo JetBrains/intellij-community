@@ -24,7 +24,7 @@ import static com.intellij.openapi.vcs.Executor.cd;
 public abstract class GitRefManagerTest extends GitSingleRepoTest {
 
   @NotNull
-  protected Collection<VcsRef> given(@NotNull String... refs) {
+  protected Collection<VcsRef> given(String @NotNull ... refs) {
     Collection<VcsRef> result = new ArrayList<>();
     cd(projectRoot);
     Hash hash = HashImpl.build(git("rev-parse HEAD"));
@@ -51,7 +51,7 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
   }
 
   @NotNull
-  protected List<VcsRef> expect(@NotNull String... refNames) {
+  protected List<VcsRef> expect(String @NotNull ... refNames) {
     final Set<VcsRef> refs = GitTestUtil.readAllRefs(this, projectRoot, ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
     return ContainerUtil.map2List(refNames, refName -> {
       VcsRef item = ContainerUtil.find(refs, ref -> ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName)));

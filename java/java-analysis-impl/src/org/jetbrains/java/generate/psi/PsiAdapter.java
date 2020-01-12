@@ -639,8 +639,7 @@ public class PsiAdapter {
      * @param clazz the class
      * @return the names.
      */
-    @NotNull
-    public static String[] getImplementsClassnames(PsiClass clazz) {
+    public static String @NotNull [] getImplementsClassnames(PsiClass clazz) {
         PsiClass[] interfaces = clazz.getInterfaces();
 
         if (interfaces == null || interfaces.length == 0) {

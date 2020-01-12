@@ -88,8 +88,7 @@ public class MarkdownCodeFencePluginCache implements Disposable {
     return filesToDelete;
   }
 
-  @NotNull
-  private static File[] getChildren(@NotNull File directory) {
+  private static File @NotNull [] getChildren(@NotNull File directory) {
     File[] files = directory.listFiles();
     return files != null ? files : EMPTY_FILE_ARRAY;
   }

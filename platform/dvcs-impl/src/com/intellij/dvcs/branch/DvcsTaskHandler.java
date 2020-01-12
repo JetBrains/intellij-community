@@ -102,9 +102,8 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     return myRepositoryManager.isSyncEnabled();
   }
 
-  @NotNull
   @Override
-  public TaskInfo[] getCurrentTasks() {
+  public TaskInfo @NotNull [] getCurrentTasks() {
     List<R> repositories = myRepositoryManager.getRepositories();
     Map<String, TaskInfo> tasks = FactoryMap.create(key -> new TaskInfo(key, new ArrayList<>()));
     for (R repository : repositories) {

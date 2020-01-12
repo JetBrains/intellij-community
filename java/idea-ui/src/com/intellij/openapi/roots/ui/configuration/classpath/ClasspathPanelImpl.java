@@ -146,9 +146,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         return myEntryTable.convertRowIndexToModel(viewIndex);
       }
 
-      @NotNull
       @Override
-      public Object[] getAllElements() {
+      public Object @NotNull [] getAllElements() {
         final int count = myModel.getRowCount();
         Object[] elements = new Object[count];
         for (int idx = 0; idx < count; idx++) {

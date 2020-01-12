@@ -361,7 +361,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(fileName + ".after");
   }
 
-  private void doTestConflict(@NotNull final String conflict, @NotNull final String... rest) {
+  private void doTestConflict(@NotNull final String conflict, final String @NotNull ... rest) {
     List<String> expected = new ArrayList<>(Arrays.asList(rest));
     expected.add(conflict);
 

@@ -392,11 +392,11 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs) {
+  public void addAffectedDocuments(@Nullable Project project, Document @NotNull ... docs) {
   }
 
   @Override
-  public void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files) {
+  public void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files) {
   }
 
   private void fireCommandStarted() {

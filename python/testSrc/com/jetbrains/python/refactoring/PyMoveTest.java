@@ -483,7 +483,7 @@ public class PyMoveTest extends PyTestCase {
     doComparingDirectories(testDir -> moveSymbols(testDir, toFileName, symbolNames));
   }
 
-  private void moveSymbols(@NotNull VirtualFile testDir, @NotNull String toFileName, @NotNull String... symbolNames) {
+  private void moveSymbols(@NotNull VirtualFile testDir, @NotNull String toFileName, String @NotNull ... symbolNames) {
     final PsiNamedElement[] symbols = ContainerUtil.map2Array(symbolNames, PsiNamedElement.class, name -> {
       final PsiNamedElement found = findFirstNamedElement(name);
       assertNotNull("Symbol '" + name + "' does not exist", found);

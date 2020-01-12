@@ -34,7 +34,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       return "null";
     }
   };
-  @NotNull private Comparable[] myComputedWeighs;
+  private Comparable @NotNull [] myComputedWeighs;
   private final Computable<? extends T> myElement;
   private final Loc myLocation;
   private final Weigher<T,Loc>[] myWeighers;

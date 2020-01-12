@@ -72,7 +72,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
                               @Nullable Date dateFrom,
                               @Nullable Date dateTo,
                               boolean noTags,
-                              @NotNull String... revisions) {
+                              String @NotNull ... revisions) {
     super(environment);
     myConsumer = consumer;
     myModule = module;

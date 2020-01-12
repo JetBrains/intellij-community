@@ -40,8 +40,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
   @Override
-  @NotNull
-  public PsiStatement[] getStatements() {
+  public PsiStatement @NotNull [] getStatements() {
     return PsiImplUtil.getChildStatements(this);
   }
 

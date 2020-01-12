@@ -186,7 +186,7 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
 
-  private void verifySplitting(boolean checkForegroundColor, @NotNull Segment... expectedSegments) {
+  private void verifySplitting(boolean checkForegroundColor, Segment @NotNull ... expectedSegments) {
     EditorEx editor = (EditorEx)getEditor();
     IterationState.CaretData caretData = IterationState.createCaretData(editor);
     IterationState iterationState = new IterationState(editor, 0, editor.getDocument().getTextLength(),

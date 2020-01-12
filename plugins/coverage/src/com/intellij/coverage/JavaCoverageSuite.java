@@ -72,13 +72,11 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     myCoverageEngine = coverageSupportProvider;
   }
 
-  @NotNull
-  public String[] getFilteredPackageNames() {
+  public String @NotNull [] getFilteredPackageNames() {
     return getPackageNames(myFilters);
   }
 
-  @NotNull
-  public String[] getExcludedPackageNames() {
+  public String @NotNull [] getExcludedPackageNames() {
     return getPackageNames(myExcludePatterns);
   }
 
@@ -94,18 +92,15 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @NotNull
-  public String[] getFilteredClassNames() {
+  public String @NotNull [] getFilteredClassNames() {
     return getClassNames(myFilters);
   }
 
-  @NotNull
-  public String[] getExcludedClassNames() {
+  public String @NotNull [] getExcludedClassNames() {
     return getClassNames(myExcludePatterns);
   }
 
-  @NotNull
-  private static String[] getClassNames(final String[] filters) {
+  private static String @NotNull [] getClassNames(final String[] filters) {
     if (filters == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     List<String> result = new ArrayList<>();
     for (String filter : filters) {

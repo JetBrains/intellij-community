@@ -82,7 +82,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
 
   @Nullable
   @Override
-  public String getActionName(@NotNull PsiElement[] elements) {
+  public String getActionName(PsiElement @NotNull [] elements) {
     int classCount = 0, directoryCount = 0;
     for (PsiElement element : elements) {
       if (element instanceof PsiClass) classCount++;
@@ -317,7 +317,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   }
 
   @Nullable
-  private static String getPromptToMoveDirectoryLibrariesSafe(@Nullable PsiElement[] elements) {
+  private static String getPromptToMoveDirectoryLibrariesSafe(PsiElement @Nullable [] elements) {
     if (elements == null || elements.length != 1) return null;
     final Project project = elements[0].getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();

@@ -28,16 +28,14 @@ import java.util.Set;
 
 public class ExpectedTypesGetter {
 
-  @NotNull
-  public static PsiType[] getExpectedTypes(final PsiElement context, boolean defaultTypes) {
+  public static PsiType @NotNull [] getExpectedTypes(final PsiElement context, boolean defaultTypes) {
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
     if(expression == null) return PsiType.EMPTY_ARRAY;
 
     return extractTypes(ExpectedTypesProvider.getExpectedTypes(expression, true), defaultTypes);
   }
 
-  @NotNull
-  public static PsiType[] extractTypes(ExpectedTypeInfo[] infos, boolean defaultTypes) {
+  public static PsiType @NotNull [] extractTypes(ExpectedTypeInfo[] infos, boolean defaultTypes) {
     Set<PsiType> result = new THashSet<>(infos.length);
     for (ExpectedTypeInfo info : infos) {
       final PsiType type = info.getType();

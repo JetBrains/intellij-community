@@ -45,9 +45,8 @@ public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
     }
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     if (getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       return ReferenceProvidersRegistry.getReferencesFromProviders(this);
     }

@@ -144,8 +144,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     }
   }
 
-  @NotNull
-  public KeyStroke[] getShowTabsKeyStrokes() {
+  public KeyStroke @NotNull [] getShowTabsKeyStrokes() {
     return getKeyStrokesByActionId(ShowContentAction.ACTION_ID);
   }
 

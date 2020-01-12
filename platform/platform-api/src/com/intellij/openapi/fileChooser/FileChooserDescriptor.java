@@ -148,7 +148,7 @@ public class FileChooserDescriptor implements Cloneable {
     return Collections.unmodifiableList(myRoots);
   }
 
-  public void setRoots(@NotNull VirtualFile... roots) {
+  public void setRoots(VirtualFile @NotNull ... roots) {
     withRoots(roots);
   }
 
@@ -282,7 +282,7 @@ public class FileChooserDescriptor implements Cloneable {
    * @param files - selected files to be checked
    * @throws Exception if the the files cannot be accepted
    */
-  public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
+  public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
   }
 
   public boolean isForcedToUseIdeaFileChooser() {

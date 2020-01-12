@@ -78,9 +78,8 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return false;
   }
 
-  @NotNull
   @Override
-  public String[] getToolWindowIds() {
+  public String @NotNull [] getToolWindowIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -524,8 +523,7 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    @NotNull
-    public Content[] getContents() {
+    public Content @NotNull [] getContents() {
       return myContents.toArray(new Content[0]);
     }
 
@@ -541,8 +539,7 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    @NotNull
-    public Content[] getSelectedContents() {
+    public Content @NotNull [] getSelectedContents() {
       return mySelected != null ? new Content[]{mySelected} : new Content[0];
     }
 

@@ -33,9 +33,8 @@ abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty
     return new JsonPropertyNameReference(this);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     final PsiReference[] fromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
     return ArrayUtil.prepend(new JsonPropertyNameReference(this), fromProviders);
   }

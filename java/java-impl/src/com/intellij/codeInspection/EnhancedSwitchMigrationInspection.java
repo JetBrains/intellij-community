@@ -641,13 +641,13 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
   private static class OldSwitchStatementBranch {
     final boolean myIsFallthrough;
-    final @NotNull PsiStatement[] myStatements;
+    final PsiStatement @NotNull [] myStatements;
     final @NotNull PsiSwitchLabelStatement myLabelStatement;
     final @Nullable PsiBreakStatement myBreakStatement;
     @Nullable OldSwitchStatementBranch myPreviousSwitchBranch = null;
 
     private OldSwitchStatementBranch(boolean isFallthrough,
-                                     @NotNull PsiStatement[] statements,
+                                     PsiStatement @NotNull [] statements,
                                      @NotNull PsiSwitchLabelStatement switchLabelStatement,
                                      @Nullable PsiBreakStatement breakStatement) {
       myIsFallthrough = isFallthrough;

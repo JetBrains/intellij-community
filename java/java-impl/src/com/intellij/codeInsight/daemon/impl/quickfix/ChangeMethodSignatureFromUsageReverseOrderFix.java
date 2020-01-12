@@ -32,7 +32,7 @@ import java.util.Set;
 
 public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodSignatureFromUsageFix {
   public ChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
-                                                       @NotNull PsiExpression[] expressions,
+                                                       PsiExpression @NotNull [] expressions,
                                                        @NotNull PsiSubstitutor substitutor,
                                                        @NotNull PsiElement context,
                                                        boolean changeAllUsages,

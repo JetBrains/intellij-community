@@ -537,7 +537,7 @@ public final class PyToxTest extends PyEnvTestCase {
     private final String[] myEnvsToRun;
     private final String[] myArgs;
 
-    RunnerWithArguments(@NotNull final String[] envsToRun, @NotNull final String... args) {
+    RunnerWithArguments(final String @NotNull [] envsToRun, final String @NotNull ... args) {
       super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, 0);
       myEnvsToRun = envsToRun;
       myArgs = args;

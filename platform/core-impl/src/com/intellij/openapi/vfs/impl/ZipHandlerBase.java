@@ -127,9 +127,8 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     return info;
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
     try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
       ZipFile zip = zipRef.get();
       ZipEntry entry = zip.getEntry(relativePath);
@@ -205,7 +204,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
+    public int read(byte @NotNull [] b, int off, int len) throws IOException {
       return myStream.read(b, off, len);
     }
 

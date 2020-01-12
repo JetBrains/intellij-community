@@ -548,8 +548,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
   }
 
-  @Nullable
-  private static PsiClass[] getTopLevelClasses(PsiElement element) {
+  private static PsiClass @Nullable [] getTopLevelClasses(PsiElement element) {
     while (true) {
       if (element == null || element instanceof PsiFile) break;
       if (element instanceof PsiClass &&

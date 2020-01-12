@@ -69,9 +69,8 @@ public class HgCommonBranchActions extends BranchActionGroup {
     return repositories.size() > 1 ? null : repositories.get(0);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return new AnAction[]{
       new UpdateAction(myProject, myRepositories, myBranchName),
       new CompareAction(myProject, myRepositories, myBranchName),

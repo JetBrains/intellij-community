@@ -74,8 +74,8 @@ public class CachedValueProfiler {
   }
 
   @Nullable
-  private static StackTraceElement findFirstStackTraceElementExcluding(@NotNull StackTraceElement[] stackTraceElements,
-                                                                       @NotNull String... excludedClasses) {
+  private static StackTraceElement findFirstStackTraceElementExcluding(StackTraceElement @NotNull [] stackTraceElements,
+                                                                       String @NotNull ... excludedClasses) {
     for (StackTraceElement element : stackTraceElements) {
       if (!matches(element, excludedClasses)) {
         return element;
@@ -85,7 +85,7 @@ public class CachedValueProfiler {
     return null;
   }
 
-  private static boolean matches(@NotNull StackTraceElement element, @NotNull String[] excludedClasses) {
+  private static boolean matches(@NotNull StackTraceElement element, String @NotNull [] excludedClasses) {
     for (String aClass : excludedClasses) {
       if (element.getClassName().startsWith(aClass)) return true;
     }

@@ -76,8 +76,7 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 

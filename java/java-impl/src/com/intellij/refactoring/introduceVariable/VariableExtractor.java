@@ -245,9 +245,8 @@ class VariableExtractor {
 
     final PsiAnnotation[] annotations = type.getAnnotations();
     return type.annotate(new TypeAnnotationProvider() {
-      @NotNull
       @Override
-      public PsiAnnotation[] getAnnotations() {
+      public PsiAnnotation @NotNull [] getAnnotations() {
         final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
         final Set<String> nullables = new HashSet<>();
         Nullability nullability = nullabilityAnnotationInfo != null ? nullabilityAnnotationInfo.getNullability() : Nullability.UNKNOWN;

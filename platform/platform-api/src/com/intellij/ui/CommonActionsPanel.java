@@ -82,7 +82,7 @@ public class CommonActionsPanel extends JPanel {
   private EnumMap<Buttons, ShortcutSet> myCustomShortcuts;
 
   CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
-                     @Nullable AnActionButton[] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
+                     AnActionButton @Nullable [] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
                      Icon addIcon, Buttons... buttons) {
     super(new BorderLayout());
@@ -213,7 +213,7 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
-  public void setCustomShortcuts(@NotNull Buttons button, @Nullable ShortcutSet... shortcutSets) {
+  public void setCustomShortcuts(@NotNull Buttons button, ShortcutSet @Nullable ... shortcutSets) {
     if (shortcutSets != null) {
       if (myCustomShortcuts == null) myCustomShortcuts = new EnumMap<>(Buttons.class);
       myCustomShortcuts.put(button, new CompositeShortcutSet(shortcutSets));

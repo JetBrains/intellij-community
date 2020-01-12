@@ -45,7 +45,7 @@ class ClassFieldsManager extends FieldsManager {
   @Override
   protected Collection<PyElement> moveAssignments(@NotNull final PyClass from,
                                                   @NotNull final Collection<PyAssignmentStatement> statements,
-                                                  @NotNull final PyClass... to) {
+                                                  final PyClass @NotNull ... to) {
     return moveAssignmentsImpl(from, statements, to);
   }
 
@@ -58,7 +58,7 @@ class ClassFieldsManager extends FieldsManager {
    */
   static Collection<PyElement> moveAssignmentsImpl(@NotNull final PyClass from,
                                                    @NotNull final Collection<? extends PyAssignmentStatement> statements,
-                                                   @NotNull final PyClass... to) {
+                                                   final PyClass @NotNull ... to) {
     //TODO: Copy/paste with InstanceFieldsManager. Move to parent?
     final Collection<PyElement> result = new ArrayList<>();
     for (final PyClass destClass : to) {

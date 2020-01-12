@@ -22,10 +22,10 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
   private final boolean myIsVarargs;
   private final boolean myCurried;
   @Nullable private final PsiType myReturnType;
-  @NotNull private final GrClosureParameter[] myParameters;
+  private final GrClosureParameter @NotNull [] myParameters;
   @NotNull private final PsiSubstitutor mySubstitutor;
 
-  public GrImmediateClosureSignatureImpl(@NotNull PsiParameter[] parameters,
+  public GrImmediateClosureSignatureImpl(PsiParameter @NotNull [] parameters,
                                          @Nullable PsiType returnType,
                                          @NotNull PsiSubstitutor substitutor) {
     LOG.assertTrue(returnType == null || returnType.isValid());
@@ -46,7 +46,7 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
     this(parameters, returnType, PsiSubstitutor.EMPTY);
   }
 
-  public GrImmediateClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs, boolean isCurried) {
+  public GrImmediateClosureSignatureImpl(GrClosureParameter @NotNull [] params, @Nullable PsiType returnType, boolean isVarArgs, boolean isCurried) {
     myParameters = params;
     myReturnType = returnType;
     myIsVarargs = isVarArgs;
@@ -73,8 +73,7 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
   }
 
   @Override
-  @NotNull
-  public GrClosureParameter[] getParameters() {
+  public GrClosureParameter @NotNull [] getParameters() {
     GrClosureParameter[] result = new GrClosureParameter[myParameters.length];
     System.arraycopy(myParameters, 0, result, 0, myParameters.length);
     return result;

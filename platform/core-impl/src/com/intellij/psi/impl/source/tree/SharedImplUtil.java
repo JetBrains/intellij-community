@@ -158,8 +158,7 @@ public class SharedImplUtil {
     return node.getTreeParent().getPsi().getManager();
   }
 
-  @NotNull
-  public static ASTNode[] getChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
+  public static ASTNode @NotNull [] getChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
     int count = countChildrenOfType(node, elementType);
     if (count == 0) {
       return ASTNode.EMPTY_ARRAY;

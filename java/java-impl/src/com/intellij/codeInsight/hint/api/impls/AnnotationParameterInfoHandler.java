@@ -29,9 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Mossienko
  */
 public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod>, DumbAware {
-  @Nullable
   @Override
-  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+  public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return null;
   }
 

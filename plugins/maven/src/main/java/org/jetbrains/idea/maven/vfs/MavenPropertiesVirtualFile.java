@@ -84,8 +84,7 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     if (myContent == null) throw new IOException();
     return myContent;
   }

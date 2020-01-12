@@ -301,9 +301,8 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myCompilerOutputForTests = null;
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getOutputRoots(final boolean includeTests) {
+  public VirtualFile @NotNull [] getOutputRoots(final boolean includeTests) {
     List<VirtualFile> result = new ArrayList<>();
 
     final VirtualFile outputPathForTests = includeTests ? getCompilerOutputPathForTests() : null;
@@ -318,9 +317,8 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public String[] getOutputRootUrls(final boolean includeTests) {
+  public String @NotNull [] getOutputRootUrls(final boolean includeTests) {
     final List<String> result = new ArrayList<>();
 
     final String outputPathForTests = includeTests ? getCompilerOutputUrlForTests() : null;

@@ -249,9 +249,8 @@ public class HgBranchPopupActions {
       return branchWithHashes;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       List<AnAction> branchHeadActions = new ArrayList<>();
       for (Hash hash : myHeads) {
         branchHeadActions
@@ -284,9 +283,8 @@ public class HgBranchPopupActions {
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return AnAction.EMPTY_ARRAY;
     }
   }
@@ -300,9 +298,8 @@ public class HgBranchPopupActions {
       super(project, repositories, branchName, HgBranchType.BOOKMARK);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return ArrayUtil.append(super.getChildren(e), new DeleteBookmarkAction(myProject, myRepositories, myBranchName));
     }
 
@@ -331,9 +328,8 @@ public class HgBranchPopupActions {
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{new BookmarkActions.DeleteBookmarkAction(myProject, myRepositories, myBranchName)};
     }
   }

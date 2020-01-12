@@ -311,16 +311,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
   }
 
-  @NotNull
-  private String[] suggestVariableNameByType(@NotNull PsiType type, @NotNull VariableKind variableKind, boolean correctKeywords) {
+  private String @NotNull [] suggestVariableNameByType(@NotNull PsiType type, @NotNull VariableKind variableKind, boolean correctKeywords) {
     return suggestVariableNameByType(type, variableKind, correctKeywords, false);
   }
 
-  @NotNull
-  private String[] suggestVariableNameByType(@NotNull PsiType type,
-                                             @NotNull final VariableKind variableKind,
-                                             final boolean correctKeywords,
-                                             boolean skipIndices) {
+  private String @NotNull [] suggestVariableNameByType(@NotNull PsiType type,
+                                                       @NotNull final VariableKind variableKind,
+                                                       final boolean correctKeywords,
+                                                       boolean skipIndices) {
     Collection<String> byTypeNames = doSuggestNamesByType(type, variableKind, skipIndices);
     return ArrayUtilRt.toStringArray(getSuggestionsByNames(byTypeNames, variableKind, correctKeywords));
   }
@@ -536,7 +534,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       this(propertyName, Collections.singletonList(propertyName));
     }
 
-    private NamesByExprInfo(@Nullable String propertyName, @NotNull String... names) {
+    private NamesByExprInfo(@Nullable String propertyName, String @NotNull ... names) {
       this(
         propertyName,
         propertyName == null ? Arrays.asList(names) : ContainerUtil.prepend(Arrays.asList(names), propertyName)
@@ -738,12 +736,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
-  private static String constantValueToConstantName(@NotNull String[] names) {
+  private static String constantValueToConstantName(String @NotNull [] names) {
     return String.join("_", names);
   }
 
-  @NotNull
-  private static String[] getSuggestionsByValue(@NotNull String stringValue) {
+  private static String @NotNull [] getSuggestionsByValue(@NotNull String stringValue) {
     List<String> result = new ArrayList<>();
     StringBuffer currentWord = new StringBuffer();
 
@@ -1091,7 +1088,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return false;
   }
 
-  private static void sortVariableNameSuggestions(@NotNull String[] names,
+  private static void sortVariableNameSuggestions(String @NotNull [] names,
                                                   @NotNull final VariableKind variableKind,
                                                   @Nullable final String propertyName,
                                                   @Nullable final PsiType type) {

@@ -48,13 +48,13 @@ public final class Settings {
   }
 
 
-  public Settings(boolean replaceUsages, @Nullable String classParameterName, @Nullable VariableData[] variableDatum) {
+  public Settings(boolean replaceUsages, @Nullable String classParameterName, VariableData @Nullable [] variableDatum) {
     this(replaceUsages, classParameterName, variableDatum, false);
   }
 
   public Settings(boolean replaceUsages,
                   @Nullable String classParameterName,
-                  @Nullable VariableData[] variableDatum,
+                  VariableData @Nullable [] variableDatum,
                   boolean delegate) {
     myReplaceUsages = replaceUsages;
     myDelegate = delegate;

@@ -116,8 +116,7 @@ public final class JetBrainsProtocolHandler {
     return "shutdown".equals(getCommand());
   }
 
-  @NotNull
-  public static String[] checkForJetBrainsProtocolCommand(@NotNull String[] args) {
+  public static String @NotNull [] checkForJetBrainsProtocolCommand(String @NotNull [] args) {
     String property = System.getProperty(JetBrainsProtocolHandler.class.getName());
     return property != null ? new String[]{property} : args;
   }

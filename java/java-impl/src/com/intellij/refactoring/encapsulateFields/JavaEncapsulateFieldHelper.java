@@ -301,9 +301,8 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return methodCall;
   }
 
-  @NotNull
   @Override
-  public PsiField[] getApplicableFields(@NotNull PsiClass aClass) {
+  public PsiField @NotNull [] getApplicableFields(@NotNull PsiClass aClass) {
     final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), field -> !(field instanceof PsiEnumConstant));
     return fields.toArray(PsiField.EMPTY_ARRAY);
   }

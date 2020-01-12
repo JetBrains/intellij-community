@@ -382,9 +382,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void removeAllSchemes() {
   }
 
-  @NotNull
   @Override
-  public EditorColorsScheme[] getAllSchemes() {
+  public EditorColorsScheme @NotNull [] getAllSchemes() {
     EditorColorsScheme[] result = getAllVisibleSchemes(mySchemeManager.getAllSchemes());
     Arrays.sort(result, EditorColorSchemesComparator.INSTANCE);
     return result;

@@ -843,8 +843,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   protected AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
       @Override
-      @NotNull
-      public AnAction[] getChildren(@Nullable
+      public AnAction @NotNull [] getChildren(@Nullable
                                     final AnActionEvent e) {
 
         AnAction addModuleAction = new AddModuleAction(false);

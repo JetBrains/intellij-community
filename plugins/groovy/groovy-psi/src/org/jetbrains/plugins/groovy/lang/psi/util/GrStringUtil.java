@@ -627,7 +627,7 @@ public class GrStringUtil {
 
   public static boolean parseRegexCharacters(@NotNull String chars,
                                              @NotNull StringBuilder outChars,
-                                             @Nullable int[] sourceOffsets,
+                                             int @Nullable [] sourceOffsets,
                                              boolean escapeSlash) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length() + 1;
     if (chars.indexOf('\\') < 0) {
@@ -715,7 +715,7 @@ public class GrStringUtil {
   /**
    * @see com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl#parseStringCharacters(String, StringBuilder, int[])
    */
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);

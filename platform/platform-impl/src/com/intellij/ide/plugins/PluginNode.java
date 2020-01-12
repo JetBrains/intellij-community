@@ -238,7 +238,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return myDependencies;
   }
 
-  public void setDepends(@NotNull List<? extends PluginId> depends, @Nullable PluginId[] optionalDependencies) {
+  public void setDepends(@NotNull List<? extends PluginId> depends, PluginId @Nullable [] optionalDependencies) {
     myDependencies = new ArrayList<>(depends);
     myOptionalDependencies = optionalDependencies;
   }
@@ -280,14 +280,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  @NotNull
-  public PluginId[] getDependentPluginIds() {
+  public PluginId @NotNull [] getDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PluginId[] getOptionalDependentPluginIds() {
+  public PluginId @NotNull [] getOptionalDependentPluginIds() {
     return myOptionalDependencies != null ? myOptionalDependencies : PluginId.EMPTY_ARRAY;
   }
 

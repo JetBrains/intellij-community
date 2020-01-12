@@ -327,8 +327,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getClasses() {
+  public PsiClass @NotNull [] getClasses() {
     final PsiClass[] declaredDefs = super.getClasses();
     if (!isScript()) return declaredDefs;
     final PsiClass scriptClass = getScriptClass();
@@ -350,9 +349,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     return this;
   }
 
-  @NotNull
   @Override
-  public GrVariableDeclaration[] getScriptDeclarations(boolean topLevelOnly) {
+  public GrVariableDeclaration @NotNull [] getScriptDeclarations(boolean topLevelOnly) {
     return PsiImplUtilKt.getScriptDeclarations(this, topLevelOnly);
   }
 

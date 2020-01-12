@@ -309,8 +309,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
     AtomicBoolean resolveStarted = new AtomicBoolean();
     final PsiReferenceProvider hardProvider = new PsiReferenceProvider() {
       @Override
-      @NotNull
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         String text = String.valueOf(((PsiLiteralExpression)element).getValue());
         if (text.equals("ref")) {
           return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, false) {

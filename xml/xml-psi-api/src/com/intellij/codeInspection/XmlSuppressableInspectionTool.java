@@ -28,13 +28,11 @@ import org.jetbrains.annotations.Nullable;
 public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements BatchSuppressableTool {
   @NonNls static final String ALL = "ALL";
 
-  @NotNull
-  public static SuppressQuickFix[] getSuppressFixes(@NotNull String toolId) {
+  public static SuppressQuickFix @NotNull [] getSuppressFixes(@NotNull String toolId) {
     return getSuppressFixes(toolId, new DefaultXmlSuppressionProvider());
   }
 
-  @NotNull
-  public static SuppressQuickFix[] getSuppressFixes(@NotNull String toolId, @NotNull XmlSuppressionProvider provider) {
+  public static SuppressQuickFix @NotNull [] getSuppressFixes(@NotNull String toolId, @NotNull XmlSuppressionProvider provider) {
     return new SuppressQuickFix[]{new SuppressTagStatic(toolId, provider), new SuppressForFile(toolId, provider),
       new SuppressAllForFile(provider)};
   }

@@ -80,8 +80,7 @@ public class MethodSignatureUtil {
     return Arrays.equals(erased1, erased2);
   }
 
-  @NotNull
-  public static PsiType[] calcErasedParameterTypes(@NotNull MethodSignature signature) {
+  public static PsiType @NotNull [] calcErasedParameterTypes(@NotNull MethodSignature signature) {
     PsiType[] parameterTypes = signature.getParameterTypes();
     if (parameterTypes.length == 0) return PsiType.EMPTY_ARRAY;
 
@@ -112,16 +111,16 @@ public class MethodSignatureUtil {
 
   @NotNull
   public static MethodSignature createMethodSignature(@NonNls @NotNull String name,
-                                                      @NotNull PsiType[] parameterTypes,
-                                                      @NotNull PsiTypeParameter[] typeParameterList,
+                                                      PsiType @NotNull [] parameterTypes,
+                                                      PsiTypeParameter @NotNull [] typeParameterList,
                                                       @NotNull PsiSubstitutor substitutor) {
     return createMethodSignature(name, parameterTypes, typeParameterList, substitutor, false);
   }
 
   @NotNull
   public static MethodSignature createMethodSignature(@NonNls @NotNull String name,
-                                                      @NotNull PsiType[] parameterTypes,
-                                                      @NotNull PsiTypeParameter[] typeParameterList,
+                                                      PsiType @NotNull [] parameterTypes,
+                                                      PsiTypeParameter @NotNull [] typeParameterList,
                                                       @NotNull PsiSubstitutor substitutor,
                                                       boolean isConstructor) {
     return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor, isConstructor);
@@ -282,8 +281,7 @@ public class MethodSignatureUtil {
     return getOverloads(method).length > 1;
   }
 
-  @NotNull
-  private static PsiMethod[] getOverloads(@NotNull PsiMethod method) {
+  private static PsiMethod @NotNull [] getOverloads(@NotNull PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
     return aClass.findMethodsByName(method.getName(), false);
@@ -368,8 +366,7 @@ public class MethodSignatureUtil {
     return substitutor1;
   }
 
-  @NotNull
-  public static PsiMethod[] convertMethodSignaturesToMethods(@NotNull List<? extends MethodSignatureBackedByPsiMethod> sameNameMethodList) {
+  public static PsiMethod @NotNull [] convertMethodSignaturesToMethods(@NotNull List<? extends MethodSignatureBackedByPsiMethod> sameNameMethodList) {
     final PsiMethod[] methods = new PsiMethod[sameNameMethodList.size()];
     for (int i = 0; i < sameNameMethodList.size(); i++) {
       methods[i] = sameNameMethodList.get(i).getMethod();

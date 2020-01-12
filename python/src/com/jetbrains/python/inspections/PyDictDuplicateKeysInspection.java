@@ -127,7 +127,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
       return node instanceof PyLiteralExpression || node instanceof PyReferenceExpression ? node.getText() : null;
     }
 
-    private void registerProblems(@NotNull MultiMap<String, PsiElement> keyValueAndKeys, @NotNull LocalQuickFix... quickFixes) {
+    private void registerProblems(@NotNull MultiMap<String, PsiElement> keyValueAndKeys, LocalQuickFix @NotNull ... quickFixes) {
       for (Map.Entry<String, Collection<PsiElement>> entry : keyValueAndKeys.entrySet()) {
         final String keyValue = entry.getKey();
         final Collection<PsiElement> keys = entry.getValue();

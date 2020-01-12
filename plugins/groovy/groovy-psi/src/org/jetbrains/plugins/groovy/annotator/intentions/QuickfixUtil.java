@@ -158,7 +158,7 @@ public class QuickfixUtil {
   }
 
   @NotNull
-  public static List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, @NotNull LocalQuickFix[] fixes) {
+  public static List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, LocalQuickFix @NotNull [] fixes) {
     InspectionManager inspectionManager = InspectionManager.getInstance(highlightElement.getProject());
     // dummy problem descriptor, highlight element is only used
     ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(
@@ -167,8 +167,7 @@ public class QuickfixUtil {
     return ContainerUtil.map(fixes, it -> new LocalQuickFixAsIntentionAdapter(it, descriptor));
   }
 
-  @NotNull
-  public static LocalQuickFix[] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
+  public static LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
     return wrapToQuickFixes(actions, highlightElement.getContainingFile()).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }

@@ -79,8 +79,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   }
 
   /** Don't call this method, it's public for implementation reasons */
-  @NotNull
-  public PsiFileStub[] getStubRoots() {
+  public PsiFileStub @NotNull [] getStubRoots() {
     if (myStubRoots != null) return myStubRoots;
 
     final T psi = getPsi();
@@ -127,7 +126,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     return result;
   }
 
-  public void setStubRoots(@NotNull PsiFileStub[] roots) {
+  public void setStubRoots(PsiFileStub @NotNull [] roots) {
     if (roots.length == 0) {
       Logger.getInstance(getClass()).error("Incorrect psi file stub roots count" + this + "," + getStubType());
     }

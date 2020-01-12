@@ -86,8 +86,7 @@ public final class ParametersList implements Cloneable {
     return join(getList());
   }
 
-  @NotNull
-  public String[] getArray() {
+  public String @NotNull [] getArray() {
     return ArrayUtilRt.toStringArray(getList());
   }
 
@@ -113,7 +112,7 @@ public final class ParametersList implements Cloneable {
     addAt(0, parameter);
   }
 
-  public void prependAll(@NotNull @NonNls String... parameter) {
+  public void prependAll(@NonNls String @NotNull ... parameter) {
     addAll(parameter);
     Collections.rotate(myParameters, parameter.length);
   }
@@ -294,7 +293,7 @@ public final class ParametersList implements Cloneable {
     add(value);
   }
 
-  public void addAll(@NotNull @NonNls String... parameters) {
+  public void addAll(@NonNls String @NotNull ... parameters) {
     addAll(Arrays.asList(parameters));
   }
 
@@ -332,15 +331,14 @@ public final class ParametersList implements Cloneable {
    * @see ParametersListUtil#join(List)
    */
   @NotNull
-  public static String join(@NotNull @NonNls String... parameters) {
+  public static String join(@NonNls String @NotNull ... parameters) {
     return ParametersListUtil.join(parameters);
   }
 
   /**
    * @see ParametersListUtil#parseToArray(String)
    */
-  @NotNull
-  public static String[] parse(@NotNull @NonNls String string) {
+  public static String @NotNull [] parse(@NotNull @NonNls String string) {
     return ParametersListUtil.parseToArray(string);
   }
 

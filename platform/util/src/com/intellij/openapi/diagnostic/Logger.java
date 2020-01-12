@@ -97,7 +97,7 @@ public abstract class Logger {
 
   public abstract void debug(@NonNls String message, @Nullable Throwable t);
 
-  public void debug(@NonNls @NotNull String message, @NotNull Object... details) {
+  public void debug(@NonNls @NotNull String message, Object @NotNull ... details) {
     if (isDebugEnabled()) {
       StringBuilder sb = new StringBuilder();
       sb.append(message);
@@ -152,15 +152,15 @@ public abstract class Logger {
 
   static final Function<Attachment, String> ATTACHMENT_TO_STRING = attachment -> attachment.getPath() + "\n" + attachment.getDisplayText();
 
-  public void error(@NonNls String message, @NotNull Attachment... attachments) {
+  public void error(@NonNls String message, Attachment @NotNull ... attachments) {
     error(message, null, attachments);
   }
 
-  public void error(@NonNls String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+  public void error(@NonNls String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING));
   }
 
-  public void error(@NonNls String message, @NotNull String... details) {
+  public void error(@NonNls String message, String @NotNull ... details) {
     error(message, new Throwable(message), details);
   }
 
@@ -172,7 +172,7 @@ public abstract class Logger {
     error(t.getMessage(), t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  public abstract void error(@NonNls String message, @Nullable Throwable t, @NotNull String... details);
+  public abstract void error(@NonNls String message, @Nullable Throwable t, String @NotNull ... details);
 
   @Contract("false,_->fail") // wrong, but avoid quite a few warnings in the code
   public boolean assertTrue(boolean value, @NonNls @Nullable Object message) {

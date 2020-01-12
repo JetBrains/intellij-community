@@ -35,9 +35,8 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
     return myRootNode;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull final Object element) {
+  public Object @NotNull [] getChildElements(@NotNull final Object element) {
     return getChildren(element, myData, myStateBean);
   }
 

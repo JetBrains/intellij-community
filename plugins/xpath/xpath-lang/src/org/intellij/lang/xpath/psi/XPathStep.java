@@ -25,8 +25,7 @@ public interface XPathStep extends XPathExpression {
     @Nullable
     XPathNodeTest getNodeTest();
 
-    @NotNull
-    XPathPredicate[] getPredicates();
+    XPathPredicate @NotNull [] getPredicates();
 
     @Nullable
     XPathExpression getPreviousStep();

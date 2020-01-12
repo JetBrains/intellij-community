@@ -126,8 +126,7 @@ public class ViewTextAction extends XFetchValueActionBase {
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return myStringNode != null ? new Action[]{getOKAction(), getCancelAction()} : new Action[]{getCancelAction()};
     }
 

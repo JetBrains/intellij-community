@@ -50,8 +50,7 @@ public class MoveClassesOrPackagesImpl {
     ).show();
   }
 
-  @Nullable
-  public static PsiElement[] adjustForMove(final Project project, final PsiElement[] elements, final PsiElement targetElement) {
+  public static PsiElement @Nullable [] adjustForMove(final Project project, final PsiElement[] elements, final PsiElement targetElement) {
     final PsiElement[] psiElements = new PsiElement[elements.length];
     List<String> names = new ArrayList<>();
     for (int idx = 0; idx < elements.length; idx++) {

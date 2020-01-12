@@ -74,20 +74,17 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   }
 
   @Override
-  @NotNull
-  public Grouper[] getGroupers() {
+  public Grouper @NotNull [] getGroupers() {
     return new Grouper[]{myByWordPrefixesGrouper};
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return new Sorter[] {Sorter.ALPHA_SORTER};
   }
 
   @Override
-  @NotNull
-  public Filter[] getFilters() {
+  public Filter @NotNull [] getFilters() {
     return Filter.EMPTY_ARRAY;
   }
 

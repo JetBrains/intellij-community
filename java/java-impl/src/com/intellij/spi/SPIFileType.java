@@ -66,7 +66,7 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
 
   @Nullable
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
 }

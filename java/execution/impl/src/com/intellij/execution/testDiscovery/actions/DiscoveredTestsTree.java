@@ -126,8 +126,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
                   .collect(Collectors.toSet());
   }
 
-  @NotNull
-  TestMethodUsage[] getTestMethods() {
+  TestMethodUsage @NotNull [] getTestMethods() {
     return myModel.getTestMethods();
   }
 

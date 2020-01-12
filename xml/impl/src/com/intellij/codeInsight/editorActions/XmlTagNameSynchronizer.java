@@ -87,8 +87,7 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     return null;
   }
 
-  @NotNull
-  private static TagNameSynchronizer[] findSynchronizers(final Document document) {
+  private static TagNameSynchronizer @NotNull [] findSynchronizers(final Document document) {
     if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return TagNameSynchronizer.EMPTY;
     final Editor[] editors = EditorFactory.getInstance().getEditors(document);
 

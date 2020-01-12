@@ -146,13 +146,11 @@ public final class EnvironmentUtil {
    *
    * @see #getEnvironmentMap()
    */
-  @NotNull
-  public static String[] getEnvironment() {
+  public static String @NotNull [] getEnvironment() {
     return flattenEnvironment(getEnvironmentMap());
   }
 
-  @NotNull
-  public static String[] flattenEnvironment(@NotNull Map<String, String> environment) {
+  public static String @NotNull [] flattenEnvironment(@NotNull Map<String, String> environment) {
     String[] array = new String[environment.size()];
     int i = 0;
     for (Map.Entry<String, String> entry : environment.entrySet()) {

@@ -87,11 +87,10 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return new PsiElement[]{mySettings.getToSearchFor()};
       }
 
@@ -139,9 +138,8 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     return showConflicts(conflicts, usagesIn);
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     final PsiMethod toSearchFor = ((PsiMethod)mySettings.getToSearchFor());
@@ -207,7 +205,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
 
     //PsiType initializerType = mySettings.getSelectedType();

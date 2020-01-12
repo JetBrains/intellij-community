@@ -40,8 +40,7 @@ public abstract class JavaPsiFacade {
    *
    * @return the array of found classes, or an empty array if no classes are found.
    */
-  @NotNull
-  public abstract PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public abstract PsiClass @NotNull [] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the project for the package with the specified full-qualified name and returns one

@@ -35,8 +35,7 @@ public abstract class BasicXmlAttributeDescriptor extends XmlEnumerationDescript
     return getName();
   }
 
-  @Nullable
-  public String[] getEnumeratedValues(@Nullable XmlElement context) {
+  public String @Nullable [] getEnumeratedValues(@Nullable XmlElement context) {
     return getEnumeratedValues();
   }
 

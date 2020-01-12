@@ -84,8 +84,7 @@ public abstract class DebuggerAction extends AnAction {
     return (DebuggerTreeNodeImpl)component;
   }
 
-  @Nullable
-  public static DebuggerTreeNodeImpl[] getSelectedNodes(DataContext dataContext) {
+  public static DebuggerTreeNodeImpl @Nullable [] getSelectedNodes(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
     if(tree == null) return null;
     TreePath[] paths = tree.getSelectionPaths();

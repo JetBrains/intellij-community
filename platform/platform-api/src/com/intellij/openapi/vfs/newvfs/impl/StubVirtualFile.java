@@ -17,9 +17,8 @@ import java.nio.charset.Charset;
  * @author max
  */
 public class StubVirtualFile extends VirtualFile {
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     throw unsupported();
   }
 
@@ -152,12 +151,12 @@ public class StubVirtualFile extends VirtualFile {
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) {
     throw unsupported();
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) {
     throw unsupported();
   }
 
@@ -167,7 +166,7 @@ public class StubVirtualFile extends VirtualFile {
   }
 
   @Override
-  public void setBOM(@Nullable byte[] BOM) {
+  public void setBOM(byte @Nullable [] BOM) {
     throw unsupported();
   }
 

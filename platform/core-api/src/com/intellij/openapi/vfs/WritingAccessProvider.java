@@ -40,7 +40,7 @@ public abstract class WritingAccessProvider {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  public Collection<VirtualFile> requestWriting(@NotNull VirtualFile... files) {
+  public Collection<VirtualFile> requestWriting(VirtualFile @NotNull ... files) {
     throw new AbstractMethodError("requestWriting(List<VirtualFile>) not implemented");
   }
 

@@ -40,9 +40,8 @@ public class ShowShortenNames extends ActionGroup implements DumbAware {
     myChildren = kids.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myChildren;
   }
 

@@ -230,9 +230,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         final ArtifactType[] types = ArtifactType.getAllTypes();
         final AnAction[] actions = new AnAction[types.length];
         for (int i = 0; i < types.length; i++) {

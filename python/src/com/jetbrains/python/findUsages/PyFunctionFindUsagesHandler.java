@@ -41,9 +41,8 @@ public class PyFunctionFindUsagesHandler extends PyFindUsagesHandler {
     return true;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getPrimaryElements() {
+  public PsiElement @NotNull [] getPrimaryElements() {
     return myAllElements != null ? myAllElements.toArray(PsiElement.EMPTY_ARRAY) : super.getPrimaryElements();
   }
 }

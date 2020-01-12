@@ -116,7 +116,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   }
 
   @Override
-  public boolean canCreate(@NotNull final PsiDirectory[] dirs) {
+  public boolean canCreate(final PsiDirectory @NotNull [] dirs) {
     for (PsiDirectory dir : dirs) {
       if (canCreate(dir)) return true;
     }

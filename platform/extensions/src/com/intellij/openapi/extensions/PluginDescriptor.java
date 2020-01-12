@@ -36,11 +36,9 @@ public interface PluginDescriptor {
 
   int getReleaseVersion();
 
-  @NotNull
-  PluginId[] getDependentPluginIds();
+  PluginId @NotNull [] getDependentPluginIds();
 
-  @NotNull
-  PluginId[] getOptionalDependentPluginIds();
+  PluginId @NotNull [] getOptionalDependentPluginIds();
 
   String getVendor();
 

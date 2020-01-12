@@ -138,7 +138,7 @@ public final class StartupUtil {
     }
   }
 
-  public static void prepareApp(@NotNull String[] args, @NotNull String mainClass) throws Exception {
+  public static void prepareApp(String @NotNull [] args, @NotNull String mainClass) throws Exception {
     LoadingState.setStrictMode();
 
     Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
@@ -212,7 +212,7 @@ public final class StartupUtil {
     startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
   }
 
-  private static void startApp(@NotNull String[] args,
+  private static void startApp(String @NotNull [] args,
                                @NotNull CompletableFuture<?> initUiTask,
                                @NotNull Logger log,
                                boolean configImportNeeded,
@@ -246,7 +246,7 @@ public final class StartupUtil {
   }
 
   @NotNull
-  private static CompletableFuture<?> scheduleInitUi(@NotNull String[] args, @NotNull ExecutorService executor) {
+  private static CompletableFuture<?> scheduleInitUi(String @NotNull [] args, @NotNull ExecutorService executor) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.

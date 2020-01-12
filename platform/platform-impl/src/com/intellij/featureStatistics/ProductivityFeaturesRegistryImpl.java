@@ -180,8 +180,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   @Override
-  @NotNull
-  public ApplicabilityFilter[] getMatchingFilters(@NotNull String featureId) {
+  public ApplicabilityFilter @NotNull [] getMatchingFilters(@NotNull String featureId) {
     lazyLoadFromPluginsFeaturesProviders();
     List<ApplicabilityFilter> filters = new ArrayList<>();
     for (Pair<String, ApplicabilityFilter> pair : myApplicabilityFilters) {

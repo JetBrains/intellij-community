@@ -135,7 +135,7 @@ public class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  public static void enableDebugLogging(@NotNull Disposable parentDisposable, @NotNull String... categories) {
+  public static void enableDebugLogging(@NotNull Disposable parentDisposable, String @NotNull ... categories) {
     for (String category : categories) {
       final Logger logger = Logger.getInstance(category);
       logger.setLevel(Level.DEBUG);

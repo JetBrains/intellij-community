@@ -32,17 +32,15 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     myEndingSlashNotAllowed = endingSlashNotAllowed;
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull String text, int offset, final boolean soft) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull String text, int offset, final boolean soft) {
     return getReferencesByElement(element, text, offset, soft, Module.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                               @NotNull String text,
-                                               int offset,
-                                               final boolean soft,
-                                               @NotNull final Module... forModules) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                         @NotNull String text,
+                                                         int offset,
+                                                         final boolean soft,
+                                                         final Module @NotNull ... forModules) {
     return new FileReferenceSet(text, element, offset, this, true, myEndingSlashNotAllowed) {
 
 
@@ -107,8 +105,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     String text = null;
     if (element instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)element).getValue();

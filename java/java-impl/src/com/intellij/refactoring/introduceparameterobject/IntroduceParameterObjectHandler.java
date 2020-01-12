@@ -86,7 +86,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1) {
       return;
     }

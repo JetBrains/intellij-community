@@ -47,9 +47,8 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeP
    */
   int getIndex();
 
-  @NotNull
   @Override
-  default PsiAnnotation[] getAnnotations() {
+  default PsiAnnotation @NotNull [] getAnnotations() {
     return PsiClass.super.getAnnotations();
   }
 
@@ -58,9 +57,8 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeP
     return PsiClass.super.hasAnnotation(fqn);
   }
 
-  @NotNull
   @Override
-  default JvmReferenceType[] getBounds() {
+  default JvmReferenceType @NotNull [] getBounds() {
     return getExtendsList().getReferencedTypes();
   }
 

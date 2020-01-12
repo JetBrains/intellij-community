@@ -94,9 +94,9 @@ public abstract class CommandProcessor {
 
   public abstract void markCurrentCommandAsGlobal(@Nullable Project project);
 
-  public abstract void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs);
+  public abstract void addAffectedDocuments(@Nullable Project project, Document @NotNull ... docs);
 
-  public abstract void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files);
+  public abstract void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files);
 
   /**
    * @deprecated use {@link CommandListener#TOPIC}

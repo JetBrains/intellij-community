@@ -67,7 +67,7 @@ public class DialogAppender extends AppenderSkeleton {
     }
   }
 
-  void appendToLoggers(@NotNull LoggingEvent event, @NotNull ErrorLogger[] errorLoggers) {
+  void appendToLoggers(@NotNull LoggingEvent event, ErrorLogger @NotNull [] errorLoggers) {
     if (myDialogRunnable != null) {
       return;
     }

@@ -53,9 +53,8 @@ public class MavenFixedValueReferenceProvider implements MavenParamReferenceProv
           return null;
         }
 
-        @NotNull
         @Override
-        public Object[] getVariants() {
+        public Object @NotNull [] getVariants() {
           return myValues;
         }
       }

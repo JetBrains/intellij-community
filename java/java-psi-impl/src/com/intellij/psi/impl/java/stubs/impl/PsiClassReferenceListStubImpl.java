@@ -34,15 +34,14 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   private final String[] myNames;
   private volatile PsiClassType[] myTypes;
 
-  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull String[] names) {
+  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, String @NotNull [] names) {
     super(parent, type);
     ObjectUtils.assertAllElementsNotNull(names);
     myNames = names;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     PsiClassType[] types = myTypes;
     if (types == null) {
       myTypes = types = createTypes();
@@ -50,8 +49,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return types.clone();
   }
 
-  @NotNull
-  private PsiClassType[] createTypes() {
+  private PsiClassType @NotNull [] createTypes() {
     PsiClassType[] types = myNames.length == 0 ? PsiClassType.EMPTY_ARRAY : new PsiClassType[myNames.length];
 
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
@@ -89,9 +87,8 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return types;
   }
 
-  @NotNull
   @Override
-  public String[] getReferencedNames() {
+  public String @NotNull [] getReferencedNames() {
     return myNames.clone();
   }
 

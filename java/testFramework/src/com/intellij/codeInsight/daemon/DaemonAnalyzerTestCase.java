@@ -119,7 +119,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
-  protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
+  protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
@@ -177,7 +177,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
-  protected HighlightTestInfo testFile(@NonNls @NotNull String... filePath) {
+  protected HighlightTestInfo testFile(@NonNls String @NotNull ... filePath) {
     return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override
       public HighlightTestInfo doTest() {
@@ -195,12 +195,12 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doTest(new VirtualFile[] { vFile }, checkWarnings, checkInfos );
   }
 
-  protected void doTest(@NotNull VirtualFile[] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(VirtualFile @NotNull [] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFiles(null, vFile);
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected void doTest(boolean checkWarnings, boolean checkInfos, @NotNull String ... files) throws Exception {
+  protected void doTest(boolean checkWarnings, boolean checkInfos, String @NotNull ... files) throws Exception {
     configureByFiles(null, files);
     doDoTest(checkWarnings, checkInfos);
   }

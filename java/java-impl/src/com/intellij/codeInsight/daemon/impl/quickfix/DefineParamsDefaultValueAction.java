@@ -174,8 +174,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     CreateFromUsageBaseFix.startTemplate(editor, template, project);
   }
 
-  @Nullable
-  protected PsiParameter[] getParams(PsiElement element) {
+  protected PsiParameter @Nullable [] getParams(PsiElement element) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     assert method != null;
     final PsiParameter[] parameters = method.getParameterList().getParameters();

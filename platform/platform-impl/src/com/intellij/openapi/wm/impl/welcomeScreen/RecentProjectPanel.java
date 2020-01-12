@@ -355,7 +355,7 @@ public class RecentProjectPanel extends JPanel {
     private final Dimension mySize;
     private Point myMousePoint;
 
-    private MyList(Dimension size, @NotNull AnAction[] listData) {
+    private MyList(Dimension size, AnAction @NotNull [] listData) {
       super(listData);
       mySize = size;
       setExpandableItemsEnabled(false);

@@ -64,7 +64,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
   }
 
@@ -89,7 +89,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {}
+    public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {}
   }
 
   public static boolean isEnabled(@NotNull Editor editor) {
@@ -367,9 +367,8 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
               }
             }
 
-            @Nullable
             @Override
-            public DocumentReference[] getAffectedDocuments() {
+            public DocumentReference @Nullable [] getAffectedDocuments() {
               return null;
             }
 

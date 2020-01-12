@@ -27,9 +27,8 @@ public class LazyFqnClassType extends GrLiteralClassType {
     return myFqn;
   }
 
-  @NotNull
   @Override
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     return PsiType.EMPTY_ARRAY;
   }
 

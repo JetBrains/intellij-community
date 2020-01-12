@@ -97,7 +97,7 @@ public class TokenSetTest {
     }
   }
 
-  private static void check(@NotNull TokenSet set, @NotNull IElementType... elements) {
+  private static void check(@NotNull TokenSet set, IElementType @NotNull ... elements) {
     final Set<IElementType> expected = ContainerUtil.newHashSet(elements);
     for (IElementType t : Arrays.asList(T1, T2, T3, T4, T5, T6)) {
       if (expected.contains(t)) {

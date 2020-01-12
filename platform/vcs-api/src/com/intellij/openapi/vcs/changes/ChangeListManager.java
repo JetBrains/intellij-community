@@ -163,8 +163,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
   @Deprecated
-  @NotNull
-  public abstract IgnoredFileBean[] getFilesToIgnore();
+  public abstract IgnoredFileBean @NotNull [] getFilesToIgnore();
 
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
@@ -174,13 +173,13 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
   @Deprecated
-  public abstract void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
+  public abstract void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
   @Deprecated
-  public abstract void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
+  public abstract void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.

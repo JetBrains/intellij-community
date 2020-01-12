@@ -26,8 +26,7 @@ public interface JavaFileManager {
   @Nullable
   PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope);
 
-  @NotNull
-  PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope);
+  PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope);
 
   @NotNull
   Collection<String> getNonTrivialPackagePrefixes();

@@ -31,8 +31,7 @@ class UniteSameType implements DiffCorrection {
     return unitSameTypes(covertSequentialOneSideToChange(unitSameTypes(fragments)));
   }
 
-  @NotNull
-  private static DiffFragment[] unitSameTypes(@NotNull DiffFragment[] fragments) {
+  private static DiffFragment @NotNull [] unitSameTypes(DiffFragment @NotNull [] fragments) {
     if (fragments.length < 2) return fragments;
     DiffCorrection.FragmentsCollector collector = new DiffCorrection.FragmentsCollector();
     DiffFragment previous = fragments[0];
@@ -50,8 +49,7 @@ class UniteSameType implements DiffCorrection {
     return collector.toArray();
   }
 
-  @NotNull
-  private static DiffFragment[] covertSequentialOneSideToChange(@NotNull DiffFragment[] fragments) {
+  private static DiffFragment @NotNull [] covertSequentialOneSideToChange(DiffFragment @NotNull [] fragments) {
     if (fragments.length < 2) return fragments;
     DiffCorrection.FragmentsCollector collector = new DiffCorrection.FragmentsCollector();
 //    DiffFragment previous = fragments[0];

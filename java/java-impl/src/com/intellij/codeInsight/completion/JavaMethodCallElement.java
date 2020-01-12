@@ -510,9 +510,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       return null;
     }
 
-    @Nullable
     @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+    public LookupElement @Nullable [] calculateLookupItems(ExpressionContext context) {
       return null;
     }
   }

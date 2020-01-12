@@ -20,8 +20,7 @@ public interface GrParameterList extends GroovyPsiElement, PsiParameterList {
   TextRange getParametersRange();
 
   @Override
-  @NotNull
-  GrParameter[] getParameters();
+  GrParameter @NotNull [] getParameters();
 
   int getParameterNumber(GrParameter parameter);
 }

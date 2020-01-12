@@ -44,7 +44,7 @@ public class RenameGroovyPropertyProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void renameElement(@NotNull PsiElement element, @NotNull String newName, @NotNull UsageInfo[] usages, @Nullable RefactoringElementListener listener)
+  public void renameElement(@NotNull PsiElement element, @NotNull String newName, UsageInfo @NotNull [] usages, @Nullable RefactoringElementListener listener)
     throws IncorrectOperationException {
 
     //do nothing

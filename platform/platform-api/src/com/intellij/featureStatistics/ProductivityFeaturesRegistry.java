@@ -28,8 +28,7 @@ public abstract class ProductivityFeaturesRegistry {
 
   public abstract GroupDescriptor getGroupDescriptor(@NotNull String id);
 
-  @NotNull
-  public abstract ApplicabilityFilter[] getMatchingFilters(@NotNull String featureId);
+  public abstract ApplicabilityFilter @NotNull [] getMatchingFilters(@NotNull String featureId);
 
   @NotNull
   public static ProductivityFeaturesRegistry getInstance() {

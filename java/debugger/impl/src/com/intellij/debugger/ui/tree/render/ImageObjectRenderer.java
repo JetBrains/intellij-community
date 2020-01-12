@@ -74,8 +74,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     return null;
   }
 
-  @Nullable
-  private static byte[] getImageBytes(EvaluationContext evaluationContext, Value obj, String methodName)
+  private static byte @Nullable [] getImageBytes(EvaluationContext evaluationContext, Value obj, String methodName)
     throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
     EvaluationContext copyContext = evaluationContext.createEvaluationContext(obj);

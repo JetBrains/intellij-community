@@ -41,8 +41,7 @@ public interface VcsContext extends PlaceProvider<String> {
   @Nullable
   VirtualFile getSelectedFile();
 
-  @NotNull
-  VirtualFile[] getSelectedFiles();
+  VirtualFile @NotNull [] getSelectedFiles();
 
   @NotNull
   default Stream<VirtualFile> getSelectedFilesStream() {
@@ -75,8 +74,7 @@ public interface VcsContext extends PlaceProvider<String> {
 
   File getSelectedIOFile();
 
-  @NotNull
-  FilePath[] getSelectedFilePaths();
+  FilePath @NotNull [] getSelectedFilePaths();
 
   @NotNull
   default Stream<FilePath> getSelectedFilePathsStream() {
@@ -86,11 +84,9 @@ public interface VcsContext extends PlaceProvider<String> {
   @Nullable
   FilePath getSelectedFilePath();
 
-  @Nullable
-  ChangeList[] getSelectedChangeLists();
+  ChangeList @Nullable [] getSelectedChangeLists();
 
-  @Nullable
-  Change[] getSelectedChanges();
+  Change @Nullable [] getSelectedChanges();
 
   String getActionName();
 }

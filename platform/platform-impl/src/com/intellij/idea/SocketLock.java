@@ -153,7 +153,7 @@ public final class SocketLock {
   }
 
   @NotNull
-  public Pair<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String[] args) throws Exception {
+  public Pair<ActivationStatus, CliResult> lockAndTryActivate(String @NotNull [] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     lockPortFiles();
@@ -352,7 +352,7 @@ public final class SocketLock {
     private final String myToken;
     private State myState = State.HEADER;
 
-    MyChannelInboundHandler(@NotNull String[] lockedPaths,
+    MyChannelInboundHandler(String @NotNull [] lockedPaths,
                             @NotNull AtomicReference<Function<List<String>, Future<CliResult>>> commandProcessorRef,
                             @NotNull String token) {
       myLockedPaths = lockedPaths;

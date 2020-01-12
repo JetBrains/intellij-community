@@ -503,7 +503,7 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Contract("null, _ -> false")
-  public static boolean isClassType(@Nullable PsiType type, @NotNull String... names) {
+  public static boolean isClassType(@Nullable PsiType type, String @NotNull ... names) {
     String fqn = getQualifiedName(type);
     if (fqn == null) return false;
     return ContainerUtil.or(names, it -> it.equals(fqn));

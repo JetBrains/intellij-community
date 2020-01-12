@@ -304,15 +304,14 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return new JavaReplaceHandler(project, replaceOptions);
   }
 
-  @NotNull
   @Override
-  public PsiElement[] createPatternTree(@NotNull String text,
-                                        @NotNull PatternTreeContext context,
-                                        @NotNull LanguageFileType fileType,
-                                        @NotNull Language language,
-                                        String contextId,
-                                        @NotNull Project project,
-                                        boolean physical) {
+  public PsiElement @NotNull [] createPatternTree(@NotNull String text,
+                                                  @NotNull PatternTreeContext context,
+                                                  @NotNull LanguageFileType fileType,
+                                                  @NotNull Language language,
+                                                  String contextId,
+                                                  @NotNull Project project,
+                                                  boolean physical) {
     if (MEMBER_CONTEXT.getId().equals(contextId)) {
       context = PatternTreeContext.Class;
     }

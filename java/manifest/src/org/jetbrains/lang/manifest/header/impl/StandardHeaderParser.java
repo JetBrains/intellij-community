@@ -65,9 +65,8 @@ public class StandardHeaderParser implements HeaderParser {
     return value != null ? value.getUnwrappedText() : null;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart) {
+  public PsiReference @NotNull [] getReferences(@NotNull HeaderValuePart headerValuePart) {
     return PsiReference.EMPTY_ARRAY;
   }
 }

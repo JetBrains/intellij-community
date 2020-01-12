@@ -536,7 +536,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
                       "line1\nline2\nline3\nDone\n");
   }
 
-  private void assertPrintedText(@NotNull String[] textToPrint, @NotNull String expectedText) {
+  private void assertPrintedText(String @NotNull [] textToPrint, @NotNull String expectedText) {
     myConsole.clear();
     myConsole.waitAllRequests();
     Assert.assertEquals("", myConsole.getText());

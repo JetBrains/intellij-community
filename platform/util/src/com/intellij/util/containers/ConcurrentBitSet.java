@@ -366,8 +366,7 @@ public class ConcurrentBitSet {
     return b.toString();
   }
 
-  @NotNull
-  public int[] toIntArray() {
+  public int @NotNull [] toIntArray() {
     return array.clone();
   }
 
@@ -395,7 +394,7 @@ public class ConcurrentBitSet {
     }
   }
 
-  private ConcurrentBitSet(@NotNull int[] words) {
+  private ConcurrentBitSet(int @NotNull [] words) {
     array = words;
   }
 }

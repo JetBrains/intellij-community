@@ -160,7 +160,7 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
     }
 
     @Override
-    protected void onSelection(@NotNull int[] selection) {
+    protected void onSelection(int @NotNull [] selection) {
       cancelResolve();
       setStatusText("");
 

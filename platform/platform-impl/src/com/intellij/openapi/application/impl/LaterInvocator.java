@@ -326,8 +326,7 @@ public class LaterInvocator {
     requestFlush();
   }
 
-  @NotNull
-  public static Object[] getCurrentModalEntities() {
+  public static Object @NotNull [] getCurrentModalEntities() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return ArrayUtil.toObjectArray(ourModalEntities);
   }

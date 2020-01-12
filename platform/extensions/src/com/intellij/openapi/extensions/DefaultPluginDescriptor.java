@@ -79,15 +79,13 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
     return 0;
   }
 
-  @NotNull
   @Override
-  public PluginId[] getDependentPluginIds() {
+  public PluginId @NotNull [] getDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PluginId[] getOptionalDependentPluginIds() {
+  public PluginId @NotNull [] getOptionalDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }
 

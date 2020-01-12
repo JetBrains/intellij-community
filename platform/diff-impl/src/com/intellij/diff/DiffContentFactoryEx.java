@@ -40,35 +40,35 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull byte[] content,
+                                              byte @NotNull [] content,
                                               @NotNull FilePath filePath) throws IOException;
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull byte[] content,
+                                              byte @NotNull [] content,
                                               @NotNull FilePath filePath,
                                               @Nullable Charset defaultCharset) throws IOException;
 
   @Override
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull byte[] content,
+                                              byte @NotNull [] content,
                                               @NotNull VirtualFile highlightFile) throws IOException;
 
 
   @NotNull
   public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                          @NotNull byte[] content,
+                                                          byte @NotNull [] content,
                                                           @NotNull FileType fileType,
                                                           @NotNull String fileName);
 
   @NotNull
   public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                          @NotNull byte[] content,
+                                                          byte @NotNull [] content,
                                                           @NotNull FilePath filePath);
 
   @NotNull
   public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
-                                                          @NotNull byte[] content,
+                                                          byte @NotNull [] content,
                                                           @NotNull VirtualFile highlightFile);
 }

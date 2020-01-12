@@ -268,9 +268,8 @@ public class YouTrackRepository extends BaseRepositoryImpl {
         return description;
       }
 
-      @NotNull
       @Override
-      public Comment[] getComments() {
+      public Comment @NotNull [] getComments() {
         return Comment.EMPTY_ARRAY;
       }
 

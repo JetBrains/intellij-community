@@ -33,6 +33,5 @@ public interface GrTuple extends GroovyPsiElement {
 
   int indexOf(@NotNull PsiElement element);
 
-  @NotNull
-  GrReferenceExpression[] getExpressions();
+  GrReferenceExpression @NotNull [] getExpressions();
 }

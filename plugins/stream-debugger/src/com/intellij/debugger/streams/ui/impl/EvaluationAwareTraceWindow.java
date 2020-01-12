@@ -159,15 +159,13 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
             .forEach(x -> x.setContent(new JBLabel(reason, SwingConstants.CENTER), BorderLayout.CENTER));
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{new DialogWrapperExitAction("Close", CLOSE_EXIT_CODE)};
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[]{new MyToggleViewAction()};
   }
 

@@ -124,9 +124,8 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   /**
    * @deprecated use PredefinedCodeStyle extension point instead
    */
-  @NotNull
   @Deprecated
-  public PredefinedCodeStyle[] getPredefinedCodeStyles() {
+  public PredefinedCodeStyle @NotNull [] getPredefinedCodeStyles() {
     return PredefinedCodeStyle.EMPTY_ARRAY;
   }
 

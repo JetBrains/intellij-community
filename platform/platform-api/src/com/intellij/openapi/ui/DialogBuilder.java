@@ -425,8 +425,7 @@ public class DialogBuilder implements Disposable {
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       if (myActions == null) return super.createActions();
       ArrayList<Action> actions = new ArrayList<>(myActions.size());
       for (ActionDescriptor actionDescriptor : myActions) {

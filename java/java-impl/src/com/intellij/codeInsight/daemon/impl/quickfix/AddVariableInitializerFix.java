@@ -87,7 +87,7 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
   }
 
   static void runAssignmentTemplate(@NotNull final List<? extends PsiExpression> initializers,
-                                    @NotNull final LookupElement[] suggestedInitializers,
+                                    final LookupElement @NotNull [] suggestedInitializers,
                                     @Nullable Editor editor) {
     if (editor == null) return;
     LOG.assertTrue(!initializers.isEmpty());
@@ -101,8 +101,7 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
     builder.run(editor, false);
   }
 
-  @NotNull
-  static LookupElement[] suggestInitializer(final PsiVariable variable) {
+  static LookupElement @NotNull [] suggestInitializer(final PsiVariable variable) {
     PsiType type = variable.getType();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
 

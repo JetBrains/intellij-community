@@ -76,7 +76,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
   }
 
@@ -86,7 +86,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
       myLogger.error(message, checkException(t));
       ExceptionUtil.rethrow(t);

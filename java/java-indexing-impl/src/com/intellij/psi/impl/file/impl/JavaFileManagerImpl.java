@@ -69,9 +69,8 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return new PsiPackageImpl(myManager, packageName);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
     List<Pair<PsiClass, VirtualFile>> result = doFindClasses(qName, scope);
 
     int count = result.size();

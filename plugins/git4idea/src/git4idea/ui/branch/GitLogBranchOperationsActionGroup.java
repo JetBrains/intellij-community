@@ -44,13 +44,12 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
     setPopup(false);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@NotNull AnActionEvent e,
-                                @NotNull Project project,
-                                @NotNull VcsLog log,
-                                @NotNull GitRepository root,
-                                @NotNull CommitId commit) {
+  public AnAction @NotNull [] getChildren(@NotNull AnActionEvent e,
+                                          @NotNull Project project,
+                                          @NotNull VcsLog log,
+                                          @NotNull GitRepository root,
+                                          @NotNull CommitId commit) {
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     List<VcsRef> refs = e.getData(VcsLogDataKeys.VCS_LOG_REFS);
     if (logUI == null || refs == null) {

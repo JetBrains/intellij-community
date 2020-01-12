@@ -31,15 +31,14 @@ public abstract class Macro {
   }
 
   @Nullable
-  public abstract Result calculateResult(@NotNull Expression[] params, ExpressionContext context);
+  public abstract Result calculateResult(Expression @NotNull [] params, ExpressionContext context);
 
   @Nullable
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return null;
   }
 
-  @Nullable
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement @Nullable [] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     return null;
   }
 

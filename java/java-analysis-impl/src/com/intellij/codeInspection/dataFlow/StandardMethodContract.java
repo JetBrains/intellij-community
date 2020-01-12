@@ -25,9 +25,9 @@ import java.util.stream.Stream;
  * @author peter
  */
 public final class StandardMethodContract extends MethodContract {
-  private final @NotNull ValueConstraint[] myParameters;
+  private final ValueConstraint @NotNull [] myParameters;
 
-  public StandardMethodContract(@NotNull ValueConstraint[] parameters, @NotNull ContractReturnValue returnValue) {
+  public StandardMethodContract(ValueConstraint @NotNull [] parameters, @NotNull ContractReturnValue returnValue) {
     super(returnValue);
     myParameters = parameters;
   }
@@ -159,8 +159,7 @@ public final class StandardMethodContract extends MethodContract {
     return result;
   }
 
-  @NotNull
-  public static ValueConstraint[] createConstraintArray(int paramCount) {
+  public static ValueConstraint @NotNull [] createConstraintArray(int paramCount) {
     ValueConstraint[] args = new ValueConstraint[paramCount];
     Arrays.fill(args, ValueConstraint.ANY_VALUE);
     return args;

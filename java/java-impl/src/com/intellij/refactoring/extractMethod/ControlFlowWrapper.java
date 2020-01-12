@@ -89,7 +89,7 @@ public class ControlFlowWrapper {
     return myFirstExitStatementCopy;
   }
 
-  public Collection<PsiStatement> prepareExitStatements(@NotNull final PsiElement[] elements,
+  public Collection<PsiStatement> prepareExitStatements(final PsiElement @NotNull [] elements,
                                                         @NotNull final PsiElement enclosingCodeFragment)
     throws ExitStatementsNotSameException {
     myExitPoints = new IntArrayList();
@@ -154,13 +154,11 @@ public class ControlFlowWrapper {
   public static class ExitStatementsNotSameException extends Exception {}
 
 
-  @NotNull
-  public PsiVariable[] getOutputVariables() {
+  public PsiVariable @NotNull [] getOutputVariables() {
     return getOutputVariables(myGenerateConditionalExit);
   }
 
-  @NotNull
-  PsiVariable[] getOutputVariables(boolean collectVariablesAtExitPoints) {
+  PsiVariable @NotNull [] getOutputVariables(boolean collectVariablesAtExitPoints) {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods

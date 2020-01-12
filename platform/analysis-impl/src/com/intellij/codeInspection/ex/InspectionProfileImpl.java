@@ -412,8 +412,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  @NotNull
-  public InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element) {
+  public InspectionToolWrapper @NotNull [] getInspectionTools(@Nullable PsiElement element) {
     initInspectionTools(element == null ? null : element.getProject());
     List<InspectionToolWrapper> result = new ArrayList<>();
     for (Tools toolList : myTools.values()) {
@@ -622,21 +621,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         return merger.getMergedToolName();
       }
 
-      @NotNull
       @Override
-      public String[] getSourceToolNames() {
+      public String @NotNull [] getSourceToolNames() {
         return merger.getSourceToolNames();
       }
     };
   }
 
-  @Nullable
   @Transient
-  public String[] getScopesOrder() {
+  public String @Nullable [] getScopesOrder() {
     return myScopesOrder;
   }
 
-  public void setScopesOrder(@NotNull String[] scopesOrder) {
+  public void setScopesOrder(String @NotNull [] scopesOrder) {
     myScopesOrder = scopesOrder;
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }

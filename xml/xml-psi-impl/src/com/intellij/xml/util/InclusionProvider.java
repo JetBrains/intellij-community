@@ -28,8 +28,7 @@ final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
     myXincludeTag = xincludeTag;
   }
 
-  @NotNull
-  public static PsiElement[] getIncludedTags(XmlTag xincludeTag) {
+  public static PsiElement @NotNull [] getIncludedTags(XmlTag xincludeTag) {
     if (!XmlTagImpl.shouldProcessIncludesNow()) return PsiElement.EMPTY_ARRAY;
     return CachedValuesManager.getCachedValue(xincludeTag, new InclusionProvider(xincludeTag));
   }
@@ -61,8 +60,7 @@ final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
     return new XmlTag[]{rootTag};
   }
 
-  @Nullable
-  private static PsiElement[] computeInclusion(final XmlTag xincludeTag) {
+  private static PsiElement @Nullable [] computeInclusion(final XmlTag xincludeTag) {
     final XmlFile included = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
     final XmlDocument document = included != null ? included.getDocument() : null;
     final XmlTag rootTag = document != null ? document.getRootTag() : null;

@@ -25,6 +25,6 @@ public interface LightDuplicateProfile {
   boolean acceptsFile(@NotNull VirtualFile file);
 
   interface Callback {
-    void process(int hash, int hash2, @NotNull LighterAST ast, @NotNull LighterASTNode... nodes);
+    void process(int hash, int hash2, @NotNull LighterAST ast, LighterASTNode @NotNull ... nodes);
   }
 }

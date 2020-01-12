@@ -30,9 +30,8 @@ public class JavaFxSetterAttributeDescriptor extends JavaFxPropertyAttributeDesc
     myPsiMethod = psiMethod;
   }
 
-  @Nullable
   @Override
-  public String[] getEnumeratedValues() {
+  public String @Nullable [] getEnumeratedValues() {
     return null;
   }
 

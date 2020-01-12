@@ -62,12 +62,12 @@ public class ReplicatorInputStream extends InputStream {
   }
 
   @Override
-  public int read(@NotNull final byte[] b) throws IOException {
+  public int read(final byte @NotNull [] b) throws IOException {
     return read(b, 0, b.length);
   }
 
   @Override
-  public int read(@NotNull final byte[] b, final int off, final int len) throws IOException {
+  public int read(final byte @NotNull [] b, final int off, final int len) throws IOException {
     final int count = mySource.read(b, off, len);
     if (count < 0) return count;
     myTarget.write(b, off, count);

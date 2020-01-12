@@ -58,8 +58,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getClasses() {
+  public PsiClass @NotNull [] getClasses() {
     final StubElement<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
@@ -154,8 +153,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
+  public PsiElement @NotNull [] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
     PsiImportList importList = getImportList();
     if (importList == null) return EMPTY_ARRAY;
 
@@ -185,8 +183,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getSingleClassImports(boolean checkIncludes) {
+  public PsiClass @NotNull [] getSingleClassImports(boolean checkIncludes) {
     PsiImportList importList = getImportList();
     if (importList == null) return PsiClass.EMPTY_ARRAY;
 
@@ -221,14 +218,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  @NotNull
-  public String[] getImplicitlyImportedPackages() {
+  public String @NotNull [] getImplicitlyImportedPackages() {
     return IMPLICIT_IMPORTS;
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
+  public PsiJavaCodeReferenceElement @NotNull [] getImplicitlyImportedPackageReferences() {
     return PsiImplUtil.namesToPackageReferences(myManager, IMPLICIT_IMPORTS);
   }
 

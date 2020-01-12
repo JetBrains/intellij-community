@@ -56,12 +56,12 @@ public final class Encoder {
   }
 
   @NotNull
-  public String decode(@NotNull byte[] compressed) {
+  public String decode(byte @NotNull [] compressed) {
     return UnitBitSet.decode(compressed, alphabet);
   }
 
   @NotNull
-  public String decode(@NotNull byte[] data, int from, int to) {
+  public String decode(byte @NotNull [] data, int from, int to) {
     return UnitBitSet.decode(data, from, to, alphabet);
   }
 

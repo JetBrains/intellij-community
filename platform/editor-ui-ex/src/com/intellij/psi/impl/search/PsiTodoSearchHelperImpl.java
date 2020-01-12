@@ -36,20 +36,17 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   }
 
   @Override
-  @NotNull
-  public PsiFile[] findFilesWithTodoItems() {
+  public PsiFile @NotNull [] findFilesWithTodoItems() {
     return TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
   }
 
   @Override
-  @NotNull
-  public TodoItem[] findTodoItems(@NotNull PsiFile file) {
+  public TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file) {
     return findTodoItems(file, 0, file.getTextLength());
   }
 
   @Override
-  @NotNull
-  public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
     final Collection<IndexPatternOccurrence> occurrences =
       IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance(), TodoConfiguration.getInstance().isMultiLine()).findAll();
     if (occurrences.isEmpty()) {
@@ -59,8 +56,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     return processTodoOccurences(startOffset, endOffset, occurrences);
   }
 
-  @NotNull
-  private static TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<? extends IndexPatternOccurrence> occurrences) {
+  private static TodoItem @NotNull [] processTodoOccurences(int startOffset, int endOffset, Collection<? extends IndexPatternOccurrence> occurrences) {
     List<TodoItem> items = new ArrayList<>(occurrences.size());
     TextRange textRange = new TextRange(startOffset, endOffset);
     final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
@@ -75,15 +71,13 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     return items.toArray(new TodoItem[0]);
   }
 
-  @NotNull
   @Override
-  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file) {
+  public TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file) {
     return findTodoItemsLight(file, 0, file.getTextLength());
   }
 
-  @NotNull
   @Override
-  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
     final Collection<IndexPatternOccurrence> occurrences =
       LightIndexPatternSearch.SEARCH.createQuery(
         new IndexPatternSearch.SearchParameters(file, TodoIndexPatternProvider.getInstance(), TodoConfiguration.getInstance().isMultiLine())

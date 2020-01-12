@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.xml.namespace.QName;
 
 public interface XsltTemplate extends PsiNamedElement, XsltNamedElement {
-    @NotNull
-    XsltParameter[] getParameters();
+    XsltParameter @NotNull [] getParameters();
 
     @Nullable
     XsltParameter getParameter(String name);

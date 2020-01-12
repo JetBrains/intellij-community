@@ -68,7 +68,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
    * if elements.length > 1 the expected values are PsiField objects only
    */
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, DataContext dataContext) {
     PsiClass aClass = null;
     final HashSet<PsiField> preselectedFields = new HashSet<>();
     if (elements.length == 1) {

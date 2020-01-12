@@ -86,7 +86,7 @@ public class PsiJavaPatterns extends StandardPatterns{
     });
   }
 
-  public static PsiJavaElementPattern.Capture<PsiNewExpression> psiNewExpression(@NotNull final String... fqns) {
+  public static PsiJavaElementPattern.Capture<PsiNewExpression> psiNewExpression(final String @NotNull ... fqns) {
     return new PsiJavaElementPattern.Capture<>(new InitialPatternCondition<PsiNewExpression>(PsiNewExpression.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {

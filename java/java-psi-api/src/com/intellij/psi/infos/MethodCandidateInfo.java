@@ -61,7 +61,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                              boolean staticsProblem,
                              PsiElement argumentList,
                              PsiElement currFileContext,
-                             @Nullable PsiType[] argumentTypes,
+                             PsiType @Nullable [] argumentTypes,
                              PsiType[] typeArguments) {
     this(candidate, substitutor, accessProblem, staticsProblem, argumentList, currFileContext, argumentTypes, typeArguments,
          PsiUtil.getLanguageLevel(argumentList));
@@ -73,7 +73,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                              boolean staticsProblem,
                              PsiElement argumentList,
                              PsiElement currFileContext,
-                             @Nullable PsiType[] argumentTypes,
+                             PsiType @Nullable [] argumentTypes,
                              PsiType[] typeArguments,
                              @NotNull LanguageLevel languageLevel) {
     super(candidate, substitutor, accessProblem, staticsProblem, currFileContext);
@@ -439,7 +439,7 @@ public class MethodCandidateInfo extends CandidateInfo{
    */
   @NotNull
   public PsiSubstitutor inferTypeArguments(@NotNull final ParameterTypeInferencePolicy policy,
-                                           @NotNull final PsiExpression[] arguments,
+                                           final PsiExpression @NotNull [] arguments,
                                            boolean includeReturnConstraint) {
     final Computable<PsiSubstitutor> computable = () -> {
       final PsiMethod method = getElement();
@@ -483,8 +483,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
 
-  @Nullable
-  public PsiType[] getArgumentTypes() {
+  public PsiType @Nullable [] getArgumentTypes() {
     return myArgumentTypes;
   }
 

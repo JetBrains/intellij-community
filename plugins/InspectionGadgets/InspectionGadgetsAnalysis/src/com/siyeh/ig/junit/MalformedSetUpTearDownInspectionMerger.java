@@ -29,15 +29,13 @@ public class MalformedSetUpTearDownInspectionMerger extends InspectionElementsMe
     return "MalformedSetUpTearDown";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] { "TeardownIsPublicVoidNoArg", "SetupIsPublicVoidNoArg" };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] { "TearDownWithIncorrectSignature", "SetUpWithIncorrectSignature" };
   }
 }

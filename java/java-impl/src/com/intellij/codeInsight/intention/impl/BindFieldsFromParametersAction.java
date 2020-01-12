@@ -206,7 +206,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @NotNull
   private static MemberChooser<ParameterClassMember> showChooser(@NotNull Project project,
                                            @NotNull PsiMethod method,
-                                           @NotNull ParameterClassMember[] members) {
+                                           ParameterClassMember @NotNull [] members) {
     final MemberChooser<ParameterClassMember> chooser = new MemberChooser<>(members, false, true, project);
     chooser.selectElements(getInitialSelection(method, members));
     chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters");
@@ -218,7 +218,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
    * Exclude parameters passed to super() or this() calls from initial selection
    */
   private static ParameterClassMember[] getInitialSelection(@NotNull PsiMethod method,
-                                                            @NotNull ParameterClassMember[] members) {
+                                                            ParameterClassMember @NotNull [] members) {
     final Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
@@ -239,8 +239,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     return ContainerUtil.findAll(members, member -> !resolvedInSuperOrThis.contains(member.getParameter())).toArray(ParameterClassMember.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static ParameterClassMember[] sortByParameterIndex(@NotNull ParameterClassMember[] members, @NotNull PsiMethod method) {
+  private static ParameterClassMember @NotNull [] sortByParameterIndex(ParameterClassMember @NotNull [] members, @NotNull PsiMethod method) {
     final PsiParameterList parameterList = method.getParameterList();
     Arrays.sort(members, Comparator.comparingInt(o -> parameterList.getParameterIndex(o.getParameter())));
     return members;
@@ -264,8 +263,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     return result;
   }
 
-  @NotNull
-  private static ParameterClassMember[] toClassMemberArray(@NotNull Collection<? extends SmartPsiElementPointer<PsiParameter>> unboundedParams) {
+  private static ParameterClassMember @NotNull [] toClassMemberArray(@NotNull Collection<? extends SmartPsiElementPointer<PsiParameter>> unboundedParams) {
     final ParameterClassMember[] result = new ParameterClassMember[unboundedParams.size()];
     int i = 0;
     for (SmartPsiElementPointer<PsiParameter> pointer : unboundedParams) {

@@ -125,14 +125,12 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     return contentsToByteArray(true);
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(boolean cacheContent) throws IOException {
     checkNotTooLarge(null);
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
     if (preloadedContent != null) return preloadedContent;
@@ -161,13 +159,13 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     checkNotTooLarge(requestor);
     super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
     checkNotTooLarge(null);
     super.setBinaryContent(content, newModificationStamp, newTimeStamp);
   }

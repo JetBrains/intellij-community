@@ -127,8 +127,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     final String key = getKeyText();
 
     List<IProperty> properties;
@@ -151,8 +150,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return getResolveResults(properties);
   }
 
-  @NotNull
-  private static ResolveResult[] getResolveResults(List<? extends IProperty> properties) {
+  private static ResolveResult @NotNull [] getResolveResults(List<? extends IProperty> properties) {
     if (properties.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
     final ResolveResult[] results = new ResolveResult[properties.size()];

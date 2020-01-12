@@ -187,7 +187,7 @@ public class ActionsTree {
     return null;
   }
 
-  public void reset(@NotNull Keymap keymap, @NotNull QuickList[] allQuickLists) {
+  public void reset(@NotNull Keymap keymap, QuickList @NotNull [] allQuickLists) {
     reset(keymap, allQuickLists, myFilter, null);
   }
 
@@ -210,7 +210,7 @@ public class ActionsTree {
     return myBaseFilter;
   }
 
-  private void reset(@NotNull Keymap keymap, @NotNull QuickList[] allQuickLists, String filter, @Nullable Shortcut shortcut) {
+  private void reset(@NotNull Keymap keymap, QuickList @NotNull [] allQuickLists, String filter, @Nullable Shortcut shortcut) {
     myKeymap = keymap;
 
     final PathsKeeper pathsKeeper = new PathsKeeper();

@@ -19,11 +19,9 @@ import java.util.List;
 public abstract class DiffPreviewProvider {
   public static final ExtensionPointName<DiffPreviewProvider> EP_NAME = ExtensionPointName.create("com.intellij.diffPreviewProvider");
 
-  @NotNull
-  public abstract DiffContent[] createContents();
+  public abstract DiffContent @NotNull [] createContents();
 
-  @NotNull
-  public static DiffContent[] getContents() {
+  public static DiffContent @NotNull [] getContents() {
     // Assuming that standalone IDE should provide one provider
     final List<DiffPreviewProvider> providers = EP_NAME.getExtensionList();
     if (providers.size() != 0) {
@@ -32,11 +30,10 @@ public abstract class DiffPreviewProvider {
     return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, StdFileTypes.JAVA);
   }
 
-  @NotNull
-  public static DiffContent[] createContent(@NotNull String left,
-                                            @NotNull String center,
-                                            @NotNull String right,
-                                            @NotNull FileType fileType) {
+  public static DiffContent @NotNull [] createContent(@NotNull String left,
+                                                      @NotNull String center,
+                                                      @NotNull String right,
+                                                      @NotNull FileType fileType) {
     return new DiffContent[]{
       createContent(left, fileType),
       createContent(center, fileType),

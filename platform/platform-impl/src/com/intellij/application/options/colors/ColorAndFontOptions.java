@@ -385,9 +385,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return true;
   }
 
-  @NotNull
   @Override
-  public Configurable[] buildConfigurables() {
+  public Configurable @NotNull [] buildConfigurables() {
     myDisposeCompleted = false;
     initAll();
 

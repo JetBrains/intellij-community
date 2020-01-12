@@ -144,7 +144,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     private final boolean myOnDemand;
     private final boolean myImportStatic;
 
-    ReferenceCollector(@NotNull PsiElement[] importTargets, boolean onDemand, boolean importStatic) {
+    ReferenceCollector(PsiElement @NotNull [] importTargets, boolean onDemand, boolean importStatic) {
       this.myImportTargets = importTargets;
       this.myOnDemand = onDemand;
       this.myImportStatic = importStatic;

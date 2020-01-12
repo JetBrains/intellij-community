@@ -44,15 +44,15 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     return CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
   }
 
-  protected static ArrangementSectionRule section(@NotNull StdArrangementMatchRule... rules) {
+  protected static ArrangementSectionRule section(StdArrangementMatchRule @NotNull ... rules) {
     return section(null, null, rules);
   }
 
-  protected static ArrangementSectionRule section(@Nullable String start, @Nullable String end, @NotNull StdArrangementMatchRule... rules) {
+  protected static ArrangementSectionRule section(@Nullable String start, @Nullable String end, StdArrangementMatchRule @NotNull ... rules) {
     return ArrangementSectionRule.create(start, end, rules);
   }
 
-  protected static StdArrangementRuleAliasToken alias(@NotNull String id, @NotNull StdArrangementMatchRule... rules) {
+  protected static StdArrangementRuleAliasToken alias(@NotNull String id, StdArrangementMatchRule @NotNull ... rules) {
     return new StdArrangementRuleAliasToken(id, id, ContainerUtil.newArrayList(rules));
   }
 
@@ -72,7 +72,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   }
 
   @NotNull
-  protected static StdArrangementMatchRule nameRule(@NotNull String nameFilter, @NotNull ArrangementSettingsToken... tokens) {
+  protected static StdArrangementMatchRule nameRule(@NotNull String nameFilter, ArrangementSettingsToken @NotNull ... tokens) {
     if (tokens.length == 0) {
       return new StdArrangementMatchRule(new StdArrangementEntryMatcher(atom(nameFilter)));
     }
@@ -86,7 +86,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   }
 
   @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull ArrangementSettingsToken... conditions) {
+  protected static StdArrangementMatchRule rule(ArrangementSettingsToken @NotNull ... conditions) {
     return rule(ContainerUtil.map(conditions, it -> atom(it)));
   }
 
@@ -96,7 +96,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   }
 
   @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull ArrangementAtomMatchCondition... conditions) {
+  protected static StdArrangementMatchRule rule(ArrangementAtomMatchCondition @NotNull ... conditions) {
     ArrangementMatchCondition compositeCondition = ArrangementUtil.combine(conditions);
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(compositeCondition));
   }

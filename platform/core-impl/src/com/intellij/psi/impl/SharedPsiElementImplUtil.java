@@ -72,8 +72,7 @@ public class SharedPsiElementImplUtil {
     }
   }
 
-  @NotNull
-  public static PsiReference[] getReferences(PsiElement thisElement) {
+  public static PsiReference @NotNull [] getReferences(PsiElement thisElement) {
     PsiReference ref = thisElement.getReference();
     return ref != null ? new PsiReference[]{ref} : PsiReference.EMPTY_ARRAY;
   }

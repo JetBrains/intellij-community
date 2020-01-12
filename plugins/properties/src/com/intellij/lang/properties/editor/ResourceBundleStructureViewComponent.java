@@ -111,8 +111,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     PopupHandler.installPopupHandler(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
   }
 
-  @NotNull
-  private PsiFile[] getSelectedPsiFiles() {
+  private PsiFile @NotNull [] getSelectedPsiFiles() {
     return ContainerUtil.map2Array(myResourceBundle.getPropertiesFiles(), PsiFile.class, propFile -> propFile.getContainingFile());
   }
 

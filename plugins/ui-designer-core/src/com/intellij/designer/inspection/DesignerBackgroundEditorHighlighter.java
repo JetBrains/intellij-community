@@ -30,15 +30,13 @@ public final class DesignerBackgroundEditorHighlighter implements BackgroundEdit
     myHighlightingPasses = new HighlightingPass[]{new DesignerHighlightingPass(designer)};
   }
 
-  @NotNull
   @Override
-  public HighlightingPass[] createPassesForEditor() {
+  public HighlightingPass @NotNull [] createPassesForEditor() {
     return myHighlightingPasses;
   }
 
-  @NotNull
   @Override
-  public HighlightingPass[] createPassesForVisibleArea() {
+  public HighlightingPass @NotNull [] createPassesForVisibleArea() {
     return HighlightingPass.EMPTY_ARRAY;
   }
 }

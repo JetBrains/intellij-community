@@ -410,13 +410,13 @@ public class PyExtractMethodUtil {
 
   // Creates string for call
   @NotNull
-  private static String createCallArgsString(@NotNull final AbstractVariableData[] variableDatas) {
+  private static String createCallArgsString(final AbstractVariableData @NotNull [] variableDatas) {
     return StringUtil.join(ContainerUtil.mapNotNull(variableDatas, data -> data.isPassAsParameter() ? data.getOriginalName() : null), ",");
   }
 
   private static void processParameters(@NotNull final Project project,
                                         @NotNull final PyFunction generatedMethod,
-                                        @NotNull final AbstractVariableData[] variableData,
+                                        final AbstractVariableData @NotNull [] variableData,
                                         final boolean isMethod,
                                         final boolean isClassMethod,
                                         final boolean isStaticMethod) {
@@ -456,7 +456,7 @@ public class PyExtractMethodUtil {
   }
 
   @NotNull
-  private static Map<String, String> createMap(@NotNull final AbstractVariableData[] variableData) {
+  private static Map<String, String> createMap(final AbstractVariableData @NotNull [] variableData) {
     final Map<String, String> map = new HashMap<>();
     for (AbstractVariableData data : variableData) {
       map.put(data.getOriginalName(), data.getName());
@@ -497,7 +497,7 @@ public class PyExtractMethodUtil {
 
   @NotNull
   private static PyFunction generateMethodFromExpression(@NotNull final String methodName,
-                                                         @NotNull final AbstractVariableData[] variableData,
+                                                         final AbstractVariableData @NotNull [] variableData,
                                                          @NotNull final PsiElement expression,
                                                          @Nullable final PyUtil.MethodFlags flags, boolean isAsync) {
     final PyFunctionBuilder builder = new PyFunctionBuilder(methodName, expression);
@@ -519,7 +519,7 @@ public class PyExtractMethodUtil {
 
   @NotNull
   private static PyFunction generateMethodFromElements(@NotNull final String methodName,
-                                                       @NotNull final AbstractVariableData[] variableData,
+                                                       final AbstractVariableData @NotNull [] variableData,
                                                        @NotNull final List<PsiElement> elementsRange,
                                                        @Nullable PyUtil.MethodFlags flags,
                                                        boolean isAsync) {
@@ -565,7 +565,7 @@ public class PyExtractMethodUtil {
     }
   }
 
-  private static void addFakeParameters(@NotNull PyFunctionBuilder builder, @NotNull AbstractVariableData[] variableData) {
+  private static void addFakeParameters(@NotNull PyFunctionBuilder builder, AbstractVariableData @NotNull [] variableData) {
     for (AbstractVariableData data : variableData) {
       builder.parameter(data.getOriginalName());
     }

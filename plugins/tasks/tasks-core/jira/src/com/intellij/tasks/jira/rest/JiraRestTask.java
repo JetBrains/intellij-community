@@ -61,8 +61,7 @@ public class JiraRestTask extends JiraTask {
 
 
   @Override
-  @NotNull
-  public Comment[] getComments() {
+  public Comment @NotNull [] getComments() {
     return ContainerUtil.map2Array(myJiraIssue.getComments(), Comment.class, (Function<JiraComment, Comment>)comment -> new Comment() {
 
       @Override

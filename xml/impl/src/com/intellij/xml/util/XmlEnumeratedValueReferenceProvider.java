@@ -39,9 +39,8 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
 
   public final static Key<Boolean> SUPPRESS = Key.create("suppress attribute value references");
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
 
     if (XmlSchemaTagsProcessor.PROCESSING_FLAG.get() != null || context.get(SUPPRESS) != null) {
       return PsiReference.EMPTY_ARRAY;

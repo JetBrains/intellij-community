@@ -353,7 +353,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
-                           @NotNull CharSequence[] texts,
+                           CharSequence @NotNull [] texts,
                            @NotNull ProgressIndicator indicator) {
     final DocumentContent content1 = getContent1();
     final DocumentContent content2 = getContent2();
@@ -1082,9 +1082,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       // Will not happen for initial rediff
     }
 
-    @Nullable
     @Override
-    protected LogicalPosition[] getCaretPositions() {
+    protected LogicalPosition @Nullable [] getCaretPositions() {
       LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
       Pair<int[], Side> pair = transferLineFromOneside(position.line);
       LogicalPosition[] carets = new LogicalPosition[2];

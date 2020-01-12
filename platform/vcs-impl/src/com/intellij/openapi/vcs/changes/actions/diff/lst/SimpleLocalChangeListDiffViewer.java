@@ -111,7 +111,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @NotNull
     @Override
     public Runnable done(boolean isContentsEqual,
-                         @NotNull CharSequence[] texts,
+                         CharSequence @NotNull [] texts,
                          @NotNull List<? extends LineFragment> fragments,
                          @NotNull List<LocalTrackerDiffUtil.LineFragmentData> fragmentsData) {
       List<SimpleDiffChange> changes = new ArrayList<>();

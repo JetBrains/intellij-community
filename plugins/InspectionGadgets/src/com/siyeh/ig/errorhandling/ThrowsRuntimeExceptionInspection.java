@@ -34,9 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowsRuntimeExceptionInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final String exceptionName = (String)infos[0];
     if (MoveExceptionToJavadocFix.isApplicable((PsiJavaCodeReferenceElement)infos[1])) {
       return new InspectionGadgetsFix[] {

@@ -29,8 +29,7 @@ public @interface State {
    *
    * <p>Module-level: optional, corresponding module file will be used ({@code *.iml}).</p>
    */
-  @NotNull
-  Storage[] storages() default {};
+  Storage @NotNull [] storages() default {};
 
   /**
    * If set to false, complete project (or application) reload is required when the storage file is changed externally and the state has changed.

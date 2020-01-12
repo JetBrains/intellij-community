@@ -131,9 +131,8 @@ public class TracRepository extends BaseRepositoryImpl {
         return null;
       }
 
-      @NotNull
       @Override
-      public Comment[] getComments() {
+      public Comment @NotNull [] getComments() {
         return Comment.EMPTY_ARRAY;
       }
 

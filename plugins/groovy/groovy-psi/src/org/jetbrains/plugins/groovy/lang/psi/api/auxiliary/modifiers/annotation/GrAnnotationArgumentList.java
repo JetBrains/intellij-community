@@ -26,6 +26,5 @@ import com.intellij.psi.PsiAnnotationParameterList;
  */
 public interface GrAnnotationArgumentList extends GroovyPsiElement, PsiAnnotationParameterList {
   @Override
-  @NotNull
-  GrAnnotationNameValuePair[] getAttributes();
+  GrAnnotationNameValuePair @NotNull [] getAttributes();
 }

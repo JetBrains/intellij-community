@@ -232,9 +232,8 @@ public class PluginUpdateDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return ContainerUtil.ar(myIgnoreAction);
   }
 

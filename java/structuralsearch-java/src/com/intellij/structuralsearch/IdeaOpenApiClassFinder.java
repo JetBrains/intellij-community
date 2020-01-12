@@ -53,9 +53,8 @@ public class IdeaOpenApiClassFinder extends NonClasspathClassFinder {
     return !(scope instanceof StructuralSearchScriptScope) ? null : super.findClass(qualifiedName, scope);
   }
 
-  @NotNull
   @Override
-  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return !(scope instanceof StructuralSearchScriptScope) ? PsiPackage.EMPTY_ARRAY : super.getSubPackages(psiPackage, scope);
   }
 }

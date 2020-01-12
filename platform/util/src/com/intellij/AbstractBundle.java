@@ -43,23 +43,23 @@ public abstract class AbstractBundle {
   }
 
   @NotNull
-  public String getMessage(@NotNull String key, @NotNull Object... params) {
+  public String getMessage(@NotNull String key, Object @NotNull ... params) {
     return CommonBundle.message(getResourceBundle(), key, params);
   }
 
   @NotNull
-  public Supplier<String> localizedMessage(@NotNull String key, @NotNull Object... params) {
+  public Supplier<String> localizedMessage(@NotNull String key, Object @NotNull ... params) {
     return () -> getMessage(key, params);
   }
 
   @Nullable
-  public String messageOfNull(@NotNull String key, @NotNull Object... params) {
+  public String messageOfNull(@NotNull String key, Object @NotNull ... params) {
     return CommonBundle.messageOfNull(getResourceBundle(), key, params);
   }
 
   public String messageOrDefault(@NotNull String key,
                                  @Nullable String defaultValue,
-                                 @NotNull Object... params) {
+                                 Object @NotNull ... params) {
     return CommonBundle.messageOrDefault(getResourceBundle(), key, defaultValue, params);
   }
 

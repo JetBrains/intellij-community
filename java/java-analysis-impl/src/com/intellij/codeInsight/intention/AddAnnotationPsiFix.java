@@ -37,8 +37,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
 
   public AddAnnotationPsiFix(@NotNull String fqn,
                              @NotNull PsiModifierListOwner modifierListOwner,
-                             @NotNull PsiNameValuePair[] values,
-                             @NotNull String... annotationsToRemove) {
+                             PsiNameValuePair @NotNull [] values,
+                             String @NotNull ... annotationsToRemove) {
     super(modifierListOwner);
     myAnnotation = fqn;
     ObjectUtils.assertAllElementsNotNull(values);
@@ -189,7 +189,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     return inserted;
   }
 
-  public static void removePhysicalAnnotations(@NotNull PsiModifierListOwner owner, @NotNull String... fqns) {
+  public static void removePhysicalAnnotations(@NotNull PsiModifierListOwner owner, String @NotNull ... fqns) {
     for (String fqn : fqns) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, true, fqn);
       if (annotation != null && !AnnotationUtil.isInferredAnnotation(annotation)) {
@@ -198,8 +198,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     }
   }
 
-  @NotNull
-  protected String[] getAnnotationsToRemove() {
+  protected String @NotNull [] getAnnotationsToRemove() {
     return myAnnotationsToRemove;
   }
 

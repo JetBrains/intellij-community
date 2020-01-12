@@ -50,7 +50,7 @@ public class ConfigFileImpl extends SimpleModificationTracker implements ConfigF
     final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
     myFilePointer = pointerManager.create(configuration.getUrl(), this, new VirtualFilePointerListener() {
       @Override
-      public void validityChanged(@NotNull final VirtualFilePointer[] pointers) {
+      public void validityChanged(final VirtualFilePointer @NotNull [] pointers) {
         myPsiFile = null;
         onChange();
       }

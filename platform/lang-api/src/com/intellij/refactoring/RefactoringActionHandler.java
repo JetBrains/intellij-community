@@ -43,5 +43,5 @@ public interface RefactoringActionHandler {
    * @param dataContext can be {@code null} for some but not all of refactoring action handlers
    *                    (it is recommended to pass {@code DataManager.getDataContext()} instead of {@code null})
    */
-  void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext);
+  void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext);
 }

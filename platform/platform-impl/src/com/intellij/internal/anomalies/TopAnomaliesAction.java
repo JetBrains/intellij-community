@@ -171,9 +171,8 @@ public class TopAnomaliesAction extends ActionGroup {
     e.getPresentation().setText("Top " + LIMIT);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return Holder.CHILDREN;
   }
 

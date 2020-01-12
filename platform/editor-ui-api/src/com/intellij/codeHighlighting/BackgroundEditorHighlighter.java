@@ -4,13 +4,11 @@ package com.intellij.codeHighlighting;
 import org.jetbrains.annotations.NotNull;
 
 public interface BackgroundEditorHighlighter {
-  @NotNull
-  HighlightingPass[] createPassesForEditor();
+  HighlightingPass @NotNull [] createPassesForEditor();
 
   /**
    * @deprecated unused
    */
   @Deprecated
-  @NotNull
-  HighlightingPass[] createPassesForVisibleArea();
+  HighlightingPass @NotNull [] createPassesForVisibleArea();
 }

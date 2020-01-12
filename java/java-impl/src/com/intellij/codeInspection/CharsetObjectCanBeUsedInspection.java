@@ -140,10 +140,10 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
 
   abstract static class CharsetCallMatcher {
     @NotNull final String myClassName;
-    @NotNull final String[] myParameters;
+    final String @NotNull [] myParameters;
     final int myCharsetParameterIndex;
 
-    CharsetCallMatcher(@NotNull String className, @NotNull String... parameters) {
+    CharsetCallMatcher(@NotNull String className, String @NotNull ... parameters) {
       myClassName = className;
       myParameters = parameters;
       int index = -1;
@@ -198,7 +198,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   }
 
   static class CharsetConstructorMatcher extends CharsetCallMatcher {
-    CharsetConstructorMatcher(@NotNull String className, @NotNull String... parameters) {
+    CharsetConstructorMatcher(@NotNull String className, String @NotNull ... parameters) {
       super(className, parameters);
     }
 
@@ -217,7 +217,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   static class CharsetMethodMatcher extends CharsetCallMatcher {
     @NotNull private final String myMethodName;
 
-    CharsetMethodMatcher(@NotNull String className, @NotNull String methodName, @NotNull String... parameters) {
+    CharsetMethodMatcher(@NotNull String className, @NotNull String methodName, String @NotNull ... parameters) {
       super(className, parameters);
       myMethodName = methodName;
     }

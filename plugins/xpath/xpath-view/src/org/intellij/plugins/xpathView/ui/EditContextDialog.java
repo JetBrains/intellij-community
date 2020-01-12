@@ -473,8 +473,7 @@ public class EditContextDialog extends DialogWrapper {
 
   private class MyVariableContext extends SimpleVariableContext {
     @Override
-    @NotNull
-    public String[] getVariablesInScope(XPathElement element) {
+    public String @NotNull [] getVariablesInScope(XPathElement element) {
       final Collection<Variable> variables = myVariableTableModel.getVariables();
       return Variable.asSet(variables).toArray(new String[variables.size()]);
     }

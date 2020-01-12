@@ -236,8 +236,7 @@ public class BuildTargetSourcesState implements BuildListener {
     return JpsPathUtil.urlToFile(url).getAbsolutePath();
   }
 
-  @NotNull
-  private static byte[] sum(byte[] firstHash, byte[] secondHash) {
+  private static byte @NotNull [] sum(byte[] firstHash, byte[] secondHash) {
     byte[] result = firstHash != null ? firstHash : new byte[HASH_SIZE];
     for (int i = 0; i < result.length; i++) {
       result[i] += secondHash[i];

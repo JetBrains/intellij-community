@@ -32,8 +32,7 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return new PsiElement[] {myInnerClass};
   }
 

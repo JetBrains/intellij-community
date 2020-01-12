@@ -26,7 +26,7 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
   @Override
   public HgPromptChoice promptUser(@NotNull final String message,
-                                   @NotNull final HgPromptChoice[] choices,
+                                   final HgPromptChoice @NotNull [] choices,
                                    @NotNull final HgPromptChoice defaultChoice) {
 
     Matcher localDelMatcher = LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN.matcher(message);

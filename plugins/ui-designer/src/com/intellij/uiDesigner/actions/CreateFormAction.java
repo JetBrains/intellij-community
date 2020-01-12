@@ -37,8 +37,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
   }
 
   @Override
-  @NotNull
-  protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
     final MyInputValidator validator = new JavaNameValidator(project, directory);
 
     final DialogWrapper dialog = new MyDialog(project, validator);
@@ -48,8 +47,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
   }
 
   @Override
-  @NotNull
-  protected PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
     PsiElement createdFile;
     PsiClass newClass = null;
     try {

@@ -81,8 +81,7 @@ class NameUsage implements PsiElementUsage {
       }
 
       @Override
-      @NotNull
-      public TextChunk[] getText() {
+      public TextChunk @NotNull [] getText() {
         PyPsiUtils.assertValid(myElement);
         if (myElement.isValid()) {
           PsiFile file = myElement.getContainingFile();

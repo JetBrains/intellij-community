@@ -44,8 +44,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
     Collection<PsiClass> allClasses = new SmartList<>();
     processClassesWithName(name, Processors.cancelableCollectProcessor(allClasses), scope, null);
     if (allClasses.isEmpty()) return PsiClass.EMPTY_ARRAY;
@@ -88,14 +87,12 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  @NotNull
-  public String[] getAllClassNames() {
+  public String @NotNull [] getAllClassNames() {
     return ArrayUtilRt.toStringArray(StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY, myProject));
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope) {
+  public PsiMethod @NotNull [] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope) {
     final Collection<? extends PsiMethod> methods = StubIndex.getElements(GrMethodNameIndex.KEY, name, myProject,
                                                                           new GrSourceFilterScope(scope), GrMethod.class);
     final Collection<? extends PsiMethod> annMethods = StubIndex.getElements(GrAnnotationMethodNameIndex.KEY, name, myProject,
@@ -124,28 +121,24 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
+  public PsiMethod @NotNull [] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
     return getMethodsByName(name, scope);
   }
 
-  @NotNull
   @Override
-  public PsiField[] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
+  public PsiField @NotNull [] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
     return getFieldsByName(name, scope);
   }
 
   @Override
-  @NotNull
-  public String[] getAllMethodNames() {
+  public String @NotNull [] getAllMethodNames() {
     Collection<String> keys = StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, myProject);
     keys.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY, myProject));
     return ArrayUtilRt.toStringArray(keys);
   }
 
   @Override
-  @NotNull
-  public PsiField[] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
+  public PsiField @NotNull [] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
     final Collection<? extends PsiField> fields = StubIndex.getElements(GrFieldNameIndex.KEY, name, myProject,
                                                                         new GrSourceFilterScope(scope), GrField.class);
     if (fields.isEmpty()) return PsiField.EMPTY_ARRAY;
@@ -153,8 +146,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  @NotNull
-  public String[] getAllFieldNames() {
+  public String @NotNull [] getAllFieldNames() {
     Collection<String> fields = StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, myProject);
     return ArrayUtilRt.toStringArray(fields);
   }

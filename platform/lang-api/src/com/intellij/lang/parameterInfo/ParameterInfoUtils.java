@@ -42,7 +42,7 @@ public class ParameterInfoUtils {
 
   @SafeVarargs
   @Nullable
-  public static <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, @NotNull Class<? extends PsiElement>... stopAt) {
+  public static <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, Class<? extends PsiElement> @NotNull ... stopAt) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 

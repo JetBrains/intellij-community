@@ -22,8 +22,7 @@ public class FileContent extends UserDataHolderBase {
     myVirtualFile = virtualFile;
   }
 
-  @NotNull
-  public byte[] getBytesOrEmptyArray() {
+  public byte @NotNull [] getBytesOrEmptyArray() {
     try {
       return getBytes();
     } catch (IOException e) {
@@ -31,8 +30,7 @@ public class FileContent extends UserDataHolderBase {
     }
   }
 
-  @NotNull
-  public byte[] getBytes() throws IOException {
+  public byte @NotNull [] getBytes() throws IOException {
     if (myCachedBytes == null) {
       if (myVirtualFile.isValid()) {
         myCachedTimeStamp = myVirtualFile.getTimeStamp();

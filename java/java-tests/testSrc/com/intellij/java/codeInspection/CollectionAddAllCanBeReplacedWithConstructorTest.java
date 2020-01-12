@@ -25,9 +25,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CollectionAddAllCanBeReplacedWithConstructorTest extends LightQuickFixParameterizedTestCase {
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new CollectionAddAllCanBeReplacedWithConstructorInspection(),
     };

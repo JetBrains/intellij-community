@@ -343,7 +343,7 @@ public class TextChangesStorage {
    * @param index             target symbol index (is assumed to be 'client text' index)
    * @return                  'client text' symbol at the given index
    */
-  public char charAt(@NotNull char[] originalData, int index) {
+  public char charAt(char @NotNull [] originalData, int index) {
     int changeIndex = getChangeIndex(index);
     if (changeIndex >= 0) {
       // Target char is contained at the stored change text
@@ -375,7 +375,7 @@ public class TextChangesStorage {
    * @param end               target substring end offset (against the 'client text'; exclusive)
    * @return                  substring for the given text range
    */
-  public CharSequence substring(@NotNull char[] originalData, int start, int end) {
+  public CharSequence substring(char @NotNull [] originalData, int start, int end) {
     if (myChanges.isEmpty()) {
       return new String(originalData, start, end - start);
     }

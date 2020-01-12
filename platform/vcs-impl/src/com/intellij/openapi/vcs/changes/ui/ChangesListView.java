@@ -272,7 +272,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  static Stream<VirtualFile> getVirtualFiles(@Nullable TreePath[] paths, @Nullable Object tag) {
+  static Stream<VirtualFile> getVirtualFiles(TreePath @Nullable [] paths, @Nullable Object tag) {
     return stream(paths)
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
@@ -282,7 +282,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  static Stream<FilePath> getFilePaths(@Nullable TreePath[] paths, @Nullable Object tag) {
+  static Stream<FilePath> getFilePaths(TreePath @Nullable [] paths, @Nullable Object tag) {
     return stream(paths)
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
@@ -302,7 +302,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  static Stream<Change> getChanges(@NotNull Project project, @Nullable TreePath[] paths) {
+  static Stream<Change> getChanges(@NotNull Project project, TreePath @Nullable [] paths) {
     Stream<Change> changes = stream(paths)
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))

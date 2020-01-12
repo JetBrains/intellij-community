@@ -82,7 +82,7 @@ public class PySdkUtil {
                                                @NonNls String[] command,
                                                @Nullable @NonNls Map<String, String> extraEnv,
                                                final int timeout,
-                                               @Nullable byte[] stdin,
+                                               byte @Nullable [] stdin,
                                                boolean needEOFMarker) {
     return getProcessOutput(new GeneralCommandLine(command), homePath, extraEnv, timeout, stdin, needEOFMarker);
   }
@@ -96,7 +96,7 @@ public class PySdkUtil {
   public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
                                                @Nullable @NonNls Map<String, String> extraEnv,
                                                int timeout,
-                                               @Nullable byte[] stdin, boolean needEOFMarker) {
+                                               byte @Nullable [] stdin, boolean needEOFMarker) {
     if (homePath == null || !new File(homePath).exists()) {
       return new ProcessOutput();
     }

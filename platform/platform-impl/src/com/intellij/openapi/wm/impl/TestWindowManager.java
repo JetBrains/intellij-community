@@ -86,8 +86,7 @@ public final class TestWindowManager extends WindowManagerEx {
   public void resetWindow(Window window) { }
 
   @Override
-  @NotNull
-  public ProjectFrameHelper[] getAllProjectFrames() {
+  public ProjectFrameHelper @NotNull [] getAllProjectFrames() {
     return new ProjectFrameHelper[0];
   }
 

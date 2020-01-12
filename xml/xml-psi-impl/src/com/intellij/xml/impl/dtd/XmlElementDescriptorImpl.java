@@ -95,9 +95,8 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     myElementDecl = (XmlElementDecl) element;
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies(){
+  public Object @NotNull [] getDependencies(){
     return new Object[]{myElementDecl, ExternalResourceManager.getInstance()};
   }
 
@@ -222,7 +221,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     return getCachedAttributeDeclarations((XmlElement)getDeclaration());
   }
 
-  public static @NotNull XmlAttlistDecl[] getCachedAttributeDeclarations(@Nullable XmlElement owner) {
+  public static XmlAttlistDecl @NotNull [] getCachedAttributeDeclarations(@Nullable XmlElement owner) {
     if (owner == null) return XmlAttlistDecl.EMPTY_ARRAY;
     owner = (XmlElement)PsiTreeUtil.getParentOfType(owner, ourParentClassesToScanAttributes);
     if (owner == null) return XmlAttlistDecl.EMPTY_ARRAY;

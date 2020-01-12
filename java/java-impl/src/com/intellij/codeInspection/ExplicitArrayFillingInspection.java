@@ -140,11 +140,10 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         }
       }
 
-      @Nullable
-      private PsiElement[] getDefs(@NotNull PsiCodeBlock block,
-                                   @NotNull PsiVariable arrayVar,
-                                   @NotNull PsiReferenceExpression arrayRef,
-                                   @Nullable Object defaultValue) {
+      private PsiElement @Nullable [] getDefs(@NotNull PsiCodeBlock block,
+                                              @NotNull PsiVariable arrayVar,
+                                              @NotNull PsiReferenceExpression arrayRef,
+                                              @Nullable Object defaultValue) {
         PsiElement[] defs = DefUseUtil.getDefs(block, arrayVar, arrayRef);
         PsiExpression[] expressions = new PsiExpression[defs.length];
         for (int i = 0; i < defs.length; i++) {
@@ -177,7 +176,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Nullable
-      private Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, @NotNull PsiElement[] defs) {
+      private Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, PsiElement @NotNull [] defs) {
         Set<Integer> set = new HashSet<>();
         for (PsiElement def : defs) {
           int start = flow.getStartOffset(def);

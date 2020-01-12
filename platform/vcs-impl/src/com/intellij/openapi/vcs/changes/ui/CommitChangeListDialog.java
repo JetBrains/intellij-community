@@ -444,7 +444,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   private class CommitAction extends AbstractAction implements OptionAction {
-    @NotNull private Action[] myOptions = new Action[0];
+    private Action @NotNull [] myOptions = new Action[0];
 
     private CommitAction(String okActionText) {
       super(okActionText);
@@ -456,9 +456,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       myExecutorEventDispatcher.getMulticaster().executorCalled(null);
     }
 
-    @NotNull
     @Override
-    public Action[] getOptions() {
+    public Action @NotNull [] getOptions() {
       return myOptions;
     }
 
@@ -474,8 +473,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<Action> result = new ArrayList<>();
 
     if (myCommitAction != null) {

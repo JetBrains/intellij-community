@@ -12,7 +12,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private final QuickFix[] myFixes;
   private final String myDescriptionTemplate;
 
-  public CommonProblemDescriptorImpl(@Nullable QuickFix[] fixes, @NotNull final String descriptionTemplate) {
+  public CommonProblemDescriptorImpl(QuickFix @Nullable [] fixes, @NotNull final String descriptionTemplate) {
     if (fixes != null && fixes.length > 0) {
       myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), ArrayUtil.newArray(ArrayUtil.getComponentType(fixes), 0))
                                                 : fixes;
@@ -37,8 +37,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   }
 
   @Override
-  @Nullable
-  public QuickFix[] getFixes() {
+  public QuickFix @Nullable [] getFixes() {
     return myFixes;
   }
 

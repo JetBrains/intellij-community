@@ -82,7 +82,7 @@ public class TypeMigrationLabeler {
 
   public TypeMigrationLabeler(TypeMigrationRules rules,
                               Function<PsiElement, PsiType> migrationRootTypeFunction,
-                              @Nullable("any root accepted if null") PsiElement[] allowedRoots,
+                              PsiElement @Nullable("any root accepted if null") [] allowedRoots,
                               Project project) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
@@ -131,8 +131,7 @@ public class TypeMigrationLabeler {
     return map2Usages(myFailedConversions.keySet());
   }
 
-  @NotNull
-  private static UsageInfo[] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
+  private static UsageInfo @NotNull [] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
     return ContainerUtil
       .map2Array(usages, new UsageInfo[usages.size()], pair -> {
         final PsiExpression expr = pair.getFirst().getElement();

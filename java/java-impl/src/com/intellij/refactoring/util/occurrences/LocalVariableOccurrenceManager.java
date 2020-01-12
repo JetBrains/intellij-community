@@ -32,15 +32,13 @@ public class LocalVariableOccurrenceManager extends BaseOccurrenceManager {
     myLocalVariable = localVariable;
   }
 
-  @NotNull
   @Override
-  public PsiExpression[] defaultOccurrences() {
+  public PsiExpression @NotNull [] defaultOccurrences() {
     return PsiExpression.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiExpression[] findOccurrences() {
+  public PsiExpression @NotNull [] findOccurrences() {
     return CodeInsightUtil.findReferenceExpressions(RefactoringUtil.getVariableScope(myLocalVariable), myLocalVariable);
   }
 

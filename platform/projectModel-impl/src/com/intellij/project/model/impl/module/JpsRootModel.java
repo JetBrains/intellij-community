@@ -55,9 +55,8 @@ public class JpsRootModel extends RootModelBase implements ModuleRootModel {
     return myContentEntries;
   }
 
-  @NotNull
   @Override
-  public OrderEntry[] getOrderEntries() {
+  public OrderEntry @NotNull [] getOrderEntries() {
     return OrderEntry.EMPTY_ARRAY;
   }
 

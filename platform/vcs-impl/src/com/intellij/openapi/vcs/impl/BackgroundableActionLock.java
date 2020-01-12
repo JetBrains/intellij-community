@@ -24,9 +24,9 @@ import java.util.Objects;
 
 public class BackgroundableActionLock {
   @NotNull private final Project myProject;
-  @NotNull private final Object[] myKeys;
+  private final Object @NotNull [] myKeys;
 
-  BackgroundableActionLock(@NotNull Project project, @NotNull final Object[] keys) {
+  BackgroundableActionLock(@NotNull Project project, final Object @NotNull [] keys) {
     myProject = project;
     myKeys = keys;
   }
@@ -48,22 +48,22 @@ public class BackgroundableActionLock {
 
 
   @NotNull
-  public static BackgroundableActionLock getLock(@NotNull Project project, @NotNull Object... keys) {
+  public static BackgroundableActionLock getLock(@NotNull Project project, Object @NotNull ... keys) {
     return new BackgroundableActionLock(project, keys);
   }
 
   @CalledInAwt
-  public static boolean isLocked(@NotNull Project project, @NotNull Object... keys) {
+  public static boolean isLocked(@NotNull Project project, Object @NotNull ... keys) {
     return getManager(project).isBackgroundTaskRunning(keys);
   }
 
   @CalledInAwt
-  public static void lock(@NotNull Project project, @NotNull Object... keys) {
+  public static void lock(@NotNull Project project, Object @NotNull ... keys) {
     getManager(project).startBackgroundTask(keys);
   }
 
   @CalledInAwt
-  public static void unlock(@NotNull Project project, @NotNull Object... keys) {
+  public static void unlock(@NotNull Project project, Object @NotNull ... keys) {
     if (project.isDisposed()) return;
     getManager(project).stopBackgroundTask(keys);
   }

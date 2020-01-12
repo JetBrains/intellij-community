@@ -60,8 +60,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       myVcsManager = vcsManager;
     }
 
-    @NotNull
-    public VirtualFile[] execute() {
+    public VirtualFile @NotNull [] execute() {
       try {
         ourInProgress.set(Boolean.TRUE);
         return myVcsManager.getRootsUnderVcs(SvnVcs.getInstance(myProject));
@@ -262,8 +261,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getNotFilteredRoots() {
+  public VirtualFile @NotNull [] getNotFilteredRoots() {
     return myRootsHelper.execute();
   }
 

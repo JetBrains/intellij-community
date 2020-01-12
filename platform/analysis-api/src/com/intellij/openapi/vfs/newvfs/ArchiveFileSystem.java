@@ -136,9 +136,8 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return getHandler(file).getAttributes(getRelativePath(file));
   }
 
-  @NotNull
   @Override
-  public String[] list(@NotNull VirtualFile file) {
+  public String @NotNull [] list(@NotNull VirtualFile file) {
     return getHandler(file).list(getRelativePath(file));
   }
 
@@ -188,9 +187,8 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return ArchiveHandler.DEFAULT_LENGTH;
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     return getHandler(file).contentsToByteArray(getRelativePath(file));
   }
 

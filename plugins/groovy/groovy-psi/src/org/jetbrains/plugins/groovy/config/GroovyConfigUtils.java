@@ -47,8 +47,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return ourGroovyConfigUtils;
   }
 
-  @NotNull
-  public static File[] getGroovyAllJars(@NotNull String path) {
+  public static File @NotNull [] getGroovyAllJars(@NotNull String path) {
     return LibrariesUtil.getFilesInDirectoryByPattern(path, GROOVY_ALL_JAR_PATTERN);
   }
 

@@ -25,9 +25,8 @@ public class ShowNotificationIconsDialogAction extends AnAction implements DumbA
         setResizable(false);
       }
 
-      @NotNull
       @Override
-      protected Action[] createLeftSideActions() {
+      protected Action @NotNull [] createLeftSideActions() {
         return new Action[]{new AbstractAction("&Repaint icons") {
           @Override
           public void actionPerformed(ActionEvent e) {

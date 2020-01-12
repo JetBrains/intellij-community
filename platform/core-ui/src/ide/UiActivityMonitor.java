@@ -13,10 +13,10 @@ public abstract class UiActivityMonitor {
   }
 
   @NotNull
-  public abstract BusyObject getBusy(@NotNull Project project, @NotNull UiActivity ... toWatch);
+  public abstract BusyObject getBusy(@NotNull Project project, UiActivity @NotNull ... toWatch);
 
   @NotNull
-  public abstract BusyObject getBusy(@NotNull UiActivity ... toWatch);
+  public abstract BusyObject getBusy(UiActivity @NotNull ... toWatch);
 
   public abstract void addActivity(@NotNull Project project, @NotNull UiActivity activity);
 

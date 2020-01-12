@@ -716,14 +716,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   @Override
-  @NotNull
-  public PluginId[] getDependentPluginIds() {
+  public PluginId @NotNull [] getDependentPluginIds() {
     return myDependencies;
   }
 
   @Override
-  @NotNull
-  public PluginId[] getOptionalDependentPluginIds() {
+  public PluginId @NotNull [] getOptionalDependentPluginIds() {
     return myOptionalDependencies;
   }
 

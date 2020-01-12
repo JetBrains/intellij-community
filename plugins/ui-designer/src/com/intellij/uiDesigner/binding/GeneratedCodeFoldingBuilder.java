@@ -20,8 +20,7 @@ import java.util.List;
  */
 public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     MyFoldingVisitor visitor = new MyFoldingVisitor();
     root.accept(visitor);
     return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY);

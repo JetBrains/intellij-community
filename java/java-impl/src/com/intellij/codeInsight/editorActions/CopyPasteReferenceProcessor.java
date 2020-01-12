@@ -171,10 +171,9 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
             qClassName, staticMemberName));
   }
 
-  @NotNull
-  protected abstract TRef[] findReferencesToRestore(PsiFile file,
-                                                    RangeMarker bounds,
-                                                    ReferenceData[] referenceData);
+  protected abstract TRef @NotNull [] findReferencesToRestore(PsiFile file,
+                                                              RangeMarker bounds,
+                                                              ReferenceData[] referenceData);
 
   protected PsiElement resolveReferenceIgnoreOverriding(PsiPolyVariantReference reference) {
     PsiElement referent = reference.resolve();
@@ -191,7 +190,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
                                             TRef[] refs,
                                             Set<String> imported);
 
-  private static void askReferencesToRestore(Project project, @NotNull PsiElement[] refs,
+  private static void askReferencesToRestore(Project project, PsiElement @NotNull [] refs,
                                       ReferenceData[] referenceData) {
     PsiManager manager = PsiManager.getInstance(project);
 

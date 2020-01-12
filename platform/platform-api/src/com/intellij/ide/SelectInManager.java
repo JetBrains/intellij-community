@@ -48,8 +48,7 @@ public final class SelectInManager  {
     return targets;
   }
 
-  @NotNull
-  public SelectInTarget[] getTargets() {
+  public SelectInTarget @NotNull [] getTargets() {
     return getTargetList().toArray(new SelectInTarget[0]);
   }
 

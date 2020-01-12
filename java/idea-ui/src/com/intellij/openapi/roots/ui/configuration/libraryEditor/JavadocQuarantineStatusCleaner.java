@@ -42,7 +42,7 @@ public class JavadocQuarantineStatusCleaner {
 
   private static final String QUARANTINE_ATTRIBUTE = "com.apple.quarantine";
 
-  public static void cleanIfNeeded(@NotNull VirtualFile... docFolders) {
+  public static void cleanIfNeeded(VirtualFile @NotNull ... docFolders) {
     if (docFolders.length > 0 && SystemInfo.isMac) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<String> quarantined = Stream.of(docFolders)

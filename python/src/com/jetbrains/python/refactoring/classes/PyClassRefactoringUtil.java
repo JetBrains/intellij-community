@@ -152,7 +152,7 @@ public final class PyClassRefactoringUtil {
    * @return newly added methods or existing one (if skipIfExists is true and method already exists)
    */
   @NotNull
-  public static List<PyFunction> addMethods(@NotNull final PyClass destination, final boolean skipIfExist, @NotNull final PyFunction... methods) {
+  public static List<PyFunction> addMethods(@NotNull final PyClass destination, final boolean skipIfExist, final PyFunction @NotNull ... methods) {
 
     final PyStatementList destStatementList = destination.getStatementList();
     final List<PyFunction> result = new ArrayList<>(methods.length);
@@ -222,7 +222,7 @@ public final class PyClassRefactoringUtil {
 
   public static void restoreNamedReferences(@NotNull final PsiElement newElement,
                                             @Nullable final PsiElement oldElement,
-                                            @NotNull final PsiElement[] otherMovedElements) {
+                                            final PsiElement @NotNull [] otherMovedElements) {
     newElement.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -247,7 +247,7 @@ public final class PyClassRefactoringUtil {
 
   public static void restoreReference(@NotNull PyReferenceExpression sourceNode,
                                       @NotNull PyReferenceExpression targetNode,
-                                      @NotNull PsiElement[] otherMovedElements) {
+                                      PsiElement @NotNull [] otherMovedElements) {
     try {
       PsiNamedElement target = sourceNode.getCopyableUserData(ENCODED_IMPORT);
       final String asName = sourceNode.getCopyableUserData(ENCODED_IMPORT_AS);
@@ -350,7 +350,7 @@ public final class PyClassRefactoringUtil {
    * @param element     element to store references for
    * @param namesToSkip if reference inside of element has one of this names, it will not be saved.
    */
-  public static void rememberNamedReferences(@NotNull final PsiElement element, @NotNull final String... namesToSkip) {
+  public static void rememberNamedReferences(@NotNull final PsiElement element, final String @NotNull ... namesToSkip) {
     element.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -533,7 +533,7 @@ public final class PyClassRefactoringUtil {
    */
   public static void addSuperclasses(@NotNull final Project project,
                                      @NotNull final PyClass clazz,
-                                     @NotNull final PyClass... superClasses) {
+                                     final PyClass @NotNull ... superClasses) {
 
     final Collection<String> superClassNames = new ArrayList<>();
 

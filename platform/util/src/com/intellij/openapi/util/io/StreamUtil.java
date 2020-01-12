@@ -35,8 +35,7 @@ public class StreamUtil {
     return total;
   }
 
-  @NotNull
-  public static byte[] loadFromStream(@NotNull InputStream inputStream) throws IOException {
+  public static byte @NotNull [] loadFromStream(@NotNull InputStream inputStream) throws IOException {
     final UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
     try {
       copyStreamContent(inputStream, outputStream);
@@ -73,15 +72,13 @@ public class StreamUtil {
     return StringFactory.createShared(convertSeparators(s.toCharArray()));
   }
 
-  @NotNull
-  public static char[] readTextAndConvertSeparators(@NotNull Reader reader) throws IOException {
+  public static char @NotNull [] readTextAndConvertSeparators(@NotNull Reader reader) throws IOException {
     char[] buffer = readText(reader);
 
     return convertSeparators(buffer);
   }
 
-  @NotNull
-  private static char[] convertSeparators(@NotNull char[] buffer) {
+  private static char @NotNull [] convertSeparators(char @NotNull [] buffer) {
     int dst = 0;
     char prev = ' ';
     for (char c : buffer) {
@@ -114,8 +111,7 @@ public class StreamUtil {
     return StringFactory.createShared(readText(reader));
   }
 
-  @NotNull
-  private static char[] readText(@NotNull Reader reader) throws IOException {
+  private static char @NotNull [] readText(@NotNull Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
 
     char[] buffer = new char[2048];

@@ -1187,8 +1187,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Nullable
     private PyArgumentList myParameterOwner;
 
-    @NotNull
-    private Object[] myItemsToShow;
+    private Object @NotNull [] myItemsToShow;
 
     private int myIndex;
 
@@ -1202,7 +1201,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     @Override
     @NotNull
-    public String setupUIComponentPresentation(@NotNull String[] texts, @NotNull EnumSet<Flag>[] flags, @NotNull Color background) {
+    public String setupUIComponentPresentation(String @NotNull [] texts, EnumSet<Flag> @NotNull [] flags, @NotNull Color background) {
       assertEquals(texts.length, flags.length);
       myListOfTexts.add(texts);
       myListOfFlags.add(flags);
@@ -1293,13 +1292,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
-    @NotNull
-    public Object[] getItemsToShow() {
+    public Object @NotNull [] getItemsToShow() {
       return myItemsToShow;
     }
 
     @Override
-    public void setItemsToShow(@NotNull Object[] items) {
+    public void setItemsToShow(Object @NotNull [] items) {
       myItemsToShow = items;
     }
 
@@ -1368,11 +1366,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       throw new UnsupportedOperationException();
     }
 
-    private void check(@NotNull String text, @NotNull String[] highlighted) {
+    private void check(@NotNull String text, String @NotNull [] highlighted) {
       check(text, highlighted, ArrayUtilRt.EMPTY_STRING_ARRAY);
     }
 
-    private void check(@NotNull String text, @NotNull String[] highlighted, @NotNull String[] disabled) {
+    private void check(@NotNull String text, String @NotNull [] highlighted, String @NotNull [] disabled) {
       assertEquals("Number of collected hints is wrong", 1, myItemsToShow.length);
       check(text, highlighted, disabled, 0);
     }
@@ -1392,7 +1390,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
      * @param disabled    expected disabled substrings of hint
      * @param index       hint index
      */
-    private void check(@NotNull String text, @NotNull String[] highlighted, @NotNull String[] disabled, int index) {
+    private void check(@NotNull String text, String @NotNull [] highlighted, String @NotNull [] disabled, int index) {
       final String[] hintText = myListOfTexts.get(index);
       final EnumSet<Flag>[] hintFlags = myListOfFlags.get(index);
 

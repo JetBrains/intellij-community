@@ -136,7 +136,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     assertEquals(textAfter, file.getText());
   }
 
-  public void formatEveryoneAndCheckIfResultEqual(@NotNull final String...before) {
+  public void formatEveryoneAndCheckIfResultEqual(final String @NotNull ... before) {
     assert before.length > 1;
     final PsiFile file = createFile("A.java", "");
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());

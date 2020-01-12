@@ -41,8 +41,7 @@ public abstract class PsiShortNamesCache {
    * @param name the name of the files to find.
    * @return the list of files in the project which have the specified name.
    */
-  @NotNull
-  public PsiFile[] getFilesByName(@NotNull String name) {
+  public PsiFile @NotNull [] getFilesByName(@NotNull String name) {
     return PsiFile.EMPTY_ARRAY;
   }
 
@@ -51,8 +50,7 @@ public abstract class PsiShortNamesCache {
    *
    * @return the list of all file names in the project.
    */
-  @NotNull
-  public String[] getAllFileNames() {
+  public String @NotNull [] getAllFileNames() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -63,8 +61,7 @@ public abstract class PsiShortNamesCache {
    * @param scope the scope in which classes are searched.
    * @return the list of found classes.
    */
-  @NotNull
-  public abstract PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
+  public abstract PsiClass @NotNull [] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all classes in the project and
@@ -72,8 +69,7 @@ public abstract class PsiShortNamesCache {
    *
    * @return the list of all class names.
    */
-  @NotNull
-  public abstract String[] getAllClassNames();
+  public abstract String @NotNull [] getAllClassNames();
 
   public boolean processAllClassNames(@NotNull Processor<? super String> processor) {
     return ContainerUtil.process(getAllClassNames(), processor);
@@ -103,14 +99,11 @@ public abstract class PsiShortNamesCache {
    * @param scope the scope in which methods are searched.
    * @return the list of found methods.
    */
-  @NotNull
-  public abstract PsiMethod[] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope);
+  public abstract PsiMethod @NotNull [] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope);
 
-  @NotNull
-  public abstract PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
+  public abstract PsiMethod @NotNull [] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
 
-  @NotNull
-  public abstract PsiField[] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
+  public abstract PsiField @NotNull [] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
 
   public abstract boolean processMethodsWithName(@NonNls @NotNull String name,
                                                  @NotNull GlobalSearchScope scope,
@@ -137,8 +130,7 @@ public abstract class PsiShortNamesCache {
    *
    * @return the list of all method names.
    */
-  @NotNull
-  public abstract String[] getAllMethodNames();
+  public abstract String @NotNull [] getAllMethodNames();
 
   /**
    * Returns the list of all fields with the specified name in the specified scope.
@@ -147,8 +139,7 @@ public abstract class PsiShortNamesCache {
    * @param scope the scope in which fields are searched.
    * @return the list of found fields.
    */
-  @NotNull
-  public abstract PsiField[] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
+  public abstract PsiField @NotNull [] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all fields in the project and
@@ -156,8 +147,7 @@ public abstract class PsiShortNamesCache {
    *
    * @return the list of all field names.
    */
-  @NotNull
-  public abstract String[] getAllFieldNames();
+  public abstract String @NotNull [] getAllFieldNames();
 
   public boolean processFieldsWithName(@NotNull String name,
                                        @NotNull Processor<? super PsiField> processor,

@@ -160,7 +160,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
   }
 
-  private void setAcceleratorFromShortcuts(@NotNull Shortcut[] shortcuts) {
+  private void setAcceleratorFromShortcuts(Shortcut @NotNull [] shortcuts) {
     for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
         final KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();

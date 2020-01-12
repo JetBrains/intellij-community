@@ -109,8 +109,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     Module module = myConfigurationModule.getModule();
     return module != null ? new Module[]{module} : Module.EMPTY_ARRAY;
   }

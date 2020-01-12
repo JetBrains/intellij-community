@@ -100,7 +100,7 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
     presentation.setIcon(AllIcons.Nodes.Editorconfig);
   }
 
-  private static boolean isAvailableFor(@NotNull PsiDirectory[] dirs) {
+  private static boolean isAvailableFor(PsiDirectory @NotNull [] dirs) {
     for (PsiDirectory dir : dirs) {
       if (dir.getVirtualFile().getFileSystem().isReadOnly()) {
         return false;
@@ -132,7 +132,7 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
                              boolean isRoot,
                              boolean commentOutProperties,
                              @NotNull List<Language> languages,
-                             @NotNull EditorConfigPropertyKind... propertyKinds) {
+                             EditorConfigPropertyKind @NotNull ... propertyKinds) {
     try {
       VirtualFile target = outputDir.createChildData(this, outputFile.getName());
       try (EditorConfigSettingsWriter settingsWriter =

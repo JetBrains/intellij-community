@@ -51,9 +51,8 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
     return doc.getText();
   }
 
-  @Nullable
   @Override
-  public byte[] getContentAsBytes() throws VcsException {
+  public byte @Nullable [] getContentAsBytes() throws VcsException {
     final VirtualFile vFile = getVirtualFile();
     if (vFile == null) {
       return null;

@@ -404,8 +404,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     return new THashSet<>(Arrays.asList(getExpectedTypes(params)), EXPECTED_TYPE_INFO_STRATEGY);
   }
 
-  @NotNull
-  public static TypeConstraint[] getExpectedTypes(CompletionParameters params) {
+  public static TypeConstraint @NotNull [] getExpectedTypes(CompletionParameters params) {
     final PsiElement position = params.getPosition();
     final GrExpression expression = PsiTreeUtil.getParentOfType(position, GrExpression.class);
     if (expression != null) {

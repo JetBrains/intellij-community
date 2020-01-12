@@ -51,9 +51,8 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
     }
   };
 
-  @NotNull
   @Override
-  public Object[] getFileReferenceCompletionVariants(final FileReference reference) {
+  public Object @NotNull [] getFileReferenceCompletionVariants(final FileReference reference) {
     final String s = reference.getText();
     if (s != null && s.equals("/")) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;

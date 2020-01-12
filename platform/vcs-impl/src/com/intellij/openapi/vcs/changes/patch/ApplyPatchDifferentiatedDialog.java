@@ -297,9 +297,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     };
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (myExecutors.isEmpty()) {
       return super.createActions();
     }
@@ -524,9 +523,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       group.add(diffAction);
 
       ActionGroup mapDirectoryActionGroup = new ActionGroup("Change Directory Paths", null, AllIcons.Vcs.Folders) {
-        @NotNull
         @Override
-        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           return new AnAction[]{
             new MapDirectory(), new StripUp("Remove Leading Directory"), new ZeroStrip(),
             new StripDown("Restore Leading Directory"), new ResetStrip()};

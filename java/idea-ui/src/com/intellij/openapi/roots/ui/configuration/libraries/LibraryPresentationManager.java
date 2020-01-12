@@ -50,7 +50,7 @@ public abstract class LibraryPresentationManager {
   public abstract List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context);
 
   @NotNull
-  public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots, Set<? extends LibraryKind> excludedKinds);
+  public abstract List<String> getDescriptions(VirtualFile @NotNull [] classRoots, Set<? extends LibraryKind> excludedKinds);
 
   public abstract List<Library> getLibraries(@NotNull Set<? extends LibraryKind> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
 

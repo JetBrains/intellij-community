@@ -29,15 +29,11 @@ public interface StubElement<T extends PsiElement> extends Stub {
 
   T getPsi();
 
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull IElementType elementType, final E[] array);
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull TokenSet filter, final E[] array);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull IElementType elementType, final E[] array);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull TokenSet filter, final E[] array);
 
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull IElementType elementType, @NotNull ArrayFactory<E> f);
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull TokenSet filter, @NotNull ArrayFactory<E> f);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull IElementType elementType, @NotNull ArrayFactory<E> f);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull TokenSet filter, @NotNull ArrayFactory<E> f);
 
   @Nullable
   <E extends PsiElement> E getParentStubOfType(@NotNull Class<E> parentClass);

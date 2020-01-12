@@ -11,7 +11,7 @@ public class ArrayBackedFMap implements KeyFMap {
   private final int[] keys;
   private final Object[] values;
 
-  ArrayBackedFMap(@NotNull int[] keys, @NotNull Object[] values) {
+  ArrayBackedFMap(int @NotNull [] keys, Object @NotNull [] values) {
     this.keys = keys;
     this.values = values;
   }
@@ -107,14 +107,12 @@ public class ArrayBackedFMap implements KeyFMap {
     return hash;
   }
 
-  @NotNull
   @Override
-  public Key[] getKeys() {
+  public Key @NotNull [] getKeys() {
     return getKeysByIndices(keys);
   }
 
-  @NotNull
-  static Key[] getKeysByIndices(int[] indexes) {
+  static Key @NotNull [] getKeysByIndices(int[] indexes) {
     Key[] result = new Key[indexes.length];
 
     for (int i = 0; i < indexes.length; i++) {

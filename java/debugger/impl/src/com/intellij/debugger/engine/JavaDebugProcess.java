@@ -273,9 +273,8 @@ public class JavaDebugProcess extends XDebugProcess {
     myJavaSession.runToCursor(position, false);
   }
 
-  @NotNull
   @Override
-  public XBreakpointHandler<?>[] getBreakpointHandlers() {
+  public XBreakpointHandler<?> @NotNull [] getBreakpointHandlers() {
     return myBreakpointHandlers;
   }
 

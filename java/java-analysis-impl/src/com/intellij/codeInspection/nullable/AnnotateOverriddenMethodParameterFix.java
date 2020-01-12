@@ -41,7 +41,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   private final String myAnnotation;
   private final String[] myAnnosToRemove;
 
-  AnnotateOverriddenMethodParameterFix(@NotNull String annotationFQN, @NotNull String... annosToRemove) {
+  AnnotateOverriddenMethodParameterFix(@NotNull String annotationFQN, String @NotNull ... annosToRemove) {
     myAnnotation = annotationFQN;
     myAnnosToRemove = annosToRemove;
   }

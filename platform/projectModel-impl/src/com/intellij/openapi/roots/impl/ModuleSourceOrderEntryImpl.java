@@ -68,8 +68,7 @@ class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSou
 
 
   @Override
-  @NotNull
-  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
+  public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
       return getRootModel().getSourceRoots();
     }
@@ -77,8 +76,7 @@ class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSou
   }
 
   @Override
-  @NotNull
-  public String[] getUrls(@NotNull OrderRootType type) {
+  public String @NotNull [] getUrls(@NotNull OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
       List<String> result = new ArrayList<>();
       for (ContentEntry contentEntry : getRootModel().getContentEntries()) {

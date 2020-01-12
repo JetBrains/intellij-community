@@ -372,8 +372,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
   }
 
-  @Nullable
-  public byte[] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
+  public byte @Nullable [] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
     final VirtualFile parent = f.getParent();
     final String name = f.getName();
     final Entry entry = myEntriesManager.getEntryFor(parent, name);
@@ -511,9 +510,8 @@ public class CvsChangeProvider implements ChangeProvider {
       return fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
     }
 
-    @Nullable
     @Override
-    public byte[] getContentAsBytes() throws VcsException {
+    public byte @Nullable [] getContentAsBytes() throws VcsException {
       if (myContent == null) {
         try {
           myContent = getUpToDateBinaryContent();
@@ -525,8 +523,7 @@ public class CvsChangeProvider implements ChangeProvider {
       return myContent;
     }
 
-    @Nullable
-    private byte[] getUpToDateBinaryContent() throws CannotFindCvsRootException {
+    private byte @Nullable [] getUpToDateBinaryContent() throws CannotFindCvsRootException {
       final VirtualFile virtualFile = myPath.getVirtualFile();
       byte[] result = null;
       if (virtualFile != null) {
@@ -584,8 +581,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     @Override
-    @Nullable
-    public byte[] getBinaryContent() throws VcsException {
+    public byte @Nullable [] getBinaryContent() throws VcsException {
       return getContentAsBytes();
     }
 

@@ -188,8 +188,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   }
 
   @Override
-  @NotNull
-  public String[] getUrls() {
+  public String @NotNull [] getUrls() {
     if (myTimeStampOfCachedThings == UNINITIALIZED) {
       // optimization: when querying urls, and nothing was cached yet, do not access disk (in cacheThings()) - can be expensive
       return myList.stream().map(VirtualFilePointer::getUrl).toArray(String[]::new);
@@ -289,14 +288,12 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getFiles() {
+  public VirtualFile @NotNull [] getFiles() {
     return getOrCache().second;
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getDirectories() {
+  public VirtualFile @NotNull [] getDirectories() {
     return getOrCache().third;
   }
 

@@ -49,9 +49,8 @@ public class ReferenceProviderType {
       myType = type;
     }
 
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
       Collection<PsiReference> result = new ArrayList<>();
       for (PsiReferenceProvider child : COLLECTOR.forKey(myType)) {
         ContainerUtil.addAllNotNull(result, child.getReferencesByElement(element, context));

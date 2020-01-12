@@ -48,8 +48,7 @@ public final class GrClassReferenceType extends PsiClassType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     return myReferenceElement.getTypeArguments();
   }
 

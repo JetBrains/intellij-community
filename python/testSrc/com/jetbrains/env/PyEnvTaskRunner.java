@@ -56,8 +56,8 @@ public class PyEnvTaskRunner {
    */
   public void runTask(@NotNull final PyTestTask testTask,
                       @NotNull final String testName,
-                      @Nullable final Class<? extends PythonSdkFlavor>[] skipOnFlavors,
-                      @NotNull final String... tagsRequiredByTest) {
+                      final Class<? extends PythonSdkFlavor> @Nullable [] skipOnFlavors,
+                      final String @NotNull ... tagsRequiredByTest) {
     boolean wasExecuted = false;
 
     List<String> passedRoots = Lists.newArrayList();

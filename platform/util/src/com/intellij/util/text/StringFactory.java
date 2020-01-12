@@ -47,7 +47,7 @@ public class StringFactory {
    * CAUTION! EXTREMELY DANGEROUS!! DO NOT USE THIS METHOD UNLESS YOU ARE REALLY DESPERATE!!!
    */
   @NotNull
-  public static String createShared(@NotNull char[] chars) {
+  public static String createShared(char @NotNull [] chars) {
     if (ourConstructor != null) {
       try {
         return ourConstructor.newInstance(chars, Boolean.TRUE);

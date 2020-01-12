@@ -39,8 +39,7 @@ public class AnnotationTargetUtil {
   private static final TargetType[] LOCAL_VARIABLE_TARGETS = {TargetType.LOCAL_VARIABLE, TargetType.TYPE_USE};
   private static final TargetType[] MODULE_TARGETS = {TargetType.MODULE};
 
-  @NotNull
-  public static TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
+  public static TargetType @NotNull [] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     if (owner == null) {
       return TargetType.EMPTY_ARRAY;
     }
@@ -173,7 +172,7 @@ public class AnnotationTargetUtil {
    * at any of the targets, or {@linkplain TargetType#UNKNOWN} if the annotation does not resolve to a valid annotation type.
    */
   @Nullable
-  public static TargetType findAnnotationTarget(@NotNull PsiAnnotation annotation, @NotNull TargetType... types) {
+  public static TargetType findAnnotationTarget(@NotNull PsiAnnotation annotation, TargetType @NotNull ... types) {
     if (types.length != 0) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       if (ref != null) {
@@ -192,7 +191,7 @@ public class AnnotationTargetUtil {
    * at any of the targets, or {@linkplain TargetType#UNKNOWN} if the type is not a valid annotation (e.g. cannot be resolved).
    */
   @Nullable
-  public static TargetType findAnnotationTarget(@NotNull PsiClass annotationType, @NotNull TargetType... types) {
+  public static TargetType findAnnotationTarget(@NotNull PsiClass annotationType, TargetType @NotNull ... types) {
     if (types.length != 0) {
       Set<TargetType> targets = getAnnotationTargets(annotationType);
       if (targets != null) {

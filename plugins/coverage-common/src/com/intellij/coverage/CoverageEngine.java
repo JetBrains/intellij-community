@@ -100,7 +100,7 @@ public abstract class CoverageEngine {
   public CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
                                            @NotNull final String name,
                                            @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                           @Nullable final String[] filters,
+                                           final String @Nullable [] filters,
                                            final long lastCoverageTimeStamp,
                                            @Nullable final String suiteToMerge,
                                            final boolean coverageByTestEnabled,
@@ -130,7 +130,7 @@ public abstract class CoverageEngine {
   public abstract CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
                                                     @NotNull final String name,
                                                     @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                                    @Nullable final String[] filters,
+                                                    final String @Nullable [] filters,
                                                     final long lastCoverageTimeStamp,
                                                     @Nullable final String suiteToMerge,
                                                     final boolean coverageByTestEnabled,
@@ -282,7 +282,7 @@ public abstract class CoverageEngine {
     return "Hits: " + hits;
   }
 
-  public abstract List<PsiElement> findTestsByNames(@NotNull final String[] testNames, @NotNull final Project project);
+  public abstract List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project);
 
   /**
    * To support per test coverage. Return file name which contain traces for given test 
@@ -320,8 +320,7 @@ public abstract class CoverageEngine {
     return false;
   }
 
-  @NotNull
-  public Object[] postProcessExecutableLines(@NotNull Object[] lines, Editor editor) {
+  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, Editor editor) {
     return lines;
   }
 

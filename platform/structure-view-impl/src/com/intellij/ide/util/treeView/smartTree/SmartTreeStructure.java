@@ -57,9 +57,8 @@ public class SmartTreeStructure extends AbstractTreeStructure {
     return (AbstractTreeNode)element;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     return ((AbstractTreeNode)element).getChildren().toArray();
   }
 

@@ -1053,8 +1053,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @NotNull
-  private static TextRange[] getHighlightersTextRange(@NotNull MarkupModel markup) {
+  private static TextRange @NotNull [] getHighlightersTextRange(@NotNull MarkupModel markup) {
     final RangeHighlighter[] highlighters = markup.getAllHighlighters();
 
     final TextRange[] result = new TextRange[highlighters.length];
@@ -1064,8 +1063,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return orderByHashCode(result); // markup.getAllHighlighters returns unordered array
   }
 
-  @NotNull
-  private static <T extends Segment> T[] orderByHashCode(@NotNull T[] highlighters) {
+  private static <T extends Segment> T @NotNull [] orderByHashCode(T @NotNull [] highlighters) {
     Arrays.sort(highlighters, (o1, o2) -> o2.hashCode() - o1.hashCode());
     return highlighters;
   }
@@ -1246,7 +1244,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, @NotNull VirtualFile... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     VirtualFile file = super.configureByFiles(rawProjectRoot, vFiles);
     EditorTracker.getInstance(myProject).setActiveEditors(Collections.singletonList(getEditor()));
     return file;
@@ -2159,7 +2157,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public static void useAnnotatorsIn(@NotNull com.intellij.lang.Language language,
-                                     @NotNull MyRecordingAnnotator[] annotators,
+                                     MyRecordingAnnotator @NotNull [] annotators,
                                      @NotNull Runnable runnable) {
     MyRecordingAnnotator.clearAll();
     for (Annotator annotator : annotators) {

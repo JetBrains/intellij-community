@@ -76,8 +76,7 @@ public class PyPackageUtil {
   @NotNull
   private static final String INSTALL_REQUIRES = "install_requires";
 
-  @NotNull
-  private static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[]{
+  private static final String @NotNull [] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[]{
     REQUIRES, INSTALL_REQUIRES, "setup_requires", "tests_require"
   };
 
@@ -188,7 +187,7 @@ public class PyPackageUtil {
 
   @NotNull
   private static List<PyRequirement> getSetupPyRequiresFromArguments(@NotNull PyCallExpression setupCall,
-                                                                     @NotNull String... argumentNames) {
+                                                                     String @NotNull ... argumentNames) {
     return PyRequirementParser.fromText(
       StreamEx
         .of(argumentNames)

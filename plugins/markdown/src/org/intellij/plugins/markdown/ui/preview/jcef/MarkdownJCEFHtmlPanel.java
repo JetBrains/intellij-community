@@ -34,8 +34,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
     }
   };
 
-  @NotNull
-  private String[] myCssUris = ArrayUtil.EMPTY_STRING_ARRAY;
+  private String @NotNull [] myCssUris = ArrayUtil.EMPTY_STRING_ARRAY;
   @NotNull
   private String myCSP = "";
   @NotNull
@@ -89,7 +88,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   }
 
   @Override
-  public void setCSS(@Nullable String inlineCss, @NotNull String... fileUris) {
+  public void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris) {
     PreviewStaticServer.getInstance().setInlineStyle(inlineCss);
     myCssUris = inlineCss == null ? fileUris
                                   : ArrayUtil

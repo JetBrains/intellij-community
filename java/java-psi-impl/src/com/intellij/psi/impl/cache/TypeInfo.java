@@ -75,7 +75,7 @@ public class TypeInfo {
 
   private final PsiAnnotationStub[] myAnnotationStubs;
 
-  public TypeInfo(String text, byte arrayCount, boolean ellipsis, @NotNull PsiAnnotationStub[] annotationStubs) {
+  public TypeInfo(String text, byte arrayCount, boolean ellipsis, PsiAnnotationStub @NotNull [] annotationStubs) {
     this.text = text == null ? null : internFrequentType(text);
     this.arrayCount = arrayCount;
     isEllipsis = ellipsis;

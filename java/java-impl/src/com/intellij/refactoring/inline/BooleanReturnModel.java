@@ -122,7 +122,7 @@ class BooleanReturnModel {
   }
 
   @Nullable
-  static BooleanReturnModel from(@NotNull PsiCodeBlock body, @NotNull PsiReturnStatement[] returns) {
+  static BooleanReturnModel from(@NotNull PsiCodeBlock body, PsiReturnStatement @NotNull [] returns) {
     List<PsiExpression> terminal = new ArrayList<>();
     boolean earlyValue = false;
     int earlyCount = 0;

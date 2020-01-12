@@ -34,7 +34,7 @@ public class VcsPushAction extends DumbAwareAction {
 
   @NotNull
   private static Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager,
-                                                            @Nullable VirtualFile[] files) {
+                                                            VirtualFile @Nullable [] files) {
     if (files == null) return Collections.emptyList();
     Collection<Repository> repositories = new HashSet<>();
     for (VirtualFile file : files) {

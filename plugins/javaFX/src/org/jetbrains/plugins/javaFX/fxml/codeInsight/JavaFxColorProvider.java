@@ -116,8 +116,7 @@ public class JavaFxColorProvider implements ElementColorProvider {
     return null;
   }
 
-  @NotNull
-  private static Object[] getArgumentValues(@NotNull PsiExpression[] argumentExpressions) {
+  private static Object @NotNull [] getArgumentValues(PsiExpression @NotNull [] argumentExpressions) {
     return ContainerUtil.map(argumentExpressions,
                              expression -> JavaConstantExpressionEvaluator.computeConstantExpression(expression, false),
                              ArrayUtilRt.EMPTY_OBJECT_ARRAY);

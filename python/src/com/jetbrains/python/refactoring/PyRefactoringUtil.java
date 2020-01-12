@@ -151,8 +151,7 @@ public class PyRefactoringUtil {
     return getSelectedExpression(file.getProject(), file, element1, element2);
   }
 
-  @NotNull
-  public static PsiElement[] findStatementsInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
+  public static PsiElement @NotNull [] findStatementsInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
     ArrayList<PsiElement> array = new ArrayList<>();
 
     PsiElement element1 = file.findElementAt(startOffset);

@@ -83,7 +83,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   }
 
   @Override
-  public void main(@NotNull String[] args) {
+  public void main(String @NotNull [] args) {
     int exitCode = 0;
     try {
       Future<CliResult> commandFuture = processCommand(Arrays.asList(args), null);

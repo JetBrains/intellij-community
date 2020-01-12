@@ -16,8 +16,7 @@ public interface JvmType {
    * @return type annotations
    * @see java.lang.reflect.AnnotatedType#getAnnotations
    */
-  @NotNull
-  JvmAnnotation[] getAnnotations();
+  JvmAnnotation @NotNull [] getAnnotations();
 
   default <T> T accept(@NotNull JvmTypeVisitor<T> visitor) {
     return visitor.visitType(this);

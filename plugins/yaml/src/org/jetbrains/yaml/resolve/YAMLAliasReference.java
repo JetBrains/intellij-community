@@ -44,9 +44,8 @@ public class YAMLAliasReference extends PsiReferenceBase<YAMLAliasImpl> {
     return Objects.requireNonNull(myElement.getIdentifierPsi(), "Reference should not be created for aliases without name");
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     Collection<YAMLAnchor> defs = YAMLLocalResolveUtil.getFirstAnchorDefs(myElement.getContainingFile().getOriginalFile());
     return defs.toArray();
   }

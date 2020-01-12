@@ -159,7 +159,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return true;
   }
 
-  private static void refresh(@NotNull GitRepository... repositories) {
+  private static void refresh(GitRepository @NotNull ... repositories) {
     for (GitRepository repository : repositories) {
       repository.update();
     }

@@ -48,7 +48,7 @@ public class InspectionProfileWrapper {
     myProfile = profile;
   }
 
-  public static void checkInspectionsDuplicates(@NotNull InspectionToolWrapper[] toolWrappers) {
+  public static void checkInspectionsDuplicates(InspectionToolWrapper @NotNull [] toolWrappers) {
     if (alreadyChecked) {
       return;
     }

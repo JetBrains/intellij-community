@@ -516,12 +516,11 @@ public class SSHMain implements GitExternalApp {
      */
     @Override
     @SuppressWarnings({"UseOfObsoleteCollectionType"})
-    @Nullable
-    public String[] replyToChallenge(final String name,
-                                     final String instruction,
-                                     final int numPrompts,
-                                     final String[] prompt,
-                                     final boolean[] echo) {
+    public String @Nullable [] replyToChallenge(final String name,
+                                                final String instruction,
+                                                final int numPrompts,
+                                                final String[] prompt,
+                                                final boolean[] echo) {
       if (numPrompts == 0) {
         return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }

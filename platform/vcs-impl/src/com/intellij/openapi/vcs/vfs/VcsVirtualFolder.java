@@ -24,8 +24,7 @@ public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() {
+  public byte @NotNull [] contentsToByteArray() {
     throw new RuntimeException(VcsBundle.message("exception.text.internal.error.method.should.not.be.called"));
   }
 }

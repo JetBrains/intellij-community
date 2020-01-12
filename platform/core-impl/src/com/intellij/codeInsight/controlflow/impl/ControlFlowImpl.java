@@ -25,13 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public class ControlFlowImpl  implements ControlFlow {
   private final Instruction[] myInstructions;
 
-  public ControlFlowImpl(@NotNull Instruction[] instructions) {
+  public ControlFlowImpl(Instruction @NotNull [] instructions) {
     myInstructions = instructions;
   }
 
-  @NotNull
   @Override
-  public Instruction[] getInstructions() {
+  public Instruction @NotNull [] getInstructions() {
     return myInstructions;
   }
 }

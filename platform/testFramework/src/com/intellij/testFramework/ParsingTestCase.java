@@ -71,11 +71,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   private final boolean myLowercaseFirstLetter;
   private ExtensionPointImpl<KeyedLazyInstance<ParserDefinition>> myLangParserDefinition;
 
-  protected ParsingTestCase(@NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
+  protected ParsingTestCase(@NotNull String dataPath, @NotNull String fileExt, ParserDefinition @NotNull ... definitions) {
     this(dataPath, fileExt, false, definitions);
   }
 
-  protected ParsingTestCase(@NotNull String dataPath, @NotNull String fileExt, boolean lowercaseFirstLetter, @NotNull ParserDefinition... definitions) {
+  protected ParsingTestCase(@NotNull String dataPath, @NotNull String fileExt, boolean lowercaseFirstLetter, ParserDefinition @NotNull ... definitions) {
     myDefinitions = definitions;
     myFullDataPath = getTestDataPath() + "/" + dataPath;
     myFileExt = fileExt;

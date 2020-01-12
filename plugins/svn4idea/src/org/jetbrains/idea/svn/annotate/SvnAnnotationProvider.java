@@ -170,8 +170,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                   @NotNull SvnBindException e,
                                   @NotNull VirtualFile file,
                                   @NotNull SvnRevisionNumber revisionNumber,
-                                  @NotNull FileAnnotation[] annotation,
-                                  @NotNull VcsException[] exception) {
+                                  FileAnnotation @NotNull [] annotation,
+                                  VcsException @NotNull [] exception) {
     // TODO: Check how this scenario could be reproduced by user and what changes needs to be done for command line client
     if (e.contains(ErrorCode.FS_NOT_FOUND)) {
       final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();

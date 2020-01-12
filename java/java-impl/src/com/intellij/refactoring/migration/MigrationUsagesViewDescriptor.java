@@ -36,8 +36,7 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return PsiElement.EMPTY_ARRAY;
   }
 

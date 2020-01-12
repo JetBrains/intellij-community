@@ -39,9 +39,8 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
     return new JavaFxClassTagDescriptor(name, tag);
   }
 
-  @NotNull
   @Override
-  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable XmlDocument document) {
     if (document != null) {
       final Project project = document.getProject();
       final PsiClass paneClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_SCENE_LAYOUT_PANE, GlobalSearchScope.allScope(project));

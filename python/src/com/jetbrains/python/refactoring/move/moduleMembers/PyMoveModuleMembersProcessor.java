@@ -54,7 +54,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   private final LinkedHashSet<PsiFile> mySourceFiles;
   private final String myDestination;
 
-  public PyMoveModuleMembersProcessor(@NotNull PsiNamedElement[] elements, @NotNull String destination) {
+  public PyMoveModuleMembersProcessor(PsiNamedElement @NotNull [] elements, @NotNull String destination) {
     super(elements[0].getProject());
     final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
     myElements = ContainerUtil.map(elements, manager::createSmartPsiElementPointer);
@@ -64,11 +64,10 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return ContainerUtil.mapNotNull(myElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
       }
 
@@ -79,9 +78,8 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     };
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return StreamEx.of(myElements)
       .map(SmartPsiElementPointer::getElement)
       .nonNull()
@@ -91,7 +89,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(@NotNull final UsageInfo[] usages) {
+  protected void performRefactoring(final UsageInfo @NotNull [] usages) {
     final MultiMap<PsiElement, UsageInfo> usagesByElement = MultiMap.create();
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);

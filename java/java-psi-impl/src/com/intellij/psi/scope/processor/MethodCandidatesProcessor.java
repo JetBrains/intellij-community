@@ -37,7 +37,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   protected MethodCandidatesProcessor(@NotNull PsiElement place,
                                       PsiFile placeFile,
-                                      @NotNull PsiConflictResolver[] resolvers,
+                                      PsiConflictResolver @NotNull [] resolvers,
                                       @NotNull List<CandidateInfo> container) {
     super(resolvers, container, place, placeFile);
   }
@@ -107,8 +107,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
                                                getTypeArguments(), getLanguageLevel(), varargs);
   }
 
-  @NotNull
-  private static PsiType[] getExpressionTypes(@NotNull PsiExpressionList argumentList) {
+  private static PsiType @NotNull [] getExpressionTypes(@NotNull PsiExpressionList argumentList) {
     return argumentList.getExpressionTypes();
   }
 
@@ -138,8 +137,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
-  @NotNull
-  public CandidateInfo[] getCandidates() {
+  public CandidateInfo @NotNull [] getCandidates() {
     final JavaResolveResult[] resolveResult = getResult();
     if (resolveResult.length == 0) return CandidateInfo.EMPTY_ARRAY;
     final CandidateInfo[] infos = new CandidateInfo[resolveResult.length];

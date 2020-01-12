@@ -25,7 +25,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final List<? extends Editor> myEditors;
   @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
 
-  @NotNull private final AnAction[] myActions;
+  private final AnAction @NotNull [] myActions;
 
   public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
                                  @NotNull List<? extends Editor> editors) {
@@ -148,9 +148,8 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     AnAction editorSettingsGroup = ActionManager.getInstance().getAction("Diff.EditorGutterPopupMenu.EditorSettings");
 
     List<AnAction> actions = new ArrayList<>();
@@ -217,9 +216,8 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       myOptions = ContainerUtil.map(HighlightingLevel.values(), level -> new OptionAction(level), AnAction.EMPTY_ARRAY);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return myOptions;
     }
 
@@ -264,9 +262,8 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       setPopup(true);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return myOptions;
     }
 

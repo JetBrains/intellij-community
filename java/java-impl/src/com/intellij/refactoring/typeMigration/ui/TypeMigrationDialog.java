@@ -55,7 +55,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   private final ScopeChooserCombo myScopeChooserCombo;
 
   public TypeMigrationDialog(@NotNull Project project,
-                             @NotNull PsiElement[] roots,
+                             PsiElement @NotNull [] roots,
                              @Nullable TypeMigrationRules rules) {
     super(project, false);
     myRoots = roots;
@@ -120,7 +120,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     private final Function<PsiElement, PsiType> myMigrationTypeFunction;
 
     public MultipleElements(@NotNull Project project,
-                            @NotNull PsiElement[] roots,
+                            PsiElement @NotNull [] roots,
                             @NotNull Function<PsiElement, PsiType> migrationTypeFunction,
                             @NotNull TypeMigrationRules rules) {
       super(project, roots, rules);
@@ -140,7 +140,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     private final EditorComboBox myToTypeEditor;
 
     public SingleElement(@NotNull Project project,
-                         @NotNull PsiElement[] roots) {
+                         PsiElement @NotNull [] roots) {
       super(project, roots, null);
       LOG.assertTrue(roots.length > 0);
       final PsiType rootType = getRootType();
@@ -196,8 +196,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       panel.add(myToTypeEditor, gc);
     }
 
-    @Nullable
-    private String[] getValidTypes(final Project project, final PsiElement root) {
+    private String @Nullable [] getValidTypes(final Project project, final PsiElement root) {
       if (root instanceof PsiField || root instanceof PsiMethod) {
         final PsiModifierList modifierList = ((PsiModifierListOwner)root).getModifierList();
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;

@@ -38,8 +38,7 @@ public interface PsiTodoSearchHelper {
    *
    * @return the list of files with to do items.
    */
-  @NotNull
-  PsiFile[] findFilesWithTodoItems();
+  PsiFile @NotNull [] findFilesWithTodoItems();
 
   /**
    * Searches the specified file for to do items.
@@ -47,8 +46,7 @@ public interface PsiTodoSearchHelper {
    * @param file the file to search for to do items.
    * @return the array of found items.
    */
-  @NotNull
-  TodoItem[] findTodoItems(@NotNull PsiFile file);
+  TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file);
 
   /**
    * Searches the specified range of text in the specified file for to do items.
@@ -58,13 +56,10 @@ public interface PsiTodoSearchHelper {
    * @param endOffset   the end offset of the text range to search to do items in.
    * @return the array of found items.
    */
-  @NotNull
-  TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
+  TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
 
-  @NotNull
-  TodoItem[] findTodoItemsLight(@NotNull PsiFile file);
-  @NotNull
-  TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset);
+  TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file);
+  TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset);
 
   /**
    * Returns the number of to do items in the specified file.

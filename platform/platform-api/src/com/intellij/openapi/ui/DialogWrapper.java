@@ -1086,16 +1086,14 @@ public abstract class DialogWrapper {
    * @see #createSouthPanel
    * @see #createJButtonForAction
    */
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     Action helpAction = getHelpAction();
     return helpAction == myHelpAction && getHelpId() == null ?
            new Action[]{getOKAction(), getCancelAction()} :
            new Action[]{getOKAction(), getCancelAction(), helpAction};
   }
 
-  @NotNull
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[0];
   }
 

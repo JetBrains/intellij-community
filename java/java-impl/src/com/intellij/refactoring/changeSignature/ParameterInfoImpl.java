@@ -168,8 +168,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
    * @param method method to create an array from
    * @return an array of ParameterInfoImpl entries
    */
-  @NotNull
-  public static ParameterInfoImpl[] fromMethod(@NotNull PsiMethod method) {
+  public static ParameterInfoImpl @NotNull [] fromMethod(@NotNull PsiMethod method) {
     List<ParameterInfoImpl> result = new ArrayList<>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -186,8 +185,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
    * @param parameterToRemove parameter to remove from method signature
    * @return an array of ParameterInfoImpl entries
    */
-  @NotNull
-  public static ParameterInfoImpl[] fromMethodExceptParameter(@NotNull PsiMethod method, @NotNull PsiParameter parameterToRemove) {
+  public static ParameterInfoImpl @NotNull [] fromMethodExceptParameter(@NotNull PsiMethod method, @NotNull PsiParameter parameterToRemove) {
     List<ParameterInfoImpl> result = new ArrayList<>();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {

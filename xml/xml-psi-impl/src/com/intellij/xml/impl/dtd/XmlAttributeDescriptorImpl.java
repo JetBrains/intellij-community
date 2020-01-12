@@ -58,9 +58,8 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     myEnumerated = myDecl.isEnumerated();
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies(){
+  public Object @NotNull [] getDependencies(){
     return new Object[]{myDecl};
   }
 

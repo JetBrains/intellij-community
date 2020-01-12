@@ -331,7 +331,7 @@ public final class EventLog {
 
   private static final String[] SKIP_TAGS = {"html", "body", "b", "i", "font"};
 
-  private static boolean isTag(@NotNull String []tags, @NotNull String tag) {
+  private static boolean isTag(String @NotNull [] tags, @NotNull String tag) {
     tag = tag.substring(1, tag.length() - 1); // skip <>
     tag = StringUtil.trimEnd(StringUtil.trimStart(tag, "/"), "/"); // skip /
     int index = tag.indexOf(' ');

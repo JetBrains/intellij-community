@@ -62,12 +62,12 @@ class CommandProcessorImpl extends CoreCommandProcessor {
   }
 
   @Override
-  public void addAffectedDocuments(Project project, @NotNull Document... docs) {
+  public void addAffectedDocuments(Project project, Document @NotNull ... docs) {
     getUndoManager(project).addAffectedDocuments(docs);
   }
 
   @Override
-  public void addAffectedFiles(Project project, @NotNull VirtualFile... files) {
+  public void addAffectedFiles(Project project, VirtualFile @NotNull ... files) {
     getUndoManager(project).addAffectedFiles(files);
   }
 }

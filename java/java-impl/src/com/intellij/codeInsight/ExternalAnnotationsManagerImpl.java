@@ -144,7 +144,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   public void annotateExternally(@NotNull final PsiModifierListOwner listOwner,
                                  @NotNull final String annotationFQName,
                                  @NotNull final PsiFile fromFile,
-                                 @Nullable final PsiNameValuePair[] value) throws CanceledConfigurationException {
+                                 final PsiNameValuePair @Nullable [] value) throws CanceledConfigurationException {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     LOG.assertTrue(!application.isWriteAccessAllowed());
@@ -495,7 +495,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     return null;
   }
 
-  private void chooseRootAndAnnotateExternally(@NotNull VirtualFile[] roots, @NotNull ExternalAnnotation annotation) {
+  private void chooseRootAndAnnotateExternally(VirtualFile @NotNull [] roots, @NotNull ExternalAnnotation annotation) {
     if (roots.length > 1) {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>("Annotation Roots", roots) {
         @Override
@@ -526,8 +526,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     }
   }
 
-  @NotNull
-  private static VirtualFile[] filterByReadOnliness(@NotNull VirtualFile[] files) {
+  private static VirtualFile @NotNull [] filterByReadOnliness(VirtualFile @NotNull [] files) {
     List<VirtualFile> result = ContainerUtil.filter(files, VirtualFile::isInLocalFileSystem);
     return VfsUtilCore.toVirtualFileArray(result);
   }
@@ -597,7 +596,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   @Override
   public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                         @NotNull final String annotationFQN,
-                                        @Nullable final PsiNameValuePair[] value) {
+                                        final PsiNameValuePair @Nullable [] value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return processExistingExternalAnnotations(listOwner, annotationFQN, annotationTag -> {
       annotationTag.replace(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
@@ -821,7 +820,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   @NonNls
   @NotNull
   @VisibleForTesting
-  public static String createAnnotationTag(@NotNull String annotationFQName, @Nullable PsiNameValuePair[] values) {
+  public static String createAnnotationTag(@NotNull String annotationFQName, PsiNameValuePair @Nullable [] values) {
     @NonNls String text;
     if (values != null && values.length != 0) {
       text = "  <annotation name='" + annotationFQName + "'>\n";
@@ -964,8 +963,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     }
 
     @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       final Action okAction = getOKAction();
       assignMnemonic(getAddInCode(), okAction);
       final String externalName = ProjectBundle.message("external.annotations.external.option");

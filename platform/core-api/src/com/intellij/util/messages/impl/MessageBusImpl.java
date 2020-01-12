@@ -135,8 +135,7 @@ public class MessageBusImpl implements MessageBus {
   /**
    * calculates {@link #myOrder} for the given child bus
    */
-  @NotNull
-  private int[] nextOrder() {
+  private int @NotNull [] nextOrder() {
     MessageBusImpl lastChild = ContainerUtil.getLastItem(myChildBuses);
 
     int lastChildIndex = lastChild == null ? 0 : ArrayUtil.getLastElement(lastChild.myOrder, 0);

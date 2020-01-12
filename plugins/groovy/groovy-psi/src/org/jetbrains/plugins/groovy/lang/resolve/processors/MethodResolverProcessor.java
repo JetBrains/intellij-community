@@ -26,8 +26,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
  */
 public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResult> implements GrMethodComparator.Context {
 
-  @Nullable
-  private final PsiType[] myArgumentTypes;
+  private final PsiType @Nullable [] myArgumentTypes;
 
   private final boolean myAllVariants;
 
@@ -43,8 +42,8 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
                                  @NotNull PsiElement place,
                                  boolean isConstructor,
                                  @Nullable PsiType thisType,
-                                 @Nullable PsiType[] argumentTypes,
-                                 @Nullable PsiType[] typeArguments) {
+                                 PsiType @Nullable [] argumentTypes,
+                                 PsiType @Nullable [] typeArguments) {
     this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false);
   }
 
@@ -52,8 +51,8 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
                                  @NotNull PsiElement place,
                                  boolean isConstructor,
                                  @Nullable PsiType thisType,
-                                 @Nullable PsiType[] argumentTypes,
-                                 @Nullable PsiType[] typeArguments,
+                                 PsiType @Nullable [] argumentTypes,
+                                 PsiType @Nullable [] typeArguments,
                                  boolean allVariants) {
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place);
     myIsConstructor = isConstructor;
@@ -119,8 +118,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
   }
 
   @Override
-  @NotNull
-  public GroovyResolveResult[] getCandidates() {
+  public GroovyResolveResult @NotNull [] getCandidates() {
     if (!myAllVariants && hasApplicableCandidates()) {
       return filterCandidates();
     }
@@ -184,8 +182,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
   }
 
   @Override
-  @Nullable
-  public PsiType[] getArgumentTypes() {
+  public PsiType @Nullable [] getArgumentTypes() {
     return myArgumentTypes;
   }
 

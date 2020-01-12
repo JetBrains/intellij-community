@@ -51,7 +51,7 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @param actions the actions to add to the group
    */
-  public DefaultActionGroup(@NotNull AnAction... actions) {
+  public DefaultActionGroup(AnAction @NotNull ... actions) {
     this(Arrays.asList(actions));
   }
 
@@ -303,9 +303,8 @@ public class DefaultActionGroup extends ActionGroup {
     incrementModificationStamp();
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return getChildren(e, e != null ? e.getActionManager() : ActionManager.getInstance());
   }
 
@@ -316,8 +315,7 @@ public class DefaultActionGroup extends ActionGroup {
    * @return An array of children actions
    */
   @Override
-  @NotNull
-  public final AnAction[] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     boolean hasNulls = false;
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
@@ -395,8 +393,7 @@ public class DefaultActionGroup extends ActionGroup {
     return mySortedChildren.size() + myPairs.size();
   }
 
-  @NotNull
-  public final AnAction[] getChildActionsOrStubs() {
+  public final AnAction @NotNull [] getChildActionsOrStubs() {
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
@@ -427,7 +424,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  public final void addAll(@NotNull AnAction... actions) {
+  public final void addAll(AnAction @NotNull ... actions) {
     if (actions.length == 0) {
       return;
     }

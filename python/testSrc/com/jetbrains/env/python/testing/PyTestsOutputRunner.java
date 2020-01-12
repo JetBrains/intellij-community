@@ -27,7 +27,7 @@ import org.junit.Assert;
  */
 abstract class PyTestsOutputRunner<T extends PyScriptTestProcessRunner<?>> extends PyTestsFunctionBasedRunner<T> {
 
-  PyTestsOutputRunner(@NotNull final String... functionsToCheck) {
+  PyTestsOutputRunner(final String @NotNull ... functionsToCheck) {
     super(functionsToCheck);
   }
 

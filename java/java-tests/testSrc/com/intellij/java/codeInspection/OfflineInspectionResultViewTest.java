@@ -53,8 +53,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
       }
 
       @Override
-      @NotNull
-      public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
+      public InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement element) {
         return new InspectionToolWrapper[]{myUnusedToolWrapper};
       }
 
@@ -63,8 +62,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
       public InspectionProfileModifiableModel getModifiableModel() {
         return new InspectionProfileModifiableModel(this) {
           @Override
-          @NotNull
-          public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
+          public InspectionToolWrapper @NotNull [] getInspectionTools(PsiElement element) {
             return new InspectionToolWrapper[]{myUnusedToolWrapper};
           }
 

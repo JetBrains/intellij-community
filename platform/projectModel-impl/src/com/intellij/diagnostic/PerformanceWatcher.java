@@ -205,7 +205,7 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   @NotNull
-  public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+  public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
     StringBuilder trace = new StringBuilder(
       headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n");

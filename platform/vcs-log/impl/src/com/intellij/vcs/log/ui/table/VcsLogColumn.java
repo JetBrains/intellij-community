@@ -39,7 +39,7 @@ public enum VcsLogColumn {
   };
 
   @NotNull public static final List<VcsLogColumn> DYNAMIC_COLUMNS = ContainerUtil.immutableList(AUTHOR, DATE, HASH);
-  @NotNull private static final VcsLogColumn[] COLUMNS = values(); // to reduce copying overhead
+  private static final VcsLogColumn @NotNull [] COLUMNS = values(); // to reduce copying overhead
 
   @NotNull private final String myName;
   @NotNull private final Class<?> myContentClass;

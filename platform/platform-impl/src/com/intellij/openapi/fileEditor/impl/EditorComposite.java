@@ -97,8 +97,8 @@ public class EditorComposite implements Disposable {
    * is {@code null} or {@code providers} is {@code null} or {@code myEditor} arrays is empty
    */
   EditorComposite(@NotNull final VirtualFile file,
-                  @NotNull final FileEditor[] editors,
-                  @NotNull FileEditorProvider[] providers,
+                  final FileEditor @NotNull [] editors,
+                  FileEditorProvider @NotNull [] providers,
                   @NotNull final FileEditorManagerEx fileEditorManager) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
@@ -165,8 +165,7 @@ public class EditorComposite implements Disposable {
     });
   }
 
-  @NotNull
-  public FileEditorProvider[] getProviders() {
+  public FileEditorProvider @NotNull [] getProviders() {
     return myProviders;
   }
 
@@ -276,8 +275,7 @@ public class EditorComposite implements Disposable {
    * @return editors which are opened in the composite. <b>Do not modify
    * this array</b>.
    */
-  @NotNull
-  public FileEditor[] getEditors() {
+  public FileEditor @NotNull [] getEditors() {
     return myEditors;
   }
 

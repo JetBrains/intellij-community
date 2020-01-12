@@ -264,8 +264,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     return super.acceptImplementationForReference(reference, element);
   }
 
-  @Nullable
-  private static PsiClass[] getClassesWithMember(final PsiReference reference, final PsiMember member) {
+  private static PsiClass @Nullable [] getClassesWithMember(final PsiReference reference, final PsiMember member) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
       @Override
       public PsiClass[] compute() {

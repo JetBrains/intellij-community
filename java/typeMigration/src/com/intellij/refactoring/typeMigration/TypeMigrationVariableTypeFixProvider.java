@@ -24,8 +24,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
   private static final Logger LOG1 = Logger.getInstance(TypeMigrationVariableTypeFixProvider.class);
 
   @Override
-  @NotNull
-  public IntentionAction[] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
+  public IntentionAction @NotNull [] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     return new IntentionAction[]{createTypeMigrationFix(variable, toReturn)};
   }
 

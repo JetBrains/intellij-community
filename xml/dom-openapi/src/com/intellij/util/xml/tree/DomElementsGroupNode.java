@@ -49,9 +49,8 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     myRootDomElement = rootDomElement;
   }
 
-  @NotNull
   @Override
-  public SimpleNode[] getChildren() {
+  public SimpleNode @NotNull [] getChildren() {
     if (!myParentElement.isValid()) return NO_CHILDREN;
 
     final List<SimpleNode> simpleNodes = new ArrayList<>();
@@ -64,8 +63,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   @Override
-  @NotNull
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[]{myParentElement, myChildrenTagName};
   }
 

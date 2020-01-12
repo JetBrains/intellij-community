@@ -119,7 +119,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         problems.add(descriptor);
       }
 
-      private boolean isSafeToFlatten(@NotNull PsiCall callExpression, @NotNull PsiMethod oldRefMethod, @NotNull PsiExpression[] arrayElements) {
+      private boolean isSafeToFlatten(@NotNull PsiCall callExpression, @NotNull PsiMethod oldRefMethod, PsiExpression @NotNull [] arrayElements) {
         if (arrayElements.length == 1) {
           PsiType type = arrayElements[0].getType();
           // change foo(new Object[]{array}) to foo(array) is not safe
@@ -172,8 +172,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static PsiExpression[] getInitializers(final PsiNewExpression newExpression) {
+  private static PsiExpression @Nullable [] getInitializers(final PsiNewExpression newExpression) {
     PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
     if (initializer != null) {
       return initializer.getInitializers();

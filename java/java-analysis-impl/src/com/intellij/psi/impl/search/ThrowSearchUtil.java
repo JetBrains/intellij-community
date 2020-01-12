@@ -124,8 +124,7 @@ public class ThrowSearchUtil {
     return exn instanceof PsiNewExpression;
   }
 
-  @Nullable
-  public static Root[] getSearchRoots(final PsiElement element) {
+  public static Root @Nullable [] getSearchRoots(final PsiElement element) {
     if (element instanceof PsiThrowStatement) {
       final PsiThrowStatement aThrow = (PsiThrowStatement)element;
       final PsiExpression exn = aThrow.getException();

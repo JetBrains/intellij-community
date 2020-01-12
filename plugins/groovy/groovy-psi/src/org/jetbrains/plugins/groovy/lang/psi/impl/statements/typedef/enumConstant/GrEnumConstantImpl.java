@@ -126,23 +126,20 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return list.addNamedArgument(namedArgument);
   }
 
-  @NotNull
   @Override
-  public GrNamedArgument[] getNamedArguments() {
+  public GrNamedArgument @NotNull [] getNamedArguments() {
     final GrArgumentList argumentList = getArgumentList();
     return argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
   }
 
-  @NotNull
   @Override
-  public GrExpression[] getExpressionArguments() {
+  public GrExpression @NotNull [] getExpressionArguments() {
     final GrArgumentList argumentList = getArgumentList();
     return argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
     return multiResolve(true);
   }
 
@@ -186,9 +183,8 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return resolveMethod();
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return myReference.multiResolve(incompleteCode);
   }
 

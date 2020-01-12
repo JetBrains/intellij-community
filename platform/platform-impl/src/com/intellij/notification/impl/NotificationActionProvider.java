@@ -26,8 +26,7 @@ import java.awt.event.ActionEvent;
  * @author Sergey.Malenkov
  */
 public interface NotificationActionProvider extends NotificationFullContent {
-  @NotNull
-  Action[] getActions(HyperlinkListener listener);
+  Action @NotNull [] getActions(HyperlinkListener listener);
 
   final class Action extends AbstractAction {
     private final HyperlinkListener myListener;

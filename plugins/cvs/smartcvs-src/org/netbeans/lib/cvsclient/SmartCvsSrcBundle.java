@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
  */
 public class SmartCvsSrcBundle {
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 

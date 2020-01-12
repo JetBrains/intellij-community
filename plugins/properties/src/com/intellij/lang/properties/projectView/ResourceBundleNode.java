@@ -129,7 +129,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   }
 
   @Override
-  public boolean canDrop(@NotNull TreeNode[] sourceNodes) {
+  public boolean canDrop(TreeNode @NotNull [] sourceNodes) {
     for (TreeNode node : sourceNodes) {
       if (extractPropertiesFileFromNode(node) == null) return false;
     }
@@ -137,7 +137,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   }
 
   @Override
-  public void drop(@NotNull TreeNode[] sourceNodes, @NotNull DataContext dataContext) {
+  public void drop(TreeNode @NotNull [] sourceNodes, @NotNull DataContext dataContext) {
     MultiMap<ResourceBundle, PropertiesFile> bundleGrouping = new MultiMap<>();
     for (TreeNode sourceNode : sourceNodes) {
       final PropertiesFile propertiesFile = extractPropertiesFileFromNode(sourceNode);

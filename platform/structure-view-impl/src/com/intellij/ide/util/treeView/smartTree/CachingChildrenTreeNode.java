@@ -67,7 +67,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   private static class CompositeComparator implements Comparator<CachingChildrenTreeNode> {
     private final Sorter[] mySorters;
 
-    CompositeComparator(@NotNull Sorter[] sorters) {
+    CompositeComparator(Sorter @NotNull [] sorters) {
       mySorters = sorters;
     }
 
@@ -83,7 +83,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  protected void sortChildren(@NotNull Sorter[] sorters) {
+  protected void sortChildren(Sorter @NotNull [] sorters) {
     if (myChildren == null) return;
 
     Collections.sort(myChildren, new CompositeComparator(sorters));
@@ -95,7 +95,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  protected void filterChildren(@NotNull Filter[] filters) {
+  protected void filterChildren(Filter @NotNull [] filters) {
     Collection<AbstractTreeNode<?>> children = getChildren();
     for (Filter filter : filters) {
       for (Iterator<AbstractTreeNode<?>> eachNode = children.iterator(); eachNode.hasNext();) {
@@ -109,7 +109,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     setChildren(children);
   }
 
-  void groupChildren(@NotNull Grouper[] groupers) {
+  void groupChildren(Grouper @NotNull [] groupers) {
     for (Grouper grouper : groupers) {
       groupElements(grouper);
     }

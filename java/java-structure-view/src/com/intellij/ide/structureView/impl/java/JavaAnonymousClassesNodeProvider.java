@@ -59,9 +59,8 @@ public class JavaAnonymousClassesNodeProvider
     return IdeBundle.message("file.structure.toggle.show.anonymous.classes");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta I" : "control I")};
   }
 

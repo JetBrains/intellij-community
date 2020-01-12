@@ -48,9 +48,8 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     return label;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     DialogWrapperAction reloadAction = new DialogWrapperAction("Reload") {
       @Override
       protected void doAction(ActionEvent e) {

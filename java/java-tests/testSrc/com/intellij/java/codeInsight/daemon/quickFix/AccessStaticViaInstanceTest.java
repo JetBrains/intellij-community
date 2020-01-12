@@ -21,9 +21,8 @@ import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstan
 import org.jetbrains.annotations.NotNull;
 
 public class AccessStaticViaInstanceTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {new AccessStaticViaInstance()};
   }
 

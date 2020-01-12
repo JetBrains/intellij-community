@@ -16,10 +16,10 @@ public @interface TestFor {
    * Binds implementation class with a test to let
    * find-usages help locating class by test
    */
-  @NotNull Class[] classes() default {};
+  Class @NotNull [] classes() default {};
 
   /**
    * Binds test with issues
    */
-  @NotNull String[] issues() default {};
+  String @NotNull [] issues() default {};
 }

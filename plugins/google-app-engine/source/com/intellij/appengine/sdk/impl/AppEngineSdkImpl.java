@@ -64,14 +64,12 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   }
 
   @Override
-  @NotNull
-  public File[] getLibraries() {
+  public File @NotNull [] getLibraries() {
     return getJarsFromDirectory(new File(myHomePath, "lib/shared"));
   }
 
-  @NotNull
   @Override
-  public File[] getJspLibraries() {
+  public File @NotNull [] getJspLibraries() {
     return getJarsFromDirectory(new File(myHomePath, "lib/shared/jsp"));
   }
 
@@ -197,8 +195,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getOrmLibSources() {
+  public VirtualFile @NotNull [] getOrmLibSources() {
     final File libsDir = new File(myHomePath, "src/orm");
     final File[] files = libsDir.listFiles();
     List<VirtualFile> roots = new ArrayList<>();

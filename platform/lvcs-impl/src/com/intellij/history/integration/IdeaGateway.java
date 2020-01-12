@@ -447,7 +447,7 @@ public class IdeaGateway {
     return d.getText().getBytes(charset);
   }
 
-  public String stringFromBytes(@NotNull byte[] bytes, @NotNull String path) {
+  public String stringFromBytes(byte @NotNull [] bytes, @NotNull String path) {
     VirtualFile file = findVirtualFile(path);
     Charset charset = file != null ? file.getCharset() : EncodingRegistry.getInstance().getDefaultCharset();
     return CharsetToolkit.bytesToString(bytes, charset);

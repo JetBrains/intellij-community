@@ -226,10 +226,9 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     return filePath1.equals(filePath2) && Comparing.equal(existingRevision, newRevision);
   }
 
-  @NotNull
-  private DualViewColumnInfo[] createColumnList(@NotNull Project project,
-                                                @NotNull VcsHistoryProvider provider,
-                                                @Nullable ColumnInfo[] additionalColumns) {
+  private DualViewColumnInfo @NotNull [] createColumnList(@NotNull Project project,
+                                                          @NotNull VcsHistoryProvider provider,
+                                                          ColumnInfo @Nullable [] additionalColumns) {
     ArrayList<DualViewColumnInfo> columns = new ArrayList<>();
     columns.add(new TreeNodeColumnInfoWrapper<>(
       new RevisionColumnInfo(comparing(revision -> myRevisionsOrder.get(revision.getRevisionNumber()), reverseOrder()))));
@@ -481,8 +480,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     return null;
   }
 
-  @Nullable
-  private Change[] getChanges() {
+  private Change @Nullable [] getChanges() {
     final VcsFileRevision[] revisions = getSelectedRevisions();
 
     if (revisions.length > 0) {
@@ -513,8 +511,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     return myRevisionToVirtualFile.get(revision);
   }
 
-  @NotNull
-  public VcsFileRevision[] getSelectedRevisions() {
+  public VcsFileRevision @NotNull [] getSelectedRevisions() {
     //noinspection unchecked
     List<TreeNodeOnVcsRevision> selection = (List<TreeNodeOnVcsRevision>)myDualView.getSelection();
     VcsFileRevision[] result = new VcsFileRevision[selection.size()];
@@ -861,9 +858,8 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
       }
     }
 
-    @Nullable
     @Override
-    public byte[] getContentAsBytes() throws VcsException {
+    public byte @Nullable [] getContentAsBytes() throws VcsException {
       try {
         return VcsHistoryUtil.loadRevisionContent(myRevision);
       }

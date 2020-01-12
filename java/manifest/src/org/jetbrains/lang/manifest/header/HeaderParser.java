@@ -56,6 +56,5 @@ public interface HeaderParser {
   /**
    * Returns references from a given header value, or empty array if none/not applicable.
    */
-  @NotNull
-  PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart);
+  PsiReference @NotNull [] getReferences(@NotNull HeaderValuePart headerValuePart);
 }

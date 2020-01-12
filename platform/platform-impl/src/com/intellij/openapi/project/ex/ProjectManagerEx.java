@@ -117,7 +117,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
-  @NotNull
   @ApiStatus.Internal
-  public abstract String[] getAllExcludedUrls();
+  public abstract String @NotNull [] getAllExcludedUrls();
 }

@@ -48,9 +48,8 @@ public class LightTypeParameterListBuilder extends LightElement implements PsiTy
     }
   }
 
-  @NotNull
   @Override
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     if (cached == null) {
       if (myParameters.isEmpty()) {
         cached = PsiTypeParameter.EMPTY_ARRAY;

@@ -29,7 +29,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Override
-  public UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
+  public UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
     if (element instanceof PyElement) {
       if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return IN_IMPORT;

@@ -107,7 +107,7 @@ public class LoadingOrder {
     return new LoadingOrder(AFTER_STR + id);
   }
 
-  public static void sort(@NotNull Orderable[] orderable) {
+  public static void sort(Orderable @NotNull [] orderable) {
     if (orderable.length > 1) {
       sort(Arrays.asList(orderable));
     }

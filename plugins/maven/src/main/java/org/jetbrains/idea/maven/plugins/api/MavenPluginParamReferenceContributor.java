@@ -43,9 +43,8 @@ public class MavenPluginParamReferenceContributor extends PsiReferenceContributo
 
   private static class MavenPluginParamRefProvider extends PsiReferenceProvider {
 
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
       final XmlText xmlText = (XmlText)element.getParent();
       PsiFile xmlFile = element.getContainingFile();
       VirtualFile virtualFile = xmlFile.getVirtualFile();

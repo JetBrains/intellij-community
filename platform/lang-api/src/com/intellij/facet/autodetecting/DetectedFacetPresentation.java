@@ -39,7 +39,7 @@ public abstract class DetectedFacetPresentation {
   }
 
   @Nullable
-  public String getAutodetectionPopupText(@NotNull Module module, @NotNull FacetType facetType, @NotNull String facetName, @NotNull VirtualFile[] files) {
+  public String getAutodetectionPopupText(@NotNull Module module, @NotNull FacetType facetType, @NotNull String facetName, VirtualFile @NotNull [] files) {
     return null;
   }
 
@@ -50,7 +50,7 @@ public abstract class DetectedFacetPresentation {
    */
   @Deprecated
   @Nullable
-  public String getAutodetectionPopupText(@NotNull Facet facet, @NotNull VirtualFile[] files) {
+  public String getAutodetectionPopupText(@NotNull Facet facet, VirtualFile @NotNull [] files) {
     return null;
   }
 

@@ -86,7 +86,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, PsiElement::getContainingFile);
     final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, roots, migrationTypeFunction, rules, allowDependentRoots) {
       @Override
-      public void performRefactoring(@NotNull final UsageInfo[] usages) {
+      public void performRefactoring(final UsageInfo @NotNull [] usages) {
         super.performRefactoring(usages);
         if (editor != null) {
           ApplicationManager.getApplication().invokeLater(() -> {
@@ -129,7 +129,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new TypeMigrationViewDescriptor(myRoots[0]);
   }
 
@@ -162,7 +162,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void previewRefactoring(@NotNull final UsageInfo[] usages) {
+  protected void previewRefactoring(final UsageInfo @NotNull [] usages) {
     MigrationPanel panel = new MigrationPanel(myRoots, myLabeler, myProject, isPreviewUsages());
     String name;
     if (myRoots.length == 1) {
@@ -209,9 +209,8 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     return text;
   }
 
-  @NotNull
   @Override
-  public UsageInfo[] findUsages() {
+  public UsageInfo @NotNull [] findUsages() {
     myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots, myProject);
 
     try {
@@ -225,12 +224,12 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     myRoots = elements;
   }
 
   @Override
-  public void performRefactoring(@NotNull UsageInfo[] usages) {
+  public void performRefactoring(UsageInfo @NotNull [] usages) {
     change(usages, myLabeler, myProject);
   }
 

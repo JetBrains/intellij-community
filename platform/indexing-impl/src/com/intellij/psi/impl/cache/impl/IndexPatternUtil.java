@@ -17,8 +17,7 @@ public class IndexPatternUtil {
     return getIndexPatternProviders().stream().mapToInt(provider -> provider.getIndexPatterns().length).sum();
   }
 
-  @NotNull
-  public static IndexPattern[] getIndexPatterns() {
+  public static IndexPattern @NotNull [] getIndexPatterns() {
     IndexPattern[] result = new IndexPattern[getIndexPatternCount()];
     int destIndex = 0;
     for (IndexPatternProvider provider : getIndexPatternProviders()) {

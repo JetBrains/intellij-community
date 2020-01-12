@@ -29,7 +29,8 @@ public abstract class XmlQuickFixFactory {
   }
 
   @NotNull
-  public abstract LocalQuickFixAndIntentionActionOnPsiElement insertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,@NotNull String... values);
+  public abstract LocalQuickFixAndIntentionActionOnPsiElement insertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,
+                                                                                         String @NotNull ... values);
 
   @NotNull
   public abstract LocalQuickFix createNSDeclarationIntentionFix(@NotNull final PsiElement element,

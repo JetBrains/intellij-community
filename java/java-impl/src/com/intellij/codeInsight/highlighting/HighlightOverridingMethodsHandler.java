@@ -51,7 +51,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
   protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(targets, myEditor, CodeInsightBundle.message("highlight.overridden.classes.chooser.title")) {
       @Override
-      protected void selected(@NotNull PsiClass... classes) {
+      protected void selected(PsiClass @NotNull ... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();

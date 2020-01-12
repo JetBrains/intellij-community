@@ -126,8 +126,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public PsiDirectory[] getSubdirectories() {
+  public PsiDirectory @NotNull [] getSubdirectories() {
     VirtualFile[] files = myFile.getChildren();
     ArrayList<PsiDirectory> dirs = new ArrayList<>();
     for (VirtualFile file : files) {
@@ -140,8 +139,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public PsiFile[] getFiles() {
+  public PsiFile @NotNull [] getFiles() {
     if (!myFile.isValid()) throw new InvalidVirtualFileAccessException(myFile);
     VirtualFile[] files = myFile.getChildren();
     ArrayList<PsiFile> psiFiles = new ArrayList<>();
@@ -197,8 +195,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     checkValid();
 
     VirtualFile[] files = myFile.getChildren();
@@ -258,8 +255,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return ArrayUtilRt.EMPTY_CHAR_ARRAY;
   }
 

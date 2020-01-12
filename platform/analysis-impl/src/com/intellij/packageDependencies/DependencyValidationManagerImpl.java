@@ -102,8 +102,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   }
 
   @Override
-  @NotNull
-  public DependencyRule[] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to) {
+  public DependencyRule @NotNull [] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to) {
     ArrayList<DependencyRule> result = new ArrayList<>();
     for (DependencyRule dependencyRule : myState.rules) {
       if (dependencyRule.isForbiddenToUse(from, to)) {
@@ -113,9 +112,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     return result.toArray(new DependencyRule[0]);
   }
 
-  @NotNull
   @Override
-  public DependencyRule[] getApplicableRules(@NotNull PsiFile file) {
+  public DependencyRule @NotNull [] getApplicableRules(@NotNull PsiFile file) {
     ArrayList<DependencyRule> result = new ArrayList<>();
     for (DependencyRule dependencyRule : myState.rules) {
       if (dependencyRule.isApplicable(file)) {
@@ -141,9 +139,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     return myState.unnamedScopes;
   }
 
-  @NotNull
   @Override
-  public DependencyRule[] getAllRules() {
+  public DependencyRule @NotNull [] getAllRules() {
     List<DependencyRule> rules = myState.rules;
     return rules.toArray(new DependencyRule[0]);
   }
@@ -369,7 +366,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   }
 
   @Override
-  public void setScopes(@NotNull NamedScope[] scopes) {
+  public void setScopes(NamedScope @NotNull [] scopes) {
     super.setScopes(scopes);
     final List<String> order = myNamedScopeManager.myOrderState.myOrder;
     order.clear();

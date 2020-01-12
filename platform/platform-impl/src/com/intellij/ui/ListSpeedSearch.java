@@ -79,9 +79,8 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     return myComponent.getSelectedIndex();
   }
 
-  @NotNull
   @Override
-  protected Object[] getAllElements() {
+  protected Object @NotNull [] getAllElements() {
     return getAllListElements(myComponent);
   }
 

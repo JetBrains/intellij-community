@@ -37,31 +37,31 @@ class VcsRootConfiguration {
   }
 
   @NotNull
-  public VcsRootConfiguration vcsRoots(@NotNull String... vcsRoots) {
+  public VcsRootConfiguration vcsRoots(String @NotNull ... vcsRoots) {
     myVcsRoots = Arrays.asList(vcsRoots);
     return this;
   }
 
   @NotNull
-  public VcsRootConfiguration mappings(@NotNull String... mappings) {
+  public VcsRootConfiguration mappings(String @NotNull ... mappings) {
     myMappings = Arrays.asList(mappings);
     return this;
   }
 
   @NotNull
-  public VcsRootConfiguration contentRoots(@NotNull String... contentRoots) {
+  public VcsRootConfiguration contentRoots(String @NotNull ... contentRoots) {
     myContentRoots = Arrays.asList(contentRoots);
     return this;
   }
 
   @NotNull
-  public VcsRootConfiguration unregErrors(@NotNull String... unregErrors) {
+  public VcsRootConfiguration unregErrors(String @NotNull ... unregErrors) {
     myUnregErrors = Arrays.asList(unregErrors);
     return this;
   }
 
   @NotNull
-  public VcsRootConfiguration extraErrors(@NotNull String... extraErrors) {
+  public VcsRootConfiguration extraErrors(String @NotNull ... extraErrors) {
     myExtraErrors = Arrays.asList(extraErrors);
     return this;
   }

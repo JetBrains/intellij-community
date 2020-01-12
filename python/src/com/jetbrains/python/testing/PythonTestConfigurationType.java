@@ -58,9 +58,8 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
           NotNullLazyValue.createValue(() -> PythonIcons.Python.PythonTests));
   }
 
-  @NotNull
   @Override
-  public ConfigurationFactory[] getConfigurationFactories() {
+  public ConfigurationFactory @NotNull [] getConfigurationFactories() {
     return myFactories.getValue();
   }
 

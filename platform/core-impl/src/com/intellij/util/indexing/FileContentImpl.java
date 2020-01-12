@@ -45,7 +45,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     this(file, contentAsText, null, documentStamp, false);
   }
 
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+  public FileContentImpl(@NotNull final VirtualFile file, final byte @NotNull [] content) {
     this(file, null, content, -1, true);
   }
 
@@ -185,9 +185,8 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return myPhysicalContent;
   }
 
-  @NotNull
   @Override
-  public byte[] getContent() {
+  public byte @NotNull [] getContent() {
     byte[] content = myContent;
     if (content == null) {
       myContent = content = myContentAsText.toString().getBytes(getCharset());
@@ -218,12 +217,11 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return myFileName;
   }
 
-  @Nullable
-  public byte[] getHash(boolean fromDocument) {
+  public byte @Nullable [] getHash(boolean fromDocument) {
     return fromDocument ? myDocumentHash : myFileContentHash;
   }
 
-  public void setHashes(@NotNull byte[] fileContentHash, @NotNull byte[] documentHash) {
+  public void setHashes(byte @NotNull [] fileContentHash, byte @NotNull [] documentHash) {
     myFileContentHash = fileContentHash;
     myDocumentHash = documentHash;
   }

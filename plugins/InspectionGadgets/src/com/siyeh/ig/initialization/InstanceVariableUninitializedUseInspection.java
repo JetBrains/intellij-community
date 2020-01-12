@@ -105,9 +105,8 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
     super.writeSettings(element);
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return AddToIgnoreIfAnnotatedByListQuickFix.build(field, annotationNames);
   }

@@ -52,9 +52,8 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * @deprecated use async variant
    * {@link CreateElementActionBase#invokeDialog(Project, PsiDirectory, Consumer)} instead
    */
-  @NotNull
   @Deprecated
-  protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -70,8 +69,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
   /**
    * @return created elements. Never null.
    */
-  @NotNull
-  protected abstract PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception;
+  protected abstract PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception;
 
   protected abstract String getErrorTitle();
 

@@ -25,9 +25,8 @@ public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return EMPTY_ARRAY;
     }
   };
@@ -124,11 +123,9 @@ public abstract class ActionGroup extends AnAction {
    *
    * @return An array representing children of this group. All returned children must be not {@code null}.
    */
-  @NotNull
-  public abstract AnAction[] getChildren(@Nullable AnActionEvent e);
+  public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     return getChildren(null);
   }
 

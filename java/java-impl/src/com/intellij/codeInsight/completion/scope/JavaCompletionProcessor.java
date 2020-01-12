@@ -264,7 +264,7 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
     return JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
   }
 
-  public void setCompletionElements(@NotNull Object[] elements) {
+  public void setCompletionElements(Object @NotNull [] elements) {
     for (Object element: elements) {
       CompletionElement completion = new CompletionElement(element, PsiSubstitutor.EMPTY);
       myResults.put(completion, completion);

@@ -43,8 +43,7 @@ public class BuildoutPartReference extends PsiReferenceBase<PsiElement> {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     List<String> res = Lists.newArrayList();
     BuildoutCfgFile file = PsiTreeUtil.getParentOfType(myElement, BuildoutCfgFile.class);
     if (file != null) {

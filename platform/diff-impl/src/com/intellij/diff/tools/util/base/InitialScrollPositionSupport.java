@@ -36,7 +36,7 @@ public class InitialScrollPositionSupport {
 
     @Nullable protected ScrollToPolicy myScrollToChange;
     @Nullable protected EditorsVisiblePositions myEditorsPosition;
-    @Nullable protected LogicalPosition[] myCaretPosition;
+    protected LogicalPosition @Nullable [] myCaretPosition;
 
     public void processContext(@NotNull DiffRequest request) {
       myScrollToChange = request.getUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE);
@@ -53,17 +53,15 @@ public class InitialScrollPositionSupport {
       request.putUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION, carets);
     }
 
-    @Nullable
-    protected abstract LogicalPosition[] getCaretPositions();
+    protected abstract LogicalPosition @Nullable [] getCaretPositions();
 
     @Nullable
     protected abstract EditorsVisiblePositions getVisiblePositions();
   }
 
   private static abstract class SideInitialScrollHelper extends InitialScrollHelperBase {
-    @Nullable
     @Override
-    protected LogicalPosition[] getCaretPositions() {
+    protected LogicalPosition @Nullable [] getCaretPositions() {
       return doGetCaretPositions(getEditors());
     }
 
@@ -194,8 +192,7 @@ public class InitialScrollPositionSupport {
     protected abstract boolean doScrollToLine();
   }
 
-  @NotNull
-  public static Point[] doGetScrollingPositions(@NotNull List<? extends Editor> editors) {
+  public static Point @NotNull [] doGetScrollingPositions(@NotNull List<? extends Editor> editors) {
     Point[] carets = new Point[editors.size()];
     for (int i = 0; i < editors.size(); i++) {
       carets[i] = DiffUtil.getScrollingPosition(editors.get(i));
@@ -203,8 +200,7 @@ public class InitialScrollPositionSupport {
     return carets;
   }
 
-  @NotNull
-  public static LogicalPosition[] doGetCaretPositions(@NotNull List<? extends Editor> editors) {
+  public static LogicalPosition @NotNull [] doGetCaretPositions(@NotNull List<? extends Editor> editors) {
     LogicalPosition[] carets = new LogicalPosition[editors.size()];
     for (int i = 0; i < editors.size(); i++) {
       carets[i] = DiffUtil.getCaretPosition(editors.get(i));
@@ -219,7 +215,7 @@ public class InitialScrollPositionSupport {
     return new EditorsVisiblePositions(carets, points);
   }
 
-  public static void doMoveCaretsToPositions(@NotNull LogicalPosition[] positions, @NotNull List<? extends Editor> editors) {
+  public static void doMoveCaretsToPositions(LogicalPosition @NotNull [] positions, @NotNull List<? extends Editor> editors) {
     for (int i = 0; i < editors.size(); i++) {
       Editor editor = editors.get(i);
       if (editor != null) editor.getCaretModel().moveToLogicalPosition(positions[i]);
@@ -254,19 +250,19 @@ public class InitialScrollPositionSupport {
   public static class EditorsVisiblePositions {
     public static final Key<EditorsVisiblePositions> KEY = Key.create("Diff.EditorsVisiblePositions");
 
-    @NotNull public final LogicalPosition[] myCaretPosition;
-    @NotNull public final Point[] myPoints;
+    public final LogicalPosition @NotNull [] myCaretPosition;
+    public final Point @NotNull [] myPoints;
 
     public EditorsVisiblePositions(@NotNull LogicalPosition caretPosition, @NotNull Point points) {
       this(new LogicalPosition[]{caretPosition}, new Point[]{points});
     }
 
-    public EditorsVisiblePositions(@NotNull LogicalPosition[] caretPosition, @NotNull Point[] points) {
+    public EditorsVisiblePositions(LogicalPosition @NotNull [] caretPosition, Point @NotNull [] points) {
       myCaretPosition = caretPosition;
       myPoints = points;
     }
 
-    public boolean isSame(@Nullable LogicalPosition... caretPosition) {
+    public boolean isSame(LogicalPosition @Nullable ... caretPosition) {
       // TODO: allow small fluctuations ?
       if (caretPosition == null) return true;
       if (myCaretPosition.length != caretPosition.length) return false;

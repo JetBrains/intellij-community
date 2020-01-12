@@ -116,9 +116,8 @@ class JrtHandler extends ArchiveHandler {
     return map;
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
     EntryInfo entry = getEntryInfo(relativePath);
     if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
     Path path = getFileSystem().getPath("/modules/" + relativePath);

@@ -73,9 +73,8 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
     return getClass().getName();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     Action copy = new DialogWrapperAction("&Copy") {
       @Override
       protected void doAction(ActionEvent e) {

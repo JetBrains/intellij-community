@@ -32,7 +32,7 @@ class SimpleDocTagInfo implements JavadocTagInfo {
   private final boolean myInline;
   private final LanguageLevel myLanguageLevel;
 
-  SimpleDocTagInfo(@NotNull String name, @NotNull LanguageLevel level, boolean isInline, @NotNull Class... contexts) {
+  SimpleDocTagInfo(@NotNull String name, @NotNull LanguageLevel level, boolean isInline, Class @NotNull ... contexts) {
     myName = name;
     myContexts = contexts;
     myInline = isInline;

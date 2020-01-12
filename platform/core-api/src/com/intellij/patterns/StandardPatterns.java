@@ -39,7 +39,7 @@ public class StandardPatterns {
 
   @NotNull
   @SafeVarargs
-  public static <T> ElementPattern<T> instanceOf(@NotNull Class<T>... classes) {
+  public static <T> ElementPattern<T> instanceOf(Class<T> @NotNull ... classes) {
     ElementPattern[] patterns = ContainerUtil.map(classes, StandardPatterns::instanceOf, new ElementPattern[0]);
     return or(patterns);
   }
@@ -97,7 +97,7 @@ public class StandardPatterns {
 
   @NotNull
   @SafeVarargs
-  public static <E> ElementPattern<E> or(@NotNull final ElementPattern<? extends E>... patterns) {
+  public static <E> ElementPattern<E> or(final ElementPattern<? extends E> @NotNull ... patterns) {
     return new ObjectPattern.Capture<>(new InitialPatternConditionPlus(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {

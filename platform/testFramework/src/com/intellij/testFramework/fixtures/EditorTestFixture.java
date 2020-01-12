@@ -204,8 +204,7 @@ public class EditorTestFixture {
     return getLookupElements();
   }
 
-  @Nullable
-  public LookupElement[] getLookupElements() {
+  public LookupElement @Nullable [] getLookupElements() {
     LookupImpl lookup = getLookup();
     if (lookup == null) {
       return myEmptyLookup ? LookupElement.EMPTY_ARRAY : null;
@@ -252,7 +251,7 @@ public class EditorTestFixture {
     return result;
   }
 
-  public void assertPreferredCompletionItems(final int selected, @NotNull final String... expected) {
+  public void assertPreferredCompletionItems(final int selected, final String @NotNull ... expected) {
     final LookupImpl lookup = getLookup();
     assertNotNull("No lookup is shown", lookup);
 

@@ -29,8 +29,7 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
   /**
    * @return the left-hand side of the statement; each item may consist of many elements.
    */
-  @NotNull
-  PyExpression[] getTargets();
+  PyExpression @NotNull [] getTargets();
 
   /**
    * Return all expressions which are considered assignment targets (to the left of the last = sign in the statement).
@@ -38,8 +37,7 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
    *
    * @return the list of assignment target expressions
    */
-  @NotNull
-  PyExpression[] getRawTargets();
+  PyExpression @NotNull [] getRawTargets();
 
 
   /**

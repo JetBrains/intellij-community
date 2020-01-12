@@ -34,9 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static final Logger LOG = Logger.getInstance(GroovyEncapsulateFieldHelper.class);
 
-  @NotNull
   @Override
-  public PsiField[] getApplicableFields(@NotNull PsiClass aClass) {
+  public PsiField @NotNull [] getApplicableFields(@NotNull PsiClass aClass) {
     if (aClass instanceof GrTypeDefinition) {
       return ((GrTypeDefinition)aClass).getCodeFields();
     }

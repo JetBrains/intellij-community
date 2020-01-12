@@ -15,7 +15,7 @@ public abstract class RefJavaUtil {
   @Deprecated
   public abstract void addReferences(@NotNull PsiModifierListOwner psiFrom, @NotNull RefJavaElement ref, @Nullable PsiElement findIn);
 
-  public void addReferencesTo(@NotNull UDeclaration decl, @NotNull RefJavaElement ref, @Nullable UElement... findIn) {
+  public void addReferencesTo(@NotNull UDeclaration decl, @NotNull RefJavaElement ref, UElement @Nullable ... findIn) {
     throw new UnsupportedOperationException("Should be implemented");
   }
 

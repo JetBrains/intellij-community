@@ -233,8 +233,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     assertReadAccessAllowed();
 
     final int len = getTextLength();
@@ -371,9 +370,8 @@ public class CompositeElement extends TreeElement {
     return 0; //ChildRole.NONE;
   }
 
-  @NotNull
   @Override
-  public ASTNode[] getChildren(@Nullable TokenSet filter) {
+  public ASTNode @NotNull [] getChildren(@Nullable TokenSet filter) {
     int count = countChildren(filter);
     if (count == 0) {
       return EMPTY_ARRAY;
@@ -388,8 +386,7 @@ public class CompositeElement extends TreeElement {
     return result;
   }
 
-  @NotNull
-  public <T extends PsiElement> T[] getChildrenAsPsiElements(@Nullable TokenSet filter, @NotNull ArrayFactory<? extends T> constructor) {
+  public <T extends PsiElement> T @NotNull [] getChildrenAsPsiElements(@Nullable TokenSet filter, @NotNull ArrayFactory<? extends T> constructor) {
     assertReadAccessAllowed();
     int count = countChildren(filter);
     T[] result = constructor.create(count);
@@ -407,8 +404,7 @@ public class CompositeElement extends TreeElement {
     return result;
   }
 
-  @NotNull
-  public <T extends PsiElement> T[] getChildrenAsPsiElements(@NotNull IElementType type, @NotNull ArrayFactory<? extends T> constructor) {
+  public <T extends PsiElement> T @NotNull [] getChildrenAsPsiElements(@NotNull IElementType type, @NotNull ArrayFactory<? extends T> constructor) {
     assertReadAccessAllowed();
     int count = countChildren(type);
     T[] result = constructor.create(count);

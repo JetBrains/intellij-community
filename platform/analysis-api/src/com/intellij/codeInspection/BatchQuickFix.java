@@ -38,7 +38,7 @@ public interface BatchQuickFix<D extends CommonProblemDescriptor> {
    * @param refreshViews        post-refresh inspection results view; would remove collected elements from the view
    */
   void applyFix(@NotNull final Project project,
-                @NotNull final D[] descriptors,
+                final D @NotNull [] descriptors,
                 @NotNull final List<PsiElement> psiElementsToIgnore,
                 @Nullable final Runnable refreshViews);
 }

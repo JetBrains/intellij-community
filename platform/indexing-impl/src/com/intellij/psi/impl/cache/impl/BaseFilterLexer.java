@@ -104,7 +104,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   }
 
   @Override
-  public final void run(CharSequence chars, @Nullable char[] charsArray, int start, int end) {
+  public final void run(CharSequence chars, char @Nullable [] charsArray, int start, int end) {
     myOccurrenceConsumer.addOccurrence(chars, charsArray, start, end, myOccurenceMask);
   }
 

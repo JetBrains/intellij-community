@@ -66,8 +66,7 @@ public abstract class Task {
   @Nullable
   public abstract String getDescription();
 
-  @NotNull
-  public abstract Comment[] getComments();
+  public abstract Comment @NotNull [] getComments();
 
   @NotNull
   public abstract Icon getIcon();

@@ -78,7 +78,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
 
   @NotNull
   @Override
-  public BusyObject getBusy(@NotNull Project project, @NotNull UiActivity... toWatch) {
+  public BusyObject getBusy(@NotNull Project project, UiActivity @NotNull ... toWatch) {
     if (!isActive()) return myEmptyBusy;
 
     return _getBusy(project, toWatch);
@@ -86,7 +86,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
 
   @NotNull
   @Override
-  public BusyObject getBusy(@NotNull UiActivity... toWatch) {
+  public BusyObject getBusy(UiActivity @NotNull ... toWatch) {
     if (!isActive()) return myEmptyBusy;
 
     return _getBusy(null, toWatch);
@@ -138,7 +138,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
   }
 
   @NotNull
-  private BusyImpl _getBusy(@Nullable Project key, @NotNull UiActivity... toWatch) {
+  private BusyImpl _getBusy(@Nullable Project key, UiActivity @NotNull ... toWatch) {
     return getBusyContainer(key).getOrCreateBusy(toWatch);
   }
 
@@ -298,7 +298,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
     }
 
     @NotNull
-    public BusyImpl getOrCreateBusy(@NotNull UiActivity... activities) {
+    public BusyImpl getOrCreateBusy(UiActivity @NotNull ... activities) {
       Set<UiActivity> key = ContainerUtil.set(activities);
 
       if (myActivities2Object.containsKey(key)) {

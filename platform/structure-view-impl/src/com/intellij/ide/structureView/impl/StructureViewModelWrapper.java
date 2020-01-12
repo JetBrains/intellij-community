@@ -80,20 +80,17 @@ public class StructureViewModelWrapper implements StructureViewModel {
   }
 
   @Override
-  @NotNull
-  public Grouper[] getGroupers() {
+  public Grouper @NotNull [] getGroupers() {
     return myStructureViewModel.getGroupers();
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return myStructureViewModel.getSorters();
   }
 
   @Override
-  @NotNull
-  public Filter[] getFilters() {
+  public Filter @NotNull [] getFilters() {
     return myStructureViewModel.getFilters();
   }
 }

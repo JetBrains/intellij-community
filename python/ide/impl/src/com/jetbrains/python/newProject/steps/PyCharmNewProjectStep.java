@@ -54,7 +54,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewProjectSe
     }
 
     @Override
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<PyNewProjectSettings>[] generators,
+    public AnAction[] getActions(DirectoryProjectGenerator<PyNewProjectSettings> @NotNull [] generators,
                                  @NotNull AbstractCallback<PyNewProjectSettings> callback) {
       Arrays.sort(generators, Comparator.comparing(DirectoryProjectGenerator::getName));
       Arrays.sort(generators, Comparator.comparingInt(value -> {

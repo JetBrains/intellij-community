@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public interface ConfigFileMetaDataProvider {
 
-  @NotNull
-  ConfigFileMetaData[] getMetaData();
+  ConfigFileMetaData @NotNull [] getMetaData();
 
   @Nullable
   ConfigFileMetaData findMetaData(@NonNls @NotNull String id);

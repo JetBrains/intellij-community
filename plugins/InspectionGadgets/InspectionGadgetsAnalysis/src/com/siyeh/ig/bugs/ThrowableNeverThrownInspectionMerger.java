@@ -29,9 +29,8 @@ public class ThrowableNeverThrownInspectionMerger extends InspectionElementsMerg
     return "ThrowableNotThrown";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {"ThrowableInstanceNeverThrown", "ThrowableResultOfMethodCallIgnored"};
   }
 }

@@ -885,8 +885,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return super.getToolTipText(event);
     }
 
-    @Nullable
-    private ColumnInfo[] getColumnInfos() {
+    private ColumnInfo @Nullable [] getColumnInfos() {
       TableModel model = getModel();
       if (model instanceof SortableColumnModel) {
         return ((SortableColumnModel)model).getColumnInfos();

@@ -309,8 +309,7 @@ public class IconUtil {
   /**
    * Result icons look like original but have equal (maximum) size
    */
-  @NotNull
-  public static Icon[] getEqualSizedIcons(@NotNull Icon... icons) {
+  public static Icon @NotNull [] getEqualSizedIcons(Icon @NotNull ... icons) {
     Icon[] result = new Icon[icons.length];
     int width = 0;
     int height = 0;

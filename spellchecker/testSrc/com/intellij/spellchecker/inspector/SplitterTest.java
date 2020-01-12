@@ -423,7 +423,7 @@ public class SplitterTest {
     return words;
   }
 
-  private static void correctListToCheck(Splitter splitter, String text, @NotNull String... expected) {
+  private static void correctListToCheck(Splitter splitter, String text, String @NotNull ... expected) {
     List<String> words = wordsToCheck(splitter, text);
     List<String> expectedWords = Arrays.asList(expected);
     assertEquals("Splitting:'" + text + "'", expectedWords.toString(), words.toString());

@@ -32,7 +32,7 @@ public abstract class GroovyExpressionSurrounder implements Surrounder {
 
   @Override
   @Nullable
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
+  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) throws IncorrectOperationException {
     if (elements.length != 1) return null;
 
     PsiElement element = elements[0];
@@ -43,7 +43,7 @@ public abstract class GroovyExpressionSurrounder implements Surrounder {
   protected abstract TextRange surroundExpression(@NotNull GrExpression expression, @Nullable PsiElement context);
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     return elements.length == 1 &&  isApplicable(elements[0]);
   }
 

@@ -102,7 +102,7 @@ public class JavaHighlightUtil {
   }
 
   @Nullable
-  public static PsiType sameType(@NotNull PsiExpression[] expressions) {
+  public static PsiType sameType(PsiExpression @NotNull [] expressions) {
     PsiType type = null;
     for (PsiExpression expression : expressions) {
       final PsiType currentType;

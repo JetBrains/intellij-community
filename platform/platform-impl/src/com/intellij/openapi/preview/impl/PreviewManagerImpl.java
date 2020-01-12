@@ -148,9 +148,8 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       });
 
       moveToStandardViewAction.registerCustomShortcutSet(new ShortcutSet() {
-        @NotNull
         @Override
-        public Shortcut[] getShortcuts() {
+        public Shortcut @NotNull [] getShortcuts() {
           Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
           return keymap.getShortcuts("ShowContent");
         }

@@ -49,7 +49,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @NonNls
   private static final String NAME_TEMPLATE_VARIABLE = "name";
 
-  public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,@NotNull String... values) {
+  public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName, String @NotNull ... values) {
     super(tag);
     myAttrName = attrName;
     myValues = values;

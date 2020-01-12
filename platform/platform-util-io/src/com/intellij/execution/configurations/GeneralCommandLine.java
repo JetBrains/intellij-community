@@ -93,7 +93,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public GeneralCommandLine() { }
 
-  public GeneralCommandLine(@NotNull String... command) {
+  public GeneralCommandLine(String @NotNull ... command) {
     this(Arrays.asList(command));
   }
 
@@ -228,7 +228,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return env;
   }
 
-  public void addParameters(@NotNull String... parameters) {
+  public void addParameters(String @NotNull ... parameters) {
     withParameters(parameters);
   }
 
@@ -237,7 +237,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(@NotNull String... parameters) {
+  public GeneralCommandLine withParameters(String @NotNull ... parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }

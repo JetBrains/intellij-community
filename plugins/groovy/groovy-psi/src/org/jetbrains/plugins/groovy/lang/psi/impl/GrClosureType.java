@@ -63,14 +63,12 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public PsiType @NotNull [] getParameters() {
     if (ourForbidClosureInference) throw new IllegalStateException();
     return ObjectUtils.notNull(myTypeArgs.getValue(), PsiType.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public PsiType[] inferParameters() {
+  public PsiType @NotNull [] inferParameters() {
     final PsiClass psiClass = resolve();
     if (psiClass != null && psiClass.getTypeParameters().length == 1) {
       final PsiType type = GrClosureSignatureUtil.getReturnType(mySignatures);
@@ -153,7 +151,7 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Nullable
-  public PsiType curry(@NotNull PsiType[] args, int position, @NotNull PsiElement context) {
+  public PsiType curry(PsiType @NotNull [] args, int position, @NotNull PsiElement context) {
     final List<GrSignature> curried = CurryKt.curry(mySignatures, args, position, context);
     if (curried.isEmpty()) {
       return null;
