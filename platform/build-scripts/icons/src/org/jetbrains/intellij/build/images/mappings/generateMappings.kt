@@ -62,8 +62,8 @@ private fun generateMappings() {
     val jsonFile = path.toRelativeString(repo)
     stageFiles(listOf(jsonFile), repo)
     commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update",
-                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com",
-                  force = true)
+                                                           "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com",
+                                                           force = true)
   }
 }
 

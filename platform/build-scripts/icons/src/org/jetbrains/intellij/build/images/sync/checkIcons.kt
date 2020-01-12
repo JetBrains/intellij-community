@@ -48,19 +48,18 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
         throw e
       }
       if (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty()) {
-        createReviewForDev(context)?.also {
-          context.createdReviews = listOf(it)
-        }
+        commitAndPush(context)
       }
     }
     else -> syncIconsRepo(context)
   }
   val report = report(context, skippedDirs.size)
-  if (isUnderTeamCity() &&
-      (context.isFail() ||
-       // reviews should be created
-       context.iconsCommitHashesToSync.isNotEmpty() && context.devReviews().isEmpty())) context.doFail(report)
-  else log(report)
+  if (isUnderTeamCity() && context.isFail()) {
+    context.doFail(report)
+  }
+  else {
+    log(report)
+  }
 }
 
 private fun push(context: Context) {
@@ -71,14 +70,9 @@ private fun push(context: Context) {
         val devCommitsLinks = context.devCommitsToSync
           .values.asSequence().flatten()
           .filter { it.committer == pushedCommit.committer }
-          .map {
-            commitUrl(UPSOURCE_DEV_PROJECT_ID, it)?.let { url ->
-              slackLink("'${it.subject}'", url)
-            } ?: "'${it.subject}'"
-          }.joinToString()
-        val commitUrl = commitUrl(UPSOURCE_ICONS_PROJECT_ID, pushedCommit)
-        val synced = commitUrl?.let { slackLink("synced", it) } ?: "synced"
-        "Icons from $devCommitsLinks are $synced"
+          .map { "'${it.subject}'" }
+          .joinToString()
+        "Icons from $devCommitsLinks are synced"
       }, context, success = true
     )
   }
