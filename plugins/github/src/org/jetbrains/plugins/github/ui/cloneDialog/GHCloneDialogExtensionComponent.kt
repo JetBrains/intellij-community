@@ -348,7 +348,6 @@ internal class GHCloneDialogExtensionComponent(
   override fun doValidateAll(): List<ValidationInfo> {
     val list = ArrayList<ValidationInfo>()
     ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
-    ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.createDestination(directoryField.text))
     return list
   }
 
