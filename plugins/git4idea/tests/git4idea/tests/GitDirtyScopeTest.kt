@@ -119,7 +119,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
 
     emptyBulkChange(file)
 
-    assertTrue(isDirtyPath(file))
+    assertFalse(isDirtyPath(file))
   }
 
   private fun editDocument(file: VirtualFile, newContent: String) {
