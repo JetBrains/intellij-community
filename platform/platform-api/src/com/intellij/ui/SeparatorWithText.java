@@ -34,7 +34,6 @@ import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
 public class SeparatorWithText extends JComponent implements Accessible {
-
   private String myCaption;
   private int myPrefWidth;
   private int myAlignment;
@@ -74,7 +73,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
   }
 
   private Dimension getPreferredFontSize() {
-    Dimension size = new Dimension(myPrefWidth < 0 ? 0 : myPrefWidth, 1);
+    Dimension size = new Dimension(Math.max(myPrefWidth, 0), 1);
     String caption = getCaption();
     if (caption != null) {
       FontMetrics fm = getFontMetrics(getFont());
