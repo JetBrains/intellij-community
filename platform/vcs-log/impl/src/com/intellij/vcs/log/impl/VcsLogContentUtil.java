@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.project.Project;
@@ -76,7 +76,9 @@ public class VcsLogContentUtil {
                                               @NotNull Class<U> clazz, boolean select,
                                               @NotNull Condition<? super U> condition) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    if (toolWindow == null) return null;
+    if (toolWindow == null) {
+      return null;
+    }
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> {
@@ -87,11 +89,17 @@ public class VcsLogContentUtil {
       }
       return false;
     });
-    if (component == null) return null;
+    if (component == null) {
+      return null;
+    }
 
     if (select) {
-      if (!toolWindow.isVisible()) toolWindow.activate(null);
-      if (!ContentUtilEx.selectContent(manager, component, true)) return null;
+      if (!toolWindow.isVisible()) {
+        toolWindow.activate(null);
+      }
+      if (!ContentUtilEx.selectContent(manager, component, true)) {
+        return null;
+      }
     }
     //noinspection unchecked
     return (U)getLogUi(component);
@@ -135,7 +143,9 @@ public class VcsLogContentUtil {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(),
                                    new VcsLogPanel(logManager, logUi), tabGroupName, shortName, focus, logUi);
-    if (focus) toolWindow.activate(null);
+    if (focus) {
+      toolWindow.activate(null);
+    }
     logManager.scheduleInitialization();
     return logUi;
   }

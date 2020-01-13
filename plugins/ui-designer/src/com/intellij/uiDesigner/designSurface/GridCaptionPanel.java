@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
@@ -517,16 +516,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     @Override
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       return new DnDDragStartBean(new MyDragBean(myIsRow, getSelectedCells(dragOrigin)));
-    }
-
-    @Override
-    @Nullable
-    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-      return null;
-    }
-
-    @Override
-    public void dragDropEnd() {
     }
 
     @Override

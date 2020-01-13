@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
 import com.intellij.ide.ui.UISettings;
@@ -29,7 +29,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
 
-public class DnDManagerImpl extends DnDManager implements Disposable {
+public final class DnDManagerImpl extends DnDManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
 
   @NonNls private static final String SOURCE_KEY = "DnD Source";
@@ -84,7 +84,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   public void registerSource(DnDSource source, JComponent component) {
     if (!getApplication().isHeadlessEnvironment()) {
       component.putClientProperty(SOURCE_KEY, source);
-      final DragSource defaultDragSource = DragSource.getDefaultDragSource();
+      DragSource defaultDragSource = DragSource.getDefaultDragSource();
       defaultDragSource.createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY_OR_MOVE, myDragGestureListener);
     }
   }
@@ -113,7 +113,8 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       cleanup.run();
-    } else {
+    }
+    else {
       SwingUtilities.invokeLater(cleanup);
     }
   }
@@ -161,20 +162,18 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
     DnDEventImpl currentEvent = myCurrentEvent;
 
-    if (myCurrentEvent == null) {
-      if (aComponentOverDragging instanceof JComponent) {
-        JComponent jComp = (JComponent)aComponentOverDragging;
-        DnDTarget target = getTarget(jComp);
-        if (target instanceof DnDNativeTarget) {
-          DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
-          if (event == null) {
-            DnDNativeTarget.EventInfo info = new DnDNativeTarget.EventInfo(flavors, transferable);
-            event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint);
-            jComp.putClientProperty(DnDNativeTarget.EVENT_KEY, event);
-          }
-
-          currentEvent = event;
+    if (myCurrentEvent == null && aComponentOverDragging instanceof JComponent) {
+      JComponent jComp = (JComponent)aComponentOverDragging;
+      DnDTarget target = getTarget(jComp);
+      if (target instanceof DnDNativeTarget) {
+        DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
+        if (event == null) {
+          DnDNativeTarget.EventInfo info = new DnDNativeTarget.EventInfo(flavors, transferable);
+          event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint);
+          jComp.putClientProperty(DnDNativeTarget.EVENT_KEY, event);
         }
+
+        currentEvent = event;
       }
     }
 
@@ -240,15 +239,15 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
     updateCursor();
 
-    final Container current = (Container)currentEvent.getCurrentOverComponent();
-    final Point point = currentEvent.getPointOn(getLayeredPane(current));
+    Container current = (Container)currentEvent.getCurrentOverComponent();
+    Point point = currentEvent.getPointOn(getLayeredPane(current));
     Rectangle inPlaceRect = new Rectangle(point.x - 5, point.y - 5, 5, 5);
 
     if (!currentEvent.equals(myLastProcessedEvent)) {
       hideCurrentHighlighter();
     }
 
-    final DnDTarget processedTarget = getLastProcessedTarget();
+    DnDTarget processedTarget = getLastProcessedTarget();
     boolean sameTarget = processedTarget != null && processedTarget.equals(target);
     if (sameTarget) {
       if (currentEvent.isDropPossible()) {
@@ -259,11 +258,9 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
           }
         }
       }
-      else {
-        if (myLastProcessedPoint == null || currentEvent == null || !myLastProcessedPoint.equals(currentEvent.getPoint())) {
-          hideCurrentHighlighter();
-          queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
-        }
+      else if (myLastProcessedPoint == null || !myLastProcessedPoint.equals(currentEvent.getPoint())) {
+        hideCurrentHighlighter();
+        queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
       }
     }
     else {
@@ -528,54 +525,49 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     return null;
   }
 
-  private class MyDragGestureListener implements DragGestureListener {
+  private final class MyDragGestureListener implements DragGestureListener {
     @Override
-    public void dragGestureRecognized(DragGestureEvent dge) {
+    public void dragGestureRecognized(DragGestureEvent event) {
       try {
-        final DnDSource source = getSource(dge.getComponent());
-        if (source == null || !MouseDragHelper.checkModifiers(dge.getTriggerEvent())) return;
+        DnDSource source = getSource(event.getComponent());
+        // Actually, under Linux it is possible to get 2 or more dragGestureRecognized calls for single drag
+        // operation. To reproduce:
+        // 1. Do D-n-D in Styles tree
+        // 2. Make an attempt to do D-n-D in Services tree
+        // 3. Do D-n-D in Styles tree again.
 
-        DnDAction action = getDnDActionForPlatformAction(dge.getDragAction());
-        if (source.canStartDragging(action, dge.getDragOrigin())) {
-
-          if (myCurrentEvent == null) {
-            // Actually, under Linux it is possible to get 2 or more dragGestureRecognized calls for single drag
-            // operation. To reproduce:
-            // 1. Do D-n-D in Styles tree
-            // 2. Make an attempt to do D-n-D in Services tree
-            // 3. Do D-n-D in Styles tree again.
-
-            LOG.debug("Starting dragging for " + action);
-            hideCurrentHighlighter();
-            DnDDragStartBean bean = source.startDragging(action, dge.getDragOrigin());
-            myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, bean.getAttachedObject(), bean.getPoint());
-            myCurrentEvent.setOrgPoint(dge.getDragOrigin());
-
-            Pair<Image, Point> pair = bean.isEmpty() ? null : source.createDraggedImage(action, dge.getDragOrigin(), bean);
-            if (pair == null) {
-              pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
-            }
-
-            if (SystemInfo.isMac && MultiResolutionImageProvider.isMultiResolutionImageAvailable()) {
-              Image mrImage = MultiResolutionImageProvider.convertFromJBImage(pair.first);
-              if (mrImage != null) pair = new Pair<>(mrImage, pair.second);
-            }
-
-            if (!DragSource.isDragImageSupported()) {
-              // not all of the platforms supports image dragging (mswin doesn't, for example).
-              myCurrentEvent.putUserData(DRAGGED_IMAGE_KEY, pair);
-            }
-
-            // mac osx fix: it will draw a border with size of the dragged component if there is no image provided.
-            dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent, new MyDragSourceListener(source));
-
-            // check if source is also a target
-            //        DnDTarget target = getTarget(dge.getComponent());
-            //        if( target != null ) {
-            //          target.update(myCurrentEvent);
-            //        }
-          }
+        if (source == null || !MouseDragHelper.checkModifiers(event.getTriggerEvent()) || myCurrentEvent != null) {
+          return;
         }
+
+        DnDAction action = getDnDActionForPlatformAction(event.getDragAction());
+        if (!source.canStartDragging(action, event.getDragOrigin())) {
+          return;
+        }
+
+        LOG.debug("Starting dragging for " + action);
+        hideCurrentHighlighter();
+        DnDDragStartBean bean = source.startDragging(action, event.getDragOrigin());
+        myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, bean.getAttachedObject(), bean.getPoint());
+        myCurrentEvent.setOrgPoint(event.getDragOrigin());
+
+        Pair<Image, Point> pair = bean.isEmpty() ? null : source.createDraggedImage(action, event.getDragOrigin(), bean);
+        if (pair == null) {
+          pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
+        }
+
+        if (SystemInfo.isMac && MultiResolutionImageProvider.isMultiResolutionImageAvailable()) {
+          Image mrImage = MultiResolutionImageProvider.convertFromJBImage(pair.first);
+          if (mrImage != null) pair = new Pair<>(mrImage, pair.second);
+        }
+
+        if (!DragSource.isDragImageSupported()) {
+          // not all of the platforms supports image dragging (mswin doesn't, for example).
+          myCurrentEvent.putUserData(DRAGGED_IMAGE_KEY, pair);
+        }
+
+        // mac osx fix: it will draw a border with size of the dragged component if there is no image provided.
+        event.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent, new MyDragSourceListener(source));
       }
       catch (InvalidDnDOperationException e) {
         LOG.info(e);

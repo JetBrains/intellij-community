@@ -135,10 +135,6 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   @Override
-  public void dragDropEnd() {
-  }
-
-  @Override
   public void dropActionChanged(int gestureModifiers) {
   }
 

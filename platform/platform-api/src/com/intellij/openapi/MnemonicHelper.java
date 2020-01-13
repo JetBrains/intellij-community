@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
@@ -35,7 +35,7 @@ import java.util.function.IntPredicate;
  *
  * @author lesya
  */
-public class MnemonicHelper extends ComponentTreeWatcher {
+public final class MnemonicHelper extends ComponentTreeWatcher {
   private static final Logger LOG = Logger.getInstance(MnemonicHelper.class);
 
   public static final Key<IntPredicate> MNEMONIC_CHECKER = Key.create("MNEMONIC_CHECKER");
@@ -190,11 +190,16 @@ public class MnemonicHelper extends ComponentTreeWatcher {
 
   private static final MnemonicFixer ourMnemonicFixer = new MnemonicFixer();
 
-  private static class MnemonicFixer implements ContainerListener {
+  private static final class MnemonicFixer implements ContainerListener {
     void addTo(Component component) {
       for (Component c : UIUtil.uiTraverser(component)) {
-        if (c instanceof Container) ((Container)c).addContainerListener(this);
-        if (c instanceof ActionButtonComponent) fixMacMnemonicKeyStroke((JComponent)c, null);
+        if (c instanceof Container) {
+          ((Container)c).addContainerListener(this);
+        }
+        if (c instanceof ActionButtonComponent) {
+          assert c instanceof JComponent;
+          fixMacMnemonicKeyStroke((JComponent)c, null);
+        }
         MnemonicWrapper.getWrapper(c);
       }
     }

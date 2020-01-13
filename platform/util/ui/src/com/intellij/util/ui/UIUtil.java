@@ -2582,7 +2582,6 @@ public final class UIUtil {
     return result;
   });
 
-
   public static void scrollListToVisibleIfNeeded(@NotNull final JList<?> list) {
     SwingUtilities.invokeLater(() -> {
       final int selectedIndex = list.getSelectedIndex();

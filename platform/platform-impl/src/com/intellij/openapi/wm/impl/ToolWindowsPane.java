@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.RemoteDesktopService;
@@ -187,9 +187,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   /**
-   * Creates command which shows tool window with specified set of parameters.
-   * Command uses cloned copy of passed {@code info} object.
-   *
    * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after adding
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
@@ -291,7 +288,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, final float weight) {
+  private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, float weight) {
     if (ToolWindowAnchor.TOP == anchor) {
       verticalSplitter.setFirstComponent(component);
       verticalSplitter.setFirstSize((int)(layeredPane.getHeight() * weight));

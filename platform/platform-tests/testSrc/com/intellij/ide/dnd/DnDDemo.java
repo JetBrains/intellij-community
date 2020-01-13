@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.treeStructure.Tree;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,17 +26,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       @Override
       public DnDDragStartBean startDragging(DnDAction action, Point point) {
         return new DnDDragStartBean(source.getLastSelectedPathComponent().toString());
-      }
-
-
-      @Override
-      @Nullable
-      public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-        return null;
-      }
-
-      @Override
-      public void dragDropEnd() {
       }
 
       @Override
