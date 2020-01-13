@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.impl.BeanExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
@@ -318,7 +319,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           break;
 
         case "resource-bundle":
-          myResourceBundleBaseName = StringUtil.nullize(child.getTextTrim());
+          String value = StringUtil.nullize(child.getTextTrim());
+          if (myResourceBundleBaseName != null && !Comparing.equal(myResourceBundleBaseName, value)) {
+            LOG.warn("Resource bundle redefinition for plugin '" + rootDescriptor.getPluginId() + "'. " +
+                     "Old value: " + myResourceBundleBaseName + ", new value: " + value);
+          }
+          myResourceBundleBaseName = value;
           break;
 
         case "product-descriptor":
