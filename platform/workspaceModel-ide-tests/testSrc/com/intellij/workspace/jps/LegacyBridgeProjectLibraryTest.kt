@@ -314,13 +314,16 @@ class LegacyBridgeProjectLibraryTest {
   private fun checkLibraryDiskState(currentLibraryName: String, previousLibraryName: String = "") {
     val iprFile = File(project.projectFilePath!!)
     StoreUtil.saveDocumentsAndProjectSettings(project)
-    val librariesList = JDOMUtil.load(iprFile).getChild("component")!!.getChildren("library")
+    val librariesList = JDOMUtil.load(iprFile).getChildren("component")
+                                .first { it.getAttribute("name")!!.value == "libraryTable" }
+                                .getChildren("library")
     assertTrue(librariesList.find { it.getAttribute("name")!!.value == currentLibraryName } != null)
     assertTrue(librariesList.find { it.getAttribute("name")!!.value == previousLibraryName } == null)
   }
 
   private fun checkLibraryClassRootOnDisk(libraryName: String, classFileName: String): Boolean {
-    return JDOMUtil.load(File(project.projectFilePath!!)).getChild("component")
+    return JDOMUtil.load(File(project.projectFilePath!!)).getChildren("component")
+             .first { it.getAttribute("name")!!.value == "libraryTable" }
              ?.getChildren("library")?.find { it.getAttribute("name")!!.value == libraryName }
              ?.getChild(OrderRootType.CLASSES.name())
              ?.getChild("root")
