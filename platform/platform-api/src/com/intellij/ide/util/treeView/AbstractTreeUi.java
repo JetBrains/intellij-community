@@ -641,7 +641,7 @@ public class AbstractTreeUi {
     }
   }
 
-  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor> nodeDescriptorComparator) {
+  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor<?>> nodeDescriptorComparator) {
     myNodeDescriptorComparator = nodeDescriptorComparator;
     myLastComparatorStamp = -1;
     getBuilder().queueUpdateFrom(getTreeStructure().getRootElement(), true);

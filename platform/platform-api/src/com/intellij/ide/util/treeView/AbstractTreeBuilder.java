@@ -45,7 +45,7 @@ public class AbstractTreeBuilder implements Disposable {
   public AbstractTreeBuilder(@NotNull JTree tree,
                              @NotNull DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
-                             @Nullable Comparator<? super NodeDescriptor> comparator) {
+                             @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     this(tree, treeModel, treeStructure, comparator, DEFAULT_UPDATE_INACTIVE);
   }
 
@@ -171,9 +171,11 @@ public class AbstractTreeBuilder implements Disposable {
     return ui == null ? null : ui.getRootNode();
   }
 
-  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor> nodeDescriptorComparator) {
+  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor<?>> nodeDescriptorComparator) {
     AbstractTreeUi ui = getUi();
-    if (ui != null) ui.setNodeDescriptorComparator(nodeDescriptorComparator);
+    if (ui != null) {
+      ui.setNodeDescriptorComparator(nodeDescriptorComparator);
+    }
   }
 
   /**

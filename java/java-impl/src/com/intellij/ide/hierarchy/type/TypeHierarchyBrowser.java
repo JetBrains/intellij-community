@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.newAPI.HierarchyScopeType;
 import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
@@ -81,7 +81,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected Comparator<NodeDescriptor> getComparator() {
+  protected Comparator<NodeDescriptor<?>> getComparator() {
     return JavaHierarchyUtil.getComparator(myProject);
   }
 
