@@ -27,7 +27,7 @@ class Test {
 }
 
 class Example {
-    static List<? extends AbstractTreeNode<?>> treeNodes = null;
+    static List<? extends AbstractTreeNode> treeNodes = null;
 
     public static void main(String[] args) {
         for (AbstractTreeNode<String> treeNode : treeNodes) {
