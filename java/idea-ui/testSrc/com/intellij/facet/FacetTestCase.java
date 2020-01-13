@@ -5,17 +5,14 @@ import com.intellij.facet.mock.MockFacet;
 import com.intellij.facet.mock.MockFacetConfiguration;
 import com.intellij.facet.mock.MockSubFacetType;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.testFramework.JavaPsiTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public abstract class FacetTestCase extends JavaPsiTestCase {
+public abstract class FacetTestCase extends HeavyPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -101,11 +98,5 @@ public abstract class FacetTestCase extends JavaPsiTestCase {
     final ModifiableFacetModel model = manager.createModifiableModel();
     model.rename(facet, newName);
     commit(model);
-  }
-
-  @NotNull
-  @Override
-  protected Module loadModule(@NotNull String relativePath) {
-    return super.loadModule(PathManagerEx.getTestDataPath() + "/" + relativePath);
   }
 }

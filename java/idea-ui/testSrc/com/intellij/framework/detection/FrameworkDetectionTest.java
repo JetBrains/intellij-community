@@ -62,7 +62,7 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   public void testCreateFacetAfterDetectionManually() {
     final VirtualFile file = createFrameworkConfig("my-config.xml");
     assertFrameworkDetectedIn(file);
-    createFacet("my-config.xml");
+    createMockFacet("my-config.xml");
     assertNoFrameworksDetected();
   }
 
@@ -124,7 +124,7 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   }
 
   public void testDetectSubFacet() {
-    final MockFacet facet = createFacet("my-config.xml");
+    final MockFacet facet = createMockFacet("my-config.xml");
     final VirtualFile file = createFrameworkConfig("sub-my-config.xml");
     final MockFacetConfiguration configuration = assertFrameworkDetectedIn(file);
     assertEquals("sub-my-config.xml", configuration.getData());
@@ -166,7 +166,7 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
     assertFrameworkDetectedIn(file);
   }
 
-  private MockFacet createFacet(final String fileName) {
+  private MockFacet createMockFacet(final String fileName) {
     final MockFacet facet = WriteAction.compute(() -> FacetManager.getInstance(myModule).addFacet(MockFacetType.getInstance(), "f", null));
     facet.getConfiguration().setData(fileName);
     return facet;
