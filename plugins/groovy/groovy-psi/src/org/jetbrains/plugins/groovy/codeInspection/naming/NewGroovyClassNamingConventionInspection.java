@@ -24,6 +24,7 @@ import java.util.List;
 public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   public NewGroovyClassNamingConventionInspection() {
     super(wrapClassExtensions(), "Groovy" + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    registerConventionsListener(NewClassNamingConventionInspection.EP_NAME);
   }
 
   private static List<NamingConvention<PsiClass>> wrapClassExtensions() {
