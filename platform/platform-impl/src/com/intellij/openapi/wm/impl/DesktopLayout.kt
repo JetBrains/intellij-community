@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.serialize
@@ -11,7 +11,6 @@ import com.intellij.util.xmlb.XmlSerializer
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
-import javax.swing.SwingConstants
 
 class DesktopLayout {
   companion object {
@@ -34,13 +33,6 @@ class DesktopLayout {
     return result
   }
 
-  private fun normalizeOrders() {
-    normalizeOrder(getAllInfos(ToolWindowAnchor.TOP))
-    normalizeOrder(getAllInfos(ToolWindowAnchor.LEFT))
-    normalizeOrder(getAllInfos(ToolWindowAnchor.BOTTOM))
-    normalizeOrder(getAllInfos(ToolWindowAnchor.RIGHT))
-  }
-
   /**
    * Creates or gets `WindowInfo` for the specified `id`.
    */
@@ -61,41 +53,11 @@ class DesktopLayout {
     val info = WindowInfoImpl()
     info.id = id
     info.isFromPersistentSettings = false
-    info.order = getMaxOrder(info.anchor) + 1
+    info.order = getMaxOrder(idToInfo.values, info.anchor) + 1
     return info
   }
 
   fun getInfo(id: String) = idToInfo.get(id)
-
-  /**
-   * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
-   * Returned infos are sorted by order.
-   */
-  internal fun getAllInfos(anchor: ToolWindowAnchor): List<WindowInfoImpl> {
-    val result = mutableListOf<WindowInfoImpl>()
-    for (info in idToInfo.values) {
-      if (anchor == info.anchor) {
-        result.add(info)
-      }
-    }
-    result.sortWith(windowInfoComparator)
-    return result
-  }
-
-  /**
-   * @param anchor anchor of the stripe.
-   * @return maximum ordinal number in the specified stripe. Returns `-1`
-   * if there is no any tool window with the specified anchor.
-   */
-  private fun getMaxOrder(anchor: ToolWindowAnchor): Int {
-    var result = -1
-    for (info in idToInfo.values) {
-      if (anchor == info.anchor && result < info.order) {
-        result = info.order
-      }
-    }
-    return result
-  }
 
   /**
    * Sets new `anchor` and `id` for the specified tool window.
@@ -105,12 +67,12 @@ class DesktopLayout {
     var newOrder = suppliedNewOrder
     // if order isn't defined then the window will the last in the stripe
     if (newOrder == -1) {
-      newOrder = getMaxOrder(newAnchor) + 1
+      newOrder = getMaxOrder(idToInfo.values, newAnchor) + 1
     }
 
     val oldAnchor = info.anchor
     // shift order to the right in the target stripe
-    val infos = getAllInfos(newAnchor)
+    val infos = getAllInfos(idToInfo.values, newAnchor)
     for (i in infos.size - 1 downTo -1 + 1) {
       val info2 = infos[i]
       if (newOrder <= info2.order) {
@@ -122,34 +84,38 @@ class DesktopLayout {
     info.anchor = newAnchor
     info.order = newOrder
     // normalize orders in the source and target stripes
-    normalizeOrder(getAllInfos(oldAnchor))
+    normalizeOrder(getAllInfos(idToInfo.values, oldAnchor))
     if (oldAnchor != newAnchor) {
-      normalizeOrder(getAllInfos(newAnchor))
+      normalizeOrder(getAllInfos(idToInfo.values, newAnchor))
     }
   }
 
   fun readExternal(layoutElement: Element) {
     val infoBinding = XmlSerializer.getBeanBinding(WindowInfoImpl::class.java)
 
+    val list = mutableListOf<WindowInfoImpl>()
     for (element in layoutElement.getChildren(WindowInfoImpl.TAG)) {
       val info = WindowInfoImpl()
       infoBinding.deserializeInto(info, element)
       info.normalizeAfterRead()
       val id = info.id
       if (id == null) {
-        LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(element))
+        LOG.warn("Skip invalid window info (no id): ${JDOMUtil.writeElement(element)}")
         continue
       }
-      idToInfo.put(id, info)
-    }
 
-    for (info in idToInfo.values) {
       // if order isn't defined then window's button will be the last one in the stripe
       if (info.order == -1) {
-        info.order = getMaxOrder(info.anchor) + 1
+        info.order = getMaxOrder(list, info.anchor) + 1
       }
+      idToInfo.put(id, info)
+      list.add(info)
     }
-    normalizeOrders()
+
+    normalizeOrder(getAllInfos(list, ToolWindowAnchor.TOP))
+    normalizeOrder(getAllInfos(list, ToolWindowAnchor.LEFT))
+    normalizeOrder(getAllInfos(list, ToolWindowAnchor.BOTTOM))
+    normalizeOrder(getAllInfos(list, ToolWindowAnchor.RIGHT))
   }
 
   val stateModificationCount: Long
@@ -210,10 +176,11 @@ private val LOG = logger<DesktopLayout>()
 
 private fun getAnchorWeight(anchor: ToolWindowAnchor): Int {
   return when (anchor) {
-    ToolWindowAnchor.TOP -> SwingConstants.TOP
-    ToolWindowAnchor.LEFT -> SwingConstants.LEFT
-    ToolWindowAnchor.BOTTOM -> SwingConstants.BOTTOM
-    else -> if (anchor == ToolWindowAnchor.RIGHT) SwingConstants.RIGHT else 0
+    ToolWindowAnchor.TOP -> 1
+    ToolWindowAnchor.LEFT -> 2
+    ToolWindowAnchor.BOTTOM -> 3
+    ToolWindowAnchor.RIGHT -> 4
+    else -> 0
   }
 }
 
@@ -230,4 +197,34 @@ private fun normalizeOrder(infos: List<WindowInfoImpl>) {
   for (i in infos.indices) {
     infos[i].order = i
   }
+}
+
+/**
+ * @param anchor anchor of the stripe.
+ * @return maximum ordinal number in the specified stripe. Returns `-1`
+ * if there is no any tool window with the specified anchor.
+ */
+private fun getMaxOrder(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): Int {
+  var result = -1
+  for (info in list) {
+    if (anchor == info.anchor && result < info.order) {
+      result = info.order
+    }
+  }
+  return result
+}
+
+/**
+ * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
+ * Returned infos are sorted by order.
+ */
+internal fun getAllInfos(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): List<WindowInfoImpl> {
+  val result = mutableListOf<WindowInfoImpl>()
+  for (info in list) {
+    if (anchor == info.anchor) {
+      result.add(info)
+    }
+  }
+  result.sortWith(windowInfoComparator)
+  return result
 }

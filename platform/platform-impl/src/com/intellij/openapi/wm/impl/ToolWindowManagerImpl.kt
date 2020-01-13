@@ -724,10 +724,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun getVisibleToolWindowsOn(anchor: ToolWindowAnchor): Sequence<ToolWindowEntry> {
-    return layout.getAllInfos(anchor).asSequence().mapNotNull { each ->
-      val entry = idToEntry.get(each.id ?: return@mapNotNull null) ?: return@mapNotNull null
-      if (entry.toolWindow.isAvailable || UISettings.instance.alwaysShowWindowsButton) entry else null
-    }
+    return idToEntry.values
+      .asSequence()
+      .filter { it.readOnlyWindowInfo.anchor == anchor && (it.toolWindow.isAvailable || UISettings.instance.alwaysShowWindowsButton) }
   }
 
   // cannot be ToolWindowEx because of backward compatibility

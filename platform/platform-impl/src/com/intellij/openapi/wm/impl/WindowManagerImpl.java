@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -30,6 +31,7 @@ import com.sun.jna.platform.WindowUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
@@ -661,6 +664,28 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @Nullable
   public final Component getFocusedComponent(@Nullable final Project project) {
     return myWindowWatcher.getFocusedComponent(project);
+  }
+
+  @Override
+  public void noStateLoaded() {
+    try {
+      myLayout.readExternal(JDOMUtil.load(
+        "<layout>\n" +
+        "  <!-- left stripe -->\n" +
+        "  <window_info id=\"Project\" order=\"0\" weight=\"0.25\" content_ui=\"combo\" />\n" +
+        "  <window_info id=\"Structure\" order=\"1\" weight=\"0.25\" />\n" +
+        "  <!-- bottom stripe -->\n" +
+        "  <window_info id=\"Version Control\" anchor=\"bottom\" order=\"0\" />\n" +
+        "  <window_info id=\"Find\" anchor=\"bottom\" order=\"1\" />\n" +
+        "  <window_info id=\"Run\" anchor=\"bottom\" order=\"2\" />\n" +
+        "  <window_info id=\"Debug\" anchor=\"bottom\" order=\"3\" weight=\"0.4\" />\n" +
+        "  <window_info id=\"Inspection\" anchor=\"bottom\" order=\"4\" weight=\"0.4\" />\n" +
+        "</layout>"
+      ));
+    }
+    catch (IOException | JDOMException e) {
+      LOG.error(e);
+    }
   }
 
   @Override
