@@ -8,7 +8,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.TOOLWINDOW_ID
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.ToolWindowImpl
@@ -20,6 +22,10 @@ import javax.swing.JPanel
 
 private val ToolWindow.project: Project? get() = (this as? ToolWindowImpl)?.toolWindowManager?.project
 private val Project.changesViewContentManager: ChangesViewContentI get() = ChangesViewContentManager.getInstance(this)
+
+private fun getToolWindowIdFor(extension: ChangesViewContentEP): String =
+  if (isCommitToolWindow.asBoolean() && COMMIT_TOOL_WINDOW_CONTENT_FILTER(extension.tabName)) COMMIT_TOOLWINDOW_ID
+  else TOOLWINDOW_ID
 
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
 private val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
@@ -41,8 +47,8 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasAnyMappings()
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    updateContent(project)
-    project.changesViewContentManager.setContentManager(toolWindow.contentManager)
+    updateContent(project, toolWindow)
+    project.changesViewContentManager.attachToolWindow(toolWindow)
 
     putClientProperty(toolWindow.component, IS_CONTENT_CREATED, true)
   }
@@ -50,7 +56,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   protected open fun updateState(project: Project, toolWindow: ToolWindow) {
     updateAvailability(project, toolWindow)
     if (getClientProperty(toolWindow.component, IS_CONTENT_CREATED) == true) {
-      updateContent(project)
+      updateContent(project, toolWindow)
     }
   }
 
@@ -65,10 +71,10 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.setAvailable(available, null)
   }
 
-  private fun updateContent(project: Project) {
+  private fun updateContent(project: Project, toolWindow: ToolWindow) {
     val changesViewContentManager = project.changesViewContentManager
 
-    ChangesViewContentEP.EP_NAME.getExtensions(project).forEach { extension ->
+    getExtensions(project, toolWindow).forEach { extension ->
       val isVisible = extension.newPredicateInstance(project)?.`fun`(project) != false
       val content = changesViewContentManager.findContents { it.getUserData(CHANGES_VIEW_EXTENSION) === extension }.firstOrNull()
 
@@ -79,6 +85,11 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
         changesViewContentManager.removeContent(content)
       }
     }
+  }
+
+  private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
+    val toolWindowId = toolWindow.id ?: return emptyList()
+    return ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(it) == toolWindowId }
   }
 
   private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content =

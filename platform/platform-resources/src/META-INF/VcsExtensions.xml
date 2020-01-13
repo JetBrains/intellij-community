@@ -98,6 +98,9 @@
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager"
                     testServiceImplementation="com.intellij.openapi.vcs.changes.ui.DummyChangesViewContentManager"/>
 
+    <toolWindow id="Commit" anchor="left" icon="AllIcons.Toolwindows.ToolWindowCommit"
+                factoryClass="com.intellij.openapi.vcs.changes.ui.CommitToolWindowFactory"/>
+
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowFactory"/>
 

@@ -1,43 +1,67 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.SHELF
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerAdapter
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.util.IJSwingUtilities
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.ContainerUtil
-import java.util.*
+import com.intellij.util.ObjectUtils.tryCast
 import java.util.function.Predicate
+
+internal val ToolWindow.id: String? get() = (this as? ToolWindowImpl)?.id
+
+internal val isCommitToolWindow = Registry.get("vcs.commit.tool.window")
+internal val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF }
 
 class ChangesViewContentManager : ChangesViewContentI, Disposable {
 
-  private var contentManager: ContentManager? = null
-  private val addedContents = ArrayList<Content>()
+  private val toolWindows = mutableSetOf<ToolWindow>()
+  private val addedContents = mutableListOf<Content>()
 
-  override fun setContentManager(manager: ContentManager) {
-    contentManager = manager.also {
-      val contentProvidersListener = ContentProvidersListener()
-      it.addContentManagerListener(contentProvidersListener)
-      Disposer.register(this, Disposable { it.removeContentManagerListener(contentProvidersListener) })
-    }
+  private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
 
-    for (content in addedContents) {
-      addIntoCorrectPlace(manager, content)
-      IJSwingUtilities.updateComponentTreeUI(content.component)
+  private fun Content.resolveToolWindowId(): String =
+    if (isCommitToolWindow.asBoolean() && COMMIT_TOOL_WINDOW_CONTENT_FILTER(tabName)) COMMIT_TOOLWINDOW_ID
+    else TOOLWINDOW_ID
+
+  private fun Content.resolveToolWindow(): ToolWindow? {
+    val toolWindowId = resolveToolWindowId()
+    return toolWindows.find { it.id == toolWindowId }
+  }
+
+  private fun Content.resolveContentManager(): ContentManager? = resolveToolWindow()?.contentManager
+
+  override fun attachToolWindow(toolWindow: ToolWindow) {
+    toolWindows.add(toolWindow)
+    initContentManager(toolWindow.contentManager)
+  }
+
+  private fun initContentManager(contentManager: ContentManager) {
+    val listener = ContentProvidersListener()
+    contentManager.addContentManagerListener(listener)
+    Disposer.register(this, Disposable { contentManager.removeContentManagerListener(listener) })
+
+    val contents = addedContents.filter { it.resolveContentManager() === contentManager }
+    contents.forEach {
+      addIntoCorrectPlace(contentManager, it)
+      IJSwingUtilities.updateComponentTreeUI(it.component)
     }
-    addedContents.clear()
+    addedContents.removeAll(contents)
 
     // Ensure that first tab is selected after tabs reordering
-    val firstContent = manager.getContent(0)
-    if (firstContent != null) manager.setSelectedContent(firstContent)
+    val firstContent = contentManager.getContent(0)
+    if (firstContent != null) contentManager.setSelectedContent(firstContent)
   }
 
   override fun dispose() {
@@ -48,7 +72,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   }
 
   override fun addContent(content: Content) {
-    val contentManager = contentManager
+    val contentManager = content.resolveContentManager()
     if (contentManager == null) {
       addedContents.add(content)
     }
@@ -58,7 +82,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   }
 
   override fun removeContent(content: Content) {
-    val contentManager = contentManager
+    val contentManager = content.manager
     if (contentManager == null || contentManager.isDisposed) {
       addedContents.remove(content)
       Disposer.dispose(content)
@@ -73,35 +97,27 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   }
 
   override fun setSelectedContent(content: Content, requestFocus: Boolean) {
-    val contentManager = contentManager ?: return
-    contentManager.setSelectedContent(content, requestFocus)
+    content.manager?.setSelectedContent(content, requestFocus)
   }
 
-  override fun <T> getActiveComponent(aClass: Class<T>): T? {
-    val selectedContent = contentManager?.selectedContent ?: return null
-    return ObjectUtils.tryCast(selectedContent.component, aClass)
-  }
+  override fun <T : Any> getActiveComponent(aClass: Class<T>): T? =
+    contentManagers.mapNotNull { tryCast(it.selectedContent?.component, aClass) }.firstOrNull()
 
-  fun isContentSelected(contentName: String): Boolean {
-    val selectedContent = contentManager?.selectedContent ?: return false
-    return Comparing.equal(contentName, selectedContent.tabName)
-  }
+  fun isContentSelected(contentName: String): Boolean =
+    contentManagers.any { it.selectedContent?.tabName == contentName }
 
   override fun selectContent(tabName: String) {
     selectContent(tabName, false)
   }
 
   fun selectContent(tabName: String, requestFocus: Boolean) {
-    val contentManager = contentManager ?: return
-    val toSelect = ContainerUtil.find(contentManager.contents) { content -> content.tabName == tabName }
-    if (toSelect != null) {
-      contentManager.setSelectedContent(toSelect, requestFocus)
-    }
+    val content = contentManagers.flatMap { it.contents.asList() }.find { it.tabName == tabName } ?: return
+    content.manager?.setSelectedContent(content, requestFocus)
   }
 
   override fun findContents(predicate: Predicate<Content>): List<Content> {
-    val contents = contentManager?.contents?.let { listOf(*it) } ?: addedContents
-    return ContainerUtil.filter(contents) { content -> predicate.test(content) }
+    val allContents = contentManagers.flatMap { it.contents.asList() } + addedContents
+    return allContents.filter { predicate.test(it) }.toList()
   }
 
   private inner class ContentProvidersListener : ContentManagerAdapter() {
@@ -145,6 +161,8 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   companion object {
     @JvmField
     val TOOLWINDOW_ID: String = ToolWindowId.VCS
+    internal const val COMMIT_TOOLWINDOW_ID: String = "Commit"
+
     @JvmField
     val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
 

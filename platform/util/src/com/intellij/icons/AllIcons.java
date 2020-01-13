@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -2041,6 +2041,7 @@ public class AllIcons {
     /** 13x13 */ public static final Icon ToolWindowBuild = load("/toolwindows/toolWindowBuild.svg");
     /** 13x13 */ public static final Icon ToolWindowChanges = load("/toolwindows/toolWindowChanges.svg");
     /** 13x13 */ public static final Icon ToolWindowCommander = load("/toolwindows/toolWindowCommander.svg");
+    /** 13x13 */ public static final Icon ToolWindowCommit = load("/toolwindows/toolWindowCommit.svg");
     /** 13x13 */ public static final Icon ToolWindowCoverage = load("/toolwindows/toolWindowCoverage.svg");
     /** 13x13 */ public static final Icon ToolWindowDebugger = load("/toolwindows/toolWindowDebugger.svg");
     /** 13x13 */ public static final Icon ToolWindowFavorites = load("/toolwindows/toolWindowFavorites.svg");
