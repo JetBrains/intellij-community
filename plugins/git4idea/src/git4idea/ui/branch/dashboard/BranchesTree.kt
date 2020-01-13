@@ -16,7 +16,6 @@ import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.util.ui.tree.WideSelectionTreeUI
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
@@ -87,12 +86,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   private fun installDoubleClickHandler() {
     object : DoubleClickListener() {
       override fun onDoubleClick(e: MouseEvent): Boolean {
-        val clickPath =
-          (if (WideSelectionTreeUI.isWideSelection(this@BranchesTreeComponent))
-            getClosestPathForLocation(e.x, e.y)
-          else
-            getPathForLocation(e.x, e.y))
-          ?: return false
+        val clickPath = getClosestPathForLocation(e.x, e.y) ?: return false
         val selectionPath = selectionPath
         if (selectionPath == null || clickPath != selectionPath) return false
         val node = (selectionPath.lastPathComponent as? BranchTreeNode) ?: return false
