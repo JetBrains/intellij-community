@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -609,7 +609,8 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     private final EditorWindow myWindow;
 
     private EditorTabs(Project project, @NotNull Disposable parentDisposable, @NotNull EditorWindow window) {
-      super(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), parentDisposable);
+      super(project, parentDisposable);
+
       myWindow = window;
       IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));

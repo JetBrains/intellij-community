@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.icons.AllIcons;
@@ -22,11 +22,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
-class LightEditTabs extends JBEditorTabs {
+final class LightEditTabs extends JBEditorTabs {
   private final LightEditorManager myEditorManager;
 
   LightEditTabs(@NotNull Disposable parent, LightEditorManager editorManager) {
-    super(LightEditUtil.getProject(), ActionManager.getInstance(), null, parent);
+    super(LightEditUtil.getProject(), null, parent);
+
     myEditorManager = editorManager;
     addListener(new TabsListener() {
       @Override

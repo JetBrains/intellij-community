@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -36,7 +35,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
-public class PyDataView implements DumbAware {
+public final class PyDataView implements DumbAware {
   public static final String DATA_VIEWER_ID = "SciView";
   public static final String COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault";
   public static final String AUTO_RESIZE = "python.debugger.dataview.autoresize";
@@ -157,7 +156,7 @@ public class PyDataView implements DumbAware {
   }
 
   public void init(@NotNull ToolWindow toolWindow) {
-    myTabs = new JBRunnerTabs(myProject, ActionManager.getInstance(), IdeFocusManager.getInstance(myProject), myProject);
+    myTabs = new JBRunnerTabs(myProject, myProject);
     myTabs.setDataProvider(dataId -> {
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;

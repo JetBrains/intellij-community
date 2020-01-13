@@ -63,7 +63,6 @@ public class JBTabsImpl extends JComponent
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
   private static final Logger LOG = Logger.getInstance(JBTabsImpl.class);
 
-  @NotNull final ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<>();
   private final Map<TabInfo, AccessibleTabPage> myInfo2Page = new HashMap<>();
   private final Map<TabInfo, Integer> myHiddenInfos = new HashMap<>();
@@ -197,17 +196,12 @@ public class JBTabsImpl extends JComponent
   }
 
   private JBTabsImpl(@NotNull Project project, @NotNull Disposable parent) {
-    this(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), parent);
+    this(project, IdeFocusManager.getInstance(project), parent);
   }
 
-  public JBTabsImpl(@Nullable Project project, IdeFocusManager focusManager, @NotNull Disposable parent) {
-    this(project, ActionManager.getInstance(), focusManager, parent);
-  }
-
-  public JBTabsImpl(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
+  public JBTabsImpl(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parent) {
     myProject = project;
-    myActionManager = actionManager;
-    myFocusManager = focusManager != null ? focusManager : getGlobalInstance();
+    myFocusManager = focusManager == null ? getGlobalInstance() : focusManager;
 
     setOpaque(true);
     setBackground(myTabPainter.getBackgroundColor());
@@ -218,8 +212,9 @@ public class JBTabsImpl extends JComponent
 
     myNavigationActions = new DefaultActionGroup();
 
-    myNextAction = new SelectNextAction(this, myActionManager);
-    myPrevAction = new SelectPreviousAction(this, myActionManager);
+    ActionManager actionManager = ActionManager.getInstance();
+    myNextAction = new SelectNextAction(this, actionManager);
+    myPrevAction = new SelectPreviousAction(this, actionManager);
 
     myNavigationActions.add(myNextAction);
     myNavigationActions.add(myPrevAction);
@@ -246,8 +241,8 @@ public class JBTabsImpl extends JComponent
         disposePopupListener();
       }
     };
-    AnAction tabListAction = myActionManager.getAction("TabList");
-    myMoreToolbar = myActionManager
+    AnAction tabListAction = actionManager.getAction("TabList");
+    myMoreToolbar = actionManager
       .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(tabListAction), true);
     myMoreToolbar.setTargetComponent(this);
     myMoreToolbar.getComponent().setBorder(JBUI.Borders.empty());
@@ -575,14 +570,14 @@ public class JBTabsImpl extends JComponent
 
   private void addTimerUpdate() {
     if (!myListenerAdded) {
-      myActionManager.addTimerListener(500, this);
+      ActionManager.getInstance().addTimerListener(500, this);
       myListenerAdded = true;
     }
   }
 
   private void removeTimerUpdate() {
     if (myListenerAdded) {
-      myActionManager.removeTimerListener(this);
+      ActionManager.getInstance().removeTimerListener(this);
       myListenerAdded = false;
     }
   }
@@ -646,8 +641,7 @@ public class JBTabsImpl extends JComponent
    * TODO use {@link RdIdeaKt#childAtMouse(IdeGlassPane, Container)}
    */
   @Deprecated
-  class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
-
+  final class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
     private TabLabel myCurrentOverLabel;
     private Point myLastOverPoint;
 
@@ -1447,7 +1441,7 @@ public class JBTabsImpl extends JComponent
 
       if (group != null) {
         final String place = info.getPlace();
-        ActionToolbar toolbar = tabs.myActionManager.createActionToolbar(place != null ? place : "JBTabs", group, tabs.myHorizontalSide);
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(place != null ? place : "JBTabs", group, tabs.myHorizontalSide);
         toolbar.setTargetComponent(info.getActionsContextComponent());
         final JComponent actionToolbar = toolbar.getComponent();
         add(actionToolbar, BorderLayout.CENTER);
