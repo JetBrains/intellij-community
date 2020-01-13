@@ -19,7 +19,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +32,6 @@ import static com.intellij.openapi.actionSystem.ActionToolbar.DEFAULT_MINIMUM_BU
 public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
 
-  @ApiStatus.Experimental
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     myActionGroup = actionGroup;
     setPopup(true);
