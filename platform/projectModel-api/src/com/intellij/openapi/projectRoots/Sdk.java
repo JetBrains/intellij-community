@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  * @see ProjectJdkTable
  * @see ProjectRootManager#getProjectSdk()
- * @see SdkTracker
  */
 @ApiStatus.NonExtendable
 public interface Sdk extends UserDataHolder {

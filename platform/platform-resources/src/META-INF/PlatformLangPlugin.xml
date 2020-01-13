@@ -45,9 +45,6 @@
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.projectRoots.SdkTracker"
-                    serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkTrackerImpl"/>
-
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
