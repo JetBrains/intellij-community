@@ -49,7 +49,10 @@
         serviceInterface="org.intellij.lang.xpath.xslt.psi.XsltElementFactory"
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
 
-    <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations" displayName="XSLT File Associations" nonDefaultProject="true" />
+    <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations"
+                         bundle="messages.IdeBundle"
+                         key="configurable.FileAssociationsConfigurable.display.name"
+                         nonDefaultProject="true" />
 
     <projectService serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState" />
 
@@ -129,9 +132,12 @@
       <category>XSLT</category>
     </intentionAction>
 
-    <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings" displayName="XPath Viewer" />
+    <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings"
+                             bundle="messages.IdeBundle"
+                             key="configurable.XPathConfigurable.display.name"/>
     <applicationConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" id="settings.xslt"
-                             displayName="XSLT"/>
+                             bundle="messages.IdeBundle"
+                             key="configurable.UIImpl.display.name"/>
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
     <gotoSymbolContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltChooseByNameContributor"/>
