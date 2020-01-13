@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
  *   <li>{@link #start()} can be called only once after the indicator was created. (Or also after {@link #stop()}, if the indicator is reusable - see {@link com.intellij.openapi.progress.util.AbstractProgressIndicatorBase#isReuseable()})</li>
  *   <li>{@link #stop()} can be called only once after {@link #start()}</li>
  *   <li>{@link #setModalityProgress(ProgressIndicator)} can be called only before {@link #start()}</li>
+ *   <li>{@link #setFraction(double)}/{@link #getFraction()} can be called only after {@code setIndeterminate(false)}</li>
  * </ul>
  */
 public interface ProgressIndicator {
