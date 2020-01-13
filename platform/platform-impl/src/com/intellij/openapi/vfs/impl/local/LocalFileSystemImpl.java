@@ -33,7 +33,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
 
-  private final WatchRootsMap myWatchRootsMap ;
+  private final WatchRootsManager myWatchRootsManager;
 
   public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -43,7 +43,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
         () -> { if (!ApplicationManager.getApplication().isDisposed()) storeRefreshStatusToFiles(); },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
-    myWatchRootsMap = new WatchRootsMap(myWatcher, this);
+    myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
   }
 
@@ -129,9 +129,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
                                                @Nullable Collection<String> flatRootsToAdd) {
     Collection<WatchRequest> nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
     LOG.assertTrue(nonNullWatchRequestsToRemove.size() == watchRequestsToRemove.size(), "watch requests collection should not contain `null` elements");
-    return myWatchRootsMap.replaceWatchedRoots(nonNullWatchRequestsToRemove,
-                                               ObjectUtils.notNull(recursiveRootsToAdd, Collections.emptyList()),
-                                               ObjectUtils.notNull(flatRootsToAdd, Collections.emptyList()));
+    return myWatchRootsManager.replaceWatchedRoots(nonNullWatchRequestsToRemove,
+                                                   ObjectUtils.notNull(recursiveRootsToAdd, Collections.emptyList()),
+                                                   ObjectUtils.notNull(flatRootsToAdd, Collections.emptyList()));
 
   }
   @Override
@@ -160,6 +160,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
-    myWatchRootsMap.clear();
+    myWatchRootsManager.clear();
   }
 }
