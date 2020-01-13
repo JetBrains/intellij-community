@@ -143,6 +143,9 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
 
   @Override
   public void setModalityProgress(ProgressIndicator modalityProgress) {
+    if (isRunning()) {
+      throw new IllegalStateException("Can't change modality progress for already running indicator");
+    }
   }
 
   @Override
