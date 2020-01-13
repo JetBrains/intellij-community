@@ -430,7 +430,7 @@
       <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
     </extensionPoint>
 
-    <extensionPoint name="framework.detector" interface="com.intellij.framework.detection.FrameworkDetector"/>
+    <extensionPoint name="framework.detector" interface="com.intellij.framework.detection.FrameworkDetector" dynamic="true"/>
 
     <extensionPoint name="methodNavigationOffsetProvider" interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider" dynamic="true"/>
 

@@ -50,6 +50,13 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
     assertNoFrameworksDetected();
   }
 
+  public void testDynamicDetector() {
+    VirtualFile file = createFrameworkConfig("my-config.xml");
+    assertNoFrameworksDetected();
+    FrameworkDetector.EP_NAME.getPoint(null).registerExtension(new MockFacetDetector(), getTestRootDisposable());
+    assertFrameworkDetectedIn(file);
+  }
+
   public void testCreateFacet() {
     createFrameworkConfig("my-config.xml");
     setupFrameworks(detect());

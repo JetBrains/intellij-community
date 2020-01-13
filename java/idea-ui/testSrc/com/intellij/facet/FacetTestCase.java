@@ -3,6 +3,7 @@ package com.intellij.facet;
 
 import com.intellij.facet.mock.MockFacet;
 import com.intellij.facet.mock.MockFacetConfiguration;
+import com.intellij.facet.mock.MockFacetType;
 import com.intellij.facet.mock.MockSubFacetType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
@@ -13,6 +14,13 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class FacetTestCase extends HeavyPlatformTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    FacetType.EP_NAME.getPoint(null).registerExtension(new MockFacetType(), getTestRootDisposable());
+    FacetType.EP_NAME.getPoint(null).registerExtension(new MockSubFacetType(), getTestRootDisposable());
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {
