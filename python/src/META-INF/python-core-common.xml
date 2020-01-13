@@ -507,8 +507,9 @@
                              id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              displayName="Python External Documentation"/>
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
-                         id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" displayName="Python Integrated Tools"
-                         />
+                         id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyIntegratedToolsModulesConfigurable.display.name"/>
     <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
 
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
