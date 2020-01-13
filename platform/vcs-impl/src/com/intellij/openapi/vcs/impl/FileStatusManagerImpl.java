@@ -11,7 +11,8 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -101,10 +103,26 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
   }
 
-  static final class FileStatusManagerDocumentListener implements FileDocumentManagerListener, BulkAwareDocumentListener.Simple {
+  static final class FileStatusManagerDocumentListener implements FileDocumentManagerListener, DocumentListener {
+    private final Key<Boolean> CHANGED = Key.create("FileStatusManagerDocumentListener.document.changed");
+
     @Override
-    public void afterDocumentChange(@NotNull Document document) {
-      refreshFileStatus(document);
+    public void documentChanged(@NotNull DocumentEvent event) {
+      Document document = event.getDocument();
+      if (document.isInBulkUpdate()) {
+        document.putUserData(CHANGED, Boolean.TRUE);
+      }
+      else {
+        refreshFileStatus(document);
+      }
+    }
+
+    @Override
+    public void bulkUpdateFinished(@NotNull Document document) {
+      if (document.getUserData(CHANGED) != null) {
+        document.putUserData(CHANGED, null);
+        refreshFileStatus(document);
+      }
     }
 
     @Override
