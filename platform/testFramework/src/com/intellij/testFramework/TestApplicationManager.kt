@@ -280,6 +280,8 @@ fun disposeApplicationAndCheckForLeaks() {
       println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
     }
 
+    l.run { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) }
+
     l.run {
       try {
         LeakHunter.checkNonDefaultProjectLeak()
