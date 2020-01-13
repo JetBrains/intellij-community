@@ -966,8 +966,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val button = StripeButton(toolWindowPane!!, toolWindow)
 
-    val anchor = (contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor
-    toolWindowPane.addStripeButton(button, anchor, layout.MyStripeButtonComparator(anchor, this))
+    addStripeButton(button, (contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor)
 
     val entry = ToolWindowEntry(button, toolWindow, disposable)
     idToEntry.put(task.id, entry)
@@ -1333,7 +1332,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val otherInfo = layout.getInfo(otherId)?.copy() ?: continue
       otherEntry.applyWindowInfo(otherInfo)
     }
-    toolWindowPane.addStripeButton(entry.stripeButton, anchor, layout.MyStripeButtonComparator(currentInfo.anchor, this))
+    addStripeButton(entry.stripeButton, anchor, currentAnchor = currentInfo.anchor)
+  }
+
+  private fun addStripeButton(button: StripeButton, anchor: ToolWindowAnchor, currentAnchor: ToolWindowAnchor = anchor) {
+    val stripe = toolWindowPane!!.getStripeFor(anchor)
+    stripe.addButton(button, layout.MyStripeButtonComparator(currentAnchor, this))
+    stripe.revalidate()
   }
 
   internal fun setSideTool(id: String, isSplit: Boolean) {

@@ -33,8 +33,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
@@ -364,7 +366,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return getComponentAt(ToolWindowAnchor.BOTTOM) != null;
   }
 
-  @Nullable
+  @NotNull
   Stripe getStripeFor(@NotNull ToolWindowAnchor anchor) {
     if (ToolWindowAnchor.TOP == anchor) {
       return topStripe;
@@ -824,24 +826,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (!dirtyMode) {
       layeredPane.validate();
       layeredPane.repaint();
-    }
-  }
-
-  void addStripeButton(@NotNull StripeButton button, @NotNull ToolWindowAnchor anchor, @NotNull Comparator<? super StripeButton> comparator) {
-    if (ToolWindowAnchor.TOP == anchor) {
-      topStripe.addButton(button, comparator);
-    }
-    else if (ToolWindowAnchor.LEFT == anchor) {
-      leftStripe.addButton(button, comparator);
-    }
-    else if (ToolWindowAnchor.BOTTOM == anchor) {
-      bottomStripe.addButton(button, comparator);
-    }
-    else if (ToolWindowAnchor.RIGHT == anchor) {
-      rightStripe.addButton(button, comparator);
-    }
-    else {
-      LOG.error("unknown anchor: " + anchor);
     }
   }
 
