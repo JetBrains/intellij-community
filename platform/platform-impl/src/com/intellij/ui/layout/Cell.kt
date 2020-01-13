@@ -198,10 +198,10 @@ abstract class Cell : BaseBuilder {
     label(gapLeft = gapLeft)
   }
 
-  fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit) {
+  fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit): CellBuilder<JComponent> {
     val result = Link(text, action = action)
     style?.let { UIUtil.applyStyle(it, result) }
-    result()
+    return result()
   }
 
   fun browserLink(text: String, url: String) {

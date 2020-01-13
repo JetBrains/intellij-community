@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.ProjectManager
@@ -23,6 +24,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
@@ -217,16 +219,38 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
             .enabled(!isOverridden)
         }
         fullRow { checkBox(cdUseContrastToolbars) }
-        fullRow {
-          component(ColorBlindnessPanel()) // FIXME: UI DSL
-            .withBinding({ it.colorBlindness },
-                         { it, value -> it.colorBlindness = value },
-                         PropertyBinding({ settings.colorBlindness },
-                                         { settings.colorBlindness = it }))
-            .onApply {
-              DefaultColorSchemesManager.getInstance().reload()
-              (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
+
+        val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
+        if (supportedValues.isNotEmpty()) {
+          val modelBinding = PropertyBinding({ settings.colorBlindness }, { settings.colorBlindness = it })
+          val onApply = {
+            DefaultColorSchemesManager.getInstance().reload()
+            (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
+          }
+
+          fullRow {
+            if (supportedValues.size == 1) {
+              component(JBCheckBox(UIBundle.message("color.blindness.checkbox.text")))
+                .withBinding({ if (it.isSelected) supportedValues.first() else null },
+                             { it, value -> it.isSelected = value != null },
+                             modelBinding)
+                .onApply(onApply)
             }
+            else {
+              val enableColorBlindness = component(JBCheckBox(UIBundle.message("color.blindness.combobox.text")))
+                .applyToComponent { isSelected = modelBinding.get() != null }
+              component(ComboBox(supportedValues.toTypedArray()))
+                .enableIf(enableColorBlindness.selected)
+                .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { UIBundle.message(it.key) } }
+                .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
+                             { it, value -> it.selectedItem = value ?: supportedValues.first() },
+                             modelBinding)
+                .onApply(onApply)
+            }
+
+            link(UIBundle.message("color.blindness.link.to.help")) { HelpManager.getInstance().invokeHelp("Colorblind_Settings") }
+              .withLargeLeftGap()
+          }
         }
       }
       titledRow(message("group.ui.options")) {
