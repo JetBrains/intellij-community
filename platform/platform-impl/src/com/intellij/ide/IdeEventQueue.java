@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.diagnostic.EventsWatcher;
@@ -731,7 +731,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void _dispatchEvent(@NotNull AWTEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
+    if (e.getID() == MouseEvent.MOUSE_DRAGGED && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
         dndManager.setLastDropHandler(null);

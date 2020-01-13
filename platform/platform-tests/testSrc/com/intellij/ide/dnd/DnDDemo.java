@@ -57,10 +57,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       @Override
       public void cleanUpOnLeave() {
       }
-
-      @Override
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-      }
     };
 
     final DnDTarget delegee2 = new DnDTarget() {
@@ -83,10 +79,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
 
       @Override
       public void cleanUpOnLeave() {
-      }
-
-      @Override
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     };
 
@@ -113,14 +105,7 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       @Override
       public void cleanUpOnLeave() {
       }
-
-
-      @Override
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-      }
     }, delegates);
-
-
 
     tabs.add("Delegates", delegates);
 
@@ -139,10 +124,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
 
       @Override
       public void cleanUpOnLeave() {
-      }
-
-      @Override
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     }, xy);
 
