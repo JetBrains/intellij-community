@@ -73,7 +73,7 @@ private val cdDisableControlsMnemonics
     groupName = windowOptionGroupName)
 private val cdAllowMergingButtons
   get() = CheckboxDescriptor(
-    "Allow merging buttons on dialogs",
+    message("allow.merging.dialog.buttons"),
     settings::allowMergeButtons,
     groupName = windowOptionGroupName)
 private val cdSmoothScrolling
@@ -128,12 +128,12 @@ private val cdMoveCursorOnButton
     groupName = uiOptionGroupName)
 private val cdHideNavigationPopups
   get() = CheckboxDescriptor(
-    "Hide navigation popups on focus loss",
+    message("hide.navigation.popups.on.focus.loss"),
     settings::hideNavigationOnFocusLoss,
     groupName = uiOptionGroupName)
 private val cdDnDWithAlt
   get() = CheckboxDescriptor(
-    "Drag-n-Drop with ALT pressed only",
+    message("dnd.with.alt.pressed.only"),
     settings::dndWithPressedAltOnly,
     groupName = uiOptionGroupName)
 
@@ -212,7 +212,8 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
           val isOverridden = GeneralSettings.isSupportScreenReadersOverridden()
           checkBox(message("checkbox.support.screen.readers"),
                    generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders,
-                   comment = if (isOverridden) """The option is overridden by the JVM property: "${GeneralSettings.SUPPORT_SCREEN_READERS}"""" else null)
+                   comment = if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
+                   else null)
             .enabled(!isOverridden)
         }
         fullRow { checkBox(cdUseContrastToolbars) }
@@ -230,7 +231,8 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
       }
       titledRow(message("group.ui.options")) {
         fullRow {
-          buttonFromAction("Background Image...", ActionPlaces.UNKNOWN, ActionManager.getInstance().getAction("Images.SetBackgroundImage"))
+          buttonFromAction(message("background.image.button"), ActionPlaces.UNKNOWN,
+                           ActionManager.getInstance().getAction("Images.SetBackgroundImage"))
             .apply { isEnabled = ProjectManager.getInstance().openProjects.isNotEmpty() }
         }
         fullRow { checkBox(cdCyclicListScrolling) }
@@ -241,7 +243,7 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
         fullRow { checkBox(cdHideNavigationPopups) }
         fullRow { checkBox(cdDnDWithAlt) }
         fullRow {
-          label("Tooltip initial delay (ms):")
+          label(message("tooltip.initial.delay.label"))
           slider(0, 1200, 100, 1200)
             .labelTable {
               put(0, JLabel("0"))
@@ -320,8 +322,7 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
           { checkBox(cdDisableControlsMnemonics) },
           {
             checkBox(cdSmoothScrolling)
-            ContextHelpLabel.create(
-              "When using the mouse wheel/touchpad, the entire interface will scroll smoothly instead of line by line")()
+            ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
           }
         )
         twoColumnRow(

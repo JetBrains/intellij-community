@@ -2,36 +2,37 @@
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
+import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.util.text.StringUtil
 
-internal val uiOptionGroupName = "UI"
-internal val windowOptionGroupName = "Window"
-internal val viewOptionGroupName = "View"
+internal val uiOptionGroupName get() = message("appearance.ui.option.group")
+internal val windowOptionGroupName get() = message("appearance.window.option.group")
+internal val viewOptionGroupName get() = message("appearance.view.option.group")
 
 private val settings get() = UISettings.instance
 private val notificationSettings get() = NotificationsConfigurationImpl.getInstanceImpl()
 
 private val cdShowMainToolbar
   get() = CheckboxDescriptor(
-    "Show Main Toolbar",
+    message("show.main.toolbar"),
     settings::showMainToolbar,
     groupName = viewOptionGroupName)
 private val cdShowStatusBar
   get() = CheckboxDescriptor(
-    "Show Status Bar",
+    message("show.status.bar"),
     settings::showStatusBar,
     groupName = viewOptionGroupName)
 private val cdShowNavigationBar
   get() = CheckboxDescriptor(
-    "Show Navigation Bar",
+    message("show.navigation.bar"),
     settings::showNavigationBar,
     groupName = viewOptionGroupName)
 private val cdUseSmallTabLabels
   get() = CheckboxDescriptor(
-    "Small labels in editor tabs",
+    message("small.labels.in.editor.tabs"),
     settings::useSmallLabelsOnTabs,
     groupName = windowOptionGroupName)
 private val cdNavigateToPreview
@@ -46,7 +47,7 @@ private val cdShowEditorPreview
     groupName = windowOptionGroupName)
 private val cdShowBalloons
   get() = CheckboxDescriptor(
-    "Display balloon notifications",
+    message("display.balloon.notifications"),
     notificationSettings::SHOW_BALLOONS,
     groupName = uiOptionGroupName)
 
