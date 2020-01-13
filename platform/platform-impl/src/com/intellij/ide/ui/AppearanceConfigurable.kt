@@ -6,6 +6,7 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.editor.EditorFactory
@@ -43,83 +44,103 @@ private val lafManager get() = LafManager.getInstance()
 private val cdAnimateWindows
   get() = CheckboxDescriptor(
     message("checkbox.animate.windows"),
-    settings::animateWindows)
+    settings::animateWindows,
+    groupName = windowOptionGroupName)
 private val cdShowToolWindowBars
   get() = CheckboxDescriptor(
     message("checkbox.show.tool.window.bars"),
-    PropertyBinding({ !settings.hideToolStripes }, { settings.hideToolStripes = !it }))
+    PropertyBinding({ !settings.hideToolStripes }, { settings.hideToolStripes = !it }),
+    groupName = windowOptionGroupName)
 private val cdShowToolWindowNumbers
   get() = CheckboxDescriptor(
     message("checkbox.show.tool.window.numbers"),
-    settings::showToolWindowsNumbers)
+    settings::showToolWindowsNumbers,
+    groupName = windowOptionGroupName)
 private val cdShowMemoryIndicator
   get() = CheckboxDescriptor(
     message("checkbox.show.memory.indicator"),
-    settings::showMemoryIndicator)
+    settings::showMemoryIndicator,
+    groupName = windowOptionGroupName)
 private val cdDisableMenuMnemonics
   get() = CheckboxDescriptor(
     KeyMapBundle.message("disable.mnemonic.in.menu.check.box"),
-    settings::disableMnemonics)
+    settings::disableMnemonics,
+    groupName = windowOptionGroupName)
 private val cdDisableControlsMnemonics
   get() = CheckboxDescriptor(
     KeyMapBundle.message("disable.mnemonic.in.controls.check.box"),
-    settings::disableMnemonicsInControls)
+    settings::disableMnemonicsInControls,
+    groupName = windowOptionGroupName)
 private val cdAllowMergingButtons
   get() = CheckboxDescriptor(
     "Allow merging buttons on dialogs",
-    settings::allowMergeButtons)
+    settings::allowMergeButtons,
+    groupName = windowOptionGroupName)
 private val cdSmoothScrolling
   get() = CheckboxDescriptor(
     message("checkbox.smooth.scrolling"),
-    settings::smoothScrolling)
+    settings::smoothScrolling,
+    groupName = uiOptionGroupName)
 private val cdShowMenuIcons
   get() = CheckboxDescriptor(
     message("checkbox.show.icons.in.menu.items"),
-    settings::showIconsInMenus)
+    settings::showIconsInMenus,
+    groupName = windowOptionGroupName)
 private val cdWidescreenToolWindowLayout
   get() = CheckboxDescriptor(
     message("checkbox.widescreen.tool.window.layout"),
-    settings::wideScreenSupport)
+    settings::wideScreenSupport,
+    groupName = windowOptionGroupName)
 private val cdLeftToolWindowLayout
   get() = CheckboxDescriptor(
     message("checkbox.left.toolwindow.layout"),
-    settings::leftHorizontalSplit)
+    settings::leftHorizontalSplit,
+    groupName = windowOptionGroupName)
 private val cdRightToolWindowLayout
   get() = CheckboxDescriptor(
     message("checkbox.right.toolwindow.layout"),
-    settings::rightHorizontalSplit)
+    settings::rightHorizontalSplit,
+    groupName = windowOptionGroupName)
 private val cdCyclicListScrolling
   get() = CheckboxDescriptor(
     message("checkboox.cyclic.scrolling.in.lists"),
-    settings::cycleScrolling)
+    settings::cycleScrolling,
+    groupName = uiOptionGroupName)
 private val cdShowQuickNavigationIcons
   get() = CheckboxDescriptor(
     message("checkbox.show.icons.in.quick.navigation"),
-    settings::showIconInQuickNavigation)
+    settings::showIconInQuickNavigation,
+    groupName = uiOptionGroupName)
 private val cdUseCompactTreeIndents
   get() = CheckboxDescriptor(
     message("checkbox.compact.tree.indents"),
-    settings::compactTreeIndents)
+    settings::compactTreeIndents,
+    groupName = uiOptionGroupName)
 private val cdShowTreeIndents
   get() = CheckboxDescriptor(
     message("checkbox.show.tree.indent.guides"),
-    settings::showTreeIndentGuides)
+    settings::showTreeIndentGuides,
+    groupName = uiOptionGroupName)
 private val cdMoveCursorOnButton
   get() = CheckboxDescriptor(
     message("checkbox.position.cursor.on.default.button"),
-    settings::moveMouseOnDefaultButton)
+    settings::moveMouseOnDefaultButton,
+    groupName = uiOptionGroupName)
 private val cdHideNavigationPopups
   get() = CheckboxDescriptor(
     "Hide navigation popups on focus loss",
-    settings::hideNavigationOnFocusLoss)
+    settings::hideNavigationOnFocusLoss,
+    groupName = uiOptionGroupName)
 private val cdDnDWithAlt
   get() = CheckboxDescriptor(
     "Drag-n-Drop with ALT pressed only",
-    settings::dndWithPressedAltOnly)
+    settings::dndWithPressedAltOnly,
+    groupName = uiOptionGroupName)
+
 private val cdUseTransparentMode
   get() = CheckboxDescriptor(
     message("checkbox.use.transparent.mode.for.floating.windows"),
-    settings::enableAlphaMode)
+    PropertyBinding({ settings.state.enableAlphaMode }, { settings.state.enableAlphaMode = it }))
 private val cdOverrideLaFFont
   get() = CheckboxDescriptor(
     message("checkbox.override.default.laf.fonts"),
@@ -128,6 +149,28 @@ private val cdUseContrastToolbars
   get() = CheckboxDescriptor(
     message("checkbox.acessibility.contrast.scrollbars"),
     settings::useContrastScrollbars)
+
+internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
+  cdAnimateWindows,
+  cdShowToolWindowBars,
+  cdShowToolWindowNumbers,
+  cdShowMemoryIndicator,
+  cdDisableMenuMnemonics,
+  cdDisableControlsMnemonics,
+  cdAllowMergingButtons,
+  cdSmoothScrolling,
+  cdShowMenuIcons,
+  cdWidescreenToolWindowLayout,
+  cdLeftToolWindowLayout,
+  cdRightToolWindowLayout,
+  cdCyclicListScrolling,
+  cdShowQuickNavigationIcons,
+  cdUseCompactTreeIndents,
+  cdShowTreeIndents,
+  cdMoveCursorOnButton,
+  cdHideNavigationPopups,
+  cdDnDWithAlt
+).map(CheckboxDescriptor::asOptionDescriptor)
 
 class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "preferences.lookFeel") {
   private var shouldUpdateLaF = false
