@@ -260,7 +260,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     isClipped = true
 
-    val testSimple = simplePaths?.let { testSimple(it, width - (projectTitle.longWidth + classTitle.longWidth)) }
+    val shrinkedSimplePaths = simplePaths?.let { shrinkSimplePaths(it, width - (projectTitle.longWidth + classTitle.longWidth)) }
 
     val pathPatterns = listOf( 
       Pattern(projectTitle.longWidth + classTitle.shortWidth) {
@@ -275,7 +275,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
         projectTitle.getShort()
       })
 
-    titleString = testSimple?.let {
+    titleString = shrinkedSimplePaths?.let {
       projectTitle.getLong() +
       classTitle.getLong() + it
     } ?: pathPatterns.first { it.preferredWidth < width }.let {
@@ -291,7 +291,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     onBoundsChanged?.invoke()
   }
 
-  private fun testSimple(simplePaths: List<TitlePart>, simpleWidth: Int): String? {
+  private fun shrinkSimplePaths(simplePaths: List<TitlePart>, simpleWidth: Int): String? {
     isClipped = simplePaths.sumBy { it.longWidth } > simpleWidth
 
     for (i in simplePaths.size - 1 downTo 0) {
