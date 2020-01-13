@@ -10,6 +10,7 @@ import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.Restarter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -26,6 +28,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -93,9 +96,29 @@ public final class ConfigImportHelper {
 
     if (!result.isNull()) {
       doImport(result.get().first, newConfigDir, result.get().second, log);
+
       if (settings != null) {
         settings.importFinished(newConfigDir);
       }
+
+      if (Files.isRegularFile(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()))) {
+        String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
+        String message = ApplicationBundle.message("restart.import.settings");
+        String[] options = {ApplicationBundle.message("restart.import.now"), ApplicationBundle.message("restart.import.later")};
+        if (JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), message, title, JOptionPane.YES_NO_OPTION,
+                                         JOptionPane.INFORMATION_MESSAGE, Messages.getInformationIcon(), options, null) == 0) {
+          if (Restarter.isSupported()) {
+            try {
+              Restarter.scheduleRestart(false);
+            }
+            catch (IOException e) {
+              Main.showMessage("Restart failed", e);
+            }
+          }
+          System.exit(0);
+        }
+      }
+
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
     }
   }
