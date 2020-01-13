@@ -117,6 +117,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
         else {
           super.visitElement(element);
         }
+       return;
       }
     });
   }
