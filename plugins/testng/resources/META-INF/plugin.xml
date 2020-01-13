@@ -86,17 +86,17 @@
     <listener implementation="com.intellij.rt.testng.TestNGTestDiscoveryListener"/>
   </extensions>
     <extensionPoints >
-      <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="com.intellij.rt.testng.IDEATestNGListener"/>
+      <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="com.intellij.rt.testng.IDEATestNGListener" dynamic="true"/>
     </extensionPoints>
 
   <actions>
-    <group>
-      <action class="com.theoryinpractice.testng.ui.actions.TestNGExcludeFromRunAction" text="Exclude from suite" id="excludeFromTestNGSuite"/>
+    <group id="excludeGroup">
+      <action class="com.theoryinpractice.testng.ui.actions.TestNGExcludeFromRunAction" text="Exclude from Suite" id="excludeFromTestNGSuite"/>
       <separator/>
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
-    <group>
-      <action class="com.theoryinpractice.testng.ui.actions.TestNGAddToTestsPatternAction" id="AddToTestNGSuite" text="Add to temp suite"/>
+    <group id="addToTempGroup">
+      <action class="com.theoryinpractice.testng.ui.actions.TestNGAddToTestsPatternAction" id="AddToTestNGSuite" text="Add to Temp Suite"/>
       <add-to-group anchor="first" group-id="RunContextGroup"/>
     </group>
   </actions>
