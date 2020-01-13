@@ -31,10 +31,20 @@ class PyNamedTupleInspection : PyInspection() {
 
       val ancestors = cls.getAncestorClasses(context)
       val ancestorsFields = ancestors.map {
-        when {
-          !classFieldsFilter(it) -> Ancestor.FILTERED
-          processFields(it, fieldsFilter, hasAssignedValue).fieldsWithDefaultValue.isNotEmpty() -> Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE
-          else -> Ancestor.HAS_NOT_FIELD_WITH_DEFAULT_VALUE
+        if (!classFieldsFilter(it)) {
+          Ancestor.FILTERED
+        }
+        else {
+          val processor = processFields(it, fieldsFilter, hasAssignedValue)
+          if (processor.fieldsWithDefaultValue.isNotEmpty()) {
+            Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE
+          }
+          else if (processor.lastFieldWithoutDefaultValue != null) {
+            Ancestor.HAS_NOT_FIELD_WITH_DEFAULT_VALUE
+          }
+          else {
+            Ancestor.FILTERED
+          }
         }
       }
 

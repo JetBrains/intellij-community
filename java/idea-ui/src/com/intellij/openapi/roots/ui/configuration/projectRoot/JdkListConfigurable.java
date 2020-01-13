@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
@@ -71,7 +72,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return "SDKs";
+    return IdeBundle.message("configurable.JdkListConfigurable.display.name");
   }
 
   @Override

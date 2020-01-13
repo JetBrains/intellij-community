@@ -5,6 +5,7 @@ import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions> implements SearchableConfigurable {
+public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions>implements SearchableConfigurable {
   private CoverageOptionsPanel myPanel;
   private final CoverageOptionsProvider myManager;
   private final Project myProject;
@@ -32,7 +33,7 @@ public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageO
   @Nls
   @Override
   public String getDisplayName() {
-    return "Coverage";
+    return UIBundle.message("configurable.CoverageOptionsConfigurable.display.name");
   }
 
   @Override

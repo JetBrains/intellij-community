@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-@ApiStatus.Experimental
 public class EmptyInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key,Value> {
   public EmptyInputDataDiffBuilder(int inputId) {
     super(inputId);

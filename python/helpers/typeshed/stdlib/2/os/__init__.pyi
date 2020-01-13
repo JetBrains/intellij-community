@@ -136,10 +136,17 @@ if sys.version_info >= (3, 6):
 
 _PathType = path._PathType
 
-_StatVFS = NamedTuple('_StatVFS', [('f_bsize', int), ('f_frsize', int), ('f_blocks', int),
-                                   ('f_bfree', int), ('f_bavail', int), ('f_files', int),
-                                   ('f_ffree', int), ('f_favail', int), ('f_flag', int),
-                                   ('f_namemax', int)])
+class _StatVFS(NamedTuple):
+    f_bsize: int
+    f_frsize: int
+    f_blocks: int
+    f_bfree: int
+    f_bavail: int
+    f_files: int
+    f_ffree: int
+    f_favail: int
+    f_flag: int
+    f_namemax: int
 
 def getlogin() -> str: ...
 def getpid() -> int: ...
@@ -349,20 +356,3 @@ if sys.version_info < (3, 0):
 P_ALL: int
 WEXITED: int
 WNOWAIT: int
-
-if sys.version_info >= (3, 3):
-    if sys.platform != 'win32':
-        # Unix only
-        def sync() -> None: ...
-
-        def truncate(path: Union[_PathType, int], length: int) -> None: ...  # Unix only up to version 3.4
-
-        def fwalk(top: AnyStr = ..., topdown: bool = ...,
-                  onerror: Callable = ..., *, follow_symlinks: bool = ...,
-                  dir_fd: int = ...) -> Iterator[Tuple[AnyStr, List[AnyStr], List[AnyStr], int]]: ...
-
-    terminal_size = NamedTuple('terminal_size', [('columns', int), ('lines', int)])
-    def get_terminal_size(fd: int = ...) -> terminal_size: ...
-
-if sys.version_info >= (3, 4):
-    def cpu_count() -> Optional[int]: ...

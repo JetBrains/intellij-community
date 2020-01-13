@@ -61,7 +61,7 @@ PIPE: int
 STDOUT: int
 
 class CalledProcessError(Exception):
-    returncode = 0
+    returncode: int
     # morally: _CMD
     cmd: Any
     # morally: Optional[bytes]
@@ -79,8 +79,8 @@ class Popen(Generic[_T]):
     stdin: Optional[IO[bytes]]
     stdout: Optional[IO[bytes]]
     stderr: Optional[IO[bytes]]
-    pid = 0
-    returncode = 0
+    pid: int
+    returncode: int
 
     def __new__(cls,
                 args: _CMD,

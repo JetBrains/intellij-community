@@ -4,8 +4,10 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.DynamicGroupTool;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
@@ -23,6 +25,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.inspection.StructuralSearchInspectionToolWrapper;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -38,15 +41,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * @author cdr
- */
-public class SSBasedInspection extends LocalInspectionTool {
+public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
   static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
 
   @NonNls public static final String SHORT_NAME = "SSBasedInspection";
@@ -163,6 +160,14 @@ public class SSBasedInspection extends LocalInspectionTool {
         }
       }
     };
+  }
+
+  @Override
+  public List<LocalInspectionToolWrapper> getChildren() {
+    if (Registry.is("ssr.separate.inspections")) {
+      return ContainerUtil.map(getConfigurations(), configuration -> new StructuralSearchInspectionToolWrapper(configuration));
+    }
+    return Collections.emptyList();
   }
 
   static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {

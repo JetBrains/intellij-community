@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class CvsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.intellij.cvsSupport2.CvsBundle";
+  @NonNls private static final String BUNDLE = "messages.CvsBundle";
   private static final CvsBundle INSTANCE = new CvsBundle();
 
   private CvsBundle() { super(BUNDLE); }

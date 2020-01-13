@@ -57,8 +57,8 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
-  public String[] getGroupPath() {
-    return new String[]{"Structural Search"};
+  public String getGroupDisplayName() {
+    return "Structural Search";
   }
 
   @Nullable

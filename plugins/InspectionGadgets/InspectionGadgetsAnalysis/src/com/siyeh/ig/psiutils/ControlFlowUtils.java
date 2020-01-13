@@ -923,6 +923,7 @@ public class ControlFlowUtils {
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
         PsiElement ternaryParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
         return ternaryParent instanceof PsiReturnStatement ||
+               ternaryParent instanceof PsiLambdaExpression ||
                (ternaryParent instanceof PsiLocalVariable && 
                 (!((PsiLocalVariable)ternaryParent).getTypeElement().isInferredType() || 
                  PsiTypesUtil.isDenotableType(((PsiLocalVariable)ternaryParent).getType(), ternaryParent))) ||
@@ -956,6 +957,10 @@ public class ControlFlowUtils {
           return true;
         }
       }
+    }
+    if (parent instanceof PsiResourceVariable) {
+      PsiResourceList list = ObjectUtils.tryCast(parent.getParent(), PsiResourceList.class);
+      return list != null && list.getParent() instanceof PsiTryStatement;
     }
     if (parent instanceof PsiField) {
       PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent);

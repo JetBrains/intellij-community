@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -55,16 +55,11 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
 
   @Nullable
   @Override
-  public CompositeRepositoryLocation getLocationFor(@NotNull FilePath root) {
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root);
-    if (vcs != null) {
-      final CommittedChangesProvider committedChangesProvider = vcs.getCommittedChangesProvider();
-      if (committedChangesProvider != null) {
-        return new CompositeRepositoryLocation(committedChangesProvider,
-                                               CommittedChangesCache.getInstance(myProject).getLocationCache().getLocation(vcs, root, false));
-      }
-    }
-    return null;
+  public RepositoryLocation getLocationFor(@NotNull FilePath root) {
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root);
+    if (vcs == null) return null;
+
+    return CommittedChangesCache.getInstance(myProject).getLocationCache().getLocation(vcs, root, false);
   }
 
   @Override

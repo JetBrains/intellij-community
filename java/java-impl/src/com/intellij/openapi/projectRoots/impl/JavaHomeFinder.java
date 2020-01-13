@@ -6,18 +6,22 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 public abstract class JavaHomeFinder {
@@ -29,7 +33,9 @@ public abstract class JavaHomeFinder {
    */
   @NotNull
   public static List<String> suggestHomePaths() {
-    List<String> paths = new ArrayList<>(new HashSet<>(getFinder().findExistingJdks()));
+    JavaHomeFinder javaFinder = getFinder();
+    Collection<String> foundPaths = javaFinder.findExistingJdks();
+    ArrayList<String> paths = new ArrayList<>(foundPaths);
     paths.sort((o1, o2) -> Comparing.compare(JavaVersion.tryParse(o2), JavaVersion.tryParse(o1)));
     return paths;
   }
@@ -63,14 +69,16 @@ public abstract class JavaHomeFinder {
     return new DefaultFinder();
   }
 
-  protected void scanFolder(File folder, List<? super String> result) {
-    if (JdkUtil.checkForJdk(folder))
+  protected void scanFolder(@NotNull File folder, boolean includeNestDirs, @NotNull List<? super String> result) {
+    if (JdkUtil.checkForJdk(folder)) {
       result.add(folder.getAbsolutePath());
-
-    for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY)) {
-      file = adjustPath(file);
-      if (JdkUtil.checkForJdk(file)) {
-        result.add(file.getAbsolutePath());
+    }
+    else if (includeNestDirs) {
+      for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY)) {
+        file = adjustPath(file);
+        if (JdkUtil.checkForJdk(file)) {
+          result.add(file.getAbsolutePath());
+        }
       }
     }
   }
@@ -102,9 +110,38 @@ public abstract class JavaHomeFinder {
     public List<String> findExistingJdks() {
       List<String> result = new ArrayList<>();
       for (String path : myPaths) {
-        scanFolder(new File(path), result);
+        scanFolder(new File(path), true, result);
+      }
+      for (File dir : guessByPathVariable()) {
+        scanFolder(dir, false, result);
       }
       return result;
+    }
+
+    public Collection<File> guessByPathVariable() {
+      String pathVarString = System.getenv("PATH");
+      if (pathVarString == null || pathVarString.isEmpty()) return Collections.emptyList();
+      boolean isWindows = SystemInfo.isWindows;
+      String suffix = isWindows ? ".exe" : "";
+      ArrayList<File> dirsToCheck = new ArrayList<>(1);
+      String[] pathEntries = pathVarString.split(File.pathSeparator);
+      for (String p : pathEntries) {
+        File dir = new File(p);
+        if (StringUtilRt.equal(dir.getName(), "bin", !isWindows)) {
+          File f1 = new File(p, "java" + suffix);
+          File f2 = new File(p, "javac" + suffix);
+          if (f1.isFile() && f2.isFile()) {
+            File f1c = canonize(f1);
+            File f2c = canonize(f2);
+            File d1 = granny(f1c);
+            File d2 = granny(f2c);
+            if (d1 != null && d2 != null && FileUtil.filesEqual(d1, d2)) {
+              dirsToCheck.add(d1);
+            }
+          }
+        }
+      }
+      return dirsToCheck;
     }
   }
 
@@ -138,4 +175,21 @@ public abstract class JavaHomeFinder {
       return file;
     }
   }
+
+  @NotNull
+  private static File canonize(@NotNull File file) {
+    try {
+      return file.getCanonicalFile();
+    }
+    catch (IOException ioe) {
+      return file.getAbsoluteFile();
+    }
+  }
+
+  @Nullable
+  private static File granny(@Nullable File file) {
+    File parent = file.getParentFile();
+    return parent != null ? parent.getParentFile() : null;
+  }
+
 }

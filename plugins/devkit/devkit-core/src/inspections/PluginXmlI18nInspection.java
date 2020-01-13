@@ -35,7 +35,9 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
   }
 
-  private static void highlightAction(DomElementAnnotationHolder holder, ActionOrGroup action) {
+  private static void highlightAction(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup action) {
+    if (Boolean.TRUE.equals(action.getInternal().getValue())) return;
+
     String id = action.getId().getStringValue();
     if (id == null) return;
 

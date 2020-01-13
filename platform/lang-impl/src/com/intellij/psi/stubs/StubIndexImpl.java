@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -76,11 +79,20 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
-  private volatile Future<AsyncState> myStateFuture;
+  @NotNull private CompletableFuture<AsyncState> myStateFuture = new CompletableFuture<>();
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
   private StubIndexState myPreviouslyRegistered;
+
+  public StubIndexImpl() {
+    StubIndexExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<StubIndexExtension<?, ?>>() {
+      @Override
+      public void extensionRemoved(@NotNull StubIndexExtension<?, ?> extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ID.unloadId(extension.getKey());
+      }
+    }, ApplicationManager.getApplication());
+  }
 
   @Nullable
   static StubIndexImpl getInstanceOrInvalidate() {
@@ -580,11 +592,11 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
     assert !myInitialized;
     // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
     FileBasedIndex.getInstance();
-    myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
+    Future<AsyncState> future = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
 
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       try {
-        myStateFuture.get();
+        future.get();
       }
       catch (Throwable t) {
         LOG.error(t);
@@ -604,7 +616,7 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
 
   private void clearState() {
     myCachedStubIds.clear();
-    myStateFuture = null;
+    myStateFuture = new CompletableFuture<>();
     myState = null;
     myInitialized = false;
     LOG.info("StubIndexExtension-s were unloaded");
@@ -769,6 +781,7 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
       }
 
       myInitialized = true;
+      myStateFuture.complete(state);
       return state;
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.settings;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
@@ -209,7 +210,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
 
   @Override
   public String getDisplayName() {
-    return "Remote Jar Repositories";
+    return IdeBundle.message("configurable.RemoteRepositoriesConfigurable.display.name");
   }
 
   @Override

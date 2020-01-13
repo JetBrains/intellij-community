@@ -25,6 +25,7 @@ import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,7 +88,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   @Nls
   @Override
   public String getDisplayName() {
-    return "Buildout";
+    return PyBundle.message("configurable.BuildoutConfigurable.display.name");
   }
 
   @Override

@@ -35,7 +35,7 @@ record VarArgMismatch2(int[] x) {
 record Delegate(int x) {
   public Delegate(int x) {
     <error descr="Canonical constructor cannot delegate to another constructor">this()</error>;
-    this.x = 0;
+    <error descr="Variable 'x' might already have been assigned to">this.x</error> = 0;
   }
   
   public <error descr="Non-canonical record constructor must delegate to another constructor">Delegate</error>() {
@@ -56,5 +56,15 @@ record NotInitializedField(int <error descr="Record component 'x' might not be i
 record ImplicitCanonicalConstructor(String s) {
   static void test() {
     new ImplicitCanonicalConstructor("Asdasd");
+  }
+}
+record AssignmentInNonCanonical(int x, int y, long depth) {
+  public AssignmentInNonCanonical(int x, int y) {
+    this(x, y, 10);
+    <error descr="Variable 'x' might already have been assigned to">this.x</error> = x;
+  }
+
+  void method() {
+    <error descr="Cannot assign a value to final variable 'x'">this.x</error> = 0;
   }
 }

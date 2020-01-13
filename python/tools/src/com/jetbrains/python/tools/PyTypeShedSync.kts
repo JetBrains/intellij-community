@@ -36,6 +36,7 @@ val whiteList = setOf(
   "builtins",
   "collections",
   "concurrent",
+  "contextvars",
   "cPickle",
   "crypt",
   "ctypes",
@@ -76,7 +77,8 @@ val whiteList = setOf(
   "unittest",
   "urllib",
   "uuid",
-  "werkzeug"
+  "werkzeug",
+  "xml"
 )
 
 println("Cleaning")

@@ -814,7 +814,7 @@ class TimeoutExpired(SubprocessError):
 
 
 class CalledProcessError(Exception):
-    returncode = 0
+    returncode: int
     # morally: _CMD
     cmd: Any
     # morally: Optional[_TXT]
@@ -835,8 +835,8 @@ class Popen(Generic[AnyStr]):
     stdin: IO[AnyStr]
     stdout: IO[AnyStr]
     stderr: IO[AnyStr]
-    pid = 0
-    returncode = 0
+    pid: int
+    returncode: int
 
     # Technically it is wrong that Popen provides __new__ instead of __init__
     # but this shouldn't come up hopefully?

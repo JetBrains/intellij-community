@@ -61,6 +61,23 @@ public class TargetedCommandLine {
     return CommandLineUtil.toCommandLine(command, parameters, target.getRemotePlatform().getPlatform());
   }
 
+  public List<String> collectCommandsSynchronously(@NotNull TargetEnvironment target) throws com.intellij.execution.ExecutionException {
+    String command = resolvePromise(myExePath.getTargetValue(), "exe path");
+    if (command == null) {
+      throw new com.intellij.execution.ExecutionException("Resolved value for exe path is null");
+    }
+
+    List<String> commandLine = new ArrayList<>(myParameters.size() + 1);
+
+    commandLine.add(command);
+
+    for (TargetValue<String> parameter : myParameters) {
+      commandLine.add(resolvePromise(parameter.getTargetValue(), "parameter"));
+    }
+
+    return commandLine;
+  }
+
   @Nullable
   public String getWorkingDirectory() throws com.intellij.execution.ExecutionException {
     return resolvePromise(myWorkingDirectory.getTargetValue(), "working directory");

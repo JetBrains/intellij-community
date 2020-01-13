@@ -77,7 +77,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     final PsiMethod method = (PsiMethod)elements[0];
     String message = null;
     if (!method.getManager().isInProject(method)) {
-      message = "Move method is not supported for non-project methods";
+      message = RefactoringBundle.message("move.method.is.not.supported.for.non.project.methods");
     } else if (method.isConstructor()) {
       message = RefactoringBundle.message("move.method.is.not.supported.for.constructors");
     } else if (method.getLanguage()!= JavaLanguage.INSTANCE) {

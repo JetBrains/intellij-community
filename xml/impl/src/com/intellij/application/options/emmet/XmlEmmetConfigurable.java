@@ -160,7 +160,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
   @Nls
   @Override
   public String getDisplayName() {
-    return "HTML";
+    return XmlBundle.message("configurable.XmlEmmetConfigurable.display.name");
   }
 
   @Nullable

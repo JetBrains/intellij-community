@@ -243,7 +243,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
   @Override
   public String getDisplayName() {
-    return "Custom Plugin Repositories";
+    return IdeBundle.message("configurable.PluginHostsConfigurable.display.name");
   }
 
   @Override

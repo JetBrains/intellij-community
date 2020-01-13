@@ -30,6 +30,7 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testSuperInterfaceConstant() { doSingleTest(); }
   public void testMultipleTypes() { doSingleTest(); }
   public void testMultipleTypes2() { doSingleTest(); }
+  public void testRecord() { doSingleTest(); }
   public void testParametericMethod() { doSingleTest(); }
   public void testQualifyInner() { doSingleTest(); }
   public void testTypeArgsFormatted() { doSingleTest(); }

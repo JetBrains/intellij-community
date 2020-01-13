@@ -2,7 +2,8 @@
 class A{
   void test(){
     Integer container = null;
+    int i = 0;
       assert container != null;
-      for (int i = 0, limit = container.intValue(); i < limit; i++){}
+      for (int limit = container.intValue(); i < limit; i++){}
   }
 }

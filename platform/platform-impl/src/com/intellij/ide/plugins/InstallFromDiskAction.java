@@ -5,11 +5,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author yole
+ */
 public class InstallFromDiskAction extends DumbAwareAction {
-  public InstallFromDiskAction(@Nullable String text) {
-    super(text, "", AllIcons.Nodes.Plugin);
+  public InstallFromDiskAction() {
+    super("Install Plugin from Disk...", null, AllIcons.Nodes.Plugin);
   }
 
   @Override

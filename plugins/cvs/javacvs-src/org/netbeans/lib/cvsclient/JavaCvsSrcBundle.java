@@ -34,7 +34,7 @@ public class JavaCvsSrcBundle {
   }
 
   private static Reference<ResourceBundle> ourBundle;
-  @NonNls protected static final String PATH_TO_BUNDLE = "org.netbeans.lib.cvsclient.JavaCvsSrcBundle";
+  @NonNls protected static final String PATH_TO_BUNDLE = "messages.JavaCvsSrcBundle";
 
   private JavaCvsSrcBundle() {
   }

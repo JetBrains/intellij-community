@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.IdeView;
@@ -33,7 +33,7 @@ import java.util.Calendar;
 public class ScopeViewPaneTest extends TestSourceBasedTestCase {
   private static final int DELAY = 200;
 
-  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.MAY, day = 10)
   public void testStructure() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);
@@ -179,7 +179,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     Disposer.dispose(pane);
   }
 
-  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.MAY, day = 10)
   public void testInScope() {
     ScopeTreeViewPanel pane = null;
     try {
@@ -370,7 +370,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
      }
    }
 
-  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.MAY, day = 10)
   public void testCompactEmptyDirectories() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);
@@ -448,7 +448,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     Disposer.dispose(pane);
   }
 
-  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.MAY, day = 10)
   public void testFlattenPackages() {
     final Project project = getProject();
     final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(project);

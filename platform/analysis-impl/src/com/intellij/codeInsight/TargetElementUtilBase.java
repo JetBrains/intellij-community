@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomDeclarationSearcher;
@@ -164,21 +165,15 @@ public final class TargetElementUtilBase {
 
     Project project = editor.getProject();
     if (project == null) return null;
-    PsiElement[] result = {null};
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
-      final Language language = ref.getElement().getLanguage();
-      TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
-      if (evaluator != null) {
-        final PsiElement element = evaluator.getElementByReference(ref, flags);
-        if (element != null) {
-          result[0] = element;
-          return;
-        }
+    final Language language = ref.getElement().getLanguage();
+    TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
+    if (evaluator != null) {
+      final PsiElement element = evaluator.getElementByReference(ref, flags);
+      if (element != null) {
+        return element;
       }
-      result[0] = ref.resolve();
-    }, project, DumbModeAccessType.RELIABLE_DATA_ONLY);
-
-    return result[0];
+    }
+    return ref.resolve();
   }
 
   @Nullable

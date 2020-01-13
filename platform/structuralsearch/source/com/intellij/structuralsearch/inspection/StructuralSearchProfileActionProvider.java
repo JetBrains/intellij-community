@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -22,13 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author Bas Leijdekkers
  */
 public class StructuralSearchProfileActionProvider extends InspectionProfileActionProvider {
-
-  private SingleInspectionProfilePanel myProfilePanel;
 
   @NotNull
   @Override
@@ -109,9 +106,32 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       if (!ConfigurationManager.showSaveTemplateAsDialog(inspection.getConfigurations(), configuration, project)) {
         return;
       }
-      InspectionProvider.addConfigurationToProfile(project, profile, configuration);
+      addConfigurationToProfile(project, profile, configuration);
       profile.getProfileManager().fireProfileChanged(profile);
       myPanel.selectInspectionTool(configuration.getUuid().toString());
+    }
+
+    private static void addConfigurationToProfile(@NotNull Project project,
+                                                  InspectionProfileImpl profile,
+                                                  Configuration configuration) {
+      final UUID uuid = configuration.getUuid();
+      final InspectionToolWrapper<?, ?> toolWrapper;
+      if (uuid == null) {
+        configuration.setUuid(UUID.randomUUID());
+        toolWrapper = null;
+      }
+      else {
+        toolWrapper = profile.getInspectionTool(configuration.getUuid().toString(), project);
+      }
+      if (toolWrapper == null) {
+        final LocalInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
+        profile.addTool(project, wrapped, null);
+
+        // enable inspection even when profile is locked, because either:
+        // - user just added this inspection explicitly
+        // - or inspection was just imported from enabled old SSR inspection
+        profile.setToolEnabled(configuration.getUuid().toString(), true);
+      }
     }
   }
 }

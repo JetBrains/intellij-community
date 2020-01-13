@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.ui.UIBundle;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -100,7 +101,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     @Override
     @Nls
     public String getDisplayName() {
-        return "Templates";
+      return UIBundle.message("configurable.TemplatesPanel.display.name");
     }
 
   @Override

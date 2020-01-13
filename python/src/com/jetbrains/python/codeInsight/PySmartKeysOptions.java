@@ -41,7 +41,7 @@ public class PySmartKeysOptions extends BeanConfigurable<CodeInsightSettings> im
   @Nls(capitalization = Nls.Capitalization.Title)
   @Override
   public String getDisplayName() {
-    return "Python";
+    return PyBundle.message("configurable.PySmartKeysOptions.display.name");
   }
 
   @NotNull

@@ -2,14 +2,10 @@
 package com.intellij.openapi.components;
 
 /**
- * Please use application services or extensions instead of application component, because
- * if you register a class as an application component it will be loaded, its instance will be created and
+ * @deprecated components are deprecated. If you register a class as an application component it will be loaded, its instance will be created and
  * {@link #initComponent()} methods will be called each time IDE is started even if user doesn't use any feature of your
- * plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance until user calls its
- * actions explicitly.
- *
- * @deprecated Components are deprecated; please see http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for
- * guidelines on migrating to other APIs.
+ * plugin. Also plugins which declare application components don't support dynamic loading. Please see
+ * http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for guidelines on migrating to other APIs.
  */
 @Deprecated
 public interface ApplicationComponent extends BaseComponent {

@@ -143,7 +143,7 @@ pipeline_command ::=  '!'? pipeline
 
 let_command  ::= let expression
 eval_command ::= eval (EVAL_CONTENT|simple_command_element)+
-test_command ::= test simple_command_element+
+test_command ::= test simple_command_element*
 
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
@@ -219,7 +219,7 @@ private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') 
 
 function_definition ::= &(function | word '(') function_definition_inner {extends=command}
 private function_definition_inner ::=           word argument_list  newlines block
-                                     | function word argument_list? newlines block {pin(".*")="function|argument_list"}
+                                     | function (word | <<keywordsRemapped>>) argument_list? newlines block {pin(".*")="function|argument_list"}
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
 private argument_list_recover ::= !('\n'| '{')
 

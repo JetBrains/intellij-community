@@ -19,26 +19,26 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
-  public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
-    if (queryParameters instanceof PyClass) {
-      final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)queryParameters, true);
+  public boolean execute(@NotNull final PsiElement e, @NotNull final Processor<? super PsiElement> consumer) {
+    if (e instanceof PyClass) {
+      final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)e, true);
       return query.forEach(consumer);
     }
-    else if (queryParameters instanceof PyFunction) {
+    else if (e instanceof PyFunction) {
       final Query<PyFunction> query =
-        ReadAction.compute(() -> PyOverridingMethodsSearch.search((PyFunction)queryParameters, true));
+        ReadAction.compute(() -> PyOverridingMethodsSearch.search((PyFunction)e, true));
 
       return query.forEach(consumer);
     }
-    else if (queryParameters instanceof PyTargetExpression) {  // PY-237
-      final PsiElement parent = ReadAction.compute(() -> queryParameters.getParent());
+    else if (e instanceof PyTargetExpression) {  // PY-237
+      final PsiElement parent = ReadAction.compute(() -> e.getParent());
 
       if (parent instanceof PyAssignmentStatement) {
         return consumer.process(parent);
       }
     }
-    else if (queryParameters instanceof PyiFile) {
-      final PsiElement originalElement = ReadAction.compute(() -> PyiUtil.getOriginalElement((PyiFile)queryParameters));
+    else if (e instanceof PyiFile) {
+      final PsiElement originalElement = ReadAction.compute(() -> PyiUtil.getOriginalElement((PyiFile)e));
       if (originalElement != null) {
         consumer.process(originalElement);
       }

@@ -651,10 +651,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return vcses;
   }
 
-  @Override
   @Nls
+  @Override
   public String getDisplayName() {
-    return "Mappings";
+    return VcsBundle.message("configurable.VcsDirectoryConfigurationPanel.display.name");
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation.ui;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.openapi.options.ConfigurationException;
@@ -107,7 +108,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
   @Override
   @Nls
   public String getDisplayName() {
-    return "Templates";
+    return CodeInsightBundle.message("configurable.EqualsHashCodeTemplatesPanel.display.name");
   }
 
   @Override

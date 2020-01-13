@@ -340,7 +340,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
+    @ScheduledForRemoval(inVersion = "2021.1")
     public static final Icon ShowViewer = load("/actions/showViewer.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.SetDefault */
@@ -1489,44 +1489,7 @@ public class AllIcons {
     public final static class Jsf {
       /** 16x16 */ public static final Icon Renderer = load("/nodes/jsf/renderer.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Component */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Component = load("/nodes/jsf/component.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Converter */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Converter = load("/nodes/jsf/converter.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.ManagedBean */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon ManagedBean = load("/nodes/jsf/managedBean.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.NavigationRule */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon NavigationRule = load("/nodes/jsf/navigationRule.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.RenderKit */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon RenderKit = load("/nodes/jsf/renderKit.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Validator */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon Validator = load("/nodes/jsf/validator.svg");
-
     }
-    /** 16x16 */ public static final Icon Jsr45 = load("/nodes/jsr45.svg");
     /** 16x16 */ public static final Icon JunitTestMark = load("/nodes/junitTestMark.svg");
     /** 16x16 */ public static final Icon KeymapAnt = load("/nodes/keymapAnt.svg");
     /** 16x16 */ public static final Icon KeymapEditor = load("/nodes/keymapEditor.svg");
@@ -1632,24 +1595,6 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon DataView = load("/nodes/dataView.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.Ejb */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Ejb = load("/nodes/ejb.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbCmpField */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon EjbCmpField = load("/nodes/ejbCmpField.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbFinderMethod */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon EjbFinderMethod = load("/nodes/ejbFinderMethod.svg");
-
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
@@ -1661,6 +1606,12 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon JavaModuleRoot = load("/nodes/Module.svg");
+
+    /** @deprecated to be removed in IDEA 2020.2 - use Jsr45debugIcons.Jsr45 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.2")
+    public static final Icon Jsr45 = load("/nodes/jsr45.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Package */
     @SuppressWarnings("unused")

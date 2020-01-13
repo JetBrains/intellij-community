@@ -35,6 +35,9 @@ public class LocalInspectionEP extends InspectionEP implements LocalInspectionTo
   @Attribute("unfair")
   public boolean unfair;
 
+  @Attribute("dynamicGroup")
+  public boolean dynamicGroup;
+
   @Override
   public String getDefaultID() {
     return id;

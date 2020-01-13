@@ -136,7 +136,7 @@ public class PluginGroups {
       "com.intellij.persistence",
 
       "com.intellij.hibernate",
-      "com.intellij.frameworks.reactor",
+      "com.intellij.reactivestreams",
       "com.intellij.frameworks.java.sql",
       // preview ends
 

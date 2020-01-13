@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -183,6 +184,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
           setSelectedContent(current, true, true, !forcedFocus).notify(result);
         }
         else {
+          ToolWindowManager.getInstance(myProject).activateEditorComponent();
           result.setDone();
         }
       }

@@ -505,6 +505,7 @@ public class HighlightControlFlowUtil {
         break;
       }
     }
+    boolean canDefer = !inLoop;
 
     if (!alreadyAssigned) {
       if (!(variable instanceof PsiField)) return null;
@@ -543,14 +544,19 @@ public class HighlightControlFlowUtil {
                               (PsiMethod)codeBlock.getParent() : null;
         // assignment to final field in several constructors threatens us only if these are linked (there is this() call in the beginning)
         final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? JavaHighlightUtil.getChainedConstructors(ctr) : Collections.emptyList();
-        for (PsiMethod redirectedConstructor : redirectedConstructors) {
-          PsiCodeBlock body = redirectedConstructor.getBody();
-          if (body != null && variableDefinitelyAssignedIn(variable, body)) {
-            alreadyAssigned = true;
-            break;
+        if (!redirectedConstructors.isEmpty() && aClass.isRecord()) {
+          alreadyAssigned = true;
+        } else {
+          for (PsiMethod redirectedConstructor : redirectedConstructors) {
+            PsiCodeBlock body = redirectedConstructor.getBody();
+            if (body != null && variableDefinitelyAssignedIn(variable, body)) {
+              alreadyAssigned = true;
+              break;
+            }
           }
         }
       }
+      canDefer = !alreadyAssigned;
     }
 
     if (alreadyAssigned) {
@@ -559,7 +565,7 @@ public class HighlightControlFlowUtil {
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
       HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
-      if (!inLoop) {
+      if (canDefer) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
       }
       return highlightInfo;

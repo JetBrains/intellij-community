@@ -55,20 +55,27 @@ public class CopyTest extends LightJavaCodeInsightFixtureTestCase {
     assertNotNull(first);
     final VirtualFile second = root.findFileByRelativePath("from/2.txt");
     assertNotNull(second);
+    final VirtualFile java = root.findFileByRelativePath("from/Foo.java");
+    assertNotNull(java);
 
     final PsiFile firstPsi = getPsiManager().findFile(first);
     final PsiFile secondPsi = getPsiManager().findFile(second);
+    final PsiFile javaPsi = getPsiManager().findFile(java);
 
-    assertTrue(CopyHandler.canCopy(new PsiElement[]{firstPsi, secondPsi}));
+    assertTrue(CopyHandler.canCopy(new PsiElement[]{firstPsi, secondPsi, javaPsi}));
 
     final VirtualFile toDir = root.findChild("to");
     assertNotNull(toDir);
     final PsiDirectory targetDirectory = getPsiManager().findDirectory(toDir);
 
-    CopyHandler.doCopy(new PsiElement[]{firstPsi, secondPsi}, targetDirectory);
+    CopyHandler.doCopy(new PsiElement[]{firstPsi, secondPsi, javaPsi}, targetDirectory);
 
     assertNotNull(root.findFileByRelativePath("to/1.txt"));
     assertNotNull(root.findFileByRelativePath("to/2.txt"));
+    VirtualFile javaFile = root.findFileByRelativePath("to/Foo.java");
+    assertNotNull(javaFile);
+    PsiFile file = getPsiManager().findFile(javaFile);
+    assertTrue(file instanceof PsiJavaFile && "to".equals(((PsiJavaFile)file).getPackageName()));
   }
 
   public void testPackageInfo() throws Exception {

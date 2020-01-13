@@ -29,8 +29,8 @@
 + -com-intellij-aop-
 + -com-intellij-dsm-
 + -com-intellij-frameworks-akka-
-+ -com-intellij-frameworks-reactor-
 + -com-intellij-java-ide-
++ -com-intellij-reactivestreams-
 + -org-jetbrains-debugger-streams-
 + -org-jetbrains-idea-eclipse-
 + -org-jetbrains-java-decompiler-

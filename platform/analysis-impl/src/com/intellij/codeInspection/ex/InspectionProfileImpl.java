@@ -487,6 +487,15 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final Map<String, List<String>> dependencies = new THashMap<>();
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
+      if (toolWrapper instanceof LocalInspectionToolWrapper &&
+          ((LocalInspectionToolWrapper)toolWrapper).isDynamicGroup() &&
+          //some settings were read for the tool, so it must be initialized,
+          //otherwise no dynamic tools are expected
+          toolWrapper.isInitialized()) {
+        for (LocalInspectionToolWrapper wrapper : ((DynamicGroupTool)toolWrapper.getTool()).getChildren()) {
+          addTool(project, wrapper, dependencies);
+        }
+      }
     }
     myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
       @Override
@@ -556,7 +565,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                    : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
-    boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
+    boolean enabled = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
     final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
     Element element = myUninitializedSettings.remove(shortName);
     try {

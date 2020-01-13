@@ -75,7 +75,6 @@ abstract class DvcsCloneDialogComponent(var project: Project,
     val list = ArrayList<ValidationInfo>()
     ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
     ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkRepositoryURL(urlEditor, urlEditor.text.trim()))
-    ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.createDestination(directoryField.text))
     return list
   }
 

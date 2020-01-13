@@ -14,7 +14,7 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.math.max
 
-class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.settingsdialog.IDE.editor.tabs"), EditorOptionsProvider {
+class EditorTabsConfigurable : BoundConfigurable(message("configurable.editor.tabs.display.name"), "reference.settingsdialog.IDE.editor.tabs"), EditorOptionsProvider {
   private lateinit var myEditorTabPlacement: JComboBox<Int>
   private lateinit var myScrollTabLayoutInEditorCheckBox: JCheckBox
 

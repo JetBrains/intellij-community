@@ -379,7 +379,10 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
   @Override
   public boolean isValid() {
-    for (PsiType type : mySubstitutionMap.values()) {
+    for (Map.Entry<PsiTypeParameter, PsiType> entry : mySubstitutionMap.entrySet()) {
+      if (!entry.getKey().isValid()) return false;
+
+      PsiType type = entry.getValue();
       if (type != null && !type.isValid()) return false;
     }
     return true;

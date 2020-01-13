@@ -593,6 +593,7 @@ public class RedundantCastUtil {
       if (typeElement == null) return;
       final PsiType castTo = typeElement.getType();
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(typeCast.getOperand());
+      if (operand == null) return;
 
       PsiType opType = operand.getType();
       final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);

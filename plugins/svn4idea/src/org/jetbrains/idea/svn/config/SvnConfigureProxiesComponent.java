@@ -53,7 +53,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   @Override
   public String getDisplayName() {
-    return "HTTP Proxies Configuration";
+    return SvnBundle.message("configurable.SvnConfigureProxiesComponent.display.name");
   }
 
   @Override

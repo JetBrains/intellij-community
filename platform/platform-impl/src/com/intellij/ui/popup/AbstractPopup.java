@@ -1335,14 +1335,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         int delta = screen.width + screen.x - location.x;
         if (size.width > delta) {
           size.width = delta;
-          // we shrank horizontally - need to increase height to fit the horizontal scrollbar
-          JScrollPane scrollPane = ScrollUtil.findScrollPane(myContent);
-          if (scrollPane != null && scrollPane.getHorizontalScrollBarPolicy() != ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
-            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
-            if (scrollBar != null) {
-              prefSize.height += scrollBar.getPreferredSize().height;
-            }
-          }
         }
       }
     }

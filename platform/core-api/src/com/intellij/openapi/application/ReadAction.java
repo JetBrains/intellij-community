@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static AccessToken start() {
     return ApplicationManager.getApplication().acquireReadActionLock();
   }
