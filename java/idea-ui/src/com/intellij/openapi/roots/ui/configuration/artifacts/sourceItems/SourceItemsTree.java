@@ -134,10 +134,6 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     return DnDAwareTree.getDragImage(this, ProjectBundle.message("drag.n.drop.text.0.packaging.elements", nodes.length), dragOrigin);
   }
 
-  @Override
-  public void dropActionChanged(int gestureModifiers) {
-  }
-
   private static class SourceItemsTreeStructure extends SimpleTreeStructure {
     private final ArtifactEditorContext myEditorContext;
     private final ArtifactEditorImpl myArtifactsEditor;

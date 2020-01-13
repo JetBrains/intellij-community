@@ -448,14 +448,6 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return null;
   }
 
-  @Override
-  public void cleanUpOnLeave() {
-  }
-
-  @Override
-  public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-  }
-
   public void startRenaming(TreePath path) {
     myTree.startEditingAtPath(path);
   }

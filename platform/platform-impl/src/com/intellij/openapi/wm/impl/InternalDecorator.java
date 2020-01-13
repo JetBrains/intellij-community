@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -123,11 +123,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       else if (ToolWindowAnchor.RIGHT == anchor) {
         add(myDivider, BorderLayout.WEST);
       }
-      myDivider.setPreferredSize(new Dimension(0, 0));
+      divider.setPreferredSize(new Dimension(0, 0));
     }
     else {
       // docked and floating windows don't have divider
-      remove(myDivider);
+      remove(divider);
     }
 
     validate();

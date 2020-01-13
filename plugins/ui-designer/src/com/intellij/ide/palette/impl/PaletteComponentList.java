@@ -370,10 +370,6 @@ public final class PaletteComponentList extends JBList {
       Rectangle rc = getCellBounds(row, row);
       return location.y < rc.getCenterY() ? row : row + 1;
     }
-
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-    }
   }
 
   private class MyDnDSource implements DnDSource {

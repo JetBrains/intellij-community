@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.DataManager;
@@ -379,13 +379,5 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         addWatchExpression(XExpressionImpl.fromText(text), -1, false);
       }
     }
-  }
-
-  @Override
-  public void cleanUpOnLeave() {
-  }
-
-  @Override
-  public void updateDraggedImage(final Image image, final Point dropPoint, final Point imageOffset) {
   }
 }

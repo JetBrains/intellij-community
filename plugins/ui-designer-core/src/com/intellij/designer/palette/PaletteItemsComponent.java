@@ -150,10 +150,6 @@ public class PaletteItemsComponent extends JBList {
       public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
         return null;
       }
-
-      @Override
-      public void dropActionChanged(int gestureModifiers) {
-      }
     }, this);
 
     initActions();

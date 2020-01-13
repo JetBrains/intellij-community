@@ -27,10 +27,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       public DnDDragStartBean startDragging(DnDAction action, Point point) {
         return new DnDDragStartBean(source.getLastSelectedPathComponent().toString());
       }
-
-      @Override
-      public void dropActionChanged(final int gestureModifiers) {
-      }
     }, source);
 
 
@@ -53,10 +49,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       public void drop(DnDEvent aEvent) {
         System.out.println("Delegee 1 accepted drop");
       }
-
-      @Override
-      public void cleanUpOnLeave() {
-      }
     };
 
     final DnDTarget delegee2 = new DnDTarget() {
@@ -75,10 +67,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       @Override
       public void drop(DnDEvent aEvent) {
 
-      }
-
-      @Override
-      public void cleanUpOnLeave() {
       }
     };
 
@@ -101,10 +89,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
           aEvent.delegateDropTo(delegee1);
         }
       }
-
-      @Override
-      public void cleanUpOnLeave() {
-      }
     }, delegates);
 
     tabs.add("Delegates", delegates);
@@ -120,10 +104,6 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       @Override
       public void drop(DnDEvent aEvent) {
         System.out.println("Droppped to " + asXyString(aEvent));
-      }
-
-      @Override
-      public void cleanUpOnLeave() {
       }
     }, xy);
 

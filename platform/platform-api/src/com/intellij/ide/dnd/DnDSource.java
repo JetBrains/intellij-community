@@ -40,4 +40,8 @@ public interface DnDSource extends DnDDropActionHandler {
 
   default void dragDropEnd() {
   }
+
+  @Override
+  default void dropActionChanged(int gestureModifiers) {
+  }
 }

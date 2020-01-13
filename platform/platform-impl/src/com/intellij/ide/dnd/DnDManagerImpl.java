@@ -267,7 +267,9 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   private void updateCursor() {
-    if (myCurrentDragContext == null || myCurrentEvent == null) return;
+    if (myCurrentDragContext == null || myCurrentEvent == null) {
+      return;
+    }
 
     Cursor cursor;
     if (myCurrentEvent.isDropPossible()) {
@@ -307,7 +309,6 @@ public final class DnDManagerImpl extends DnDManager {
       hideCurrentHighlighter();
     }
     myLastMessage = message;
-
     return canGoToParent;
   }
 
@@ -342,7 +343,6 @@ public final class DnDManagerImpl extends DnDManager {
         return target;
       }
     }
-
     return NULL_TARGET;
   }
 
@@ -351,9 +351,8 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   void showHighlighter(RelativeRectangle rectangle, int aType, DnDEvent aEvent) {
-    final JLayeredPane layeredPane = getLayeredPane(rectangle.getPoint().getComponent());
-    final Rectangle bounds = rectangle.getRectangleOn(layeredPane);
-
+    JLayeredPane layeredPane = getLayeredPane(rectangle.getPoint().getComponent());
+    Rectangle bounds = rectangle.getRectangleOn(layeredPane);
     showHighlighter(layeredPane, aEvent, bounds, aType);
   }
 
@@ -434,28 +433,23 @@ public final class DnDManagerImpl extends DnDManager {
     if (aComponent == null) {
       return null;
     }
-
-    if (aComponent instanceof JLayeredPane) {
+    else if (aComponent instanceof JLayeredPane) {
       return (JLayeredPane)aComponent;
     }
-
-    if (aComponent instanceof JFrame) {
+    else if (aComponent instanceof JFrame) {
       return ((JFrame)aComponent).getRootPane().getLayeredPane();
     }
-
-    if (aComponent instanceof JDialog) {
+    else if (aComponent instanceof JDialog) {
       return ((JDialog)aComponent).getRootPane().getLayeredPane();
     }
 
-    final Window window = SwingUtilities.getWindowAncestor(aComponent);
-
+    Window window = SwingUtilities.getWindowAncestor(aComponent);
     if (window instanceof JFrame) {
-      return ((JFrame) window).getRootPane().getLayeredPane();
+      return ((JFrame)window).getRootPane().getLayeredPane();
     }
     else if (window instanceof JDialog) {
-      return ((JDialog) window).getRootPane().getLayeredPane();
+      return ((JDialog)window).getRootPane().getLayeredPane();
     }
-
     return null;
   }
 
@@ -472,14 +466,6 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void drop(DnDEvent aEvent) {
-    }
-
-    @Override
-    public void cleanUpOnLeave() {
-    }
-
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
   }
 

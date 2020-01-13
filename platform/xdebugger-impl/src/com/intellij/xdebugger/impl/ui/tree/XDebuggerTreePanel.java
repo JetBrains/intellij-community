@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author nik
  */
-public class XDebuggerTreePanel implements DnDSource {
+public final class XDebuggerTreePanel implements DnDSource {
   private final XDebuggerTree myTree;
   private final JPanel myMainPanel;
 
@@ -76,9 +76,5 @@ public class XDebuggerTreePanel implements DnDSource {
       return DnDAwareTree.getDragImage(myTree, nodes[0].getPath(), dragOrigin);
     }
     return DnDAwareTree.getDragImage(myTree, XDebuggerBundle.message("xdebugger.drag.text.0.elements", nodes.length), dragOrigin);
-  }
-
-  @Override
-  public void dropActionChanged(final int gestureModifiers) {
   }
 }

@@ -517,10 +517,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       return new DnDDragStartBean(new MyDragBean(myIsRow, getSelectedCells(dragOrigin)));
     }
-
-    @Override
-    public void dropActionChanged(final int gestureModifiers) {
-    }
   }
 
   private class MyDnDTarget implements DnDTarget {
@@ -578,10 +574,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public void cleanUpOnLeave() {
       setDropInsertLine(-1);
       myEditor.getActiveDecorationLayer().removeFeedback();
-    }
-
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
 
     private void setDropInsertLine(final int i) {

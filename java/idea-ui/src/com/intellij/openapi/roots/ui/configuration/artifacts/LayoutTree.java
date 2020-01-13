@@ -93,10 +93,6 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   @Override
-  public void dropActionChanged(int gestureModifiers) {
-  }
-
-  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DnDManager.getInstance().unregisterSource(this);
