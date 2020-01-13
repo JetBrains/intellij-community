@@ -278,13 +278,22 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder<T> {
-    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
-    return CellBuilderImpl(builder, this@MigLayoutRow, this)
+  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags,
+                                                  gapLeft: Int,
+                                                  growPolicy: GrowPolicy?,
+                                                  comment: String?): CellBuilder<T> {
+    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, growPolicy, comment)
+    return CellBuilderImpl(builder, this@MigLayoutRow, this).apply {
+      if (gapLeft != 0) {
+        builder.updateComponentConstraints(component) {
+          horizontal.gapBefore = gapToBoundSize(gapLeft, true)
+        }
+      }
+    }
   }
 
   // separate method to avoid JComponent as a receiver
-  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
+  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, growPolicy: GrowPolicy? = null, comment: String? = null) {
     components.add(component)
 
     if (!visible) {
@@ -313,7 +322,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       builder.topButtonGroup?.add(component)
     }
 
-    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, gapLeft = gapLeft, growPolicy = growPolicy)
+    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, growPolicy = growPolicy)
 
     if (!noGrid && indent > 0 && components.size == 1) {
       cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
@@ -499,6 +508,12 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   override fun sizeGroup(name: String) = apply {
     builder.updateComponentConstraints(component) {
       sizeGroup(name)
+    }
+  }
+
+  override fun withLargeLeftGap(): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
     }
   }
 }
