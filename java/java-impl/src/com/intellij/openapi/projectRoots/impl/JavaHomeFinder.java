@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -109,13 +110,14 @@ public abstract class JavaHomeFinder {
     @NotNull
     @Override
     public List<String> findExistingJdks() {
-      List<String> result = new ArrayList<>();
+      ArrayList<String> result = new ArrayList<>();
       for (String path : myPaths) {
         scanFolder(new File(path), true, result);
       }
       for (File dir : guessByPathVariable()) {
         scanFolder(dir, false, result);
       }
+      removeDuplicates(result, SystemInfo.isFileSystemCaseSensitive);
       return result;
     }
 
@@ -128,7 +130,7 @@ public abstract class JavaHomeFinder {
       String[] pathEntries = pathVarString.split(File.pathSeparator);
       for (String p : pathEntries) {
         File dir = new File(p);
-        if (StringUtilRt.equal(dir.getName(), "bin", !isWindows)) {
+        if (StringUtilRt.equal(dir.getName(), "bin", SystemInfo.isFileSystemCaseSensitive)) {
           File f1 = new File(p, "java" + suffix);
           File f2 = new File(p, "javac" + suffix);
           if (f1.isFile() && f2.isFile()) {
@@ -222,6 +224,20 @@ public abstract class JavaHomeFinder {
   private static File granny(@Nullable File file) {
     File parent = file.getParentFile();
     return parent != null ? parent.getParentFile() : null;
+  }
+
+  private static void removeDuplicates(@NotNull ArrayList<String> strings, boolean caseSensitive) {
+    int k = strings.size() - 1;
+    while (k > 0) {
+      String s = strings.get(k);
+      for (int i = 0; i < k; i++) {
+        if (StringUtil.equal(strings.get(i), s, caseSensitive)) {
+          strings.remove(k);
+          break;
+        }
+      }
+      k--;
+    }
   }
 
 }
