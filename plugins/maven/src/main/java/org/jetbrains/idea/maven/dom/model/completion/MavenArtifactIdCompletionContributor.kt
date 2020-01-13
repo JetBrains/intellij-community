@@ -45,8 +45,8 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
     val set = HashSet<String>()
     while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled()
-      val item = cld.poll() as? MavenRepositoryArtifactInfo ?: continue
-      if (item != null && set.add(item.artifactId)) {
+      val item = cld.poll()
+      if (item is MavenRepositoryArtifactInfo && set.add(item.artifactId)) {
         result
           .addElement(
             MavenDependencyCompletionUtil.lookupElement(item, item.artifactId).withInsertHandler(
