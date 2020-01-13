@@ -2,11 +2,9 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
-import com.intellij.ide.util.importProject.RootsDetectionStep;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
 import com.intellij.ide.util.projectWizard.ModuleImportProvider;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -101,10 +99,6 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
     Module module = importProjectFrom(file.getParent(), step -> {
       if (step != null) {
         assertEquals("Existing Sources", myWizard.getSequence().getSelectedType());
-        if (step instanceof RootsDetectionStep) {
-          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-          assertEquals(6, steps.size());
-        }
       }
     }, new ImportFromSourcesProvider());
 
