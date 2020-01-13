@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>org.jetbrains.idea.reposearch</id>
   <name>Jetbrains Repository Search</name>
   <vendor>JetBrains</vendor>
