@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
@@ -139,7 +140,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 
-  public void setCaption(String captionAboveOf) {
+  public void setCaption(@Nls String captionAboveOf) {
     myCaption = captionAboveOf;
   }
 
