@@ -34,6 +34,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.configurationScript",
     "intellij.yaml",
     "intellij.tasks.core",
+    "intellij.repository.search",
     "intellij.maven",
     "intellij.gradle",
     "intellij.gradle.java",
