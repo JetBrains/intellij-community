@@ -43,16 +43,16 @@ import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
 public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
-  @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
-  @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_EXTERNAL_SUPER_NOTNULL;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED;
-  @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
-  @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
+  @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
+  @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_GETTER = true;
+  @SuppressWarnings("WeakerAccess") public boolean IGNORE_EXTERNAL_SUPER_NOTNULL;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED;
+  @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
+  @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.nullable.NullableStuffInspectionBase");
@@ -412,10 +412,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                      Annotated annotated,
                                                      NullableNotNullManager manager, String anno, @NotNull ProblemsHolder holder) {
     if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
-      String message = "Not \'";
+      String message = "Not '";
       PsiAnnotation annotation = Objects.requireNonNull(annotated.isDeclaredNullable ? annotated.nullable : annotated.notNull);
       message += annotation.getQualifiedName();
-      message += "\' but \'" + anno + "\' would be used for code generation.";
+      message += "' but '" + anno + "' would be used for code generation.";
       final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
       holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
                              message,
@@ -848,7 +848,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               && (isNullableNotInferred(overriding, false) || !isNullableNotInferred(overriding, true))
               && AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull)) {
             PsiIdentifier identifier = method.getNameIdentifier();//load tree
-            PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
+            NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(method);
+            LOG.assertTrue(info != null);
+            PsiAnnotation annotation = info.getAnnotation();
             final String[] annotationsToRemove = ArrayUtilRt.toStringArray(nullableManager.getNullables());
 
             LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull)
@@ -875,9 +877,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   !isNullableNotInferred(parameter, false) &&
                   AddAnnotationPsiFix.isAvailable(parameter, defaultNotNull)) {
                 PsiIdentifier identifier = parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
-                PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], nullableManager.getNotNulls());
+                NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameters[i]);
+                LOG.assertTrue(info != null);
+                PsiAnnotation annotation = info.getAnnotation();
                 PsiElement psiElement = annotation;
-                if (annotation == null || !annotation.isPhysical()) {
+                if (!annotation.isPhysical()) {
                   psiElement = identifier;
                   if (psiElement == null) continue;
                 }
