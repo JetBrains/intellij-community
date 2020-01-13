@@ -13,5 +13,4 @@ class ProductTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(VMOSu
   }
 
   override val value: String = ApplicationNamesInfo.getInstance().fullProductName
-  override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" - ")
 }

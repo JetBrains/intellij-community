@@ -13,9 +13,9 @@ abstract class SimpleTitleInfoProvider(defaultSubscription: TitleInfoSubscriptio
     subscription.listener = { updateSubscriptions() }
   }
 
-  private var updateListener: HashSet<(() -> Unit)> = HashSet()
+  private var updateListener: HashSet<((provider: TitleInfoProvider) -> Unit)> = HashSet()
 
-  override fun addUpdateListener(value: () -> Unit, disposable: Disposable?) {
+  override fun addUpdateListener(disposable: Disposable?, value: (provider: TitleInfoProvider) -> Unit) {
     updateListener.add(value)
 
     updateSubscriptions()
@@ -26,9 +26,6 @@ abstract class SimpleTitleInfoProvider(defaultSubscription: TitleInfoSubscriptio
   }
 
   protected open fun updateValue() {
-    borderlessTitlePart.active = isActive
-    borderlessTitlePart.longText = value
-
     updateNotify()
   }
 
@@ -37,7 +34,7 @@ abstract class SimpleTitleInfoProvider(defaultSubscription: TitleInfoSubscriptio
   }
 
   private fun updateNotify() {
-    updateListener.forEach { it() }
+    updateListener.forEach { it(this) }
   }
 
   override val isActive: Boolean

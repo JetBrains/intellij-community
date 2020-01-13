@@ -849,5 +849,8 @@
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductVersionTitleInfoProvider"/>
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.SuperUserSuffixTitleInfoProvider"/>
 
+    <borderlessPartTitleProvider forClass="com.intellij.openapi.wm.impl.simpleTitleParts.ProductTitleInfoProvider" implementationClass = "com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DashTitlePartTitle" />
+    <borderlessPartTitleProvider forClass="com.intellij.openapi.wm.impl.simpleTitleParts.SuperUserSuffixTitleInfoProvider" implementationClass = "com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DashTitlePartTitle" />
+
   </extensions>
 </idea-plugin>

@@ -11,20 +11,24 @@ interface TitleInfoProvider {
     var EP: ExtensionPointName<TitleInfoProvider> = ExtensionPointName.create("com.intellij.titleInfoProvider")
 
     @JvmStatic
-    fun getProviders(project: Project, listener: () -> Unit): List<TitleInfoProvider> {
+    fun getProviders(project: Project, listener: (provider: TitleInfoProvider) -> Unit): List<TitleInfoProvider> {
       val list = EP.getExtensionList(project)
       list.forEach{it.addUpdateListener(listener)}
 
       return list
     }
+
+    @JvmStatic
+    fun getProviders(project: Project): List<TitleInfoProvider> {
+      return EP.getExtensionList(project)
+    }
   }
 
-  fun addUpdateListener(value: () -> Unit) {
-    addUpdateListener(value, null)
+  fun addUpdateListener(value: (provider: TitleInfoProvider) -> Unit) {
+    addUpdateListener(null, value)
   }
 
-  fun addUpdateListener(value: () -> Unit, disposable: Disposable?)
-  val borderlessTitlePart: DefaultPartTitle
+  fun addUpdateListener(disposable: Disposable?, value: (provider: TitleInfoProvider) -> Unit)
   val isActive: Boolean
   val value: String
 }

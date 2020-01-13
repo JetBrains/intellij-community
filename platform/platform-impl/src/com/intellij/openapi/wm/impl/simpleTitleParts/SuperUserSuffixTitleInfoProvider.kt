@@ -8,7 +8,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Def
 
 class SuperUserSuffixTitleInfoProvider : SimpleTitleInfoProvider(TitleInfoSubscription.ALWAYS_ACTIVE, TitleInfoSubscription.ALWAYS_ACTIVE) {
   override val value: String = prepareValue()
-  override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" - ")
 
   private fun prepareValue(): String {
     val vl = ProjectFrameHelper.getSuperUserSuffix()

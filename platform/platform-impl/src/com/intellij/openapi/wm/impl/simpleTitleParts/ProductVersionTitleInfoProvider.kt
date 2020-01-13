@@ -7,5 +7,4 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Def
 
 class ProductVersionTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(VMOSubscription( "ide.ui.version.in.title"), RegistrySubscription("ide.borderless.title.version", project)) {
   override val value: String =  ApplicationInfo.getInstance().fullVersion ?: ""
-  override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" ")
 }

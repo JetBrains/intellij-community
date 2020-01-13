@@ -68,7 +68,6 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
 
   override val isActive: Boolean
     get() = super.isActive && debuggerSessionStarted
-  override val borderlessTitlePart: DefaultPartTitle = DefaultPartTitle(" ")
   override val value: String = "[Debugger]"
 
 }
