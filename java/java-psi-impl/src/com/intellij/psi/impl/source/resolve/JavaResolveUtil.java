@@ -42,7 +42,7 @@ public class JavaResolveUtil {
     return null;
   }
 
-  public static PsiElement findParentContextOfClass(PsiElement element, Class aClass, boolean strict){
+  public static PsiElement findParentContextOfClass(PsiElement element, Class<?> aClass, boolean strict){
     PsiElement scope = strict ? element.getContext() : element;
     while(scope != null && !aClass.isInstance(scope)){
       scope = scope.getContext();

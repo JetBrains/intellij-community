@@ -37,7 +37,7 @@ class AntPathUtil {
   }
 
   public static String getIdeaRtJarPath() {
-    final Class aClass = JavacRunner.class;
+    final Class<?> aClass = JavacRunner.class;
     return PathUtil.getJarPathForClass(aClass);
   }
 }
