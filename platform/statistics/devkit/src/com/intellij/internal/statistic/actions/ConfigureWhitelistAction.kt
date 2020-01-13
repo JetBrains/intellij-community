@@ -11,9 +11,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.components.dialog
 
-class ConfigureWhitelistAction : DumbAwareAction() {
+class ConfigureWhitelistAction(private var myRecorderId: String = "FUS") : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val whitelistConfigurationModel = WhitelistConfigurationModel()
@@ -38,10 +39,8 @@ class ConfigureWhitelistAction : DumbAwareAction() {
     val whitelistSettingsPersistence = EventLogWhitelistSettingsPersistence.getInstance()
     for ((recorder, settings) in recorderToSettings) {
       val customPath = settings.customPath
-      if (settings.useCustomPath) {
-        if (customPath != null) {
-          whitelistSettingsPersistence.setPathSettings(recorder, WhitelistPathSettings(customPath, true))
-        }
+      if (settings.useCustomPath && customPath != null) {
+        whitelistSettingsPersistence.setPathSettings(recorder, WhitelistPathSettings(customPath, true))
       }
       else {
         val oldSettings = whitelistSettingsPersistence.getPathSettings(recorder)
@@ -57,8 +56,13 @@ class ConfigureWhitelistAction : DumbAwareAction() {
     super.update(event)
     val presentation = event.presentation
     presentation.isEnabled = TestModeValidationRule.isTestModeEnabled()
-    presentation.icon = AllIcons.General.Settings
+    val settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(myRecorderId)
+    presentation.icon = if (settings != null && settings.isUseCustomPath) customPathConfiguredIcon else AllIcons.General.Settings
     presentation.text = "Configure Whitelist"
+  }
+
+  companion object {
+    private val customPathConfiguredIcon = LayeredIcon(AllIcons.General.Settings, AllIcons.Nodes.WarningMark)
   }
 }
 

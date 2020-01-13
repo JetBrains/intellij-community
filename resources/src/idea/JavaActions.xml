@@ -152,12 +152,10 @@
 
     <action internal="true" id="TestParseEventLogWhitelistAction"
             class="com.intellij.internal.statistic.actions.TestParseEventLogWhitelistAction">
-      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
     <action internal="true" id="CollectFUStatisticsAction"
             class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction">
-      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
     <!-- Help -->

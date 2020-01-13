@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.eventLog.EventLogFile;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
@@ -28,6 +31,19 @@ import org.jetbrains.annotations.NotNull;
  * @see ProjectUsagesCollector
  */
 public class RecordStateStatisticsEventLogAction extends AnAction {
+  private final boolean myShowNotification;
+
+  public RecordStateStatisticsEventLogAction() {
+    this(true);
+  }
+
+  public RecordStateStatisticsEventLogAction(boolean showNotification) {
+    super(ActionsBundle.message("action.RecordStateCollectors.text"),
+          ActionsBundle.message("action.RecordStateCollectors.description"),
+          AllIcons.Ide.IncomingChangesOn);
+    myShowNotification = showNotification;
+  }
+
   private static class Holder {
     private static final FUStateUsagesLogger myStatesLogger = new FUStateUsagesLogger();
   }
@@ -48,9 +64,12 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
         Holder.myStatesLogger.logApplicationStates();
         Holder.myStatesLogger.logProjectStates(project, indicator);
 
+        if (!myShowNotification) return;
+
         ApplicationManager.getApplication().invokeLater(
           () -> {
-            Notification notification = new Notification("FeatureUsageStatistics", "Feature usage statistics",
+            Notification notification = new Notification("FeatureUsageStatistics",
+                                                         StatisticsBundle.message("stats.feature.usage.statistics"),
                                                          "Finished collecting and recording events", NotificationType.INFORMATION);
             if (logVFile != null) {
               notification.addAction(NotificationAction.createSimple("Show Log File", () -> {

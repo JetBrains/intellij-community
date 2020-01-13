@@ -25,7 +25,9 @@ import com.intellij.ui.JBColor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.DateFormatUtil
 import java.awt.BorderLayout
+import java.awt.FlowLayout
 import javax.swing.BorderFactory
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 const val eventLogToolWindowsId = "Statistics Event Log"
@@ -35,21 +37,33 @@ class StatisticsEventLogToolWindow(project: Project, private val recorderId: Str
   private val eventLogListener: (LogEvent) -> Unit = { logEvent -> consoleLog.addLogLine(buildLogMessage(logEvent)) }
 
   init {
-    val topPanel = JPanel(BorderLayout())
-    topPanel.add(consoleLog.filter, BorderLayout.EAST)
+    val topPanel = JPanel(FlowLayout(FlowLayout.LEFT))
+    topPanel.add(consoleLog.filter)
+    topPanel.add(createActionToolbar())
     topPanel.border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.border())
     add(topPanel, BorderLayout.NORTH)
 
     setContent(consoleLog.component)
 
-    val toolbarActions = DefaultActionGroup()
-    toolbarActions.add(consoleLog.orCreateActions)
-    toolbarActions.add(ConfigureWhitelistAction())
-    toolbarActions.add(UpdateWhitelistAction(recorderId))
-    toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", toolbarActions, false).component
+    toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", consoleLog.orCreateActions, false).component
 
     Disposer.register(this, consoleLog)
     EventLogNotificationService.subscribe(eventLogListener, recorderId)
+  }
+
+  private fun createActionToolbar(): JComponent {
+    val topToolbarActions = DefaultActionGroup()
+    topToolbarActions.add(RecordStateStatisticsEventLogAction(false))
+    topToolbarActions.add(OpenEventLogFileAction(recorderId))
+    topToolbarActions.addSeparator()
+    topToolbarActions.add(ConfigureWhitelistAction(recorderId))
+    topToolbarActions.add(UpdateWhitelistAction(recorderId))
+    topToolbarActions.add(OpenWhitelistFileAction(recorderId))
+    topToolbarActions.addSeparator()
+    topToolbarActions.add(AddTestGroupToLocalWhitelistAction())
+    topToolbarActions.add(CleanupLocalWhitelistAction())
+    topToolbarActions.add(OpenLocalWhitelistFileAction(recorderId))
+    return ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true).component
   }
 
   override fun dispose() {
