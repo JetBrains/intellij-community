@@ -163,7 +163,7 @@ public abstract class NodeDescriptor<E> {
       @NotNull
       private NodeComparator<? super T> myDelegate;
 
-      private Delegate(@NotNull NodeComparator<? super T> delegate) {
+      public Delegate(@NotNull NodeComparator<? super T> delegate) {
         myDelegate = delegate;
       }
 

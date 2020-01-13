@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
 import com.intellij.ide.IconProvider;
@@ -55,14 +55,14 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
 
   @Override
   @Nullable
-  protected Collection<AbstractTreeNode> getChildrenImpl() {
+  protected Collection<AbstractTreeNode<?>> getChildrenImpl() {
     final PsiDirectory directory = getPsiDirectory();
     if (!directory.isValid()) {
       return Collections.emptyList();
     }
 
     // scan folder's children
-    final List<AbstractTreeNode> children =
+    final List<AbstractTreeNode<?>> children =
       ContainerUtil.map(directory.getSubdirectories(), this::createFolderNode);
 
     for (PsiFile file : directory.getFiles()) {
@@ -99,7 +99,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
 
     return new AbstractFolderNode(getModule(), realDirectory, presentableText, getSettings(), FOLDER) {
       @Override
-      protected void processNotDirectoryFile(List<AbstractTreeNode> nodes, PsiFile file) {
+      protected void processNotDirectoryFile(List<AbstractTreeNode<?>> nodes, PsiFile file) {
         AbstractFolderNode.this.processNotDirectoryFile(nodes, file);
       }
 
@@ -147,7 +147,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
     return ModuleRootManager.getInstance(module).getFileIndex().isInContent(file);
   }
 
-  protected void processNotDirectoryFile(final List<AbstractTreeNode> nodes, final PsiFile file) {
+  protected void processNotDirectoryFile(final List<AbstractTreeNode<?>> nodes, final PsiFile file) {
     if (file instanceof GroovyFile) {
       final GrTypeDefinition[] definitions = ((GroovyFile)file).getTypeDefinitions();
       if (definitions.length > 0) {

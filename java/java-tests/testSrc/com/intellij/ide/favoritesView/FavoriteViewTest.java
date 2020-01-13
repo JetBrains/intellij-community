@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesView;
 
 import com.intellij.ide.favoritesTreeView.FavoritesListNode;
@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class FavoritesViewTest extends TestSourceBasedTestCase {
+public class FavoriteViewTest extends TestSourceBasedTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -65,14 +65,14 @@ public class FavoritesViewTest extends TestSourceBasedTestCase {
     assertTrue(favoritesManager.getFavoritesListRootUrls(name).isEmpty());
     assertTrue(favoritesManager.addRoots(name, getModule(), nodeToAdd));
 
-    assertTrue(!favoritesManager.getFavoritesListRootUrls(name).isEmpty());
+    assertFalse(favoritesManager.getFavoritesListRootUrls(name).isEmpty());
     Element favorite = new Element("favorite");
     favoritesManager.writeExternal(favorite);
 
-    final Collection<AbstractTreeNode> nodes = FavoritesListNode.getFavoritesRoots(myProject, "xxx", null);
-    AbstractTreeNode targetNode = null;
+    final Collection<AbstractTreeNode<?>> nodes = FavoritesListNode.getFavoritesRoots(myProject, "xxx", null);
+    AbstractTreeNode<?> targetNode = null;
     final AbstractUrl url = FavoritesManager.createUrlByElement(nodeToAdd, myProject);
-    for (AbstractTreeNode node : nodes) {
+    for (AbstractTreeNode<?> node : nodes) {
       final AbstractUrl nodeUrl = FavoritesManager.createUrlByElement(node.getValue(), myProject);
       if (Comparing.equal(nodeUrl, url)) {
         targetNode = node;

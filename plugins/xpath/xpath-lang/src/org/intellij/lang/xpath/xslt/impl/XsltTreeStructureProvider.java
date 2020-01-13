@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -32,20 +32,20 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
   @Override
   @NotNull
   @SuppressWarnings({"RawUseOfParameterizedType"})
-  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
-    Collection<AbstractTreeNode> l = children;
+  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+    Collection<AbstractTreeNode<?>> l = children;
     int i = 0;
-    for (AbstractTreeNode o : children) {
+    for (AbstractTreeNode<?> o : children) {
       if (o instanceof ProjectViewNode) {
-        final ProjectViewNode node = (ProjectViewNode)o;
-        final Object element = node.getValue();
+        ProjectViewNode<?> node = (ProjectViewNode)o;
+        Object element = node.getValue();
         if (element instanceof PsiFile) {
           if (XsltSupport.isXsltFile((PsiFile)element)) {
             if (l == children && l.getClass() != ArrayList.class) {
               l = new ArrayList<>(children);
             }
             final XsltFileNode fileNode = new XsltFileNode(myProject, (PsiFile)element, settings);
-            ((List<AbstractTreeNode>)l).set(i, fileNode);
+            ((List<AbstractTreeNode<?>>)l).set(i, fileNode);
           }
         }
       }
@@ -83,7 +83,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
 
     @Override
     @SuppressWarnings({"RawUseOfParameterizedType"})
-    public Collection<AbstractTreeNode> getChildrenImpl() {
+    public Collection<AbstractTreeNode<?>> getChildrenImpl() {
       if (myConfig.isShowLinkedFiles()) {
         final PsiFile[] psiFiles = myInstance.getAssociationsFor(getValue());
         if (psiFiles.length > 0) {

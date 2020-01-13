@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -906,7 +892,7 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
 
   private void assertNoInfiniteAutoExpand(final Runnable enableExpand) throws Exception {
     class Level extends Node {
-      int myLevel;
+      final int myLevel;
 
       Level(Node parent, int level) {
         super(parent, "level" + level);
@@ -1778,10 +1764,10 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
   }
 
   public void testResorting() throws Exception {
-    final boolean[] invert = new boolean[]{false};
-    NodeDescriptor.NodeComparator<NodeDescriptor> c = new NodeDescriptor.NodeComparator<NodeDescriptor>() {
+    boolean[] invert = new boolean[]{false};
+    NodeDescriptor.NodeComparator<NodeDescriptor<?>> c = new NodeDescriptor.NodeComparator<NodeDescriptor<?>>() {
       @Override
-      public int compare(NodeDescriptor o1, NodeDescriptor o2) {
+      public int compare(NodeDescriptor<?> o1, NodeDescriptor<?> o2) {
         return invert[0] ? AlphaComparator.INSTANCE.compare(o2, o1) : AlphaComparator.INSTANCE.compare(o1, o2);
       }
     };
@@ -2003,7 +1989,7 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
   }
 
   private void doTestSelectionOnDelete(boolean keepRef) throws Exception {
-    myComparator.setDelegate(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
+    myComparator.setDelegate(new NodeDescriptor.NodeComparator<NodeDescriptor<?>>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         boolean isParent1 = myStructure._getChildElements(o1.getElement(), false).length > 0;

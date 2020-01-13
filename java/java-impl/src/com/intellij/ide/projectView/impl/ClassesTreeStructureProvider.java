@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -37,15 +37,15 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
   @NotNull
   @Override
-  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
-                                             @NotNull Collection<AbstractTreeNode> children,
+  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                             @NotNull Collection<AbstractTreeNode<?>> children,
                                              ViewSettings settings) {
     return AbstractTreeUi.calculateYieldingToWriteAction(() -> doModify(parent, children));
   }
 
   @NotNull
-  private Collection<AbstractTreeNode> doModify(@NotNull AbstractTreeNode parent, @NotNull Collection<? extends AbstractTreeNode> children) {
-    List<AbstractTreeNode> result = new ArrayList<>();
+  private Collection<AbstractTreeNode<?>> doModify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<? extends AbstractTreeNode<?>> children) {
+    List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (AbstractTreeNode<?> child : children) {
       ProgressManager.checkCanceled();
 
@@ -150,18 +150,20 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   }
 
   private static class PsiClassOwnerTreeNode extends PsiFileNode {
-    @NotNull private final Collection<? extends AbstractTreeNode> myMandatoryChildren;
+    @NotNull
+    private final Collection<? extends AbstractTreeNode<?>> myMandatoryChildren;
 
     PsiClassOwnerTreeNode(@NotNull PsiClassOwner classOwner,
                           ViewSettings settings,
-                          @NotNull Collection<? extends AbstractTreeNode> mandatoryChildren) {
+                          @NotNull Collection<? extends AbstractTreeNode<?>> mandatoryChildren) {
       super(classOwner.getProject(), classOwner, settings);
+
       myMandatoryChildren = mandatoryChildren;
     }
 
     @Override
-    public Collection<AbstractTreeNode> getChildrenImpl() {
-      List<AbstractTreeNode> result = new ArrayList<>(myMandatoryChildren);
+    public Collection<AbstractTreeNode<?>> getChildrenImpl() {
+      List<AbstractTreeNode<?>> result = new ArrayList<>(myMandatoryChildren);
       PsiFile value = getValue();
       if (value instanceof PsiClassOwner) {
         ViewSettings settings = getSettings();

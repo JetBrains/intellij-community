@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -26,7 +24,7 @@ import java.util.List;
 public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
-  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;
@@ -34,7 +32,7 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
     final ResourceBundle[] resourceBundles = ResourceBundle.ARRAY_DATA_KEY.getData(context);
     //on bundles nodes
     if (resourceBundles != null) {
-      final Collection<AbstractTreeNode> result = new ArrayList<>();
+      final Collection<AbstractTreeNode<?>> result = new ArrayList<>();
       for (ResourceBundle bundle : resourceBundles) {
         result.add(new ResourceBundleNode(project, bundle, viewSettings));
       }
