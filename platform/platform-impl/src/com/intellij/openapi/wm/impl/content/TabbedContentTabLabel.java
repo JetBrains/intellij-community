@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,7 +8,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.ref.Reference;
@@ -18,8 +17,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class TabbedContentTabLabel extends ContentTabLabel {
-
+public final class TabbedContentTabLabel extends ContentTabLabel {
   private final TabbedContent myContent;
   private Reference<JBPopup> myPopupReference = null;
 
@@ -80,7 +78,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
         return hasMultipleTabs();
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Runnable getAction() {
         return () -> selectContent();
@@ -99,7 +97,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     }
   }
 
-  @Nullable
+  @NotNull
   @Override
   public TabbedContent getContent() {
     return myContent;

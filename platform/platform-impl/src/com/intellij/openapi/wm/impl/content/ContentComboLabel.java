@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -44,7 +45,7 @@ final class ContentComboLabel extends BaseLabel {
         @Override
         public void keyPressed(KeyEvent e) {
           if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
+            ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
           }
           super.keyPressed(e);
         }
@@ -57,7 +58,7 @@ final class ContentComboLabel extends BaseLabel {
     super.processMouseEvent(e);
 
     if (UIUtil.isActionClick(e)) {
-      ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
+      ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
     }
   }
 
@@ -109,7 +110,8 @@ final class ContentComboLabel extends BaseLabel {
   @Nullable
   @Override
   public Content getContent() {
-    return myUi.contentManager == null ? null : myUi.contentManager.getSelectedContent();
+    ContentManager contentManager = myUi.getContentManager();
+    return contentManager == null ? null : contentManager.getSelectedContent();
   }
 
   @Override
@@ -145,7 +147,7 @@ final class ContentComboLabel extends BaseLabel {
     @Override
     public boolean doAccessibleAction(int index) {
       if (index == 0) {
-        ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
+        ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
         return true;
       }
       else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -10,10 +10,10 @@ import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
@@ -22,18 +22,22 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
+import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -45,7 +49,7 @@ private val LOG = logger<ToolWindowImpl>()
 class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManagerImpl,
                                           val id: String,
                                           private val canCloseContent: Boolean,
-                                          private val canWorkInDumbMode: Boolean,
+                                          private val dumbAware: Boolean,
                                           component: JComponent?,
                                           private val parentDisposable: Disposable,
                                           windowInfo: WindowInfo,
@@ -56,16 +60,14 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   var windowInfo: WindowInfo = windowInfo
     private set
 
-  private val contentUi by lazy {
-    ToolWindowContentUi(this)
-  }
+  private var contentUi: ToolWindowContentUi? = null
 
   private var decorator: InternalDecorator? = null
 
   private var hideOnEmptyContent = false
   var isPlaceholderMode = false
 
-  private val pendingContentManagerListeners: List<ContentManagerListener>? = null
+  private var pendingContentManagerListeners: MutableList<ContentManagerListener>? = null
 
   private val showing = object : BusyObject.Impl() {
     override fun isReady(): Boolean {
@@ -82,36 +84,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   internal var icon: ToolWindowIcon? = null
 
   private val contentManager = lazy {
-    val contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
-
-    val contentComponent = contentManager.component
-    InternalDecorator.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
-    Disposer.register(parentDisposable, UiNotifyConnector(contentComponent, object : Activatable {
-      override fun showNotify() {
-        showing.onReady()
-      }
-    }))
-
-    val decorator = InternalDecorator(this)
-    this.decorator = decorator
-    decorator.applyWindowInfo(windowInfo)
-    decorator.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) {
-        toolWindowManager.resized(e.component as InternalDecorator)
-      }
-    })
-    decorator.addContentComponent(canWorkInDumbMode, contentManager)
-
-    toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, contentManager.component)
-
-    // after init, as it was before contentManager creation was changed to be lazy
-    pendingContentManagerListeners?.let { list ->
-      for (listener in list) {
-        contentManager.addContentManagerListener(listener)
-      }
-    }
-
-    contentManager
+    createContentManager()
   }
 
   init {
@@ -123,13 +96,67 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     }
   }
 
+  internal fun getOrCreateDecoratorComponent(): JComponent {
+    ensureContentManagerInitialized()
+    return decorator!!
+  }
+
+  private fun createContentManager(): ContentManagerImpl {
+    val contentUi = ToolWindowContentUi(this, windowInfo.contentUiType)
+    this.contentUi = contentUi
+    val contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
+
+    addContentNotInHierarchyComponents(contentUi)
+
+    val contentComponent = contentManager.component
+    InternalDecorator.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
+    Disposer.register(parentDisposable, UiNotifyConnector(contentComponent, object : Activatable {
+      override fun showNotify() {
+        showing.onReady()
+      }
+    }))
+
+    val decorator = InternalDecorator(this, contentUi)
+    this.decorator = decorator
+
+    var decoratorChild = contentManager.component
+    if (!dumbAware) {
+      decoratorChild = DumbService.getInstance(toolWindowManager.project).wrapGently(decoratorChild, parentDisposable)
+    }
+    decorator.add(decoratorChild, BorderLayout.CENTER)
+    decorator.applyWindowInfo(windowInfo)
+    decorator.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        toolWindowManager.resized(e.component as InternalDecorator)
+      }
+    })
+
+    toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, contentComponent)
+
+    // after init, as it was before contentManager creation was changed to be lazy
+    pendingContentManagerListeners?.let { list ->
+      pendingContentManagerListeners = null
+      for (listener in list) {
+        contentManager.addContentManagerListener(listener)
+      }
+    }
+
+    return contentManager
+  }
+
   internal fun applyWindowInfo(info: WindowInfo) {
     if (windowInfo == info) {
       return
     }
 
     windowInfo = info
-    decorator?.applyWindowInfo(info)
+    val decorator = decorator
+    contentUi?.setType(info.contentUiType)
+    if (decorator != null) {
+      decorator.applyWindowInfo(info)
+      decorator.validate()
+      decorator.repaint()
+    }
   }
 
   val decoratorComponent: JComponent?
@@ -142,6 +169,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     toolWindowFocusWatcher?.setFocusedComponentImpl(component)
   }
 
+  @Deprecated(message = "Do not use.", level = DeprecationLevel.ERROR)
   fun getContentUI() = contentUi
 
   override fun getDisposable() = parentDisposable
@@ -164,19 +192,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun isActive(): Boolean {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val frameHelper = toolWindowManager.getFrame() ?: return false
-    val frame = frameHelper.frame
-    if (!frame.isActive || toolWindowManager.isEditorComponentActive) {
-      return false
-    }
-
-    val actionManager = ActionManager.getInstance()
-    if (actionManager is ActionManagerImpl && !actionManager.isActionPopupStackEmpty && !actionManager.isToolWindowContextMenuVisible) {
-      return false
-    }
-    else {
-      return windowInfo.isActive || (windowInfo.isVisible && (decorator?.isFocused(frameHelper.frame) ?: false))
-    }
+    return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
 
   override fun getReady(requestor: Any): ActionCallback {
@@ -262,27 +278,22 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun getDecorator() = decorator!!
 
-  val isFocused: Boolean
-    get() {
-      return decorator?.isFocused(toolWindowManager.getFrame()?.frame ?: return false) ?: false
-    }
-
   override fun setAdditionalGearActions(value: ActionGroup?) {
     additionalGearActions = value
   }
 
   override fun setTitleActions(vararg actions: AnAction) {
-    contentManager.value
+    createContentIfNeeded()
     decorator!!.setTitleActions(actions)
   }
 
   override fun setTabActions(vararg actions: AnAction) {
-    contentManager.value
+    createContentIfNeeded()
     decorator!!.setTabActions(actions)
   }
 
   fun setTabDoubleClickActions(vararg actions: AnAction) {
-    contentUi.setTabDoubleClickActions(*actions)
+    contentUi?.setTabDoubleClickActions(*actions)
   }
 
   override fun setAvailable(available: Boolean, runnable: Runnable?) {
@@ -321,13 +332,19 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun getContentManager(): ContentManager {
-    ensureContentInitialized()
+    createContentIfNeeded()
     return contentManager.value
   }
 
   override fun addContentManagerListener(listener: ContentManagerListener) {
     if (contentManager.isInitialized()) {
       contentManager.value.addContentManagerListener(listener)
+    }
+    else {
+      if (pendingContentManagerListeners == null) {
+        pendingContentManagerListeners = arrayListOf()
+      }
+      pendingContentManagerListeners!!.add(listener)
     }
   }
 
@@ -414,17 +431,34 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun isDisposed() = contentManager.isInitialized() && contentManager.value.isDisposed
 
-  fun ensureContentInitialized() {
-    val currentContentFactory = contentFactory
-    if (currentContentFactory != null) {
-      // clear it first to avoid SOE
-      this.contentFactory = null
-      if (contentManager.isInitialized()) {
-        contentManager.value.removeAllContents(false)
-      }
-      contentManager.value
-      currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
+  private fun ensureContentManagerInitialized() {
+    contentManager.value
+  }
+
+  internal fun scheduleContentInitializationIfNeeded() {
+    if (contentFactory != null) {
+      // todo use lazy loading (e.g. JBLoadingPanel)
+      createContentIfNeeded()
     }
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Do not use. Tool window content will be initialized automatically.", level = DeprecationLevel.ERROR)
+  fun ensureContentInitialized() {
+    createContentIfNeeded()
+  }
+
+  internal fun createContentIfNeeded() {
+    val currentContentFactory = contentFactory ?: return
+    // clear it first to avoid SOE
+    this.contentFactory = null
+    if (contentManager.isInitialized()) {
+      contentManager.value.removeAllContents(false)
+    }
+    else {
+      ensureContentManagerInitialized()
+    }
+    currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
   }
 
   override fun getHelpId() = helpId
@@ -434,9 +468,8 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun showContentPopup(inputEvent: InputEvent) {
-    // create before access contentUi
-    val contentManager = contentManager.value
-    ToolWindowContentUi.toggleContentPopup(contentUi, contentManager)
+    // called only when tool window is already opened, so, content should be already created
+    ToolWindowContentUi.toggleContentPopup(contentUi!!, contentManager.value)
   }
 
   @JvmOverloads
@@ -524,7 +557,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   private inner class ResizeActionGroup : ActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true), DumbAware {
     private val children by lazy<Array<AnAction>> {
       // force creation
-      contentManager.value
+      createContentIfNeeded()
       val component = decorator
       val toolWindow = this@ToolWindowImpl
       arrayOf(
@@ -558,7 +591,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     }
 
     override fun update(e: AnActionEvent) {
-      hadSeveralContents = hadSeveralContents || getContentManager().contentCount > 1
+      hadSeveralContents = hadSeveralContents || (contentManager.isInitialized() && contentManager.value.contentCount > 1)
       super.update(e)
       e.presentation.isVisible = hadSeveralContents
     }
@@ -596,4 +629,31 @@ private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
   if (children.isNotEmpty() && !separatorText.isNullOrEmpty()) {
     main.addAction(Separator(separatorText), Constraints.FIRST)
   }
+}
+
+private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
+  UIUtil.putClientProperty(contentUi.component, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
+    override fun iterator(): Iterator<JComponent> {
+      val contentManager = contentUi.contentManager ?: return Collections.emptyIterator()
+      if (contentManager.contentCount == 0) {
+        return Collections.emptyIterator()
+      }
+
+      return contentManager.contents
+        .asSequence()
+        .mapNotNull { content: Content ->
+          var last: JComponent? = null
+          var parent: Component? = content.component
+          while (parent != null) {
+            if (parent === contentUi.component || parent !is JComponent) {
+              return@mapNotNull null
+            }
+            last = parent
+            parent = parent.getParent()
+          }
+          last
+        }
+        .iterator()
+    }
+  })
 }

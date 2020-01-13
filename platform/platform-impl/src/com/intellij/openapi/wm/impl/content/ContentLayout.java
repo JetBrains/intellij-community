@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -13,8 +13,6 @@ import javax.swing.*;
 import java.awt.*;
 
 abstract class ContentLayout {
-  static final int TAB_ARC = 2;
-
   ToolWindowContentUi myUi;
   BaseLabel myIdLabel;
 
@@ -29,8 +27,6 @@ abstract class ContentLayout {
   public abstract void layout();
 
   public abstract void paintComponent(Graphics g);
-
-  public abstract void paintChildren(Graphics g);
 
   public abstract void update();
 
@@ -54,7 +50,7 @@ abstract class ContentLayout {
   }
 
   private String getTitleSuffix() {
-    ContentManager manager = myUi.contentManager;
+    ContentManager manager = myUi.getContentManager();
     switch (manager == null ? 0 : manager.getContentCount()) {
       case 0:
         return null;
