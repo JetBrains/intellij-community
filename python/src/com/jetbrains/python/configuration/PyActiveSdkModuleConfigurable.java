@@ -24,6 +24,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurabl
   private final Project myProject;
 
   public PyActiveSdkModuleConfigurable(Project project) {
-    super(project, "Project Interpreter", "reference.settings.project.interpreter");
+    super(project, PyBundle.message("configurable.PyActiveSdkModuleConfigurable.display.name"), "reference.settings.project.interpreter");
     myProject = project;
   }
 
