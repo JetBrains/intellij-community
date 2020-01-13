@@ -207,7 +207,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val pseudoDir = File(file.parent, "sub/zip")
     refresh(root)
 
-    watch(pseudoDir, false, checkRoots = !SystemInfo.isLinux)
+    watch(pseudoDir, false)
     assertEvents({ file.writeText("new content") }, mapOf(), SHORT_PROCESS_DELAY)
   }
 
@@ -359,7 +359,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     }
   }
 
-  @Ignore
   @Test fun testSymlinkBelowWatchRoot() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
 
@@ -374,6 +373,106 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U', file to 'U'))
     assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D', file to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C', file to 'C'))
+  }
+
+  @Test fun testCircularSymlinkBelowWatchRoot() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+
+    val top = tempDir.newFolder("top")
+    val topA = tempDir.newFolder("top/a")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val link = Files.createSymbolicLink(Paths.get(topA.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
+    val link2 = Files.createSymbolicLink(Paths.get(file.parent, "dir4"), Paths.get(topA.path)).toFile()
+    val fileLink = File(link, "dir3/" + file.name)
+
+    refresh(top)
+
+    val request = watch(link.parentFile)
+    watch(link2.parentFile)
+
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U', file to 'U'))
+    assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D', file to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C', file to 'C'))
+
+    unwatch(request)
+
+    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
+  }
+
+  // TODO this test is blinking - sometimes VFS cannot find file by ID
+  @Ignore
+  @Test fun testSymlinkBelowWatchRootCreation() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    refresh(top)
+
+    watch(top)
+
+    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
+
+    val link = Paths.get(top.path, "link").toFile()
+    var fileLink: File? = null
+    assertEvents(
+      {
+        Files.createSymbolicLink(link.toPath(), Paths.get("${top.path}/dir1/dir2"))
+        fileLink = File(link, "dir3/" + file.name)
+      }, mapOf(link to 'C'))
+    refresh(top)
+
+    assertEvents({ file.writeText("newer content") }, mapOf(fileLink!! to 'U', file to 'U'))
+
+    assertEvents({ link.delete() }, mapOf(link to 'D'))
+    assertEvents({ file.writeText("even newer content") }, mapOf(file to 'U'))
+  }
+
+  @Test fun testJunctionBelowWatchRoot() {
+    IoTestUtil.assumeWindows()
+
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val junctionPath = "${top.path}/link"
+    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", junctionPath)
+    try {
+      val watchRoot = junction.parentFile
+      val fileLink = File(junction, "dir3/" + file.name)
+      refresh(top)
+
+      watch(watchRoot)
+      assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U', file to 'U'))
+      assertEvents({ assertTrue(file.delete()) }, mapOf(fileLink to 'D', file to 'D'))
+      assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C', file to 'C'))
+    }
+    finally {
+      IoTestUtil.deleteJunction(junctionPath)
+    }
+  }
+
+  @Ignore
+  @Test fun testJunctionBelowWatchRootCreation() {
+    IoTestUtil.assumeWindows()
+
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    refresh(top)
+
+    watch(top)
+
+    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
+
+    val junctionPath = "${top.path}/link"
+    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", junctionPath)
+    try {
+      val fileLink = File(junction, "dir3/" + file.name)
+      refresh(top)
+      assertEvents({ file.writeText("newer content") }, mapOf(junction to 'P', file to 'U'))
+      // TODO File watcher maps path OK, but the event is not consumed by VFS properly
+      assertEvents({ file.writeText("even newer content") }, mapOf(fileLink to 'U', file to 'U'))
+    } finally {
+      IoTestUtil.deleteJunction(junctionPath)
+    }
+    assertEvents({ file.writeText("even newer content") }, mapOf(file to 'U'))
   }
 
   @Test fun testSubst() {

@@ -685,6 +685,7 @@ public class FSRecords {
   private static void addToFreeRecordsList(int id) {
     // DbConnection.addFreeRecord(id); // important! Do not add fileId to free list until restart
     setFlags(id, FREE_RECORD_FLAG, false);
+    SymlinkRegistry.INSTANCE.symlinkPossiblyRemoved(id);
   }
 
   private static final int ROOT_RECORD_ID = 1;
@@ -1029,6 +1030,7 @@ public class FSRecords {
       try (DataOutputStream stream = writeAttribute(id, ourSymlinkTargetAttr)) {
         IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
       }
+      SymlinkRegistry.INSTANCE.symlinkTargetStored(id);
     });
   }
 

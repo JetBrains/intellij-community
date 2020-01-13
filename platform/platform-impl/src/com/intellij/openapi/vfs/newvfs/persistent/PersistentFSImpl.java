@@ -284,6 +284,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
     if (attributes.isSymLink()) {
       FSRecords.storeSymlinkTarget(id, symlinkTarget);
+    } else {
+      SymlinkRegistry.INSTANCE.symlinkPossiblyRemoved(id);
     }
 
     return true;
