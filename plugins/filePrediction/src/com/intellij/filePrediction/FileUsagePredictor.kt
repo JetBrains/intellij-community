@@ -3,9 +3,6 @@ package com.intellij.filePrediction
 
 import com.intellij.filePrediction.ExternalReferencesResult.Companion.FAILED_COMPUTATION
 import com.intellij.filePrediction.history.FilePredictionHistory
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -13,21 +10,22 @@ import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.NonUrgentExecutor
 
-object FileUsagePredictor {
+internal object FileUsagePredictor {
   private const val CALCULATE_CANDIDATE_PROBABILITY: Double = 0.2
   private const val MAX_CANDIDATE: Int = 10
 
   fun onFileOpened(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
     NonUrgentExecutor.getInstance().execute {
+      val start = System.currentTimeMillis()
       val result = calculateExternalReferences(project, prevFile)
+      val refsComputation = System.currentTimeMillis() - start
 
-      FileNavigationLogger.logEvent(project, newFile, prevFile, "file.opened", result.contains(newFile))
+      FileNavigationLogger.logEvent(project, newFile, prevFile, "file.opened", refsComputation, result.contains(newFile))
       if (Math.random() < CALCULATE_CANDIDATE_PROBABILITY) {
         prevFile?.let {
-          calculateCandidates(project, it, newFile, result)
+          calculateCandidates(project, it, newFile, refsComputation, result)
         }
       }
 
@@ -52,11 +50,12 @@ object FileUsagePredictor {
   private fun calculateCandidates(project: Project,
                                   prevFile: VirtualFile,
                                   openedFile: VirtualFile,
+                                  refsComputation: Long,
                                   referencesResult: ExternalReferencesResult) {
     val candidates = selectFileCandidates(project, prevFile, referencesResult.references)
     for (candidate in candidates) {
       if (candidate != openedFile) {
-        FileNavigationLogger.logEvent(project, candidate, prevFile, "candidate.calculated", referencesResult.contains(candidate))
+        FileNavigationLogger.logEvent(project, candidate, prevFile, "candidate.calculated", refsComputation, referencesResult.contains(candidate))
       }
     }
   }
@@ -81,43 +80,6 @@ object FileUsagePredictor {
         to.add(next)
       }
     }
-  }
-}
-
-private object FileNavigationLogger {
-  private const val GROUP_ID = "file.prediction"
-
-  fun logEvent(project: Project, newFile: VirtualFile, prevFile: VirtualFile?, event: String, isInRef: ThreeState) {
-    val data = FileTypeUsagesCollector.newFeatureUsageData(newFile.fileType).
-      addNewFileInfo(newFile, isInRef).
-      addPrevFileInfo(prevFile).
-      addFileFeatures(project, newFile, prevFile)
-
-    FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, event, data)
-  }
-
-  private fun FeatureUsageData.addNewFileInfo(newFile: VirtualFile, isInRef: ThreeState): FeatureUsageData {
-    if (isInRef != ThreeState.UNSURE) {
-      addData("in_ref", isInRef == ThreeState.YES)
-    }
-    return addAnonymizedPath(newFile.path)
-  }
-
-  private fun FeatureUsageData.addPrevFileInfo(prevFile: VirtualFile?): FeatureUsageData {
-    if (prevFile != null) {
-      return addData("prev_file_type", prevFile.fileType.name).addAnonymizedValue("prev_file_path", prevFile.path)
-    }
-    return this
-  }
-
-  private fun FeatureUsageData.addFileFeatures(project: Project,
-                                               newFile: VirtualFile,
-                                               prevFile: VirtualFile?): FeatureUsageData {
-    val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, prevFile)
-    for (feature in features) {
-      feature.value.addToEventData(feature.key, this)
-    }
-    return this
   }
 }
 

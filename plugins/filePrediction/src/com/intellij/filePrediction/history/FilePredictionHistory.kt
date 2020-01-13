@@ -9,7 +9,7 @@ import com.intellij.openapi.project.ProjectManagerListener
 
 class FilePredictionHistory(val project: Project) {
   companion object {
-    private const val RECENT_FILES_LIMIT = 75
+    private const val RECENT_FILES_LIMIT = 50
 
     fun getInstance(project: Project): FilePredictionHistory {
       return ServiceManager.getService(project, FilePredictionHistory::class.java)
