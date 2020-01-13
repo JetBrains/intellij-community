@@ -2,6 +2,8 @@ package com.intellij.filePrediction.history
 
 import kotlin.math.max
 
+private val EMPTY_NEXT_FILE_PROBABILITY = NextFileProbability(0.0, 0.0, 0.0, 0.0, 0.0)
+
 class FileSequenceModelHelper {
   fun onFileOpened(root: NGramMapNode, code: Int, previous1: Int?) {
     root.count++
@@ -29,15 +31,27 @@ class FileSequenceModelHelper {
     }
   }
 
-  fun calculateUniGramProb(root: NGramMapNode, code: Int): Double {
-    val count = root.getNode(code)?.count ?: 0
-    return calculateProbability(root, count, false)
+  fun calculateUniGramProb(root: NGramMapNode, code: Int?): NextFileProbability {
+    val count = code?.let { root.getNode(code)?.count } ?: 0
+    val (min, max) = root.findMinMax()
+    return calculateNextFileProbabilityFeatures(root, count, min, max, false)
   }
 
-  fun calculateBiGramProb(root: NGramMapNode, code: Int, previous: Int?, isIncomplete: Boolean = true): Double {
-    val prevNode = previous?.let { root.getNode(it) } ?: return 0.0
-    val count = prevNode.getNode(code) ?: 0
-    return calculateProbability(prevNode, count, isIncomplete)
+  fun calculateBiGramProb(root: NGramMapNode, code: Int?, previous: Int?, isIncomplete: Boolean = true): NextFileProbability {
+    val prevNode = previous?.let { root.getNode(it) } ?: return EMPTY_NEXT_FILE_PROBABILITY
+    val count = code?.let { prevNode.getNode(code) } ?: 0
+
+    val (min, max) = prevNode.findMinMax()
+    return calculateNextFileProbabilityFeatures(prevNode, count, min, max, isIncomplete)
+  }
+
+  private fun <T> calculateNextFileProbabilityFeatures(root: NGramModelNode<T>, count: Int, min: Int, max: Int, isIncomplete: Boolean): NextFileProbability {
+    val mle = calculateProbability(root, count, isIncomplete)
+    val minMle = calculateProbability(root, min, isIncomplete)
+    val maxMle = calculateProbability(root, max, isIncomplete)
+    val mleToMin = if (minMle != 0.0) mle / minMle else 0.0
+    val mleToMax = if (maxMle != 0.0) mle / maxMle else 0.0
+    return NextFileProbability(mle, minMle, maxMle, mleToMin, mleToMax)
   }
 
   private fun <T> calculateProbability(node: NGramModelNode<T>, count: Int, isIncomplete: Boolean): Double {

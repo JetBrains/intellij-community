@@ -1,8 +1,10 @@
 package com.intellij.filePrediction.history
 
-private val NEW_FILE_HISTORY_FEATURES = FileHistoryFeatures(-1, 0.0, 0.0)
+data class FileHistoryFeatures(val position: Int, val uniGram: NextFileProbability, val biGram: NextFileProbability)
 
-data class FileHistoryFeatures(val position: Int, val uniGram: Double, val biGram: Double)
+data class NextFileProbability(
+  val mle: Double, val minMle: Double, val maxMle: Double, val mleToMin: Double, val mleToMax: Double
+)
 
 class FileHistoryManager(private var state: FilePredictionHistoryState, private val recentFilesLimit: Int) {
   val helper: FileSequenceModelHelper = FileSequenceModelHelper()
@@ -62,13 +64,13 @@ class FileHistoryManager(private var state: FilePredictionHistoryState, private 
   fun calcHistoryFeatures(fileUrl: String): FileHistoryFeatures {
     val index = findEntry(fileUrl)
     val size = state.recentFiles.size
-    if (index < 0 || index >= size) {
-      return NEW_FILE_HISTORY_FEATURES
-    }
-    val entry = state.recentFiles[index]
-    val uniGram = helper.calculateUniGramProb(state.root, entry.code)
-    val biGram = helper.calculateBiGramProb(state.root, entry.code, state.prevFile)
-    return FileHistoryFeatures(size - index - 1, uniGram, biGram)
+
+    val fileWasPreviouslyOpened = index in 0 until size
+    val entry = if (fileWasPreviouslyOpened) state.recentFiles[index] else null
+    val position = if (fileWasPreviouslyOpened) size - index - 1 else -1
+    val uniGram = helper.calculateUniGramProb(state.root, entry?.code)
+    val biGram = helper.calculateBiGramProb(state.root, entry?.code, state.prevFile)
+    return FileHistoryFeatures(position, uniGram, biGram)
   }
 
   private fun findEntry(fileUrl: String): Int {

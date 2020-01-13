@@ -17,8 +17,16 @@ class FilePredictionHistoryFeatures: FilePredictionFeatureProvider {
 
     val (position, uniGram, biGram) = history.calcHistoryFeatures(newFile.url)
     result["position"] = numerical(position)
-    result["unigram"] = numerical(uniGram)
-    result["bigram"] = numerical(biGram)
+    addNGramFeatures(uniGram, "uni", result)
+    addNGramFeatures(biGram, "bi", result)
     return result
+  }
+
+  private fun addNGramFeatures(probability: NextFileProbability, prefix: String, result: HashMap<String, FilePredictionFeature>) {
+    result[prefix + "_mle"] = numerical(probability.mle)
+    result[prefix + "_min"] = numerical(probability.minMle)
+    result[prefix + "_max"] = numerical(probability.maxMle)
+    result[prefix + "_mle_to_min"] = numerical(probability.mleToMin)
+    result[prefix + "_mle_to_max"] = numerical(probability.mleToMax)
   }
 }

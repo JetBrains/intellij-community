@@ -4,6 +4,7 @@ package com.intellij.filePrediction.history
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
+import kotlin.math.abs
 
 abstract class FilePredictionHistoryBaseTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
   protected fun doTestInternal(openedFiles: List<String>, size: Int, limit: Int, assertion: (FileHistoryManager) -> Unit) {
@@ -31,5 +32,17 @@ abstract class FilePredictionHistoryBaseTest : CodeInsightFixtureTestCase<Module
       }
       true
     }
+  }
+
+  protected fun assertNextFileProbabilityEquals(fileName: String, expected: NextFileProbability, actual: NextFileProbability) {
+    assertDoubleEquals("MLE for $fileName", expected.mle, actual.mle)
+    assertDoubleEquals("min(MLE) for $fileName", expected.minMle, actual.minMle)
+    assertDoubleEquals("max(MLE) for $fileName", expected.maxMle, actual.maxMle)
+    assertDoubleEquals("MLE/min(MLE) for $fileName", expected.mleToMin, actual.mleToMin)
+    assertDoubleEquals("MLE/max(MLE) for $fileName", expected.mleToMax, actual.mleToMax)
+  }
+
+  private fun assertDoubleEquals(itemName: String, expected: Double, actual: Double) {
+    assertTrue("$itemName isn't equal to expected. Expected: $expected, Actual: $actual", abs(expected - actual) < 0.0000000001)
   }
 }

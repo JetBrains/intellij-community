@@ -8,6 +8,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import gnu.trove.TIntIntHashMap
 import gnu.trove.TIntObjectHashMap
 import org.jdom.Element
+import kotlin.math.max
 
 class FilePredictionHistoryState {
   @get:Property(surroundWithTag = true)
@@ -124,6 +125,8 @@ abstract class NGramModelNode<T> {
   abstract fun getOrCreate(code: Int): T
 
   abstract fun getNode(code: Int): T?
+
+  abstract fun findMinMax(): Pair<Int, Int>
 }
 
 class NGramMapNode: NGramModelNode<NGramListNode>() {
@@ -139,6 +142,26 @@ class NGramMapNode: NGramModelNode<NGramListNode>() {
 
   override fun getNode(code: Int): NGramListNode? {
     return usages[code]
+  }
+
+  fun clear() {
+    usages.clear()
+  }
+
+  override fun findMinMax(): Pair<Int, Int> {
+    var minCount: Int = -1
+    var maxCount: Int = -1
+    usages.forEachValue { listNode ->
+      val count = listNode.count
+      if (minCount < 0 || minCount > count) {
+        minCount = count
+      }
+      if (maxCount < 0 || maxCount < count) {
+        maxCount = count
+      }
+      true
+    }
+    return max(minCount, 0) to max(maxCount, 0)
   }
 
   override fun equals(other: Any?): Boolean {
@@ -157,10 +180,6 @@ class NGramMapNode: NGramModelNode<NGramListNode>() {
     var result = count
     result = 31 * result + usages.hashCode()
     return result
-  }
-
-  fun clear() {
-    usages.clear()
   }
 }
 
@@ -182,6 +201,21 @@ class NGramListNode: NGramModelNode<Int>() {
 
   fun setNode(code: Int, count: Int) {
     usages.put(code, count)
+  }
+
+  override fun findMinMax(): Pair<Int, Int> {
+    var minCount: Int = -1
+    var maxCount: Int = -1
+    usages.forEachValue { count ->
+      if (minCount < 0 || minCount > count) {
+        minCount = count
+      }
+      if (maxCount < 0 || maxCount < count) {
+        maxCount = count
+      }
+      true
+    }
+    return max(minCount, 0) to max(maxCount, 0)
   }
 
   override fun equals(other: Any?): Boolean {
