@@ -10,7 +10,6 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -68,7 +67,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
 
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
-  public static final String FONT_CONFIGURABLE_NAME = "Color Scheme Font";
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
@@ -470,12 +468,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return new ArrayList<>(extensions);
   }
 
+  public static String getFontConfigurableName() {
+    return ApplicationBundle.message("title.colors.scheme.font");
+  }
+
   private static class FontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true);
-      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new FontOptions(options), previewPanel, FONT_CONFIGURABLE_NAME, null, null){
+      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new FontOptions(options), previewPanel, getFontConfigurableName(), null, null){
         @Override
         public boolean containsFontOptions() {
           return true;
@@ -486,7 +488,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public String getPanelDisplayName() {
-      return FONT_CONFIGURABLE_NAME;
+      return getFontConfigurableName();
     }
 
     @Override
@@ -505,7 +507,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
         }
       };
-      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new ConsoleFontOptions(options), previewPanel, "Font", null, null){
+      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new ConsoleFontOptions(options), previewPanel, ApplicationBundle.message("label.font.type"), null, null){
         @Override
         public boolean containsFontOptions() {
           return true;
@@ -516,7 +518,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public String getPanelDisplayName() {
-      return "Console Font";
+      return ApplicationBundle.message("title.console.font");
     }
 
      @NotNull
