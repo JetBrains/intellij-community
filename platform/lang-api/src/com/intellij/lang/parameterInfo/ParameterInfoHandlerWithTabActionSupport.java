@@ -20,11 +20,11 @@ public interface ParameterInfoHandlerWithTabActionSupport<ParameterOwner extends
   IElementType getActualParametersRBraceType();
 
   @NotNull
-  Set<Class> getArgumentListAllowedParentClasses();
+  Set<Class<?>> getArgumentListAllowedParentClasses();
 
   @SuppressWarnings("TypeParameterExtendsFinalClass") // keep historical signature for compatibility
   @NotNull
-  Set<? extends Class> getArgListStopSearchClasses();
+  Set<? extends Class<?>> getArgListStopSearchClasses();
 
   @NotNull Class<ParameterOwner> getArgumentListClass();
 

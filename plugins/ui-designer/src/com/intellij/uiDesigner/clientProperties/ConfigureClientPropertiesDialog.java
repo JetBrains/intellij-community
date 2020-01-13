@@ -188,15 +188,15 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   private void fillClassTree() {
-    List<Class> configuredClasses = myManager.getConfiguredClasses(myProject);
+    List<Class<?>> configuredClasses = myManager.getConfiguredClasses(myProject);
     Collections.sort(configuredClasses, Comparator.comparingInt(ConfigureClientPropertiesDialog::getInheritanceLevel));
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    Map<Class, DefaultMutableTreeNode> classToNodeMap = new HashMap<>();
-    for (Class cls : configuredClasses) {
+    Map<Class<?>, DefaultMutableTreeNode> classToNodeMap = new HashMap<>();
+    for (Class<?> cls : configuredClasses) {
       DefaultMutableTreeNode parentNode = root;
-      Class superClass = cls.getSuperclass();
+      Class<?> superClass = cls.getSuperclass();
       while (superClass != null) {
         if (classToNodeMap.containsKey(superClass)) {
           parentNode = classToNodeMap.get(superClass);

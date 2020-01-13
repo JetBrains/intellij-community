@@ -134,7 +134,7 @@ public class PlaybackRunner implements Disposable {
       }
       PlaybackContext context =
         new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir,
-                            (Set<Class>)myFacadeClasses.clone()) {
+                            (Set<Class<?>>)myFacadeClasses.clone()) {
           private final long myTimeStamp = myContextTimestamp;
 
           @Override

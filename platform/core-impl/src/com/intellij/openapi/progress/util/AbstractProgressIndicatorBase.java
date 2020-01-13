@@ -74,7 +74,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private static final Set<Class> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<?>> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
 
   protected boolean isReuseable() {
     return false;

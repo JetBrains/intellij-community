@@ -52,9 +52,9 @@ import java.util.*;
  * @author Maxim.Mossienko
  */
 public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
-  private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
+  private static final Set<Class<?>> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
-  private static final Set<Class> ourStopSearch = Collections.singleton(PsiMethod.class);
+  private static final Set<Class<?>> ourStopSearch = Collections.singleton(PsiMethod.class);
   private static final String WHITESPACE_OR_LINE_BREAKS = " \t\n";
   private static final Key<Inlay> CURRENT_HINT = Key.create("current.hint");
   private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
@@ -536,13 +536,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   @NotNull
-  public Set<Class> getArgumentListAllowedParentClasses() {
+  public Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ourArgumentListAllowedParentClassesSet;
   }
 
   @NotNull
   @Override
-  public Set<Class> getArgListStopSearchClasses() {
+  public Set<? extends Class<?>> getArgListStopSearchClasses() {
     return ourStopSearch;
   }
 

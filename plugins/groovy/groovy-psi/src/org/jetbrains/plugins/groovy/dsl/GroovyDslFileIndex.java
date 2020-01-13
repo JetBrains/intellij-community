@@ -271,11 +271,11 @@ public class GroovyDslFileIndex {
   @NotNull
   private static Set<File> getBundledScriptFolders() {
     final GdslScriptProvider[] extensions = GdslScriptProvider.EP_NAME.getExtensions();
-    final Set<Class> classes = new HashSet<>(ContainerUtil.map(extensions, GdslScriptProvider::getClass));
+    final Set<Class<?>> classes = new HashSet<>(ContainerUtil.map(extensions, GdslScriptProvider::getClass));
     classes.add(GdslScriptProvider.class); // for default extension
 
     Set<File> scriptFolders = new LinkedHashSet<>();
-    for (Class aClass : classes) {
+    for (Class<?> aClass : classes) {
       File jarPath = new File(PathUtil.getJarPathForClass(aClass));
       if (jarPath.isFile()) {
         jarPath = jarPath.getParentFile();

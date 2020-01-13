@@ -119,9 +119,9 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
   }
 
   public void testProvidersCompatibility() {
-    Set<Class> project = ContainerUtil.map2Set(ImportModuleAction.getProviders(null), p -> p.getClass());
+    Set<Class<?>> project = ContainerUtil.map2Set(ImportModuleAction.getProviders(null), p -> p.getClass());
     assertFalse(project.contains(ModuleImportProvider.class));
-    Set<Class> modular = ContainerUtil.map2Set(ImportModuleAction.getProviders(getProject()), p -> p.getClass());
+    Set<Class<?>> modular = ContainerUtil.map2Set(ImportModuleAction.getProviders(getProject()), p -> p.getClass());
     assertTrue(modular.contains(ModuleImportProvider.class));
   }
 }

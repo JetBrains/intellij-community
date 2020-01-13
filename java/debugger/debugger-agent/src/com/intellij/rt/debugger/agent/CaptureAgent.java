@@ -414,8 +414,8 @@ public class CaptureAgent {
       }
     }
 
-    List<Class> classes = new ArrayList<Class>(classNames.size());
-    for (Class aClass : ourInstrumentation.getAllLoadedClasses()) {
+    List<Class<?>> classes = new ArrayList<Class<?>>(classNames.size());
+    for (Class<?> aClass : ourInstrumentation.getAllLoadedClasses()) {
       if (classNames.contains(aClass.getName())) {
         classes.add(aClass);
       }

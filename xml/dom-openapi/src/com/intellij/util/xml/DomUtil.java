@@ -295,13 +295,13 @@ public class DomUtil {
     }
   }
 
-  public static Collection<Class> getAllInterfaces(final Class aClass, final Collection<Class> result) {
-    final Class[] interfaces = aClass.getInterfaces();
+  public static Collection<Class<?>> getAllInterfaces(final Class<?> aClass, final Collection<Class<?>> result) {
+    final Class<?>[] interfaces = aClass.getInterfaces();
     ContainerUtil.addAll(result, interfaces);
     if (aClass.getSuperclass() != null) {
       getAllInterfaces(aClass.getSuperclass(), result);
     }
-    for (Class anInterface : interfaces) {
+    for (Class<?> anInterface : interfaces) {
       getAllInterfaces(anInterface, result);
     }
     return result;
