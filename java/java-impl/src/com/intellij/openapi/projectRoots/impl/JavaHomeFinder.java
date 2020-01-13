@@ -44,7 +44,7 @@ public abstract class JavaHomeFinder {
   protected abstract List<String> findExistingJdks();
 
   private static JavaHomeFinder getFinder() {
-    if (!Registry.is("java.detector.enabled")) {
+    if (!Registry.is("java.detector.enabled", true)) {
       return new JavaHomeFinder() {
         @NotNull
         @Override
