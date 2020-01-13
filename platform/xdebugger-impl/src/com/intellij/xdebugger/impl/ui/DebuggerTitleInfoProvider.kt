@@ -47,11 +47,15 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
       }
 
       override fun processStopped(debugProcess: XDebugProcess) {
-        debuggerSessionStarted = false
+        checkState()
       }
 
       override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
-        debuggerSessionStarted = currentSession != null
+        checkState()
+      }
+
+      private fun checkState() {
+        debuggerSessionStarted = XDebuggerManager.getInstance(project).debugSessions.isNotEmpty()
       }
     })
 
