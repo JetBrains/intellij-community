@@ -48,12 +48,19 @@ public abstract class PsiFileBase extends PsiFileImpl {
     init(nodeType, nodeType);
   }
 
-  private static Language findLanguage(Language baseLanguage, FileViewProvider viewProvider) {
+  private static Language findLanguage(@NotNull Language baseLanguage, @NotNull FileViewProvider viewProvider) {
     final Set<Language> languages = viewProvider.getLanguages();
+    Language candidate = null;
     for (final Language actualLanguage : languages) {
-      if (actualLanguage.isKindOf(baseLanguage)) {
-        return actualLanguage;
+      if (actualLanguage.equals(baseLanguage)) {
+        return baseLanguage;
       }
+      if (candidate == null && actualLanguage.isKindOf(baseLanguage)) {
+        candidate = actualLanguage;
+      }
+    }
+    if (candidate != null) {
+      return candidate;
     }
     throw new AssertionError(
         "Language " + baseLanguage + " doesn't participate in view provider " + viewProvider + ": " + new ArrayList<>(languages));
