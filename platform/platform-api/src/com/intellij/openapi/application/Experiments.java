@@ -4,7 +4,6 @@ package com.intellij.openapi.application;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,11 +48,7 @@ public final class Experiments {
 
   @NotNull
   public static Experiments getInstance() {
-    if (ApplicationManager.getApplication() == null) {
-      // usages from UI Designer preview where no application available
-      return new Experiments();
-    }
-    return ServiceManager.getService(Experiments.class);
+    return ApplicationManager.getApplication().getService(Experiments.class);
   }
 
   public boolean isFeatureEnabled(@NotNull String featureId) {
