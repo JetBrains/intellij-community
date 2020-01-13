@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Strategy for mapping {@link LibraryPathType external library path types} to {@link OrderRootType ide library path types}.
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  */
 public interface ExternalLibraryPathTypeMapper {
-  @NotNull
+  @Nullable
   OrderRootType map(@NotNull LibraryPathType type);
 
   static ExternalLibraryPathTypeMapper getInstance() {

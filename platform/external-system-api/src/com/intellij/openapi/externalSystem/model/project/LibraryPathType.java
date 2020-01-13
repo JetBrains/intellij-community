@@ -9,5 +9,5 @@ import com.intellij.openapi.roots.OrderRootType;
  * @author Denis Zhdanov
  */
 public enum LibraryPathType {
-  BINARY, SOURCE, DOC
+  BINARY, SOURCE, DOC, ANNOTATION
 }
