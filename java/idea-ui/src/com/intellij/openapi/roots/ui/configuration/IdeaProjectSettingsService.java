@@ -166,6 +166,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
       .withProject(myProject)
       .onSdkSelected(sdk -> myDeprecatedChosenSdk = sdk)
       .updateProjectSdkFromSelection()
+      .buildPopup()
       .showInFocusCenter();
 
     return null;

@@ -76,6 +76,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
       .withProject(project)
       .withSdkTypeFilter(type -> type instanceof JavaSdkType)
       .updateSdkForFile(file)
+      .buildPopup()
       .showInFocusCenter();
   }
 }

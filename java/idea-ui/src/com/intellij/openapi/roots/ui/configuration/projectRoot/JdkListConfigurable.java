@@ -234,6 +234,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
         .withProjectSdksModel(getJdksTreeModel())
         .withSdkTypeFilter(notSimpleJavaSdkType())
         .withSdkFilter(sdk -> false)
+        .buildPopup()
         .showPopup(e);
     }
   }

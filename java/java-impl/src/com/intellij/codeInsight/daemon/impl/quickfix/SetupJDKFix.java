@@ -70,6 +70,7 @@ public class SetupJDKFix implements IntentionAction, HighPriorityAction {
       .withProject(project)
       .withSdkTypeFilter(type -> type instanceof JavaSdkType)
       .updateSdkForFile(file)
+      .buildPopup()
       .showInBestPositionFor(editor);
   }
 
