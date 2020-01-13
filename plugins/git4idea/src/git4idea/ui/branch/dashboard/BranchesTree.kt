@@ -269,21 +269,6 @@ internal class FilteringBranchesTree(project: Project,
     }
 }
 
-internal val BRANCH_TREE_NODE_COMPARATOR = Comparator<BranchNodeDescriptor> { d1, d2 ->
-  val b1 = d1.branchInfo
-  val b2 = d2.branchInfo
-  if (b1 == null || b2 == null) d1.type.compareTo(d2.type)
-  else if (b1.isCurrent && !b2.isCurrent) -1
-  else if (!b1.isCurrent && b2.isCurrent) 1
-  else if (b1.isFavorite && !b2.isFavorite) -1
-  else if (!b1.isFavorite && b2.isFavorite) 1
-  else if (b1.isLocal && !b2.isLocal) -1
-  else if (!b1.isLocal && b2.isLocal) 1
-  else {
-    b1.branchName.compareTo(b2.branchName)
-  }
-}
-
 private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
   override fun createTransferable(tree: JComponent): Transferable? {
     if (tree is BranchesTreeComponent) {

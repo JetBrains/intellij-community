@@ -54,3 +54,20 @@ internal fun Set<BranchInfo>.toNodeDescriptors() =
     .map { BranchNodeDescriptor(NodeType.BRANCH, it) }
     .sortedWith(BRANCH_TREE_NODE_COMPARATOR)
     .toList()
+
+internal val BRANCH_TREE_NODE_COMPARATOR = Comparator<BranchNodeDescriptor> { d1, d2 ->
+  val b1 = d1.branchInfo
+  val b2 = d2.branchInfo
+  when {
+    b1 == null || b2 == null -> d1.type.compareTo(d2.type)
+    b1.isCurrent && !b2.isCurrent -> -1
+    !b1.isCurrent && b2.isCurrent -> 1
+    b1.isFavorite && !b2.isFavorite -> -1
+    !b1.isFavorite && b2.isFavorite -> 1
+    b1.isLocal && !b2.isLocal -> -1
+    !b1.isLocal && b2.isLocal -> 1
+    else -> {
+      b1.branchName.compareTo(b2.branchName)
+    }
+  }
+}
