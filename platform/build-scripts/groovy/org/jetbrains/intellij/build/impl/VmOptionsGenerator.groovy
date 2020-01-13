@@ -15,7 +15,7 @@ class VmOptionsGenerator {
       '-XX:+UseConcMarkSweepGC', '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-ea',
       '-XX:CICompilerCount=2',
-      '-Dsun.io.useCanonPrefixCache=false', '-Djava.net.preferIPv4Stack=true',
+      '-Dsun.io.useCanonPrefixCache=false',
       '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:-OmitStackTraceInFastThrow',
