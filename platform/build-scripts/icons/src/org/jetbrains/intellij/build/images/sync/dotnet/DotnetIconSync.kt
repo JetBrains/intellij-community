@@ -5,8 +5,8 @@ import org.jetbrains.intellij.build.images.generateIconsClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.sync.*
 import java.io.File
-import java.util.*
 import java.nio.file.Path
+import java.util.*
 
 @Suppress("unused")
 internal object DotnetIconSync {
@@ -54,8 +54,8 @@ internal object DotnetIconSync {
       }
       generateClasses()
       createBranchForMerge()
-      commitChanges(tmpCommit)
-      if (isUnderTeamCity()) {
+      val changes = commitChanges(tmpCommit)
+      if (changes != null && isUnderTeamCity()) {
         pushBranchForMerge()
         triggerMerge()
       }
@@ -85,7 +85,7 @@ internal object DotnetIconSync {
     generateIconsClasses(DotnetIconsClasses(context.devRepoDir.absolutePath))
   }
 
-  private fun commitChanges(tmpCommit: CommitInfo) {
+  private fun commitChanges(tmpCommit: CommitInfo): CommitInfo? {
     step("Committing changes..")
     val changes = context.iconsCommitsToSync.mapValues {
       it.value.filterNot { commit ->
@@ -95,7 +95,13 @@ internal object DotnetIconSync {
     val commit = context.devRepoRoot.commit(changes.commitMessage(), committer.name, committer.email) {
       it.fileName.toString().endsWith(".java")
     }
-    println("Committed ${commit?.hash} ${commit?.subject}")
+    if (commit != null) {
+      println("Committed ${commit.hash} ${commit.subject}")
+    }
+    else {
+      println("Nothing to commit")
+    }
+    return commit
   }
 
   private fun File.commit(message: String, user: String, email: String, filter: (Path) -> Boolean = { false }) =
@@ -103,9 +109,12 @@ internal object DotnetIconSync {
       val path = toPath().resolve(it)
       isImage(path) || filter(path)
     }.let {
-      stageFiles(it, this)
-      commit(this, message, user, email)
-      commitInfo(this)
+      if (it.isNotEmpty()) {
+        stageFiles(it, this)
+        commit(this, message, user, email)
+        commitInfo(this)
+      }
+      else null
     }
 
   private fun createBranchForMerge() {
