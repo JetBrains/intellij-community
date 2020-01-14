@@ -124,7 +124,7 @@ public class MethodExtractor {
           .guardMethodCall(dependencies.exitGroups.get(0).statements.get(0).getText());
       case NullableExitVariable:
         return builder
-          .declareVariable(findNotNullReturn(returnMode, dependencies), "out")
+          .declareVariable(findReturnType(returnMode, dependencies), "out")
           .returnNotNullVariable();
       case ReturnMethodCall:
         return builder
@@ -134,7 +134,7 @@ public class MethodExtractor {
       case Variable:
         final PsiVariable outVariable = guessOutputVariable(dependencies);
         if (isDeclaredInside(dependencies.fragment, outVariable)) {
-          return builder.declareVariable(findNotNullReturn(returnMode, dependencies), outVariable.getName());
+          return builder.declareVariable(findReturnType(returnMode, dependencies), outVariable.getName());
         }
         else {
           return builder.assignToVariable(outVariable.getName());
@@ -157,7 +157,7 @@ public class MethodExtractor {
       .makeStatic(isInsideStaticMethod(dependencies.fragment.getCommonParent()))
       .throwExceptions(dependencies.thrownExceptions)
       .parameterTypes(getDefaultParameterTypes(dependencies))
-      .returnType(findNotNullReturn(returnMode, dependencies));
+      .returnType(findReturnType(returnMode, dependencies));
   }
 
   private static List<PsiType> getDefaultParameterTypes(FlowDependency dependencies) {
@@ -195,7 +195,7 @@ public class MethodExtractor {
     }
   }
 
-  private static PsiType findNotNullReturn(ReturnMode returnMode, FlowDependency dependency) {
+  private static PsiType findReturnType(ReturnMode returnMode, FlowDependency dependency) {
     switch (returnMode) {
       case MethodCall:
         return PsiType.VOID;
