@@ -18,7 +18,16 @@ public class JCEFHtmlPanel extends JBCefBrowser {
   }
 
   public JCEFHtmlPanel() {
-    super(ourCefClient, null);
+    this(null);
+  }
+
+  public JCEFHtmlPanel(String url) {
+    super(ourCefClient, url);
+  }
+
+  public JCEFHtmlPanel(JBCefClient client, String url) {
+    super(client, url);
+    Disposer.register(this, client);
   }
 
   public void setHtml(@NotNull String html) {
