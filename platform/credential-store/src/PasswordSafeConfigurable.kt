@@ -188,22 +188,22 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
 
   override fun getComponent(): JPanel {
     myPanel = panel {
-      row { label("Save passwords:") }
+      row { label(IdeBundle.message("passwordSafeConfigurable.save.password")) }
 
       buttonGroup(settings::providerType) {
         if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
           row {
-            radioButton("In native Keychain", ProviderType.KEYCHAIN)
+            radioButton(IdeBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
           }
         }
 
         row {
-          keepassRadioButton = radioButton("In KeePass", ProviderType.KEEPASS).component
+          keepassRadioButton = radioButton(IdeBundle.message("passwordSafeConfigurable.in.keepass"), ProviderType.KEEPASS).component
           row("Database:") {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
               it.isDirectory || it.name.endsWith(".kdbx")
             }
-            keePassDbFile = textFieldWithBrowseButton("KeePass Database File",
+            keePassDbFile = textFieldWithBrowseButton(IdeBundle.message("passwordSafeConfigurable.keepass.database.file"),
                                                       fileChooserDescriptor = fileChooserDescriptor,
                                                       fileChosen = {
                                                         when {
@@ -211,7 +211,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
                                                           else -> it.path
                                                         }
                                                       },
-                                                      comment = if (SystemInfo.isWindows) null else "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
+                                                      comment = if (SystemInfo.isWindows) null else IdeBundle.message("passwordSafeConfigurable.weak.encryption"))
             gearButton(
               ClearKeePassDatabaseAction(),
               ImportKeePassDatabaseAction(),
@@ -239,7 +239,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
           }
         }
         row {
-          radioButton("Do not save, forget passwords after restart", ProviderType.MEMORY_ONLY)
+          radioButton(IdeBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
         }
       }
     }
@@ -247,8 +247,8 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
   }
 
   private fun usePgpKeyText(): String {
-    val prefix = "Protect master password using PGP key"
-    return if (pgpListModel.isEmpty) "$prefix (No keys configured)" else "$prefix:"
+    val prefix = IdeBundle.message("passwordSafeConfigurable.protect.master.password.using.pgp.key")
+    return if (pgpListModel.isEmpty) "$prefix ${IdeBundle.message("passwordSafeConfigurable.no.keys.configured")}" else "$prefix:"
   }
 
   private fun getSelectedPgpKey(): PgpKey? {
@@ -272,7 +272,9 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
 
   private inner class ClearKeePassDatabaseAction : DumbAwareAction("Clear") {
     override fun actionPerformed(event: AnActionEvent) {
-      if (!MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
+      if (!MessageDialogBuilder.yesNo(IdeBundle.message("passwordSafeConfigurable.clear.passwords"),
+                                      IdeBundle.message("passwordSafeConfigurable.are.you.sure")).yesText(
+          IdeBundle.message("passwordSafeConfigurable.remove.passwords")).isYes) {
         return
       }
 
