@@ -35,6 +35,7 @@ public class JUnitUtil {
   private static final String TEST_INTERFACE = "junit.framework.Test";
   private static final String TEST_SUITE_CLASS = "junit.framework.TestSuite";
   public static final String TEST_ANNOTATION = "org.junit.Test";
+  public static final String RULE_ANNOTATION = "org.junit.Rule";
   public static final String TEST5_PACKAGE_FQN = "org.junit.jupiter.api";
   public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
   public static final String CUSTOM_TESTABLE_ANNOTATION = "org.junit.platform.commons.annotation.Testable";
@@ -77,7 +78,7 @@ public class JUnitUtil {
 
   private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = ContainerUtil
     .immutableList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
-                   BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
+                   BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME, RULE_ANNOTATION);
 
   public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
@@ -96,7 +97,11 @@ public class JUnitUtil {
     "org.junit.runners.Parameterized",
     "org.junit.runners.BlockJUnit4ClassRunner",
     "org.junit.runners.JUnit4",
-    "org.junit.internal.runners.JUnit4ClassRunner"
+    "org.junit.internal.runners.JUnit4ClassRunner",
+    "org.mockito.junit.MockitoJUnitRunner",
+    "org.mockito.junit.MockitoJUnitRunner.StrictStubs",
+    "org.mockito.junit.MockitoJUnitRunner.Silent",
+    "org.mockito.junit.MockitoJUnitRunner.Strict"
   };
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {

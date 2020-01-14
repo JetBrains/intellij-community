@@ -70,6 +70,8 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
+
 /**
  * @author: Roman Chernyatchik
  */
@@ -108,7 +110,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private volatile boolean myDisposed = false;
   private SMTestProxy myLastFailed;
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
-  private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this); 
+  private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
@@ -310,7 +312,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
       addToHistory(testsRoot, myProperties, this);
     });
-    
+
   }
 
   private void addToHistory(final SMTestProxy.SMRootTestProxy root,
@@ -344,7 +346,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   @Override
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
-    if (!testProxy.isConfig()) {
+    if (!testProxy.isConfig() && !CLASS_CONFIGURATION.equals(testProxy.getName())) {
       updateOnTestStarted(false);
     }
     _addTestOrSuite(testProxy);

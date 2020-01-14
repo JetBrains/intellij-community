@@ -16,6 +16,7 @@
 
 package com.intellij.junit4;
 
+import com.intellij.rt.execution.TestListenerProtocol;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.Ignore;
@@ -33,7 +34,6 @@ import java.util.*;
 public class JUnit4TestListener extends RunListener {
   public static final String EMPTY_SUITE_NAME = "junit.framework.TestSuite$1";
   public static final String EMPTY_SUITE_WARNING = "warning";
-  public static final String CLASS_CONFIGURATION = "Class Configuration";
 
   private final List myStartedSuites = new ArrayList();
   private final Map   myParents = new HashMap();
@@ -211,7 +211,7 @@ public class JUnit4TestListener extends RunListener {
     if (methodName == null) { //class setUp/tearDown failed
       if (!isIgnored) {
         classConfigurationStarted(description);
-        testFailure(failure, description, messageName, CLASS_CONFIGURATION);
+        testFailure(failure, description, messageName, TestListenerProtocol.CLASS_CONFIGURATION);
         classConfigurationFinished(description);
       }
       if (myStartedSuites.isEmpty() || !description.equals(myStartedSuites.get(myStartedSuites.size() - 1))) {
@@ -235,20 +235,20 @@ public class JUnit4TestListener extends RunListener {
       return;
     }
 
-    myPrintStream.println("##teamcity[testFinished name=\'" + escapeName(CLASS_CONFIGURATION) + "\']");
+    myPrintStream.println("##teamcity[testFinished name=\'" + escapeName(TestListenerProtocol.CLASS_CONFIGURATION) + "\']");
     myCurrentTest = null;
   }
 
   private void classConfigurationStarted(Description description) {
     if (myCurrentTest != null) {
       TestEvent value = new TestEvent();
-      value.setMethodName(CLASS_CONFIGURATION);
+      value.setMethodName(TestListenerProtocol.CLASS_CONFIGURATION);
       myWaitingQueue.put(description, value);
       return;
     }
 
     myCurrentTest = description;
-    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(CLASS_CONFIGURATION) + "\'" + getSuiteLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
+    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(TestListenerProtocol.CLASS_CONFIGURATION) + "\'" + getSuiteLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
   }
 
   private void testFailure(Failure failure, Description description, String messageName, String methodName) {
