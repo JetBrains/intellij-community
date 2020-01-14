@@ -720,15 +720,15 @@
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
+        <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
           <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"/>
-          <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction"/>
+          <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction" internal="true"/>
           <separator/>
           <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
-          <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
-          <action id="CollectTroubleshootingInformation" class="com.intellij.ide.actions.CollectTroubleshootingInformationAction"/>
-          <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
+          <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction" internal="true"/>
+          <action id="CollectTroubleshootingInformation" class="com.intellij.ide.actions.CollectTroubleshootingInformationAction" internal="true"/>
         </group>
 
         <action id="performancePlugin.ShowMemoryDialogAction" class="com.intellij.diagnostic.ShowMemoryDialogAction"/>

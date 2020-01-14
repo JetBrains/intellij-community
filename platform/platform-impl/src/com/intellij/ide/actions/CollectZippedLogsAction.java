@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -56,6 +55,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
+        PerformanceWatcher.getInstance().dumpThreads("", false);
+
         final StringBuilder troubleshooting = collectInfoFromExtensions(project);
         final File zippedLogsFile = createZip(troubleshooting);
         if (RevealFileAction.isSupported()) {
@@ -124,16 +125,5 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   @NotNull
   private static String getDate() {
     return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
-    presentation.setText(getActionName());
-  }
-
-  @NotNull
-  private static String getActionName() {
-    return ActionsBundle.message("compress.logs.and.show.in.0", RevealFileAction.getFileManagerName());
   }
 }
