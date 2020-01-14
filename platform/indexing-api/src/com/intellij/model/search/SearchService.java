@@ -38,7 +38,7 @@ public interface SearchService {
    * Creates new query for searching references by symbol.
    */
   @NotNull
-  Query<SymbolReference> searchSymbol(@NotNull Project project, @NotNull Symbol symbol, @NotNull SearchScope searchScope);
+  Query<SymbolReference> searchSymbolReferences(@NotNull Project project, @NotNull Symbol symbol, @NotNull SearchScope searchScope);
 
   /**
    * Merges a list of queries into a single query.

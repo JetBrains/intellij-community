@@ -19,7 +19,7 @@ class SearchServiceImpl : SearchService {
 
   override fun searchWord(project: Project, word: String): SearchWordQueryBuilder = SearchWordQueryBuilderImpl(project, word)
 
-  override fun searchSymbol(project: Project, symbol: Symbol, searchScope: SearchScope): Query<SymbolReference> {
+  override fun searchSymbolReferences(project: Project, symbol: Symbol, searchScope: SearchScope): Query<SymbolReference> {
     return searchParameters(DefaultSymbolReferenceSearchParameters(project, symbol.createPointer(), searchScope))
   }
 
