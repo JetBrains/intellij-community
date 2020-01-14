@@ -103,7 +103,7 @@ public abstract class JavaHomeFinder {
 
     protected DefaultFinder(String... paths) {
       File javaHome = null;
-      if (Registry.is("java.detector.include.embedded")) javaHome = getJavaHome();
+      if (Registry.is("java.detector.include.embedded", true)) javaHome = getJavaHome();
       myPaths = javaHome == null ? paths : ArrayUtil.prepend(javaHome.getAbsolutePath(), paths);
     }
 
