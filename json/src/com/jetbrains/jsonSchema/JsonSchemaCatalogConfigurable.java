@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,6 @@ import java.awt.*;
 
 public class JsonSchemaCatalogConfigurable implements Configurable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA_CATALOG = "settings.json.schema.catalog";
-  public static final String JSON_SCHEMA_CATALOG = "Remote JSON Schemas";
   @NotNull private final Project myProject;
   private final JBCheckBox myCatalogCheckBox;
   private final JBCheckBox myRemoteCheckBox;
@@ -99,7 +99,7 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
   @Nls(capitalization = Nls.Capitalization.Title)
   @Override
   public String getDisplayName() {
-    return JSON_SCHEMA_CATALOG;
+    return JsonBundle.message("configurable.JsonSchemaCatalogConfigurable.display.name");
   }
 
   @Nullable

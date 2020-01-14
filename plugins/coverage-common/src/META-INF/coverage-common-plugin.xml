@@ -10,7 +10,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <testActionProvider implementation="com.intellij.coverage.actions.TrackCoverageActionProvider"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewDirectoryNodeDecorator"/>
-    <projectConfigurable groupId="build" instance="com.intellij.coverage.CoverageOptionsConfigurable" id="coverage" displayName="Coverage" />
+    <projectConfigurable groupId="build" instance="com.intellij.coverage.CoverageOptionsConfigurable" id="coverage"
+                         bundle="messages.UIBundle" key="configurable.CoverageOptionsConfigurable.display.name"/>
+
     <projectService serviceImplementation="com.intellij.coverage.CoverageOptionsProvider"/>
     <projectService serviceImplementation="com.intellij.coverage.view.CoverageViewManager"/>
     <executor implementation="com.intellij.coverage.CoverageExecutor" />

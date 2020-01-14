@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,7 +38,6 @@ import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
  */
 public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
-  public static final String JSON_SCHEMA_MAPPINGS = "JSON Schema Mappings";
 
   private final static Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
     if (o1.isApplicationDefined() != o2.isApplicationDefined()) {
@@ -305,7 +305,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Nls
   @Override
   public String getDisplayName() {
-    return JSON_SCHEMA_MAPPINGS;
+    return JsonBundle.message("configurable.JsonSchemaMappingsConfigurable.display.name");
   }
 
 

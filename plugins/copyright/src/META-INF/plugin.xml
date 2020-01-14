@@ -12,7 +12,10 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectConfigurable groupId="editor" groupWeight="110" dynamic="true" displayName="Copyright" id="copyright"
+    <projectConfigurable groupId="editor" groupWeight="110" dynamic="true"
+                         bundle="messages.IdeBundle"
+                         key="configurable.CopyrightProjectConfigurable.display.name"
+                         id="copyright"
                          instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
     <checkinHandlerFactory implementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerFactory"/>
     <applicationService serviceImplementation="com.maddyhome.idea.copyright.util.FileTypeUtil"/>

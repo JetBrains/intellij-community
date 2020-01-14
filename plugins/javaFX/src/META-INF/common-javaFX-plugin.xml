@@ -35,7 +35,11 @@
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
-    <applicationConfigurable groupId="language" displayName="JavaFX" id="preferences.JavaFX" instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
+    <applicationConfigurable groupId="language"
+                             bundle="messages.IdeBundle"
+                             key="configurable.JavaFxSettingsConfigurable.display.name"
+                             id="preferences.JavaFX" instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
+
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxIdsIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxCustomComponentsIndex"/>

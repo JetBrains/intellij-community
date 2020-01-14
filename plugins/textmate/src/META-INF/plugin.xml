@@ -21,7 +21,10 @@
     <editorHighlighterProvider filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="textmate"
                                    implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/>
-    <applicationConfigurable groupId="editor" displayName="TextMate Bundles" id="reference.settingsdialog.textmate.bundles" provider="org.jetbrains.plugins.textmate.configuration.TextMateConfigurableProvider"/>
+    <applicationConfigurable groupId="editor"
+                             bundle="messages.IdeBundle"
+                             key="configurable.TextMateConfigurableProvider.display.name"
+                             id="reference.settingsdialog.textmate.bundles" provider="org.jetbrains.plugins.textmate.configuration.TextMateConfigurableProvider"/>
     <lang.parserDefinition language="textmate" implementationClass="org.jetbrains.plugins.textmate.psi.TextMateParserDefinition"/>
     <braceMatcher filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateBraceMatcher"/>
     <typedHandler implementation="org.jetbrains.plugins.textmate.editor.TextMateTypedHandler"/>
