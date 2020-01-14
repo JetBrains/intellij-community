@@ -259,13 +259,13 @@ public class DumpIndexAction extends AnAction {
     StringBuilder stats = new StringBuilder();
     stats.append("Statistics for index chunk ").append(chunk.getName()).append("\n");
 
-    stats.append("File based indices (").append(fileBasedGenerators.size()).append(")");
+    stats.append("File based indices (").append(fileBasedGenerators.size()).append(")").append("\n");
     for (HashBasedIndexGenerator<?, ?> generator : fileBasedGenerators) {
       appendGeneratorStatistics(stats, generator);
     }
 
     Collection<HashBasedIndexGenerator<?, ?>> stubGenerators = stubGenerator.getStubGenerators();
-    stats.append("Stub indices (").append(stubGenerators.size()).append(")");
+    stats.append("Stub indices (").append(stubGenerators.size()).append(")").append("\n");
     for (HashBasedIndexGenerator<?, ?> generator : stubGenerators) {
       appendGeneratorStatistics(stats, generator);
     }
@@ -284,7 +284,7 @@ public class DumpIndexAction extends AnAction {
       .append(" files");
 
     if (generator.isEmpty()) {
-      stringBuilder.append( "(empty result)");
+      stringBuilder.append(" (empty result)");
     }
     stringBuilder.append("\n");
   }
