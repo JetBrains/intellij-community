@@ -21,7 +21,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashMap;
@@ -477,20 +476,24 @@ public final class ConfigImportHelper {
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile);
-        List<String> updatedLines = ContainerUtil.map(lines, ConfigImportHelper::replaceVMOptions);
-        if (!updatedLines.equals(lines)) {
-          Files.write(vmOptionsFile, StringUtil.join(updatedLines, "\n").getBytes(StandardCharsets.UTF_8));
+        boolean updated = false;
+        for (ListIterator<String> i = lines.listIterator(); i.hasNext(); ) {
+          String line = i.next().trim();
+          if (line.equals("-XX:MaxJavaStackTraceDepth=-1")) {
+            i.set("-XX:MaxJavaStackTraceDepth=10000"); updated = true;
+          }
+          else if (line.startsWith("-agentlib:yjpagent")) {
+            i.remove(); updated = true;
+          }
+        }
+        if (updated) {
+          Files.write(vmOptionsFile, lines);
         }
       }
       catch (IOException e) {
         log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
       }
     }
-  }
-
-  private static String replaceVMOptions(String line) {
-    line = line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line;
-    return line.trim().startsWith("-agentlib:yjpagent") ? "" : line;
   }
 
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir) {
