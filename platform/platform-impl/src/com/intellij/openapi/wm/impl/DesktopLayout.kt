@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.util.containers.ObjectIntHashMap
+import com.intellij.openapi.wm.WindowInfo
 import com.intellij.util.xmlb.XmlSerializer
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -147,29 +147,6 @@ class DesktopLayout {
     }
     return state
   }
-
-  internal inner class MyStripeButtonComparator(anchor: ToolWindowAnchor, manager: ToolWindowManagerImpl) : Comparator<StripeButton> {
-    private val idToRegisteredInfo = ObjectIntHashMap<String>(idToInfo.size)
-
-    override fun compare(obj1: StripeButton, obj2: StripeButton): Int {
-      return getOrder(obj1) - getOrder(obj2)
-    }
-
-    private fun getOrder(obj1: StripeButton): Int {
-      val order = idToRegisteredInfo.get(obj1.id)
-      // if unknown, should be the last
-      return if (order == -1) Int.MAX_VALUE else order
-    }
-
-    init {
-      for (info in idToInfo.values) {
-        val id = info.id ?: continue
-        if (anchor == info.anchor && manager.isToolWindowRegistered(id)) {
-          idToRegisteredInfo.put(id, info.order)
-        }
-      }
-    }
-  }
 }
 
 private val LOG = logger<DesktopLayout>()
@@ -184,9 +161,9 @@ private fun getAnchorWeight(anchor: ToolWindowAnchor): Int {
   }
 }
 
-private val windowInfoComparator = Comparator { o1: WindowInfoImpl, o2: WindowInfoImpl ->
-  val d = getAnchorWeight(o1.anchor) - getAnchorWeight(o2.anchor)
-  if (d == 0) o1.order - o2.order else d
+internal val windowInfoComparator: Comparator<WindowInfo> = Comparator { o1, o2 ->
+  val anchorWeight = getAnchorWeight(o1.anchor) - getAnchorWeight(o2.anchor)
+  if (anchorWeight == 0) o1.order - o2.order else anchorWeight
 }
 
 /**
