@@ -149,11 +149,11 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
     Charset oldCharset = virtualFile.getCharset();
     Runnable undo;
     Runnable redo;
-
     if (isSafeToConvert == EncodingUtil.Magic8.ABSOLUTELY && isSafeToReload == EncodingUtil.Magic8.ABSOLUTELY) {
+      final EncodingManager encodingManager = EncodingProjectManager.getInstance(project);
       //change and forget
-      undo = () -> EncodingManager.getInstance().setEncoding(virtualFile, oldCharset);
-      redo = () -> EncodingManager.getInstance().setEncoding(virtualFile, charset);
+      undo = () -> encodingManager.setEncoding(virtualFile, oldCharset);
+      redo = () -> encodingManager.setEncoding(virtualFile, charset);
     }
     else {
       IncompatibleEncodingDialog dialog = new IncompatibleEncodingDialog(virtualFile, charset, isSafeToReload, isSafeToConvert);
