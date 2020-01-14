@@ -54,6 +54,8 @@
     <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
     <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
+                    serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
   </extensions>
 
   <project-components>
