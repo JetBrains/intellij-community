@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.BundleBase;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -11,8 +10,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
 /**
@@ -36,8 +33,8 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
                     @NotNull IdeaPluginDescriptor plugin,
-                    String iconPath,
-                    String projectType,
+                    @Nullable String iconPath,
+                    @Nullable String projectType,
                     @NotNull Supplier<Presentation> templatePresentation) {
     myPlugin = plugin;
     myClassName = actionClass;
@@ -98,19 +95,9 @@ public final class ActionStub extends AnAction implements ActionStubBase {
    * Copies template presentation and shortcuts set to {@code targetAction}.
    */
   @ApiStatus.Internal
-  public final void initAction(@NotNull AnAction targetAction, @Nullable ResourceBundle resourceBundle) {
+  public final void initAction(@NotNull AnAction targetAction) {
     copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
-    for (Map.Entry<String, String> override : myActionTextOverrides.entrySet()) {
-      String place = override.getKey();
-      String overrideText = override.getValue();
-      if (overrideText.isEmpty()) {
-        if (resourceBundle == null) return;
-        String key = "action." + getId() + "." + place + ".text";
-        overrideText = BundleBase.message(resourceBundle, key);
-      }
-      targetAction.addTextOverride(place, overrideText);
-    }
   }
 
   public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {

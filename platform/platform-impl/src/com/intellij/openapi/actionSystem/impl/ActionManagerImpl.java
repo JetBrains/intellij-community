@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.LoadingState;
@@ -115,6 +116,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String UNREGISTER_ELEMENT_NAME = "unregister";
   private static final String OVERRIDE_TEXT_ELEMENT_NAME = "override-text";
   private static final String PLACE_ATTR_NAME = "place";
+  private static final String RESOURCE_BUNDLE_ATTR_NAME = "resource-bundle";
 
   private static final Logger LOG = Logger.getInstance(ActionManagerImpl.class);
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
@@ -167,7 +169,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return null;
     }
 
-    stub.initAction(anAction, getActionsResourceBundle(stub.getPlugin()));
+    stub.initAction(anAction);
     updateIconFromStub(stub, anAction);
 
     return anAction;
@@ -239,9 +241,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  private static ResourceBundle getActionsResourceBundle(@NotNull IdeaPluginDescriptor plugin) {
-    String resBundleName = PluginManagerCore.CORE_ID != plugin.getPluginId()
-                           ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
+  private static ResourceBundle getActionsResourceBundle(@NotNull IdeaPluginDescriptor plugin, @Nullable String bundleName) {
+    String resBundleName = bundleName != null ? bundleName :
+                           plugin.getPluginId() != PluginManagerCore.CORE_ID ? plugin.getResourceBundleBaseName() :
+                           ACTIONS_BUNDLE;
     return resBundleName == null ? null : DynamicBundle.INSTANCE.getResourceBundle(resBundleName, plugin.getPluginClassLoader());
   }
 
@@ -502,7 +505,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     long startTime = StartUpMeasurer.getCurrentTime();
     for (Element e : actionDescriptionElements) {
-      processActionsChildElement(plugin, e);
+      Element parent = e.getParentElement();
+      String bundleName = parent == null ? null : parent.getAttributeValue(RESOURCE_BUNDLE_ATTR_NAME);
+      processActionsChildElement(e, plugin, getActionsResourceBundle(plugin, bundleName));
     }
     StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
   }
@@ -597,7 +602,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
    */
   @Nullable
-  private AnAction processActionElement(@NotNull Element element, @NotNull IdeaPluginDescriptorImpl plugin) {
+  private AnAction processActionElement(@NotNull Element element,
+                                        @NotNull IdeaPluginDescriptorImpl plugin,
+                                        @Nullable ResourceBundle bundle) {
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null || className.isEmpty()) {
       reportActionError(plugin.getPluginId(), "action element should have specified \"class\" attribute");
@@ -619,7 +626,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     String descriptionValue = element.getAttributeValue(DESCRIPTION);
 
     ActionStub stub = new ActionStub(className, id, plugin, iconPath, projectType, () -> {
-      ResourceBundle bundle = getActionsResourceBundle(plugin);
       String text = computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue);
       if (text == null) {
         reportActionError(plugin.getPluginId(), "'text' attribute is mandatory (action ID=" +
@@ -650,15 +656,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         processAbbreviationNode(e, id);
       }
       else if (OVERRIDE_TEXT_ELEMENT_NAME.equals(e.getName())) {
-        processOverrideTextNode(stub, e, plugin.getPluginId());
+        processOverrideTextNode(stub, e, plugin.getPluginId(), bundle);
       }
       else {
         reportActionError(plugin.getPluginId(), "unexpected name of element \"" + e.getName() + "\"");
         return null;
       }
     }
-    if (element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
-      keymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+    String shortcutOfActionId = element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME);
+    if (shortcutOfActionId != null) {
+      keymapManager.bindShortcuts(shortcutOfActionId, id);
     }
 
     registerOrReplaceActionInner(element, id, stub, plugin);
@@ -694,9 +701,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private AnAction processGroupElement(@NotNull Element element, @NotNull IdeaPluginDescriptorImpl plugin) {
-    ResourceBundle bundle = getActionsResourceBundle(plugin);
-
+  private AnAction processGroupElement(@NotNull Element element,
+                                       @NotNull IdeaPluginDescriptorImpl plugin,
+                                       @Nullable ResourceBundle bundle) {
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(plugin.getPluginId(), "unexpected name of element \"" + element.getName() + "\"");
       return null;
@@ -788,15 +795,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           ((ActionGroupStub)group).setPopupDefinedInXml(true);
         }
       }
-      if (customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
-        KeymapManagerEx.getInstanceEx().bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+      String shortcutOfActionId = element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME);
+      if (customClass && shortcutOfActionId != null) {
+        KeymapManagerEx.getInstanceEx().bindShortcuts(shortcutOfActionId, id);
       }
 
       // process all group's children. There are other groups, actions, references and links
       for (Element child : element.getChildren()) {
         String name = child.getName();
         if (ACTION_ELEMENT_NAME.equals(name)) {
-          AnAction action = processActionElement(child, plugin);
+          AnAction action = processActionElement(child, plugin, bundle);
           if (action != null) {
             assertActionIsGroupOrStub(action);
             addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
@@ -806,7 +814,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           processSeparatorNode((DefaultActionGroup)group, child, plugin.getPluginId());
         }
         else if (GROUP_ELEMENT_NAME.equals(name)) {
-          AnAction action = processGroupElement(child, plugin);
+          AnAction action = processGroupElement(child, plugin, bundle);
           if (action != null) {
             addToGroupInner(group, action, Constraints.LAST, false);
           }
@@ -911,7 +919,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return (DefaultActionGroup)parentGroup;
   }
 
-  private static void processOverrideTextNode(ActionStub stub, Element element, PluginId pluginId) {
+  private static void processOverrideTextNode(ActionStub stub, Element element, PluginId pluginId,
+                                              @Nullable ResourceBundle bundle) {
     if (!OVERRIDE_TEXT_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
@@ -922,6 +931,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return;
     }
     String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
+    if (text.isEmpty() && bundle != null) {
+      String key = "action." + stub.getId() + "." + place + ".text";
+      text = BundleBase.message(bundle, key);
+    }
+
     stub.addActionTextOverride(place, text);
   }
 
@@ -1051,16 +1065,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ref;
   }
 
-  private void processActionsChildElement(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull Element child) {
+  private void processActionsChildElement(@NotNull Element child,
+                                          @NotNull IdeaPluginDescriptorImpl plugin,
+                                          @Nullable ResourceBundle bundle) {
     String name = child.getName();
     if (ACTION_ELEMENT_NAME.equals(name)) {
-      AnAction action = processActionElement(child, plugin);
+      AnAction action = processActionElement(child, plugin, bundle);
       if (action != null) {
         assertActionIsGroupOrStub(action);
       }
     }
     else if (GROUP_ELEMENT_NAME.equals(name)) {
-      processGroupElement(child, plugin);
+      processGroupElement(child, plugin, bundle);
     }
     else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
       processSeparatorNode(null, child, plugin.getPluginId());
