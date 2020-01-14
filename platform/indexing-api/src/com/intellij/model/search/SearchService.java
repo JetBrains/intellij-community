@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
 import com.intellij.model.Symbol;
+import com.intellij.model.SymbolDeclaration;
 import com.intellij.model.SymbolReference;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,9 @@ public interface SearchService {
    */
   @NotNull
   Query<SymbolReference> searchSymbolReferences(@NotNull Project project, @NotNull Symbol symbol, @NotNull SearchScope searchScope);
+
+  @NotNull
+  Query<SymbolDeclaration> searchSymbolDeclarations(@NotNull Project project, @NotNull Symbol symbol, @NotNull SearchScope searchScope);
 
   /**
    * Merges a list of queries into a single query.
