@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
@@ -36,7 +36,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
@@ -52,7 +53,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.Semaphore
@@ -1035,7 +1035,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         val defaultList = ChangeListManager.getInstance(project).defaultChangeList
         val changes = defaultList.changes.filter { virtualFiles.contains(it.virtualFile) }
 
-        val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+        val window = getToolWindowFor(project, LOCAL_CHANGES)
         window?.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
         expire()
       })

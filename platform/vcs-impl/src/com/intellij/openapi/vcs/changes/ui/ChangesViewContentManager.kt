@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.L
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.SHELF
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -31,9 +32,11 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
 
   private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
 
-  private fun Content.resolveToolWindowId(): String =
-    if (isCommitToolWindow.asBoolean() && COMMIT_TOOL_WINDOW_CONTENT_FILTER(tabName)) COMMIT_TOOLWINDOW_ID
+  private fun getToolWindowIdFor(contentName: String): String =
+    if (isCommitToolWindow.asBoolean() && COMMIT_TOOL_WINDOW_CONTENT_FILTER(contentName)) COMMIT_TOOLWINDOW_ID
     else TOOLWINDOW_ID
+
+  private fun Content.resolveToolWindowId(): String = getToolWindowIdFor(tabName)
 
   private fun Content.resolveToolWindow(): ToolWindow? {
     val toolWindowId = resolveToolWindowId()
@@ -170,6 +173,14 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     fun getInstance(project: Project): ChangesViewContentI {
       return project.getService(ChangesViewContentI::class.java)
     }
+
+    @JvmStatic
+    fun getToolWindowIdFor(project: Project, contentName: String): String =
+      (getInstance(project) as ChangesViewContentManager).getToolWindowIdFor(contentName)
+
+    @JvmStatic
+    fun getToolWindowFor(project: Project, contentName: String): ToolWindow? =
+      ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, contentName))
 
     @JvmField
     val ORDER_WEIGHT_KEY = Key.create<Int>("ChangesView.ContentOrderWeight")

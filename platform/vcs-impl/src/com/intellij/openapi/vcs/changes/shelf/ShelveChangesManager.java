@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.google.common.collect.Lists;
@@ -35,7 +35,7 @@ import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
@@ -74,6 +74,8 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -939,8 +941,10 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private boolean isShelfContentActive() {
-    return ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).isVisible() &&
-           ((ChangesViewContentManager)ChangesViewContentManager.getInstance(myProject)).isContentSelected(ChangesViewContentManager.SHELF);
+    ToolWindow window = getToolWindowFor(myProject, SHELF);
+    return window != null &&
+           window.isVisible() &&
+           ((ChangesViewContentManager)ChangesViewContentManager.getInstance(myProject)).isContentSelected(SHELF);
   }
 
   @NotNull

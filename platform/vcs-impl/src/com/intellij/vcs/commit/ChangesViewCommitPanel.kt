@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -23,12 +23,13 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
@@ -291,9 +292,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     return true
   }
 
-  protected open fun selectContent(contentManager: ChangesViewContentI) {
-    contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES)
-  }
+  protected open fun selectContent(contentManager: ChangesViewContentI) = contentManager.selectContent(LOCAL_CHANGES)
 
   override fun deactivate(isRestoreState: Boolean) {
     if (isRestoreState) restoreToolWindowState()
@@ -318,8 +317,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     isHideToolWindowOnDeactivate = false
   }
 
-  protected open fun getVcsToolWindow(): ToolWindow? =
-    ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+  protected open fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
 
   override fun expand(item: Any) {
     val node = changesView.findNodeInTree(item)

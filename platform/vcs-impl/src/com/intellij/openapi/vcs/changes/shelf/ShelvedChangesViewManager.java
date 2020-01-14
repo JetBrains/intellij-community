@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactoryEx;
@@ -41,7 +41,6 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
@@ -80,6 +79,8 @@ import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -174,14 +175,11 @@ public class ShelvedChangesViewManager implements Disposable {
   protected void activateContent() {
     ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
     contentManager.setSelectedContent(myContent);
-    ToolWindow window = getVcsToolWindow();
+
+    ToolWindow window = getToolWindowFor(myProject, SHELF);
     if (window != null && !window.isVisible()) {
       window.activate(null);
     }
-  }
-
-  private ToolWindow getVcsToolWindow() {
-    return ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
   }
 
   private static class MyShelvedTreeModelBuilder extends TreeModelBuilder {
