@@ -162,11 +162,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
         Set<PsiMethod> accessors = new THashSet<>();
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-        PsiMethod getter = PropertyUtilBase.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
-                                                                       ContainerUtil.iterate(containingClass.getMethods()));
+        Collection<PsiMethod> methods = Arrays.asList(containingClass.getMethods());
+        PsiMethod getter = PropertyUtilBase.findPropertyGetterWithType(propertyName, isStatic, field.getType(), methods);
         if (getter != null) accessors.add(getter);
-        PsiMethod setter = PropertyUtilBase.findPropertySetterWithType(propertyName, isStatic, field.getType(),
-                                                                       ContainerUtil.iterate(containingClass.getMethods()));
+        PsiMethod setter = PropertyUtilBase.findPropertySetterWithType(propertyName, isStatic, field.getType(), methods);
         if (setter != null) accessors.add(setter);
         accessors.addAll(PropertyUtilBase.getAccessors(containingClass, fieldName));
         accessors.removeIf(accessor -> field != PropertyUtilBase.findPropertyFieldByMember(accessor));
@@ -186,11 +185,11 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return super.getSecondaryElements();
   }
 
-  private static boolean askShouldSearchAccessors(String fieldName) {
+  private static boolean askShouldSearchAccessors(@NotNull String fieldName) {
     return Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
                                        FindBundle.message("find.field.accessors.title"),
-                                       CommonBundle.getYesButtonText(),
-                                       CommonBundle.getNoButtonText(), Messages.getQuestionIcon()) == Messages.OK;
+                                       "&Include accessors",
+                                       "&Exclude accessors", Messages.getQuestionIcon()) == Messages.OK;
   }
 
   @Override
@@ -265,6 +264,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return super.findReferencesToHighlight(target, searchScope);
   }
 
+  @NotNull
   protected static String getActionString() {
     return FindBundle.message("find.super.method.warning.action.verb");
   }

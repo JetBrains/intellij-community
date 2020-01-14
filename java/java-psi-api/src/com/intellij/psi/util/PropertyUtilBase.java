@@ -217,38 +217,23 @@ public class PropertyUtilBase {
     return null;
   }
 
-  @Nullable
-  public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<? extends PsiMethod> methods) {
-    while (methods.hasNext()) {
-      PsiMethod method = methods.next();
-      if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
-      if (isSimplePropertyGetter(method)) {
-        if (getPropertyNameByGetter(method).equals(propertyName)) {
-          if (type.equals(method.getReturnType())) return method;
-        }
-      }
-    }
-    return null;
+  public static PsiMethod findPropertyGetterWithType(@NotNull String propertyName, boolean isStatic, PsiType type, @NotNull Collection<? extends PsiMethod> methods) {
+    return ContainerUtil.find(methods, method ->
+      method.hasModifierProperty(PsiModifier.STATIC) == isStatic &&
+      isSimplePropertyGetter(method) &&
+      getPropertyNameByGetter(method).equals(propertyName) &&
+      type.equals(method.getReturnType()));
   }
 
   public static boolean isSimplePropertyAccessor(PsiMethod method) {
     return isSimplePropertyGetter(method) || isSimplePropertySetter(method);
   }
 
-  @Nullable
-  public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<? extends PsiMethod> methods) {
-    while (methods.hasNext()) {
-      PsiMethod method = methods.next();
-      if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
-
-      if (isSimplePropertySetter(method)) {
-        if (getPropertyNameBySetter(method).equals(propertyName)) {
-          PsiType methodType = method.getParameterList().getParameters()[0].getType();
-          if (type.equals(methodType)) return method;
-        }
-      }
-    }
-    return null;
+  public static PsiMethod findPropertySetterWithType(@NotNull String propertyName, boolean isStatic, PsiType type, @NotNull Collection<? extends PsiMethod> methods) {
+    return ContainerUtil.find(methods, method->
+      method.hasModifierProperty(PsiModifier.STATIC) == isStatic &&
+      isSimplePropertySetter(method) &&
+      getPropertyNameBySetter(method).equals(propertyName) && type.equals(method.getParameterList().getParameters()[0].getType()));
   }
 
   public enum GetterFlavour {

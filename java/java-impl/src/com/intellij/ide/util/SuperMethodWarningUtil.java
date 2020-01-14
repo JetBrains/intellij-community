@@ -69,14 +69,15 @@ public class SuperMethodWarningUtil {
       parentInterface |= isInterface;
     }
 
-    switch (showDialog(
+    int shouldIncludeBase = showDialog(
       method.getProject(),
       DescriptiveNameUtil.getDescriptiveName(method),
       actionString,
       superAbstract,
       parentInterface,
       method.getContainingClass().isInterface(),
-      ArrayUtilRt.toStringArray(superClasses))) {
+      ArrayUtilRt.toStringArray(superClasses));
+    switch (shouldIncludeBase) {
       case Messages.YES:
         return methodTargetCandidates;
       case Messages.NO:
@@ -124,15 +125,16 @@ public class SuperMethodWarningUtil {
 
     PsiClass containingClass = superMethod.getContainingClass();
 
-    switch (showDialog(
-          method.getProject(),
-          DescriptiveNameUtil.getDescriptiveName(method),
-          actionString,
-          containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
-          containingClass.isInterface(),
-          aClass.isInterface(),
-          containingClass.getQualifiedName()
-      )) {
+    int useSuperMethod = showDialog(
+      method.getProject(),
+      DescriptiveNameUtil.getDescriptiveName(method),
+      actionString,
+      containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
+      containingClass.isInterface(),
+      aClass.isInterface(),
+      containingClass.getQualifiedName()
+    );
+    switch (useSuperMethod) {
       case Messages.YES: return superMethod;
       case Messages.NO: return method;
       default: return null;
@@ -199,22 +201,25 @@ public class SuperMethodWarningUtil {
 
   @Messages.YesNoCancelResult
   private static int showDialog(@NotNull Project project,
-                        @NotNull String name,
-                        @NotNull String actionString,
-                        boolean isSuperAbstract,
-                        boolean isParentInterface,
-                        boolean isContainedInInterface,
-                        @NotNull String... classNames) {
-    return Messages.showYesNoCancelDialog(project, getDialogMessage(name, actionString, isSuperAbstract, isParentInterface, isContainedInInterface, classNames), "Method Overrides", Messages.getQuestionIcon());
+                                @NotNull String name,
+                                @NotNull String actionString,
+                                boolean isSuperAbstract,
+                                boolean isParentInterface,
+                                boolean isContainedInInterface,
+                                @NotNull String... classNames) {
+    String message = getDialogMessage(name, actionString, isSuperAbstract, isParentInterface, isContainedInInterface, classNames);
+    return Messages.showYesNoCancelDialog(project,
+                                          message, "Super Method Found", "&Base method", "&Current method",
+                                          Messages.getCancelButton(), Messages.getQuestionIcon());
   }
 
   @NotNull
-  private static String getDialogMessage(String name,
-                                         String actionString,
+  private static String getDialogMessage(@NotNull String name,
+                                         @NotNull String actionString,
                                          boolean isSuperAbstract,
                                          boolean isParentInterface,
                                          boolean isContainedInInterface,
-                                         String[] classNames) {
+                                         @NotNull String[] classNames) {
     StringBuilder labelText = new StringBuilder();
     String classType = isParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class");
     String methodString = IdeBundle.message("element.method");
@@ -230,7 +235,7 @@ public class SuperMethodWarningUtil {
       labelText.append(IdeBundle.message("label.implements.method.of_interfaces"));
 
       for (final String className : classNames) {
-        labelText.append("<br>&emsp;").append(className);
+        labelText.append("<br>&emsp;'").append(className).append("'");
       }
     }
 
