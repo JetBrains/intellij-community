@@ -8,10 +8,13 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.Alarm.ThreadToUse.SWING_THREAD
+import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.CalledInAwt
 import javax.swing.JComponent
@@ -86,7 +89,11 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
   }
 }
 
-class GitExecutableInlineComponent(private val container: BorderLayoutPanel, private val panelToValidate: JPanel?) : InlineComponent {
+class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
+                                   private val modalityState: ModalityState,
+                                   private val panelToValidate: JPanel?) : InlineComponent {
+
+  private var progressShown = false
 
   override fun showProgress(text: String): ProgressIndicator {
     container.removeAll()
@@ -95,14 +102,20 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel, pri
       this.text = text
     }
 
-    container.addToLeft(pi.component)
-    panelToValidate?.validate()
+    progressShown = true
+    SingleAlarm(Runnable {
+      if (progressShown) {
+        container.addToLeft(pi.component)
+        panelToValidate?.validate()
+      }
+    }, delay = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, threadToUse = SWING_THREAD).request(modalityState)
 
     return pi
   }
 
   override fun showError(errorText: String, link: LinkLabel<*>?) {
     container.removeAll()
+    progressShown = false
 
     val label = multilineLabel(errorText).apply {
       foreground = DialogWrapper.ERROR_FOREGROUND_COLOR
@@ -118,6 +131,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel, pri
 
   override fun showMessage(text: String) {
     container.removeAll()
+    progressShown = false
 
     container.addToLeft(JBLabel(text))
     panelToValidate?.validate()
@@ -125,6 +139,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel, pri
 
   override fun hideProgress() {
     container.removeAll()
+    progressShown = false
 
     panelToValidate?.validate()
   }

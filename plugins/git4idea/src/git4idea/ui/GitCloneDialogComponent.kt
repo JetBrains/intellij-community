@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui
 
 import com.intellij.application.subscribe
@@ -25,7 +25,7 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
                            GitRememberedInputs.getInstance()) {
 
   private val executableManager get() = GitExecutableManager.getInstance()
-  private val inlineComponent = GitExecutableInlineComponent(errorComponent, mainPanel)
+  private val inlineComponent = GitExecutableInlineComponent(errorComponent, modalityState, mainPanel)
   private val errorNotifier = InlineErrorNotifier(inlineComponent, modalityState, this)
 
   private val executableProblemHandler = findGitExecutableProblemHandler(project)

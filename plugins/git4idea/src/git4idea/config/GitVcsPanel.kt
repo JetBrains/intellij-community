@@ -65,9 +65,10 @@ internal class GitVcsPanel(private val project: Project,
     val pathToGit = path ?: executableManager.detectedExecutable
     object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
 
+      private val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
       val errorNotifier = InlineErrorNotifierFromSettings(
-        GitExecutableInlineComponent(pathSelector.errorComponent, null),
-        ModalityState.stateForComponent(pathSelector.mainPanel), disposable!!
+        GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
+        modalityState, disposable!!
       )
 
       private lateinit var gitVersion: GitVersion
