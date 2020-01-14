@@ -4,14 +4,14 @@ package com.intellij.xdebugger.impl.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
-import com.intellij.openapi.wm.impl.simpleTitleParts.TitleInfoOption
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
 
-class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(TitleInfoOption.ALWAYS_ACTIVE, TitleInfoOption.ALWAYS_ACTIVE) {
+class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(RegistryOption("ide.title.debug", project), RegistryOption("ide.borderless.title.debug", project)) {
   private var subscriptionDisposable: Disposable? = null
 
   private var debuggerSessionStarted = false
@@ -23,6 +23,8 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
     }
 
   override fun updateSubscriptions() {
+    checkState()
+
     if (!isEnabled()) {
       subscriptionDisposable?.dispose()
       subscriptionDisposable = null
@@ -50,10 +52,6 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
       override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
         checkState()
       }
-
-      private fun checkState() {
-        debuggerSessionStarted = XDebuggerManager.getInstance(project).debugSessions.isNotEmpty()
-      }
     })
 
     val dsp = Disposable {
@@ -62,6 +60,10 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
     }
     Disposer.register(baseDisposable, dsp)
     return dsp
+  }
+
+  private fun checkState() {
+    debuggerSessionStarted = XDebuggerManager.getInstance(project).debugSessions.isNotEmpty() && isEnabled()
   }
 
   override val isActive: Boolean
