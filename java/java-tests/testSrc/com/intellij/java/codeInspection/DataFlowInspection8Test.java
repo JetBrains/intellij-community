@@ -155,6 +155,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testCapturedWildcardNotNull() { doTest(); }
   public void testVarargNotNull() { doTestWithCustomAnnotations(); }
   public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
+  public void testTypeUseLambdaReturn() {
+    setupTypeUseAnnotations("ambiguous", myFixture);
+    doTest();
+  }
 
   public void testArrayComponentAndMethodAnnotationConflict() {
     setupAmbiguousAnnotations("withTypeUse", myFixture);
