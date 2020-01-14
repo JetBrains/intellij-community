@@ -21,6 +21,7 @@ import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,5 +212,15 @@ public class VcsLogContentUtil {
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> ui == getLogUi(c));
     if (component == null) return;
     ContentUtilEx.renameTabbedContent(manager, component, newName);
+  }
+
+  /**
+   * @deprecated replaced by {@link VcsProjectLog#getOrCreateLog(Project)}.
+   */
+  @Deprecated
+  @CalledInBackground
+  @Nullable
+  public static VcsLogManager getOrCreateLog(@NotNull Project project) {
+    return VcsProjectLog.getOrCreateLog(project);
   }
 }
