@@ -359,7 +359,7 @@
     <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
     <extensionPoint name="sdkUsagesContributor" interface="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$SdkUsagesContributor" dynamic="true"/>
     <extensionPoint name="unknownSdkResolver" interface="com.intellij.openapi.projectRoots.impl.UnknownSdkResolver" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider" area="IDEA_PROJECT"/>
 
   </extensionPoints>
 </idea-plugin>

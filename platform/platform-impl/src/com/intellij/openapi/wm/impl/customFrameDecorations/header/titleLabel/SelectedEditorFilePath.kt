@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.constraints.isDisposed
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -148,7 +147,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
 
     project?.let { it ->
-      val disp = Disposer.newDisposable()
+      val disp = Disposable {
+        disposable = null
+      }
+
       Disposer.register(it, disp)
       disposable = disp
 
@@ -202,7 +204,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   protected fun updatePathLater() {
     SwingUtilities.invokeLater {
       disposable?.let {
-        if (!it.isDisposed) updatePath()
+        updatePath()
       }
     }
   }

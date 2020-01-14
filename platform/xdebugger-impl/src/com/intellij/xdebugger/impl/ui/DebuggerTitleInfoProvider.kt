@@ -4,15 +4,14 @@ package com.intellij.xdebugger.impl.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
-import com.intellij.openapi.wm.impl.simpleTitleParts.TitleInfoSubscription
+import com.intellij.openapi.wm.impl.simpleTitleParts.TitleInfoOption
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
 
-class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(TitleInfoSubscription.ALWAYS_ACTIVE, TitleInfoSubscription.ALWAYS_ACTIVE) {
+class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(TitleInfoOption.ALWAYS_ACTIVE, TitleInfoOption.ALWAYS_ACTIVE) {
   private var subscriptionDisposable: Disposable? = null
 
   private var debuggerSessionStarted = false
@@ -25,14 +24,12 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
 
   override fun updateSubscriptions() {
     if (!isEnabled()) {
-      subscriptionDisposable?.let {
-        if (!Disposer.isDisposed(it)) it.dispose()
-        return
-      }
+      subscriptionDisposable?.dispose()
+      subscriptionDisposable = null
       return
     }
 
-    if (subscriptionDisposable?.let{Disposer.isDisposed(it)} != false) {
+    if (subscriptionDisposable == null) {
       subscriptionDisposable = addSubscription(project)
     }
 
@@ -61,6 +58,7 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
 
     val dsp = Disposable {
       connection.disconnect()
+      subscriptionDisposable = null
     }
     Disposer.register(baseDisposable, dsp)
     return dsp

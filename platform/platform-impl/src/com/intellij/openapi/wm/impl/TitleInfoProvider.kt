@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 
 interface TitleInfoProvider {
   companion object {

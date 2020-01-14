@@ -7,10 +7,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 
-open class TitleInfoSubscription {
+open class TitleInfoOption {
   companion object {
     @JvmStatic
-    val ALWAYS_ACTIVE = TitleInfoSubscription()
+    val ALWAYS_ACTIVE = TitleInfoOption()
   }
 
   var isActive: Boolean = true
@@ -21,36 +21,18 @@ open class TitleInfoSubscription {
   }
 }
 
-class RegistrySubscriptionList(val keyList: List<String>, disposable: Disposable) : TitleInfoSubscription() {
-  val subscript: List<TitleInfoSubscription>
+class RegistryOption(key: String, disposable: Disposable) : TitleInfoOption() {
   init {
-    subscript = keyList.map {
-      val subscription = RegistrySubscription(it, disposable)
-      subscription.listener = { update() }
-      subscription
-    }.toList()
-  }
-
-  override fun update() {
-    isActive = subscript.isEmpty() || subscript.any { it.isActive }
-    super.update()
-  }
-}
-
-class RegistrySubscription(key: String, disposable: Disposable) : TitleInfoSubscription() {
-  init {
-    val rds = Disposer.newDisposable()
-    Disposer.register(disposable, rds)
     Registry.get(key).addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         isActive = Registry.get(key).asBoolean()
         update()
       }
-    }, rds)
+    }, disposable)
   }
 }
 
-class VMOSubscription(key: String) : TitleInfoSubscription() {
+class VMOOption(key: String) : TitleInfoOption() {
   init {
     isActive = java.lang.Boolean.getBoolean(key)
   }
