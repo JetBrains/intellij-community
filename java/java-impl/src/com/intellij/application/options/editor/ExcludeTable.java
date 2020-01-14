@@ -45,7 +45,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
       null : new ValidationInfo("Illegal name: " + value.toString(), component);
 
   private static final Disposable validatorsDisposable = Disposer.newDisposable();
-  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>("Class/package/member qualified name mask") {
+  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>(ApplicationBundle.message("exclude.table.mask")) {
 
     @Nullable
     @Override
@@ -90,7 +90,8 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     }
   };
 
-  private static final ColumnInfo<Item, ExclusionScope> SCOPE_COLUMN = new ColumnInfo<Item, ExclusionScope>("Scope") {
+  private static final ColumnInfo<Item, ExclusionScope> SCOPE_COLUMN = new ColumnInfo<Item, ExclusionScope>(ApplicationBundle.message(
+    "exclude.table.scope.column")) {
     @Nullable
     @Override
     public ExclusionScope valueOf(Item pair) {
