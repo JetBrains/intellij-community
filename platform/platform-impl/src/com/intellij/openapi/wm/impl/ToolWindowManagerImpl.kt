@@ -1185,7 +1185,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       Disposer.dispose(existing)
     }
 
-    val stripe = toolWindowPane!!.getStripeFor(entry.readOnlyWindowInfo.anchor) ?: return
+    val stripe = toolWindowPane!!.getStripeFor(entry.readOnlyWindowInfo.anchor)
     if (!entry.toolWindow.isAvailable) {
       entry.toolWindow.isPlaceholderMode = true
       stripe.updatePresentation()
@@ -1306,14 +1306,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     // if tool window isn't visible or only order number is changed then just remove/add stripe button
     val toolWindowPane = toolWindowPane!!
     if (!currentInfo.isVisible || anchor == currentInfo.anchor || currentInfo.isFloating || currentInfo.type == ToolWindowType.WINDOWED) {
-      doSetAnchor(entry, currentInfo, layoutInfo, anchor, order)
+      doSetAnchor(entry, layoutInfo, anchor, order)
     }
     else {
       // for docked and sliding windows we have to move buttons and window's decorators
       layoutInfo.isVisible = false
       toolWindowPane.removeDecorator(currentInfo, entry.toolWindow.decoratorComponent, /* dirtyMode = */ true, this)
 
-      doSetAnchor(entry, currentInfo, layoutInfo, anchor, order)
+      doSetAnchor(entry, layoutInfo, anchor, order)
 
       showToolWindowImpl(entry, false)
       if (currentInfo.isActive) {
@@ -1322,7 +1322,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  private fun doSetAnchor(entry: ToolWindowEntry, currentInfo: WindowInfo, layoutInfo: WindowInfoImpl, anchor: ToolWindowAnchor, order: Int) {
+  private fun doSetAnchor(entry: ToolWindowEntry, layoutInfo: WindowInfoImpl, anchor: ToolWindowAnchor, order: Int) {
     val toolWindowPane = toolWindowPane!!
     toolWindowPane.removeStripeButton(entry.stripeButton)
 
@@ -1332,12 +1332,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val otherInfo = layout.getInfo(otherId)?.copy() ?: continue
       otherEntry.applyWindowInfo(otherInfo)
     }
-    addStripeButton(entry.stripeButton, anchor, currentAnchor = currentInfo.anchor)
+    addStripeButton(entry.stripeButton, anchor)
   }
 
-  private fun addStripeButton(button: StripeButton, anchor: ToolWindowAnchor, currentAnchor: ToolWindowAnchor = anchor) {
+  private fun addStripeButton(button: StripeButton, anchor: ToolWindowAnchor) {
     val stripe = toolWindowPane!!.getStripeFor(anchor)
-    stripe.addButton(button, layout.MyStripeButtonComparator(currentAnchor, this))
+    stripe.addButton(button, Comparator { o1, o2 -> windowInfoComparator.compare(o1.windowInfo, o2.windowInfo) })
     stripe.revalidate()
   }
 
@@ -1381,7 +1381,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     hideIfNeededAndShowAfterTask(entry, info) {
       info.isSplit = isSplit
-      doSetAnchor(entry, entry.readOnlyWindowInfo, info, anchor, order)
+      doSetAnchor(entry, info, anchor, order)
     }
     fireStateChanged()
   }
