@@ -44,7 +44,14 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   public final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda2", "anaconda3", "miniconda", "miniconda2",
     "miniconda3", "Anaconda", "Anaconda2", "Anaconda3", "Miniconda", "Miniconda2", "Miniconda3"};
 
-  public static final CondaEnvSdkFlavor INSTANCE = new CondaEnvSdkFlavor();
+  public static CondaEnvSdkFlavor getInstance() {
+    return PythonSdkFlavor.EP_NAME.findExtension(CondaEnvSdkFlavor.class);
+  }
+
+  @Override
+  public boolean isPlatformIndependent() {
+    return true;
+  }
 
   @NotNull
   @Override

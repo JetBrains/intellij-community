@@ -42,6 +42,15 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   private final ClearableLazyValue<Set<String>> myRegistryCache =
     ClearableLazyValue.createAtomic(() -> findInRegistry(getWinRegistryService()));
 
+  public static WinPythonSdkFlavor getInstance() {
+    return PythonSdkFlavor.EP_NAME.findExtension(WinPythonSdkFlavor.class);
+  }
+
+  @Override
+  public boolean isApplicable() {
+    return SystemInfo.isWindows;
+  }
+
   @NotNull
   @Override
   public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {

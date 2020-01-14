@@ -4,12 +4,11 @@ package com.jetbrains.python.sdk.flavors;
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +19,7 @@ import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import icons.PythonIcons;
+import icons.PythonSdkIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +32,8 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public abstract class PythonSdkFlavor {
+  public static final ExtensionPointName<PythonSdkFlavor> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
+
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
@@ -59,25 +60,33 @@ public abstract class PythonSdkFlavor {
     return Collections.emptyList();
   }
 
+  /**
+   * Flavor is added to result in {@link #getApplicableFlavors()} if this method returns true.
+   * If the only condition is independence of platform, then {@link #isPlatformIndependent()} should be used.
+   * @return whether this flavor is applicable
+   */
+  public boolean isApplicable() {
+    return false;
+  }
+
+  /**
+   * Used for distinguishing platform flavors from platform-independent ones in {@link #getPlatformIndependentFlavors()}.
+   * @return whether the flavor is platform independent
+   */
+  public boolean isPlatformIndependent() {
+    return false;
+  }
+
   public static List<PythonSdkFlavor> getApplicableFlavors() {
     return getApplicableFlavors(true);
   }
 
   public static List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
     List<PythonSdkFlavor> result = new ArrayList<>();
-
-    if (SystemInfo.isWindows) {
-      result.add(ServiceManager.getService(WinPythonSdkFlavor.class));
-    }
-    else if (SystemInfo.isMac) {
-      result.add(MacPythonSdkFlavor.INSTANCE);
-    }
-    else if (SystemInfo.isUnix) {
-      result.add(UnixPythonSdkFlavor.INSTANCE);
-    }
-
-    if (addPlatformIndependent) {
-      result.addAll(getPlatformIndependentFlavors());
+    for (PythonSdkFlavor flavor : EP_NAME.getExtensionList()) {
+      if (flavor.isApplicable() || (addPlatformIndependent && flavor.isPlatformIndependent())) {
+        result.add(flavor);
+      }
     }
 
     result.addAll(getPlatformFlavorsFromExtensions(addPlatformIndependent));
@@ -85,10 +94,10 @@ public abstract class PythonSdkFlavor {
     return result;
   }
 
-  public static List<PythonSdkFlavor> getPlatformFlavorsFromExtensions(boolean isInpedendent) {
+  public static List<PythonSdkFlavor> getPlatformFlavorsFromExtensions(boolean isIndependent) {
     List<PythonSdkFlavor> result = new ArrayList<>();
     for (PythonFlavorProvider provider : PythonFlavorProvider.EP_NAME.getExtensionList()) {
-      PythonSdkFlavor flavor = provider.getFlavor(isInpedendent);
+      PythonSdkFlavor flavor = provider.getFlavor(isIndependent);
       if (flavor != null) {
         result.add(flavor);
       }
@@ -98,12 +107,11 @@ public abstract class PythonSdkFlavor {
 
   public static List<PythonSdkFlavor> getPlatformIndependentFlavors() {
     List<PythonSdkFlavor> result = Lists.newArrayList();
-    result.add(JythonSdkFlavor.INSTANCE);
-    result.add(IronPythonSdkFlavor.INSTANCE);
-    result.add(PyPySdkFlavor.INSTANCE);
-    result.add(VirtualEnvSdkFlavor.INSTANCE);
-    result.add(CondaEnvSdkFlavor.INSTANCE);
-    result.add(PyRemoteSdkFlavor.INSTANCE);
+    for (PythonSdkFlavor flavor : EP_NAME.getExtensionList()) {
+      if (flavor.isPlatformIndependent()) {
+        result.add(flavor);
+      }
+    }
 
     return result;
   }
@@ -232,7 +240,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public Icon getIcon() {
-    return PythonIcons.Python.Python;
+    return PythonSdkIcons.Python;
   }
 
   public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {

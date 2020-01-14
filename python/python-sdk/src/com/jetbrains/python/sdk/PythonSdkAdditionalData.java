@@ -82,7 +82,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   public void associateWithModule(@NotNull Module module) {
-    final String path = PySdkExtKt.getBasePath(module);
+    final String path = BasePySdkExtKt.getBasePath(module);
     if (path != null) {
       associateWithModulePath(path);
     }

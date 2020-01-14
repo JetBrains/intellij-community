@@ -8,6 +8,7 @@
 
   <xi:include href="/META-INF/PythonPsi.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonPsiImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PythonSdk.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -94,8 +95,6 @@
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.sdk.flavors.WinRegistryService"
                         serviceImplementation="com.jetbrains.python.sdk.flavors.WinRegistryServiceImpl"/>
-    <applicationService
-        serviceImplementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
@@ -636,7 +635,6 @@
     <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension"/>
     <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider" interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"/>
     <extensionPoint qualifiedName="Pythonid.pep8ProblemSuppressor" interface="com.jetbrains.python.validation.Pep8ProblemSuppressor"/>
-    <extensionPoint qualifiedName="Pythonid.pythonFlavorProvider" interface="com.jetbrains.python.sdk.flavors.PythonFlavorProvider"/>
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"/>
     <extensionPoint qualifiedName="Pythonid.pythonSdkComparator" interface="com.jetbrains.python.sdk.PySdkComparator" />
     <extensionPoint qualifiedName="Pythonid.pythonSdkTypeComparator" interface="com.jetbrains.python.sdk.PySdkTypeComparator"/>
@@ -705,6 +703,17 @@
     <!-- Pipenv -->
     <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
+
+    <!-- SDK Flavors -->
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.JythonSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.PyPySdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.PyRemoteSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
 
     <!-- Other -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>

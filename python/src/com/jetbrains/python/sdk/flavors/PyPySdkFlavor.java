@@ -18,13 +18,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PyPySdkFlavor extends PythonSdkFlavor {
-  public static PyPySdkFlavor INSTANCE = new PyPySdkFlavor();
+  public static PyPySdkFlavor getInstance() {
+    return PythonSdkFlavor.EP_NAME.findExtension(PyPySdkFlavor.class);
+  }
 
   private static final Pattern VERSION_RE = Pattern.compile("\\[(PyPy \\S+).*\\]");
   private static final Pattern PYTHON_VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Pattern VERSION_STRING_RE = Pattern.compile("PyPy (\\S+)( \\[Python (\\S+)\\])?");
 
   private PyPySdkFlavor() {
+  }
+
+  @Override
+  public boolean isPlatformIndependent() {
+    return true;
   }
 
   @Override

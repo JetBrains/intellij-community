@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootManager
@@ -96,10 +95,10 @@ fun resetSystemWideSdksDetectors() {
 }
 
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(module, context), existingSdks, module)
+  filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
 
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(module, context), existingSdks, module)
+  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
 
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
                             existingSdks: List<Sdk>,
@@ -201,12 +200,6 @@ var Project.pythonSdk: Sdk?
       }
     }
   }
-
-val Module.baseDir: VirtualFile?
-  get() = rootManager.contentRoots.firstOrNull()
-
-val Module.basePath: String?
-  get() = baseDir?.path
 
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
   val root = sdk.homePath?.let { PythonSdkUtil.getVirtualEnvRoot(it) }?.let { LocalFileSystem.getInstance().findFileByIoFile(it) } ?: return
