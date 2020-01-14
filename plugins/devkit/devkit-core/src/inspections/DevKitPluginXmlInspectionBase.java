@@ -8,7 +8,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
@@ -32,5 +34,15 @@ abstract public class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
     final PropertiesFileImpl bundleFile = ObjectUtils.tryCast(bundleReference.resolve(), PropertiesFileImpl.class);
     if (bundleFile == null) return null;
     return bundleFile;
+  }
+
+  @Nullable
+  protected static GenericAttributeValue getAttribute(DomElement domElement, String attributeName) {
+    final DomAttributeChildDescription attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
+    if (attributeDescription == null) {
+      return null;
+    }
+
+    return attributeDescription.getDomAttributeValue(domElement);
   }
 }

@@ -743,16 +743,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
-  @Nullable
-  static GenericAttributeValue getAttribute(DomElement domElement, String attributeName) {
-    final DomAttributeChildDescription attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
-    if (attributeDescription == null) {
-      return null;
-    }
-
-    return attributeDescription.getDomAttributeValue(domElement);
-  }
-
   private static void annotateComponent(Component component,
                                         DomElementAnnotationHolder holder,
                                         ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {

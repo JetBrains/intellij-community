@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
@@ -28,6 +29,7 @@ import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 
 public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
+
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
@@ -36,14 +38,15 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static void highlightAction(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup action) {
-    if (Boolean.TRUE.equals(action.getInternal().getValue())) return;
-
     String id = action.getId().getStringValue();
     if (id == null) return;
 
     String text = action.getText().getStringValue();
     String desc = action.getDescription().getStringValue();
     if (text == null && desc == null) return;
+
+    final GenericAttributeValue internal = getAttribute(action, "internal");
+    if (internal != null && "true".equals(internal.getStringValue())) return;
 
     holder.createProblem(action, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                          getText(),
