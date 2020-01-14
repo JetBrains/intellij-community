@@ -20,6 +20,10 @@
               icon="AllIcons.General.Settings">
       </action>
 
+      <action id="ExternalSystem.ToggleProjectRefresh"
+              class="com.intellij.openapi.externalSystem.autoimport.ToggleProjectRefreshAction">
+      </action>
+
       <action id="ExternalSystem.OpenTasksActivationManager"
               class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
       </action>
