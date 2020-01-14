@@ -6,6 +6,8 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -32,6 +34,7 @@ import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
   companion object {
     private val BALLOON_NOTIFICATIONS = NotificationGroup("Python interpreter configuring", NotificationDisplayType.BALLOON, true)
+    private val LOGGER = Logger.getInstance(PythonSdkConfigurator::class.java)
 
     private fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
       return existingSdks
@@ -79,7 +82,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, newProject: Boolean) {
-    if (project.pythonSdk != null || newProject) return
+    val sdk = project.pythonSdk
+    LOGGER.debug { "Input: $sdk, $newProject" }
+    if (sdk != null || newProject) return
 
     ProgressManager.getInstance().run(
       object : Task.Backgroundable(project, "Configuring a Python Interpreter", true) {
@@ -92,12 +97,13 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     indicator.isIndeterminate = true
 
     val context = UserDataHolderBase()
-    val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: return
+    val module = ModuleManager.getInstance(project).modules.firstOrNull().also { LOGGER.debug { "Module: $it" } } ?: return
     val existingSdks = ProjectSdksModel().apply { reset(project) }.sdks.filter { it.sdkType is PythonSdkType }
 
     if (indicator.isCanceled) return
-    indicator.text = "Looking for the previously used interpreter"
+    setTextAndLog(indicator, "Looking for the previously used interpreter")
     guardIndicator(indicator) { findExistingAssociatedSdk(module, existingSdks) }?.let {
+      LOGGER.debug { "The previously used interpreter: $it" }
       onEdt(project) {
         SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
         module.excludeInnerVirtualEnv(it)
@@ -107,9 +113,11 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     if (indicator.isCanceled) return
-    indicator.text = "Looking for a virtual environment related to the project"
+    setTextAndLog(indicator, "Looking for a virtual environment related to the project")
     guardIndicator(indicator) { findDetectedAssociatedEnvironment(module, existingSdks, context) }?.let {
+      LOGGER.debug { "Detected virtual environment related to the project: $it" }
       val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
+      LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 
       onEdt(project) {
         SdkConfigurationUtil.addSdk(newSdk)
@@ -124,8 +132,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     // TODO: Introduce an extension for configuring a project via a Python SDK provider
     if (indicator.isCanceled) return
-    indicator.text = "Looking for a Pipfile"
+    setTextAndLog(indicator, "Looking for a Pipfile")
     guardIndicator(indicator) { detectAndSetupPipEnv(project, module, existingSdks) }?.let {
+      LOGGER.debug { "Pipenv: $it" }
       onEdt(project) {
         SdkConfigurationUtil.addSdk(it)
         SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
@@ -135,8 +144,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     if (indicator.isCanceled) return
-    indicator.text = "Looking for the default interpreter setting for a new project"
+    setTextAndLog(indicator, "Looking for the default interpreter setting for a new project")
     guardIndicator(indicator) { getDefaultProjectSdk() }?.let {
+      LOGGER.debug { "Default interpreter setting for a new project: $it" }
       onEdt(project) {
         SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
         notifyAboutConfiguredSdk(project, module, it)
@@ -145,8 +155,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     if (indicator.isCanceled) return
-    indicator.text = "Looking for the previously used system-wide interpreter"
+    setTextAndLog(indicator, "Looking for the previously used system-wide interpreter")
     guardIndicator(indicator) { findExistingSystemWideSdk(existingSdks) }?.let {
+      LOGGER.debug { "Previously used system-wide interpreter: $it" }
       onEdt(project) {
         SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
         notifyAboutConfiguredSdk(project, module, it)
@@ -155,14 +166,21 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     if (indicator.isCanceled) return
-    indicator.text = "Looking for a system-wide interpreter"
+    setTextAndLog(indicator, "Looking for a system-wide interpreter")
     guardIndicator(indicator) { findDetectedSystemWideSdk(module, existingSdks, context) }?.let {
+      LOGGER.debug { "Detected system-wide interpreter: $it" }
       onEdt(project) {
         SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
+          LOGGER.debug { "Created system-wide interpreter: $this" }
           SdkConfigurationUtil.setDirectoryProjectSdk(project, this)
           notifyAboutConfiguredSdk(project, module, this)
         }
       }
     }
+  }
+
+  private fun setTextAndLog(indicator: ProgressIndicator, text: String) {
+    indicator.text = text
+    LOGGER.debug(text)
   }
 }
