@@ -39,6 +39,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
+import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
+
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class JUnit5TestExecutionListener implements TestExecutionListener {
   private static final String NO_LOCATION_HINT = "";
@@ -200,10 +202,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       if (messageName != null) {
         if (status == TestExecutionResult.Status.FAILED) {
           String parentId = getParentId(testIdentifier);
-          String nameAndId = " name=\'" + JUnit4TestListener.CLASS_CONFIGURATION +
+          String nameAndId = " name=\'" + CLASS_CONFIGURATION +
                              "\' nodeId=\'" + escapeName(getId(testIdentifier)) +
                              "\' parentNodeId=\'" + escapeName(parentId) + "\' ";
-          testFailure(JUnit4TestListener.CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
+          testFailure(CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("\n##teamcity[testFinished" + nameAndId + "]");
         }
 
