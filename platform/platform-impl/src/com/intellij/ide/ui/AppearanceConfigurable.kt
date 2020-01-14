@@ -27,6 +27,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
+import com.intellij.ui.components.Link
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
@@ -248,7 +249,8 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
                 .onApply(onApply)
             }
 
-            link(UIBundle.message("color.blindness.link.to.help")) { HelpManager.getInstance().invokeHelp("Colorblind_Settings") }
+            component(Link(UIBundle.message("color.blindness.link.to.help"))
+                      { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
               .withLargeLeftGap()
           }
         }
