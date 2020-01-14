@@ -660,6 +660,22 @@ public class ActionsTreeUtil {
     return KeyMapBundle.message("editor.popup.menu.title");
   }
 
+  public static String getEditorGutterPopupMenu() {
+    return KeyMapBundle.message("editor.gutter.popup.menu");
+  }
+
+  public static String getScopeViewPopupMenu() {
+    return KeyMapBundle.message("scope.view.popup.menu");
+  }
+
+  public static String getNavigationBarPopupMenu() {
+    return KeyMapBundle.message("navigation.bar.popup.menu");
+  }
+
+  public static String getNavigationBarToolbar() {
+    return KeyMapBundle.message("navigation.bar.toolbar");
+  }
+
   public static String getEditorTabPopup() {
     return KeyMapBundle.message("editor.tab.popup.menu.title");
   }
