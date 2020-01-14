@@ -246,13 +246,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun updateToolWindowHeaders() {
-    focusManager.doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(project) {
-      override fun run() {
-        idToEntry.forEach { (id, entry) ->
-          val info = layout.getInfo(id) ?: return@forEach
-          if (info.isVisible) {
-            entry.toolWindow.decorator.repaint()
-          }
+    focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
+      idToEntry.forEach { (id, entry) ->
+        val info = layout.getInfo(id) ?: return@forEach
+        if (info.isVisible) {
+          entry.toolWindow.decorator.repaint()
         }
       }
     })
@@ -347,11 +345,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        focusManager.doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(project) {
-          override fun run() {
-            if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
-              focusToolWindowByDefault()
-            }
+        focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
+          if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
+            focusToolWindowByDefault()
           }
         })
       }
@@ -1703,18 +1699,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
       val toolWindowManager = toolWindow.toolWindowManager
       toolWindowManager.focusManager
-        .doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(toolWindowManager.project) {
-          override fun run() {
-            GuiUtils.invokeLaterIfNeeded(Runnable {
-              val entry = toolWindowManager.idToEntry.get(id) ?: return@Runnable
-              val windowInfo = entry.readOnlyWindowInfo
-              if (!windowInfo.isVisible) {
-                return@Runnable
-              }
-              toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id),
-                autoFocusContents = false)
-            }, ModalityState.defaultModalityState(), toolWindowManager.project.disposed)
-          }
+        .doWhenFocusSettlesDown(ExpirableRunnable.forProject(toolWindowManager.project) {
+          GuiUtils.invokeLaterIfNeeded(Runnable {
+            val entry = toolWindowManager.idToEntry.get(id) ?: return@Runnable
+            val windowInfo = entry.readOnlyWindowInfo
+            if (!windowInfo.isVisible) {
+              return@Runnable
+            }
+            toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id),
+              autoFocusContents = false)
+          }, ModalityState.defaultModalityState(), toolWindowManager.project.disposed)
         })
     }
   }

@@ -150,3 +150,5 @@ com.jedide.apex 2.1.3.191 2.1.6.192
 com.taobao.tmf.plugin.id 1.4.16
 Signals 0.1.1
 com.pandocker 0.3 0.4 0.4.3 0.5 0.5.1 0.6 0.6.1
+CodeOutline2 0.5.4
+cogurets 1.1.0
