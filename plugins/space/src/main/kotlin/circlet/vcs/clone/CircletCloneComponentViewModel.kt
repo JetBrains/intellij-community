@@ -29,7 +29,7 @@ class CircletCloneComponentViewModel(
 
             val projectsWithRepos = repositoryService.getRepositories(allProjects.map { project -> project.key }).groupBy { it.project.key }
 
-            val starredProjectKeys = starService.starredProjects().map(PR_Project::key).toHashSet()
+            val starredProjectKeys = starService.starredProjects().resolveAll().map(PR_Project::key).toHashSet()
 
             val result = mutableListOf<CircletCloneListItem?>()
             allProjects.forEach { project ->
@@ -54,7 +54,7 @@ class CircletCloneComponentViewModel(
                     }
                 }
             }
-            while(result.size < allProjects.size) {
+            while (result.size < allProjects.size) {
                 result.add(null)
             }
             result
