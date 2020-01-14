@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.util.TimeoutUtil.sleep
 import org.junit.Test
 import java.awt.EventQueue.invokeLater
 import java.awt.EventQueue.isDispatchThread
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class AsyncPromiseStateTest {
@@ -73,31 +73,25 @@ class AsyncPromiseStateTest {
   @Test
   fun errorNow() {
     val promise = promise(State.ERROR, When.NOW)
-    try {
+    assertThatThrownBy {
       assertThat(promise.blockingGet(100)).isNull()
-    }
-    catch (ignored: ExecutionException) {
-    }
+    }.isInstanceOf(CheckedException::class.java)
   }
 
   @Test
   fun errorAfterHandlerSet() {
     val promise = promise(State.ERROR, When.AFTER)
-    try {
-      assertThat(promise.blockingGet(100)).isNull()
-    }
-    catch (ignored: ExecutionException) {
-    }
+    assertThatThrownBy {
+      promise.blockingGet(100)
+    }.isInstanceOf(CheckedException::class.java)
   }
 
   @Test
   fun errorBeforeHandlerSet() {
     val promise = promise(State.ERROR, When.BEFORE)
-    try {
-      assertThat(promise.blockingGet(100)).isNull()
-    }
-    catch (ignored: ExecutionException) {
-    }
+    assertThatThrownBy {
+      promise.blockingGet(100)
+    }.isInstanceOf(CheckedException::class.java)
   }
 }
 

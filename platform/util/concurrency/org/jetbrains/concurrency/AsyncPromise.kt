@@ -109,11 +109,13 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
       return get(timeout.toLong(), timeUnit)
     }
     catch (e: ExecutionException) {
-      if (e.cause === InternalPromiseUtil.OBSOLETE_ERROR) {
+      val cause = e.cause ?: throw e
+      if (cause === InternalPromiseUtil.OBSOLETE_ERROR) {
         return null
       }
-
-      throw e
+      else {
+        throw cause
+      }
     }
   }
 
