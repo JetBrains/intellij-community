@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -697,9 +697,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // used to normalize previously patched values
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
-    patchRowHeight(defaults, "List.rowHeight", prevScale);
-    patchRowHeight(defaults, "Table.rowHeight", prevScale);
-    patchRowHeight(defaults, "Tree.rowHeight", prevScale);
+    // fix predefined row height if default system font size is not expected
+    float prevRowHeightScale = prevScaleVal != null || SystemInfo.isMac || SystemInfo.isWindows
+                               ? prevScale
+                               : JBUIScale.getFontScale(12f);
+    patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale);
+    patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale);
+    patchRowHeight(defaults, "Tree.rowHeight", prevRowHeightScale);
 
     if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) return;
 
