@@ -20,4 +20,4 @@ internal val sortTabsAlphabetically              = CheckboxDescriptor(message("c
 internal val openTabsAtTheEnd                    = CheckboxDescriptor(message("checkbox.open.new.tabs.at.the.end"), ui::openTabsAtTheEnd)
 internal val reuseNotModifiedTabs                = CheckboxDescriptor(message("checkbox.smart.tab.reuse"), ui::reuseNotModifiedTabs, message("checkbox.smart.tab.reuse.inline.help"))
 internal val scrollTabLayoutInEditor             = CheckboxDescriptor(message("checkbox.editor.tabs.in.single.row"), ui::scrollTabLayoutInEditor)
-internal val useSmallFont                        = CheckboxDescriptor("Use small font for labels", ui::useSmallLabelsOnTabs)
+internal val useSmallFont                        = CheckboxDescriptor(message("checkbox.use.small.font.for.labels"), ui::useSmallLabelsOnTabs)
