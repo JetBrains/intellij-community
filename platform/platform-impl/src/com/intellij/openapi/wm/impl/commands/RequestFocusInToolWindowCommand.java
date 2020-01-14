@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,11 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Requests focus for the specified tool window.
- *
- * @author Vladimir Kondratyev
- */
 public final class RequestFocusInToolWindowCommand implements Runnable {
   private static final Logger LOG = Logger.getInstance(RequestFocusInToolWindowCommand.class);
   private final ToolWindowImpl toolWindow;
@@ -47,7 +42,7 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
           ToolWindowManagerImpl manager = toolWindow.getToolWindowManager();
           if (owner != component) {
             manager.getFocusManager().requestFocusInProject(component, manager.getProject());
-            bringOwnerToFront();
+            bringOwnerToFront(toolWindow);
           }
           manager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(component));
         }
@@ -55,7 +50,7 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
     }, 0);
   }
 
-  private void bringOwnerToFront() {
+  private static void bringOwnerToFront(@NotNull ToolWindowImpl toolWindow) {
     final Window owner = SwingUtilities.getWindowAncestor(toolWindow.getComponent());
     //Toolwindow component shouldn't take focus back if new dialog or frame appears
     //Example: Ctrl+D on file history brings a diff dialog to front and then hides it by main frame by calling
