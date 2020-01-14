@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.impl.NotificationParentGroup;
 import com.intellij.notification.impl.NotificationParentGroupBean;
@@ -53,7 +54,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     setLayout(new BorderLayout(5, 5));
     myTable = new NotificationsTreeTable();
 
-    myDisplayBalloons = new JCheckBox("Display balloon notifications");
+    myDisplayBalloons = new JCheckBox(IdeBundle.message("notifications.configurable.display.balloon.notifications"));
     myDisplayBalloons.setMnemonic('b');
     myDisplayBalloons.addActionListener(new ActionListener() {
       @Override
@@ -62,7 +63,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       }
     });
 
-    mySystemNotifications = new JCheckBox("Enable system notifications");
+    mySystemNotifications = new JCheckBox(IdeBundle.message("notifications.configurable.enable.system.notifications"));
     mySystemNotifications.setMnemonic('s');
 
     JPanel boxes = new JPanel();
@@ -252,7 +253,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       }
 
       new TableSpeedSearch(this);
-      getEmptyText().setText("No notifications configured");
+      getEmptyText().setText(IdeBundle.message("notifications.configurable.no.notifications.configured"));
       TreeUtil.expandAll(getTree());
     }
 
@@ -413,13 +414,13 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     public String getColumnName(int column) {
       switch (column) {
         case NotificationsTreeTable.ID_COLUMN:
-          return "Group";
+          return IdeBundle.message("notifications.configurable.column.group");
         case NotificationsTreeTable.LOG_COLUMN:
-          return "Log";
+          return IdeBundle.message("notifications.configurable.column.log");
         case NotificationsTreeTable.READ_ALOUD_COLUMN:
-          return "Read aloud";
+          return IdeBundle.message("notifications.configurable.column.read.aloud");
         default:
-          return "Popup";
+          return IdeBundle.message("notifications.configurable.column.popup");
       }
     }
 
