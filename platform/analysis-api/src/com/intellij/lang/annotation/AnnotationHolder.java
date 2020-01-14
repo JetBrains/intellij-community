@@ -191,8 +191,11 @@ public interface AnnotationHolder {
   boolean isBatchMode();
 
   /**
-   * Begin creating a new annotation for this range with severity and message.
+   * Begin constructing a new annotation.
+   * To finish construction and show the annotation on screen the {@link AnnotationBuilder#create()} method must be called.
    * For example: <p>{@code holder.newAnnotation(HighlightSeverity.WARNING, "My warning message").create();}</p>
+   * @param severity The severity of the annotation
+   * @param message The message this annotation will show in the status bar and the tooltip
    */
   @Contract(pure = true)
   @NotNull
@@ -201,8 +204,10 @@ public interface AnnotationHolder {
   }
 
   /**
-   * Begin creating a new annotation for this range with severity but with no any message.
+   * Begin constructing a new annotation with no any message.
+   * To finish construction and show the annotation on screen the {@link AnnotationBuilder#create()} method must be called.
    * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING).textAttributes(MY_ATTRIBUTES_KEY).create();}</p>
+   * @param severity The severity of the annotation
    */
   @Contract(pure = true)
   @NotNull
