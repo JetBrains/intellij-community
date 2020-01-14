@@ -6,6 +6,7 @@ import com.intellij.diagnostic.logging.LogFilter
 import com.intellij.diagnostic.logging.LogFilterListener
 import com.intellij.diagnostic.logging.LogFilterModel
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.StatisticsEventLogToolWindow.Companion.rejectedValidationTypes
 import com.intellij.internal.statistic.eventLog.EventLogNotificationService
 import com.intellij.internal.statistic.eventLog.LogEvent
@@ -55,15 +56,17 @@ class StatisticsEventLogToolWindow(project: Project, private val recorderId: Str
     val topToolbarActions = DefaultActionGroup()
     topToolbarActions.add(RecordStateStatisticsEventLogAction(false))
     topToolbarActions.add(OpenEventLogFileAction(recorderId))
-    topToolbarActions.addSeparator()
+    topToolbarActions.addSeparator(StatisticsBundle.message("stats.whitelist"))
     topToolbarActions.add(ConfigureWhitelistAction(recorderId))
     topToolbarActions.add(UpdateWhitelistAction(recorderId))
     topToolbarActions.add(OpenWhitelistFileAction(recorderId))
-    topToolbarActions.addSeparator()
+    topToolbarActions.addSeparator(StatisticsBundle.message("stats.local.whitelist"))
     topToolbarActions.add(AddTestGroupToLocalWhitelistAction())
     topToolbarActions.add(CleanupLocalWhitelistAction())
     topToolbarActions.add(OpenLocalWhitelistFileAction(recorderId))
-    return ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true).component
+    val toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true)
+    toolbar.setShowSeparatorTitles(true)
+    return toolbar.component
   }
 
   override fun dispose() {

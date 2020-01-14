@@ -124,4 +124,10 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
       value.cleanup();
     }
   }
+
+  public int size() {
+    synchronized (myLock) {
+      return eventsValidators.size();
+    }
+  }
 }

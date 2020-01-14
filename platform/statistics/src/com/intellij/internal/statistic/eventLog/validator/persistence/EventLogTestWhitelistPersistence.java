@@ -84,7 +84,8 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
       ifPresent(whitelist.groups::remove);
     whitelist.groups.add(group);
     final File file = persistence.getWhitelistFile();
-    FileUtil.writeToFile(file, new Gson().toJson(whitelist));
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    FileUtil.writeToFile(file, gson.toJson(whitelist));
   }
 
   @NotNull

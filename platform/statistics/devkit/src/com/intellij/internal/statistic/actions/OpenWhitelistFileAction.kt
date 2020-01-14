@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import java.io.File
 
 class OpenWhitelistFileAction(private val myRecorderId: String = "FUS")
@@ -33,7 +33,7 @@ class OpenWhitelistFileAction(private val myRecorderId: String = "FUS")
 
   companion object {
     fun openFileInEditor(file: File, project: Project) {
-      val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file)
+      val virtualFile = VfsUtil.findFileByIoFile(file, true)
       if (virtualFile == null) {
         val notification = Notification("FeatureUsageStatistics",
                                         StatisticsBundle.message("stats.feature.usage.statistics"),

@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.gdpr.ConsentConfigurable;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.eventLog.EventLogFile;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
@@ -22,7 +23,9 @@ public class OpenEventLogFileAction extends AnAction {
   private final String myRecorderId;
 
   public OpenEventLogFileAction(String recorderId) {
-    super(StatisticsBundle.message("stats.open.0.event.log", recorderId));
+    super(StatisticsBundle.message("stats.open.0.event.log", recorderId),
+          ActionsBundle.message("group.OpenEventLogFileAction.description"),
+          AllIcons.FileTypes.Text);
     myRecorderId = recorderId;
   }
 
@@ -54,10 +57,5 @@ public class OpenEventLogFileAction extends AnAction {
       editor.show();
     }));
     notification.notify(project);
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setIcon(AllIcons.FileTypes.Text);
   }
 }
