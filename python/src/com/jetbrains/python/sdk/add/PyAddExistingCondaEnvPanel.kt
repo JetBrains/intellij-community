@@ -78,7 +78,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
     }
   }
 
-  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox), validateAnacondaPath())
+  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this), validateAnacondaPath())
 
   private fun validateAnacondaPath(): ValidationInfo? {
     val text = condaPathField.text

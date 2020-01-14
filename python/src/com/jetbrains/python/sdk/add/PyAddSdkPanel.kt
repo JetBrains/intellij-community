@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
+import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
@@ -81,11 +84,25 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
     }
 
     @JvmStatic
-    protected fun validateSdkComboBox(field: PySdkPathChoosingComboBox): ValidationInfo? =
-      when {
-        field.selectedSdk == null -> ValidationInfo("Interpreter field is empty", field)
+    protected fun validateSdkComboBox(field: PySdkPathChoosingComboBox, view: PyAddSdkView): ValidationInfo? {
+      return when (val sdk = field.selectedSdk) {
+        null -> ValidationInfo("Interpreter field is empty", field)
+        is PySdkToInstall -> {
+          val message = sdk.getInstallationWarning(getDefaultButtonName(view))
+          ValidationInfo(message).asWarning().withOKEnabled()
+        }
         else -> null
       }
+    }
+
+    private fun getDefaultButtonName(view: PyAddSdkView): String {
+      return if (view.component.parent?.parent is PyAddNewEnvironmentPanel) {
+        "Create" // ProjectSettingsStepBase.createActionButton
+      }
+      else {
+        CommonBundle.getOkButtonText() // DialogWrapper.createDefaultActions
+      }
+    }
   }
 }
 

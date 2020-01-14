@@ -53,9 +53,7 @@ class PyAddExistingVirtualEnvPanel(private val project: Project?,
     }
   }
 
-  override fun validateAll(): List<ValidationInfo> =
-    listOf(validateSdkComboBox(sdkComboBox))
-      .filterNotNull()
+  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
 
   override fun getOrCreateSdk(): Sdk? {
     val sdk = sdkComboBox.selectedSdk

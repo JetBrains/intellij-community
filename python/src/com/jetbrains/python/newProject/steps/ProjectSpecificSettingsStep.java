@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,13 +35,14 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> implements DumbAware {
   private boolean myInstallFramework;
   @Nullable private PyAddSdkGroupPanel myInterpreterPanel;
+  @Nullable private HideableDecorator myInterpretersDecorator;
 
   public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator<T> projectGenerator,
                                      @NotNull final AbstractNewProjectStep.AbstractCallback<T> callback) {
@@ -143,19 +143,35 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @Override
+  public void setErrorText(@Nullable String text) {
+    super.setErrorText(text);
+    if (myInterpretersDecorator != null && !StringUtil.isEmpty(text)) myInterpretersDecorator.setOn(true);
+  }
+
+  @Override
+  public void setWarningText(@Nullable String text) {
+    super.setWarningText(text);
+    if (myInterpretersDecorator != null && !StringUtil.isEmpty(text)) myInterpretersDecorator.setOn(true);
+  }
+
+  @Override
   public boolean checkValid() {
     myInstallFramework = false;
     if (!super.checkValid()) {
       return false;
     }
 
-    final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
-    if (interpreterPanel != null) {
-      final List<ValidationInfo> validationInfos = interpreterPanel.validateAll();
-      if (!validationInfos.isEmpty()) {
-        setErrorText(StringUtil.join(validationInfos, info -> info.message, "\n"));
-        return false;
-      }
+    final Map<Boolean, List<String>> errorsAndWarnings = StreamEx
+      .of(myInterpreterPanel == null ? Collections.emptyList() : myInterpreterPanel.validateAll())
+      .groupingBy(it -> it.warning, Collectors.mapping(it -> it.message, Collectors.toList()));
+    final List<String> validationErrors = errorsAndWarnings.getOrDefault(false, Collections.emptyList());
+    final List<String> validationWarnings = errorsAndWarnings.getOrDefault(true, Collections.emptyList());
+    if (!validationErrors.isEmpty()) {
+      setErrorText(StringUtil.join(validationErrors, "\n"));
+      return false;
+    }
+    else if (!validationWarnings.isEmpty()) {
+      setWarningText(StringUtil.join(validationWarnings, "<br/>"));
     }
 
     final PythonProjectGenerator generator = ObjectUtils.tryCast(myProjectGenerator, PythonProjectGenerator.class);
@@ -174,7 +190,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       return false;
     }
 
-    final List<String> warnings = new ArrayList<>();
+    final List<String> warnings = new ArrayList<>(validationWarnings);
 
     final PyFrameworkProjectGenerator frameworkGenerator = ObjectUtils.tryCast(myProjectGenerator, PyFrameworkProjectGenerator.class);
 
@@ -272,13 +288,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
     final PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
                                        newEnvironmentPanel : existingSdkPanel;
-    final HideableDecorator decorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(defaultPanel), false);
-    decorator.setContentComponent(container);
+    myInterpretersDecorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(defaultPanel), false);
+    myInterpretersDecorator.setContentComponent(container);
 
     final List<PyAddSdkPanel> panels = Arrays.asList(newEnvironmentPanel, existingSdkPanel);
     myInterpreterPanel = new PyAddSdkGroupPanel("New project interpreter", getIcon(), panels, defaultPanel);
     myInterpreterPanel.addChangeListener(() -> {
-      decorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel()));
+      myInterpretersDecorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel()));
       final boolean useNewEnvironment = myInterpreterPanel.getSelectedPanel() instanceof PyAddNewEnvironmentPanel;
       PySdkSettings.getInstance().setUseNewEnvironmentForNewProject(useNewEnvironment);
       checkValid();

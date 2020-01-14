@@ -33,7 +33,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val module: Module?,
                               private val existingSdks: List<Sdk>,
                               newProjectPath: String?,
-                              context:UserDataHolder) : PyAddNewEnvPanel() {
+                              private val context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName: String = "Virtualenv"
 
   override var newProjectPath: String? = newProjectPath
@@ -76,34 +76,37 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       .panel
     add(formPanel, BorderLayout.NORTH)
     addInterpretersAsync(baseSdkField) {
-      findBaseSdks(existingSdks, module, context)
+      findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall()
     }
   }
 
   override fun validateAll(): List<ValidationInfo> =
     listOfNotNull(validateEnvironmentDirectoryLocation(pathField),
-                  validateSdkComboBox(baseSdkField))
+                  validateSdkComboBox(baseSdkField, this))
 
   override fun getOrCreateSdk(): Sdk? {
     val root = pathField.text
+    val baseSdk = baseSdkField.selectedSdk
+      .let { if (it is PySdkToInstall) it.install(module) { detectSystemWideSdks(module, existingSdks, context) } else it }
+    if (baseSdk == null) return null
+
     val task = object : Task.WithResult<String, ExecutionException>(project, "Creating Virtual Environment", false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
-        val baseSdk = baseSdkField.selectedSdk ?: throw ExecutionException("No base interpreter selected")
         val packageManager = PyPackageManager.getInstance(baseSdk)
         return packageManager.createVirtualEnv(root, inheritSitePackagesField.isSelected)
       }
     }
     val shared = makeSharedField.isSelected
     val associatedPath = if (!shared) projectBasePath else null
-    val sdk = createSdkByGenerateTask(task, existingSdks, baseSdkField.selectedSdk, associatedPath, null) ?: return null
+    val sdk = createSdkByGenerateTask(task, existingSdks, baseSdk, associatedPath, null) ?: return null
     if (!shared) {
       sdk.associateWithModule(module, newProjectPath)
     }
     moduleToExcludeSdkFrom(root, project)?.excludeInnerVirtualEnv(sdk)
     with(PySdkSettings.instance) {
       setPreferredVirtualEnvBasePath(FileUtil.toSystemIndependentName(pathField.text), projectBasePath)
-      preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
+      preferredVirtualEnvBaseSdk = baseSdk.homePath
     }
     return sdk
   }

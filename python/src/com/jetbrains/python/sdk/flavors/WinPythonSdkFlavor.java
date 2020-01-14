@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.flavors;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
@@ -37,7 +38,9 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     ImmutableMap.of("Python", "python.exe",
                     "IronPython", "ipy.exe");
 
-  private static volatile Set<String> ourRegistryCache;
+  @NotNull
+  private final ClearableLazyValue<Set<String>> myRegistryCache =
+    ClearableLazyValue.createAtomic(() -> findInRegistry(getWinRegistryService()));
 
   @NotNull
   @Override
@@ -87,10 +90,9 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     for (String name : exe_names) {
       findInstallations(candidates, name, "C:\\", "C:\\Program Files\\");
       findInPath(candidates, name);
-
-
-      findInRegistry(candidates);
     }
+
+    findInRegistry(candidates);
   }
 
   @Override
@@ -101,6 +103,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
 
     final File file = new File(path);
     return mayBeAppXReparsePoint(file) && isValidSdkPath(file);
+  }
+
+  @Override
+  public void dropCaches() {
+    myRegistryCache.drop();
   }
 
   /**
@@ -138,8 +145,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
 
 
   void findInRegistry(@NotNull final Collection<String> candidates) {
-    fillRegistryCache(getWinRegistryService());
-    candidates.addAll(ourRegistryCache);
+    candidates.addAll(myRegistryCache.getValue());
   }
 
   @NotNull
@@ -168,11 +174,9 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     }
   }
 
-  private static void fillRegistryCache(@NotNull final WinRegistryService registryService) {
-    if (ourRegistryCache != null) {
-      return;
-    }
-    ourRegistryCache = new HashSet<>();
+  @NotNull
+  private static Set<String> findInRegistry(@NotNull WinRegistryService registryService) {
+    final Set<String> result = new HashSet<>();
 
     /*
      Check https://www.python.org/dev/peps/pep-0514/ for windows registry layout to understand
@@ -195,7 +199,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
               if (folder != null) {
                 final File interpreter = new File(folder, exePath);
                 if (interpreter.exists()) {
-                  ourRegistryCache.add(FileUtil.toSystemDependentName(interpreter.getPath()));
+                  result.add(FileUtil.toSystemDependentName(interpreter.getPath()));
                 }
               }
             }
@@ -203,6 +207,8 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
         }
       }
     }
+
+    return result;
   }
 
   private static void findSubdirInstallations(Collection<String> candidates, String rootDir, String dir_prefix, String exe_name) {

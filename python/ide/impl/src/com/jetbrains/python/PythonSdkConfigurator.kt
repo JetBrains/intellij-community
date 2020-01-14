@@ -55,7 +55,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     private fun findExistingSystemWideSdk(existingSdks: List<Sdk>) =
-      existingSdks.filter { it.isSystemWide }.sortedWith(PreferredSdkComparator.INSTANCE).firstOrNull()
+      filterSystemWideSdks(existingSdks).sortedWith(PreferredSdkComparator.INSTANCE).firstOrNull()
 
     private fun findDetectedSystemWideSdk(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder) =
       detectSystemWideSdks(module, existingSdks, context).firstOrNull()

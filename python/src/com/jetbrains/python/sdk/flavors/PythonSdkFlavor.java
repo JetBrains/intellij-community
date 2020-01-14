@@ -247,4 +247,11 @@ public abstract class PythonSdkFlavor {
   public CommandLinePatcher commandLinePatcher() {
     return null;
   }
+
+  /**
+   * Could be called intentionally if another component suppose that
+   * there could be new data provided by a flavor.
+   */
+  public void dropCaches() {
+  }
 }

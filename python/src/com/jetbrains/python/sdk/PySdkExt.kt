@@ -68,9 +68,13 @@ fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
 }
 
 fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
-  val existing = existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
+  val existing = filterSystemWideSdks(existingSdks)
   val detected = detectSystemWideSdks(module, existingSdks, context)
   return existing + detected
+}
+
+fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
+  return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
 }
 
 @JvmOverloads
@@ -85,6 +89,10 @@ fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>, context: User
     .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
                                          { it.homePath }).reversed())
     .toList()
+}
+
+fun resetSystemWideSdksDetectors() {
+  PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor::dropCaches)
 }
 
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
@@ -234,7 +242,7 @@ private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): 
 val File.isNotEmptyDirectory: Boolean
   get() = exists() && isDirectory && list()?.isEmpty()?.not() ?: false
 
-val Sdk.isSystemWide: Boolean
+private val Sdk.isSystemWide: Boolean
   get() = !PythonSdkUtil.isRemote(this) && !PythonSdkUtil.isVirtualEnv(
     this) && !PythonSdkUtil.isCondaVirtualEnv(this)
 
