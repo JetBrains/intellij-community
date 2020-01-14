@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,6 +28,11 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
   public GenerateSetterHandler() {
     super(CodeInsightBundle.message("generate.setter.fields.chooser.title"));
+  }
+
+  @Override
+  protected boolean hasMembers(@NotNull PsiClass aClass) {
+    return GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass).stream().anyMatch(ecm -> !ecm.isReadOnlyMember());
   }
 
   @Override

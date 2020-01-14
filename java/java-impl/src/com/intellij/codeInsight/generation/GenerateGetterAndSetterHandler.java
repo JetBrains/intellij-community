@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,6 +37,11 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
 
   public GenerateGetterAndSetterHandler(){
     super(CodeInsightBundle.message("generate.getter.setter.title"));
+  }
+
+  @Override
+  protected boolean hasMembers(@NotNull PsiClass aClass) {
+    return GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass).stream().anyMatch(ecm -> !ecm.isReadOnlyMember());
   }
 
   @Nullable

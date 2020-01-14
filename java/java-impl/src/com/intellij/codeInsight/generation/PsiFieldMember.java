@@ -63,6 +63,11 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   }
 
   @Override
+  public boolean isReadOnlyMember() {
+    return GetterSetterPrototypeProvider.isReadOnlyProperty(getElement());
+  }
+
+  @Override
   @Nullable
   public GenerationInfo[] generateSetters(PsiClass aClass) {
     final PsiField field = getElement();
