@@ -492,8 +492,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
           //some settings were read for the tool, so it must be initialized,
           //otherwise no dynamic tools are expected
           toolWrapper.isInitialized()) {
-        for (LocalInspectionToolWrapper wrapper : ((DynamicGroupTool)toolWrapper.getTool()).getChildren()) {
-          addTool(project, wrapper, dependencies);
+        List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren();
+        if (tools.stream().noneMatch(i -> children.stream().anyMatch(l -> i.getShortName().equals(l.getShortName())))) {
+          for (LocalInspectionToolWrapper wrapper : children) {
+            addTool(project, wrapper, dependencies);
+          }
         }
       }
     }
