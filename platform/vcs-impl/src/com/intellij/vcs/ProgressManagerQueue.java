@@ -54,7 +54,7 @@ public class ProgressManagerQueue {
 
   public void start() {
     myIsStarted = true;
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       runMe();
     }
   }
@@ -80,7 +80,7 @@ public class ProgressManagerQueue {
   }
 
   public void run(@NotNull final Runnable stuff) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       stuff.run();
       return;
     }
