@@ -7,6 +7,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;

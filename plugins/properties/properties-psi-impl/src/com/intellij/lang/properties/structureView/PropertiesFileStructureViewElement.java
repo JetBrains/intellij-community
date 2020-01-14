@@ -19,10 +19,8 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.editor.PropertyStructureViewElement;
-import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +33,7 @@ import java.util.function.BooleanSupplier;
 /**
  * @author max
  */
-public class PropertiesFileStructureViewElement extends PsiTreeElementBase<PropertiesFileImpl> implements ResourceBundleEditorViewElement {
+public class PropertiesFileStructureViewElement extends PsiTreeElementBase<PropertiesFileImpl> {
   private final BooleanSupplier myGrouped;
 
   protected PropertiesFileStructureViewElement(PropertiesFileImpl propertiesFile, BooleanSupplier grouped) {
@@ -53,18 +51,6 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
       elements.add(new PropertyStructureViewElement(property, myGrouped));
     }
     return elements;
-  }
-
-  @Nullable
-  @Override
-  public IProperty[] getProperties() {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public PsiFile[] getFiles() {
-    return new PsiFile[] {getValue()};
   }
 
   @Override

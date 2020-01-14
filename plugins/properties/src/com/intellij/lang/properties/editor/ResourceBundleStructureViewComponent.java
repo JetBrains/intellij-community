@@ -16,10 +16,12 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.lang.properties.projectView.ResourceBundleDeleteProvider;
@@ -75,7 +77,30 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   @Override
   protected void addGroupByActions(@NotNull final DefaultActionGroup result) {
     super.addGroupByActions(result);
+    result.add(createSettingsActionGroup());
     result.add(new NewPropertyAction(true), Constraints.FIRST);
+  }
+
+  private ActionGroup createSettingsActionGroup() {
+    DefaultActionGroup actionGroup = new DefaultActionGroup(PropertiesBundle.message("resource.bundle.editor.settings.action.title"), true);
+    final Presentation presentation = actionGroup.getTemplatePresentation();
+    presentation.setIcon(AllIcons.General.GearPlain);
+    actionGroup.add(new ResourceBundleEditorKeepEmptyValueToggleAction());
+
+    actionGroup.add(new ToggleAction(PropertiesBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        ((ResourceBundleStructureViewModel)getTreeModel()).setShowOnlyIncomplete(state);
+        rebuild();
+      }
+    });
+
+    return actionGroup;
   }
 
   private void tunePopupActionGroup() {
@@ -88,12 +113,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
 
   @NotNull
   private PsiFile[] getSelectedPsiFiles() {
-    for (ResourceBundleEditorViewElement element : ((ResourceBundleEditor)getFileEditor()).getSelectedElements()) {
-      if (element.getFiles() != null) {
-        return element.getFiles();
-      }
-    }
-    return PsiFile.EMPTY_ARRAY;
+    return ContainerUtil.map2Array(myResourceBundle.getPropertiesFiles(), PsiFile.class, propFile -> propFile.getContainingFile());
   }
 
   @Override

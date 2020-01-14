@@ -2,6 +2,7 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
@@ -91,7 +92,7 @@ class NewPropertyAction extends AnAction {
       prefix = null;
       separator = null;
     } else {
-      final ResourceBundleEditorViewElement selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
+      final Object selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
       if (selectedElement == null) {
         return;
       }
@@ -173,13 +174,10 @@ class NewPropertyAction extends AnAction {
 
   @Nullable
   private static String getSelectedPrefixText(@NotNull ResourceBundleEditor resourceBundleEditor) {
-    Collection<ResourceBundleEditorViewElement> elements = resourceBundleEditor.getSelectedElements();
-    if (elements.size() == 1) {
-      ResourceBundleEditorViewElement item = ContainerUtil.getFirstItem(elements);
-      if (item instanceof PropertiesPrefixGroup) {
-        PropertiesPrefixGroup prefixGroup = (PropertiesPrefixGroup)item;
-        return prefixGroup.getPrefix() + prefixGroup.getSeparator();
-      }
+    Object item = resourceBundleEditor.getSelectedElementIfOnlyOne();
+    if (item instanceof PropertiesPrefixGroup) {
+      PropertiesPrefixGroup prefixGroup = (PropertiesPrefixGroup)item;
+      return prefixGroup.getPrefix() + prefixGroup.getSeparator();
     }
     return null;
   }
