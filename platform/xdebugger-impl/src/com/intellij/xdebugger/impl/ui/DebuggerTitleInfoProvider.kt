@@ -69,5 +69,4 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
   override val isActive: Boolean
     get() = super.isActive && debuggerSessionStarted
   override val value: String = "[Debugger]"
-
 }

@@ -6,5 +6,5 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 
 class ProductVersionTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(VMOSubscription( "ide.ui.version.in.title"), RegistrySubscription("ide.borderless.title.version", project)) {
-  override val value: String =  ApplicationInfo.getInstance().fullVersion ?: ""
+  override val value: String =  ApplicationInfo.getInstance().fullVersion
 }

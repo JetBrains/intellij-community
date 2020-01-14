@@ -360,9 +360,6 @@
     <extensionPoint name="sdkUsagesContributor" interface="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$SdkUsagesContributor" dynamic="true"/>
     <extensionPoint name="unknownSdkResolver" interface="com.intellij.openapi.projectRoots.impl.UnknownSdkResolver" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider" area="IDEA_PROJECT"/>
-    <extensionPoint name="borderlessPartTitleProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle"/>
-    </extensionPoint>
 
   </extensionPoints>
 </idea-plugin>

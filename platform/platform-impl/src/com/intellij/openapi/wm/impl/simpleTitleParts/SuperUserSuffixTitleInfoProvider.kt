@@ -15,4 +15,6 @@ class SuperUserSuffixTitleInfoProvider : SimpleTitleInfoProvider(TitleInfoSubscr
       if(IdeFrameDecorator.isCustomDecorationActive()) vl else "($vl)"
     } ?: ""
   }
+
+  override val borderlessPrefix: String = " - "
 }

@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.constraints.isDisposed
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -156,7 +157,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
       simpleExtensions = getProviders(it)
       simplePaths = simpleExtensions?.map { ex ->
-        val partTitle = PartTitleProvider.INSTANCE.getPartTitle(ex)
+        val partTitle = DefaultPartTitle(ex.borderlessPrefix, ex.borderlessSuffix)
         ex.addUpdateListener (disp) {
           partTitle.active = it.isActive
           partTitle.longText = it.value
@@ -199,7 +200,11 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   protected fun updatePathLater() {
-    SwingUtilities.invokeLater{updatePath()}
+    SwingUtilities.invokeLater {
+      disposable?.let {
+        if (!it.isDisposed) updatePath()
+      }
+    }
   }
 
   protected open fun unInstallListeners() {

@@ -31,4 +31,8 @@ interface TitleInfoProvider {
   fun addUpdateListener(disposable: Disposable?, value: (provider: TitleInfoProvider) -> Unit)
   val isActive: Boolean
   val value: String
+
+  val borderlessSuffix: String
+  val borderlessPrefix: String
+
 }

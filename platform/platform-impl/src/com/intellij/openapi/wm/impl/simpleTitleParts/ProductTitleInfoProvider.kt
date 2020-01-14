@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.DefaultPartTitle
 
 class ProductTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(VMOSubscription( "ide.ui.version.in.title"), RegistrySubscription("ide.borderless.title.product", project)) {
   override fun isEnabled(): Boolean {
@@ -13,4 +12,5 @@ class ProductTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(VMOSu
   }
 
   override val value: String = ApplicationNamesInfo.getInstance().fullProductName
+  override val borderlessPrefix: String = " - "
 }

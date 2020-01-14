@@ -39,4 +39,7 @@ abstract class SimpleTitleInfoProvider(defaultSubscription: TitleInfoSubscriptio
 
   override val isActive: Boolean
     get() = isEnabled()
+
+  override val borderlessSuffix: String = ""
+  override val borderlessPrefix: String = " "
 }
