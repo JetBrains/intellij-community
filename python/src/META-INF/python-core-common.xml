@@ -111,8 +111,6 @@
     <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
-    <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
-
     <moduleService serviceImplementation="com.jetbrains.python.ReSTService$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.ReSTService$AppService"/>
 

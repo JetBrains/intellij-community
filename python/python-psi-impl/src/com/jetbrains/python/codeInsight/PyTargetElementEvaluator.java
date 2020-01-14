@@ -16,7 +16,7 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.TargetElementEvaluator;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,7 +44,7 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
   @Nullable
   @Override
   public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
-    if ((flags & TargetElementUtil.ELEMENT_NAME_ACCEPTED) == 0){
+    if ((flags & TargetElementUtilBase.ELEMENT_NAME_ACCEPTED) == 0){
       return null;
     }
     final PsiElement element = ref.getElement();

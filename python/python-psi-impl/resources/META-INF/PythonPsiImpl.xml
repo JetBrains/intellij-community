@@ -26,6 +26,8 @@
 
     <gotoDeclarationHandler implementation="com.jetbrains.python.psi.impl.PyGotoDeclarationHandler"/>
 
+    <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
+
     <filePropertyPusher implementation="com.jetbrains.python.psi.impl.PythonLanguageLevelPusher"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
