@@ -44,6 +44,15 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
     return scope;
   }
 
+  @NotNull
+  private ModuleWithDependentsTestScope getCachedModuleTestsWithDependentsScope() {
+    ModuleWithDependentsTestScope scope = myModuleTestsWithDependentsScope;
+    if (scope == null) {
+      myModuleTestsWithDependentsScope = scope = new ModuleWithDependentsTestScope(myModule);
+    }
+    return scope;
+  }
+
   @Override
   @NotNull
   public GlobalSearchScope getModuleScope() {
@@ -91,17 +100,13 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   @Override
   @NotNull
   public GlobalSearchScope getModuleWithDependentsScope() {
-    return getModuleTestsWithDependentsScope().getBaseScope();
+    return getCachedModuleTestsWithDependentsScope().getBaseScope();
   }
 
   @Override
   @NotNull
-  public ModuleWithDependentsTestScope getModuleTestsWithDependentsScope() {
-    ModuleWithDependentsTestScope scope = myModuleTestsWithDependentsScope;
-    if (scope == null) {
-      myModuleTestsWithDependentsScope = scope = new ModuleWithDependentsTestScope(myModule);
-    }
-    return scope;
+  public GlobalSearchScope getModuleTestsWithDependentsScope() {
+    return getCachedModuleTestsWithDependentsScope();
   }
 
   @Override
