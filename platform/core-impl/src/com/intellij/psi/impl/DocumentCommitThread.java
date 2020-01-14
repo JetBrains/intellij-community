@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
@@ -40,8 +39,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class DocumentCommitThread implements Disposable, DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance(DocumentCommitThread.class);
@@ -84,14 +81,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       .nonBlocking(() -> commitUnderProgress(task, false))
       .expireWhen(() -> project.isDisposed() || isDisposed || !documentManager.isInUncommittedSet(document) || !task.isStillValid())
       .coalesceBy(task)
-      .finishOnUiThread(modality, edtFinish -> {
-        if (edtFinish != null) {
-          edtFinish.run();
-        }
-        else {
-          commitAsynchronously(project, document, "No edtFinish, re-added", modality);
-        }
-      })
+      .finishOnUiThread(modality, Runnable::run)
       .submit(executor);
   }
 
@@ -115,24 +105,14 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       throw new RuntimeException(s);
     }
 
-    Lock documentLock = getDocumentLock(document);
-
     CommitTask task = new CommitTask(project, document, SYNC_COMMIT_REASON, ModalityState.defaultModalityState(),
                                      PsiDocumentManager.getInstance(project).getLastCommittedText(document));
 
-    documentLock.lock();
-    try {
-      Runnable finish = commitUnderProgress(task, true);
-      assert finish != null;
-      finish.run();
-    }
-    finally {
-      documentLock.unlock();
-    }
+    commitUnderProgress(task, true).run();
   }
 
   // returns finish commit Runnable (to be invoked later in EDT) or null on failure
-  @Nullable
+  @NotNull
   private Runnable commitUnderProgress(@NotNull CommitTask task, boolean synchronously) {
     final Document document = task.getDocument();
     final Project project = task.project;
@@ -140,46 +120,39 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     final List<BooleanRunnable> finishProcessors = new SmartList<>();
     List<BooleanRunnable> reparseInjectedProcessors = new SmartList<>();
 
-    Lock lock = getDocumentLock(document);
-    if (!lock.tryLock()) {
-      return null;
-    }
-    try {
-      FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
-      if (viewProvider == null) {
-        finishProcessors.add(handleCommitWithoutPsi(documentManager, task));
-      } else {
-        for (PsiFile file : viewProvider.getAllFiles()) {
-          FileASTNode oldFileNode = file.getNode();
-          ProperTextRange changedPsiRange = ChangedPsiRangeUtil
-            .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence());
-          if (changedPsiRange != null) {
-            BooleanRunnable finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors);
-            finishProcessors.add(finishProcessor);
-          }
+    FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
+    if (viewProvider == null) {
+      finishProcessors.add(handleCommitWithoutPsi(documentManager, task));
+    } else {
+      for (PsiFile file : viewProvider.getAllFiles()) {
+        FileASTNode oldFileNode = file.getNode();
+        ProperTextRange changedPsiRange = ChangedPsiRangeUtil
+          .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence());
+        if (changedPsiRange != null) {
+          BooleanRunnable finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors);
+          finishProcessors.add(finishProcessor);
         }
       }
     }
-    finally {
-      lock.unlock();
-    }
 
-    return createFinishCommitInEDTRunnable(task, synchronously, finishProcessors, reparseInjectedProcessors);
+    return createFinishCommitRunnable(task, synchronously, finishProcessors, reparseInjectedProcessors);
   }
 
   @NotNull
-  private Runnable createFinishCommitInEDTRunnable(@NotNull final CommitTask task,
-                                                   final boolean synchronously,
-                                                   @NotNull List<? extends BooleanRunnable> finishProcessors,
-                                                   @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors) {
+  private Runnable createFinishCommitRunnable(@NotNull final CommitTask task,
+                                              final boolean synchronously,
+                                              @NotNull List<? extends BooleanRunnable> finishProcessors,
+                                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors) {
     return () -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       Document document = task.getDocument();
       Project project = task.project;
       if (project.isDisposed()) {
         return;
       }
       PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+      if (documentManager.isEventSystemEnabled(document)) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+      }
       boolean success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors,
                                                                          synchronously, task.reason);
       if (synchronously) {
@@ -219,7 +192,6 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   }
 
   @TestOnly
-  @VisibleForTesting
   // NB: failures applying EDT tasks are not handled - i.e. failed documents are added back to the queue and the method returns
   public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -337,16 +309,14 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
 
     return () -> {
       FileViewProvider viewProvider = file.getViewProvider();
-      Document document1 = task.getDocument();
-      if (!task.isStillValid() ||
-          ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getCachedViewProvider(document1) != viewProvider) {
+      if (!task.isStillValid() || documentManager.getCachedViewProvider(document) != viewProvider) {
         return false; // optimistic locking failed
       }
 
-      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      if (!ApplicationManager.getApplication().isWriteAccessAllowed() && documentManager.isEventSystemEnabled(document)) {
         VirtualFile vFile = viewProvider.getVirtualFile();
         LOG.error("Write action expected" +
-                  "; document=" + document1 +
+                  "; document=" + document +
                   "; file=" + file + " of " + file.getClass() +
                   "; file.valid=" + file.isValid() +
                   "; file.eventSystemEnabled=" + viewProvider.isEventSystemEnabled() +
@@ -358,7 +328,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
 
       diffLog.doActualPsiChange(file);
 
-      assertAfterCommit(document1, file, (FileElement)oldFileNode);
+      assertAfterCommit(document, file, (FileElement)oldFileNode);
 
       return true;
     };
@@ -394,14 +364,5 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       }
     }
   }
-
-  /**
-   * @return an internal lock object to prevent read & write phases of commit from running simultaneously for free-threaded PSI
-   */
-  private static Lock getDocumentLock(Document document) {
-    Lock lock = document.getUserData(DOCUMENT_LOCK);
-    return lock != null ? lock : ((UserDataHolderEx)document).putUserDataIfAbsent(DOCUMENT_LOCK, new ReentrantLock());
-  }
-  private static final Key<Lock> DOCUMENT_LOCK = Key.create("DOCUMENT_LOCK");
 
 }

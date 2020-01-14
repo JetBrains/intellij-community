@@ -116,6 +116,11 @@ public final class FileManagerImpl implements FileManager {
     if (viewProvider == null) {
       return;
     }
+    if (!viewProvider.isEventSystemEnabled()) {
+      setViewProvider(vFile, null);
+      return;
+    }
+
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     VirtualFile dir = vFile.getParent();

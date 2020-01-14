@@ -2,12 +2,15 @@
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +28,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -41,22 +45,28 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -738,7 +748,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testPerformLaterWhenAllCommittedFromCommitHandler() throws Exception {
-    Document document = createDocument();
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "", 0, true);
+    Document document = file.getViewProvider().getDocument();
 
     PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
     WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(0, "a"));
@@ -788,7 +799,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testNoLeaksAfterPCEInListener() {
-    Document document = createDocument();
+    Document document = createFreeThreadedDocument();
     document.addDocumentListener(new PrioritizedDocumentListener() {
       @Override
       public int getPriority() {
@@ -806,11 +817,11 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
     catch (ProcessCanceledException ignored) {
     }
-    waitForCommits();
+    getPsiDocumentManager().commitAllDocuments();
     LeakHunter.checkLeak(getPsiDocumentManager(), Document.class, d -> d == document);
   }
 
-  private Document createDocument() {
+  private Document createFreeThreadedDocument() {
     PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "");
     return file.getViewProvider().getDocument();
   }
@@ -881,4 +892,80 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     });
     assertEquals("b", file.getText());
   }
+
+  public void testNonPhysicalDocumentCommitsDoNotInterruptBackgroundTasks() {
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
+    PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
+    List<PsiFile> files = new ArrayList<>();
+    for (int i = 0; i < 90; i++) {
+      files.add(factory.createFileFromText("a.xml", XMLLanguage.INSTANCE, "<a><b><c/></b></a>", false, false));
+    }
+
+    AtomicInteger attempts = new AtomicInteger();
+    CancellablePromise<Void> future = ReadAction.nonBlocking(() -> {
+      attempts.incrementAndGet();
+
+      for (PsiFile file : files) {
+        TimeoutUtil.sleep(1);
+
+        Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
+        document.insertString(0, " ");
+
+        for (PsiElement element : SyntaxTraverser.psiTraverser(file)) {
+          ProgressManager.checkCanceled();
+          assertNotNull(element.getTextRange());
+        }
+      }
+    }).submit(AppExecutorUtil.getAppExecutorService());
+    PlatformTestUtil.waitForFuture(future, 10_000);
+
+    assertTrue(String.valueOf(attempts), attempts.get() < 10);
+  }
+
+  public void testAllowCommittingNonPhysicalDocumentsInBackgroundThread() throws Exception {
+    PsiDocumentManagerImpl pdm = getPsiDocumentManager();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+      String text = "text";
+      PsiFile file =
+        PsiFileFactory.getInstance(getProject()).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, text, false, false);
+      Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
+
+      AtomicBoolean documentCommitCallback = new AtomicBoolean();
+      pdm.performForCommittedDocument(document, () -> documentCommitCallback.set(true));
+      assertTrue(documentCommitCallback.getAndSet(false));
+
+      document.insertString(0, " ");
+      assertEquals(text, file.getText());
+
+      pdm.performForCommittedDocument(document, () -> documentCommitCallback.set(true));
+      assertFalse(documentCommitCallback.get());
+
+      pdm.commitDocument(document);
+      assertEquals(" " + text, file.getText());
+      assertTrue(documentCommitCallback.get());
+    })).get();
+  }
+
+  public void testDoNotLeakForgottenUncommittedDocument() throws Exception {
+    ensureNoLeftoversFromOtherTests();
+
+    GCWatcher watcher = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
+      Document document = createFreeThreadedDocument();
+      document.insertString(0, " ");
+      assertTrue(getPsiDocumentManager().isUncommited(document));
+      assertSameElements(getPsiDocumentManager().getUncommittedDocuments(), document);
+      return GCWatcher.tracking(document);
+    })).get();
+
+    LeakHunter.checkLeak(getPsiDocumentManager(), Document.class);
+    watcher.tryGc();
+
+    assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
+  }
+
+  private void ensureNoLeftoversFromOtherTests() {
+    LeakHunter.checkLeak(getPsiDocumentManager(), Document.class);
+  }
+
 }
