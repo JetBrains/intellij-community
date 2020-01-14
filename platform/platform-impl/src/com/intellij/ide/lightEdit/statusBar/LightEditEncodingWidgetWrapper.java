@@ -62,6 +62,7 @@ public class LightEditEncodingWidgetWrapper implements StatusBarWidget, LightEdi
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
     myEditor = editorInfo != null ? editorInfo.getEditor() : null;
+    myEncodingPanel.setEditor(myEditor);
     myEncodingPanel.update();
   }
 

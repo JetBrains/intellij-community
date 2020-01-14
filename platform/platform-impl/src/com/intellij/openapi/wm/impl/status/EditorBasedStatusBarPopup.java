@@ -33,6 +33,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -76,9 +77,14 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
     FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(getProject()).getSelectedEditor(newFile);
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
-    myEditor = new WeakReference<>(editor);
+    setEditor(editor);
 
     fileChanged(newFile);
+  }
+
+  @ApiStatus.Internal
+  public final void setEditor(@Nullable Editor editor) {
+    myEditor = new WeakReference<>(editor);
   }
 
   public final void selectionChanged(@Nullable VirtualFile newFile) {
