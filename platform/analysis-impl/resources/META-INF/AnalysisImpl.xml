@@ -11,6 +11,7 @@
     <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
 
     <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper" dynamic="true"/>
+    <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
