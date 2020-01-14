@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.icons.AllIcons;
@@ -41,12 +42,12 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
   };
 
-  private final Option myOverriddenOption = new Option("java.overridden", "Overridden method", AllIcons.Gutter.OverridenMethod);
-  private final Option myImplementedOption = new Option("java.implemented", "Implemented method", AllIcons.Gutter.ImplementedMethod);
-  private final Option myOverridingOption = new Option("java.overriding", "Overriding method", AllIcons.Gutter.OverridingMethod);
-  private final Option myImplementingOption = new Option("java.implementing", "Implementing method", AllIcons.Gutter.ImplementingMethod);
-  private final Option mySiblingsOption = new Option("java.sibling.inherited", "Sibling inherited method", AllIcons.Gutter.SiblingInheritedMethod);
-  private final Option myServiceOption = new Option("java.service", "Service", AllIcons.Gutter.Java9Service);
+  private final Option myOverriddenOption = new Option("java.overridden", CodeInsightBundle.message("gutter.overridden.method"), AllIcons.Gutter.OverridenMethod);
+  private final Option myImplementedOption = new Option("java.implemented", CodeInsightBundle.message("gutter.implemented.method"), AllIcons.Gutter.ImplementedMethod);
+  private final Option myOverridingOption = new Option("java.overriding", CodeInsightBundle.message("gutter.overriding.method"), AllIcons.Gutter.OverridingMethod);
+  private final Option myImplementingOption = new Option("java.implementing", CodeInsightBundle.message("gutter.implementing.method"), AllIcons.Gutter.ImplementingMethod);
+  private final Option mySiblingsOption = new Option("java.sibling.inherited", CodeInsightBundle.message("gutter.sibling.inherited.method"), AllIcons.Gutter.SiblingInheritedMethod);
+  private final Option myServiceOption = new Option("java.service", CodeInsightBundle.message("gutter.service"), AllIcons.Gutter.Java9Service);
 
   public JavaLineMarkerProvider() { }
 
