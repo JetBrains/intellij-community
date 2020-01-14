@@ -831,12 +831,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * @param dirtyMode if `true` then all UI operations are performed in dirty mode.
    */
   private fun showToolWindowImpl(entry: ToolWindowEntry, dirtyMode: Boolean): Boolean {
-    val id = entry.id
-
     if (entry.readOnlyWindowInfo.isVisible || !entry.toolWindow.isAvailable) {
       return false
     }
 
+    val id = entry.id
     val toBeShownInfo = layout.getInfo(id) ?: throw IllegalThreadStateException("window with id=\"$id\" is unknown")
     toBeShownInfo.isVisible = true
     toBeShownInfo.isShowStripeButton = true
@@ -1637,7 +1636,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val id = entry.id
-    val decorator = entry.toolWindow.decoratorComponent!!
+    val decorator = entry.toolWindow.getOrCreateDecoratorComponent()
     val windowedDecorator = FrameWrapper(project, title = "$id - ${project.name}", component = decorator)
     val window = windowedDecorator.getFrame()
 
