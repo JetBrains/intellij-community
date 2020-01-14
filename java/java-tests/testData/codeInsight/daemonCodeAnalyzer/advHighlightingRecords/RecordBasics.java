@@ -23,7 +23,7 @@ record <error descr="Class 'UnrelatedDefaults' must implement abstract method 'r
 record ComponentModifiers(
   <error descr="Modifier 'public' not allowed here">public</error> int x, 
   <error descr="Modifier 'static' not allowed here">static</error> int y,
-  final int z) {}
+  <error descr="Modifier 'final' not allowed here">final</error> int z) {}
 record ComponentDuplicateName(int <error descr="Variable 'x' is already defined in the scope">x</error>, int <error descr="Variable 'x' is already defined in the scope">x</error>) {}
 record VarArgOk(int... x) {}
 record VarArgOk2(int x, int... y) {}

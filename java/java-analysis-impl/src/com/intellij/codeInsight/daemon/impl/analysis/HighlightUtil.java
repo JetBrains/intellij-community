@@ -1022,11 +1022,10 @@ public class HighlightUtil extends HighlightUtilBase {
     else if (modifierOwner instanceof PsiClassInitializer) {
       isAllowed = PsiModifier.STATIC.equals(modifier);
     }
-    else if (modifierOwner instanceof PsiLocalVariable || modifierOwner instanceof PsiParameter || 
-             modifierOwner instanceof PsiRecordComponent) {
+    else if (modifierOwner instanceof PsiLocalVariable || modifierOwner instanceof PsiParameter) {
       isAllowed = PsiModifier.FINAL.equals(modifier);
     }
-    else if (modifierOwner instanceof PsiReceiverParameter) {
+    else if (modifierOwner instanceof PsiReceiverParameter || modifierOwner instanceof PsiRecordComponent) {
       isAllowed = false;
     }
 
