@@ -151,7 +151,7 @@
                     interface="com.intellij.compiler.options.CompilerOptionsFilter" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.java.programPatcher"
-                    interface="com.intellij.execution.runners.JavaProgramPatcher"/>
+                    interface="com.intellij.execution.runners.JavaProgramPatcher" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.OrderRootTypeUI"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
