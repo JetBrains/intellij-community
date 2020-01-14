@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,9 +101,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     itemPanelWrapper = new JPanel(cardLayout);
 
-    JLabel descLabel =
-      new JLabel("<html>Quick Lists allow you to define commonly used groups of actions (for example, refactoring or VCS actions)" +
-                 " and to assign keyboard shortcuts to such groups.</html>");
+    JLabel descLabel = new JLabel(IdeBundle.message("quick.lists.description"));
     descLabel.setBorder(new EmptyBorder(0, 25, 0, 25));
 
     itemPanelWrapper.add(descLabel, EMPTY);
@@ -129,7 +128,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
   public void apply(@NotNull List<QuickList> settings) throws ConfigurationException {
     itemPanel.apply();
 
-    editor.ensureNonEmptyNames("Quick list should have non empty name");
+    editor.ensureNonEmptyNames(IdeBundle.message("quick.lists.not.empty.name"));
     editor.processModifiedItems((newItem, oldItem) -> {
       if (!oldItem.getName().equals(newItem.getName())) {
         keymapListener.quickListRenamed(oldItem, newItem);
