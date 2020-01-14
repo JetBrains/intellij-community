@@ -46,7 +46,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
 
     mySelectedEditorFilePath = CustomDecorationPath(frame) {updateCustomDecorationHitTestSpots()}
 
-    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 3", "[pref!]"))
+    menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 3", "[pref!]${JBUI.scale(10)}"))
     menuHolder.border = JBUI.Borders.empty(0, H - 1, 0, 0)
     menuHolder.isOpaque = false
     menuHolder.add(myIdeMenu, "wmin 0, wmax pref, top, growy")

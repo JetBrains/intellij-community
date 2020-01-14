@@ -34,6 +34,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import gnu.trove.THashSet;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +48,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.List;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -272,14 +271,21 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private void updateTitle() {
-    updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile);
+    updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile, myTitleInfoExtensions);
   }
 
-  public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
+  public static @Nullable
+  String getSuperUserSuffix() {
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "Administrator" : "ROOT";
   }
 
-  public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
+  private List<TitleInfoProvider> myTitleInfoExtensions = null;
+
+  public static void updateTitle(@NotNull JFrame frame,
+                                 @Nullable String title,
+                                 @Nullable String fileTitle,
+                                 @Nullable File currentFile,
+                                 @Nullable List<TitleInfoProvider> extensions) {
     if (ourUpdatingTitle) return;
 
     try {
@@ -290,13 +296,11 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
 
       Builder builder = new Builder().append(title).append(fileTitle);
-      if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
+
+      if (extensions != null && !extensions.isEmpty()) {
+        extensions.stream().filter(it -> it.isActive()).map(it -> it.getValue()).filter(it -> !it.isEmpty()).forEach(it -> builder.append(it, " "));
       }
-      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
-      }
-      builder.append(getSuperUserSuffix(), " ");
+
       frame.setTitle(builder.toString());
     }
     finally {
@@ -378,6 +382,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
 
     installDefaultProjectStatusBarWidgets(myProject);
+    initTitleInfoProviders(project);
     if (selfie != null) {
       StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
         selfie = null;
@@ -385,9 +390,19 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
   }
 
+  private void initTitleInfoProviders(@NotNull Project project) {
+    myTitleInfoExtensions = TitleInfoProvider.getProviders(project, (it) -> {
+      updateTitle();
+      return Unit.INSTANCE;
+    });
+  }
+
   private final Set<String> widgetIds = new THashSet<>();
 
-  protected boolean addWidget(@NotNull Disposable disposable, @NotNull IdeStatusBarImpl statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
+  protected boolean addWidget(@NotNull Disposable disposable,
+                              @NotNull IdeStatusBarImpl statusBar,
+                              @NotNull StatusBarWidget widget,
+                              @NotNull String anchor) {
     if (!widgetIds.add(widget.ID())) {
       LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
       return false;

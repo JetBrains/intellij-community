@@ -243,7 +243,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
     String suffix = ProjectFrameHelper.getSuperUserSuffix();
     if (suffix != null) {
-      title += ' ' + suffix;
+      title += " (" + suffix+")";
     }
     return title;
   }
