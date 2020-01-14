@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.style;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -16,6 +16,7 @@ public class CStyleArrayDeclarationFixTest extends IGQuickFixesTestCase {
   public void testMultipleVariablesSingleDeclaration() { doTest(); }
   public void testMultipleFieldsSingleDeclaration() { doTest(); }
   public void testParameter() { doTest(); }
+  public void testRecord() { doTest(); }
 
   @Override
   public void setUp() throws Exception {
