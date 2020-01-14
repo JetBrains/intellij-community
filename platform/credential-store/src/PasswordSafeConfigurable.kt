@@ -210,8 +210,10 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
                                                           it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
                                                           else -> it.path
                                                         }
-                                                      },
-                                                      comment = if (SystemInfo.isWindows) null else IdeBundle.message("passwordSafeConfigurable.weak.encryption"))
+                                                      })
+              .apply {
+                if (!SystemInfo.isWindows) comment(IdeBundle.message("passwordSafeConfigurable.weak.encryption"))
+              }.component
             gearButton(
               ClearKeePassDatabaseAction(),
               ImportKeePassDatabaseAction(),
@@ -230,9 +232,9 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
                 pgpListModel,
                 { getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
                 { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null },
-                growPolicy = GrowPolicy.MEDIUM_TEXT,
                 renderer = listCellRenderer { value, _, _ -> setText("${value.userId} (${value.keyId})") }
               )
+                .growPolicy(GrowPolicy.MEDIUM_TEXT)
                 .enableIf(usePgpKey.selected)
                 .component
             }

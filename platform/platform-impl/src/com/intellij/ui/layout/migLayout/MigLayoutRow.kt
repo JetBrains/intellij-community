@@ -435,7 +435,12 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   override val component: T
 ) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
   private var applyIfEnabled = false
-  var property: GraphProperty<*>? = null
+  private var property: GraphProperty<*>? = null
+
+  override fun withGraphProperty(property: GraphProperty<*>): CellBuilder<T> {
+    this.property = property
+    return this
+  }
 
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
     row.addCommentRow(component, text, maxLineLength)

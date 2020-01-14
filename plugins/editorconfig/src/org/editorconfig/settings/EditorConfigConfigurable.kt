@@ -31,7 +31,7 @@ class EditorConfigConfigurable : CodeStyleSettingsProvider(), GeneralCodeStyleOp
   override fun createComponent(): JComponent {
     return panel {
       row {
-        myEnabled = checkBox(EditorConfigBundle.message("config.enable"), comment = EditorConfigBundle.message("config.warning"))
+        myEnabled = checkBox(EditorConfigBundle.message("config.enable"), comment = EditorConfigBundle.message("config.warning")).component
 
         if (EditorConfigExportProviderEP.shouldShowExportButton()) {
           button(EditorConfigBundle.message("config.export")) {

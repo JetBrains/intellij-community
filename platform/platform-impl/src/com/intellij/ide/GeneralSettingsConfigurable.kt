@@ -76,8 +76,8 @@ class GeneralSettingsConfigurable: BoundCompositeConfigurable<SearchableConfigur
         row("Default directory:") {
           textFieldWithBrowseButton(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory,
                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                                      .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) },
-                                    growPolicy = GrowPolicy.MEDIUM_TEXT)
+                                      .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
+            .growPolicy(GrowPolicy.MEDIUM_TEXT)
             .comment("This directory is preselected in \"Open...\" and \"New | Project...\" dialogs.", 80)
         }
         buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {

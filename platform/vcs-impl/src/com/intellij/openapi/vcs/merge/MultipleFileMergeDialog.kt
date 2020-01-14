@@ -147,7 +147,7 @@ open class MultipleFileMergeDialog(
           table = it
           it.setTreeCellRenderer(virtualFileRenderer)
           it.rowHeight = virtualFileRenderer.preferredSize.height
-        }, growX, growY, pushX, pushY)
+        }).constraints(growX, growY, pushX, pushY)
 
         cell(isVerticalFlow = true) {
           JButton(VcsBundle.message("multiple.file.merge.accept.yours")).also {

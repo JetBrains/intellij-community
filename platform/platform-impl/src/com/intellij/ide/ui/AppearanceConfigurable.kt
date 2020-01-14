@@ -259,7 +259,7 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
         fullRow {
           buttonFromAction(message("background.image.button"), ActionPlaces.UNKNOWN,
                            ActionManager.getInstance().getAction("Images.SetBackgroundImage"))
-            .apply { isEnabled = ProjectManager.getInstance().openProjects.isNotEmpty() }
+            .applyToComponent { isEnabled = ProjectManager.getInstance().openProjects.isNotEmpty() }
         }
         fullRow { checkBox(cdCyclicListScrolling) }
         fullRow { checkBox(cdShowQuickNavigationIcons) }
@@ -414,7 +414,6 @@ private fun CellBuilder<JSlider>.labelTable(table: Hashtable<Int, JComponent>.()
   return this
 }
 
-private fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBuilder<T> = also { task(component) }
 private fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }
 private fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: InnerCell.() -> Unit): Row = row {
   cell {

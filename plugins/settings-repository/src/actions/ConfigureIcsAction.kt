@@ -25,7 +25,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
           row(icsMessage("settings.upstream.url")) {
             urlTextField = textFieldWithBrowseButton(value = icsManager.repositoryManager.getUpstream(),
                                                      browseDialogTitle = "Choose Local Git Repository",
-                                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+                                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
           }
 
           noteRow(
