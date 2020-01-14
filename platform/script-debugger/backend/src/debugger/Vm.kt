@@ -45,7 +45,7 @@ interface Vm : UserDataHolderEx {
   fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*> = nullPromise()
 
   val presentableName: String
-    get() = "main loop"
+    get() = "Main Thread"
 
   val childVMs: MutableList<Vm>
 }
