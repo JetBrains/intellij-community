@@ -26,5 +26,5 @@ public interface UsageSearcher extends Generator<Usage> {
   // hands all found usages to the processor
   // not guaranteed to be in read action, not guaranteed in the same thread
   @Override
-  void generate(@NotNull Processor<Usage> processor);
+  void generate(@NotNull Processor<? super Usage> processor);
 }

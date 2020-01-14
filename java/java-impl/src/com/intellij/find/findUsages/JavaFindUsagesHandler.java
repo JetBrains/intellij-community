@@ -218,7 +218,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   @Override
   public boolean processElementUsages(@NotNull final PsiElement element,
-                                      @NotNull final Processor<UsageInfo> processor,
+                                      @NotNull final Processor<? super UsageInfo> processor,
                                       @NotNull final FindUsagesOptions options) {
     return JavaFindUsagesHelper.processElementUsages(element, options, processor);
   }

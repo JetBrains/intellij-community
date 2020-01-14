@@ -481,7 +481,7 @@ public class XPathEvalAction extends XPathAction {
         }
 
         @Override
-        public void generate(@NotNull final Processor<Usage> processor) {
+        public void generate(@NotNull final Processor<? super Usage> processor) {
             Runnable runnable = () -> {
                 final List<?> list;
                 if (myResult.isEmpty()) {

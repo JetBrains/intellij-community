@@ -251,7 +251,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
           final Set<UsageInfo> usages = new HashSet<>();
 
           @Override
-          public void generate(@NotNull final Processor<Usage> processor) {
+          public void generate(@NotNull final Processor<? super Usage> processor) {
             ApplicationManager.getApplication().runReadAction(() -> {
               collectUsages(myModel);
               for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {

@@ -31,7 +31,7 @@ class PyWordsScanner extends VersionedWordsScanner {
   private volatile DefaultWordsScanner myDelegate;
 
   @Override
-  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<? super WordOccurrence> processor) {
     DefaultWordsScanner delegate = myDelegate;
     if (delegate == null) {
       myDelegate = delegate = new DefaultWordsScanner(new PythonLexer(),

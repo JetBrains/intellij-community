@@ -68,7 +68,7 @@ public class PropertiesFindUsagesTest extends JavaCodeInsightTestCase {
 
   private static void processUsages(final PsiElement element,
                                     final FindUsagesOptions options,
-                                    final Processor<UsageInfo> processor) {
+                                    final Processor<? super UsageInfo> processor) {
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
     assertNotNull(handler);

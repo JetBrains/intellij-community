@@ -107,7 +107,7 @@ public abstract class PsiShortNamesCache {
 
   public abstract boolean processMethodsWithName(@NonNls @NotNull String name,
                                                  @NotNull GlobalSearchScope scope,
-                                                 @NotNull Processor<PsiMethod> processor);
+                                                 @NotNull Processor<? super PsiMethod> processor);
 
   public boolean processMethodsWithName(@NonNls @NotNull String name,
                                         @NotNull final Processor<? super PsiMethod> processor,

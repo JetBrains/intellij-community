@@ -137,7 +137,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     });
   }
 
-  private void doTest(@NonNls String text, Processor<PsiFile> run) {
+  private void doTest(@NonNls String text, Processor<? super PsiFile> run) {
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
     PsiModificationTracker tracker = PsiModificationTracker.SERVICE.getInstance(getProject());
     long count = tracker.getModificationCount();

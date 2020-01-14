@@ -71,7 +71,7 @@ public class SearchCommand {
       new UsageTarget[]{target},
       () -> new UsageSearcher() {
         @Override
-        public void generate(@NotNull final Processor<Usage> processor) {
+        public void generate(@NotNull final Processor<? super Usage> processor) {
           findUsages(processor);
         }
       },

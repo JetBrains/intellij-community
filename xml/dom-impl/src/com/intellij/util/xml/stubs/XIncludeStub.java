@@ -68,7 +68,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
     }
   }
 
-  private static void processChildrenWithLocalName(DomElement parent, String localName, Processor<DomElement> processor) {
+  private static void processChildrenWithLocalName(DomElement parent, String localName, Processor<? super DomElement> processor) {
     parent.acceptChildren(element -> {
       if (element.getXmlElementName().equals(localName)) {
         processor.process(element);

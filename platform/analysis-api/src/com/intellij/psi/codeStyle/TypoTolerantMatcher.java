@@ -781,7 +781,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
       return errors;
     }
 
-    private boolean processErrors(int start, int end, Processor<Pair<Integer, Error>> processor) {
+    private boolean processErrors(int start, int end, Processor<? super Pair<Integer, Error>> processor) {
       if (myBase != null && start < myDeriveIndex) {
         if (!myBase.processErrors(start, myDeriveIndex, processor)) {
           return false;

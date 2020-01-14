@@ -105,7 +105,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   @Override
   public boolean processMethodsWithName(@NonNls @NotNull String name,
                                         @NotNull GlobalSearchScope scope,
-                                        @NotNull Processor<PsiMethod> processor) {
+                                        @NotNull Processor<? super PsiMethod> processor) {
     return processMethodsWithName(name, processor, scope, null);
   }
 

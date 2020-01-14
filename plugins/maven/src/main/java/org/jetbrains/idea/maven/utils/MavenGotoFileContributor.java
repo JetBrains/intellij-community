@@ -33,7 +33,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class MavenGotoFileContributor implements ChooseByNameContributorEx {
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = ObjectUtils.notNull(scope.getProject());
     for (MavenProject p : MavenProjectsManager.getInstance(project).getProjects()) {
       String id = p.getMavenId().getArtifactId();
@@ -43,7 +43,7 @@ public class MavenGotoFileContributor implements ChooseByNameContributorEx {
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
     for (MavenProject each : MavenProjectsManager.getInstance(parameters.getProject()).getProjects()) {

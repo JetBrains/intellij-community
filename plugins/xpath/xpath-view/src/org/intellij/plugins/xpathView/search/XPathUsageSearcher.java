@@ -69,7 +69,7 @@ class XPathUsageSearcher implements UsageSearcher {
     }
 
     @Override
-    public void generate(@NotNull final Processor<Usage> processor) {
+    public void generate(@NotNull final Processor<? super Usage> processor) {
         Runnable runnable = () -> {
             myIndicator.setIndeterminate(true);
             myIndicator.setText2(findBundleMessage("find.searching.for.string.in.file.occurrences.progress", 0));

@@ -157,7 +157,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @Override
   public boolean processPackageDirectories(@NotNull final PsiPackage psiPackage,
                                            @NotNull GlobalSearchScope scope,
-                                           @NotNull final Processor<PsiDirectory> consumer,
+                                           @NotNull final Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
     return processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       final PsiDirectory psiDirectory = psiPackage.getManager().findDirectory(dir);

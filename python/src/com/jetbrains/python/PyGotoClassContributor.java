@@ -30,14 +30,14 @@ import java.util.Collections;
  */
 public class PyGotoClassContributor implements GotoClassContributor, ChooseByNameContributorEx {
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     if (!StubIndex.getInstance().processAllKeys(PyClassNameIndex.KEY, processor, scope, filter)) return;
     if (!FileBasedIndex.getInstance().processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter)) return;
   }
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     Project project = parameters.getProject();
     GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestScope(parameters.getSearchScope());
