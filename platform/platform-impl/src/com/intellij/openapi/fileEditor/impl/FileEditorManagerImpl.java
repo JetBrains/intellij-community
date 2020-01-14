@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
@@ -995,13 +995,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       @NotNull
       @Override
       public ActionCallback run() {
-        focusManager.doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
-          @Override
-          public void run() {
-            runnable.run();
-            done.setDone();
-          }
-        }, ModalityState.current());
+        focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(myProject, () -> {
+          runnable.run();
+          done.setDone();
+        }), ModalityState.current());
         return done;
       }
     });
