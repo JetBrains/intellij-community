@@ -202,6 +202,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         continue;
       }
 
+      boolean clearContent = true;
       Element child = (Element)content;
       switch (child.getName()) {
         case "extensions":
@@ -219,6 +220,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           else {
             myActionElements.addAll(child.getChildren());
           }
+          clearContent = child.getAttributeValue("resource-bundle") == null;
           break;
 
         case "module":
@@ -348,7 +350,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           break;
       }
 
-      child.getContent().clear();
+      if (clearContent) {
+        child.getContent().clear();
+      }
     }
 
     if (myVersion == null) {
