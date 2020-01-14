@@ -57,7 +57,7 @@ public class IdeUICustomization {
   }
 
   public String getSelectAutopopupByCharsText() {
-    return "Insert selected suggestion by pressing space, dot, or other context-dependent keys";
+    return IdeBundle.message("ui.customization.select.auto.popup.by.chars.text");
   }
 
   /**
