@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.vcs.changes.ui.isCommitToolWindow
 import com.intellij.ui.OnePixelSplitter
 
 private const val VERTICAL_PROPORTION_KEY = "ChangesViewManager.COMMIT_SPLITTER_PROPORTION"
@@ -11,8 +12,17 @@ private const val DEFAULT_HORIZONTAL_PROPORTION = 0.4f
 
 private val propertiesComponent get() = PropertiesComponent.getInstance()
 
-private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", DEFAULT_VERTICAL_PROPORTION) {
-  private var isVerticalProportionSet = propertiesComponent.isValueSet(VERTICAL_PROPORTION_KEY)
+private const val COMMIT_TOOL_WINDOW_PROPORTION_KEY = "CommitToolWindow.COMMIT_SPLITTER_PROPORTION"
+private const val COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION = 0.6f
+
+private fun getVerticalProportionKey() =
+  if (isCommitToolWindow.asBoolean()) COMMIT_TOOL_WINDOW_PROPORTION_KEY else VERTICAL_PROPORTION_KEY
+
+private fun getDefaultVerticalProportion() =
+  if (isCommitToolWindow.asBoolean()) COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION else DEFAULT_VERTICAL_PROPORTION
+
+private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", getDefaultVerticalProportion()) {
+  private var isVerticalProportionSet = isCommitToolWindow.asBoolean() || propertiesComponent.isValueSet(getVerticalProportionKey())
   private var previousHeight = 0
   private var verticalSecondHeight = 0
 
@@ -21,8 +31,13 @@ private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", DEFAUL
   }
 
   override fun doLayout() {
-    calculateInitialVerticalProportion()
-    doLayoutRetainingSecondHeight()
+    if (isCommitToolWindow.asBoolean()) {
+      super.doLayout()
+    }
+    else {
+      calculateInitialVerticalProportion()
+      doLayoutRetainingSecondHeight()
+    }
   }
 
   private fun doLayoutRetainingSecondHeight() {
@@ -53,7 +68,7 @@ private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", DEFAUL
       proportion = propertiesComponent.getFloat(HORIZONTAL_PROPORTION_KEY, DEFAULT_HORIZONTAL_PROPORTION)
     }
     else if (isVerticalProportionSet) {
-      proportion = propertiesComponent.getFloat(VERTICAL_PROPORTION_KEY, DEFAULT_VERTICAL_PROPORTION)
+      proportion = propertiesComponent.getFloat(getVerticalProportionKey(), getDefaultVerticalProportion())
     }
   }
 
@@ -67,5 +82,5 @@ private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", DEFAUL
   }
 
   private fun saveVerticalProportion(value: Float) =
-    propertiesComponent.setValue(VERTICAL_PROPORTION_KEY, value, DEFAULT_VERTICAL_PROPORTION)
+    propertiesComponent.setValue(getVerticalProportionKey(), value, getDefaultVerticalProportion())
 }
