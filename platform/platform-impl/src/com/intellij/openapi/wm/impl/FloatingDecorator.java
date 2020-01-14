@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowInfo;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -53,8 +54,8 @@ public final class FloatingDecorator extends JDialog {
   private float myStartRatio;
   private float myEndRatio; // start and end alpha ratio for transparency animation
 
-  FloatingDecorator(@NotNull JFrame owner, @NotNull ToolWindowImpl toolWindow) {
-    super(owner, toolWindow.getId());
+  FloatingDecorator(@NotNull JFrame owner, @NotNull InternalDecorator decorator) {
+    super(owner, decorator.getToolWindow().getId());
 
     MnemonicHelper.init(getContentPane());
 
@@ -62,21 +63,19 @@ public final class FloatingDecorator extends JDialog {
     JComponent contentPane = (JComponent)getContentPane();
     contentPane.setLayout(new BorderLayout());
 
-    InternalDecorator internalDecorator = toolWindow.getDecorator();
-
     if (SystemInfo.isWindows) {
       setUndecorated(true);
       contentPane.add(new BorderItem(ANCHOR_TOP), BorderLayout.NORTH);
       contentPane.add(new BorderItem(ANCHOR_LEFT), BorderLayout.WEST);
       contentPane.add(new BorderItem(ANCHOR_BOTTOM), BorderLayout.SOUTH);
       contentPane.add(new BorderItem(ANCHOR_RIGHT), BorderLayout.EAST);
-      contentPane.add(internalDecorator, BorderLayout.CENTER);
+      contentPane.add(decorator, BorderLayout.CENTER);
     }
     else {
       // Due to JDK's bug #4234645 we cannot support custom decoration on Linux platform.
       // The problem is that Window.setLocation() doesn't work properly wjen the dialod is displayable.
       // Therefore we use native WM decoration.
-      contentPane.add(internalDecorator, BorderLayout.CENTER);
+      contentPane.add(decorator, BorderLayout.CENTER);
       getRootPane().putClientProperty("Window.style", "small");
     }
 
@@ -84,7 +83,8 @@ public final class FloatingDecorator extends JDialog {
     addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(WindowEvent event) {
-        toolWindow.getToolWindowManager().resized(internalDecorator);
+        ToolWindowImpl toolWindow = decorator.getToolWindow();
+        toolWindow.getToolWindowManager().resized(decorator);
         toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
       }
     });
@@ -108,15 +108,16 @@ public final class FloatingDecorator extends JDialog {
 
   @Override
   public final void show(){
-    setFocusableWindowState(myInfo.isActive());
+    boolean isActive = myInfo.isActiveOnStart();
+    setFocusableWindowState(isActive);
 
     super.show();
 
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getState().getEnableAlphaMode()) {
-      final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
+      WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
       windowManager.setAlphaModeEnabled(this, true);
-      if (myInfo.isActive()) {
+      if (isActive) {
         windowManager.setAlphaModeRatio(this, 0.0f);
       }
       else {
@@ -155,7 +156,7 @@ public final class FloatingDecorator extends JDialog {
     }
 
     myDelayAlarm.cancelAllRequests();
-    if (myInfo.isActive()) {
+    if (info.isActiveOnStart()) {
       // make window non transparent
       myFrameTicker.cancelAllRequests();
       myStartRatio = getCurrentAlphaRatio();
@@ -207,7 +208,7 @@ public final class FloatingDecorator extends JDialog {
       if(MouseEvent.MOUSE_DRAGGED==e.getID() && myLastPoint != null){
         final Point newPoint=e.getPoint();
         SwingUtilities.convertPointToScreen(newPoint,this);
-        final Rectangle screenBounds=WindowManagerEx.getInstanceEx().getScreenBounds();
+        Rectangle screenBounds = WindowManagerEx.getInstanceEx().getScreenBounds();
         int screenMaxX = screenBounds.x + screenBounds.width;
         int screenMaxY = screenBounds.y + screenBounds.height;
 
@@ -368,9 +369,8 @@ public final class FloatingDecorator extends JDialog {
   private final class MyAnimator implements Runnable {
     @Override
     public final void run() {
-      final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
       if (isDisplayable() && isShowing()) {
-        windowManager.setAlphaModeRatio(FloatingDecorator.this, getCurrentAlphaRatio());
+        WindowManager.getInstance().setAlphaModeRatio(FloatingDecorator.this, getCurrentAlphaRatio());
       }
       if (myCurrentFrame < TOTAL_FRAME_COUNT) {
         myCurrentFrame++;
@@ -384,13 +384,13 @@ public final class FloatingDecorator extends JDialog {
 
   private final class MyUISettingsListener implements UISettingsListener {
     @Override
-    public void uiSettingsChanged(@NotNull final UISettings uiSettings) {
+    public void uiSettingsChanged(@NotNull UISettings uiSettings) {
       LOG.assertTrue(isDisplayable());
       LOG.assertTrue(isShowing());
-      final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
+      WindowManager windowManager = WindowManager.getInstance();
       myDelayAlarm.cancelAllRequests();
       if (uiSettings.getState().getEnableAlphaMode()) {
-        if (!myInfo.isActive()) {
+        if (!isActive()) {
           windowManager.setAlphaModeEnabled(FloatingDecorator.this, true);
           windowManager.setAlphaModeRatio(FloatingDecorator.this, uiSettings.getState().getAlphaModeRatio());
         }

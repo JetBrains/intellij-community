@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.components.BaseState
@@ -24,7 +24,8 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     const val DEFAULT_WEIGHT = 0.33f
   }
 
-  override var isActive by property(false)
+  @get:Attribute("active")
+  override var isActiveOnStart by property(false)
 
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
   override var anchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }

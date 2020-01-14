@@ -218,8 +218,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   void removeDecorator(@NotNull WindowInfo info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.getType() == ToolWindowType.DOCKED) {
-      boolean side = !info.isSplit();
-      WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
+      WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), !info.isSplit());
       if (sideInfo == null) {
         setComponent(null, info.getAnchor(), 0);
       }
@@ -243,13 +242,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         layeredPane.repaint();
       }
     }
-    else if (info.isSliding()) {
+    else if (info.getType() == ToolWindowType.SLIDING) {
       if (component != null) {
-        removeSlidingComponentCmd(component, info, dirtyMode);
+        removeSlidingComponent(component, info, dirtyMode);
       }
-    }
-    else {
-      throw new IllegalArgumentException("Unknown window type");
     }
   }
 
@@ -836,7 +832,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  private void removeSlidingComponentCmd(@NotNull Component component, @NotNull WindowInfo info, boolean dirtyMode) {
+  private void removeSlidingComponent(@NotNull Component component, @NotNull WindowInfo info, boolean dirtyMode) {
     UISettings uiSettings = UISettings.getInstance();
     if (!dirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
       final Rectangle bounds = component.getBounds();
