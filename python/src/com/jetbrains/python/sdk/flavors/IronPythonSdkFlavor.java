@@ -44,6 +44,12 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
     return true;
   }
 
+  @Nullable
+  @Override
+  public String envPathParam() {
+    return "IRONPYTHONPATH";
+  }
+
   @NotNull
   @Override
   public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {

@@ -46,7 +46,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         }
         else {
           //for other shells we read envs from activate script by the default shell and pass them to the process
-          envs.putAll(PythonSdkType.activateVirtualEnv(sdk))
+          envs.putAll(PySdkUtil.activateVirtualEnv(sdk))
         }
       }
     }

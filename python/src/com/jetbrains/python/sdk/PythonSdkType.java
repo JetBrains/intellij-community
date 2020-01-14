@@ -45,7 +45,6 @@ import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -59,8 +58,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -546,31 +547,17 @@ public final class PythonSdkType extends SdkType {
   }
 
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
-    final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
-    if (cached != null) return cached;
-
-    final String sdkHome = sdk.getHomePath();
-    if (sdkHome == null) return Collections.emptyMap();
-
-    final Map<String, String> environment = activateVirtualEnv(sdkHome);
-    sdk.putUserData(ENVIRONMENT_KEY, environment);
-    return environment;
+    return PySdkUtil.activateVirtualEnv(sdk);
   }
 
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
-    PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
-    if (reader.getActivate() != null) {
-      try {
-        return Collections.unmodifiableMap(PyVirtualEnvReader.Companion.filterVirtualEnvVars(reader.readPythonEnv()));
-      }
-      catch (Exception e) {
-        LOG.error("Couldn't read virtualenv variables", e);
-      }
-    }
-
-    return Collections.emptyMap();
+    return PySdkUtil.activateVirtualEnv(sdkHome);
   }
 
   @Nullable

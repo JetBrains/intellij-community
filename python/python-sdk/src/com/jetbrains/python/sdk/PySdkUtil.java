@@ -9,10 +9,13 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +25,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +43,7 @@ public class PySdkUtil {
   // Windows EOF marker, Ctrl+Z
   public static final int SUBSTITUTE = 26;
   public static final String PATH_ENV_VARIABLE = "PATH";
+  private static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
 
   private PySdkUtil() {
     // explicitly none
@@ -177,5 +182,33 @@ public class PySdkUtil {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
+    final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
+    if (cached != null) return cached;
+
+    final String sdkHome = sdk.getHomePath();
+    if (sdkHome == null) return Collections.emptyMap();
+
+    final Map<String, String> environment = activateVirtualEnv(sdkHome);
+    sdk.putUserData(ENVIRONMENT_KEY, environment);
+    return environment;
+  }
+
+  @NotNull
+  public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
+    PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
+    if (reader.getActivate() != null) {
+      try {
+        return Collections.unmodifiableMap(PyVirtualEnvReader.Companion.filterVirtualEnvVars(reader.readPythonEnv()));
+      }
+      catch (Exception e) {
+        LOG.error("Couldn't read virtualenv variables", e);
+      }
+    }
+
+    return Collections.emptyMap();
   }
 }

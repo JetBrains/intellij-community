@@ -202,7 +202,7 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
   val result = with(handler) {
     when {
       indicator != null -> {
-        addProcessListener(PyPackageManagerImpl.IndicatedProcessOutputListener(indicator))
+        addProcessListener(IndicatedProcessOutputListener(indicator))
         runProcessWithProgressIndicator(indicator)
       }
       else ->

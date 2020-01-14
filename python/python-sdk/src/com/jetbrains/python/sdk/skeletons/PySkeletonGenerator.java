@@ -19,12 +19,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +37,7 @@ import java.util.*;
  * launch it using multitude of existing options (see {@link #commandBuilder()}), communicate
  * with a running generator instance and interpret its results. Second, it's an extension
  * necessary to customize generation steps for various interpreter flavors supported in PyCharm,
- * first of all, remote ones (see {@link PyRemoteSkeletonGeneratorFactory} EP).
+ * first of all, remote ones (see {@link com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory} EP).
  * <p>
  * Conceptually there are two distinct modes for launching the generator:
  * <ul>
@@ -94,10 +91,6 @@ public class PySkeletonGenerator {
 
   @NonNls public static final String STATE_MARKER_FILE = ".state.json";
   @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
-
-  // Some flavors need current folder to be passed as param. Here are they.
-  private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
-    ImmutableMap.of(IronPythonSdkFlavor.class, "IRONPYTHONPATH");
 
   private static final Gson ourGson = new GsonBuilder().create();
 
@@ -234,11 +227,12 @@ public class PySkeletonGenerator {
     public Map<String, String> getEnvironment() {
       Map<String, String> env = new HashMap<>();
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+      final String flavorPathParam = flavor != null ? flavor.envPathParam() : null;
       // TODO Investigate whether it's possible to pass this directory as an ordinary "extraSysPath" entry
-      if (myWorkingDir != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-        env = PySdkUtil.mergeEnvVariables(env, ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myWorkingDir));
+      if (myWorkingDir != null && flavorPathParam != null) {
+        env = PySdkUtil.mergeEnvVariables(env, ImmutableMap.of(flavorPathParam, myWorkingDir));
       }
-      env = PySdkUtil.mergeEnvVariables(env, PythonSdkType.activateVirtualEnv(mySdk));
+      env = PySdkUtil.mergeEnvVariables(env, PySdkUtil.activateVirtualEnv(mySdk));
       PythonEnvUtil.setPythonDontWriteBytecode(env);
       if (myPrebuilt) {
         env.put("IS_PREGENERATED_SKELETONS", "1");
@@ -266,7 +260,7 @@ public class PySkeletonGenerator {
      *                      than misconfigured interpreter or execution error in order to inspect the output manually.
      */
     @NotNull
-    public ProcessOutput runProcess(boolean ensureSuccess) throws InvalidSdkException, ExecutionException {
+    public ProcessOutput runProcess(boolean ensureSuccess) throws InvalidSdkException {
       return PySkeletonGenerator.this.runProcess(this, ensureSuccess);
     }
 
@@ -351,7 +345,7 @@ public class PySkeletonGenerator {
   }
 
   @NotNull
-  protected ProcessOutput runProcess(@NotNull Builder builder, boolean ensureSuccess) throws InvalidSdkException, ExecutionException {
+  protected ProcessOutput runProcess(@NotNull Builder builder, boolean ensureSuccess) throws InvalidSdkException {
     final ProcessOutput output = getProcessOutput(builder.getWorkingDir(),
                                                   ArrayUtil.toStringArray(builder.getCommandLine()),
                                                   builder.getStdin(),

@@ -5,7 +5,9 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessNotCreatedException;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +18,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -475,7 +476,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
     try {
       final GeneralCommandLine commandLine =
-        new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(PythonSdkType.activateVirtualEnv(getSdk()));
+        new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(PySdkUtil.activateVirtualEnv(getSdk()));
       final Map<String, String> environment = commandLine.getEnvironment();
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
@@ -575,29 +576,5 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     return packages;
-  }
-
-  public static class IndicatedProcessOutputListener extends ProcessAdapter {
-    @NotNull private final ProgressIndicator myIndicator;
-
-    public IndicatedProcessOutputListener(@NotNull ProgressIndicator indicator) {
-      myIndicator = indicator;
-    }
-
-    @Override
-    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-      if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
-        for (String line : StringUtil.splitByLines(event.getText())) {
-          final String trimmed = line.trim();
-          if (isMeaningfulOutput(trimmed)) {
-            myIndicator.setText2(trimmed);
-          }
-        }
-      }
-    }
-
-    private static boolean isMeaningfulOutput(@NotNull String trimmed) {
-      return trimmed.length() > 3;
-    }
   }
 }

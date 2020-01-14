@@ -13,10 +13,10 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.packaging.IndicatedProcessOutputListener
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.packaging.PyPackageManagerImpl
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PySdkUtil
 
 @Throws(ExecutionException::class)
 fun runConda(condaExecutable: String, arguments: List<String>): ProcessOutput {
@@ -27,7 +27,7 @@ fun runConda(condaExecutable: String, arguments: List<String>): ProcessOutput {
 fun runConda(sdk: Sdk?, arguments: List<String>): ProcessOutput {
   val condaExecutable = findCondaExecutable(sdk)
   val environment = if (sdk != null) {
-    PythonSdkType.activateVirtualEnv(sdk)
+    PySdkUtil.activateVirtualEnv(sdk)
   }
   else {
     readCondaEnv(condaExecutable)
@@ -37,14 +37,14 @@ fun runConda(sdk: Sdk?, arguments: List<String>): ProcessOutput {
 
 @Throws(ExecutionException::class)
 fun runCondaPython(condaPythonExecutable: String, arguments: List<String>): ProcessOutput {
-  return run(condaPythonExecutable, arguments, PythonSdkType.activateVirtualEnv(condaPythonExecutable))
+  return run(condaPythonExecutable, arguments, PySdkUtil.activateVirtualEnv(condaPythonExecutable))
 }
 
 private fun run(executable: String, arguments: List<String>, env: Map<String, String>?): ProcessOutput {
   val commandLine = GeneralCommandLine(executable).withParameters(arguments).withEnvironment(env)
   val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
   val handler = CapturingProcessHandler(commandLine).apply {
-    addProcessListener(PyPackageManagerImpl.IndicatedProcessOutputListener(indicator))
+    addProcessListener(IndicatedProcessOutputListener(indicator))
   }
   return handler.runProcessWithProgressIndicator(indicator).apply {
     if (isCancelled) throw RunCanceledByUserException()
@@ -53,7 +53,7 @@ private fun run(executable: String, arguments: List<String>, env: Map<String, St
 }
 
 private fun readCondaEnv(condaExecutable: String): Map<String, String>? {
-  return PyCondaPackageService.getCondaBasePython(condaExecutable)?.let { PythonSdkType.activateVirtualEnv(it) }
+  return PyCondaPackageService.getCondaBasePython(condaExecutable)?.let { PySdkUtil.activateVirtualEnv(it) }
 }
 
 @Throws(ExecutionException::class)

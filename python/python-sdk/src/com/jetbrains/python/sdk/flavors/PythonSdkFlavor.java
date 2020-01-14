@@ -77,6 +77,16 @@ public abstract class PythonSdkFlavor {
     return false;
   }
 
+  /**
+   * Some flavors need current folder to be put in its environment variable.
+   * @return name of env variable to contain current folder.
+   *         {@code null} if the flavor doesn't need it
+   */
+  @Nullable
+  public String envPathParam() {
+    return null;
+  }
+
   public static List<PythonSdkFlavor> getApplicableFlavors() {
     return getApplicableFlavors(true);
   }

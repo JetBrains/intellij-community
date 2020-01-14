@@ -123,7 +123,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     String sdkHome = sdk.getHomePath();
     if (sdkHome != null && (PythonSdkUtil.isVirtualEnv(sdkHome) || PythonSdkUtil.isConda(sdk))) {
       final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
-        PythonSdkType.activateVirtualEnv(sdk); // pre-cache virtualenv activated environment
+        PySdkUtil.activateVirtualEnv(sdk); // pre-cache virtualenv activated environment
       });
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         // Running SDK update in background is inappropriate for tests: test may complete before update and updater thread will leak

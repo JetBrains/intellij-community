@@ -17,7 +17,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +28,9 @@ import java.util.*;
 @State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   private static final Logger LOG = Logger.getInstance(PyCondaPackageService.class);
+
+  private final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda2", "anaconda3", "miniconda", "miniconda2",
+    "miniconda3", "Anaconda", "Anaconda2", "Anaconda3", "Miniconda", "Miniconda2", "Miniconda3"};
 
   private static final String CONDA_ENVS_DIR = "envs";
 
@@ -136,7 +138,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   private static String getCondaExecutableByName(@NotNull final String condaName) {
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\', '/'));
     if (userHome != null) {
-      for (String root : CondaEnvSdkFlavor.CONDA_DEFAULT_ROOTS) {
+      for (String root : CONDA_DEFAULT_ROOTS) {
         VirtualFile condaFolder = userHome.findChild(root);
         String executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;
