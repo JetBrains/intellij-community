@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author Bas Leijdekkers
@@ -69,9 +69,21 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final String shortName = myPanel.getSelectedTool().getShortName();
+      final InspectionToolWrapper<?, ?> selectedTool = myPanel.getSelectedTool();
+      final String shortName = selectedTool.getShortName();
       myPanel.removeSelectedRow();
+      final Project project = e.getData(CommonDataKeys.PROJECT);
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
+      final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
+      assert wrapper != null;
+      final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
+      final List<Configuration> configurations = inspection.getConfigurations();
+      for (final Iterator<Configuration> iterator = configurations.iterator(); iterator.hasNext(); ) {
+        final Configuration configuration = iterator.next();
+        if (configuration.getUuid().toString().equals(shortName)) {
+          iterator.remove();
+        }
+      }
       profile.removeTool(shortName);
       profile.getProfileManager().fireProfileChanged(profile);
     }
@@ -103,6 +115,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
       final Configuration configuration = dialog.getConfiguration();
 
+      configuration.resetUuid();
       if (!ConfigurationManager.showSaveTemplateAsDialog(inspection.getConfigurations(), configuration, project)) {
         return;
       }
@@ -114,24 +127,18 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     private static void addConfigurationToProfile(@NotNull Project project,
                                                   InspectionProfileImpl profile,
                                                   Configuration configuration) {
-      final UUID uuid = configuration.getUuid();
-      final InspectionToolWrapper<?, ?> toolWrapper;
-      if (uuid == null) {
-        configuration.setUuid(UUID.randomUUID());
-        toolWrapper = null;
+      final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(configuration.getUuid().toString(), project);
+      if (toolWrapper != null) {
+        // already added
+        return;
       }
-      else {
-        toolWrapper = profile.getInspectionTool(configuration.getUuid().toString(), project);
-      }
-      if (toolWrapper == null) {
-        final LocalInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
-        profile.addTool(project, wrapped, null);
+      final LocalInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
+      profile.addTool(project, wrapped, null);
 
-        // enable inspection even when profile is locked, because either:
-        // - user just added this inspection explicitly
-        // - or inspection was just imported from enabled old SSR inspection
-        profile.setToolEnabled(configuration.getUuid().toString(), true);
-      }
+      // enable inspection even when profile is locked, because either:
+      // - user just added this inspection explicitly
+      // - or inspection was just imported from enabled old SSR inspection
+      profile.setToolEnabled(configuration.getUuid().toString(), true);
     }
   }
 }

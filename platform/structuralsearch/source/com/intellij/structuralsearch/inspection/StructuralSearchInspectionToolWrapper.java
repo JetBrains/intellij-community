@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWrapper {
   public StructuralSearchInspectionToolWrapper(Configuration configuration) {
-    super(new StructuralSearchFakeInspection(configuration.getName(), configuration.getUuid()));
+    super(new StructuralSearchFakeInspection(configuration));
   }
 
   private StructuralSearchInspectionToolWrapper(@NotNull LocalInspectionTool tool) {

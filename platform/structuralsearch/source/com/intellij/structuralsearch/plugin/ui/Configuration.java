@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -48,7 +48,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     category = configuration.category;
     created = -1L; // receives timestamp when added to history
     predefined = false; // copy is never predefined
-    uuid = null;
+    uuid = configuration.uuid;
   }
 
   public abstract Configuration copy();
@@ -84,12 +84,13 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.created = created;
   }
 
-  public void setUuid(UUID uuid) {
-    this.uuid = uuid;
+  public void resetUuid() {
+    uuid = UUID.randomUUID();
   }
 
+  @NotNull
   public UUID getUuid() {
-    return uuid;
+    return uuid == null ? (uuid = UUID.randomUUID()) : uuid;
   }
 
   @Override

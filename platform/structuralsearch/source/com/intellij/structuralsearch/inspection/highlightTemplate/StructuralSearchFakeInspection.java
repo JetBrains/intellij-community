@@ -3,29 +3,25 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.UUID;
 
 /**
  * @author Bas Leijdekkers
  */
 public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
-  private final String myShortName;
-  private String myName;
+  @NotNull private final Configuration myConfiguration;
   private InspectionProfileImpl myProfile = null;
 
-  public StructuralSearchFakeInspection(String name, UUID uuid) {
-    this.myName = name;
-    myShortName = uuid.toString();
+  public StructuralSearchFakeInspection(@NotNull Configuration configuration) {
+    myConfiguration = configuration;
   }
 
   public StructuralSearchFakeInspection(StructuralSearchFakeInspection copy) {
-    myShortName = copy.myShortName;
-    myName = copy.myName;
+    myConfiguration = copy.myConfiguration;
     myProfile =  copy.myProfile;
   }
 
@@ -33,19 +29,20 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getDisplayName() {
-    return myName;
+    return myConfiguration.getName();
   }
 
   @NotNull
   @Override
   public String getShortName() {
-    return myShortName;
+    return myConfiguration.getUuid().toString();
   }
 
   @NotNull
   @Override
   public String getID() {
-    return myShortName;
+    // todo make configurable
+    return getShortName();
   }
 
   @Nullable
