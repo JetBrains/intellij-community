@@ -626,7 +626,9 @@
                             implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator"/>
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
-                         displayName="Groovy Compiler" parentId="project.propCompiler"/>
+                         bundle="messages.GroovyBundle"
+                         key="configurable.GroovyCompilerConfigurable.display.name"
+                         parentId="project.propCompiler"/>
     <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.groovy.compiler.GrBuildProcessParametersProvider"/>
