@@ -81,6 +81,7 @@ import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionPro
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindow;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -692,13 +693,14 @@ public class ShelvedChangesViewManager implements Disposable {
       MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
       Disposer.register(this, changeProcessor);
 
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
+      boolean isToolbarHorizontal = isCommitToolWindow().asBoolean();
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, isToolbarHorizontal);
 
       myRootPanel = new JPanel(new BorderLayout());
-      myRootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
+      myRootPanel.add(toolbar.getComponent(), isToolbarHorizontal ? BorderLayout.NORTH : BorderLayout.WEST);
 
       if (Registry.is("show.diff.preview.as.editor.tab")) {
-        myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree){
+        myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree) {
 
           @Override
           protected boolean skipPreviewUpdate() {
