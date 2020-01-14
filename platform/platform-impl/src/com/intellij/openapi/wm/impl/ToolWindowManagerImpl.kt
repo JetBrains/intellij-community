@@ -247,10 +247,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun updateToolWindowHeaders() {
     focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
-      idToEntry.forEach { (id, entry) ->
-        val info = layout.getInfo(id) ?: return@forEach
-        if (info.isVisible) {
-          entry.toolWindow.decorator.repaint()
+      for (entry in idToEntry.values) {
+        if (entry.readOnlyWindowInfo.isVisible) {
+          entry.toolWindow.decoratorComponent?.repaint()
         }
       }
     })
