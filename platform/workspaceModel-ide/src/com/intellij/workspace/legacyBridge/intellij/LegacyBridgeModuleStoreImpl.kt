@@ -15,7 +15,7 @@ internal class LegacyBridgeModuleStoreImpl(private val pathMacroManager: PathMac
 
   override val storageManager: StateStorageManagerImpl =
     if (enabled)
-      LegacyBridgeModuleStateStorageManager(pathMacroManager)
+      LegacyBridgeModuleStateStorageManager(pathMacroManager, module)
     else
       DummyModuleStateStorageManager()
 
@@ -38,8 +38,6 @@ internal class LegacyBridgeModuleStoreImpl(private val pathMacroManager: PathMac
     virtualFileTracker = null
   )
 
-  private class LegacyBridgeModuleStateStorageManager(pathMacroManager: PathMacroManager) : ModuleStateStorageManager(
-    macroSubstitutor = TrackingPathMacroSubstitutorImpl(pathMacroManager),
-    module = null
-  )
+  private class LegacyBridgeModuleStateStorageManager(pathMacroManager: PathMacroManager, module: Module) : ModuleStateStorageManager(
+    TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 }

@@ -24,6 +24,7 @@ import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspace.virtualFileUrl
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.LanguageLevel
@@ -149,6 +150,11 @@ class LegacyBridgeModulesTest {
       assertNull(moduleManager.findModuleByName(oldModuleName))
       assertSame(module, moduleManager.findModuleByName(newModuleName))
       assertEquals(newModuleName, module.name)
+
+      val moduleFile = module.moduleFile?.virtualFileUrl?.file
+      assertNotNull(moduleFile)
+      assertEquals(newNameFile, moduleFile)
+      assertTrue(module.moduleFilePath.endsWith(newNameFile.name))
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
 

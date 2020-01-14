@@ -2,6 +2,7 @@
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.facet.FacetManager
+import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.impl.ModuleImpl
@@ -19,10 +20,11 @@ internal class LegacyBridgeModuleImpl(
   override var moduleEntityId: ModuleId,
   name: String,
   project: Project,
-  private val filePath: String,
+  filePath: String,
   override var entityStore: TypedEntityStore,
   override var diff: TypedEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath), LegacyBridgeModule {
+  private val directoryPath: String = File(filePath).parent
 
   override fun rename(newName: String, notifyStorage: Boolean) {
     moduleEntityId = moduleEntityId.copy(name = newName)
@@ -43,8 +45,7 @@ internal class LegacyBridgeModuleImpl(
     registerService(IComponentStore::class.java, LegacyBridgeModuleStoreImpl::class.java, pluginDescriptor, true)
   }
 
-  override fun getModuleFile(): VirtualFile? = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+  override fun getModuleFile(): VirtualFile? = LocalFileSystem.getInstance().findFileByIoFile(File(moduleFilePath))
 
-  // TODO It should participate in rename too
-  override fun getModuleFilePath(): String = filePath
+  override fun getModuleFilePath(): String = "$directoryPath/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}"
 }
