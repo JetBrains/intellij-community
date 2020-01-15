@@ -56,7 +56,7 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
               StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
     for (StatusBarWidgetProvider provider : StatusBarWidgetProvider.EP_NAME.getExtensionList()) {
       if (provider.isCompatibleWith(this)) {
-        final StatusBarWidget widget = provider.getWidget(LightEditUtil.getProject());
+        final StatusBarWidget widget = provider.getWidget(project);
         if (widget != null) {
           addWidget(this, statusBar, widget, provider.getAnchor());
         }
