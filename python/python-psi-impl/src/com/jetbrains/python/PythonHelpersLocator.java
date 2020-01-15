@@ -26,6 +26,7 @@ import java.io.File;
 
 public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
+  private static final String PROPERTY_HELPERS_LOCATION = "idea.python.helpers.path";
 
   private PythonHelpersLocator() {}
 
@@ -34,6 +35,10 @@ public final class PythonHelpersLocator {
    */
   @NotNull
   public static File getHelpersRoot() {
+    String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
+    if (property != null) {
+      return new File(property);
+    }
     return getHelperRoot("intellij.python.helpers", "helpers");
   }
 
