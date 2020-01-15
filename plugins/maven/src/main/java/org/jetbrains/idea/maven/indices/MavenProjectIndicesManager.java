@@ -240,7 +240,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       return false;
     }
     ProgressIndicatorProvider.checkCanceled();
-    return getGroupIds().contains(groupId);
+    return myProjectIndices.stream().anyMatch(i -> i.hasGroupId(groupId));
   }
 
   /**
@@ -252,7 +252,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       return false;
     }
     ProgressIndicatorProvider.checkCanceled();
-    return getArtifactIds(groupId).contains(artifactId);
+    return myProjectIndices.stream().anyMatch(i -> i.hasArtifactId(groupId, artifactId));
   }
 
   /**
@@ -262,7 +262,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   public boolean hasVersion(String groupId, String artifactId, String version) {
     if (hasProjectVersion(groupId, artifactId, version)) return true;
     ProgressIndicatorProvider.checkCanceled();
-    return getVersions(groupId, artifactId).contains(version);
+    return myProjectIndices.stream().anyMatch(i -> i.hasVersion(groupId, artifactId, version));
   }
 
   private Set<String> getProjectGroupIds() {
