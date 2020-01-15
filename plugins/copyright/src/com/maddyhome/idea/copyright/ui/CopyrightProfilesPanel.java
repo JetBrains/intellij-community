@@ -75,8 +75,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
       ObjectUtils.doIfNotNull((MyNode)treePath.getLastPathComponent(), c -> c.getDisplayName()), true);
 
     StatusText emptyText = myTree.getEmptyText();
-    emptyText.setText("No copyright profiles added.");
-    emptyText.appendSecondaryText("Add profile", SimpleTextAttributes.LINK_ATTRIBUTES, __ -> doAddProfile());
+    emptyText.setText(IdeBundle.message("copyright.profiles.empty"));
+    emptyText.appendSecondaryText(IdeBundle.message("copyright.profiles.add.profile"), SimpleTextAttributes.LINK_ATTRIBUTES, __ -> doAddProfile());
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     if (!shortcutText.isEmpty()) {
       emptyText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
@@ -315,7 +315,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
 
   @Override
   protected String getEmptySelectionString() {
-    return "Select a profile to view or edit its details here";
+    return IdeBundle.message("copyright.profiles.select.profile");
   }
 
   void addItemsChangeListener(final Runnable runnable) {
