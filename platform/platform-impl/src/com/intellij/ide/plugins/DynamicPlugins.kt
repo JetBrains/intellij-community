@@ -17,6 +17,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
@@ -132,6 +133,10 @@ object DynamicPlugins {
     if (!hasNoComponents(pluginDescriptor)) return false
     if (!((ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(pluginDescriptor))) return false
 
+    pluginDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
+      if (isPluginLoaded(pluginId) && !optionalDescriptors.any { !allowLoadUnloadWithoutRestart(it, pluginDescriptor) }) return false
+    }
+
     var canUnload = true
     processOptionalDependenciesOnPlugin(pluginDescriptor) { _, dependencyDescriptor ->
       if (!allowLoadUnloadWithoutRestart(dependencyDescriptor, pluginDescriptor)) canUnload = false
@@ -246,6 +251,13 @@ object DynamicPlugins {
             IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
           }
 
+          pluginDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
+            if (isPluginLoaded(pluginId)) {
+              for (optionalDescriptor in optionalDescriptors) {
+                unloadPluginDescriptor(optionalDescriptor, loadedPluginDescriptor)
+              }
+            }
+          }
           unloadPluginDescriptor(pluginDescriptor, loadedPluginDescriptor)
 
           for (project in ProjectManager.getInstance().openProjects) {
@@ -276,7 +288,7 @@ object DynamicPlugins {
       UIUtil.dispatchAllInvocationEvents()
 
       val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
-      if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable()) {
+      if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable() && !ApplicationManager.getApplication().isUnitTestMode) {
         val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
         val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
         val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
@@ -392,7 +404,12 @@ object DynamicPlugins {
   private fun loadPluginDescriptor(baseDescriptor: IdeaPluginDescriptorImpl, pluginDescriptor: IdeaPluginDescriptorImpl) {
     val application = ApplicationManager.getApplication() as ApplicationImpl
     val listenerCallbacks = arrayListOf<Runnable>()
-    val pluginsToLoad = listOf(PlatformComponentManagerImpl.DescriptorToLoad(pluginDescriptor, baseDescriptor))
+    val pluginsToLoad = mutableListOf(PlatformComponentManagerImpl.DescriptorToLoad(pluginDescriptor, baseDescriptor))
+    pluginDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
+      if (isPluginLoaded(pluginId)) {
+        pluginsToLoad.addAll(optionalDescriptors.map { optionalDescriptor -> PlatformComponentManagerImpl.DescriptorToLoad(optionalDescriptor, baseDescriptor) })
+      }
+    }
     application.registerComponents(pluginsToLoad, listenerCallbacks)
     for (openProject in ProjectManager.getInstance().openProjects) {
       (openProject as ProjectImpl).registerComponents(pluginsToLoad, listenerCallbacks)
@@ -401,8 +418,13 @@ object DynamicPlugins {
       }
     }
     listenerCallbacks.forEach(Runnable::run)
-    (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(baseDescriptor, pluginDescriptor.actionDescriptionElements)
+    for (descriptorToLoad in pluginsToLoad) {
+      (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(baseDescriptor, descriptorToLoad.descriptor.actionDescriptionElements)
+    }
   }
+
+  private fun isPluginLoaded(pluginId: PluginId?) =
+    PluginManagerCore.getLoadedPlugins().any { it.pluginId == pluginId }
 
   @JvmStatic
   fun pluginDisposable(clazz: Class<*>): Disposable? {

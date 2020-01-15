@@ -131,9 +131,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     else StartUpMeasurer.startMainActivity("${activityNamePrefix}service and ep registration")
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
-    for ((plugin, _) in plugins) {
+    for ((plugin, rootDescriptor) in plugins) {
       val containerDescriptor = getContainerDescriptor(plugin)
-      registerServices(containerDescriptor.services, plugin)
+      registerServices(containerDescriptor.services, rootDescriptor)
 
       for (descriptor in containerDescriptor.components) {
         if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {

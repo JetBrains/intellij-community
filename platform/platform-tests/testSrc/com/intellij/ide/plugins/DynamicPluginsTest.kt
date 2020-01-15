@@ -99,7 +99,12 @@ class DynamicPluginsTest {
     val newDescriptor = loadDescriptorInTest(pluginFile.parent.parent)
     PluginManagerCore.initClassLoader(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor, true)
-    assertNotNull(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader)
+    try {
+      assertNotNull(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader)
+    }
+    finally {
+      DynamicPlugins.unloadPlugin(newDescriptor)
+    }
   }
 
   @Test
@@ -246,6 +251,35 @@ class DynamicPluginsTest {
     }
   }
 
+  @Test
+  fun loadOptionalDependencyDescriptor() {
+    val plugin1Disposable = loadPluginWithText("<idea-plugin><id>foo</id></idea-plugin>", DynamicPluginsTest::class.java.classLoader)
+    try {
+      assertNull(ServiceManager.getService(MyPersistentComponent::class.java))
+      val plugin2Disposable = loadPluginWithOptionalDependency(
+        """<idea-plugin>
+                <id>bar</id>
+                <depends optional="true" config-file="bar.xml">foo</depends>
+            </idea-plugin>""",
+        """<idea-plugin>
+           <extensions defaultExtensionNs="com.intellij">
+             <applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>
+           </extensions>  
+         </idea-plugin>
+       """
+      )
+      try {
+        assertNotNull(ServiceManager.getService(MyPersistentComponent::class.java))
+      }
+      finally {
+        Disposer.dispose(plugin2Disposable)
+      }
+      assertNull(ServiceManager.getService(MyPersistentComponent::class.java))
+    }
+    finally {
+      Disposer.dispose(plugin1Disposable)
+    }
+  }
 
   @Test
   fun testProjectService() {
