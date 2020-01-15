@@ -10,6 +10,7 @@ import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.DetectRetinaKit;
+import com.intellij.util.ui.JBScalableIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,6 +293,17 @@ public final class JBUIScale {
    */
   public static int scale(int i) {
     return Math.round(userScaleFactor.get() * i);
+  }
+
+  /**
+   * Scales the passed {@code icon} according to the user scale factor.
+   *
+   * @see ScaleType#USR_SCALE
+   */
+  @NotNull
+  public static <T extends JBScalableIcon> T scaleIcon(@NotNull T icon) {
+    //noinspection unchecked
+    return (T)icon.withIconPreScaled(false);
   }
 
   public static int scaleFontSize(float fontSize) {

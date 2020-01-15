@@ -186,16 +186,21 @@ public class JBUI {
     return new JBInsets(0, 0, 0, r);
   }
 
+  /**
+   * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public static <T extends JBScalableIcon> T scale(@NotNull T icon) {
-    //noinspection unchecked
-    return (T)icon.withIconPreScaled(false);
+    return JBUIScale.scaleIcon(icon);
   }
 
   /**
-   * @deprecated Use {@link #scale(JBScalableIcon)}.
+   * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     //noinspection unchecked

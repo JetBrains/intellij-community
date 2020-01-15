@@ -43,7 +43,7 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
   /**
    * Creates an icon of the provided size.
    *
-   * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
+   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} (JBScalableIcon)} to meet HiDPI.
    */
   @NotNull
   public static EmptyIcon create(int size) {
@@ -53,7 +53,7 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
   /**
    * Creates an icon of the provided size.
    *
-   * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
+   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} (JBScalableIcon)} to meet HiDPI.
    */
   @NotNull
   public static EmptyIcon create(int width, int height) {
