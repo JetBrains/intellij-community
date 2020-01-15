@@ -180,6 +180,20 @@ public class PythonSdkUtil {
     return false;
   }
 
+  /**
+   * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
+   */
+  @NotNull
+  public static String getSkeletonsPath(String basePath, String sdkHome) {
+    String sep = File.separator;
+    return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
+  }
+
+  @NotNull
+  public static String getSkeletonsRootPath(String basePath) {
+    return basePath + File.separator + SKELETON_DIR_NAME;
+  }
+
   public static String getRemoteSourcesLocalPath(String sdkHome) {
     String sep = File.separator;
 

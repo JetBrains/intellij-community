@@ -450,7 +450,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
 
   @Nullable
   private static String getBinarySkeletonsPath(@Nullable String path) {
-    return path != null ? PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), path) : null;
+    return path != null ? PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), path) : null;
   }
 
   /**

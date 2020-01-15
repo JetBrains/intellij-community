@@ -77,8 +77,6 @@ public final class PythonSdkType extends SdkType {
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
-  private static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
-
   /**
    * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
    * hyphen sign (<i>-</i>) for <i>docker-compose:</i> scheme.
@@ -412,13 +410,18 @@ public final class PythonSdkType extends SdkType {
   /**
    * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
    */
+  @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static String getSkeletonsPath(String basePath, String sdkHome) {
-    String sep = File.separator;
-    return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
+    return PythonSdkUtil.getSkeletonsPath(basePath, sdkHome);
   }
 
+  @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static String getSkeletonsRootPath(String basePath) {
-    return basePath + File.separator + PythonSdkUtil.SKELETON_DIR_NAME;
+    return PythonSdkUtil.getSkeletonsRootPath(basePath);
   }
 
   @NotNull
