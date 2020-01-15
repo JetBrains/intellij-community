@@ -169,6 +169,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupCustomAnnotations(pkg, "{ElementType.METHOD, ElementType.TYPE_USE}", fixture);
   }
 
+  public void testTypeUseAmbiguousArrayReturn() {
+    setupAmbiguousAnnotations("ambiguous", myFixture);
+    doTest();
+  }
   public void testLambdaInlining() { doTest(); }
 
   public void testOptionalInlining() {

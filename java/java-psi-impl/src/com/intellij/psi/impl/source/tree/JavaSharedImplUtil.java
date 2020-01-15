@@ -83,9 +83,6 @@ public class JavaSharedImplUtil {
     if (modifierList != null) {
       PsiAnnotation[] annotations = modifierList.getAnnotations();
       if (annotations.length > 0) {
-        TypeAnnotationProvider original =
-          modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
-        TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
         if (type instanceof PsiArrayType) {
           Stack<PsiArrayType> types = new Stack<>();
           do {
@@ -93,7 +90,7 @@ public class JavaSharedImplUtil {
             type = ((PsiArrayType)type).getComponentType();
           }
           while (type instanceof PsiArrayType);
-          type = type.annotate(provider);
+          type = annotate(type, modifierList, annotations);
           while (!types.isEmpty()) {
             PsiArrayType t = types.pop();
             type = t instanceof PsiEllipsisType ? new PsiEllipsisType(type, t.getAnnotations()) : new PsiArrayType(type, t.getAnnotations());
@@ -102,16 +99,24 @@ public class JavaSharedImplUtil {
         }
         else if (type instanceof PsiDisjunctionType) {
           List<PsiType> components = new ArrayList<>(((PsiDisjunctionType)type).getDisjunctions());
-          components.set(0, components.get(0).annotate(provider));
+          components.set(0, annotate(components.get(0), modifierList, annotations));
           return ((PsiDisjunctionType)type).newDisjunctionType(components);
         }
         else {
-          return type.annotate(provider);
+          return annotate(type, modifierList, annotations);
         }
       }
     }
 
     return type;
+  }
+
+  @NotNull
+  private static PsiType annotate(@NotNull PsiType type, @NotNull PsiModifierList modifierList, PsiAnnotation @NotNull [] annotations) {
+    TypeAnnotationProvider original =
+      modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
+    TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
+    return type.annotate(provider);
   }
 
   public static void normalizeBrackets(@NotNull PsiVariable variable) {
