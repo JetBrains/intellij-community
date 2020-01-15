@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -37,7 +37,7 @@ import java.io.StringWriter;
 /**
  * @author anna
  */
-public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
+public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
   private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");
 
   private static final Logger LOG = Logger.getInstance(ByteCodeViewerManager.class);
@@ -124,21 +124,23 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   @Override
   protected void doUpdateComponent(@NotNull PsiElement element, PsiElement originalElement, ByteCodeViewerComponent component) {
-    final Content content = myToolWindow.getContentManager().getSelectedContent();
-    if (content != null && element != null) {
+    Content content = myToolWindow.getContentManager().getSelectedContent();
+    if (content != null) {
       updateByteCode(element, component, content);
     }
   }
 
   @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
-    final Content content = myToolWindow.getContentManager().getSelectedContent();
-    if (content != null) {
-      final ByteCodeViewerComponent component = (ByteCodeViewerComponent)content.getComponent();
-      PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
-      if (element != null) {
-        updateByteCode(element, component, content);
-      }
+    Content content = myToolWindow.getContentManager().getSelectedContent();
+    if (content == null) {
+      return;
+    }
+
+    ByteCodeViewerComponent component = (ByteCodeViewerComponent)content.getComponent();
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
+    if (element != null) {
+      updateByteCode(element, component, content);
     }
   }
 
@@ -148,7 +150,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   }
 
   protected void doUpdateComponent(@NotNull PsiElement element, final String newText) {
-    final Content content = myToolWindow.getContentManager().getSelectedContent();
+    Content content = myToolWindow.getContentManager().getSelectedContent();
     if (content != null) {
       updateByteCode(element, (ByteCodeViewerComponent)content.getComponent(), content, newText);
     }
