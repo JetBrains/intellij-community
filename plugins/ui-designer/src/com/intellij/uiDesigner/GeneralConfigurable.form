@@ -105,7 +105,7 @@
         </constraints>
         <properties>
           <margin top="10" left="0" bottom="2" right="2"/>
-          <text value="&amp;Resize column and row headers with mouse"/>
+          <text resource-bundle="messages/UIDesignerBundle" key="ui.designer.general.settings.resize.column.and.row.headers"/>
         </properties>
       </component>
     </children>
