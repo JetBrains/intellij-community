@@ -64,7 +64,7 @@ internal class InstallPluginService : RestService() {
       .newFromEncoded(ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/') + "/api/getCompatibleUpdates")
       .addParameters(mapOf(
         "build" to getBuildNumberForDownload(),
-        "pluginId" to pluginId,
+        "pluginXmlId" to pluginId,
         "max" to "1"
       ))
     val compatibleUpdateExists = HttpRequests.request(url).readString() != "[]"
