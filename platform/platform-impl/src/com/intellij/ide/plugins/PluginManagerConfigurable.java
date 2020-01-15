@@ -90,8 +90,6 @@ public class PluginManagerConfigurable
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
-  public static final String MANAGE_PLUGIN_REPOSITORIES = "Manage Plugin Repositories...";
-
   private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
 
@@ -106,7 +104,7 @@ public class PluginManagerConfigurable
   private SearchResultPanel myMarketplaceSearchPanel;
   private SearchResultPanel myInstalledSearchPanel;
 
-  private final LinkLabel<Object> myUpdateAll = new LinkLabel<>("Update All", null);
+  private final LinkLabel<Object> myUpdateAll = new LinkLabel<>(IdeBundle.message("plugin.manager.update.all"), null);
   private final JLabel myUpdateCounter = new CountComponent();
   private final CountIcon myCountIcon = new CountIcon();
 
@@ -178,8 +176,8 @@ public class PluginManagerConfigurable
     myUpdateAll.setVisible(false);
     myUpdateCounter.setVisible(false);
 
-    myTabHeaderComponent.addTab("Marketplace", null);
-    myTabHeaderComponent.addTab("Installed", myCountIcon);
+    myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.marketplace"), null);
+    myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myCountIcon);
 
     myPluginUpdatesService = PluginUpdatesService.connectConfigurable(countValue -> {
       int count = countValue == null ? 0 : countValue;
@@ -227,7 +225,7 @@ public class PluginManagerConfigurable
   @NotNull
   private DefaultActionGroup createGearActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
-    actions.add(new DumbAwareAction(MANAGE_PLUGIN_REPOSITORIES) {
+    actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.repositories")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginHostsConfigurable())) {

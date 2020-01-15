@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.ui.components.JBTabbedPane;
@@ -73,7 +74,7 @@ public class TabbedPaneHeaderComponent extends JPanel {
     myTabbedPane.setOpaque(false);
 
     add(myTabbedPane);
-    add(TabHeaderComponent.createToolbar("Manage Repositories, Configure Proxy or Install Plugin from Disk", actions), BorderLayout.EAST);
+    add(TabHeaderComponent.createToolbar(IdeBundle.message("plugin.manager.tooltip"), actions), BorderLayout.EAST);
   }
 
   @Override
