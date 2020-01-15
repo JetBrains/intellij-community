@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.IdeBundle;
@@ -126,8 +126,8 @@ public final class FavoritesManager implements ProjectComponent, JDOMExternaliza
     });
   }
 
-  List<AbstractTreeNode> createRootNodes() {
-    List<AbstractTreeNode> result = new ArrayList<>();
+  List<AbstractTreeNode<?>> createRootNodes() {
+    List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (String listName : myFavoritesRootsOrder) {
       result.add(new FavoritesListNode(myProject, listName, myDescriptions.get(listName)));
     }
@@ -181,11 +181,11 @@ public final class FavoritesManager implements ProjectComponent, JDOMExternaliza
   }
 
   public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
-    Collection<AbstractTreeNode> nodes = AddToFavoritesAction.createNodes(myProject, moduleContext, elements, true, getViewSettings());
+    Collection<AbstractTreeNode<?>> nodes = AddToFavoritesAction.createNodes(myProject, moduleContext, elements, true, getViewSettings());
     return !nodes.isEmpty() && addRoots(name, nodes);
   }
 
-  public synchronized Comparator<FavoritesTreeNodeDescriptor> getCustomComparator(@NotNull final String name) {
+  public synchronized Comparator<FavoriteTreeNodeDescriptor> getCustomComparator(@NotNull final String name) {
     return getProviders().get(name);
   }
 
@@ -197,7 +197,7 @@ public final class FavoritesManager implements ProjectComponent, JDOMExternaliza
     return Pair.create(url, className);
   }
 
-  public boolean addRoots(final String name, final Collection<? extends AbstractTreeNode> nodes) {
+  public boolean addRoots(final String name, final Collection<? extends AbstractTreeNode<?>> nodes) {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
 
     final HashSet<AbstractUrl> set =
@@ -216,7 +216,7 @@ public final class FavoritesManager implements ProjectComponent, JDOMExternaliza
     return true;
   }
 
-  public boolean canAddRoots(@NotNull String name, @NotNull Collection<? extends AbstractTreeNode> nodes) {
+  public boolean canAddRoots(@NotNull String name, @NotNull Collection<? extends AbstractTreeNode<?>> nodes) {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
 
     final HashSet<AbstractUrl> set =
@@ -229,7 +229,7 @@ public final class FavoritesManager implements ProjectComponent, JDOMExternaliza
   }
 
   private void appendChildNodes(AbstractTreeNode node, TreeItem<Pair<AbstractUrl, String>> treeItem) {
-    final Collection<? extends AbstractTreeNode> children = node.getChildren();
+    final Collection<? extends AbstractTreeNode<?>> children = node.getChildren();
     for (AbstractTreeNode child : children) {
       final TreeItem<Pair<AbstractUrl, String>> childTreeItem = new TreeItem<>(createPairForNode(child));
       treeItem.addChild(childTreeItem);
@@ -268,11 +268,11 @@ public final class FavoritesManager implements ProjectComponent, JDOMExternaliza
     return false;
   }
 
-  public synchronized boolean removeRoot(@NotNull String name, @NotNull List<? extends AbstractTreeNode> elements) {
+  public synchronized boolean removeRoot(@NotNull String name, @NotNull List<? extends AbstractTreeNode<?>> elements) {
     Function<AbstractTreeNode, AbstractUrl> convertor = obj -> createUrlByElement(obj.getValue(), myProject);
     boolean result = true;
     for (AbstractTreeNode element : elements) {
-      final List<AbstractTreeNode> path = TaskDefaultFavoriteListProvider.getPathToUsualNode(element);
+      final List<AbstractTreeNode<?>> path = TaskDefaultFavoriteListProvider.getPathToUsualNode(element);
       result &= findListToRemoveFrom(name, path.subList(1, path.size()), convertor);
     }
     return result;

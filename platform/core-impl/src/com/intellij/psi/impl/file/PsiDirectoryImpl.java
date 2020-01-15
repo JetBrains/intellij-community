@@ -30,16 +30,18 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 
 public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Queryable {
-  public static final Key<Boolean> UPDATE_ADDED_FILE_KEY = Key.create("UPDATE_ADDED_FILE_KEY");
+  private static final Key<Boolean> UPDATE_ADDED_FILE_KEY = Key.create("UPDATE_ADDED_FILE_KEY");
   private static final Logger LOG = Logger.getInstance(PsiDirectoryImpl.class);
 
   private final PsiManagerImpl myManager;
@@ -353,17 +355,33 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
-
-      final PsiFile copyPsi = myManager.findFile(copyVFile);
-      if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
       if (UPDATE_ADDED_FILE_KEY.get(this, true)) {
         DumbService.getInstance(getProject()).completeJustSubmittedTasks();
-        UpdateAddedFileProcessor.updateAddedFiles(copyPsi);
+        final PsiFile copyPsi = findCopy(copyVFile, vFile);
+        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(copyPsi));
+        return copyPsi;
       }
-      return copyPsi;
+      return findCopy(copyVFile, vFile);
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e);
+    }
+  }
+
+  @NotNull
+  private PsiFile findCopy(VirtualFile copyVFile, VirtualFile vFile) {
+    final PsiFile copyPsi = myManager.findFile(copyVFile);
+    if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
+    return copyPsi;
+  }
+
+  public <T extends Throwable> void executeWithUpdatingAddedFilesDisabled(ThrowableRunnable<T> runnable) throws T {
+    try {
+      putUserData(UPDATE_ADDED_FILE_KEY, false);
+      runnable.run();
+    }
+    finally {
+      putUserData(UPDATE_ADDED_FILE_KEY,null);
     }
   }
 
@@ -419,7 +437,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile == null) throw new IncorrectOperationException("Could not find file " + newVFile);
-        UpdateAddedFileProcessor.updateAddedFiles(newFile);
+        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(newFile));
         return newFile;
       }
       catch (IOException e) {

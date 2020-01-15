@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.RemoteDesktopService;
@@ -33,8 +33,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
@@ -187,9 +189,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   /**
-   * Creates command which shows tool window with specified set of parameters.
-   * Command uses cloned copy of passed {@code info} object.
-   *
    * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after adding
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
@@ -291,7 +290,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, final float weight) {
+  private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, float weight) {
     if (ToolWindowAnchor.TOP == anchor) {
       verticalSplitter.setFirstComponent(component);
       verticalSplitter.setFirstSize((int)(layeredPane.getHeight() * weight));
@@ -367,7 +366,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return getComponentAt(ToolWindowAnchor.BOTTOM) != null;
   }
 
-  @Nullable
+  @NotNull
   Stripe getStripeFor(@NotNull ToolWindowAnchor anchor) {
     if (ToolWindowAnchor.TOP == anchor) {
       return topStripe;
@@ -827,24 +826,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (!dirtyMode) {
       layeredPane.validate();
       layeredPane.repaint();
-    }
-  }
-
-  void addStripeButton(@NotNull StripeButton button, @NotNull ToolWindowAnchor anchor, @NotNull Comparator<? super StripeButton> comparator) {
-    if (ToolWindowAnchor.TOP == anchor) {
-      topStripe.addButton(button, comparator);
-    }
-    else if (ToolWindowAnchor.LEFT == anchor) {
-      leftStripe.addButton(button, comparator);
-    }
-    else if (ToolWindowAnchor.BOTTOM == anchor) {
-      bottomStripe.addButton(button, comparator);
-    }
-    else if (ToolWindowAnchor.RIGHT == anchor) {
-      rightStripe.addButton(button, comparator);
-    }
-    else {
-      LOG.error("unknown anchor: " + anchor);
     }
   }
 

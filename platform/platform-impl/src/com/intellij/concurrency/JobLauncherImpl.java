@@ -172,6 +172,7 @@ public class JobLauncherImpl extends JobLauncher {
           complete(null); // complete manually before calling callback
         }
         catch (Throwable throwable) {
+          myStatus = Status.EXECUTED;
           completeExceptionally(throwable);
         }
         finally {

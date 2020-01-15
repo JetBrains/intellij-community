@@ -10,7 +10,7 @@ To view the bytecode, select a class file and open <b>View | Show Bytecode</b>.]
   <depends>com.intellij.modules.java</depends>
 
   <extensionPoints>
-    <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher"/>
+    <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -18,7 +18,7 @@ To view the bytecode, select a class file and open <b>View | Show Bytecode</b>.]
   </extensions>
 
   <actions>
-    <group>
+    <group id="ByeCodeViewerGroup">
       <action id="ByteCodeViewer" class="com.intellij.byteCodeViewer.ShowByteCodeAction" text="Show Bytecode"/>
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
     </group>

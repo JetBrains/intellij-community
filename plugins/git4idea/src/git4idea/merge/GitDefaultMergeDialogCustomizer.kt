@@ -49,6 +49,7 @@ internal open class GitDefaultMergeDialogCustomizer(
 ) : MergeDialogCustomizer() {
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
     val repos = getRepositoriesForFiles(project, files)
+      .ifEmpty { getRepositories(project).filter { it.conflictsHolder.conflicts.isNotEmpty() } }
 
     val mergeBranches = repos.map { resolveMergeBranch(it)?.presentable }
     if (mergeBranches.any { it != null }) {

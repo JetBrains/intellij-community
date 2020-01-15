@@ -57,7 +57,7 @@ Adds support for working with shell script files
     <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
 
     <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.shellcheck.ShShellcheckExternalAnnotator"/>
-    <localInspection language="Shell Script" groupName="Shell Script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
+    <localInspection language="Shell Script" groupName="Shell script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
                      level="ERROR" unfair="true" implementationClass="com.intellij.sh.shellcheck.ShShellcheckInspection"/>
 
     <spellchecker.support language="Shell Script" implementationClass="com.intellij.sh.spellchecker.ShSpellcheckingStrategy"/>
@@ -73,11 +73,11 @@ Adds support for working with shell script files
 
     <intentionAction>
       <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
-      <category>Shell Script</category>
+      <category>Shell script</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.sh.ShExplainShellIntention</className>
-      <category>Shell Script</category>
+      <category>Shell script</category>
     </intentionAction>
   </extensions>
   <actions>

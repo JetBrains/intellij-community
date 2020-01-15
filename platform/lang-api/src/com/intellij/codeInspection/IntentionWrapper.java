@@ -85,7 +85,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
 
   @NotNull
   @Override
-  public Class getActionClass() {
+  public Class<?> getActionClass() {
     return getAction().getClass();
   }
 

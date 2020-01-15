@@ -496,7 +496,9 @@
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
 
-    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions" id="editor.preferences.pyOptions"/>
+    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions" id="editor.preferences.pyOptions"
+                                 bundle="messages.PyBundle"
+                                 key="configurable.PySmartKeysOptions.display.name"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyConsoleFileReferenceContributor" language="Python" order="before filePath"/>
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor" language="Python"/>
@@ -505,18 +507,24 @@
                              id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              displayName="Python External Documentation"/>
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
-                         id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" displayName="Python Integrated Tools"
-                         />
+                         id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyIntegratedToolsModulesConfigurable.display.name"/>
     <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
 
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
 
     <projectConfigurable groupId="build" dynamic="true" id="pyconsole" instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"
-                         displayName="Console"/>
+                         bundle="messages.PyBundle"
+                         key="configurable.PyConsoleOptionsConfigurable.display.name"/>
+
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
 
-    <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python" instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
-                         displayName="Python Debugger"/>
+    <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
+                         instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyDebuggerConfigurable.display.name"/>
+
     <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
 
     <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>

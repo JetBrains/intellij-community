@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.IdeBundle;
@@ -61,7 +61,8 @@ public class AbstractTreeUi {
   private AbstractTreeStructure myTreeStructure;
   private AbstractTreeUpdater myUpdater;
 
-  private Comparator<? super NodeDescriptor> myNodeDescriptorComparator;
+  private Comparator<? super NodeDescriptor<?>> myNodeDescriptorComparator;
+
   private final Comparator<TreeNode> myNodeComparator = new Comparator<TreeNode>() {
     @Override
     public int compare(TreeNode n1, TreeNode n2) {
@@ -69,8 +70,8 @@ public class AbstractTreeUi {
       if (isLoadingNode(n1)) return -1;
       if (isLoadingNode(n2)) return 1;
 
-      NodeDescriptor nodeDescriptor1 = getDescriptorFrom(n1);
-      NodeDescriptor nodeDescriptor2 = getDescriptorFrom(n2);
+      NodeDescriptor<?> nodeDescriptor1 = getDescriptorFrom(n1);
+      NodeDescriptor<?> nodeDescriptor2 = getDescriptorFrom(n2);
 
       if (nodeDescriptor1 == null && nodeDescriptor2 == null) return 0;
       if (nodeDescriptor1 == null) return -1;
@@ -81,6 +82,7 @@ public class AbstractTreeUi {
              : nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
     }
   };
+
   long myOwnComparatorStamp;
   private long myLastComparatorStamp;
 
@@ -210,7 +212,7 @@ public class AbstractTreeUi {
                       @NotNull JTree tree,
                       @NotNull DefaultTreeModel treeModel,
                       AbstractTreeStructure treeStructure,
-                      @Nullable Comparator<? super NodeDescriptor> comparator,
+                      @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                       boolean updateIfInactive) {
     myBuilder = builder;
     myTree = tree;
@@ -639,7 +641,7 @@ public class AbstractTreeUi {
     }
   }
 
-  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor> nodeDescriptorComparator) {
+  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor<?>> nodeDescriptorComparator) {
     myNodeDescriptorComparator = nodeDescriptorComparator;
     myLastComparatorStamp = -1;
     getBuilder().queueUpdateFrom(getTreeStructure().getRootElement(), true);
@@ -663,7 +665,6 @@ public class AbstractTreeUi {
     boolean wasCleanedUp = false;
     if (myRootNodeWasQueuedToInitialize) {
       Object root = getTreeStructure().getRootElement();
-      assert root != null : "Root element cannot be null";
 
       Object currentRoot = getElementFor(myRootNode);
 

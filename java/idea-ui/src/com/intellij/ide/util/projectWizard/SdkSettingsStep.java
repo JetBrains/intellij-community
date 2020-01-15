@@ -54,12 +54,12 @@ public class SdkSettingsStep extends ModuleWizardStep {
   private final ModuleBuilder myModuleBuilder;
   private final JPanel myJdkPanel;
 
-  public SdkSettingsStep(SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder,
+  public SdkSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder,
                          @NotNull Condition<? super SdkTypeId> sdkTypeIdFilter) {
     this(settingsStep, moduleBuilder, sdkTypeIdFilter, null);
   }
 
-  public SdkSettingsStep(SettingsStep settingsStep,
+  public SdkSettingsStep(@NotNull SettingsStep settingsStep,
                          @NotNull ModuleBuilder moduleBuilder,
                          @NotNull Condition<? super SdkTypeId> sdkTypeIdFilter,
                          @Nullable Condition<? super Sdk> sdkFilter) {
@@ -69,7 +69,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
     }
   }
 
-  public SdkSettingsStep(WizardContext context,
+  public SdkSettingsStep(@NotNull WizardContext context,
                          @NotNull ModuleBuilder moduleBuilder,
                          @NotNull Condition<? super SdkTypeId> sdkTypeIdFilter,
                          @Nullable Condition<? super Sdk> sdkFilter) {

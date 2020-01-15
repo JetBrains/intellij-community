@@ -56,13 +56,13 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent,
                             @NotNull NotNullFunction<Disposable, Invoker> invokerCreator,
-                            @Nullable Comparator<? super NodeDescriptor> comparator) {
+                            @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     this(structure, parent, invokerCreator);
     if (comparator != null) this.comparator = wrapToNodeComparator(comparator);
   }
 
   public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent,
-                            @Nullable Comparator<? super NodeDescriptor> comparator) {
+                            @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     this(structure, parent, Invoker::forBackgroundThreadWithReadAction, comparator);
   }
 
@@ -76,21 +76,21 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public StructureTreeModel(@NotNull Structure structure,
-                            @NotNull Comparator<? super NodeDescriptor> comparator,
+                            @NotNull Comparator<? super NodeDescriptor<?>> comparator,
                             @NotNull Disposable parentDisposable) {
     this(structure, parentDisposable);
     this.comparator = wrapToNodeComparator(comparator);
   }
 
   @NotNull
-  private static Comparator<? super Node> wrapToNodeComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
+  private static Comparator<? super Node> wrapToNodeComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     return (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
   }
 
   /**
    * @param comparator a comparator to sort tree nodes or {@code null} to disable sorting
    */
-  public final void setComparator(@Nullable Comparator<? super NodeDescriptor> comparator) {
+  public final void setComparator(@Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     if (disposed) return;
     if (comparator != null) {
       this.comparator = wrapToNodeComparator(comparator);
@@ -366,8 +366,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private static boolean isValid(@NotNull AbstractTreeStructure structure, Object element) {
     if (element == null) return false;
     if (element instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)element;
-      if (null == node.getValue()) return false;
+      AbstractTreeNode<?> node = (AbstractTreeNode<?>)element;
+      if (null == node.getValue()) {
+        return false;
+      }
     }
     if (element instanceof ValidateableNode) {
       ValidateableNode node = (ValidateableNode)element;
@@ -391,8 +393,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @Nullable
   private List<Node> getValidChildren(@NotNull Node node) {
-    NodeDescriptor descriptor = node.getDescriptor();
-    if (descriptor == null) return null;
+    NodeDescriptor<?> descriptor = node.getDescriptor();
+    if (descriptor == null) {
+      return null;
+    }
 
     Object parent = descriptor.getElement();
     if (!isValid(structure, parent)) return null;
@@ -439,7 +443,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     private final LeafState leafState;
     private final int hashCode;
 
-    private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor parent) {
+    private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
       this(structure.createDescriptor(element, parent), structure.getLeafState(element), element.hashCode());
     }
 
@@ -465,7 +469,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
 
     private boolean update() {
-      NodeDescriptor descriptor = getDescriptor();
+      NodeDescriptor<?> descriptor = getDescriptor();
       return descriptor != null && descriptor.update();
     }
 
@@ -507,13 +511,13 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return list != null ? list : emptyList();
     }
 
-    private NodeDescriptor getDescriptor() {
+    private NodeDescriptor<?> getDescriptor() {
       Object object = getUserObject();
-      return object instanceof NodeDescriptor ? (NodeDescriptor)object : null;
+      return object instanceof NodeDescriptor ? (NodeDescriptor<?>)object : null;
     }
 
     private Object getElement() {
-      NodeDescriptor descriptor = getDescriptor();
+      NodeDescriptor<?> descriptor = getDescriptor();
       return descriptor == null ? null : descriptor.getElement();
     }
 
@@ -543,7 +547,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
 
     @Override
-    public Enumeration children() {
+    public Enumeration<?> children() {
       return enumeration(getChildren());
     }
 

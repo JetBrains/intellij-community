@@ -78,12 +78,6 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
 
   @NotNull
   @Override
-  protected String getSchemeTypeName() {
-    return "Keymap";
-  }
-
-  @NotNull
-  @Override
   protected AbstractSchemeActions<KeymapScheme> createSchemeActions() {
     return getManager();
   }
@@ -122,7 +116,8 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
 
   @Override
   protected JComponent createTopComponent() {
-    SwingActionLink link = new SwingActionLink(new AbstractAction("Get more keymaps in " + ShowSettingsUtil.getSettingsMenuName() + " | Plugins") {
+    SwingActionLink link = new SwingActionLink(new AbstractAction(
+      KeyMapBundle.message("link.get.more.keymaps.in.0.plugins", ShowSettingsUtil.getSettingsMenuName())) {
       @Override
       public void actionPerformed(ActionEvent e) {
         Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext((SwingActionLink)e.getSource()));

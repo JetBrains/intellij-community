@@ -49,26 +49,8 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
 
   fun createComponentConstraints(cc: Lazy<CC>,
                                  component: Component,
-                                 gapLeft: Int = 0,
-                                 gapAfter: Int = 0,
-                                 gapTop: Int = 0,
-                                 gapBottom: Int = 0,
                                  split: Int = -1,
                                  growPolicy: GrowPolicy?): CC? {
-    if (gapLeft != 0) {
-      cc.value.horizontal.gapBefore = gapToBoundSize(gapLeft, true)
-    }
-    if (gapAfter != 0) {
-      cc.value.horizontal.gapAfter = gapToBoundSize(gapAfter, true)
-    }
-
-    if (gapTop != 0) {
-      cc.value.vertical.gapBefore = gapToBoundSize(gapTop, false)
-    }
-    if (gapBottom != 0) {
-      cc.value.vertical.gapAfter = gapToBoundSize(gapBottom, false)
-    }
-
     if (split != -1) {
       cc.value.split = split
     }

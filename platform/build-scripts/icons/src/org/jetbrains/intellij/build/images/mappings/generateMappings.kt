@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.images.mappings
 
 import org.jetbrains.intellij.build.images.IconsClassGenerator
-import org.jetbrains.intellij.build.images.ImageCollector
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.sync.*
 import java.io.File
@@ -63,8 +62,8 @@ private fun generateMappings() {
     val jsonFile = path.toRelativeString(repo)
     stageFiles(listOf(jsonFile), repo)
     commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update",
-                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com",
-                  force = true)
+                                                           "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com",
+                                                           force = true)
   }
 }
 
@@ -93,22 +92,19 @@ private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
   val project = jpsProject(homePath)
   val generator = IconsClassGenerator(home, project.modules)
   return protectStdErr {
-    project.modules.parallelStream().map { module ->
-      val iconsClassInfo = generator.getIconsClassInfo(module) ?: return@map null
-      val imageCollector = ImageCollector(home.toPath(), iconsOnly = true, className = iconsClassInfo.className)
-      val images = imageCollector.collect(module, includePhantom = true)
-      if (images.isNotEmpty()) {
-        val icons = images.asSequence()
+    project.modules.parallelStream()
+      .flatMap { generator.getIconsClassInfo(it).stream() }
+      .filter { it.images.isNotEmpty() }
+      .map { info ->
+        val icons = info.images.asSequence()
           .filter { it.file != null && Icon(it.file!!.toFile()).isValid }
           .map { it.sourceRoot.file }.toSet()
-        return@map when {
+        when {
           icons.isEmpty() -> null
-          icons.size > 1 -> error("${iconsClassInfo.className}: ${icons.joinToString()}")
-          else -> Mapping("idea", iconsClassInfo.className, "idea/${icons.first().toRelativeString(home)}")
+          icons.size > 1 -> error("${info.className}: ${icons.joinToString()}")
+          else -> Mapping("idea", info.className, "idea/${icons.first().toRelativeString(home)}")
         }
-      }
-      else null
-    }.filter(Objects::nonNull).map { it!! }.toList()
+      }.filter(Objects::nonNull).map { it!! }.toList()
   }
 }
 

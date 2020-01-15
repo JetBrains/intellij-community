@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.dnd.DnDSupport;
@@ -39,10 +39,10 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   List<AnAction> myDoubleClickActions = new ArrayList<>();
 
-  TabContentLayout(ToolWindowContentUi ui) {
+  TabContentLayout(@NotNull ToolWindowContentUi ui) {
     super(ui);
 
-    new BaseButtonBehavior(myUi) {
+    new BaseButtonBehavior(myUi.getTabComponent()) {
       @Override
       protected void execute(final MouseEvent e) {
         if (!myUi.isCurrent(TabContentLayout.this)) return;
@@ -65,7 +65,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
       }
     };
 
-    ContentManager contentManager = myUi.contentManager;
+    ContentManager contentManager = myUi.getContentManager();
     for (int i = 0; i < contentManager.getContentCount(); i++) {
       contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));
     }
@@ -99,14 +99,14 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     List<? extends ContentTabLabel> tabs = ContainerUtil.filter(myTabs, myLastLayout.toDrop::contains);
     final List<Content> contentsToShow = ContainerUtil.map(tabs, ContentTabLabel::getContent);
     final SelectContentStep step = new SelectContentStep(contentsToShow);
-    RelativePoint point = new RelativePoint(myUi, new Point(rect.x, rect.y + rect.height));
+    RelativePoint point = new RelativePoint(myUi.getTabComponent(), new Point(rect.x, rect.y + rect.height));
     JBPopupFactory.getInstance().createListPopup(step).show(point);
   }
 
   @Override
   public void layout() {
-    Rectangle bounds = myUi.getBounds();
-    ContentManager manager = myUi.contentManager;
+    Rectangle bounds = myUi.getTabComponent().getBounds();
+    ContentManager manager = myUi.getContentManager();
     LayoutData data = new LayoutData(myUi);
 
     data.eachX = TAB_LAYOUT_START;
@@ -136,7 +136,6 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
         }
       }
     }
-
 
     if (data.fullLayout) {
       for (ContentTabLabel eachTab : myTabs) {
@@ -200,8 +199,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
       data.moreRect = null;
     }
 
-    final Rectangle moreRect = data.moreRect == null ? null : new Rectangle(data.eachX, 0, /*getMoreToolbarWidth()*/16+MORE_ICON_BORDER, bounds.height);
-
+    Rectangle moreRect = data.moreRect == null ? null : new Rectangle(data.eachX, 0, /*getMoreToolbarWidth()*/16+MORE_ICON_BORDER, bounds.height);
     myUi.isResizableArea = p -> moreRect == null || !moreRect.contains(p);
     myLastLayout = data;
     if (toolbarUpdateNeeded) {
@@ -220,7 +218,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
       }
     }
 
-    ContentManager contentManager = myUi.contentManager;
+    ContentManager contentManager = myUi.getContentManager();
     Content selected = contentManager.getSelectedContent();
     if (selected == null && contentManager.getContents().length > 0) {
       selected = contentManager.getContents()[0];
@@ -237,14 +235,16 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   boolean isToDrawTabs() {
-    if(myTabs.size() > 1) return true;
-
-      if(myTabs.size() == 1)  {
-        String title = myTabs.get(0).getContent().getToolwindowTitle();
-        return !StringUtil.isEmpty(title);
-      }
-
+    int size = myTabs.size();
+    if (size > 1) {
+      return true;
+    }
+    else if (size == 1) {
+      return !StringUtil.isEmpty(myTabs.get(0).getContent().getToolwindowTitle());
+    }
+    else {
       return false;
+    }
   }
 
   static class LayoutData {
@@ -263,12 +263,12 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     public int contentCount;
 
     LayoutData(ToolWindowContentUi ui) {
-      layoutSize = ui.getSize();
-      contentCount = ui.contentManager.getContentCount();
+      layoutSize = ui.getTabComponent().getSize();
+      contentCount = ui.getContentManager().getContentCount();
     }
   }
 
-  private JBTabPainter tabPainter = JBTabPainter.getTOOL_WINDOW();
+  private final JBTabPainter tabPainter = JBTabPainter.getTOOL_WINDOW();
 
   @Override
   public void paintComponent(Graphics g) {
@@ -293,11 +293,6 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   @Override
-  public void paintChildren(Graphics g) {
-    if (!isToDrawTabs()) return;
-  }
-
-  @Override
   public void update() {
     for (ContentTabLabel each : myTabs) {
       each.update();
@@ -308,13 +303,13 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   @Override
   public void rebuild() {
-    myUi.removeAll();
+    myUi.getTabComponent().removeAll();
 
-    myUi.add(myIdLabel);
+    myUi.getTabComponent().add(myIdLabel);
     ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
 
     for (ContentTabLabel each : myTabs) {
-      myUi.add(each);
+      myUi.getTabComponent().add(each);
       ToolWindowContentUi.initMouseListeners(each, myUi, false);
     }
   }
@@ -359,7 +354,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   @Override
   public void showContentPopup(ListPopup listPopup) {
-    Content selected = myUi.contentManager.getSelectedContent();
+    Content selected = myUi.getContentManager().getSelectedContent();
     if (selected != null) {
       ContentTabLabel tab = myContent2Tabs.get(selected);
       listPopup.showUnderneathOf(tab);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -38,7 +38,6 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,7 +61,7 @@ public final class UpdateCheckerComponent implements Runnable {
   }
 
   static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
-  @NonNls static final String UPDATE_WHATS_NEW_MESSAGE = "ide.update.whats.new.message";
+  static final String UPDATE_WHATS_NEW_MESSAGE = "ide.update.whats.new.message";
 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 

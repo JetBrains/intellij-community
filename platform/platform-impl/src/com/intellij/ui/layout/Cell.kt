@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -131,6 +132,8 @@ interface CellBuilder<T : JComponent> {
 
   @ApiStatus.Internal
   fun shouldSaveOnApply(): Boolean
+
+  fun withLargeLeftGap(): CellBuilder<T>
 }
 
 internal interface CheckboxCellBuilder {
@@ -195,10 +198,10 @@ abstract class Cell : BaseBuilder {
     label(gapLeft = gapLeft)
   }
 
-  fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit) {
+  fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit): CellBuilder<JComponent> {
     val result = Link(text, action = action)
     style?.let { UIUtil.applyStyle(it, result) }
-    result()
+    return result()
   }
 
   fun browserLink(text: String, url: String) {
@@ -208,6 +211,14 @@ abstract class Cell : BaseBuilder {
     result()
   }
 
+  fun buttonFromAction(text: String, actionPlace: String, action: AnAction, vararg constraints: CCFlags): JButton {
+    val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
+    button.addActionListener { ActionUtil.invokeAction(action, button, actionPlace, null, null) }
+    button(*constraints)
+    return button
+  }
+
+  // backward compatibility - return type should be void
   fun button(text: String, vararg constraints: CCFlags, actionListener: (event: ActionEvent) -> Unit) {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
@@ -228,7 +239,7 @@ abstract class Cell : BaseBuilder {
 
   @JvmOverloads
   fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, vararg constraints: CCFlags = emptyArray()): JCheckBox {
-    val component = JCheckBox(text)
+    val component = JBCheckBox(text)
     component.isSelected = isSelected
     component(*constraints, comment = comment)
     return component
@@ -467,6 +478,14 @@ abstract class Cell : BaseBuilder {
   fun scrollPane(component: Component, vararg constraints: CCFlags): CellBuilder<JScrollPane> {
     return JBScrollPane(component)(*constraints)
   }
+
+  fun <T : JComponent> component(
+    component: T,
+    vararg constraints: CCFlags,
+    gapLeft: Int = 0,
+    growPolicy: GrowPolicy? = null,
+    comment: String? = null
+  ): CellBuilder<T> = component.invoke(constraints = *constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = comment)
 
   abstract operator fun <T : JComponent> T.invoke(
     vararg constraints: CCFlags,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.build.BuildContentManager;
@@ -56,7 +56,7 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put(RUN, new ToolWindowInfo("Run"));
     ourToolwindowWhitelist.put(BuildContentManager.TOOL_WINDOW_ID, new ToolWindowInfo("Build"));
     ourToolwindowWhitelist.put(FIND, new ToolWindowInfo("Find"));
-    ourToolwindowWhitelist.put(CVS, new ToolWindowInfo("CVS"));
+    ourToolwindowWhitelist.put("CVS", new ToolWindowInfo("CVS"));
     ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo("Hierarchy"));
     ourToolwindowWhitelist.put(INSPECTION, new ToolWindowInfo("Inspection_Results"));
     ourToolwindowWhitelist.put(TODO_VIEW, new ToolWindowInfo("TODO"));

@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.projectView;
 
@@ -46,9 +44,9 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
 
   @Override
   @NotNull
-  public Collection<AbstractTreeNode> getChildren() {
+  public Collection<AbstractTreeNode<?>> getChildren() {
     List<PropertiesFile> propertiesFiles = getResourceBundle().getPropertiesFiles();
-    Collection<AbstractTreeNode> children = new ArrayList<>();
+    Collection<AbstractTreeNode<?>> children = new ArrayList<>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile.getContainingFile(), getSettings());
       children.add(node);

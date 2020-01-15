@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.ide.commander.AbstractListBuilder;
@@ -82,8 +83,8 @@ public class CoverageViewBuilder extends AbstractListBuilder {
   }
 
   @Override
-  protected List<AbstractTreeNode> getAllAcceptableNodes(Object[] childElements, VirtualFile file) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<>();
+  protected List<AbstractTreeNode<?>> getAllAcceptableNodes(Object[] childElements, VirtualFile file) {
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>();
 
     for (Object childElement1 : childElements) {
       CoverageListNode childElement = (CoverageListNode)childElement1;

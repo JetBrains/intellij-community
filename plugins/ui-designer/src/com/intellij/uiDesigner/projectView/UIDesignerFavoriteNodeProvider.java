@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.projectView;
 
@@ -31,12 +31,12 @@ import java.util.*;
 public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   @Nullable
-  public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, @NotNull final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode<?>> getFavoriteNodes(DataContext context, @NotNull final ViewSettings viewSettings) {
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
     Form[] forms = Form.DATA_KEY.getData(context);
     if (forms != null) {
-      Collection<AbstractTreeNode> result = new ArrayList<>();
+      Collection<AbstractTreeNode<?>> result = new ArrayList<>();
       Set<PsiClass> bindClasses = new HashSet<>();
       for (Form form: forms) {
         final PsiClass classToBind = form.getClassToBind();

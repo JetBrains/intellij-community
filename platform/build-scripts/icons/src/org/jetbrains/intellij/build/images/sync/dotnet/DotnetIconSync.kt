@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.sync.*
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 
 @Suppress("unused")
 internal object DotnetIconSync {
@@ -16,7 +17,29 @@ internal object DotnetIconSync {
     SyncPath("net", "Rider/rider/icons/resources/resharper")
   )
 
-  private val context = Context()
+  private val committer by lazy(::triggeredBy)
+  private val context = Context().apply {
+    iconsFilter = { file ->
+      // need to filter designers' icons using developers' icon-robots.txt
+      Icon(file).isValid && file.toRelativeString(iconsRepoDir)
+        .let(devRepoDir::resolve)
+        .let(IconRobotsDataReader::isSyncSkipped)
+        .not()
+    }
+  }
+
+  private val targetWaveNumber by lazy {
+    val prop = "icons.sync.dotnet.wave.number"
+    System.getProperty(prop) ?: error("Specify property $prop")
+  }
+  private val branchForMerge by lazy {
+    val randomPart = UUID.randomUUID().toString().substring(1..4)
+    "net$targetWaveNumber-icons-sync-$randomPart"
+  }
+  private val mergeRobotBuildConfiguration by lazy {
+    val prop = "icons.sync.dotnet.merge.robot.build.conf"
+    System.getProperty(prop) ?: error("Specify property $prop")
+  }
 
   private fun step(msg: String) = println("\n** $msg")
 
@@ -30,7 +53,12 @@ internal object DotnetIconSync {
         checkIcons(context)
       }
       generateClasses()
-      if (isUnderTeamCity()) commitChanges(tmpCommit)
+      createBranchForMerge()
+      val changes = commitChanges(tmpCommit)
+      if (changes != null && isUnderTeamCity()) {
+        pushBranchForMerge()
+        triggerMerge()
+      }
     }
     finally {
       resetToPreviousCommit(context.iconsRepo)
@@ -54,24 +82,26 @@ internal object DotnetIconSync {
 
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconsClasses(context.devRepoDir.absolutePath) { module ->
-      // module containing directories in `sync`-list
-      module.name == "rider-icons"
-    }
+    generateIconsClasses(DotnetIconsClasses(context.devRepoDir.absolutePath))
   }
 
-  private fun commitChanges(tmpCommit: CommitInfo) {
+  private fun commitChanges(tmpCommit: CommitInfo): CommitInfo? {
     step("Committing changes..")
     val changes = context.iconsCommitsToSync.mapValues {
       it.value.filterNot { commit ->
         commit.hash == tmpCommit.hash
       }
     }
-    val (user, email) = triggeredBy()
-    val commit = context.devRepoRoot.commit(changes.commitMessage(), user, email) {
+    val commit = context.devRepoRoot.commit(changes.commitMessage(), committer.name, committer.email) {
       it.fileName.toString().endsWith(".java")
     }
-    println("Committed ${commit?.hash} ${commit?.subject}")
+    if (commit != null) {
+      println("Committed ${commit.hash} ${commit.subject}")
+    }
+    else {
+      println("Nothing to commit")
+    }
+    return commit
   }
 
   private fun File.commit(message: String, user: String, email: String, filter: (Path) -> Boolean = { false }) =
@@ -79,8 +109,27 @@ internal object DotnetIconSync {
       val path = toPath().resolve(it)
       isImage(path) || filter(path)
     }.let {
-      stageFiles(it, this)
-      commit(this, message, user, email)
-      commitInfo(this)
+      if (it.isNotEmpty()) {
+        stageFiles(it, this)
+        commit(this, message, user, email)
+        commitInfo(this)
+      }
+      else null
     }
+
+  private fun createBranchForMerge() {
+    step("Creating branch $branchForMerge..")
+    execute(context.devRepoRoot, GIT, "checkout", "-B", branchForMerge)
+  }
+
+  private fun pushBranchForMerge() {
+    step("Pushing $branchForMerge..")
+    push(context.devRepoRoot, branchForMerge)
+  }
+
+  private fun triggerMerge() {
+    step("Triggering merge with $mergeRobotBuildConfiguration..")
+    val response = triggerBuild(mergeRobotBuildConfiguration, branchForMerge)
+    println("Response is $response")
+  }
 }

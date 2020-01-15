@@ -31,10 +31,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
                             val noGrid: Boolean = false,
-                            private val indent: Int /* level number (nested rows) */) : Row() {
+                            private val indent: Int /* level number (nested rows) */,
+                            private val incrementsIndent: Boolean = parent != null) : Row() {
   companion object {
     // as static method to ensure that members of current row are not used
-    private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, indent: Int, isParentRowLabeled: Boolean, maxLineLength: Int) {
+    private fun createCommentRow(parent: MigLayoutRow,
+                                 comment: String,
+                                 component: JComponent,
+                                 indent: Int,
+                                 isParentRowLabeled: Boolean,
+                                 maxLineLength: Int) {
       val cc = CC()
       val commentRow = parent.createChildRow()
       commentRow.isComment = true
@@ -164,14 +170,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                              label: JLabel? = null,
                              isSeparated: Boolean = false,
                              noGrid: Boolean = false,
-                             title: String? = null): MigLayoutRow {
+                             title: String? = null,
+                             incrementsIndent: Boolean = true): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
-    val newIndent = if (parent == null) indent else indent + spacing.indentLevel
+    val newIndent = if (!this.incrementsIndent) indent else indent + spacing.indentLevel
 
     val row = MigLayoutRow(this, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else newIndent)
+                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else newIndent,
+                           incrementsIndent = incrementsIndent)
 
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
@@ -215,15 +223,25 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun titledRow(title: String, init: Row.() -> Unit): Row {
-    return createChildRow(isSeparated = true, title = title).apply(init).apply {
-      createChildRow().apply {
-        JPanel().apply {
-          maximumSize = Dimension(0, 0)
-          preferredSize = Dimension(0, 0)
-        }()
-        largeGapAfter()
+    return createBlockRow(title, true, init)
+  }
+
+  override fun blockRow(init: Row.() -> Unit): Row {
+    return createBlockRow(null, false, init)
+  }
+
+  private fun createBlockRow(title: String?, isSeparated: Boolean, init: Row.() -> Unit): Row {
+    return createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
+      .apply(init)
+      .apply {
+        createChildRow().apply {
+          JPanel().apply {
+            maximumSize = Dimension(0, 0)
+            preferredSize = Dimension(0, 0)
+          }()
+          largeGapAfter()
+        }
       }
-    }
   }
 
   override fun hideableRow(title: String, init: Row.() -> Unit): Row {
@@ -278,13 +296,22 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder<T> {
-    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
-    return CellBuilderImpl(builder, this@MigLayoutRow, this)
+  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags,
+                                                  gapLeft: Int,
+                                                  growPolicy: GrowPolicy?,
+                                                  comment: String?): CellBuilder<T> {
+    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, growPolicy, comment)
+    return CellBuilderImpl(builder, this@MigLayoutRow, this).apply {
+      if (gapLeft != 0) {
+        builder.updateComponentConstraints(component) {
+          horizontal.gapBefore = gapToBoundSize(gapLeft, true)
+        }
+      }
+    }
   }
 
   // separate method to avoid JComponent as a receiver
-  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
+  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, growPolicy: GrowPolicy? = null, comment: String? = null) {
     components.add(component)
 
     if (!visible) {
@@ -313,7 +340,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       builder.topButtonGroup?.add(component)
     }
 
-    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, gapLeft = gapLeft, growPolicy = growPolicy)
+    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, growPolicy = growPolicy)
 
     if (!noGrid && indent > 0 && components.size == 1) {
       cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
@@ -499,6 +526,12 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   override fun sizeGroup(name: String) = apply {
     builder.updateComponentConstraints(component) {
       sizeGroup(name)
+    }
+  }
+
+  override fun withLargeLeftGap(): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
     }
   }
 }

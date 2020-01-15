@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -252,9 +252,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     return false;
   }
 
-  private boolean preprocess(final MouseEvent e, final boolean motion, JRootPane eventRootPane) {
+  private boolean preprocess(@NotNull MouseEvent e, boolean motion, JRootPane eventRootPane) {
     try {
-      if (ComponentUtil.getWindow(this) != ComponentUtil.getWindow(e.getComponent())) return false;
+      if (ComponentUtil.getWindow(this) != ComponentUtil.getWindow(e.getComponent())) {
+        return false;
+      }
 
       final MouseEvent event = MouseEventAdapter.convert(e, eventRootPane);
       if (event.isAltDown() && SwingUtilities.isLeftMouseButton(event) && event.getID() == MouseEvent.MOUSE_PRESSED) {
@@ -427,7 +429,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
   }
 
-  private static void fireMouseMotion(MouseMotionListener listener, final MouseEvent event) {
+  private static void fireMouseMotion(@NotNull MouseMotionListener listener, @NotNull MouseEvent event) {
     switch (event.getID()) {
       case MouseEvent.MOUSE_DRAGGED:
         listener.mouseDragged(event);

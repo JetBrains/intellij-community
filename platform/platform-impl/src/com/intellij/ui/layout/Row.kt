@@ -44,6 +44,12 @@ interface RowBuilder : BaseBuilder {
   fun titledRow(title: String, init: Row.() -> Unit): Row
 
   /**
+   * Creates row with a huge gap after it, that can be used to group related components.
+   * Think of [titledRow] without a title and additional indent.
+   */
+  fun blockRow(init: Row.() -> Unit): Row
+
+  /**
    * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */

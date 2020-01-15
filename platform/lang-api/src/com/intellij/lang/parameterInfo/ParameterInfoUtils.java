@@ -147,7 +147,7 @@ public class ParameterInfoUtils {
     }
 
     PsiElement listParent = parent.getParent();
-    for(Class c: (Set<Class>)findArgumentListHelper.getArgumentListAllowedParentClasses()) {
+    for(Class c: (Set<Class<?>>)findArgumentListHelper.getArgumentListAllowedParentClasses()) {
       if (c.isInstance(listParent)) return (E)parent;
     }
 

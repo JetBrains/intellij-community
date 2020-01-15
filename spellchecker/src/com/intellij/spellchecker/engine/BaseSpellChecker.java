@@ -67,40 +67,42 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   private void doLoadDictionaryAsync(Loader loader, Consumer<? super Dictionary> consumer) {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
-      LOG.debug("Loading " + loader.getName());
-      Application app = ApplicationManager.getApplication();
-      app.executeOnPooledThread(() -> {
-        if (app.isDisposed()) return;
-
-        CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
-        LOG.debug(loader.getName() + " loaded!");
-        consumer.consume(dictionary);
-
-        while (!myDictionariesToLoad.isEmpty()) {
+    if (!myProject.isDefault()) {
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+        LOG.debug("Loading " + loader.getName());
+        Application app = ApplicationManager.getApplication();
+        app.executeOnPooledThread(() -> {
           if (app.isDisposed()) return;
 
-          Pair<Loader, Consumer<? super Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
-          Loader nextDictionaryLoader = nextDictionary.getFirst();
-          dictionary = CompressedDictionary.create(nextDictionaryLoader, transform);
-          LOG.debug(nextDictionaryLoader.getName() + " loaded!");
-          nextDictionary.getSecond().consume(dictionary);
-        }
+          CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
+          LOG.debug(loader.getName() + " loaded!");
+          consumer.consume(dictionary);
 
-        LOG.debug("Loading finished, restarting daemon...");
-        myLoadingDictionaries.set(false);
-        UIUtil.invokeLaterIfNeeded(() -> {
-          if (app.isDisposed()) return;
+          while (!myDictionariesToLoad.isEmpty()) {
+            if (app.isDisposed()) return;
 
-          for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
-            if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
-              DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
-              if (instance != null) instance.restart();
-            }
+            Pair<Loader, Consumer<? super Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
+            Loader nextDictionaryLoader = nextDictionary.getFirst();
+            dictionary = CompressedDictionary.create(nextDictionaryLoader, transform);
+            LOG.debug(nextDictionaryLoader.getName() + " loaded!");
+            nextDictionary.getSecond().consume(dictionary);
           }
+
+          LOG.debug("Loading finished, restarting daemon...");
+          myLoadingDictionaries.set(false);
+          UIUtil.invokeLaterIfNeeded(() -> {
+            if (app.isDisposed()) return;
+
+            for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
+              if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
+                DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
+                if (instance != null) instance.restart();
+              }
+            }
+          });
         });
       });
-    });
+    }
   }
 
   private void queueDictionaryLoad(final Loader loader, final Consumer<? super Dictionary> consumer) {

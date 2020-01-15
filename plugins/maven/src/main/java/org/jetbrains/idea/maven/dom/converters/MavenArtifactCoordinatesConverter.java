@@ -44,11 +44,11 @@ import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.util.Collection;
@@ -88,7 +88,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   @Override
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    OfflineSearchService searchService = MavenProjectIndicesManager.getInstance(context.getProject()).getOfflineSearchService();
+    DependencySearchService searchService = DependencySearchService.getInstance(context.getProject());
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
     MavenDomShortArtifactCoordinates coordinates = MavenArtifactCoordinatesHelper.getCoordinates(context);
@@ -96,7 +96,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return selectStrategy(context).getVariants(id, searchService, coordinates);
   }
 
-  protected abstract Set<String> doGetVariants(MavenId id, OfflineSearchService searchService);
+  protected abstract Set<String> doGetVariants(MavenId id, DependencySearchService searchService);
 
   @Override
   public PsiElement resolve(String o, ConvertContext context) {
@@ -213,7 +213,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return doIsValid(id, manager, context) || resolveBySpecifiedPath() != null;
     }
 
-    public Set<String> getVariants(MavenId id, OfflineSearchService searchService, MavenDomShortArtifactCoordinates coordinates) {
+    public Set<String> getVariants(MavenId id, DependencySearchService searchService, MavenDomShortArtifactCoordinates coordinates) {
       return doGetVariants(id, searchService);
     }
 
@@ -382,7 +382,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public Set<String> getVariants(MavenId id, OfflineSearchService searchService, MavenDomShortArtifactCoordinates coordinates) {
+    public Set<String> getVariants(MavenId id, DependencySearchService searchService, MavenDomShortArtifactCoordinates coordinates) {
       if (StringUtil.isEmpty(id.getGroupId())) {
         Set<String> result = new THashSet<>();
 

@@ -355,7 +355,7 @@ public class CompletionLists {
 
   @SuppressWarnings({"RawUseOfParameterizedType"})
   public static Class[] getAllInterfaces(Class<?> clazz) {
-    Set<Class> set = new HashSet<>();
+    Set<Class<?>> set = new HashSet<>();
     do {
       ContainerUtil.addAll(set, clazz.getInterfaces());
       clazz = clazz.getSuperclass();

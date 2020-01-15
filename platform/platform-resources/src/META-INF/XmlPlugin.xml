@@ -90,6 +90,13 @@
     <!--dead code-->
     <extensionPoint name="xml.util.htmlDoctypeProvider" interface="com.intellij.xml.util.HtmlDoctypeProvider"/>
 
+    <extensionPoint name="xml.namedReferenceProvider"
+                    dynamic="true"
+                    beanClass="com.intellij.xml.XmlNamedReferenceProviderBean">
+      <with attribute="hostElementClass" implements="com.intellij.psi.xml.XmlNamedReferenceHost"/>
+      <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
+      <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -591,6 +598,10 @@
     <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer"/>
+    <psi.symbolReferenceProvider hostLanguage="XML"
+                                 hostElementClass="com.intellij.psi.xml.XmlNamedReferenceHost"
+                                 targetClass="com.intellij.model.Symbol"
+                                 implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

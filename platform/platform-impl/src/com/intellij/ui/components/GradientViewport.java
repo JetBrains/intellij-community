@@ -80,7 +80,11 @@ public class GradientViewport extends JBViewport {
     Component header = getHeader();
     if (header != null) {
       int h = header.getPreferredSize().height;
-      bounds.y -= h;
+      if (bounds.y < h) {
+        bounds = new Rectangle(bounds);
+        bounds.y -= h;
+        bounds.height += h;
+      }
     }
     super.scrollRectToVisible(bounds);
   }

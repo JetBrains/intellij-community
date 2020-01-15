@@ -8,13 +8,18 @@ import java.io.File
 
 fun main() = generateIconsClasses()
 
-internal fun generateIconsClasses(homePath: String = PathManager.getHomePath(), modulesFilter: (JpsModule) -> Boolean = { true }) {
-  val home = File(homePath)
-  val project = jpsProject(homePath)
+internal open class IconsClasses {
+  open val homePath: String get() = PathManager.getHomePath()
+  open val modules: List<JpsModule> get() = jpsProject(homePath).modules
+  open fun generator(home: File, modules: List<JpsModule>) = IconsClassGenerator(home, modules)
+}
 
-  val modules = project.modules.filter(modulesFilter)
+internal fun generateIconsClasses(config: IconsClasses = IconsClasses()) {
+  val home = File(config.homePath)
 
-  val generator = IconsClassGenerator(home, modules)
+  val modules = config.modules
+
+  val generator = config.generator(home, modules)
   modules.parallelStream().forEach(generator::processModule)
   generator.printStats()
 

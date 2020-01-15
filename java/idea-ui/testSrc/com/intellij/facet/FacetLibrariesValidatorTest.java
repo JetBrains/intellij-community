@@ -11,15 +11,12 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorsFactory;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
 import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,13 +33,6 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
   @NonNls private static final String LIB_NAME = "lib";
   private MockFacet myFacet;
   private MockFacetLibrariesValidatorDescription myDescription;
-
-
-  @NotNull
-  @Override
-  protected Module createModule(@NotNull final String moduleName) {
-    return createModule(moduleName, StdModuleTypes.JAVA);
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -92,11 +82,11 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
     final FacetLibrariesValidatorImpl validator = createValidator(JDOM, JUNIT);
     assertError("");
 
-    addLibraryToRoots(myJDomJar, OrderRootType.CLASSES);
+    ModuleRootModificationUtil.addModuleLibrary(myModule, myJDomJar.getUrl());
     myValidatorsManager.validate();
     assertError("junit");
 
-    addLibraryToRoots(myJUnitJar, OrderRootType.CLASSES);
+    ModuleRootModificationUtil.addModuleLibrary(myModule, myJUnitJar.getUrl());
     myValidatorsManager.validate();
     validator.onFacetInitialized(createFacet());
 

@@ -8,7 +8,10 @@
                 canCloseContents="true"/>
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
 
-    <projectConfigurable groupId="tools" groupWeight="130" displayName="Terminal" id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
+    <projectConfigurable groupId="tools" groupWeight="130"
+                         bundle="messages.IdeBundle"
+                         key="configurable.TerminalOptionsConfigurable.display.name"
+                         id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
 
     <fileEditorProvider implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
 

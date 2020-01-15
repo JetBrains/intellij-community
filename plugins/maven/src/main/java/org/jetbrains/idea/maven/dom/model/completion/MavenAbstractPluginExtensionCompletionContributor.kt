@@ -8,20 +8,17 @@ import org.jetbrains.concurrency.collectResults
 import org.jetbrains.idea.maven.dom.model.MavenDomExtension
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
-import java.awt.SystemColor.info
-
+import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.reposearch.RepositoryArtifactData
+import org.jetbrains.idea.reposearch.SearchParameters
 import java.util.function.Consumer
-import java.util.function.Predicate
 
 
 abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String) : MavenCoordinateCompletionContributor(tagName) {
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,
                     parameters: CompletionParameters,
-                    consumer: Consumer<MavenRepositoryArtifactInfo>): Promise<Void>? {
+                    consumer: Consumer<RepositoryArtifactData>): Promise<Int>? {
 
     val text: String = trimDummy(coordinates.xmlTag?.value?.text)
     val splitted = text.split(':')
@@ -38,11 +35,11 @@ abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String
     fun findPluginByArtifactId(service: DependencySearchService,
                                text: String,
                                searchParameters: SearchParameters,
-                               consumer: Consumer<MavenRepositoryArtifactInfo>): AsyncPromise<Void> {
+                               consumer: Consumer<RepositoryArtifactData>): AsyncPromise<Int> {
       //todo: read groups from maven settings.xml
       val apachePromise = service.suggestPrefix("org.apache.maven.plugins", text, searchParameters, consumer)
       val codehausPromise = service.suggestPrefix("org.codehaus.mojo", text, searchParameters, consumer)
-      val result = AsyncPromise<Void>()
+      val result = AsyncPromise<Int>()
       listOf(apachePromise, codehausPromise).collectResults().onSuccess { result.setResult(null) }.onError { result.setError(it) }
       return result
     }

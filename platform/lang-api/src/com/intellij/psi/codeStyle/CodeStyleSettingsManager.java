@@ -81,11 +81,13 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
         @Override
         public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
           registerLanguageSettings(enumSettings(), extension);
+          registerCustomSettings(enumSettings(), extension);
         }
 
         @Override
         public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
           unregisterLanguageSettings(enumSettings(), extension);
+          unregisterCustomSettings(enumSettings(), extension);
         }
       }, disposable
     );

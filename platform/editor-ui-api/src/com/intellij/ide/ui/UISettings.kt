@@ -122,8 +122,11 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.useSmallLabelsOnTabs = value
     }
 
-  val smoothScrolling: Boolean
+  var smoothScrolling: Boolean
     get() = state.smoothScrolling
+    set(value) {
+      state.smoothScrolling = value
+    }
 
   val animatedScrolling: Boolean
     get() = state.animatedScrolling
@@ -270,8 +273,11 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.presentationMode = value
     }
 
-  val presentationModeFontSize: Int
+  var presentationModeFontSize: Int
     get() = state.presentationModeFontSize
+    set(value) {
+      state.presentationModeFontSize = value
+    }
 
   var editorTabPlacement: Int
     get() = state.editorTabPlacement
@@ -390,6 +396,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
+
+  var enableAlphaMode: Boolean
+    get() = state.enableAlphaMode
+    set(value) {
+      state.enableAlphaMode = value
+    }
 
   init {
     // TODO Remove the registry keys and migration code in 2019.3

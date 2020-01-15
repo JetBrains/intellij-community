@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageDataManager;
@@ -42,7 +43,7 @@ public abstract class CoverageViewExtension {
   @Nullable
   public abstract String getPercentage(int columnIdx, AbstractTreeNode node);
 
-  public abstract List<AbstractTreeNode> getChildrenNodes(AbstractTreeNode node);
+  public abstract List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode node);
 
   public abstract ColumnInfo[] createColumnInfos();
 
@@ -51,11 +52,11 @@ public abstract class CoverageViewExtension {
 
   @NotNull
   public abstract AbstractTreeNode createRootNode();
-  
+
   public boolean canSelectInCoverageView(Object object) {
     return object instanceof VirtualFile && PsiManager.getInstance(myProject).findFile((VirtualFile)object) != null;
   }
-  
+
   @Nullable
   public PsiElement getElementToSelect(Object object) {
     if (object instanceof PsiElement) return (PsiElement)object;
@@ -75,7 +76,7 @@ public abstract class CoverageViewExtension {
     return object instanceof VirtualFile ? (VirtualFile)object : null;
   }
 
-  public List<AbstractTreeNode> createTopLevelNodes() {
+  public List<AbstractTreeNode<?>> createTopLevelNodes() {
     return Collections.emptyList();
   }
 

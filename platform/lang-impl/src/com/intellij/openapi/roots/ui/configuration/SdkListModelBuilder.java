@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class SdkListModelBuilder {
+public final class SdkListModelBuilder {
   @Nullable private final Project myProject;
   @NotNull private final ProjectSdksModel mySdkModel;
   @NotNull private final Condition<? super Sdk> mySdkFilter;
@@ -135,7 +135,7 @@ public class SdkListModelBuilder {
       newModel.add(item);
     }
 
-    return new SdkListModel(myIsSdkDetectorInProgress, newModel.build());
+    return new SdkListModel(myIsSdkDetectorInProgress, newModel.build(), () -> mySdkModel.getProjectSdk());
   }
 
   private boolean isApplicableSuggestedItem(@NotNull SuggestedItem item) {
@@ -235,6 +235,30 @@ public class SdkListModelBuilder {
     }
 
     return false;
+  }
+
+  /**
+   * Executes an action that is associated with the given {@param item}.
+   * <br/>
+   * If there are no actions associated, the {@param onSelectableItem} callback
+   * is executed directly and the method returns,
+   * the {@param afterExecution} is NOT executed
+   * <br/>
+   * If there is action associated, it is scheduled for execution. The
+   * {@param afterExecution} callback is ONLY if the action execution
+   * ended up successfully and a new item was added to the model. In that
+   * case the callback is executed after the model is updated and the
+   * {@link #syncModel()} is invoked. The implementation may not
+   * execute the callback or and model update for any internal and
+   * non-selectable items
+   */
+  public void processSelectedElement(@NotNull JComponent parent,
+                                     @NotNull SdkListItem item,
+                                     @NotNull Consumer<? super SdkListItem> afterNewItemAdded,
+                                     @NotNull Consumer<? super SdkListItem> onSelectableItem) {
+    if (!executeAction(parent, item,afterNewItemAdded)) {
+      onSelectableItem.consume(item);
+    }
   }
 
   public void reloadActions() {

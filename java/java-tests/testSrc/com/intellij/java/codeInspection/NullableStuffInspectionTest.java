@@ -305,4 +305,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testNullPassedToNullableParameter() {
     doTest();
   }
+  
+  public void testTypeUseArrayAnnotation() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 }

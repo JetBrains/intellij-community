@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.newAPI.HierarchyScopeType;
 import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
@@ -35,7 +35,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
     final JTree tree = createTree(false);
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP);
     PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-                    
+
     final BaseOnThisMethodAction action = new BaseOnThisMethodAction();
     action.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), tree);
 
@@ -72,7 +72,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   @Override
-  protected Comparator<NodeDescriptor> getComparator() {
+  protected Comparator<NodeDescriptor<?>> getComparator() {
     return JavaHierarchyUtil.getComparator(myProject);
   }
 

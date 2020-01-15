@@ -94,6 +94,7 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
     };
   }
 
+  @NotNull
   @Override
   protected Class @NotNull [] getSuitableClasses() {
     return new Class[]{XmlTag.class};

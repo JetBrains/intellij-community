@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageAnnotator;
@@ -76,8 +77,8 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public List<AbstractTreeNode> getChildrenNodes(AbstractTreeNode node) {
-    List<AbstractTreeNode> children = new ArrayList<>();
+  public List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode node) {
+    List<AbstractTreeNode<?>> children = new ArrayList<>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();
       if (val instanceof PsiFile || val == null) return Collections.emptyList();

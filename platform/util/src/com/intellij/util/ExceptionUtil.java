@@ -27,7 +27,7 @@ public class ExceptionUtil extends ExceptionUtilRt {
     return ExceptionUtilRt.findCause(e, klass);
   }
 
-  public static boolean causedBy(Throwable e, Class klass) {
+  public static boolean causedBy(Throwable e, Class<?> klass) {
     return ExceptionUtilRt.causedBy(e, klass);
   }
 

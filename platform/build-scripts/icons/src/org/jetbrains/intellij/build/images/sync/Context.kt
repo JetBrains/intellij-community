@@ -29,7 +29,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val byDev = Changes()
   val byCommit = mutableMapOf<String, Changes>()
   val consistent: MutableCollection<String> = mutableListOf()
-  var createdReviews: Collection<Review> = emptyList()
   var icons: Map<String, GitObject> = emptyMap()
   var devIcons: Map<String, GitObject> = emptyMap()
   var devCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
@@ -149,13 +148,14 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     }
   }
 
+  var iconsFilter: (File) -> Boolean = { Icon(it).isValid }
+
   fun devChanges() = byDev.all()
   fun iconsChanges() = byDesigners.all()
 
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
-  fun devReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_DEV_PROJECT_ID }
   fun verifyDevIcons(repos: Collection<File>) = devIconsVerifier?.accept(repos)
   fun doFail(report: String) {
     log(report)

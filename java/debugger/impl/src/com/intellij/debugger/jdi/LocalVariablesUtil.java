@@ -262,7 +262,7 @@ public class LocalVariablesUtil {
     return arrayInstance;
   }
 
-  private static Method getDeclaredMethodByName(Class aClass, String methodName) throws NoSuchMethodException {
+  private static Method getDeclaredMethodByName(Class<?> aClass, String methodName) throws NoSuchMethodException {
     for (Method method : aClass.getDeclaredMethods()) {
       if (methodName.equals(method.getName())) {
         method.setAccessible(true);

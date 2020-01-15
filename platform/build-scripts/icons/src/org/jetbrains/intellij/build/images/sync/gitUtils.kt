@@ -107,13 +107,6 @@ internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File = when {
   else -> error("No git repo found in $dir")
 }
 
-internal fun unStageFiles(files: List<String>, repo: File) {
-  // OS has argument length limit
-  splitAndTry(1000, files, repo) {
-    execute(repo, GIT, "reset", "HEAD", *it.toTypedArray())
-  }
-}
-
 internal fun resetToPreviousCommit(repo: File) {
   execute(repo, GIT, "reset", "--hard", "HEAD^")
 }
@@ -158,16 +151,7 @@ internal fun commitAndPush(repo: File, branch: String, message: String, user: St
 
 internal fun checkout(repo: File, branch: String) = execute(repo, GIT, "checkout", branch)
 
-internal fun deleteBranch(repo: File, branch: String) {
-  try {
-    push(repo, ":$branch")
-  }
-  catch (e: Exception) {
-    if (e.message?.contains("remote ref does not exist") == false) throw e
-  }
-}
-
-private fun push(repo: File, spec: String, user: String? = null, email: String? = null, force: Boolean = false) =
+internal fun push(repo: File, spec: String, user: String? = null, email: String? = null, force: Boolean = false) =
   retry(doRetry = { beforePushRetry(it, repo, spec, user, email) }) {
     var args = arrayOf("origin", spec)
     if (force) args += "--force"

@@ -20,15 +20,18 @@
 
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
-                         displayName="Project Structure"
+                         bundle="messages.PyBundle"
+                         key="configurable.PythonContentEntriesConfigurable.display.name"
                          provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         displayName="Project Interpreter"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyActiveSdkModuleConfigurable.display.name"
                          instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
-                         displayName="Project Dependencies"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyDependenciesConfigurable.display.name"
                          provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
 
     <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
@@ -37,7 +40,8 @@
 
     <projectConfigurable groupId="build"
                          id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
-                         displayName="Buildout Support"
+                         bundle="messages.PyBundle"
+                         key="configurable.BuildoutModulesConfigurable.display.name"
                          instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSourceRootConfigurator" id="sourceRoot"

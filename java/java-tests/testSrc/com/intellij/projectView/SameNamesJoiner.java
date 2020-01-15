@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -33,14 +19,14 @@ import java.util.Collection;
 class SameNamesJoiner implements TreeStructureProvider {
   @NotNull
   @Override
-  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
+  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     if (parent instanceof JoinedNode) return children;
 
-    ArrayList<AbstractTreeNode> result = new ArrayList<>();
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>();
 
-    MultiValuesMap<Object, AbstractTreeNode> executed = new MultiValuesMap<>();
-    for (AbstractTreeNode child : children) {
-      ProjectViewNode treeNode = (ProjectViewNode)child;
+    MultiValuesMap<Object, AbstractTreeNode<?>> executed = new MultiValuesMap<>();
+    for (AbstractTreeNode<?> child : children) {
+      ProjectViewNode<?> treeNode = (ProjectViewNode)child;
       Object o = treeNode.getValue();
       if (o instanceof PsiFile) {
         String name = ((PsiFile)o).getVirtualFile().getNameWithoutExtension();
@@ -52,7 +38,7 @@ class SameNamesJoiner implements TreeStructureProvider {
     }
 
     for (Object each : executed.keySet()) {
-      Collection<AbstractTreeNode> objects = executed.get(each);
+      Collection<AbstractTreeNode<?>> objects = executed.get(each);
       if (objects.size() > 1) {
         result.add(new JoinedNode(objects, new Joined(findPsiFileIn(objects)), settings));
       }
@@ -68,14 +54,14 @@ class SameNamesJoiner implements TreeStructureProvider {
     return null;
   }
 
-  private PsiFile findPsiFileIn(Collection<AbstractTreeNode> objects) {
+  private static PsiFile findPsiFileIn(Collection<AbstractTreeNode<?>> objects) {
     for (AbstractTreeNode treeNode : objects) {
       if (treeNode.getValue() instanceof PsiFile) return (PsiFile)treeNode.getValue();
     }
     return null;
   }
 
-  private boolean hasElementWithTheSameName(PsiFile element) {
+  private static boolean hasElementWithTheSameName(PsiFile element) {
     PsiDirectory psiDirectory = element.getParent();
     PsiElement[] children = psiDirectory.getChildren();
     for (PsiElement child : children) {
@@ -111,15 +97,15 @@ class SameNamesJoiner implements TreeStructureProvider {
   }
 
   private static class JoinedNode extends ProjectViewNode<Joined>{
-    Collection<AbstractTreeNode> myChildren;
+    Collection<AbstractTreeNode<?>> myChildren;
 
     @Override
     @NotNull
-    public Collection<AbstractTreeNode> getChildren() {
+    public Collection<AbstractTreeNode<?>> getChildren() {
       return myChildren;
     }
 
-    JoinedNode(Collection<AbstractTreeNode> children, @NotNull Joined formFile, ViewSettings settings) {
+    JoinedNode(Collection<AbstractTreeNode<?>> children, @NotNull Joined formFile, ViewSettings settings) {
       super(null, formFile, settings);
       myChildren = children;
     }

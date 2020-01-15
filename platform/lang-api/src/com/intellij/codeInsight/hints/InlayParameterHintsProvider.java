@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hints;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,5 +112,13 @@ public interface InlayParameterHintsProvider {
    */
   default String getMainCheckboxText() {
     return "Show parameter hints";
+  }
+
+  /**
+   * @return Traverser for `root` element subtree.
+   */
+  @NotNull
+  default SyntaxTraverser<PsiElement> createTraversal(@NotNull PsiElement root) {
+    return SyntaxTraverser.psiTraverser(root);
   }
 }

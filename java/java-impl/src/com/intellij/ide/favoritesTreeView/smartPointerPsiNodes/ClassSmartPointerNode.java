@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView.smartPointerPsiNodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -20,9 +20,9 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
 
   @Override
   @NotNull
-  public Collection<AbstractTreeNode> getChildrenImpl() {
+  public Collection<AbstractTreeNode<?>> getChildrenImpl() {
     PsiClass parent = getPsiClass();
-    List<AbstractTreeNode> treeNodes = new ArrayList<>();
+    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>();
 
     if (getSettings().isShowMembers()) {
       List<PsiElement> result = new ArrayList<>();
@@ -54,7 +54,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
   public boolean isAlwaysLeaf() {
     return !getSettings().isShowMembers();
   }
-  
+
   @Override
   public void updateImpl(@NotNull PresentationData data) {
     final PsiClass aClass = getPsiClass();

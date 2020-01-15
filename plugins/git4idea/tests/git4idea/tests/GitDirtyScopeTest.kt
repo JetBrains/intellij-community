@@ -101,20 +101,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertFalse(isDirtyPath(file))
   }
 
-  /**
-   * NB: This is not intended behavior, but it is hard to avoid (we would need stateful DocumentListener or smth).
-   * Most of the time this is an error in code that calls bulk change anyway.
-   *
-   * But it's better to keep this possibility in mind, as it might trigger infinite refresh loops:
-   * -> refresh Local Changes
-   * -> refresh smth that depends on Local Changes (ex: diff preview)
-   * -> refresh smth that depends on diff preview (ex: Editor)
-   * -> call bulk document change
-   * -> mark file path dirty
-   * -> refresh Local Changes
-   * Thus test.
-   */
-  fun testEmptyBulkModeDoesMarkDirty() {
+  fun testEmptyBulkModeDoesNotMarkDirty() {
     val file = repo.root.createFile("file.txt", "initial")
     git("add .")
     commit("initial")
@@ -132,7 +119,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
 
     emptyBulkChange(file)
 
-    assertTrue(isDirtyPath(file))
+    assertFalse(isDirtyPath(file))
   }
 
   private fun editDocument(file: VirtualFile, newContent: String) {

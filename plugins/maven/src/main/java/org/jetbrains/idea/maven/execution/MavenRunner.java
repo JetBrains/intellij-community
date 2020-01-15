@@ -6,7 +6,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -21,7 +20,6 @@ import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public final class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
-  private static final Logger LOG = Logger.getInstance(MavenRunner.class);
 
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
   private final Project myProject;
@@ -67,7 +65,6 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
 
     MavenRunConfigurationType.runConfiguration(myProject, parameters, null, settings, callback, false);
   }
-
 
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
@@ -130,5 +127,4 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
     if (myProject.isDisposed()) return; // project was closed before task finished.
     MavenProjectsManager.getInstance(myProject).updateProjectTargetFolders();
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ide.dnd.DnDAction;
@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author nik
  */
-public class XDebuggerTreePanel implements DnDSource {
+public final class XDebuggerTreePanel implements DnDSource {
   private final XDebuggerTree myTree;
   private final JPanel myMainPanel;
 
@@ -76,13 +76,5 @@ public class XDebuggerTreePanel implements DnDSource {
       return DnDAwareTree.getDragImage(myTree, nodes[0].getPath(), dragOrigin);
     }
     return DnDAwareTree.getDragImage(myTree, XDebuggerBundle.message("xdebugger.drag.text.0.elements", nodes.length), dragOrigin);
-  }
-
-  @Override
-  public void dragDropEnd() {
-  }
-
-  @Override
-  public void dropActionChanged(final int gestureModifiers) {
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -474,18 +474,15 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
    *
    */
   public void setFirstComponent(@Nullable JComponent component) {
-    if (myFirstComponent != component) {
-      if (myFirstComponent != null) {
-        remove(myFirstComponent);
-      }
-      myFirstComponent = component;
-      updateComponentTreeUI(myFirstComponent);
-
-      if (myFirstComponent != null) {
-        add(myFirstComponent);
-        myFirstComponent.invalidate();
-      }
+    if (myFirstComponent == component) {
+      return;
     }
+
+    if (myFirstComponent != null) {
+      remove(myFirstComponent);
+    }
+    myFirstComponent = component;
+    doAddComponent(component);
   }
 
   @Nullable
@@ -493,25 +490,20 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return myLastComponent;
   }
 
-
   /**
    * Sets component which is located as the "second" split area. The method doesn't validate and
    * repaint the splitter.
-   *
    */
   public void setLastComponent(@Nullable JComponent component) {
-    if (myLastComponent != component) {
-      if (myLastComponent != null) {
-        remove(myLastComponent);
-      }
-      myLastComponent = component;
-      updateComponentTreeUI(myLastComponent);
-
-      if (myLastComponent != null) {
-        add(myLastComponent);
-        myLastComponent.invalidate();
-      }
+    if (myLastComponent == component) {
+      return;
     }
+
+    if (myLastComponent != null) {
+      remove(myLastComponent);
+    }
+    myLastComponent = component;
+    doAddComponent(component);
   }
 
   @Nullable
@@ -519,10 +511,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return myInnerComponent;
   }
 
-  private static void updateComponentTreeUI(@Nullable JComponent component) {
-    UIUtil.uiTraverser(component).postOrderDfsTraversal().
-      filter(c -> c instanceof JComponent).
-      forEach(c -> ((JComponent)c).updateUI());
+  private static void updateComponentTreeUI(@Nullable JComponent rootComponent) {
+    for (Component component : UIUtil.uiTraverser(rootComponent).postOrderDfsTraversal()) {
+      if (component instanceof JComponent) {
+        ((JComponent)component).updateUI();
+      }
+    }
   }
 
   /**
@@ -537,13 +531,15 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     if (myInnerComponent != null) {
       remove(myInnerComponent);
     }
-
     myInnerComponent = component;
-    updateComponentTreeUI(myInnerComponent);
+    doAddComponent(component);
+  }
 
-    if (myInnerComponent != null) {
-      add(myInnerComponent);
-      myInnerComponent.invalidate();
+  private void doAddComponent(@Nullable JComponent component) {
+    if (component != null) {
+      updateComponentTreeUI(component);
+      add(component);
+      component.invalidate();
     }
   }
 
@@ -637,11 +633,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       }
       private void _processMouseMotionEvent(MouseEvent e) {
         MouseEvent event = getTargetEvent(e);
-        if (event == null) {
-          myGlassPane.setCursor(null, myListener);
-          return;
-        }
-
         processMouseMotionEvent(event);
         if (event.isConsumed()) {
           e.consume();
@@ -650,11 +641,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
       private void _processMouseEvent(MouseEvent e) {
         MouseEvent event = getTargetEvent(e);
-        if (event == null) {
-          myGlassPane.setCursor(null, myListener);
-          return;
-        }
-
         processMouseEvent(event);
         if (event.isConsumed()) {
           e.consume();
@@ -664,7 +650,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     private final MouseAdapter myListener = new MyMouseAdapter();
 
-    private MouseEvent getTargetEvent(MouseEvent e) {
+    private MouseEvent getTargetEvent(@NotNull MouseEvent e) {
       return SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
     }
 

@@ -46,7 +46,19 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
       .withFailMessage(String.valueOf(fixes))
-      .hasSize(1);
+      .hasSize(1)
+      .first().asString().startsWith("SdkFixInfo:");
+  }
+
+  public void testMissingProjectUnknownJdk() {
+    WriteAction.run(() -> {
+      ProjectRootManager.getInstance(getProject()).setProjectSdkName("missingSDK", "foo-bar-baz");
+    });
+
+    final List<String> fixes = detectMissingSdks();
+    assertThat(fixes)
+      .withFailMessage(String.valueOf(fixes))
+      .isEmpty();
   }
 
   public void testMissingModuleJdk() {
@@ -59,7 +71,22 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
       .withFailMessage(String.valueOf(fixes))
-      .hasSize(1);
+      .hasSize(1)
+      .first().asString().startsWith("SdkFixInfo:");
+  }
+
+  public void testMissingModuleUnknownSdk() {
+    WriteAction.run(() -> {
+      ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+      model.setInvalidSdk("missingSDK", "foo-bar-baz");
+      model.commit();
+    });
+
+    final List<String> fixes = detectMissingSdks();
+    assertThat(fixes)
+      .withFailMessage(String.valueOf(fixes))
+      .hasSize(1)
+      .first().asString().startsWith("SdkSetupNotification:");
   }
 
   public void testNoProjectSdk() {
@@ -104,7 +131,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
 
     ArrayList<String> infos = new ArrayList<>();
     for (SdkFixInfo notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
-      infos.add(notification.toString());
+      infos.add("SdkFixInfo:" + notification.toString());
     }
 
     EditorNotificationPanel sdkNotification = SdkSetupNotificationTestBase.runOnText(myFixture, "Sample.java", "class Sample { java.lang.String foo; }");

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -34,7 +34,7 @@ final class ComboContentLayout extends ContentLayout {
 
   @Override
   public void layout() {
-    Rectangle bounds = myUi.getBounds();
+    Rectangle bounds = myUi.getTabComponent().getBounds();
     Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : JBUI.emptySize();
 
     int eachX = 0;
@@ -71,9 +71,6 @@ final class ComboContentLayout extends ContentLayout {
   }
 
   @Override
-  public void paintChildren(Graphics g) { }
-
-  @Override
   public void update() {
     updateIdLabel(myIdLabel);
     myComboLabel.update();
@@ -81,17 +78,17 @@ final class ComboContentLayout extends ContentLayout {
 
   @Override
   public void rebuild() {
-    myUi.removeAll();
+    myUi.getTabComponent().removeAll();
 
-    myUi.add(myIdLabel);
+    myUi.getTabComponent().add(myIdLabel);
     ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
 
-    myUi.add(myComboLabel);
+    myUi.getTabComponent().add(myComboLabel);
     ToolWindowContentUi.initMouseListeners(myComboLabel, myUi, false);
   }
 
   boolean isToDrawCombo() {
-    ContentManager manager = myUi.contentManager;
+    ContentManager manager = myUi.getContentManager();
     return manager != null && manager.getContentCount() > 1;
   }
 

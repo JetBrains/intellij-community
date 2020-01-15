@@ -23,6 +23,7 @@ interface SpacingConfiguration {
    */
   val labelColumnHorizontalGap: Int
 
+  val largeHorizontalGap: Int
   val largeVerticalGap: Int
   val radioGroupTitleVerticalGap: Int
 
@@ -50,6 +51,7 @@ fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val horizontalGap = JBUI.scale(6)
     override val verticalGap = JBUI.scale(6 * 2)
     override val labelColumnHorizontalGap = JBUI.scale(6)
+    override val largeHorizontalGap = JBUI.scale(16)
     override val largeVerticalGap = JBUI.scale(20)
     override val radioGroupTitleVerticalGap = JBUI.scale(6 + 2)
 

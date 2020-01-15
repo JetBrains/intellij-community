@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.sh.ShBundle;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +21,9 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
   private RawCommandLineEditor myInterpreterOptions;
 
   ShRunConfigurationEditor(Project project) {
-    myScriptSelector.addBrowseFolderListener("Choose Shell Script", "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
-    myScriptWorkingDirectory.addBrowseFolderListener("Choose Script Working Directory", "", project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myInterpreterSelector.addBrowseFolderListener("Choose Interpreter", "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myScriptSelector.addBrowseFolderListener(ShBundle.message("sh.label.choose.shell.script"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myScriptWorkingDirectory.addBrowseFolderListener(ShBundle.message("sh.label.choose.script.working.directory"), "", project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myInterpreterSelector.addBrowseFolderListener(ShBundle.message("sh.label.choose.interpreter"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
   }
 
   @Override
