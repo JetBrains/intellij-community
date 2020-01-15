@@ -21,10 +21,23 @@ import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.navigation.DevkitRelatedLineMarkerProviderBase;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
 public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProviderBase {
+
+  @Override
+  public String getName() {
+    return DevKitBundle.message("line.marker.related.property.description");
+  }
+
+  @NotNull
+  @Override
+  public Icon getIcon() {
+    return AllIcons.FileTypes.Properties;
+  }
+
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement leaf, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
     if (!(leaf instanceof XmlToken)) return;
