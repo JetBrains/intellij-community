@@ -55,8 +55,9 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
     reset();
     add(new JLabel(
-      XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
-                               "checkin comments and link them to issues in your issue tracker:")), BorderLayout.NORTH);
+          XmlStringUtil
+            .wrapInHtml(VcsBundle.message("settings.issue.navigation.patterns", ApplicationNamesInfo.getInstance().getFullProductName()))),
+        BorderLayout.NORTH);
     add(
       ToolbarDecorator.createDecorator(myLinkTable)
         .setAddAction(new AnActionButtonRunnable() {
