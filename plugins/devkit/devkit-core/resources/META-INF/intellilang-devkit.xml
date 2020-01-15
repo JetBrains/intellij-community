@@ -1,5 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="org.intellij.intelliLang">
-    <injectionConfig config="xmlInjections-java.xml"/>
+    <injectionConfig config="devkit-xmlInjections.xml"/>
   </extensions>
 </idea-plugin>
