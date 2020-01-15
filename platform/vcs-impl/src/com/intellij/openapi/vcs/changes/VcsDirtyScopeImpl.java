@@ -52,7 +52,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   @NotNull private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final AbstractVcs myVcs;
-  private final VcsDirtyScopeModifier myVcsDirtyScopeModifier;
   private final boolean myWasEverythingDirty;
 
   public VcsDirtyScopeImpl(@NotNull AbstractVcs vcs) {
@@ -64,39 +63,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     myProject = vcs.getProject();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myWasEverythingDirty = wasEverythingDirty;
-    myVcsDirtyScopeModifier = new VcsDirtyScopeModifier() {
-      @NotNull
-      @Override
-      public Iterator<FilePath> getDirtyFilesIterator() {
-        return iterateMap(myDirtyFiles);
-      }
-
-      @NotNull
-      @Override
-      public Iterator<FilePath> getDirtyDirectoriesIterator() {
-        return iterateMap(myDirtyDirectoriesRecursively);
-      }
-
-      @Override
-      public void recheckDirtyKeys() {
-        recheckMap(myDirtyDirectoriesRecursively);
-        recheckMap(myDirtyFiles);
-      }
-
-      @NotNull
-      private Iterator<FilePath> iterateMap(@NotNull Map<VirtualFile, THashSet<FilePath>> map) {
-        return ContainerUtil.concatIterators(ContainerUtil.map(map.values(), THashSet::iterator));
-      }
-
-      private void recheckMap(@NotNull Map<VirtualFile, THashSet<FilePath>> map) {
-        for (Iterator<THashSet<FilePath>> iterator = map.values().iterator(); iterator.hasNext();) {
-          final THashSet<FilePath> next = iterator.next();
-          if (next.isEmpty()) {
-            iterator.remove();
-          }
-        }
-      }
-    };
   }
 
   @Override
@@ -491,11 +457,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     }
     result.append("]");
     return result.toString();
-  }
-
-  @Override
-  public VcsDirtyScopeModifier getModifier() {
-    return myVcsDirtyScopeModifier;
   }
 
   @Override
