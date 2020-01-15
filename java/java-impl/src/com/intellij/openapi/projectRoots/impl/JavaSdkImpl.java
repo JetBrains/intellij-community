@@ -148,6 +148,14 @@ public final class JavaSdkImpl extends JavaSdk {
     };
   }
 
+  @NotNull
+  @Override
+  public Comparator<String> versionStringComparator() {
+    return (sdk1, sdk2) -> {
+      return Comparing.compare(getJavaVersion(sdk1), getJavaVersion(sdk2));
+    };
+  }
+
   @Override
   public String getBinPath(@NotNull Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
@@ -341,9 +349,17 @@ public final class JavaSdkImpl extends JavaSdk {
     return version != null ? JavaSdkVersion.fromJavaVersion(version) : null;
   }
 
-  private JavaVersion getJavaVersion(Sdk sdk) {
+  @Nullable
+  private JavaVersion getJavaVersion(@NotNull Sdk sdk) {
     String versionString = sdk.getVersionString();
-    return versionString != null ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse) : null;
+    return getJavaVersion(versionString);
+  }
+
+  @Nullable
+  private JavaVersion getJavaVersion(@Nullable String versionString) {
+    return versionString != null
+           ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse)
+           : null;
   }
 
   @Override

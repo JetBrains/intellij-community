@@ -99,11 +99,5 @@ public class PythonMockSdk {
     public boolean isLocalSdk(@NotNull Sdk sdk) {
       return false;
     }
-
-    @NotNull
-    @Override
-    public Comparator<Sdk> versionComparator() {
-      return null;
-    }
   }
 }
