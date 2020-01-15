@@ -28,6 +28,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import kotlin.reflect.KClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -154,6 +155,7 @@ public class NonBlockingReadActionImpl<T>
            o instanceof Editor ||
            o instanceof FileEditor ||
            o instanceof Class ||
+           o instanceof KClass ||
            o instanceof String ||
            o == null;
   }
