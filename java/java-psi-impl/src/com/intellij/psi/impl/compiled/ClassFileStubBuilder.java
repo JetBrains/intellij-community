@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
 
@@ -31,6 +32,12 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public Stream<ClassFileDecompilers.Decompiler> getAllSubBuilders() {
+    return ClassFileDecompilers.EP_NAME.extensions();
   }
 
   @Nullable

@@ -24,6 +24,8 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.stream.Stream;
+
 public interface BinaryFileStubBuilder {
   boolean acceptsFile(@NotNull VirtualFile file);
 
@@ -33,6 +35,9 @@ public interface BinaryFileStubBuilder {
   int getStubVersion();
 
   interface CompositeBinaryFileStubBuilder<SubBuilder> extends BinaryFileStubBuilder {
+    @NotNull
+    Stream<SubBuilder> getAllSubBuilders();
+
     @Nullable
     SubBuilder getSubBuilder(@NotNull FileContent fileContent);
 
