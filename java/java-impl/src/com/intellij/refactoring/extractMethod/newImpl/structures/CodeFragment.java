@@ -1,19 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.structures;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public class CodeFragment {
   public final List<PsiElement> elements;
@@ -68,19 +67,11 @@ public class CodeFragment {
 
   @SuppressWarnings("unchecked")
   public static <T extends PsiElement> T findSameElementInCopy(CodeFragment source, CodeFragment copy, T element) {
-    final int sourceStartOffset = source.getFirstElement().getTextRange().getStartOffset();
-    final int copyStartOffset = copy.getFirstElement().getTextRange().getStartOffset();
+    final int sourceStartOffset = source.getTextRange().getStartOffset();
+    final int copyStartOffset = copy.getTextRange().getStartOffset();
     final TextRange range = element.getTextRange().shiftRight(copyStartOffset - sourceStartOffset);
-    final IElementType elementType = element.getNode().getElementType();
-    PsiElement leaf = copy.getContainingFile().findElementAt(range.getStartOffset());
-    final PsiElement elementCopy = PsiTreeUtil
-      .findFirstParent(leaf, (parent) -> parent.getTextRange().equals(range) && parent.getNode().getElementType().equals(elementType));
-    if (elementCopy != null) {
-      return (T)elementCopy;
-    }
-    else {
-      throw new NoSuchElementException();
-    }
+    return (T) CodeInsightUtilCore.findElementInRange(copy.getContainingFile(), range.getStartOffset(), range.getEndOffset(), element.getClass(),
+                                           JavaLanguage.INSTANCE);
   }
 
   public static <T extends PsiElement> List<T> findSameElementsInCopy(CodeFragment source, CodeFragment copy, List<T> elements) {
