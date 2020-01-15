@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
@@ -96,6 +97,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private final MultiValuesMap<ProgressIndicatorEx, MyInlineProgressIndicator> myOriginal2Inlines = new MultiValuesMap<>();
 
   private final MergingUpdateQueue myUpdateQueue;
+  private final MergingUpdateQueue myAddProgressQueue;
   private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myShouldClosePopupAndOnProcessFinish;
@@ -133,7 +135,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
     myRefreshAndInfoPanel.add(myInfoPanel, BorderLayout.CENTER);
 
-    myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
+    myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT, this);
+    myAddProgressQueue = new MergingUpdateQueue("Progress indicator addition", ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, true, MergingUpdateQueue.ANY_COMPONENT, this);
     myPopup = new ProcessPopup(this);
 
     setRefreshVisible(false);
@@ -226,6 +229,18 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
+    myAddProgressQueue.queue(new Update(original) {
+      @Override
+      public void run() {
+        if (original.isRunning()) {
+          doAddProgress(original, info);
+        }
+      }
+    });
+  }
+
+  private void doAddProgress(@NotNull ProgressIndicatorEx original,
+                             @NotNull TaskInfo info) {
     synchronized (myOriginals) {
       final boolean veryFirst = !hasProgressIndicators();
 
