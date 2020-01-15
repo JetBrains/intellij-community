@@ -18,7 +18,6 @@ package com.jetbrains.python.sdk.skeletons;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,6 +36,7 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
@@ -256,11 +256,7 @@ public class PySkeletonRefresher {
   @NotNull
   public String getSkeletonsPath() throws InvalidSdkException {
     if (mySkeletonsPath == null) {
-      mySkeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), mySdk.getHomePath());
-      final File skeletonsDir = new File(mySkeletonsPath);
-      if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
-        throw new InvalidSdkException("Can't create skeleton dir " + mySkeletonsPath);
-      }
+      mySkeletonsPath = PySdkUtil.getOrCreateSkeletonsPath(mySdk);
     }
     return mySkeletonsPath;
   }
