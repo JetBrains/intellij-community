@@ -63,12 +63,14 @@ public class GitShowExternalLogAction extends DumbAwareAction {
       return;
     }
 
-    if (project.isDefault() || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
+    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+
+    if (project.isDefault() || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() ||
+        window == null) {
       ProgressManager.getInstance().run(new ShowLogInDialogTask(project, roots, vcs));
       return;
     }
 
-    final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     final Runnable showContent = () -> {
       ContentManager cm = window.getContentManager();
       if (checkIfProjectLogMatches(project, vcs, cm, roots) || checkIfAlreadyOpened(cm, roots)) {
@@ -111,7 +113,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
       }
     }));
     MainVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab ? VcsLogManager.LogWindowKind.TOOL_WINDOW :
-                                                                VcsLogManager.LogWindowKind.STANDALONE, true);
+                                                            VcsLogManager.LogWindowKind.STANDALONE, true);
     Disposer.register(disposable, ui);
     return new MyContentComponent(new VcsLogPanel(manager, ui), roots, disposable);
   }
