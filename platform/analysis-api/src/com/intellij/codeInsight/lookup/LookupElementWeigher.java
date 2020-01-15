@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ public abstract class LookupElementWeigher {
   private final boolean myNegated;
   private final boolean myPrefixDependent;
 
-  protected LookupElementWeigher(String id, boolean negated, boolean dependsOnPrefix) {
+  protected LookupElementWeigher(@NonNls String id, boolean negated, boolean dependsOnPrefix) {
     myId = id;
     myNegated = negated;
     myPrefixDependent = dependsOnPrefix;

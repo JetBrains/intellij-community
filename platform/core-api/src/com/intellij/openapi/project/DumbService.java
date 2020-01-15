@@ -13,10 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -282,7 +279,7 @@ public abstract class DumbService {
   /**
    * Show a notification when given action is not available during dumb mode.
    */
-  public abstract void showDumbModeNotification(@NotNull String message);
+  public abstract void showDumbModeNotification(@NotNull @Nls String message);
 
   /**
    * Show modal progress about indexing blocking those actions until it is cancelled or indexing stops.

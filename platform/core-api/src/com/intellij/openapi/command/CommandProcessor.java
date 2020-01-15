@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,29 +27,29 @@ public abstract class CommandProcessor {
    */
   @Deprecated
   public abstract void executeCommand(@NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nls @Nullable String name,
                                       @Nullable Object groupId);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nls @Nullable String name,
                                       @Nullable Object groupId);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nls @Nullable String name,
                                       @Nullable Object groupId,
                                       @Nullable Document document);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nls @Nullable String name,
                                       @Nullable Object groupId,
                                       @NotNull UndoConfirmationPolicy confirmationPolicy);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable command,
-                                      @Nullable String name,
+                                      @Nls @Nullable String name,
                                       @Nullable Object groupId,
                                       @NotNull UndoConfirmationPolicy confirmationPolicy,
                                       @Nullable Document document);
@@ -60,12 +61,12 @@ public abstract class CommandProcessor {
    */
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable command,
-                                      @Nullable String name,
+                                      @Nls @Nullable String name,
                                       @Nullable Object groupId,
                                       @NotNull UndoConfirmationPolicy confirmationPolicy,
                                       boolean shouldRecordCommandForActiveDocument);
 
-  public abstract void setCurrentCommandName(@Nullable String name);
+  public abstract void setCurrentCommandName(@Nullable @Nls String name);
 
   public abstract void setCurrentCommandGroupId(@Nullable Object groupId);
 
@@ -73,6 +74,7 @@ public abstract class CommandProcessor {
   public abstract Runnable getCurrentCommand();
 
   @Nullable
+  @Nls
   public abstract String getCurrentCommandName();
 
   @Nullable

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class ObjectUtils {
    * @return a new sentinel object
    */
   @NotNull
-  public static Object sentinel(@NotNull String name) {
+  public static Object sentinel(@NotNull @NonNls String name) {
     return new Sentinel(name);
   }
 

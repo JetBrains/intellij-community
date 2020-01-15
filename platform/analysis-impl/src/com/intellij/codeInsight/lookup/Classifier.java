@@ -17,6 +17,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ public abstract class Classifier<T> {
   protected final Classifier<T> myNext;
   private final String myName;
 
-  protected Classifier(Classifier<T> next, String name) {
+  protected Classifier(Classifier<T> next, @NonNls String name) {
     myNext = next;
     myName = name;
   }
