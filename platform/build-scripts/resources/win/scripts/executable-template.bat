@@ -20,9 +20,9 @@ IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
 IF EXIST "%JDK%" GOTO check
 
 SET BITS=64
-SET USER_JDK64_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
+SET USER_JDK64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
 SET BITS=
-SET USER_JDK_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
+SET USER_JDK_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
 IF EXIST "%USER_JDK64_FILE%" (
   SET /P JDK=<%USER_JDK64_FILE%
 ) ELSE (
@@ -77,7 +77,7 @@ IF NOT EXIST "%VM_OPTIONS_FILE%" (
 )
 IF NOT EXIST "%VM_OPTIONS_FILE%" (
   :: user-overridden
-  SET VM_OPTIONS_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.vmoptions
+  SET VM_OPTIONS_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions
 )
 IF NOT EXIST "%VM_OPTIONS_FILE%" (
   :: default, standard installation

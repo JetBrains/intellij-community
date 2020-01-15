@@ -27,7 +27,7 @@ import java.util.function.Predicate
 private val LOG = logger<ConfigImportHelperTest>()
 
 class ConfigImportHelperTest : BareTestFixtureTestCase() {
-  @JvmField @Rule val memoryFs = InMemoryFsRule()
+  @JvmField @Rule val memoryFs = InMemoryFsRule(SystemInfo.isWindows)
   @JvmField @Rule val localTempDir = TempDirectory()
 
   @Test fun `config directory is valid for import`() {
@@ -44,6 +44,15 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     finally {
       PropertiesComponent.getInstance().unsetValue("property.ConfigImportHelperTest")
     }
+  }
+
+  @Test fun `find both historic and current config directories`() {
+    val cfg15 = createConfigDir("15", storageTS = 1448928000000)
+    val cfg193 = createConfigDir("2019.1", storageTS = 1574845200000)
+    val cfg201 = createConfigDir("2020.1", storageTS = 1585731600000)
+
+    val newConfigPath = createConfigDir("2020.2")
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg201, cfg193, cfg15)
   }
 
   @Test fun `find recent config directory`() {
@@ -80,7 +89,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val cfg191 = createConfigDir("2019.1", "DataGrip", 1548225505000)
     val cfg173 = createConfigDir("2017.3", "DataGrip", 1549092322000)
 
-    val newConfigPath = createConfigDir("2019.2", "DataGrip")
+    val newConfigPath = createConfigDir("2020.1", "DataGrip")
     assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(
       cfg173, cfg191, cfg182, cfg183, cfg181, cfg163, cfg172, cfg171, cfg161, cfg162, cfg10)
   }
@@ -146,9 +155,9 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   }
 
   private fun createConfigDir(version: String, product: String = "IntelliJIdea", storageTS: Long = 0): Path {
-    val defaultPath = PathManager.getDefaultConfigPathFor("${product}${version}")
-    val relative = Paths.get(SystemProperties.getUserHome()).relativize(Paths.get(defaultPath))
-    val dir = Files.createDirectories(memoryFs.fs.getPath("/data/${relative.toString().replace('\\', '/')}"))
+    val path = if (SystemInfo.isMac || version >= "2020.1") PathManager.getDefaultConfigPathFor("${product}${version}")
+               else "${SystemProperties.getUserHome()}/.${product}${version}/config"
+    val dir = Files.createDirectories(memoryFs.fs.getPath(path).normalize())
     if (storageTS > 0) writeStorageFile(dir, storageTS)
     return dir
   }

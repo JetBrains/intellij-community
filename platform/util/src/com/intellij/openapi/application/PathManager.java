@@ -46,6 +46,7 @@ public class PathManager {
   private static final String CONFIG_DIRECTORY = "config";
   private static final String SYSTEM_DIRECTORY = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
+  private static final String IDE_VENDOR_NAME = System.getProperty("idea.vendor.name", "JetBrains");
 
   private static class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
@@ -262,7 +263,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultConfigPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Preferences", CONFIG_DIRECTORY);
+    return platformPath(selector, "Library/Preferences", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
   }
 
   @NotNull
@@ -283,7 +284,7 @@ public class PathManager {
     if (explicit != null) {
       ourPluginsPath = explicit;
     }
-    else if (SystemInfoRt.isMac && PATHS_SELECTOR != null) {
+    else if (PATHS_SELECTOR != null) {
       ourPluginsPath = getDefaultPluginPathFor(PATHS_SELECTOR);
     }
     else {
@@ -295,12 +296,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultPluginPathFor(@NotNull String selector) {
-    if (SystemInfoRt.isMac) {
-      return platformPath(selector, "Library/Application Support", "");
-    }
-    else {
-      return getDefaultConfigPathFor(selector) + '/' + PLUGINS_DIRECTORY;
-    }
+    return platformPath(selector, "Library/Application Support", "APPDATA", PLUGINS_DIRECTORY, "XDG_DATA_HOME", ".local/share", "");
   }
 
   @Nullable
@@ -331,7 +327,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultSystemPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Caches", SYSTEM_DIRECTORY);
+    return platformPath(selector, "Library/Caches", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
   }
 
   @NotNull
@@ -354,8 +350,8 @@ public class PathManager {
     if (explicit != null) {
       ourLogPath = explicit;
     }
-    else if (SystemInfoRt.isMac && PATHS_SELECTOR != null) {
-      ourLogPath = SystemProperties.getUserHome() + "/Library/Logs/" + PATHS_SELECTOR;
+    else if (PATHS_SELECTOR != null) {
+      ourLogPath = platformPath(PATHS_SELECTOR, "Library/Logs", "LOCALAPPDATA", LOG_DIRECTORY, "XDG_CACHE_HOME", ".cache", LOG_DIRECTORY);
     }
     else {
       ourLogPath = getSystemPath() + '/' + LOG_DIRECTORY;
@@ -589,39 +585,29 @@ public class PathManager {
     return path != null ? getAbsolutePath(StringUtilRt.unquoteString(path, '"')) : null;
   }
 
-  // todo[r.sh] XDG directories, Windows folders
-  // http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
-  // http://www.microsoft.com/security/portal/mmpc/shared/variables.aspx
-  private static String platformPath(String selector, String macDir, String fallback) {
-    return platformPath(selector, macDir, null, null, null, fallback);
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static String platformPath(String selector,
-                                     String macDir,
-                                     @Nullable String winVar,
-                                     @Nullable String xdgVar,
-                                     @Nullable String xdgDir,
-                                     String fallback) {
+  private static String platformPath(String selector, String macDir, String winVar, String winSub, String xdgVar, String xdgDfl, String xdgSub) {
     String userHome = SystemProperties.getUserHome();
 
     if (SystemInfoRt.isMac) {
       return userHome + '/' + macDir + '/' + selector;
     }
 
-    if (winVar != null && SystemInfoRt.isWindows) {
+    if (SystemInfoRt.isWindows) {
       String dir = System.getenv(winVar);
-      if (dir != null) {
-        return dir + '/' + selector;
-      }
+      if (dir == null || dir.isEmpty()) dir = userHome + "\\AppData\\" + (winVar.startsWith("LOCAL") ? "Local" : "Roaming");
+      dir = dir + '\\' + IDE_VENDOR_NAME + '\\' + selector;
+      if (!winSub.isEmpty()) dir = dir + '\\' + winSub;
+      return dir;
     }
 
-    if (xdgVar != null && xdgDir != null && SystemInfoRt.isUnix) {
+    if (SystemInfoRt.isUnix) {
       String dir = System.getenv(xdgVar);
-      if (dir == null) dir = userHome + '/' + xdgDir;
-      return dir + '/' + selector;
+      if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
+      dir = dir + '/' + selector;
+      if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
+      return dir;
     }
 
-    return userHome + "/." + selector + '/' + fallback;
+    throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
   }
 }
