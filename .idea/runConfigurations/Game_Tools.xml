@@ -2,8 +2,8 @@
   <configuration default="false" name="Game Tools" type="Application" factoryName="Application">
     <log_file alias="idea.log" path="$PROJECT_DIR$/system/log/idea.log" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
-    <module name="game-tools.main" />
-    <option name="PROGRAM_PARAMETERS" value="game-tools" />
+    <module name="android.game-tools.main" />
+    <option name="PROGRAM_PARAMETERS" value="game-tools --port 7007" />
     <option name="VM_PARAMETERS" value="-ea -Xms512m -Xmx1024m -XX:ReservedCodeCacheSize=240m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -Didea.is.internal=true -Didea.platform.prefix=AndroidGameTools -Dsun.awt.disablegrab=true -Dawt.useSystemAAFontSettings=lcd -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true -Didea.jre.check=true -Didea.debug.mode=true -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine -Dnosplash=true -Didea.load.plugins=false" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin" />
     <method v="2">
