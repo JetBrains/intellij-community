@@ -65,6 +65,10 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
     statusBar.updateWidgets();
   }
 
+  @Override
+  protected void initTitleInfoProviders(@NotNull Project project) {
+  }
+
   @NotNull
   @Override
   protected CloseProjectWindowHelper createCloseProjectWindowHelper() {

@@ -390,7 +390,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
   }
 
-  private void initTitleInfoProviders(@NotNull Project project) {
+  protected void initTitleInfoProviders(@NotNull Project project) {
     myTitleInfoExtensions = TitleInfoProvider.getProviders(project, (it) -> {
       updateTitle();
       return Unit.INSTANCE;
