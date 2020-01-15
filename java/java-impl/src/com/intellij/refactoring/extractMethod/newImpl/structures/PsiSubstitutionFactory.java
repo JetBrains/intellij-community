@@ -5,19 +5,19 @@ import com.intellij.psi.PsiElement;
 
 public class PsiSubstitutionFactory {
 
-  public static PsiSubstitution createAddAfter(PsiElement anchor, PsiElement element){
+  public static Runnable createAddAfter(PsiElement anchor, PsiElement element){
     return new AddSubstitution(Place.After, anchor, element);
   }
 
-  public static PsiSubstitution createAddBefore(PsiElement anchor, PsiElement element){
+  public static Runnable createAddBefore(PsiElement anchor, PsiElement element){
     return new AddSubstitution(Place.Before, anchor, element);
   }
 
-  public static PsiSubstitution createReplace(PsiElement source, PsiElement target){
+  public static Runnable createReplace(PsiElement source, PsiElement target){
     return new ReplaceSubstitution(source, target);
   }
 
-  private static class AddSubstitution implements PsiSubstitution {
+  private static class AddSubstitution implements Runnable {
     public final Place place;
     public final PsiElement anchor;
     public final PsiElement element;
@@ -29,19 +29,21 @@ public class PsiSubstitutionFactory {
     }
 
     @Override
-    public Runnable getAction() {
+    public void run() {
       switch (place) {
         case Before:
-          return () -> anchor.getParent().addBefore(element, anchor);
+          anchor.getParent().addBefore(element, anchor);
+          break;
         case After:
-          return () -> anchor.getParent().addAfter(element, anchor);
+          anchor.getParent().addAfter(element, anchor);
+          break;
         default:
           throw new IllegalStateException();
       }
     }
   }
 
-  private static class ReplaceSubstitution implements PsiSubstitution {
+  private static class ReplaceSubstitution implements Runnable {
     public final PsiElement source;
     public final PsiElement target;
 
@@ -51,8 +53,8 @@ public class PsiSubstitutionFactory {
     }
 
     @Override
-    public Runnable getAction() {
-      return () -> source.replace(target);
+    public void run() {
+      source.replace(target);
     }
   }
 

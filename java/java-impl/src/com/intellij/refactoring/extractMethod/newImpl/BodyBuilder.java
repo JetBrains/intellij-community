@@ -68,12 +68,12 @@ public class BodyBuilder {
       .missedDeclarations(missedDeclarations)
       .specialExits(findSameElementsInCopy(fragment, fragmentCopy, specialExits), specialSubstitution)
       .defaultReturn(defaultReturnExpression);
-    final List<PsiSubstitution> substitutions = onCopyBuilder.createSubstitutions();
-    substitutions.forEach(substitution -> substitution.getAction().run());
+    final List<Runnable> substitutions = onCopyBuilder.createSubstitutions();
+    substitutions.forEach(substitution -> substitution.run());
     return (PsiCodeBlock)fragmentCopy.getCommonParent();
   }
 
-  private List<PsiSubstitution> createSubstitutions() {
+  private List<Runnable> createSubstitutions() {
     return flatten(
       addDefaultReturn(fragment, defaultReturnExpression),
       addMissedDeclarations(fragment, missedDeclarations),
@@ -82,30 +82,30 @@ public class BodyBuilder {
     );
   }
 
-  private List<PsiSubstitution> replaceInputGroup(List<List<PsiExpression>> inputGroups, List<String> names) {
+  private List<Runnable> replaceInputGroup(List<List<PsiExpression>> inputGroups, List<String> names) {
     if (inputGroups.size() != names.size()) throw new IllegalArgumentException("Number of groups and names is different");
-    final ArrayList<PsiSubstitution> substitutions = new ArrayList<>();
+    final ArrayList<Runnable> substitutions = new ArrayList<>();
     for (int i = 0; i < inputGroups.size(); i++) {
       substitutions.addAll(replaceInputGroup(inputGroups.get(i), names.get(i)));
     }
     return substitutions;
   }
 
-  private List<PsiSubstitution> replaceInputGroup(List<PsiExpression> inputGroup, String name) {
+  private List<Runnable> replaceInputGroup(List<PsiExpression> inputGroup, String name) {
     return ContainerUtil.map(inputGroup, (reference) -> {
       final PsiExpression newReference = factory.createExpressionFromText(name, reference.getContext());
       return PsiSubstitutionFactory.createReplace(reference, newReference);
     });
   }
 
-  private List<PsiSubstitution> addMissedDeclarations(CodeFragment fragment, List<PsiVariable> missedVariables) {
+  private List<Runnable> addMissedDeclarations(CodeFragment fragment, List<PsiVariable> missedVariables) {
     return missedVariables.stream()
       .map(variable -> factory.createVariableDeclarationStatement(Objects.requireNonNull(variable.getName()), variable.getType(), null))
       .map(declaration -> PsiSubstitutionFactory.createAddBefore(fragment.getFirstElement(), declaration))
       .collect(Collectors.toList());
   }
 
-  private List<PsiSubstitution> replaceSpecialExits(List<PsiStatement> specialExits, String substitution) {
+  private List<Runnable> replaceSpecialExits(List<PsiStatement> specialExits, String substitution) {
     if (specialExits == null || substitution == null) return Collections.emptyList();
     return ContainerUtil.map(specialExits, exit -> {
       final PsiStatement returnStatement = factory.createStatementFromText(substitution, exit.getContext());
@@ -113,14 +113,14 @@ public class BodyBuilder {
     });
   }
 
-  private List<PsiSubstitution> addDefaultReturn(CodeFragment fragment, @Nullable String returnExpression) {
+  private List<Runnable> addDefaultReturn(CodeFragment fragment, @Nullable String returnExpression) {
     if (returnExpression == null) return Collections.emptyList();
     final PsiStatement returnStatement = factory.createStatementFromText("return " + returnExpression + ";", fragment.getCommonParent());
-    final PsiSubstitution substitution = PsiSubstitutionFactory.createAddAfter(fragment.getLastElement(), returnStatement);
+    final Runnable substitution = PsiSubstitutionFactory.createAddAfter(fragment.getLastElement(), returnStatement);
     return Collections.singletonList(substitution);
   }
 
-  private static List<PsiSubstitution> flatten(List<PsiSubstitution>... substitutions) {
+  private static List<Runnable> flatten(List<Runnable>... substitutions) {
     return ContainerUtil.flatten(substitutions);
   }
 }
