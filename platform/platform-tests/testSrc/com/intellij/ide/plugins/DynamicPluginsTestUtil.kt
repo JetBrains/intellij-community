@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.assertions.Assertions
 import java.io.File
+import java.lang.AssertionError
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.math.abs
@@ -56,7 +57,12 @@ fun loadPluginWithText(pluginXml: String, loader: ClassLoader): Disposable {
 
   return Disposable {
     descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
+    val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
     unloadPlugin(descriptor, false)
+    
+    if (!canBeUnloaded) {
+      throw AssertionError("'Allow unload without restart' returned false, why expected true")
+    }
   }
 }
 
