@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
 import git4idea.branch.GitBranchUtil
@@ -20,9 +19,6 @@ internal class LightGitTracker(private val lightEditService: LightEditService) :
   private val eventDispatcher = EventDispatcher.create(LightGitTrackerListener::class.java)
   private val singleTaskController = MySingleTaskController()
   private val listener = MyLightEditorListener()
-
-  private val tabs: JBEditorTabs
-    get() = lightEditService.editPanel.tabs
 
   var currentLocation: String? = null
 
@@ -67,7 +63,7 @@ internal class LightGitTracker(private val lightEditService: LightEditService) :
 
   private inner class MyFrameStateListener : FrameStateListener {
     override fun onFrameActivated() {
-      update((tabs.selectedInfo?.`object` as? LightEditorInfo)?.file)
+      update(lightEditService.selectedFile)
     }
   }
 

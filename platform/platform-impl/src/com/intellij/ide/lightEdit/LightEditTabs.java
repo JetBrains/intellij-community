@@ -177,6 +177,18 @@ final class LightEditTabs extends JBEditorTabs {
     }
   }
 
+  @Nullable
+  VirtualFile getSelectedFile() {
+    TabInfo info = getSelectedInfo();
+    if (info != null) {
+      LightEditorInfo editorInfo = ObjectUtils.tryCast(info.getObject(), LightEditorInfo.class);
+      if (editorInfo != null) {
+        return editorInfo.getFile();
+      }
+    }
+    return null;
+  }
+
   private static class EditorContainer extends JPanel implements DataProvider {
 
     private EditorContainer(Editor editor) {
