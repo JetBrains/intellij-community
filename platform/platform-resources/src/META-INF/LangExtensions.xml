@@ -34,7 +34,7 @@
 
     <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used, better to preload it -->
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
-                        serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="true"/>
+                        serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="notLightEdit"/>
     <vfs.asyncListener implementation="com.intellij.util.indexing.FileBasedIndexImpl$ChangedFilesCollector"/>
 
     <!-- required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload -->
@@ -42,7 +42,7 @@
                         serviceImplementation="com.intellij.ide.macro.IdePathMacros" preload="true"/>
 
     <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
-                        serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="true"/>
+                        serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="notLightEdit"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"

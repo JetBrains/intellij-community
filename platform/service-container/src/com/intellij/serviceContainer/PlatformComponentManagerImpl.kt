@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.idea.Main
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -671,6 +672,14 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
           }
           PreloadMode.NOT_HEADLESS -> {
             if (onlyIfAwait || getApplication()!!.isHeadlessEnvironment) {
+              continue@serviceLoop
+            }
+            else {
+              asyncPreloadedServices
+            }
+          }
+          PreloadMode.NOT_LIGHT_EDIT -> {
+            if (onlyIfAwait || Main.isLightEdit()) {
               continue@serviceLoop
             }
             else {

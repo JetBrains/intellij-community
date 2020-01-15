@@ -433,6 +433,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       else if (preload.equals("notHeadless")) {
         descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
       }
+      else if (preload.equals("notLightEdit")) {
+        descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
+      }
       else {
         LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
       }
