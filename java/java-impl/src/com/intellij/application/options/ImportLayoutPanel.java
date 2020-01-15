@@ -45,7 +45,8 @@ import java.awt.*;
  * @author Max Medvedev
  */
 public abstract class ImportLayoutPanel extends JPanel {
-  private final JBCheckBox myCbLayoutStaticImportsSeparately = new JBCheckBox("Layout static imports separately");
+  private final JBCheckBox myCbLayoutStaticImportsSeparately =
+    new JBCheckBox(ApplicationBundle.message("import.layout.static.imports.separately"));
   private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
