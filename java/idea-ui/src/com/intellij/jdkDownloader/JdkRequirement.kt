@@ -3,6 +3,7 @@ package com.intellij.jdkDownloader
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver.UnknownSdk
 import com.intellij.util.lang.JavaVersion
 
 
@@ -38,6 +39,16 @@ object JdkRequirements {
         return it == parsed
       }
     }
+  }
+
+  fun parseRequirement(request: UnknownSdk) : JdkRequirement? {
+    val name = request.sdkName
+    if (name != null) {
+      return parseRequirement(name)
+    }
+
+    //TODO: include version filter here
+    return null
   }
 
   fun parseRequirement(request: String): JdkRequirement? {

@@ -19,7 +19,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
   private val LOG = logger<JdkAuto>()
 
-  override fun createResolver(project: Project, indicator: ProgressIndicator): UnknownSdkLookup? {
+  override fun createResolver(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
     if (!Registry.`is`("jdk.auto.setup")) return null
     if (ApplicationManager.getApplication().isUnitTestMode) return null
 
@@ -34,8 +34,8 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
       override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): DownloadSdkFix? {
         if (sdk.sdkType != sdkType) return null
 
-        val req = JdkRequirements.parseRequirement(sdk.sdkName) ?: return null
-        LOG.info("Looking for a possible download for ${sdk.sdkType.presentableName} with name ${sdk.sdkName}")
+        val req = JdkRequirements.parseRequirement(sdk) ?: return null
+        LOG.info("Looking for a possible download for ${sdk.sdkType.presentableName} with name ${sdk}")
 
         //we select the newest matching version for a possible fix
         val jdkToDownload = lazyDownloadModel
@@ -66,10 +66,9 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
         SdkDetector.getInstance().detectSdks(sdkType, indicator, object : DetectedSdkListener {
           override fun onSdkDetected(type: SdkType, version: String, home: String) {
-            val javaVersion = JavaVersion.tryParse(version)
-            if (javaVersion != null) {
-              result += JavaLocalSdkFix(home, javaVersion)
-            }
+            val javaVersion = JavaVersion.tryParse(version) ?: return
+            val suggestedName = JdkUtil.suggestJdkName(version) ?: return
+            result += JavaLocalSdkFix(home, javaVersion, suggestedName)
           }
         })
 
@@ -79,8 +78,8 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
       override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): LocalSdkFix? {
         if (sdk.sdkType != sdkType) return null
 
-        val req = JdkRequirements.parseRequirement(sdk.sdkName) ?: return null
-        LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk.sdkName}")
+        val req = JdkRequirements.parseRequirement(sdk) ?: return null
+        LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk}")
 
         fun List<JavaLocalSdkFix>.pickBestMatch() = this.minBy { it.version }
 
@@ -99,15 +98,18 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
             val homeDir = it.homePath ?: return@mapNotNull null
             val versionString = it.versionString ?: return@mapNotNull null
             val version = JavaVersion.tryParse(versionString) ?: return@mapNotNull null
-            JavaLocalSdkFix(homeDir, version)
+            val suggestedName = JdkUtil.suggestJdkName(versionString) ?: return@mapNotNull null
+            JavaLocalSdkFix(homeDir, version, suggestedName)
           }
       }
     }
   }
 
   private class JavaLocalSdkFix(val homeDir: String,
-                                val version: JavaVersion) : LocalSdkFix {
+                                val version: JavaVersion,
+                                val suggestedName: String) : LocalSdkFix {
     override fun getExistingSdkHome() = homeDir
     override fun getVersionString() = JdkVersionDetector.formatVersionString(version)
+    override fun getSuggestedSdkName() : String = suggestedName
   }
 }
