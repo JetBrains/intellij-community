@@ -193,7 +193,9 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
 
   @Nullable
   public VirtualFile getSelectedFile() {
-    LightEditPanel panel = myFrameWrapper.getLightEditPanel();
+    LightEditFrameWrapper frameWrapper = myFrameWrapper;
+    if (frameWrapper == null) return null;
+    LightEditPanel panel = frameWrapper.getLightEditPanel();
     if (!Disposer.isDisposed(panel)) {
       return panel.getTabs().getSelectedFile();
     }
