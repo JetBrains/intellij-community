@@ -520,24 +520,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  /**
-   * Helper method. It makes window visible, activates it and request focus into the tool window.
-   * But it doesn't deactivate other tool windows. Use `prepareForActivation` method to
-   * deactivates other tool windows.
-   */
-  private fun showAndActivate(entry: ToolWindowEntry, info: WindowInfoImpl, autoFocusContents: Boolean): Boolean {
-    if (!entry.toolWindow.isAvailable || entry.readOnlyWindowInfo.isVisible) {
-      return false
-    }
-
-    showToolWindowImpl(entry, info, dirtyMode = false)
-    if (autoFocusContents && ApplicationManager.getApplication().isActive) {
-      RequestFocusInToolWindowCommand(entry.toolWindow).run()
-    }
-
-    return true
-  }
-
   internal fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean) {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
@@ -568,9 +550,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
 
-    if (showAndActivate(entry, info, autoFocusContents)) {
-      fireStateChanged()
+    if (!entry.readOnlyWindowInfo.isVisible) {
+      showToolWindowImpl(entry, info, dirtyMode = false)
     }
+
+    if (autoFocusContents && ApplicationManager.getApplication().isActive) {
+      RequestFocusInToolWindowCommand(entry.toolWindow).run()
+    }
+
+    fireStateChanged()
   }
 
   // mutate operation must use info from layout and not from decorator
@@ -1407,7 +1395,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this)
   }
 
-  fun setToolWindowAutoHide(id: String, autoHide: Boolean) {
+  internal fun setToolWindowAutoHide(id: String, autoHide: Boolean) {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
     val info = getRegisteredMutableInfoOrLogError(id)
@@ -1416,13 +1404,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     info.isAutoHide = autoHide
-    val entry = idToEntry.get(info.id!!) ?: return
+    val entry = idToEntry.get(id) ?: return
 
     val newInfo = info.copy()
     entry.applyWindowInfo(newInfo)
-    if (info.isVisible) {
-      showAndActivate(entry, info, autoFocusContents = true)
-    }
 
     fireStateChanged()
   }
@@ -1697,8 +1682,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
               return@Runnable
             }
 
-            toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id),
-              autoFocusContents = false)
+            toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id), autoFocusContents = false)
           }, ModalityState.defaultModalityState(), toolWindowManager.project.disposed)
         })
     }
