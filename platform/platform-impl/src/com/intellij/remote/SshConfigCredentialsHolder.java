@@ -9,6 +9,7 @@ public class SshConfigCredentialsHolder {
 
   private static final String SSH_CREDENTIALS_ID = "SSH_CREDENTIALS_ID";
   private static final String SSH_CONFIG_NAME = "SSH_CONFIG_NAME";
+  public static final String SSH_CONFIG_PREFIX = "sshConfig://";
 
   private String myCredentialsId;
   private String mySshConfigName;
@@ -46,7 +47,7 @@ public class SshConfigCredentialsHolder {
   }
 
   private void updateCredentialsId() {
-    myCredentialsId = "sshConfig://" + (StringUtil.isEmpty(mySshConfigName) ? "<unknown>" : mySshConfigName);
+    myCredentialsId = SSH_CONFIG_PREFIX + (StringUtil.isEmpty(mySshConfigName) ? "<unknown>" : mySshConfigName);
   }
 
   public void copyFrom(SshConfigCredentialsHolder credentials) {
