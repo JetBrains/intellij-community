@@ -263,7 +263,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 
   open fun getProjectPath(project: Project): String? {
-    return PathUtil.toSystemIndependentName(project.presentableUrl)
+    return FileUtilRt.toSystemIndependentName(project.presentableUrl ?: return null)
   }
 
   // open for Rider
