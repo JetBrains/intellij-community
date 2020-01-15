@@ -13,30 +13,27 @@ import java.awt.Component
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
-internal fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
-
-private fun CC.apply(flags: Array<out CCFlags>): CC {
+internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
   for (flag in flags) {
     when (flag) {
-    //CCFlags.wrap -> isWrap = true
-      CCFlags.grow -> grow()
+      //CCFlags.wrap -> isWrap = true
+      CCFlags.grow -> cc.grow()
       CCFlags.growX -> {
-        growX(1000f)
+        cc.growX(1000f)
       }
-      CCFlags.growY -> growY(1000f)
+      CCFlags.growY -> cc.growY(1000f)
 
-    // If you have more than one component in a cell the alignment keywords will not work since the behavior would be indeterministic.
-    // You can however accomplish the same thing by setting a gap before and/or after the components.
-    // That gap may have a minimum size of 0 and a preferred size of a really large value to create a "pushing" gap.
-    // There is even a keyword for this: "push". So "gapleft push" will be the same as "align right" and work for multi-component cells as well.
-    //CCFlags.right -> horizontal.gapBefore = BoundSize(null, null, null, true, null)
+      // If you have more than one component in a cell the alignment keywords will not work since the behavior would be indeterministic.
+      // You can however accomplish the same thing by setting a gap before and/or after the components.
+      // That gap may have a minimum size of 0 and a preferred size of a really large value to create a "pushing" gap.
+      // There is even a keyword for this: "push". So "gapleft push" will be the same as "align right" and work for multi-component cells as well.
+      //CCFlags.right -> horizontal.gapBefore = BoundSize(null, null, null, true, null)
 
-      CCFlags.push -> push()
-      CCFlags.pushX -> pushX()
-      CCFlags.pushY -> pushY()
+      CCFlags.push -> cc.push()
+      CCFlags.pushX -> cc.pushX()
+      CCFlags.pushY -> cc.pushY()
     }
   }
-  return this
 }
 
 internal class DefaultComponentConstraintCreator(private val spacing: SpacingConfiguration) {
@@ -47,23 +44,7 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
 
   val horizontalUnitSizeGap = gapToBoundSize(spacing.unitSize, true)
 
-  fun createComponentConstraints(cc: CC,
-                                 component: Component,
-                                 split: Int = -1,
-                                 growPolicy: GrowPolicy?) {
-    if (split != -1) {
-      cc.split = split
-    }
-
-    if (growPolicy != null) {
-      applyGrowPolicy(cc, growPolicy)
-    }
-    else {
-      addGrowIfNeeded(cc, component, spacing)
-    }
-  }
-
-  private fun addGrowIfNeeded(cc: CC, component: Component, spacing: SpacingConfiguration) {
+  fun addGrowIfNeeded(cc: CC, component: Component, spacing: SpacingConfiguration) {
     when {
       component is ComponentWithBrowseButton<*> -> {
         // yes, no max width. approved by UI team (all path fields stretched to the width of the window)
@@ -84,18 +65,18 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
         cc.grow()
           .pushY()
       }
-    }
 
-    if (component is JScrollPane) {
-      val view = component.viewport.view
-      if (view is JTextArea && view.rows == 0) {
-        // set min size to 2 lines (yes, for some reasons it means that rows should be set to 3)
-        view.rows = 3
+      component is JScrollPane -> {
+        val view = component.viewport.view
+        if (view is JTextArea && view.rows == 0) {
+          // set min size to 2 lines (yes, for some reasons it means that rows should be set to 3)
+          view.rows = 3
+        }
       }
     }
   }
 
-  private fun applyGrowPolicy(cc: CC, growPolicy: GrowPolicy) {
+  fun applyGrowPolicy(cc: CC, growPolicy: GrowPolicy) {
     cc.horizontal.size = when (growPolicy) {
       GrowPolicy.SHORT_TEXT -> shortTextSizeSpec
       GrowPolicy.MEDIUM_TEXT -> mediumTextSizeSpec

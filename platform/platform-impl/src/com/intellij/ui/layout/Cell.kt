@@ -105,6 +105,8 @@ interface CellBuilder<T : JComponent> {
    * which is that of the biggest component in the group
    */
   fun sizeGroup(name: String): CellBuilder<T>
+  fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
+  fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
   /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled.
@@ -134,6 +136,9 @@ interface CellBuilder<T : JComponent> {
   fun shouldSaveOnApply(): Boolean
 
   fun withLargeLeftGap(): CellBuilder<T>
+
+  @Deprecated("Prefer not to use hardcoded values")
+  fun withLeftGap(gapLeft: Int): CellBuilder<T>
 }
 
 internal interface CheckboxCellBuilder {
@@ -479,30 +484,24 @@ abstract class Cell : BaseBuilder {
     return JBScrollPane(component)(*constraints)
   }
 
-  fun <T : JComponent> component(
-    component: T,
-    vararg constraints: CCFlags,
-    gapLeft: Int = 0,
-    growPolicy: GrowPolicy? = null,
-    comment: String? = null
-  ): CellBuilder<T> = component.invoke(constraints = *constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = comment)
+  abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
-  abstract operator fun <T : JComponent> T.invoke(
+  operator fun <T : JComponent> T.invoke(
     vararg constraints: CCFlags,
     gapLeft: Int = 0,
     growPolicy: GrowPolicy? = null,
     comment: String? = null
-  ): CellBuilder<T>
+  ): CellBuilder<T> = component(this).apply {
+    constraints(*constraints)
+    if (gapLeft != 0) withLeftGap(gapLeft)
+    if (comment != null) comment(comment)
+    if (growPolicy != null) growPolicy(growPolicy)
+  }
 }
 
 class InnerCell(val cell: Cell) : Cell() {
-  override fun <T : JComponent> T.invoke(vararg constraints: CCFlags,
-                                         gapLeft: Int,
-                                         growPolicy: GrowPolicy?,
-                                         comment: String?): CellBuilder<T> {
-    with(cell) {
-      return invoke(*constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = comment)
-    }
+  override fun <T : JComponent> component(component: T): CellBuilder<T> {
+    return cell.component(component)
   }
 
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {

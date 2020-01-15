@@ -296,23 +296,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags,
-                                                  gapLeft: Int,
-                                                  growPolicy: GrowPolicy?,
-                                                  comment: String?): CellBuilder<T> {
-    val cc = constraints.create() ?: CC()
-    addComponent(this, cc, growPolicy, comment)
-    return CellBuilderImpl(builder, this@MigLayoutRow, this).apply {
-      if (gapLeft != 0) {
-        builder.updateComponentConstraints(component) {
-          horizontal.gapBefore = gapToBoundSize(gapLeft, true)
-        }
-      }
-    }
+  override fun <T : JComponent> component(component: T): CellBuilder<T> {
+    addComponent(component)
+    return CellBuilderImpl(builder, this, component)
   }
 
-  // separate method to avoid JComponent as a receiver
-  internal fun addComponent(component: JComponent, cc: CC = CC(), growPolicy: GrowPolicy? = null, comment: String? = null) {
+  internal fun addComponent(component: JComponent, cc: CC = CC()) {
     components.add(component)
     builder.componentConstraints.put(component, cc)
 
@@ -334,15 +323,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       builder.componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
     }
 
-    if (comment != null && comment.isNotEmpty()) {
-      addCommentRow(component, comment)
-    }
-
     if (component is JRadioButton) {
       builder.topButtonGroup?.add(component)
     }
 
-    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, growPolicy = growPolicy)
+    builder.defaultComponentConstraintCreator.addGrowIfNeeded(cc, component, spacing)
 
     if (!noGrid && indent > 0 && components.size == 1) {
       cc.horizontal.gapBefore = gapToBoundSize(indent, true)
@@ -525,9 +510,27 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     }
   }
 
+  override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      builder.defaultComponentConstraintCreator.applyGrowPolicy(this, growPolicy)
+    }
+  }
+
+  override fun constraints(vararg constraints: CCFlags): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      overrideFlags(this, constraints)
+    }
+  }
+
   override fun withLargeLeftGap(): CellBuilder<T> = apply {
     builder.updateComponentConstraints(component) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
+    }
+  }
+
+  override fun withLeftGap(gapLeft: Int): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      horizontal.gapBefore = gapToBoundSize(gapLeft, true)
     }
   }
 }
