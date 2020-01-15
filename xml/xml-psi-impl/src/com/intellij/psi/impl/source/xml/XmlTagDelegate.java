@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.doIfNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 @ApiStatus.Experimental
 public abstract class XmlTagDelegate {
@@ -340,7 +341,8 @@ public abstract class XmlTagDelegate {
       }
       XmlExtension extension = XmlExtension.getExtensionByElement(tag);
       if (extension != null) {
-        descriptor = extension.wrapNSDescriptor(tag, descriptor);
+        String prefix = tag.getPrefixByNamespace(namespace);
+        descriptor = extension.wrapNSDescriptor(tag, notNull(prefix, ""), descriptor);
       }
       return descriptor;
     }));

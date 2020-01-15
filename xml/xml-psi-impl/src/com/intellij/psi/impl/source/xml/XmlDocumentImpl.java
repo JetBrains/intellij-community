@@ -28,7 +28,6 @@ import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -38,7 +37,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
@@ -48,13 +46,13 @@ import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -297,11 +295,19 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   @Nullable
-  public static XmlNSDescriptor getCachedHtmlNsDescriptor(final XmlFile descriptorFile) {
-    return CachedValuesManager.getCachedValue(descriptorFile, () -> {
+  public static XmlNSDescriptor getCachedHtmlNsDescriptor(@NotNull final XmlFile descriptorFile) {
+    return getCachedHtmlNsDescriptor(descriptorFile, "");
+  }
+
+  @Nullable
+  public static XmlNSDescriptor getCachedHtmlNsDescriptor(@NotNull final XmlFile descriptorFile, @NotNull final String prefix) {
+    Map<String, XmlNSDescriptor> descriptorsByPrefix = CachedValuesManager.getCachedValue(descriptorFile, () -> {
+      return CachedValueProvider.Result.create(new ConcurrentHashMap<>(), descriptorFile);
+    });
+    return descriptorsByPrefix.computeIfAbsent(prefix, p -> {
       final XmlDocument document = descriptorFile.getDocument();
-      if (document == null) return CachedValueProvider.Result.create(null, descriptorFile);
-      return CachedValueProvider.Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData()), descriptorFile);
+      if (document == null) return null;
+      return new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData());
     });
   }
 
