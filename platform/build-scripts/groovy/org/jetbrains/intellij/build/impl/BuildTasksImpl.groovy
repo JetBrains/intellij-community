@@ -363,8 +363,7 @@ idea.fatal.error.notification=disabled
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
 
-      //todo[r.sh] fix later
-      if (Boolean.getBoolean("intellij.build.toolbox.litegen") && false) {
+      if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (buildContext.buildNumber == null) {
           buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
         }
