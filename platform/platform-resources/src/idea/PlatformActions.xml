@@ -382,6 +382,8 @@
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
+    <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
+
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
@@ -727,7 +729,6 @@
           <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction" internal="true"/>
           <separator/>
           <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
-          <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction" internal="true"/>
           <action id="CollectTroubleshootingInformation" class="com.intellij.ide.actions.CollectTroubleshootingInformationAction" internal="true"/>
         </group>
 
