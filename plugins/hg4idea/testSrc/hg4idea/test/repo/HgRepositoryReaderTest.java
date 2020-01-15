@@ -15,6 +15,7 @@
  */
 package hg4idea.test.repo;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
@@ -27,6 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+
+import static com.intellij.openapi.vcs.Executor.debug;
 
 public class HgRepositoryReaderTest extends HgPlatformTest {
 
@@ -74,6 +77,11 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testTip() {
+    File cacheDir = new File(myHgDir, "cache");
+    assertTrue(cacheDir.exists());
+    File branchFile = new File(cacheDir, "branchheads-served");
+    assertTrue(branchFile.exists());
+    debug(DvcsUtil.tryLoadFileOrReturn(branchFile, ""));
     assertEquals("25e44c95b2612e3cdf29a704dabf82c77066cb67", myRepositoryReader.readCurrentTipRevision());
   }
 
@@ -117,7 +125,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
 
 
   public void testCurrentBookmark() {
-    assertEquals(myRepositoryReader.readCurrentBookmark(), "B_BookMark");
+    assertEquals("B_BookMark", myRepositoryReader.readCurrentBookmark());
   }
 
   @NotNull
