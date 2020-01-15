@@ -57,7 +57,10 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
     if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
       return null;
     }
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+
+    DebuggerSession javaSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
+    XDebugSession session = javaSession != null ? javaSession.getXDebugSession() : null;
+
     if (session == null) {
       setFileProcessed(file, false);
       return null;
@@ -85,7 +88,7 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
     if (DumbService.getInstance(project).isDumb()) return null;
 
     ArrayList<PsiClass> alts = ContainerUtil.newArrayList(
-      JavaPsiFacade.getInstance(project).findClasses(name, GlobalSearchScope.allScope(project)));
+      JavaPsiFacade.getInstance(project).findClasses(name, javaSession.getSearchScope()));
     ContainerUtil.removeDuplicates(alts);
 
     setFileProcessed(file, true);
