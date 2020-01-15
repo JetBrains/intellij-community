@@ -3,6 +3,7 @@ package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -74,10 +75,10 @@ public class ProjectSettingsPanel {
     myScopeMappingTable = new TableView<>(myScopeMappingModel);
 
     reloadCopyrightProfiles();
-    myProfilesComboBox.setRenderer(SimpleListCellRenderer.create("No copyright", CopyrightProfile::getName));
+    myProfilesComboBox.setRenderer(SimpleListCellRenderer.create(IdeBundle.message("copyright.no.text"), CopyrightProfile::getName));
 
     myScopesLink.setVisible(!myProject.isDefault());
-    myScopesLink.setHyperlinkText("Select Scopes to add new scopes or modify existing ones");
+    myScopesLink.setHyperlinkText(IdeBundle.message("copyright.select.scopes.label"));
     myScopesLink.addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(final HyperlinkEvent e) {
@@ -106,7 +107,7 @@ public class ProjectSettingsPanel {
   public JComponent getMainComponent() {
 
     final LabeledComponent<JComboBox> component = new LabeledComponent<>();
-    component.setText("Default &project copyright:");
+    component.setText(IdeBundle.message("copyright.default.project.copyright"));
     component.setLabelLocation(BorderLayout.WEST);
     component.setComponent(myProfilesComboBox);
     ElementProducer<ScopeSetting> producer = new ElementProducer<ScopeSetting>() {
@@ -223,7 +224,7 @@ public class ProjectSettingsPanel {
 
   private class SettingColumn extends MyColumnInfo<CopyrightProfile> {
     private SettingColumn() {
-      super("Copyright");
+      super(IdeBundle.message("copyright.copyright.column"));
     }
 
     @Override
@@ -280,7 +281,7 @@ public class ProjectSettingsPanel {
 
   private class ScopeColumn extends MyColumnInfo<NamedScope> {
     private ScopeColumn() {
-      super("Scope");
+      super(IdeBundle.message("copyright.scope.column"));
     }
 
     @Override
