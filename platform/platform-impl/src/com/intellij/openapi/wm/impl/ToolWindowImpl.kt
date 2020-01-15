@@ -251,9 +251,8 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     callLater(runnable)
   }
 
-  override fun setAutoHide(state: Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    toolWindowManager.setToolWindowAutoHide(id, state)
+  override fun setAutoHide(value: Boolean) {
+    toolWindowManager.setToolWindowAutoHide(id, value)
   }
 
   override fun isAutoHide() = windowInfo.isAutoHide
