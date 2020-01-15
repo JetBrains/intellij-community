@@ -134,7 +134,7 @@ object DynamicPlugins {
     if (!((ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(pluginDescriptor))) return false
 
     pluginDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
-      if (isPluginLoaded(pluginId) && !optionalDescriptors.any { !allowLoadUnloadWithoutRestart(it, pluginDescriptor) }) return false
+      if (isPluginLoaded(pluginId) && optionalDescriptors.any { !allowLoadUnloadWithoutRestart(it, pluginDescriptor) }) return false
     }
 
     var canUnload = true
