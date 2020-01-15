@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -424,7 +424,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     catch (ProcessCanceledException e) {
       GuiUtils.invokeLaterIfNeeded(() -> {
-        closeProject(project, false, false, /* dispose */ true, true);
+        closeProject(project, false, /* dispose= */ true, true);
         notifyProjectOpenFailed();
       }, ModalityState.defaultModalityState());
       return false;
@@ -624,37 +624,32 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public final boolean closeProject(@NotNull Project project) {
-    return closeProject(project, /* isSaveProject = */ true, /* isSaveApp = */ true, /* dispose = */ false, /* checkCanClose = */ true);
+    return closeProject(project, /* isSaveProject = */ true, /* dispose = */ false, /* checkCanClose = */ true);
   }
 
   @TestOnly
   public final boolean forceCloseProject(@NotNull Project project, boolean dispose) {
-    return closeProject(project, /* isSaveProject = */ false, /* isSaveApp = */ false, dispose, /* checkCanClose = */ false);
+    return closeProject(project, /* isSaveProject = */ false, dispose, /* checkCanClose = */ false);
   }
 
   @Override
   public boolean forceCloseProject(@NotNull Project project) {
-    return closeProject(project, /* isSaveProject = */ false, /* isSaveApp = */ false, /* dispose = */ true, /* checkCanClose = */ false);
+    return closeProject(project, /* isSaveProject = */ false, /* dispose = */ true, /* checkCanClose = */ false);
   }
 
   // return true if successful
   @Override
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
     for (Project project : getOpenProjects()) {
-      if (!closeProject(project, /* isSaveProject = */ true, /* isSaveApp = */ false, /* dispose = */ true, checkCanClose)) {
+      if (!closeProject(project, /* isSaveProject = */ true, /* dispose = */ true, checkCanClose)) {
         return false;
       }
     }
     return true;
   }
 
-  // isSaveApp is ignored if saveProject is false
   @SuppressWarnings("TestOnlyProblems")
-  private boolean closeProject(@NotNull Project project,
-                               boolean isSaveProject,
-                               boolean isSaveApp,
-                               boolean dispose,
-                               boolean checkCanClose) {
+  private boolean closeProject(@NotNull Project project, boolean isSaveProject, boolean dispose, boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException(
@@ -703,7 +698,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       if (isSaveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project, isSaveApp);
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project);
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
@@ -749,7 +744,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeAndDispose(@NotNull Project project) {
-    return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true /* checkCanClose */);
+    return closeProject(project, true /* save project */, true /* dispose project */, true /* checkCanClose */);
   }
 
   private static void fireProjectClosing(@NotNull Project project) {
