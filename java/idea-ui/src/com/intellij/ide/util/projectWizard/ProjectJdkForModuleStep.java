@@ -142,9 +142,8 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   /**
    * @deprecated this method does return an empty array
    */
-  @NotNull
   @Deprecated
-  public Object[] getAllJdks() {
+  public Object @NotNull [] getAllJdks() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 

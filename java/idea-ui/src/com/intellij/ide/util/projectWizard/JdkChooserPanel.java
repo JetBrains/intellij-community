@@ -111,8 +111,7 @@ public class JdkChooserPanel extends JPanel {
     return myCurrentJdk;
   }
 
-  @NotNull
-  public Object[] getAllJdks() {
+  public Object @NotNull [] getAllJdks() {
     return myListModel.toArray();
   }
 

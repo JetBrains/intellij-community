@@ -48,8 +48,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   }
 
   @Override
-  @NotNull
-  public synchronized StructureViewTreeElement[] getChildren() {
+  public synchronized StructureViewTreeElement @NotNull [] getChildren() {
     final MultiMap<String, IProperty> propertyNames = getPropertiesMap(myResourceBundle, myShowOnlyIncomplete);
 
     final HashSet<String> remains = new HashSet<>(myElements.keySet());

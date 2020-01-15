@@ -216,7 +216,7 @@ public class SuperMethodWarningUtil {
                                          boolean isSuperAbstract,
                                          boolean isParentInterface,
                                          boolean isContainedInInterface,
-                                         @NotNull String[] classNames) {
+                                         String @NotNull [] classNames) {
     StringBuilder labelText = new StringBuilder();
     String classType = isParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class");
     String methodString = IdeBundle.message("element.method");
