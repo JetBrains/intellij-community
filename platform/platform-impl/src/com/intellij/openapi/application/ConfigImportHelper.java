@@ -55,7 +55,7 @@ public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
-  public static final String CONFIG = "config";
+  private static final String CONFIG = "config";
   private static final String[] OPTIONS = {
     OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE,
     OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,
@@ -150,10 +150,7 @@ public final class ConfigImportHelper {
   }
 
   static boolean isConfigDirectory(@NotNull Path candidate) {
-    for (String name : OPTIONS) {
-      if (Files.exists(candidate.resolve(name))) return true;
-    }
-    return false;
+    return Arrays.stream(OPTIONS).anyMatch(name -> Files.exists(candidate.resolve(name)));
   }
 
   static @NotNull List<Path> findConfigDirectories(@NotNull Path newConfigDir) {
@@ -207,9 +204,9 @@ public final class ConfigImportHelper {
             max = cur;
           }
         }
-        catch (IOException ignore) {
-        }
+        catch (IOException ignore) { }
       }
+
       lastModified.put(candidate, max != null ? max : FileTime.fromMillis(0));
     }
 

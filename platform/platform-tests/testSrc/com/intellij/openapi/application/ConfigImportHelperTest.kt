@@ -126,7 +126,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     }
   }
 
-  @Test fun `migrate settings to empty directory`() {
+  @Test fun `migrate plugins to empty directory`() {
     val oldConfigDir = localTempDir.newFolder("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
     val oldPluginZip = Files.createFile(oldPluginsDir.resolve("my-plugin.zip"))
@@ -138,7 +138,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     assertThat(newPluginsDir).isDirectoryContaining { it.fileName == oldPluginZip.fileName }
   }
 
-  @Test fun `migrate settings to directory with existing plugin`() {
+  @Test fun `do not migrate plugins to existing directory`() {
     val oldConfigDir = localTempDir.newFolder("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
     val oldPluginZip = Files.createFile(oldPluginsDir.resolve("old-plugin.zip"))
