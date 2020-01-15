@@ -21,7 +21,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -144,7 +143,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   public static FileContent createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
     FileContentImpl content = new FileContentImpl(file, file.contentsToByteArray());
     if (project != null) {
-      content.putUserData(IndexingDataKeys.PROJECT, project);
+      content.setProject(project);
     }
     return content;
   }
@@ -253,6 +252,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
 
   @Override
   public Project getProject() {
-    return getUserData(IndexingDataKeys.PROJECT);
+    Project project = super.getProject();
+    return project != null ? project : getUserData(IndexingDataKeys.PROJECT);
   }
 }

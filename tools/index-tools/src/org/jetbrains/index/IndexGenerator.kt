@@ -56,8 +56,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
                         stats: Stats): Boolean {
     try {
       if (fileFilter.accept(file)) {
-        val fileContent = FileContentImpl(
-          file, file.contentsToByteArray())
+        val fileContent = FileContentImpl.createByFile(file) as FileContentImpl
 
         val hashCode = hashing.hashString(fileContent)
 
