@@ -47,45 +47,41 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
 
   val horizontalUnitSizeGap = gapToBoundSize(spacing.unitSize, true)
 
-  fun createComponentConstraints(cc: Lazy<CC>,
+  fun createComponentConstraints(cc: CC,
                                  component: Component,
                                  split: Int = -1,
-                                 growPolicy: GrowPolicy?): CC? {
+                                 growPolicy: GrowPolicy?) {
     if (split != -1) {
-      cc.value.split = split
+      cc.split = split
     }
 
     if (growPolicy != null) {
-      applyGrowPolicy(cc.value, growPolicy)
+      applyGrowPolicy(cc, growPolicy)
     }
     else {
       addGrowIfNeeded(cc, component, spacing)
     }
-
-    return if (cc.isInitialized()) cc.value else null
   }
 
-  private fun addGrowIfNeeded(cc: Lazy<CC>, component: Component, spacing: SpacingConfiguration) {
+  private fun addGrowIfNeeded(cc: CC, component: Component, spacing: SpacingConfiguration) {
     when {
       component is ComponentWithBrowseButton<*> -> {
         // yes, no max width. approved by UI team (all path fields stretched to the width of the window)
-        cc.value.minWidth("${spacing.maxShortTextWidth}px")
-        cc.value.growX()
+        cc.minWidth("${spacing.maxShortTextWidth}px")
+        cc.growX()
       }
 
       component is JTextField && component.columns != 0 ->
         return
 
       component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*> -> {
-        cc.value
-          .growX()
-//          .pushX()
+        cc.growX()
+        //.pushX()
       }
 
       component is JScrollPane || component.isPanelWithToolbar() -> {
         // no need to use pushX - default pushX for cell is 100. avoid to configure more than need
-        cc.value
-          .grow()
+        cc.grow()
           .pushY()
       }
     }

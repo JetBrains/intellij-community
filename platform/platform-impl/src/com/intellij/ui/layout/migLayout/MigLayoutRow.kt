@@ -44,7 +44,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       val cc = CC()
       val commentRow = parent.createChildRow()
       commentRow.isComment = true
-      commentRow.addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength), lazyOf(cc))
+      commentRow.addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength), cc)
       if (isParentRowLabeled) {
         cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         cc.skip()
@@ -219,7 +219,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         growX()
       }
     }
-    addComponent(titleComponent, lazyOf(cc))
+    addComponent(titleComponent, cc)
   }
 
   override fun titledRow(title: String, init: Row.() -> Unit): Row {
@@ -282,7 +282,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       // do not add split if cell empty or contains the only component
       if ((components.size - firstComponentIndex) > 1) {
         val component = components.get(firstComponentIndex)
-        val cc = builder.componentConstraints.getOrPut(component) { CC() }
+        val cc = component.constraints
         cc.split(components.size - firstComponentIndex)
         if (fullWidth) {
           cc.spanX(LayoutUtil.INF)
@@ -300,7 +300,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                                                   gapLeft: Int,
                                                   growPolicy: GrowPolicy?,
                                                   comment: String?): CellBuilder<T> {
-    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, growPolicy, comment)
+    val cc = constraints.create() ?: CC()
+    addComponent(this, cc, growPolicy, comment)
     return CellBuilderImpl(builder, this@MigLayoutRow, this).apply {
       if (gapLeft != 0) {
         builder.updateComponentConstraints(component) {
@@ -311,8 +312,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   // separate method to avoid JComponent as a receiver
-  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, growPolicy: GrowPolicy? = null, comment: String? = null) {
+  internal fun addComponent(component: JComponent, cc: CC = CC(), growPolicy: GrowPolicy? = null, comment: String? = null) {
     components.add(component)
+    builder.componentConstraints.put(component, cc)
 
     if (!visible) {
       component.isVisible = false
@@ -343,11 +345,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, growPolicy = growPolicy)
 
     if (!noGrid && indent > 0 && components.size == 1) {
-      cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
+      cc.horizontal.gapBefore = gapToBoundSize(indent, true)
     }
 
     if (builder.hideableRowNestingLevel > 0) {
-      cc.value.hideMode = 0
+      cc.hideMode = 0
     }
 
     // if this row is not labeled and:
@@ -357,18 +359,18 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       val siblings = parent!!.subRows
       if (siblings != null && siblings.size > 1) {
         if (siblings.get(siblings.size - 2).labeled && component.text == UIBundle.message("auth.remember.cb")) {
-          cc.value.skip(1)
-          cc.value.horizontal.gapBefore = BoundSize.NULL_SIZE
+          cc.skip(1)
+          cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         }
         else if (siblings.any { it.labeled }) {
-          cc.value.spanX(2)
+          cc.spanX(2)
         }
       }
     }
 
     // MigLayout doesn't check baseline if component has grow
     if (labeled && component is JScrollPane && component.viewport.view is JTextArea) {
-      val labelCC = builder.componentConstraints.getOrPut(components.get(0)) { CC() }
+      val labelCC = components.get(0).constraints
       labelCC.alignY("top")
 
       val labelTop = component.border?.getBorderInsets(component)?.top ?: 0
@@ -376,11 +378,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         labelCC.vertical.gapBefore = gapToBoundSize(labelTop, false)
       }
     }
-
-    if (cc.isInitialized()) {
-      builder.componentConstraints.put(component, cc.value)
-    }
   }
+
+  private val JComponent.constraints get() = builder.componentConstraints.getOrPut(this) { CC() }
 
   fun addCommentRow(component: JComponent, comment: String, maxLineLength: Int = 70) {
     gapAfter = "${spacing.commentVerticalTopGap}px!"
@@ -389,19 +389,15 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     createCommentRow(this, comment, component, indent, isParentRowLabeled, maxLineLength)
   }
 
-  private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: Lazy<CC>): Boolean {
+  private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: CC): Boolean {
     if (components.size > 1 && component is JLabel && component.icon === AllIcons.General.GearPlain) {
-      componentCC.value.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
+      componentCC.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
 
       if (lastComponentConstraintsWithSplit == null) {
         val prevComponent = components.get(components.size - 2)
-        var cc = builder.componentConstraints.get(prevComponent)
-        if (cc == null) {
-          cc = CC()
-          builder.componentConstraints.put(prevComponent, cc)
-        }
-        cc.split++
-        lastComponentConstraintsWithSplit = cc
+        val prevCC = prevComponent.constraints
+        prevCC.split++
+        lastComponentConstraintsWithSplit = prevCC
       }
       else {
         lastComponentConstraintsWithSplit!!.split++
@@ -435,7 +431,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
 
     val row = createChildRow(label = null, noGrid = true)
-    row.addComponent(component, lazyOf(cc))
+    row.addComponent(component, cc)
     return row
   }
 
