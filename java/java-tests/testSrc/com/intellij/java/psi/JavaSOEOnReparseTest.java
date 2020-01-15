@@ -24,7 +24,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import org.intellij.lang.annotations.Language;
 
 @SkipSlowTestLocally
-public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase {
+public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
   private StringBuilder getHugeExpr() {
     int N = 100_000;
     String expr = "+\"b\"";
