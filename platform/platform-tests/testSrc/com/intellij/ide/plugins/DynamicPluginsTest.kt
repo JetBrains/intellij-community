@@ -34,6 +34,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.lang.AssertionError
 
 @RunsInEdt
 class DynamicPluginsTest {
@@ -320,7 +321,15 @@ class DynamicPluginsTest {
     val descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
     descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
     DynamicPlugins.loadPlugin(descriptor, false)
-    return Disposable { DynamicPlugins.unloadPlugin(loadDescriptorInTest(plugin.toPath().parent.parent), false) }
+    
+    return Disposable {
+      val unloadDescriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
+      val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
+      DynamicPlugins.unloadPlugin(unloadDescriptor, false)
+      if (!canBeUnloaded) {
+        throw AssertionError("'Allow unload without restart' returned false, why expected true")
+      }
+    }
   }
 
   private class MyUISettingsListener : UISettingsListener {
