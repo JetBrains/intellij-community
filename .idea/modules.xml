@@ -358,6 +358,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-layout-inspector/android-layout-inspector-test.iml" filepath="$PROJECT_DIR$/../adt/idea/android-layout-inspector/android-layout-inspector-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/game-tools/main/android.game-tools.main.iml" filepath="$PROJECT_DIR$/../vendor/google/game-tools/main/android.game-tools.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google/game-tools/packaging/android.game-tools.packaging.iml" filepath="$PROJECT_DIR$/../vendor/google/game-tools/packaging/android.game-tools.packaging.iml" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/testing/android.sdktools.analytics-testing.iml" filepath="$PROJECT_DIR$/../analytics-library/testing/android.sdktools.analytics-testing.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/apkparser/analyzer/android.sdktools.analyzer.iml" filepath="$PROJECT_DIR$/../base/apkparser/analyzer/android.sdktools.analyzer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/annotations/android.sdktools.android-annotations.iml" filepath="$PROJECT_DIR$/../base/annotations/android.sdktools.android-annotations.iml" />

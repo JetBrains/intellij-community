@@ -537,6 +537,7 @@ iml_project(
         "//tools/vendor/google/cpp-integration-tests",
         "//tools/vendor/google/firebase",
         "//tools/vendor/google/game-tools/main:android.game-tools.main",
+        "//tools/vendor/google/game-tools/packaging:android.game-tools.packaging",
         "//tools/vendor/google/games",
         "//tools/vendor/google/lldb-integration-tests",
         "//tools/vendor/google/real-world-integration-test:real-world-integration-tests",
