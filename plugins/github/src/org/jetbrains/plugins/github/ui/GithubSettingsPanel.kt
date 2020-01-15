@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.project.Project
@@ -35,7 +36,7 @@ class GithubSettingsPanel(project: Project,
     columns = 2
     UIUtil.fixFormattedField(this)
   }
-  private val cloneUsingSshCheckBox = JBCheckBox("Clone git repositories using ssh")
+  private val cloneUsingSshCheckBox = JBCheckBox(IdeBundle.message("github.settings.clone.ssh"))
 
   override fun reset(settings: GithubSettingsConfigurable.GithubSettingsHolder) {
     val accountsMap = settings.applicationAccounts.accounts.map {
@@ -75,11 +76,11 @@ class GithubSettingsPanel(project: Project,
   override fun getComponent(): JComponent {
     val timeoutPanel = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.X_AXIS)
-      add(JLabel("Connection timeout:"))
+      add(JLabel(IdeBundle.message("github.settings.timeout")))
       add(Box.createRigidArea(JBDimension(UIUtil.DEFAULT_HGAP, 0)))
       add(timeoutField)
       add(Box.createRigidArea(JBDimension(UIUtil.DEFAULT_HGAP, 0)))
-      add(JLabel("seconds"))
+      add(JLabel(IdeBundle.message("github.settings.seconds")))
       alignmentX = LEFT_ALIGNMENT
     }
 

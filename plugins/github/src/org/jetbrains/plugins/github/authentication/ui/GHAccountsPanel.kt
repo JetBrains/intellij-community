@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -59,8 +60,8 @@ internal class GHAccountsPanel(private val project: Project,
 
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     emptyText.apply {
-      appendText("No GitHub accounts added.")
-      appendSecondaryText("Add account", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, { addAccount() })
+      appendText(IdeBundle.message("github.accounts.added"))
+      appendSecondaryText(IdeBundle.message("github.accounts.add"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, { addAccount() })
       appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
     }
   }
