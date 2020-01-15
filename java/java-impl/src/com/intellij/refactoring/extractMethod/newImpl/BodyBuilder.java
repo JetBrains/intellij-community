@@ -93,7 +93,7 @@ public class BodyBuilder {
 
   private List<PsiSubstitution> replaceInputGroup(List<PsiExpression> inputGroup, String name) {
     return ContainerUtil.map(inputGroup, (reference) -> {
-      final PsiExpression newReference = factory.createExpressionFromText(name, null);
+      final PsiExpression newReference = factory.createExpressionFromText(name, reference.getContext());
       return PsiSubstitutionFactory.createReplace(reference, newReference);
     });
   }
@@ -108,14 +108,14 @@ public class BodyBuilder {
   private List<PsiSubstitution> replaceSpecialExits(List<PsiStatement> specialExits, String substitution) {
     if (specialExits == null || substitution == null) return Collections.emptyList();
     return ContainerUtil.map(specialExits, exit -> {
-      final PsiStatement returnStatement = factory.createStatementFromText(substitution, null);
+      final PsiStatement returnStatement = factory.createStatementFromText(substitution, exit.getContext());
       return PsiSubstitutionFactory.createReplace(exit, returnStatement);
     });
   }
 
   private List<PsiSubstitution> addDefaultReturn(CodeFragment fragment, @Nullable String returnExpression) {
     if (returnExpression == null) return Collections.emptyList();
-    final PsiStatement returnStatement = factory.createStatementFromText("return " + returnExpression + ";", null);
+    final PsiStatement returnStatement = factory.createStatementFromText("return " + returnExpression + ";", fragment.getCommonParent());
     final PsiSubstitution substitution = PsiSubstitutionFactory.createAddAfter(fragment.getLastElement(), returnStatement);
     return Collections.singletonList(substitution);
   }
