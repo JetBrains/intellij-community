@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
@@ -363,7 +363,8 @@ idea.fatal.error.notification=disabled
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
 
-      if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
+      //todo[r.sh] fix later
+      if (Boolean.getBoolean("intellij.build.toolbox.litegen") && false) {
         if (buildContext.buildNumber == null) {
           buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
         }
