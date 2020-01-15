@@ -283,7 +283,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun setTitleActions(vararg actions: AnAction) {
-    createContentIfNeeded()
+    ensureContentManagerInitialized()
     decorator!!.setTitleActions(actions)
   }
 
