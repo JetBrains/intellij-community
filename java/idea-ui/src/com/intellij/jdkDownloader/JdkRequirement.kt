@@ -3,7 +3,7 @@ package com.intellij.jdkDownloader
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver.UnknownSdk
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.util.lang.JavaVersion
 
 

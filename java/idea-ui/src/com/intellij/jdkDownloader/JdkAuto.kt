@@ -7,9 +7,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
-import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver
-import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver.*
-import com.intellij.openapi.roots.ui.configuration.SdkDetector
+import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.*
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.util.registry.Registry
@@ -31,7 +30,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         JdkListDownloader.downloadModelForJdkInstaller(indicator)
       }
 
-      override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): DownloadSdkFix? {
+      override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? {
         if (sdk.sdkType != sdkType) return null
 
         val req = JdkRequirements.parseRequirement(sdk) ?: return null
@@ -49,7 +48,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
                               }.maxBy { it.second }
                               ?.first ?: return null
 
-        return object: DownloadSdkFix {
+        return object: UnknownSdkDownloadableSdkFix {
           override fun getDownloadDescription() = jdkToDownload.fullPresentationText
 
           override fun createTask(indicator: ProgressIndicator): SdkDownloadTask {
@@ -75,7 +74,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         result
       }
 
-      override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): LocalSdkFix? {
+      override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? {
         if (sdk.sdkType != sdkType) return null
 
         val req = JdkRequirements.parseRequirement(sdk) ?: return null
@@ -107,7 +106,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
   private class JavaLocalSdkFix(val homeDir: String,
                                 val version: JavaVersion,
-                                val suggestedName: String) : LocalSdkFix {
+                                val suggestedName: String) : UnknownSdkLocalSdkFix {
     override fun getExistingSdkHome() = homeDir
     override fun getVersionString() = JdkVersionDetector.formatVersionString(version)
     override fun getSuggestedSdkName() : String = suggestedName
