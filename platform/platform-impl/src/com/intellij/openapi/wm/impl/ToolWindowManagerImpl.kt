@@ -1019,11 +1019,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun removeDecoratorWithoutUpdatingState(entry: ToolWindowEntry, info: WindowInfoImpl, dirtyMode: Boolean) {
     entry.windowedDecorator?.let {
+      entry.windowedDecorator = null
       Disposer.dispose(it)
       return
     }
 
     entry.floatingDecorator?.let {
+      entry.floatingDecorator = null
       it.dispose()
       return
     }
@@ -1043,7 +1045,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     entry.windowedDecorator?.let { windowedDecorator ->
       info.isActiveOnStart = windowedDecorator.isActive
-      entry.windowedDecorator = null
       val frame = windowedDecorator.getFrame()
       if (frame.isShowing) {
         val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
