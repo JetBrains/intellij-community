@@ -231,7 +231,10 @@ private fun GrCodeReferenceElement.canResolveToInnerClassOfCurrentClass(): Boole
 /**
  * Reference element may be created from stub. In this case containing file will be dummy, and its context will be reference parent
  */
-private fun GrCodeReferenceElement.getActualParent(): PsiElement? = containingFile.context ?: parent
+private fun GrCodeReferenceElement.getActualParent(): PsiElement? {
+  val parent = parent
+  return (parent as? PsiFile)?.context ?: parent
+}
 
 /**
  * @see org.codehaus.groovy.control.ResolveVisitor.currentClass
