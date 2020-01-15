@@ -44,7 +44,6 @@ public class Mappings {
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
 
   private final boolean myIsDelta;
-  private final boolean myDeltaIsTransient;
   private boolean myIsDifferentiated = false;
   private boolean myIsRebuild = false;
 
@@ -94,7 +93,6 @@ public class Mappings {
     myChangedFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     myDeletedClasses = new HashSet<>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myAddedClasses = new HashSet<>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-    myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "myDelta");
     myContext = base.myContext;
     myInitName = myContext.get("<init>");
@@ -105,14 +103,13 @@ public class Mappings {
     createImplementation();
   }
 
-  public Mappings(final File rootDir, PathRelativizerService relativizer, final boolean transientDelta) throws IOException {
+  public Mappings(final File rootDir, PathRelativizerService relativizer) throws IOException {
     myLock = new Object();
     myIsDelta = false;
     myChangedClasses = null;
     myChangedFiles = null;
     myDeletedClasses = null;
     myAddedClasses = null;
-    myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
     myRelativizer = relativizer;
     createImplementation();
@@ -122,51 +119,62 @@ public class Mappings {
   }
 
   private void createImplementation() throws IOException {
-    if (!myIsDelta) {
-      myContext = new DependencyContext(myRootDir, myRelativizer);
-      myDebugS = myContext.getLogger(LOG);
-    }
-
-    myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
-    myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
-
-    final CollectionFactory<String> fileCollectionFactory = new CollectionFactory<String>() {
-      @Override
-      public Collection<String> create() {
-        return new THashSet<>(FileUtil.PATH_HASHING_STRATEGY); // todo: do we really need set and not a list here?
+    try {
+      if (!myIsDelta) {
+        myContext = new DependencyContext(myRootDir, myRelativizer);
+        myDebugS = myContext.getLogger(LOG);
       }
-    };
-    if (myIsDelta && myDeltaIsTransient) {
-      myClassToSubclasses = new IntIntTransientMultiMaplet();
-      myClassToClassDependency = new IntIntTransientMultiMaplet();
-      myShortClassNameIndex = null;
-      myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(FileUtil.PATH_HASHING_STRATEGY, () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR));
-      myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
-    }
-    else {
-      if (myIsDelta) {
-        myRootDir.mkdirs();
-      }
-      myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES),
-                                                            EnumeratorIntegerDescriptor.INSTANCE);
-      myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS),
-                                                                 EnumeratorIntegerDescriptor.INSTANCE);
-      myShortClassNameIndex = myIsDelta? null : new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, SHORT_NAMES),
-                                                                                EnumeratorIntegerDescriptor.INSTANCE);
-      myRelativeSourceFilePathToClasses = new ObjectObjectPersistentMultiMaplet<String, ClassFileRepr>(
-        DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), PathStringDescriptor.INSTANCE, new ClassFileReprExternalizer(myContext),
-        () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
-      ) {
-        @NotNull
+
+      myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
+      myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
+
+      final CollectionFactory<String> fileCollectionFactory = new CollectionFactory<String>() {
         @Override
-        protected String debugString(String path) {
-          // on case-insensitive file systems save paths in normalized (lowercase) format in order to make tests run deterministically
-          return SystemInfo.isFileSystemCaseSensitive ? path : path.toLowerCase(Locale.US);
+        public Collection<String> create() {
+          return new THashSet<>(FileUtil.PATH_HASHING_STRATEGY); // todo: do we really need set and not a list here?
         }
       };
-      myClassToRelativeSourceFilePath = new IntObjectPersistentMultiMaplet<>(
-        DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), EnumeratorIntegerDescriptor.INSTANCE, PathStringDescriptor.INSTANCE, fileCollectionFactory
-      );
+      if (myIsDelta) {
+        myClassToSubclasses = new IntIntTransientMultiMaplet();
+        myClassToClassDependency = new IntIntTransientMultiMaplet();
+        myShortClassNameIndex = null;
+        myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(FileUtil.PATH_HASHING_STRATEGY, () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR));
+        myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
+      }
+      else {
+        if (myIsDelta) {
+          myRootDir.mkdirs();
+        }
+        myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES),
+                                                              EnumeratorIntegerDescriptor.INSTANCE);
+        myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS),
+                                                                   EnumeratorIntegerDescriptor.INSTANCE);
+        myShortClassNameIndex = myIsDelta? null : new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, SHORT_NAMES),
+                                                                                  EnumeratorIntegerDescriptor.INSTANCE);
+        myRelativeSourceFilePathToClasses = new ObjectObjectPersistentMultiMaplet<String, ClassFileRepr>(
+          DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), PathStringDescriptor.INSTANCE, new ClassFileReprExternalizer(myContext),
+          () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
+        ) {
+          @NotNull
+          @Override
+          protected String debugString(String path) {
+            // on case-insensitive file systems save paths in normalized (lowercase) format in order to make tests run deterministically
+            return SystemInfo.isFileSystemCaseSensitive ? path : path.toLowerCase(Locale.US);
+          }
+        };
+        myClassToRelativeSourceFilePath = new IntObjectPersistentMultiMaplet<>(
+          DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), EnumeratorIntegerDescriptor.INSTANCE, PathStringDescriptor.INSTANCE, fileCollectionFactory
+        );
+      }
+    }
+    catch (Throwable e) {
+      try {
+        // ensure already initialized maps are properly closed
+        close();
+      }
+      catch (Throwable ignored) {
+      }
+      throw e;
     }
   }
 
@@ -2956,26 +2964,39 @@ public class Mappings {
   }
 
   public void close() {
+    BuildDataCorruptedException error = null;
     synchronized (myLock) {
-      myClassToSubclasses.close();
-      myClassToClassDependency.close();
-      myRelativeSourceFilePathToClasses.close();
-      myClassToRelativeSourceFilePath.close();
+      for (CloseableMaplet maplet : Arrays.asList(myClassToSubclasses, myClassToClassDependency, myRelativeSourceFilePathToClasses, myClassToRelativeSourceFilePath, myShortClassNameIndex)) {
+        if (maplet != null) {
+          try {
+            maplet.close();
+          }
+          catch (BuildDataCorruptedException ex) {
+            if (error == null) {
+              error = ex;
+            }
+          }
+        }
+      }
 
       if (!myIsDelta) {
-        myShortClassNameIndex.close();
         // only close if you own the context
         final DependencyContext context = myContext;
         if (context != null) {
-          context.close();
+          try {
+            context.close();
+          }
+          catch (BuildDataCorruptedException ex) {
+            if (error == null) {
+              error = ex;
+            }
+          }
           myContext = null;
         }
       }
-      else {
-        if (!myDeltaIsTransient) {
-          FileUtil.delete(myRootDir);
-        }
-      }
+    }
+    if (error != null) {
+      throw error;
     }
   }
 
