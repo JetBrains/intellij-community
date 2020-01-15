@@ -419,11 +419,11 @@ private fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: Inne
   cell {
     column1()
   }
-  JPanel().apply { preferredSize = Dimension(0, 0) }(gapLeft = JBUI.scale(60))
+  component(JPanel().apply { preferredSize = Dimension(0, 0) }).withLeftGap(JBUI.scale(60))
   cell {
     column2()
   }
-  JPanel().apply { preferredSize = Dimension(0, 0) }(growX, pushX)
+  component(JPanel().apply { preferredSize = Dimension(0, 0) }).constraints(growX, pushX)
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {

@@ -479,12 +479,10 @@ abstract class Cell : BaseBuilder {
 
   operator fun <T : JComponent> T.invoke(
     vararg constraints: CCFlags,
-    gapLeft: Int = 0,
     growPolicy: GrowPolicy? = null,
     comment: String? = null
   ): CellBuilder<T> = component(this).apply {
     constraints(*constraints)
-    if (gapLeft != 0) withLeftGap(gapLeft)
     if (comment != null) comment(comment)
     if (growPolicy != null) growPolicy(growPolicy)
   }

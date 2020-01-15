@@ -145,7 +145,7 @@ abstract class Row : Cell(), RowBuilder {
   // backward compatibility
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
   operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
-    invoke(constraints = *constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = null)
+    invoke(constraints = *constraints, growPolicy = growPolicy).withLeftGap(gapLeft)
   }
 
   @Deprecated(level = DeprecationLevel.ERROR,
