@@ -59,9 +59,9 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
 
   private static void highlightComponents(DomElementAnnotationHolder holder, DomElement component) {
     holder.createProblem(component, ProblemHighlightType.LIKE_DEPRECATED,
-                         "<html>Replace Components with " +
+                         "<html>Non-dynamic plugin due to using components, replace with " +
                          "<a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html\">alternatives</a></html>",
-                         null).highlightWholeElement();
+                         null);
   }
 
   private static void highlightExtensionPoint(DomElementAnnotationHolder holder, ExtensionPoint extensionPoint) {
