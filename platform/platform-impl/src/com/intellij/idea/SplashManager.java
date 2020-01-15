@@ -36,6 +36,7 @@ public final class SplashManager {
   private static Splash SPLASH_WINDOW;
 
   public static void show(String @NotNull [] args) {
+    if (Main.isLightEdit()) return;
     if (Boolean.getBoolean(NO_SPLASH)) {
       return;
     }

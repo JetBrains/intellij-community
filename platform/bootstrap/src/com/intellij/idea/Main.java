@@ -53,6 +53,7 @@ public final class Main {
   private static boolean isHeadless;
   private static boolean isCommandLine;
   private static boolean hasGraphics = true;
+  private static boolean isLightEdit;
 
   private Main() { }
 
@@ -131,12 +132,17 @@ public final class Main {
     return isCommandLine;
   }
 
+  public static boolean isLightEdit() {
+    return isLightEdit;
+  }
+
   public static void setFlags(String @NotNull [] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
+    isLightEdit = args.length > 0 && Files.isRegularFile(Paths.get(args[0]));
   }
 
   public static boolean isHeadless(String @NotNull [] args) {
