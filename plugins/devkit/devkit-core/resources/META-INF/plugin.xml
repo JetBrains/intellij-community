@@ -283,6 +283,7 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
