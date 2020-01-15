@@ -1,5 +1,4 @@
-
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -51,8 +50,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   }
 
   public static void updateToolWindowActionPresentation(@NotNull ToolWindowImpl toolWindow) {
-    ActionManager actionManager = ActionManager.getInstance();
-    AnAction action = actionManager.getAction(getActionIdForToolWindow(toolWindow.getId()));
+    AnAction action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindow.getId()));
     if (action instanceof ActivateToolWindowAction) {
       ((ActivateToolWindowAction)action).updatePresentation(action.getTemplatePresentation(), toolWindow);
     }
@@ -66,6 +64,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
       presentation.setEnabledAndVisible(false);
       return;
     }
+
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId);
     if (toolWindow == null) {
       presentation.setEnabledAndVisible(false);
@@ -91,13 +90,16 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     Project project = getEventProject(e);
-    if (project == null) return;
+    if (project == null) {
+      return;
+    }
+
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    final ToolWindow window = windowManager.getToolWindow(myToolWindowId);
+    ToolWindow window = windowManager.getToolWindow(myToolWindowId);
     InputEvent event = e.getInputEvent();
     Runnable run = null;
     if (event instanceof KeyEvent && event.isShiftDown()) {
-      final Content[] contents = window.getContentManager().getContents();
+      Content[] contents = window.getContentManager().getContents();
       if (contents.length > 0 && window.getContentManager().getSelectedContent() != contents[0]) {
         run = () -> window.getContentManager().setSelectedContent(contents[0], true, true);
       }
@@ -106,10 +108,12 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId()) || run != null) {
       if (run != null && window.isActive()) {
         run.run();
-      } else {
+      }
+      else {
         window.activate(run);
       }
-    } else {
+    }
+    else {
       windowManager.getToolWindow(myToolWindowId).hide(null);
     }
   }
@@ -121,7 +125,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
    * @param id {@code id} of tool window to be activated.
    */
   @NonNls
-  public static String getActionIdForToolWindow(String id) {
+  public static String getActionIdForToolWindow(@NotNull String id) {
     return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
   }
 
@@ -131,26 +135,24 @@ public class ActivateToolWindowAction extends DumbAwareAction {
    * Mac OS X user, because Alt+digit types strange characters into the
    * editor.
    */
-  public static int getMnemonicForToolWindow(String id) {
+  public static int getMnemonicForToolWindow(@NotNull String id) {
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] shortcuts = activeKeymap.getShortcuts(getActionIdForToolWindow(id));
-    for (Shortcut shortcut : shortcuts) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-        int modifiers = keyStroke.getModifiers();
-        if (
-          modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.ALT_MASK) ||
+    for (Shortcut shortcut : activeKeymap.getShortcuts(getActionIdForToolWindow(id))) {
+      if (!(shortcut instanceof KeyboardShortcut)) {
+        continue;
+      }
+
+      KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
+      int modifiers = keyStroke.getModifiers();
+      if (modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.ALT_MASK) ||
           modifiers == InputEvent.ALT_MASK ||
           modifiers == InputEvent.ALT_DOWN_MASK ||
           modifiers == (InputEvent.META_DOWN_MASK | InputEvent.META_MASK) ||
           modifiers == InputEvent.META_MASK ||
-          modifiers == InputEvent.META_DOWN_MASK
-          ) {
-          int keyCode = keyStroke.getKeyCode();
-          if (KeyEvent.VK_0 <= keyCode && keyCode <= KeyEvent.VK_9) {
-            char c = (char)('0' + keyCode - KeyEvent.VK_0);
-            return (int)c;
-          }
+          modifiers == InputEvent.META_DOWN_MASK) {
+        int keyCode = keyStroke.getKeyCode();
+        if (KeyEvent.VK_0 <= keyCode && keyCode <= KeyEvent.VK_9) {
+          return (char)('0' + keyCode - KeyEvent.VK_0);
         }
       }
     }
