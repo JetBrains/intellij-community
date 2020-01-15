@@ -14,7 +14,7 @@ import com.intellij.vcs.log.BaseSingleTaskController
 import git4idea.branch.GitBranchUtil
 import java.util.*
 
-internal class LightGitTracker(private val lightEditService: LightEditService) : Disposable {
+internal class LightGitTracker(private val lightEditService: LightEditService, private val project: Project) : Disposable {
   private val lightEditorManager: LightEditorManager = lightEditService.editorManager
   private val eventDispatcher = EventDispatcher.create(LightGitTrackerListener::class.java)
   private val singleTaskController = MySingleTaskController()
@@ -77,7 +77,7 @@ internal class LightGitTracker(private val lightEditService: LightEditService) :
     BaseSingleTaskController<VirtualFile, Optional<String>>("Light Git Tracker", this::updateCurrentLocation, this) {
     override fun process(requests: List<VirtualFile>): Optional<String> {
       try {
-        return Optional.of(getLocation(LightEditUtil.getProject(), requests.last().parent))
+        return Optional.of(getLocation(project, requests.last().parent))
       }
       catch (_: VcsException) {
         return Optional.ofNullable(null)
