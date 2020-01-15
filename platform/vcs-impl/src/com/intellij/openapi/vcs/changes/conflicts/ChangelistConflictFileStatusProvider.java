@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public final class ChangelistConflictFileStatusProvider implements FileStatusProvider {
-  public static final FileStatus MODIFIED_OUTSIDE =
-    FileStatusFactory.getInstance().createFileStatus("modifiedOutside", "Modified in not active changelist");
-  public static final FileStatus ADDED_OUTSIDE =
-    FileStatusFactory.getInstance().createFileStatus("addedOutside", "Added in not active changelist");
-  public static final FileStatus CHANGELIST_CONFLICT =
-    FileStatusFactory.getInstance().createFileStatus("changelistConflict", "Changelist conflict");
+  public static final FileStatus MODIFIED_OUTSIDE = FileStatusFactory.getInstance()
+    .createFileStatus("modifiedOutside", VcsBundle.message("settings.file.status.color.modified.in.not.active.changelist"));
+  public static final FileStatus ADDED_OUTSIDE = FileStatusFactory.getInstance()
+    .createFileStatus("addedOutside", VcsBundle.message("settings.file.status.color.added.in.not.active.changelist"));
+  public static final FileStatus CHANGELIST_CONFLICT = FileStatusFactory.getInstance()
+    .createFileStatus("changelistConflict", VcsBundle.message("settings.file.status.color.changelist.conflict"));
 
   private final ChangeListManagerImpl myChangeListManager;
 
