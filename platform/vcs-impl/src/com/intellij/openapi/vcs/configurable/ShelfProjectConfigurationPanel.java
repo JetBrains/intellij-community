@@ -41,8 +41,6 @@ import static java.awt.GridBagConstraints.NONE;
 import static java.awt.GridBagConstraints.NORTHWEST;
 
 public class ShelfProjectConfigurationPanel extends JPanel {
-  @NotNull private static final String CURRENT_LOCATION_HINT = "Current location is ";
-  @NotNull private static final String DEFAULT_LOCATION_HINT = "Default location is ";
   @NotNull private final VcsConfiguration myVcsConfiguration;
   @NotNull private final Project myProject;
   @NotNull private final JBCheckBox myBaseRevisionTexts;
@@ -73,7 +71,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     contentPanel.add(createStoreBaseRevisionOption(), gb);
 
     JPanel shelfConfigurablePanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-    JButton shelfConfigurableButton = new JButton("Change Shelves Location");
+    JButton shelfConfigurableButton = new JButton(VcsBundle.message("settings.change.shelves.location"));
     shelfConfigurableButton.setEnabled(!myProject.isDefault());
     shelfConfigurableButton.addActionListener(new ActionListener() {
       @Override
@@ -91,7 +89,8 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   }
 
   private void updateLabelInfo() {
-    myInfoLabel.setText((myProject.isDefault() ? DEFAULT_LOCATION_HINT : CURRENT_LOCATION_HINT) +
+    myInfoLabel.setText((myProject.isDefault() ? VcsBundle.message("settings.default.location")
+                                               : VcsBundle.message("settings.current.location")) +
                         (myVcsConfiguration.USE_CUSTOM_SHELF_PATH ? toSystemDependentName(
                           assertNotNull(myVcsConfiguration.CUSTOM_SHELF_PATH)) : getDefaultShelfPresentationPath(myProject)));
   }
@@ -105,8 +104,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   }
 
   private JComponent createStoreBaseRevisionOption() {
-    final JBLabel noteLabel =
-      new JBLabel("The base content of files larger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K will not be stored");
+    final JBLabel noteLabel = new JBLabel(VcsBundle.message("settings.shelf.content.larger", ourMaximumFileForBaseRevisionSize / 1000));
     noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
     noteLabel.setBorder(JBUI.Borders.empty(2, 25, 5, 0));
