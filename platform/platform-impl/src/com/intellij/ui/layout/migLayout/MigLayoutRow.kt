@@ -19,7 +19,6 @@ import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
-import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.LineBorder
 import kotlin.math.max
@@ -235,10 +234,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       .apply(init)
       .apply {
         createChildRow().apply {
-          JPanel().apply {
-            maximumSize = Dimension(0, 0)
-            preferredSize = Dimension(0, 0)
-          }()
+          placeholder()
           largeGapAfter()
         }
       }

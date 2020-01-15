@@ -33,7 +33,6 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.Dimension
 import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.Window
@@ -419,11 +418,11 @@ private fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: Inne
   cell {
     column1()
   }
-  component(JPanel().apply { preferredSize = Dimension(0, 0) }).withLeftGap(JBUI.scale(60))
+  placeholder().withLeftGap(JBUI.scale(60))
   cell {
     column2()
   }
-  component(JPanel().apply { preferredSize = Dimension(0, 0) }).constraints(growX, pushX)
+  placeholder().constraints(growX, pushX)
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {

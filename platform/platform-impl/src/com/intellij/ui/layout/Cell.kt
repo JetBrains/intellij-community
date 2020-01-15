@@ -23,6 +23,7 @@ import com.intellij.ui.components.*
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ItemEvent
@@ -473,6 +474,10 @@ abstract class Cell : BaseBuilder {
 
   fun scrollPane(component: Component): CellBuilder<JScrollPane> {
     return component(JBScrollPane(component))
+  }
+
+  fun placeholder(): CellBuilder<JComponent> {
+    return component(JPanel().apply { preferredSize = Dimension(0, 0) })
   }
 
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
