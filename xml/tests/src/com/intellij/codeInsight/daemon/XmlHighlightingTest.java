@@ -11,9 +11,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspectio
 import com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
-import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
-import com.intellij.codeInspection.htmlInspections.XmlWrongRootElementInspection;
+import com.intellij.codeInspection.htmlInspections.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
@@ -1902,6 +1900,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testMobileHtml() throws Exception {
     enableInspectionTool(new HtmlUnknownTagInspection());
+    doTest(getFullRelativeTestName(".html"), true, true);
+  }
+
+  public void testSvgInHtml() throws Exception {
+    enableInspectionTools(new HtmlUnknownTagInspection(),
+                          new HtmlUnknownAttributeInspection(),
+                          new HtmlUnknownBooleanAttributeInspection());
     doTest(getFullRelativeTestName(".html"), true, true);
   }
 
