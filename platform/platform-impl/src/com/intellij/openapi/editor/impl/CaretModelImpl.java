@@ -116,67 +116,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
-  @Override
-  public void moveCaretRelatively(final int columnShift,
-                                  final int lineShift,
-                                  final boolean withSelection,
-                                  final boolean blockSelection,
-                                  final boolean scrollToCaret) {
-    getCurrentCaret().moveCaretRelatively(columnShift, lineShift, withSelection, scrollToCaret);
-  }
-
-  @Override
-  public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
-    getCurrentCaret().moveToLogicalPosition(pos);
-  }
-
-  @Override
-  public void moveToVisualPosition(@NotNull VisualPosition pos) {
-    getCurrentCaret().moveToVisualPosition(pos);
-  }
-
-  @Override
-  public void moveToOffset(int offset) {
-    getCurrentCaret().moveToOffset(offset);
-  }
-
-  @Override
-  public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
-    getCurrentCaret().moveToOffset(offset, locateBeforeSoftWrap);
-  }
-
-  @Override
-  public boolean isUpToDate() {
-    return getCurrentCaret().isUpToDate();
-  }
-
-  @NotNull
-  @Override
-  public LogicalPosition getLogicalPosition() {
-    return getCurrentCaret().getLogicalPosition();
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition getVisualPosition() {
-    return getCurrentCaret().getVisualPosition();
-  }
-
-  @Override
-  public int getOffset() {
-    return getCurrentCaret().getOffset();
-  }
-
-  @Override
-  public int getVisualLineStart() {
-    return getCurrentCaret().getVisualLineStart();
-  }
-
-  @Override
-  public int getVisualLineEnd() {
-    return getCurrentCaret().getVisualLineEnd();
-  }
-
   int getWordAtCaretStart() {
     return getCurrentCaret().getWordAtCaretStart();
   }

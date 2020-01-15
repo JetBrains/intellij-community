@@ -20,13 +20,22 @@ import org.jetbrains.annotations.Nullable;
  * @see CaretModel
  */
 public interface SelectionModel {
+
+  /**
+   * @return the editor this selection model belongs to
+   */
+  @NotNull
+  Editor getEditor();
+
   /**
    * Returns the start offset in the document of the selected text range, or the caret
    * position if there is currently no selection.
    *
    * @return the selection start offset.
    */
-  int getSelectionStart();
+  default int getSelectionStart() {
+    return getEditor().getCaretModel().getCurrentCaret().getSelectionStart();
+  }
 
   /**
    * @return    object that encapsulates information about visual position of selected text start if any
@@ -40,7 +49,9 @@ public interface SelectionModel {
    *
    * @return the selection end offset.
    */
-  int getSelectionEnd();
+  default int getSelectionEnd() {
+    return getEditor().getCaretModel().getCurrentCaret().getSelectionEnd();
+  }
 
   /**
    * @return    object that encapsulates information about visual position of selected text end if any;
@@ -84,7 +95,9 @@ public interface SelectionModel {
    *
    * @return {@code true} if a range of text is selected, {@code false} otherwise.
    */
-  boolean hasSelection();
+  default boolean hasSelection() {
+    return hasSelection(false);
+  }
 
   /**
    * Checks if a range of text is currently selected. If {@code anyCaret} is {@code true}, check all existing carets in
@@ -92,7 +105,17 @@ public interface SelectionModel {
    *
    * @return {@code true} if a range of text is selected, {@code false} otherwise.
    */
-  boolean hasSelection(boolean anyCaret);
+  default boolean hasSelection(boolean anyCaret) {
+    if (!anyCaret) {
+      return getEditor().getCaretModel().getCurrentCaret().hasSelection();
+    }
+    for (Caret caret : getEditor().getCaretModel().getAllCarets()) {
+      if (caret.hasSelection()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /**
    * Selects the specified range of text.
@@ -100,7 +123,9 @@ public interface SelectionModel {
    * @param startOffset the start offset of the text range to select.
    * @param endOffset   the end offset of the text range to select.
    */
-  void setSelection(int startOffset, int endOffset);
+  default void setSelection(int startOffset, int endOffset) {
+    getEditor().getCaretModel().getCurrentCaret().setSelection(startOffset, endOffset);
+  }
 
   /**
    * Selects target range providing information about visual boundary of selection end.
@@ -112,7 +137,9 @@ public interface SelectionModel {
    *                        no specific visual position should be used)
    * @param endOffset       end selection offset
    */
-  void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset);
+  default void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+    getEditor().getCaretModel().getCurrentCaret().setSelection(startOffset, endPosition, endOffset);
+  }
 
   /**
    * Selects target range based on its visual boundaries.
@@ -126,12 +153,17 @@ public interface SelectionModel {
    * @param startOffset     start selection offset
    * @param endOffset       end selection offset
    */
-  void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset);
+  default void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+    getEditor().getCaretModel().getCurrentCaret().setSelection(startPosition, startOffset, endPosition, endOffset);
+  }
+
 
   /**
    * Removes the selection in the editor.
    */
-  void removeSelection();
+  default void removeSelection() {
+    removeSelection(false);
+  }
 
   /**
    * Removes the selection in the editor. If {@code allCarets} is {@code true}, removes selections from all carets in the
@@ -166,7 +198,9 @@ public interface SelectionModel {
   /**
    * Selects the entire line of text at the caret position.
    */
-  void selectLineAtCaret();
+  default void selectLineAtCaret() {
+    getEditor().getCaretModel().getCurrentCaret().selectLineAtCaret();
+  }
 
   /**
    * Selects the entire word at the caret position, optionally using camel-case rules to
@@ -176,7 +210,9 @@ public interface SelectionModel {
    *                                upper-case letters within the word are considered as
    *                                boundaries for the range of text to select.
    */
-  void selectWordAtCaret(boolean honorCamelWordsSettings);
+  default void selectWordAtCaret(boolean honorCamelWordsSettings) {
+    getEditor().getCaretModel().getCurrentCaret().selectWordAtCaret(honorCamelWordsSettings);
+  }
 
   /**
    * Copies the currently selected text to the clipboard.

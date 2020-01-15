@@ -17,10 +17,7 @@ package com.intellij.openapi.editor.textarea;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.EditorCopyPasteHelper;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.SelectionListener;
@@ -42,6 +39,11 @@ public class TextComponentSelectionModel implements SelectionModel {
   public TextComponentSelectionModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor textComponentEditor) {
     myTextComponent = textComponent;
     myEditor = textComponentEditor;
+  }
+
+  @Override
+  public @NotNull Editor getEditor() {
+    return myEditor;
   }
 
   @Override
@@ -93,13 +95,8 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  public boolean hasSelection() {
-    return myTextComponent.getSelectionStart() != myTextComponent.getSelectionEnd();
-  }
-
-  @Override
   public boolean hasSelection(boolean anyCaret) {
-    return hasSelection();
+    return myTextComponent.getSelectionStart() != myTextComponent.getSelectionEnd();
   }
 
   @Override
@@ -125,14 +122,9 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  public void removeSelection() {
+  public void removeSelection(boolean allCarets) {
     final int position = myTextComponent.getCaretPosition();
     myTextComponent.select(position, position);
-  }
-
-  @Override
-  public void removeSelection(boolean allCarets) {
-    removeSelection();
   }
 
   @Override

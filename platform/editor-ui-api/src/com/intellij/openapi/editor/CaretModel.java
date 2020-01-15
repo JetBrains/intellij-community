@@ -41,11 +41,13 @@ public interface CaretModel {
    * @param blockSelection This parameter is currently ignored.
    * @param scrollToCaret  if true, the document should be scrolled so that the caret is visible after the move.
    */
-  void moveCaretRelatively(int columnShift,
-                           int lineShift,
-                           boolean withSelection,
-                           boolean blockSelection,
-                           boolean scrollToCaret);
+  default void moveCaretRelatively(int columnShift,
+                                   int lineShift,
+                                   boolean withSelection,
+                                   boolean blockSelection,
+                                   boolean scrollToCaret) {
+    getCurrentCaret().moveCaretRelatively(columnShift, lineShift, withSelection, scrollToCaret);
+  }
 
   /**
    * Moves the caret to the specified logical position.
@@ -53,21 +55,27 @@ public interface CaretModel {
    *
    * @param pos the position to move to.
    */
-  void moveToLogicalPosition(@NotNull LogicalPosition pos);
+  default void moveToLogicalPosition(@NotNull LogicalPosition pos) {
+    getCurrentCaret().moveToLogicalPosition(pos);
+  }
 
   /**
    * Moves the caret to the specified visual position.
    *
    * @param pos the position to move to.
    */
-  void moveToVisualPosition(@NotNull VisualPosition pos);
+  default void moveToVisualPosition(@NotNull VisualPosition pos) {
+    getCurrentCaret().moveToVisualPosition(pos);
+  }
 
   /**
    * Short hand for calling {@link #moveToOffset(int, boolean)} with {@code 'false'} as a second argument.
    *
    * @param offset      the offset to move to
    */
-  void moveToOffset(int offset);
+  default void moveToOffset(int offset) {
+    moveToOffset(offset, false);
+  }
 
   /**
    * Moves the caret to the specified offset in the document.
@@ -79,7 +87,9 @@ public interface CaretModel {
    *                                We may want to clearly indicate where to put the caret then. Given parameter allows to do that.
    *                                <b>Note:</b> it's ignored if there is no soft wrap at the given offset
    */
-  void moveToOffset(int offset, boolean locateBeforeSoftWrap);
+  default void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
+    getCurrentCaret().moveToOffset(offset, locateBeforeSoftWrap);
+  }
 
   /**
    * Caret position may be updated on document change (e.g. consider that user updates from VCS that causes addition of text
@@ -90,7 +100,9 @@ public interface CaretModel {
    *
    * @return    {@code true} if caret position is up-to-date for now; {@code false} otherwise
    */
-  boolean isUpToDate();
+  default boolean isUpToDate() {
+    return getCurrentCaret().isUpToDate();
+  }
 
   /**
    * Returns the logical position of the caret.
@@ -98,7 +110,9 @@ public interface CaretModel {
    * @return the caret position.
    */
   @NotNull
-  LogicalPosition getLogicalPosition();
+  default LogicalPosition getLogicalPosition() {
+    return getCurrentCaret().getLogicalPosition();
+  }
 
   /**
    * Returns the visual position of the caret.
@@ -106,14 +120,18 @@ public interface CaretModel {
    * @return the caret position.
    */
   @NotNull
-  VisualPosition getVisualPosition();
+  default VisualPosition getVisualPosition() {
+    return getCurrentCaret().getVisualPosition();
+  }
 
   /**
    * Returns the offset of the caret in the document.
    *
    * @return the caret offset.
    */
-  int getOffset();
+  default int getOffset() {
+    return getCurrentCaret().getOffset();
+  }
 
   /**
    * Adds a listener for receiving notifications about caret movement and caret addition/removal
@@ -143,12 +161,16 @@ public interface CaretModel {
   /**
    * @return    document offset for the start of the logical line where caret is located
    */
-  int getVisualLineStart();
+  default int getVisualLineStart() {
+    return getCurrentCaret().getVisualLineStart();
+  }
 
   /**
    * @return    document offset that points to the first symbol shown at the next visual line after the one with caret on it
    */
-  int getVisualLineEnd();
+  default int getVisualLineEnd() {
+    return getCurrentCaret().getVisualLineEnd();
+  }
 
   /**
    * Returns visual representation of caret (e.g. background color).

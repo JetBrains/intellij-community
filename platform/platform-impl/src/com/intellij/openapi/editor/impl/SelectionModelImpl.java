@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -47,8 +46,8 @@ public class SelectionModelImpl implements SelectionModel {
   }
 
   @Override
-  public int getSelectionStart() {
-    return myEditor.getCaretModel().getCurrentCaret().getSelectionStart();
+  public @NotNull Editor getEditor() {
+    return myEditor;
   }
 
   @NotNull
@@ -57,48 +56,10 @@ public class SelectionModelImpl implements SelectionModel {
     return myEditor.getCaretModel().getCurrentCaret().getSelectionStartPosition();
   }
 
-  @Override
-  public int getSelectionEnd() {
-    return myEditor.getCaretModel().getCurrentCaret().getSelectionEnd();
-  }
-
   @NotNull
   @Override
   public VisualPosition getSelectionEndPosition() {
     return myEditor.getCaretModel().getCurrentCaret().getSelectionEndPosition();
-  }
-
-  @Override
-  public boolean hasSelection() {
-    return hasSelection(false);
-  }
-
-  @Override
-  public boolean hasSelection(boolean anyCaret) {
-    if (!anyCaret) {
-      return myEditor.getCaretModel().getCurrentCaret().hasSelection();
-    }
-    for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-      if (caret.hasSelection()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public void setSelection(int startOffset, int endOffset) {
-    myEditor.getCaretModel().getCurrentCaret().setSelection(startOffset, endOffset);
-  }
-
-  @Override
-  public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    myEditor.getCaretModel().getCurrentCaret().setSelection(startOffset, endPosition, endOffset);
-  }
-
-  @Override
-  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    myEditor.getCaretModel().getCurrentCaret().setSelection(startPosition, startOffset, endPosition, endOffset);
   }
 
   void fireSelectionChanged(SelectionEvent event) {
@@ -133,11 +94,6 @@ public class SelectionModelImpl implements SelectionModel {
         LOG.error(e);
       }
     }
-  }
-
-  @Override
-  public void removeSelection() {
-    removeSelection(false);
   }
 
   @Override
@@ -247,16 +203,6 @@ public class SelectionModelImpl implements SelectionModel {
   @Override
   public VisualPosition getLeadSelectionPosition() {
     return myEditor.getCaretModel().getCurrentCaret().getLeadSelectionPosition();
-  }
-
-  @Override
-  public void selectLineAtCaret() {
-    myEditor.getCaretModel().getCurrentCaret().selectLineAtCaret();
-  }
-
-  @Override
-  public void selectWordAtCaret(boolean honorCamelWordsSettings) {
-    myEditor.getCaretModel().getCurrentCaret().selectWordAtCaret(honorCamelWordsSettings);
   }
 
   @Override
