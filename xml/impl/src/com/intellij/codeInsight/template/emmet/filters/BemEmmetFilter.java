@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.emmet.filters;
 
 import com.intellij.application.options.emmet.EmmetOptions;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Key;
@@ -29,7 +30,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "BEM";
+    return CodeInsightBundle.message("emmet.filter.BEM");
   }
 
   @NotNull

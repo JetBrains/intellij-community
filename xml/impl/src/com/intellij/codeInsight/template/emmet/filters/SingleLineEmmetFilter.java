@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet.filters;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -57,6 +58,6 @@ public class SingleLineEmmetFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Single line";
+    return CodeInsightBundle.message("emmet.filter.single.line");
   }
 }

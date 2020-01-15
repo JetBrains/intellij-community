@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet.filters;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.XslTextContextType;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
@@ -80,6 +81,6 @@ public class XslZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "XSL tuning";
+    return CodeInsightBundle.message("emmet.filter.xsl.tuning");
   }
 }

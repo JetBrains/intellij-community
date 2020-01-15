@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet.filters;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
@@ -79,6 +80,6 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Comment tags";
+    return CodeInsightBundle.message("emmet.filter.comment.tags");
   }
 }
