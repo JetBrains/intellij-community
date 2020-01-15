@@ -326,9 +326,7 @@ class DynamicPluginsTest {
       val unloadDescriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
       val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
       DynamicPlugins.unloadPlugin(unloadDescriptor, false)
-      if (!canBeUnloaded) {
-        throw AssertionError("'Allow unload without restart' returned false, why expected true")
-      }
+      Assertions.assertThat(canBeUnloaded).isTrue()
     }
   }
 

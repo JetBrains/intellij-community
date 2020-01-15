@@ -59,10 +59,8 @@ fun loadPluginWithText(pluginXml: String, loader: ClassLoader): Disposable {
     descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
     val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
     unloadPlugin(descriptor, false)
-    
-    if (!canBeUnloaded) {
-      throw AssertionError("'Allow unload without restart' returned false, why expected true")
-    }
+
+    Assertions.assertThat(canBeUnloaded).isTrue()
   }
 }
 
