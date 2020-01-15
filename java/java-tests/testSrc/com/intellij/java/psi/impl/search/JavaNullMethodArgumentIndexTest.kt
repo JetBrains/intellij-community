@@ -87,8 +87,7 @@ class JavaNullMethodArgumentIndexTest : BasePlatformTestCase() {
                 }
             }
     """).virtualFile
-    val content = FileContentImpl.createByFile(file)
-    content.putUserData(IndexingDataKeys.PROJECT, project)
+    val content = FileContentImpl.createByFile(file, project)
     val data = JavaNullMethodArgumentIndex().indexer.map(content).keys
 
     assertSize(8, data)

@@ -181,8 +181,7 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun assertJavaSimplePropertyIndex(text: String, expected: TIntObjectHashMap<PropertyIndexValue>) {
     val file = myFixture.configureByText(JavaFileType.INSTANCE, text)
-    val content = FileContentImpl.createByFile(file.virtualFile)
-    content.putUserData(IndexingDataKeys.PROJECT, project)
+    val content = FileContentImpl.createByFile(file.virtualFile, project)
     val data = JavaSimplePropertyIndex().indexer.map(content).values.firstOrNull() ?: TIntObjectHashMap()
     assertEquals(expected, data)
   }

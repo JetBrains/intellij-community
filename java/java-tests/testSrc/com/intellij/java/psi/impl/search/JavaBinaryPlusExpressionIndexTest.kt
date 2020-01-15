@@ -26,8 +26,7 @@ class JavaBinaryPlusExpressionIndexTest : BasePlatformTestCase() {
                 }
             }
     """).virtualFile
-    val content = FileContentImpl.createByFile(file)
-    content.putUserData(IndexingDataKeys.PROJECT, project)
+    val content = FileContentImpl.createByFile(file, project)
     val data = JavaBinaryPlusExpressionIndex().indexer.map(content).entries.first().value.offsets!!
 
     assertEquals(5, data.size)
