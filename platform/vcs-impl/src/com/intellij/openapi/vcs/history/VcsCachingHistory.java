@@ -169,11 +169,18 @@ public class VcsCachingHistory {
   public static List<VcsFileRevision> collect(@NotNull AbstractVcs vcs,
                                               @NotNull FilePath filePath,
                                               @Nullable VcsRevisionNumber revision) throws VcsException {
+    return collectSession(vcs, filePath, revision).getRevisionList();
+  }
+
+  @CalledInBackground
+  public static VcsHistorySession collectSession(@NotNull AbstractVcs vcs,
+                                                 @NotNull FilePath filePath,
+                                                 @Nullable VcsRevisionNumber revision) throws VcsException {
     VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     CollectingHistorySessionConsumer partner = new CollectingHistorySessionConsumer();
     history.reportHistory(filePath, revision, vcs.getKeyInstanceMethod(), partner, true);
     partner.check();
-    return partner.getSession().getRevisionList();
+    return partner.getSession();
   }
 
   @CalledInAwt
