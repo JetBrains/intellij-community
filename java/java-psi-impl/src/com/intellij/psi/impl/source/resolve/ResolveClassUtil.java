@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,12 +28,9 @@ public class ResolveClassUtil {
   public static PsiClass resolveClass(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     if (ref instanceof PsiJavaCodeReferenceElementImpl &&
         ((PsiJavaCodeReferenceElementImpl)ref).getKindEnum(containingFile) == PsiJavaCodeReferenceElementImpl.Kind.CLASS_IN_QUALIFIED_NEW_KIND) {
-      PsiElement parent = ref.getParent();
-      if (parent instanceof PsiAnonymousClass) {
-        parent = parent.getParent();
-      }
-      if (parent instanceof PsiNewExpression) {
-        PsiExpression qualifier = ((PsiNewExpression)parent).getQualifier();
+      PsiNewExpression parent = PsiTreeUtil.getContextOfType(ref, PsiNewExpression.class);
+      if (parent != null) {
+        PsiExpression qualifier = parent.getQualifier();
         if (qualifier != null) {
           PsiType qualifierType = qualifier.getType();
           if (qualifierType instanceof PsiClassType) {

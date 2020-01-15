@@ -11,10 +11,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.DummyHolderFactory;
-import com.intellij.psi.impl.source.JavaDummyElement;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -22,6 +19,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -250,6 +248,12 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
       throw newException("Incorrect reference '" + text + "'", holder);
     }
+    if (context instanceof PsiIdentifier) {
+      context = context.getParent();
+    }
+    if (element instanceof PsiJavaCodeReferenceElementImpl && context instanceof PsiJavaCodeReferenceElementImpl) {
+      ((PsiJavaCodeReferenceElementImpl)element).setKindWhenDummy(((PsiJavaCodeReferenceElementImpl)context).getKindEnum(context.getContainingFile()));
+    }
     return (PsiJavaCodeReferenceElement)element;
   }
 
@@ -369,7 +373,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return context != null && context.isValid() ? PsiUtil.getLanguageLevel(context) : LanguageLevel.HIGHEST;
   }
 
-  private static IncorrectOperationException newException(String msg, DummyHolder holder) {
+  private static IncorrectOperationException newException(@NonNls String msg, DummyHolder holder) {
     FileElement root = holder.getTreeElement();
     if (root instanceof JavaDummyElement) {
       Throwable cause = ((JavaDummyElement)root).getParserError();

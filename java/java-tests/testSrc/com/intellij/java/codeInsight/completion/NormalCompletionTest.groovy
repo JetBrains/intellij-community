@@ -1958,4 +1958,11 @@ class Abc {
     myFixture.completeBasic()
     myFixture.checkResult("enum X ex")
   }
+
+  void testAddImportWhenCompletingInnerAfterNew() {
+    myFixture.addClass("package p; public class Outer { public static class Inner {} }")
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Inner') })
+    checkResult()
+  }
 }
