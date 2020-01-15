@@ -15,13 +15,14 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.options.BeanConfigurable;
 
 public class JavadocOptionsProvider extends BeanConfigurable<CodeInsightSettings> {
   public JavadocOptionsProvider() {
-    super(CodeInsightSettings.getInstance(), "JavaDoc");
-    checkBox("Automatically insert closing tag in JavaDoc",
+    super(CodeInsightSettings.getInstance(), CodeInsightBundle.message("javadoc.option.javadoc.title"));
+    checkBox(CodeInsightBundle.message("javadoc.option.automatically.insert.closing.tag.javadoc"),
              () -> getInstance().JAVADOC_GENERATE_CLOSING_TAG,
              (value) -> getInstance().JAVADOC_GENERATE_CLOSING_TAG = value);
   }
