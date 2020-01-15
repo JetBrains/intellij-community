@@ -255,13 +255,13 @@ public final class TestWindowManager extends WindowManagerEx {
     @Override
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
       Disposer.register(parentDisposable, widget);
+      Disposer.register(widget, () -> myWidgetMap.remove(widget.ID()));
       addWidget(widget);
     }
 
     @Override
     public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable) {
-      Disposer.register(parentDisposable, widget);
-      addWidget(widget);
+      addWidget(widget, parentDisposable);
     }
 
     @Override
