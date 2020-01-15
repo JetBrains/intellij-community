@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.webServerPathHandler" interface="org.jetbrains.builtInWebServer.WebServerPathHandler" dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.webServerRootsProvider" interface="org.jetbrains.builtInWebServer.WebServerRootsProvider" dynamic="true"/>
 
     <extensionPoint name="httpRequestHandler" interface="org.jetbrains.ide.HttpRequestHandler"/>
