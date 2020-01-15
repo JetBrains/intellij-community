@@ -172,7 +172,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = injections.size(); i < size; i++) {
         BaseInjection injection = injections.get(i);
-        if (injection.acceptsPsiElement(attribute)) {
+        if (injection.acceptsPsiElement(attribute) && !injection.isIgnoredPlace(value)) {
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
           if (language == null) continue;
           final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());

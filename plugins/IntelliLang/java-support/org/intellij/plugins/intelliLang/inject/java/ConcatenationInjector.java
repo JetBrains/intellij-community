@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.mapIterator;
 import static java.util.Collections.emptyList;
 
 /**
@@ -373,10 +374,6 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
         else {
           if (curHost instanceof PsiLiteralExpression) {
-            if (injection.isIgnoredPlace(curHost)) {
-              return emptyList();
-            }
-
             List<TextRange> textBlockInjectedArea = getTextBlockInjectedArea(curHost);
             List<TextRange> injectedArea = (textBlockInjectedArea == null) ? injection.getInjectedArea(curHost) : textBlockInjectedArea;
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
@@ -397,9 +394,16 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
           }
         }
       }
+
       if (result.isEmpty()) {
         return emptyList();
       }
+
+      // important: here we use \n only as a good-enough delimiter for regexp matching of concatenation parts
+      if (injection.hasIgnoredPlace(mapIterator(result.iterator(), r -> r.first), "\n")) {
+        return emptyList();
+      }
+
       List<Pair<PsiLanguageInjectionHost, Language>> res = new ArrayList<>();
       if (separateFiles) {
         for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {

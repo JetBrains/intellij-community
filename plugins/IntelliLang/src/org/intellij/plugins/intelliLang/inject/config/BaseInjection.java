@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -146,19 +147,47 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   /**
-   * Determines whether injection to host or concatenation must be ignored. If at least one place in concatenation is ignored then
-   * the entire concatenation must be ignored and language must not be injected.
+   * Determines whether injection to multiple hosts or concatenation must be ignored. If at least one place in the passed collection
+   * is ignored then the entire element collection must be ignored and language must not be injected.
+   * <br>
+   * This is typically used when we want to disable language injection for complex edge cases.
+   * Real life example: inject XPath to Java annotation only when there is no '%s' substring in hosts which means template processing.
+   * <br>
+   * NOTE: In case of concatenation: ignore-pattern is checked only once per concatenation where all injection hosts added to the single
+   * string with the passed delimiter. If ignore-pattern is found in this concatenated string then all injected hosts must be ignored.
    */
-  public boolean isIgnoredPlace(PsiElement element) {
+  public boolean hasIgnoredPlace(@NotNull Iterator<PsiLanguageInjectionHost> elements, @Nullable String delimiter) {
     if (myCompiledIgnorePattern == null) {
       return false;
     }
 
-    LiteralTextEscaper<? extends PsiLanguageInjectionHost> textEscaper = ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
-    StringBuilder sb = new StringBuilder();
-    textEscaper.decode(ElementManipulators.getValueTextRange(element), sb);
+    StringBuilder buffer = new StringBuilder();
+    while (elements.hasNext()) {
+      PsiLanguageInjectionHost element = elements.next();
 
-    return myCompiledIgnorePattern.matcher(StringPattern.newBombedCharSequence(sb)).find();
+      LiteralTextEscaper<? extends PsiLanguageInjectionHost> textEscaper = element.createLiteralTextEscaper();
+      textEscaper.decode(ElementManipulators.getValueTextRange(element), buffer);
+      if (delimiter != null && elements.hasNext()) {
+        buffer.append(delimiter);
+      }
+    }
+
+    return myCompiledIgnorePattern.matcher(StringPattern.newBombedCharSequence(buffer)).find();
+  }
+
+  /**
+   * Determines whether injection to element must be ignored.
+   *
+   * @see #hasIgnoredPlace(Iterator, String)
+   */
+  public boolean isIgnoredPlace(@NotNull PsiElement element) {
+    if (!(element instanceof PsiLanguageInjectionHost)) {
+      return false;
+    }
+
+    PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
+
+    return hasIgnoredPlace(Collections.singleton(host).iterator(), null);
   }
 
   @Override
