@@ -14,7 +14,7 @@ import javax.swing.*;
  */
 public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   public VcsContentAnnotationConfigurable(Project project) {
-    super(project, "Show changed in last", "days");
+    super(project, VcsBundle.message("settings.checkbox.show.changed.in.last"), VcsBundle.message("settings.checkbox.measure.days"));
   }
 
   @Override
