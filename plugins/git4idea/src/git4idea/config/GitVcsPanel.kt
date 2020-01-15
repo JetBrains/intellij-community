@@ -190,9 +190,9 @@ internal class GitVcsPanel(private val project: Project,
 
   private fun LayoutBuilder.branchUpdateInfoRow() {
     branchUpdateInfoRow = row {
-      supportedBranchUpLabel = JBLabel("Supported for Git 2.9+")
+      supportedBranchUpLabel = JBLabel(message("settings.supported.for.2.9"))
       cell {
-        label("Explicitly check for incoming commits on remotes: ")
+        label(message("settings.explicitly.check"))
         comboBox(
           EnumComboBoxModel(GitIncomingCheckStrategy::class.java),
           {
@@ -225,29 +225,29 @@ internal class GitVcsPanel(private val project: Project,
       }
     }
     row {
-      checkBox("Commit automatically on cherry-pick",
+      checkBox(message("settings.commit.automatically.on.cherry.pick"),
                { applicationSettings.isAutoCommitOnCherryPick },
                { applicationSettings.isAutoCommitOnCherryPick = it })
     }
     row {
-      checkBox("Add the 'cherry-picked from <hash>' suffix when picking commits pushed to protected branches",
+      checkBox(message("settings.add.suffix"),
                { projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits() },
                { projectSettings.setAddSuffixToCherryPicks(it) })
     }
     row {
-      checkBox("Warn if CRLF line separators are about to be committed",
+      checkBox(message("settings.crlf"),
                { projectSettings.warnAboutCrlf() },
                { projectSettings.setWarnAboutCrlf(it) })
     }
     row {
-      checkBox("Warn when committing in detached HEAD or during rebase",
+      checkBox(message("settings.detached.head"),
                { projectSettings.warnAboutDetachedHead() },
                { projectSettings.setWarnAboutDetachedHead(it) })
     }
     branchUpdateInfoRow()
     row {
       cell {
-        label("Update method:")
+        label(message("settings.update.method"))
         comboBox(
           CollectionComboBoxModel(getUpdateMethods()),
           { projectSettings.updateMethod },
@@ -258,7 +258,7 @@ internal class GitVcsPanel(private val project: Project,
     }
     row {
       cell {
-        label("Clean working tree using:")
+        label(message("settings.clean.working.tree"))
         buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
           GitSaveChangesPolicy.values().forEach { saveSetting ->
             radioButton(saveSetting.name.toLowerCase().capitalize(), saveSetting)
@@ -267,16 +267,16 @@ internal class GitVcsPanel(private val project: Project,
       }
     }
     row {
-      checkBox("Auto-update if push of the current branch was rejected",
+      checkBox(message("settings.auto.update.on.push.rejected"),
                { projectSettings.autoUpdateIfPushRejected() },
                { projectSettings.setAutoUpdateIfPushRejected(it) })
     }
     row {
-      val previewPushOnCommitAndPush = checkBox("Show Push dialog for Commit and Push",
+      val previewPushOnCommitAndPush = checkBox(message("settings.push.dialog"),
                                                 { projectSettings.shouldPreviewPushOnCommitAndPush() },
                                                 { projectSettings.setPreviewPushOnCommitAndPush(it) })
       row {
-        checkBox("Show Push dialog only when committing to protected branches",
+        checkBox(message("settings.push.dialog.for.protected.branches"),
                  { projectSettings.isPreviewPushProtectedOnly },
                  { projectSettings.isPreviewPushProtectedOnly = it })
           .enableIf(previewPushOnCommitAndPush.selected)
@@ -284,7 +284,7 @@ internal class GitVcsPanel(private val project: Project,
     }
     row {
       cell {
-        label("Protected branches:")
+        label(message("settings.protected.branched"))
         val protectedBranchesField = ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
         protectedBranchesField(growX)
           .withBinding<List<String>>(
@@ -297,7 +297,7 @@ internal class GitVcsPanel(private val project: Project,
       }
     }
     row {
-      checkBox("Use credential helper",
+      checkBox(message("settings.credential.helper"),
                { applicationSettings.isUseCredentialHelper },
                { applicationSettings.isUseCredentialHelper = it })
     }
@@ -319,7 +319,7 @@ internal class GitVcsPanel(private val project: Project,
           override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
         }.initUi()
 
-        label("Filter Update Project information by paths: ")
+        label(message("settings.filter.update.info"))
 
         component()
           .onIsModified {
