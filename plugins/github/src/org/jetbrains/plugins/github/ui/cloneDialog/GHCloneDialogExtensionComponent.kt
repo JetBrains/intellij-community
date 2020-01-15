@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -78,7 +77,7 @@ internal class GHCloneDialogExtensionComponent(
   private val avatarLoader: CachingGithubUserAvatarLoader,
   private val imageResizer: GithubImageResizer
 ) : VcsCloneDialogExtensionComponent() {
-  private val LOG = logger<GHCloneDialogExtensionComponent>()
+  private val LOG = GithubUtil.LOG
 
   private val progressManager: ProgressVisibilityManager
   private val githubGitHelper: GithubGitHelper = GithubGitHelper.getInstance()
@@ -353,6 +352,12 @@ internal class GHCloneDialogExtensionComponent(
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
     val parent = Paths.get(directoryField.text).toAbsolutePath().parent
+    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
+    if (destinationValidation != null) {
+      LOG.error("Unable to create destination directory", destinationValidation.message)
+      GithubNotifications.showError(project, "Clone failed", "Unable to create destination directory")
+      return
+    }
 
     val lfs = LocalFileSystem.getInstance()
     var destinationParent = lfs.findFileByIoFile(parent.toFile())
@@ -360,6 +365,8 @@ internal class GHCloneDialogExtensionComponent(
       destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
     }
     if (destinationParent == null) {
+      LOG.error("Clone Failed. Destination doesn't exist")
+      GithubNotifications.showError(project, "Clone failed", "Unable to find destination")
       return
     }
     val directoryName = Paths.get(directoryField.text).fileName.toString()

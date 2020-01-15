@@ -2,12 +2,15 @@
 package git4idea.ui
 
 import com.intellij.application.subscribe
+import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
@@ -23,6 +26,7 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
   DvcsCloneDialogComponent(project,
                            GitUtil.DOT_GIT,
                            GitRememberedInputs.getInstance()) {
+  private val LOG = Logger.getInstance(GitCloneDialogComponent::class.java)
 
   private val executableManager get() = GitExecutableManager.getInstance()
   private val inlineComponent = GitExecutableInlineComponent(errorComponent, modalityState, mainPanel)
@@ -34,6 +38,12 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
 
   override fun doClone(project: Project, listener: CheckoutProvider.Listener) {
     val parent = Paths.get(getDirectory()).toAbsolutePath().parent
+    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
+    if (destinationValidation != null) {
+      LOG.error("Unable to create destination directory", destinationValidation.message)
+      VcsNotifier.getInstance(project).notifyError("Clone failed", "Unable to create destination directory")
+      return
+    }
 
     val lfs = LocalFileSystem.getInstance()
     var destinationParent = lfs.findFileByIoFile(parent.toFile())
@@ -41,6 +51,8 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
       destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
     }
     if (destinationParent == null) {
+      LOG.error("Clone Failed. Destination doesn't exist")
+      VcsNotifier.getInstance(project).notifyError("Clone failed", "Unable to find destination")
       return
     }
     val sourceRepositoryURL = getUrl()
