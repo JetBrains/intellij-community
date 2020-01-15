@@ -9,10 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
@@ -97,7 +95,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
 
-  override fun getState(): RecentProjectManagerState {
+  final override fun getState(): RecentProjectManagerState {
     synchronized(stateLock) {
       // https://youtrack.jetbrains.com/issue/TBX-3756
       @Suppress("DEPRECATION")
@@ -118,7 +116,15 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  override fun loadState(state: RecentProjectManagerState) {
+  final override fun noStateLoaded() {
+    val old = service<OldRecentDirectoryProjectsManager>().loadedState ?: return
+    val newState = RecentProjectManagerState()
+    newState.copyFrom(old)
+    newState.intIncrementModificationCount()
+    loadState(newState)
+  }
+
+  final override fun loadState(state: RecentProjectManagerState) {
     synchronized(stateLock) {
       this.state = state
       state.pid = null
@@ -128,9 +134,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
       @Suppress("DEPRECATION")
-      if (state.recentPaths.isNotEmpty() && state.recentPaths.size != state.additionalInfo.size) {
-        val existingPaths = state.recentPaths.toSet()
-        state.additionalInfo.keys.removeIf { !existingPaths.contains(it) }
+      if (state.recentPaths.isNotEmpty()) {
+        if (state.recentPaths.size != state.additionalInfo.size) {
+          convertToSystemIndependentPaths(state.recentPaths)
+          val existingPaths = state.recentPaths.toSet()
+          state.additionalInfo.keys.removeIf {
+            !existingPaths.contains(it)
+          }
+        }
       }
     }
   }
@@ -140,6 +151,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     if (openPaths.isEmpty()) {
       return
     }
+
+    convertToSystemIndependentPaths(openPaths)
 
     val oldInfoMap = mutableMapOf<String, RecentProjectMetaInfo>()
     for (path in openPaths) {
@@ -578,3 +591,25 @@ private fun readProjectName(path: String): String {
 }
 
 private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
+
+private fun convertToSystemIndependentPaths(list: MutableList<String>) {
+  list.replaceAll {
+    FileUtilRt.toSystemIndependentName(it)
+  }
+}
+
+@Service
+@State(name = "RecentDirectoryProjectsManager", storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)])
+private class OldRecentDirectoryProjectsManager : PersistentStateComponent<RecentProjectManagerState> {
+  internal var loadedState: RecentProjectManagerState? = null
+
+  companion object {
+    private val emptyState = RecentProjectManagerState()
+  }
+
+  override fun loadState(state: RecentProjectManagerState) {
+    loadedState = state
+  }
+
+  override fun getState() = emptyState
+}
