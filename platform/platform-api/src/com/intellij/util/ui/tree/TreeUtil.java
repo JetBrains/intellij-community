@@ -812,24 +812,40 @@ public final class TreeUtil {
     }
   }
 
+  /**
+   * @param tree               a tree, which nodes should be collapsed
+   * @param keepSelectionLevel a minimal path count of a lead selection path or {@code -1} to restore old selection
+   */
   public static void collapseAll(@NotNull JTree tree, final int keepSelectionLevel) {
+    assert EventQueue.isDispatchThread();
+    int row = tree.getRowCount();
+    if (row <= 1) return; // nothing to collapse
+
     final TreePath leadSelectionPath = tree.getLeadSelectionPath();
+
+    int threshold = 1; // allowed path count to collapse
+    if (!tree.isRootVisible()) threshold++;
+    if (!tree.getShowsRootHandles()) threshold++;
+
     // Collapse all
-    int row = tree.getRowCount() - 1;
-    while (row >= 0) {
-      tree.collapseRow(row);
-      row--;
+    boolean strict = false; // do not allow to collapse a top level node if is only one
+    while (0 < row--) {
+      if (!strict && row == 0) break;
+      TreePath path = tree.getPathForRow(row);
+      assert path != null : "path is not found at row " + row;
+      int count = path.getPathCount();
+      if (count == threshold && row > 0) strict = true;
+      if (count >= threshold) tree.collapsePath(path);
     }
-    Object root = tree.getModel().getRoot();
-    if (root != null && !tree.isRootVisible()) {
-      tree.expandPath(new TreePath(root));
-    }
+    if (!strict) threshold++; // top level node is not collapsed
+
     if (leadSelectionPath != null) {
-      final Object[] path = leadSelectionPath.getPath();
-      final Object[] pathToSelect = new Object[path.length > keepSelectionLevel && keepSelectionLevel >= 0 ? keepSelectionLevel : path.length];
-      System.arraycopy(path, 0, pathToSelect, 0, pathToSelect.length);
-      if (pathToSelect.length == 0) return;
-      selectPath(tree, new TreePath(pathToSelect));
+      TreePath path = leadSelectionPath;
+      if (keepSelectionLevel >= 0) {
+        int count = path.getPathCount() - Math.max(keepSelectionLevel, threshold);
+        while (0 < count--) path = path.getParentPath(); // normalize to given level
+      }
+      selectPath(tree, path);
     }
   }
 
