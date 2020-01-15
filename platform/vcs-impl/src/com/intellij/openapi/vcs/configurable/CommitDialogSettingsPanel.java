@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.EnumComboBoxModel;
@@ -102,10 +103,10 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   }
 
   private void createUIComponents() {
-    myCommitFromLocalChanges = new JBCheckBox("Commit from Local Changes without showing the Commit dialog");
+    myCommitFromLocalChanges = new JBCheckBox(VcsBundle.message("settings.commit.without.dialog"));
     myCommitFromLocalChangesPanel =
       UI.PanelFactory.panel(myCommitFromLocalChanges).
-        withComment("Applies to projects under Git and Mercurial").
+        withComment(VcsBundle.message("settings.commit.without.dialog.applies.to.git.mercurial")).
         createPanel();
     myInspectionsPanel = new CommitMessageInspectionsPanel(myProject);
     myCommitOptions = new CommitOptionsConfigurable(myProject);

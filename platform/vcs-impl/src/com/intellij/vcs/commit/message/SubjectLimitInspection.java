@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public class SubjectLimitInspection extends BaseCommitMessageInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Limit subject line";
+    return VcsBundle.message("inspection.SubjectLimitInspection.display.name");
   }
 
   @NotNull

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -34,7 +35,7 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Limit body line";
+    return VcsBundle.message("inspection.BodyLimitInspection.display.name");
   }
 
   @NotNull
