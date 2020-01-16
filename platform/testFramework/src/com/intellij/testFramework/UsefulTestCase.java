@@ -1118,7 +1118,7 @@ public abstract class UsefulTestCase extends TestCase {
       if (app != null && !app.isDisposed()) {
         FileBasedIndexImpl index = (FileBasedIndexImpl)app.getServiceIfCreated(FileBasedIndex.class);
         if (index != null) {
-          index.waitForVfsEventsExecuted(timeout, timeUnit);
+          index.getChangedFilesCollector().waitForVfsEventsExecuted(timeout, timeUnit);
         }
 
         DocumentCommitThread commitThread = (DocumentCommitThread)app.getServiceIfCreated(DocumentCommitProcessor.class);
