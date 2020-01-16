@@ -48,6 +48,12 @@ class WorkspaceModuleImporter(private val project: Project,
   private fun createDependency(artifact: MavenArtifact): ModuleDependencyItem? {
     val depProject = projectsTree.findProject(artifact.mavenId)
     if (depProject == null) {
+      if (artifact.scope == "system") {
+        return createSystemDependency(artifact)
+      }
+      if (artifact.type == "bundle") {
+        return addBundleDependency(artifact)
+      }
       return createLibraryDependency(artifact)
     }
     if (depProject === mavenProject) {
@@ -56,13 +62,44 @@ class WorkspaceModuleImporter(private val project: Project,
     if (projectsTree.isIgnored(depProject)) {
       TODO()
     }
-    if (artifact.scope == "system") {
-      TODO()
-    }
-    if (artifact.type == "bundle") {
-      TODO()
-    }
     return createModuleDependency(artifact, depProject)
+  }
+
+  private fun addBundleDependency(artifact: MavenArtifact): ModuleDependencyItem? {
+    val newArtifact = MavenArtifact(
+      artifact.groupId,
+      artifact.artifactId,
+      artifact.version,
+      artifact.baseVersion,
+      "jar",
+      artifact.classifier,
+      artifact.scope,
+      artifact.isOptional,
+      "jar",
+      null,
+      mavenProject.getLocalRepository(),
+      false, false
+    );
+    return createLibraryDependency(newArtifact);
+  }
+
+  private fun createSystemDependency(artifact: MavenArtifact): ModuleDependencyItem.Exportable.LibraryDependency {
+    assert(MavenConstants.SCOPE_SYSTEM == artifact.scope)
+    val roots = ArrayList<LibraryRoot>()
+
+    roots.add(LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+                          LibraryRootTypeId("CLASSES"),
+                          LibraryRoot.InclusionOptions.ROOT_ITSELF))
+
+    val libraryTableId = LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(mavenProject.displayName)); //(ModuleId(moduleEntity.name))
+
+
+    diff.addLibraryEntity(artifact.libraryName, libraryTableId,
+                          roots,
+                          emptyList(), MavenExternalSource.INSTANCE)
+
+    return ModuleDependencyItem.Exportable.LibraryDependency(LibraryId(artifact.libraryName, libraryTableId), false,
+                                                             toEntityScope(artifact.scope))
   }
 
   private fun createModuleDependency(artifact: MavenArtifact, depProject: MavenProject): ModuleDependencyItem {
@@ -72,6 +109,7 @@ class WorkspaceModuleImporter(private val project: Project,
   }
 
   private fun createLibraryDependency(artifact: MavenArtifact): ModuleDependencyItem.Exportable.LibraryDependency {
+    assert(MavenConstants.SCOPE_SYSTEM != artifact.scope)
     if (!libraryExists(artifact)) {
       addLibraryToProjectTable(artifact)
     }
