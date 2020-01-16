@@ -74,8 +74,17 @@ public class IdempotenceChecker {
                                           @NotNull Class<?> providerClass,
                                           @Nullable Computable<? extends T> recomputeValue) {
     String msg = checkValueEquivalence(existing, fresh);
-    if (msg != null &&
-        ourReportedValueClasses.add(providerClass)) {
+    if (msg != null) {
+      reportFailure(existing, fresh, providerClass, recomputeValue, msg);
+    }
+  }
+
+  private static <T> void reportFailure(@Nullable T existing,
+                                        @Nullable T fresh,
+                                        @NotNull Class<?> providerClass,
+                                        @Nullable Computable<? extends T> recomputeValue, String msg) {
+    boolean shouldReport = ApplicationManager.getApplication().isUnitTestMode() || ourReportedValueClasses.add(providerClass);
+    if (shouldReport) {
       if (recomputeValue != null) {
         msg += recomputeWithLogging(existing, fresh, recomputeValue);
       }
