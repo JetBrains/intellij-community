@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -44,7 +45,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   private final boolean myChangeThreadName;
 
   BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
-    myName = name;
+    myName = StringUtil.capitalize(name);
     myBackendExecutor = backendExecutor;
     if (maxThreads < 1) {
       throw new IllegalArgumentException("maxThreads must be >=1 but got: "+maxThreads);

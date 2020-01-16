@@ -3,7 +3,6 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
@@ -44,7 +43,7 @@ public final class AppExecutorUtil {
    * and execute them in parallel in the application pool (see {@link #getAppExecutorService()} not more than at {@code maxThreads} at a time.
    */
   @NotNull
-  public static ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, int maxThreads) {
+  public static ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull String name, int maxThreads) {
     return new BoundedScheduledExecutorService(name, getAppExecutorService(), maxThreads);
   }
 
@@ -54,13 +53,13 @@ public final class AppExecutorUtil {
    * @see #getAppExecutorService()
    */
   @NotNull
-  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, int maxThreads) {
+  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull String name, int maxThreads) {
     return createBoundedApplicationPoolExecutor(name, getAppExecutorService(), maxThreads);
   }
 
   @ApiStatus.Internal
   @NotNull
-  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, int maxThreads, boolean changeThreadName) {
+  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull String name, int maxThreads, boolean changeThreadName) {
     return new BoundedTaskExecutor(name, getAppExecutorService(), maxThreads, changeThreadName);
   }
 
@@ -68,7 +67,7 @@ public final class AppExecutorUtil {
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
    */
   @NotNull
-  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads) {
+  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads) {
     return new BoundedTaskExecutor(name, backendExecutor, maxThreads, true);
   }
   /**
@@ -76,7 +75,7 @@ public final class AppExecutorUtil {
    * which will shutdown itself when {@code parentDisposable} gets disposed.
    */
   @NotNull
-  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads, @NotNull
+  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, @NotNull
                                                                      Disposable parentDisposable) {
     return new BoundedTaskExecutor(name, backendExecutor, maxThreads, parentDisposable);
   }
