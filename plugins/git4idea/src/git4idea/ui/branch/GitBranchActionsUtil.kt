@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.GitUtil
@@ -144,7 +145,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
           val branchName = trackingInfo.localBranch.name
           val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$branchName:$branchName")
           try {
-            fetchResult.throwExceptionIfFailed();
+            fetchResult.throwExceptionIfFailed()
             successFetches += 1
           }
           catch (ignored: VcsException) {
@@ -156,7 +157,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
 
     override fun onSuccess() {
       if (successFetches > 0) {
-        VcsNotifier.getInstance(myProject).notifySuccess("Branches updated")
+        VcsNotifier.getInstance(myProject).notifySuccess("Selected ${pluralize("Branch", branchNames.size)} Updated")
       }
     }
   })
