@@ -13,7 +13,6 @@ import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,13 +39,6 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   public SerializationManagerImpl(@NotNull Path nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
-    if (!Files.exists(myFile)) {
-      try {
-        Files.createDirectories(myFile);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
     myUnmodifiable = unmodifiable;
     try {
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
