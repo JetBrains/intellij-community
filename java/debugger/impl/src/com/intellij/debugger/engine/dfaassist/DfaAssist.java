@@ -13,13 +13,17 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
@@ -43,13 +47,36 @@ import java.util.Map;
 
 public class DfaAssist implements DebuggerContextListener {
   private final @NotNull Project myProject;
-  private final List<Inlay<?>> myInlays = new ArrayList<>(); // modified from EDT only
+  private InlaySet myInlays = new InlaySet(null, Collections.emptyList()); // modified from EDT only
   private volatile CancellablePromise<?> myPromise;
 
   private DfaAssist(@NotNull Project project) {
     myProject = project;
   }
 
+  private static class InlaySet implements Disposable {
+    private final @NotNull List<Inlay<?>> myInlays;
+
+    private InlaySet(@Nullable Editor editor, @NotNull List<Inlay<?>> inlays) {
+      myInlays = inlays;
+      if (editor != null) {
+        editor.getDocument().addDocumentListener(new DocumentListener() {
+          @Override
+          public void beforeDocumentChange(@NotNull DocumentEvent event) {
+            ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(InlaySet.this));
+          }
+        }, this);
+      }
+    }
+
+    @Override
+    public void dispose() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      myInlays.forEach(Disposer::dispose);
+      myInlays.clear();
+    }
+  }
+  
   @Override
   public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
     if (event == DebuggerSession.Event.DETACHED || event == DebuggerSession.Event.DISPOSE) {
@@ -107,18 +134,12 @@ public class DfaAssist implements DebuggerContextListener {
     if (promise != null) {
       promise.cancel();
     }
-    ApplicationManager.getApplication().invokeLater(this::disposeInlays);
-  }
-
-  private void disposeInlays() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myInlays.forEach(Disposer::dispose);
-    myInlays.clear();
+    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myInlays));
   }
 
   private void displayInlays(Map<PsiExpression, DfaHint> hints, DebuggerContextImpl context) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    disposeInlays();
+    Disposer.dispose(myInlays);
     if (hints.isEmpty()) return;
     EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
     if (editor == null) return;
@@ -138,7 +159,9 @@ public class DfaAssist implements DebuggerContextListener {
         () -> Collections.singletonList(turnOffDfaProcessor));
       newInlays.add(model.addInlineElement(range.getEndOffset(), new PresentationRenderer(presentation)));
     });
-    myInlays.addAll(newInlays);
+    if (!newInlays.isEmpty()) {
+      myInlays = new InlaySet(editor, newInlays);
+    }
   }
 
   @NotNull
