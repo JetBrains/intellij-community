@@ -6,7 +6,7 @@ import org.jetbrains.yaml.YAMLBundle;
 
 public class YAMLSmartOptionsProvider extends BeanConfigurable<YAMLEditorOptions> {
   public YAMLSmartOptionsProvider() {
-    super(YAMLEditorOptions.getInstance(), "YAML");
+    super(YAMLEditorOptions.getInstance(), YAMLBundle.message("yaml.smartkeys.option.title"));
     checkBox(YAMLBundle.message("yaml.smartkeys.option.paste"),
              getInstance()::isUseSmartPaste,
              getInstance()::setUseSmartPaste);
