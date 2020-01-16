@@ -35,7 +35,7 @@ public class SSHMainBundle {
 
   private static Reference<ResourceBundle> ourBundle;
   @NonNls
-  private static final String BUNDLE = "org.jetbrains.git4idea.ssh.SSHMainBundle";
+  private static final String BUNDLE = "messages.SSHMainBundle";
 
   private SSHMainBundle() {
   }
