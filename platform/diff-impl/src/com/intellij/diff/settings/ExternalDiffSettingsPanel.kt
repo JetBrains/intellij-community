@@ -34,16 +34,6 @@ import javax.swing.AbstractButton
 import javax.swing.JComponent
 
 class ExternalDiffSettingsPanel {
-  companion object {
-    private const val DESCRIPTION_TEXT = "<html>" +
-                                         "Different tools have different parameters. It's important to specify all necessary parameters in proper order<br>" +
-                                         "<b>%1</b> - left (Local changes)<br>" +
-                                         "<b>%2</b> - right (Server content)<br>" +
-                                         "<b>%3</b> - base (Current version without local changes)<br>" +
-                                         "<b>%4</b> - output (Merge result)" +
-                                         "</html>"
-  }
-
   private val panel: DialogPanel
 
   init {
@@ -51,47 +41,47 @@ class ExternalDiffSettingsPanel {
 
     panel = panel {
       row {
-        val diffEnabled = checkBox("Enable external diff tool", settings::isDiffEnabled)
+        val diffEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.diff.tool"), settings::isDiffEnabled)
         enableSubRowsIfSelected(diffEnabled.component)
 
-        row("Path to executable:") {
+        row(DiffBundle.message("settings.external.diff.path.to.executable")) {
           executableTextField(DiffBundle.message("select.external.diff.program.dialog.title"),
                               { settings.diffExePath }, { settings.diffExePath = it })
         }
-        row("Parameters:") {
+        row(DiffBundle.message("settings.external.diff.parameters")) {
           textField(settings::diffParameters)
         }
         row {
-          checkBox("Use by default", settings::isDiffDefault)
+          checkBox(DiffBundle.message("settings.external.diff.use.by.default"), settings::isDiffDefault)
         }
         row {
           cell {
-            button("Test Diff") { showTestDiff() }
-            button("Test Three-Side Diff") { showTestThreeDiff() }
+            button(DiffBundle.message("settings.external.diff.test.diff")) { showTestDiff() }
+            button(DiffBundle.message("settings.external.diff.test.three.side.diff")) { showTestThreeDiff() }
           }
         }.largeGapAfter()
       }
 
       row {
-        val mergeEnabled = checkBox("Enable external merge tool", settings::isMergeEnabled)
+        val mergeEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.merge.tool"), settings::isMergeEnabled)
         enableSubRowsIfSelected(mergeEnabled.component)
 
-        row("Path to executable:") {
+        row(DiffBundle.message("settings.external.diff.path.to.executable.merge")) {
           executableTextField(DiffBundle.message("select.external.merge.program.dialog.title"),
                               { settings.mergeExePath }, { settings.mergeExePath = it })
         }
-        row("Parameters:") {
+        row(DiffBundle.message("settings.external.diff.parameters.merge")) {
           textField(settings::mergeParameters)
         }
         row {
-          checkBox("Trust process exit code", settings::isMergeTrustExitCode)
+          checkBox(DiffBundle.message("settings.external.diff.trust.process.exit.code"), settings::isMergeTrustExitCode)
         }
         row {
-          button("Test Merge") { showTestMerge() }
+          button(DiffBundle.message("settings.external.diff.test.merge")) { showTestMerge() }
         }
       }
 
-      commentRow(DESCRIPTION_TEXT)
+      commentRow(DiffBundle.message("settings.diff.tools.parameters"))
     }
   }
 
@@ -130,12 +120,13 @@ class ExternalDiffSettingsPanel {
 
     try {
       val factory = DiffContentFactory.getInstance()
-      val contents = listOf(factory.create("Left file content"), factory.create("Right file content"))
+      val contents = listOf(factory.create(DiffBundle.message("settings.external.diff.left.file.content")),
+                            factory.create(DiffBundle.message("settings.external.diff.right.file.content")))
       val titles = listOf("Left.txt", "Right.txt")
       ExternalDiffToolUtil.execute(null, ExternalDiffSettings.instance, contents, titles, null)
     }
     catch (e: Exception) {
-      Messages.showErrorDialog(e.message, "Can't Show Diff")
+      Messages.showErrorDialog(e.message, DiffBundle.message("settings.external.diff.cannot.show.diff"))
     }
   }
 
@@ -144,12 +135,14 @@ class ExternalDiffSettingsPanel {
 
     try {
       val factory = DiffContentFactory.getInstance()
-      val contents = listOf(factory.create("Left file content"), factory.create("Base file content"), factory.create("Right file content"))
+      val contents = listOf(factory.create(DiffBundle.message("settings.external.diff.left.file.content")),
+                            factory.create(DiffBundle.message("settings.external.diff.base.file.content")),
+                            factory.create(DiffBundle.message("settings.external.diff.right.file.content")))
       val titles = listOf("Left.txt", "Base.txt", "Right.txt")
       ExternalDiffToolUtil.execute(null, ExternalDiffSettings.instance, contents, titles, null)
     }
     catch (e: Exception) {
-      Messages.showErrorDialog(e.message, "Can't Show Diff")
+      Messages.showErrorDialog(e.message, DiffBundle.message("settings.external.diff.cannot.show.diff"))
     }
   }
 
@@ -158,23 +151,26 @@ class ExternalDiffSettingsPanel {
 
     try {
       val factory = DiffRequestFactory.getInstance()
-      val document = DocumentImpl("Original output file content")
+      val document = DocumentImpl(DiffBundle.message("settings.external.diff.original.output.file.content"))
 
       val callback = { result: MergeResult ->
         val message = when (result) {
-          MergeResult.CANCEL -> "Merge conflict resolve was canceled."
-          else -> "Merge conflict resolve successful.\nResolved content is:\n" +
-                  StringUtil.shortenPathWithEllipsis(document.text, 60)
+          MergeResult.CANCEL -> DiffBundle.message("settings.external.diff.merge.conflict.resolve.was.canceled")
+          else -> DiffBundle.message("settings.external.diff.merge.conflict.resolve.successful",
+                                     StringUtil.shortenPathWithEllipsis(document.text, 60))
+
         }
-        Messages.showInfoMessage(panel, message, "Test Complete")
+        Messages.showInfoMessage(panel, message, DiffBundle.message("settings.external.diff.test.complete"))
       }
-      val contents = listOf("Left file content", "Base file content", "Right file content")
+      val contents = listOf(DiffBundle.message("settings.external.diff.left.file.content"),
+                            DiffBundle.message("settings.external.diff.base.file.content"),
+                            DiffBundle.message("settings.external.diff.right.file.content"))
       val titles = listOf("Left.txt", "Base.txt", "Right.txt")
       val request = factory.createMergeRequest(null, PlainTextFileType.INSTANCE, document, contents, null, titles, callback)
       ExternalDiffToolUtil.executeMerge(null, ExternalDiffSettings.instance, request as ThreesideMergeRequest)
     }
     catch (e: Exception) {
-      Messages.showErrorDialog(e.message, "Can't Show Merge")
+      Messages.showErrorDialog(e.message, DiffBundle.message("settings.external.diff.cannot.show.merge"))
     }
   }
 }
