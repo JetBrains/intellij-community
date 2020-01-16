@@ -2,13 +2,13 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -1271,10 +1271,17 @@ public class ExpressionUtils {
   public static TextRange findStringLiteralRange(PsiExpression expression, int from, int to) {
     if (to < 0 || from > to) return null;
     if (expression == null || !TypeUtils.isJavaLangString(expression.getType())) return null;
-    if (expression instanceof PsiLiteralExpression) {
-      String value = tryCast(((PsiLiteralExpression)expression).getValue(), String.class);
+    if (expression instanceof PsiLiteralExpressionImpl) {
+      PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl) expression;
+      String value = tryCast(literalExpression.getValue(), String.class);
       if (value == null || value.length() < from || value.length() < to) return null;
-      return CodeInsightUtilCore.mapBackStringRange(expression.getText(), from, to);
+      String text = expression.getText();
+      if (literalExpression.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+        int indent = literalExpression.getTextBlockIndent();
+        if (indent == -1) return null;
+        return PsiLiteralUtil.mapBackTextBlockRange(text, from, to, indent);
+      }
+      return PsiLiteralUtil.mapBackStringRange(expression.getText(), from, to);
     }
     if (expression instanceof PsiParenthesizedExpression) {
       PsiExpression operand = ((PsiParenthesizedExpression)expression).getExpression();

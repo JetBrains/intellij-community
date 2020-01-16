@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -398,5 +400,153 @@ public class PsiLiteralUtil {
       else if (indent < prefix) prefix = indent;
     }
     return prefix;
+  }
+
+  /**
+   * Maps the substring range inside Java String literal value back into the source code range.
+   *
+   * @param text string literal as present in source code (including quotes)
+   * @param from start offset inside the represented string
+   * @param to end offset inside the represented string
+   * @return the range which represents the corresponding substring inside source representation,
+   * or null if from/to values are out of bounds.
+   */
+  @Nullable
+  public static TextRange mapBackStringRange(@NotNull String text, int from, int to) {
+    if (from > to || to < 0) return null;
+    if (text.length() < 2 || !text.startsWith("\"") || !text.endsWith("\"")) {
+      return null;
+    }
+    if (text.indexOf('\\') == -1) {
+      return new TextRange(from + 1, to + 1);
+    }
+    text = text.substring(1, text.length() - 1);
+    int charsSoFar = 0;
+    int mappedFrom = -1;
+    for (int i = 0; i != -1; i = getCharEndIndex(text, i)) {
+      if (charsSoFar == from) {
+        mappedFrom = i;
+      }
+      if (charsSoFar == to) {
+        // +1 to count open quote
+        return new TextRange(mappedFrom + 1, i + 1);
+      }
+      charsSoFar++;
+    }
+    return null;
+  }
+
+  /**
+   * Maps the substring range inside Java Text Block literal value back into the source code range.
+   *
+   * @param indent text block indent
+   * @return range in source code representation, null when from/to out of bounds or given text block source code representation is invalid
+   */
+  @Nullable
+  public static TextRange mapBackTextBlockRange(@NotNull String text, int from, int to, int indent) {
+    if (from > to || to < 0) return null;
+    TextBlockModel model = TextBlockModel.create(text, indent);
+    if (model == null) return null;
+    return model.mapTextBlockRangeBack(from, to);
+  }
+
+  private static int getCharEndIndex(@NotNull String line, int i) {
+    if (i >= line.length()) return -1;
+    char c = line.charAt(i++);
+    if (c == '\\') {
+      // like \u0020
+      char c1 = line.charAt(i++);
+      if (c1 == 'u') {
+        while (i < line.length() && line.charAt(i) == 'u') i++;
+        i += 4;
+      } else if (c1 >= '0' && c1 <= '7') { // octal escape
+        char c2 = i < line.length() ? line.charAt(i) : 0;
+        if (c2 >= '0' && c2 <= '7') {
+          i++;
+          char c3 = i < line.length() ? line.charAt(i) : 0;
+          if (c3 >= '0' && c3 <= '7' && c1 <= '3') {
+            i++;
+          }
+        }
+      }
+    }
+    return i;
+  }
+
+  private static class TextBlockModel {
+
+    private final String[] lines;
+    private final int indent;
+    private final int startPrefixLength;
+
+    private TextBlockModel(String[] lines, int indent, int startPrefixLength) {
+      this.lines = lines;
+      this.indent = indent;
+      this.startPrefixLength = startPrefixLength;
+    }
+
+    @Nullable
+    private TextRange mapTextBlockRangeBack(int from, int to) {
+      int curOffset = startPrefixLength;
+      int charsSoFar = 0;
+      int mappedFrom = -1;
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i];
+        int linePrefixLength = findLinePrefixLength(line, indent);
+        line = line.substring(linePrefixLength);
+        boolean isLastLine = i == lines.length - 1;
+        int lineSuffixLength = findLineSuffixLength(line, isLastLine);
+        line = line.substring(0, line.length() - lineSuffixLength);
+        if (!isLastLine) line += '\n';
+
+        curOffset += linePrefixLength;
+
+        int charIdx;
+        int nextIdx = 0;
+        while (true) {
+          if (from == charsSoFar) {
+            mappedFrom = curOffset + nextIdx;
+          }
+          if (to == charsSoFar) {
+            return new TextRange(mappedFrom, curOffset + nextIdx);
+          }
+          charIdx = nextIdx;
+          nextIdx = getCharEndIndex(line, charIdx);
+          if (nextIdx == -1) break;
+          charsSoFar++;
+          if (nextIdx == line.length()) curOffset += lineSuffixLength;
+        }
+        curOffset += line.length();
+      }
+      return null;
+    }
+
+    private static int findLinePrefixLength(@NotNull String line, int indent) {
+      boolean isBlankLine = line.chars().allMatch(Character::isWhitespace);
+      return isBlankLine ? line.length() : indent;
+    }
+
+    private static int findLineSuffixLength(@NotNull String line, boolean isLastLine) {
+      if (isLastLine) return 0;
+      int lastIdx = line.length() - 1;
+      for (int i = lastIdx; i >= 0; i--) if (line.charAt(i) != ' ') return lastIdx - i;
+      return 0;
+    }
+
+    @Nullable
+    private static TextBlockModel create(@NotNull String text, int indent) {
+      if (text.length() < 7 || !text.startsWith("\"\"\"") || !text.endsWith("\"\"\"")) return null;
+      int startPrefixLength = findStartPrefixLength(text);
+      if (startPrefixLength == -1) return null;
+      String[] lines = text.substring(startPrefixLength, text.length() - 3).split("\n", -1);
+      return new TextBlockModel(lines, indent, startPrefixLength);
+    }
+
+    @Contract(pure = true)
+    private static int findStartPrefixLength(@NotNull String text) {
+      int lineBreakIdx = text.indexOf("\n");
+      if (lineBreakIdx == -1) return -1;
+      return lineBreakIdx + 1;
+    }
   }
 }
