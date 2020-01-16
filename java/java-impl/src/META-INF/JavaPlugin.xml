@@ -1351,13 +1351,13 @@
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="TextBlockMigration"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids13" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids14" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TextBlockMigrationInspection"
                      bundle="messages.InspectionsBundle"
                      key="inspection.text.block.migration.name"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="TextBlockBackwardMigration"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids13" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids14" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.TextBlockBackwardMigrationInspection"
                      bundle="messages.InspectionsBundle"
                      key="inspection.text.block.backward.migration.name"/>
@@ -1652,7 +1652,7 @@
                      implementationClass="com.intellij.codeInspection.OverflowingLoopIndexInspection" />
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="EnhancedSwitchMigration"
                      key="inspection.switch.expression.migration.inspection.name" bundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids13" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids14" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.EnhancedSwitchMigrationInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantLabeledSwitchRuleCodeBlock"
@@ -1662,7 +1662,7 @@
                      implementationClass="com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCodeBlockInspection" />
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="EnhancedSwitchBackwardMigration"
                      key="inspection.switch.expression.backward.migration.inspection.name" bundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids13" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids14" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.EnhancedSwitchBackwardMigrationInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="SwitchLabeledRuleCanBeCodeBlock"
