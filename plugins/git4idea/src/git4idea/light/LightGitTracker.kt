@@ -2,11 +2,13 @@
 package git4idea.light
 
 import com.intellij.ide.FrameStateListener
-import com.intellij.ide.lightEdit.*
+import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.ide.lightEdit.LightEditorInfo
+import com.intellij.ide.lightEdit.LightEditorListener
+import com.intellij.ide.lightEdit.LightEditorManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
@@ -26,7 +28,6 @@ internal class LightGitTracker(private val lightEditService: LightEditService, p
     lightEditorManager.addListener(listener, this)
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(FrameStateListener.TOPIC,
                                                                            MyFrameStateListener())
-    Disposer.register(lightEditorManager, this)
   }
 
   @Throws(VcsException::class)
