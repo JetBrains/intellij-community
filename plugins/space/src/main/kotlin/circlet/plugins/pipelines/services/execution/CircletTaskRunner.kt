@@ -3,7 +3,6 @@ package circlet.plugins.pipelines.services.execution
 import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
 import circlet.plugins.pipelines.services.*
-import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.execution.process.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
@@ -11,6 +10,7 @@ import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
 import java.io.*
+import com.intellij.execution.*
 
 class CircletTaskRunner(val project: Project) {
 
@@ -18,53 +18,22 @@ class CircletTaskRunner(val project: Project) {
 
     fun run(taskName: String): ProcessHandler {
 
-        val script = project.service<SpaceKtsModelBuilder>().script.value
-        val logData = LogData()
+        val script = project.service<SpaceKtsModelBuilder>().script.value ?: throw ExecutionException("Script is null")
 
-        // todo: better lifetime.
-        publishBuildLog(Lifetime.Eternal, project, logData)
-
-        if (script == null) {
-            //logData.add("Script is null")
-            throw com.intellij.execution.ExecutionException("Script is null")
-        }
-
-        val config = script.config
-        val task = script.config.jobs.firstOrNull { x -> x.name == taskName }
-        if (task == null) {
-            // todo: provide logging.
-            //logData.add("Task $taskName doesn't exist")
-            throw com.intellij.execution.ExecutionException("Task $taskName doesn't exist")
-        }
+        val task = script.config.jobs.firstOrNull { x -> x.name == taskName } ?: throw ExecutionException("Task $taskName doesn't exist")
 
         logger.info("Run task $taskName")
 
-        val processHandler = object : ProcessHandler() {
-            override fun getProcessInput(): OutputStream? {
-                return null
-            }
-
-            override fun detachIsDefault(): Boolean {
-                return false
-            }
-
-            override fun detachProcessImpl() {
-                logger.info("detachProcessImpl for task $taskName")
-            }
-
-            override fun destroyProcessImpl() {
-                logger.info("destroyProcessImpl for task $taskName")
-                notifyProcessTerminated(0)
-            }
-        }
+        val processHandler = TaskProcessHandler(taskName)
 
         val storage = CircletIdeaExecutionProviderStorage(task)
         val orgInfo = OrgInfo("jetbrains.team")
 
         // todo: better lifetime
-        val provider = CircletIdeaStepExecutionProvider(Lifetime.Eternal, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
+        val provider = CircletIdeaStepExecutionProvider(Lifetime.Eternal, { text -> processHandler.println(text) }, { _ -> processHandler.destroyProcess() }, storage)
 
         val tracer = CircletIdeaAutomationTracer()
+
         val automationGraphEngineCommon = AutomationGraphEngineImpl(
             provider,
             storage,
@@ -82,23 +51,23 @@ class CircletTaskRunner(val project: Project) {
         )
 
         val repositoryData = RepositoryData("repoId", null)
+
         val branch = "myBranch"
+
         val commit = "myCommit"
 
         // todo: start asynchronous task. what is multi-threading policy?
         // todo: better lifetime
-        // todo: why?
-        async(Lifetime.Eternal, Ui) {
-            val graphId = automationStarterCommon.createGraph(0L, repositoryData, branch, commit, task)
-            automationStarterCommon.startGraph(graphId)
-        }.invokeOnCompletion {
-            if (it != null) {
-                processHandler.notifyTextAvailable("Run task failed. ${it.message}$newLine", ProcessOutputTypes.STDERR)
+        launch(Lifetime.Eternal, Ui) {
+            try {
+                val graphId = automationStarterCommon.createGraph(0L, repositoryData, branch, commit, task)
+                automationStarterCommon.startGraph(graphId)
+            } catch (th: Throwable) {
+                processHandler.notifyTextAvailable("Run task failed. ${th.message}$newLine", ProcessOutputTypes.STDERR)
+            } finally {
+                processHandler.dispose()
             }
         }
-
-        logData.add("Run task $taskName")
-        processHandler.println("Run task $taskName")
 
         return processHandler
     }
@@ -109,4 +78,32 @@ class CircletTaskRunner(val project: Project) {
         this.notifyTextAvailable("$text$newLine", ProcessOutputTypes.SYSTEM)
 
     }
+}
+
+class TaskProcessHandler(private val taskName: String) : ProcessHandler() {
+
+    companion object : KLogging()
+
+    override fun getProcessInput(): OutputStream? {
+        return null
+    }
+
+    override fun detachIsDefault(): Boolean {
+        return false
+    }
+
+    override fun detachProcessImpl() {
+        logger.info("detachProcessImpl for task $taskName")
+    }
+
+    override fun destroyProcessImpl() {
+        logger.info("destroyProcessImpl for task $taskName")
+        notifyProcessTerminated(0)
+    }
+
+    fun dispose() {
+        notifyProcessTerminated(0)
+    }
+
+
 }

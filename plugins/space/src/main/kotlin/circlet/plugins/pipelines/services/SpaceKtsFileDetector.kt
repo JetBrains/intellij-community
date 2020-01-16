@@ -40,7 +40,6 @@ class SpaceKtsFileDetector(val project: Project) : LifetimedDisposable by Lifeti
     }
 
     init {
-        // todo: make launch
         refreshScript()
         LocalFileSystem.getInstance().addVirtualFileListener(fileListener)
     }

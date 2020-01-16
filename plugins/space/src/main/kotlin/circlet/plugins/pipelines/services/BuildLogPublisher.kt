@@ -10,12 +10,11 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.externalSystem.model.*
 import com.intellij.openapi.externalSystem.model.task.*
 import com.intellij.openapi.project.*
-import com.intellij.openapi.util.*
 import libraries.coroutines.extra.*
 import libraries.io.random.*
 import runtime.reactive.*
 
-fun publishBuildLog(lifetime: Lifetime, project : Project,  data: LogData) {
+fun publishBuildLog(project: Project, data: LogData) {
     val buildId = Random.nextUID()
 
     if (!application.isUnitTestMode && !application.isHeadlessEnvironment) {
@@ -23,29 +22,28 @@ fun publishBuildLog(lifetime: Lifetime, project : Project,  data: LogData) {
         val taskId = ExternalSystemTaskId.create(projectSystemId, ExternalSystemTaskType.RESOLVE_PROJECT, project)
         val descriptor = DefaultBuildDescriptor(taskId, "Sync DSL", project.basePath!!, System.currentTimeMillis())
 
-        // wtf?
-        val result = Ref<BuildProgressListener>()
-        ApplicationManager.getApplication().invokeAndWait { result.set(ServiceManager.getService(project, SyncDslViewManager::class.java)) }
-        val view = result.get()
+        val view = ServiceManager.getService(project, SyncDslViewManager::class.java)
 
         view.onEvent(buildId, StartBuildEventImpl(descriptor, "Sync DSL ${project.name}"))
 
-        lifetime.add {
+        if (!data.lifetime.isTerminated) {
+            data.messages.change.forEach(data.lifetime) { change ->
+                when (change) {
+                    is ObservableList.Change.Add<String> -> {
+                        val message = change.newValue
+                        val detailedMessage = if (message.length > 50) message else null
+                        view.onEvent(buildId, MessageEventImpl(descriptor.id, MessageEvent.Kind.SIMPLE, "log", message, detailedMessage))
+                    }
+                    else -> {
+                        //
+                    }
+                }
+
+            }
+        }
+        data.lifetime.addOrCallImmediately {
             view.onEvent(buildId, FinishBuildEventImpl(descriptor.id, null, System.currentTimeMillis(), "finished", SuccessResultImpl(false)))
         }
 
-        data.messages.change.forEach(lifetime) { change ->
-            when (change) {
-                is ObservableList.Change.Add<String> -> {
-                    val message = change.newValue
-                    val detailedMessage = if (message.length > 50) message else null
-                    view.onEvent(buildId, MessageEventImpl(descriptor.id, MessageEvent.Kind.SIMPLE, "log", message, detailedMessage))
-                }
-                else -> {
-                    //
-                }
-            }
-
-        }
     }
 }

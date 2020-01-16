@@ -40,14 +40,14 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
         // push to IDE build log
         logBuildData.view(lifetime) { lt, log ->
             if (log != null) {
-                publishBuildLog(lt, project, log)
+                publishBuildLog(project, log)
             }
         }
     }
 
     fun rebuildModel() {
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Build DSL Model", false) {
-            override fun run(indicator: ProgressIndicator) {
+            override fun run(pi: ProgressIndicator) {
 
                 // todo: implement build cancellation and re-building
                 synchronized(sync) {
@@ -56,12 +56,13 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                     _modelBuildIsRunning.value = true
                 }
 
+                val data = LogData()
                 try {
-                    val data = LogData()
                     logBuildData.value = data
                     val model = build(project, data)
                     _script.value = model
                 } finally {
+                    data.close()
                     _modelBuildIsRunning.value = false
                 }
 
@@ -69,7 +70,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
         })
     }
 
-    private fun build(project: Project, logBuildData: LogData): ScriptViewModel {
+    private fun build(project: Project, logData: LogData): ScriptViewModel {
         lifetime.using { lt ->
             val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
 
@@ -77,7 +78,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                 val ev = it.index
                 val prefix = if (ev.level == Level.ERROR) "Error: " else ""
                 val resMessage = "$prefix${ev.message}"
-                logBuildData.add(resMessage)
+                logData.add(resMessage)
                 logger.debug(resMessage)
             }
 
@@ -108,6 +109,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                 val outputFolder = createTempDir().absolutePath + "/"
                 val targetJar = outputFolder + "compiledJar.jar"
                 val resolveResultPath = outputFolder + "compilationResolveResult"
+
                 DslJarCompiler(eventLogger).compile(
                     DslSourceFileDelegatingFileProvider(dslFile.path),
                     targetJar,
