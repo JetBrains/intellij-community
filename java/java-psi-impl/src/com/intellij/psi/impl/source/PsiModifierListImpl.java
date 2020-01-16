@@ -211,7 +211,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     // changes horizontal position of parameters list start, hence, we need to reformat them in order to preserve alignment.
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
-      CodeEditUtil.markToReformat(method.getParameterList().getNode(), true);
+      ASTNode node = method.getParameterList().getNode();
+      if (node != null) { // could be a compact constructor parameter list
+        CodeEditUtil.markToReformat(node, true);
+      }
     }
 
     if (value) {
