@@ -10,11 +10,13 @@ import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProbl
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -128,11 +130,33 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
                                        @NotNull GlobalSearchScope searchScope,
                                        boolean onTheFly,
                                        @Nullable ProgressIndicator indicator) {
-    PsiSearchHelper.SearchCostResult cheapEnough = psiSearchHelper.isCheapEnoughToSearch(name, searchScope, null, indicator);
+    GlobalSearchScope exceptPropertyFiles = createExceptPropertyFilesScope(searchScope);
+    GlobalSearchScope newScope = searchScope.intersectWith(exceptPropertyFiles);
+    PsiSearchHelper.SearchCostResult cheapEnough = psiSearchHelper.isCheapEnoughToSearch(name, newScope, null, indicator);
     if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
     if (onTheFly && cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
 
-    return ReferencesSearch.search(property, searchScope, false).findFirst() != null;
+    return ReferencesSearch.search(property, newScope, false).findFirst() != null;
+  }
+
+  @NotNull
+  private static GlobalSearchScope createExceptPropertyFilesScope(@NotNull GlobalSearchScope origin) {
+    return new GlobalSearchScope() {
+      @Override
+      public boolean isSearchInModuleContent(@NotNull Module aModule) {
+        return origin.isSearchInModuleContent(aModule);
+      }
+
+      @Override
+      public boolean isSearchInLibraries() {
+        return origin.isSearchInLibraries();
+      }
+
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        return !FileTypeRegistry.getInstance().isFileOfType(file, PropertiesFileType.INSTANCE);
+      }
+    };
   }
 
   private static class UnusedPropertiesSearchHelper {
