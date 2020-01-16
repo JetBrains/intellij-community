@@ -185,6 +185,8 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
                                 boolean moveCaret,
                                 boolean adjustScrollingPosition) {
     assertIsDispatchThreadForEditor();
+    if (myEditor.getInlayModel().isInBatchMode()) LOG.error("Folding operations shouldn't be performed during inlay batch update");
+
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;

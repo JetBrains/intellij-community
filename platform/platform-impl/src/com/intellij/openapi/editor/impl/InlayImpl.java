@@ -46,6 +46,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void update() {
+    EditorImpl.assertIsDispatchThread();
     int oldWidth = getWidthInPixels();
     int oldHeight = getHeightInPixels();
     GutterIconRenderer oldIconProvider = getGutterIconProvider();
@@ -64,7 +65,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void repaint() {
-    if (isValid() && !myEditor.isDisposed() && !myEditor.getDocument().isInBulkUpdate()) {
+    if (isValid() && !myEditor.isDisposed() && !myEditor.getDocument().isInBulkUpdate() && !myEditor.getInlayModel().isInBatchMode()) {
       JComponent contentComponent = myEditor.getContentComponent();
       if (contentComponent.isShowing()) {
         Rectangle bounds = getBounds();
@@ -82,6 +83,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void dispose() {
+    EditorImpl.assertIsDispatchThread();
     if (isValid()) {
       int offset = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
       putUserData(OFFSET_BEFORE_DISPOSAL, offset);

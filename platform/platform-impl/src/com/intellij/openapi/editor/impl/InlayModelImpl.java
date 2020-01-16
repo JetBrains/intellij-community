@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -20,11 +19,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
-public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
+public class InlayModelImpl implements InlayModel, PrioritizedInternalDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
   private static final Comparator<Inlay> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((Inlay i) -> i.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText());
@@ -51,57 +50,59 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   boolean myPutMergedIntervalsAtBeginning;
   private boolean myConsiderCaretPositionOnDocumentUpdates = true;
   private List<Inlay> myInlaysAtCaret;
+  private boolean myInBatchMode;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
     myInlineElementsTree = new InlineElementsTree(editor.getDocument());
     myBlockElementsTree = new BlockElementsTree(editor.getDocument());
     myAfterLineEndElementsTree = new AfterLineEndElementTree(editor.getDocument());
-    myEditor.getDocument().addDocumentListener(new PrioritizedInternalDocumentListener() {
-      @Override
-      public int getPriority() {
-        return EditorDocumentPriorities.INLAY_MODEL;
-      }
+    myEditor.getDocument().addDocumentListener(this, this);
+  }
 
-      @Override
-      public void beforeDocumentChange(@NotNull DocumentEvent event) {
-        if (myEditor.getDocument().isInBulkUpdate()) return;
-        int offset = event.getOffset();
-        if (myConsiderCaretPositionOnDocumentUpdates && event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
-          List<Inlay> inlays = getInlineElementsInRange(offset, offset);
-          int inlayCount = inlays.size();
-          if (inlayCount > 0) {
-            VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-            VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
-            if (inlaysStartPosition.line == caretPosition.line &&
-                caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
-              myInlaysAtCaret = inlays;
-              for (int i = 0; i < inlayCount; i++) {
-                ((InlayImpl)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
-              }
-            }
+  @Override
+  public int getPriority() {
+    return EditorDocumentPriorities.INLAY_MODEL;
+  }
+
+  @Override
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
+    if (myEditor.getDocument().isInBulkUpdate()) return;
+    if (myInBatchMode) LOG.error("Document shouldn't be changed during batch inlay operation");
+    int offset = event.getOffset();
+    if (myConsiderCaretPositionOnDocumentUpdates && event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
+      List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+      int inlayCount = inlays.size();
+      if (inlayCount > 0) {
+        VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+        VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
+        if (inlaysStartPosition.line == caretPosition.line &&
+            caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
+          myInlaysAtCaret = inlays;
+          for (int i = 0; i < inlayCount; i++) {
+            ((InlayImpl)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
           }
         }
       }
+    }
+  }
 
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        if (myInlaysAtCaret != null) {
-          for (Inlay inlay : myInlaysAtCaret) {
-            ((InlayImpl)inlay).setStickingToRight(inlay.isRelatedToPrecedingText());
-          }
-          myInlaysAtCaret = null;
-        }
+  @Override
+  public void documentChanged(@NotNull DocumentEvent event) {
+    if (myInlaysAtCaret != null) {
+      for (Inlay inlay : myInlaysAtCaret) {
+        ((InlayImpl)inlay).setStickingToRight(inlay.isRelatedToPrecedingText());
       }
+      myInlaysAtCaret = null;
+    }
+  }
 
-      @Override
-      public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-        for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
-          notifyRemoved(inlay);
-        }
-        myInlaysInvalidatedOnMove.clear();
-      }
-    }, this);
+  @Override
+  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
+    for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
+      notifyRemoved(inlay);
+    }
+    myInlaysInvalidatedOnMove.clear();
   }
 
   void reinitSettings() {
@@ -122,7 +123,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
                                                                            boolean relatesToPrecedingText,
                                                                            @NotNull T renderer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     Document document = myEditor.getDocument();
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
@@ -138,7 +139,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
                                                                           boolean showAbove,
                                                                           int priority,
                                                                           @NotNull T renderer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     offset = Math.max(0, Math.min(myEditor.getDocument().getTextLength(), offset));
     BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, priority, renderer);
     notifyAdded(inlay);
@@ -150,7 +151,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
                                                                                  boolean relatesToPrecedingText,
                                                                                  @NotNull T renderer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EditorImpl.assertIsDispatchThread();
     Document document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
     AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, renderer);
@@ -428,7 +429,32 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   }
 
   @Override
+  public void execute(boolean batchMode, @NotNull Runnable operation) {
+    EditorImpl.assertIsDispatchThread();
+    if (myInBatchMode || !batchMode) {
+      operation.run();
+    }
+    else {
+      try {
+        notifyBatchModeStarting();
+        myInBatchMode = true;
+        operation.run();
+      }
+      finally {
+        myInBatchMode = false;
+        notifyBatchModeFinished();
+      }
+    }
+  }
+
+  @Override
+  public boolean isInBatchMode() {
+    return myInBatchMode;
+  }
+
+  @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
+    EditorImpl.assertIsDispatchThread();
     myDispatcher.addListener(listener, disposable);
   }
 
@@ -442,6 +468,17 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
 
   void notifyRemoved(InlayImpl inlay) {
     myDispatcher.getMulticaster().onRemoved(inlay);
+  }
+
+  private void notifyBatchModeStarting() {
+    List<Listener> listeners = myDispatcher.getListeners();
+    for (int i = listeners.size() - 1; i >= 0; i--) {
+      listeners.get(i).onBatchModeStart(myEditor);
+    }
+  }
+
+  private void notifyBatchModeFinished() {
+    myDispatcher.getMulticaster().onBatchModeFinish(myEditor);
   }
 
   @TestOnly

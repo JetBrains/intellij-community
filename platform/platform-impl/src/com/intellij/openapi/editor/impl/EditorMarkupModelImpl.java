@@ -150,7 +150,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     MyErrorPanel errorPanel = getErrorPanel();
     if (errorPanel != null && errorPanel.myErrorStripeButton.isVisible() != value) {
       errorPanel.myErrorStripeButton.setVisible(value);
-      repaint(-1, -1);
+      repaint();
     }
   }
 
@@ -461,6 +461,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (panel != null) {
       panel.uninstallListeners();
     }
+  }
+
+  void repaint() {
+    repaint(-1, -1);
   }
 
   // startOffset == -1 || endOffset == -1 means whole document

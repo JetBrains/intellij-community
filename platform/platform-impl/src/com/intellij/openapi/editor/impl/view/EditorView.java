@@ -697,7 +697,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   private void assertNotInBulkMode() {
-    if (myDocument instanceof DocumentImpl) ((DocumentImpl)myDocument).assertNotInBulkUpdate();
-    else if (myDocument.isInBulkUpdate()) throw new IllegalStateException("Current operation is not available in bulk mode");
+    if (myDocument instanceof DocumentImpl) {
+      ((DocumentImpl)myDocument).assertNotInBulkUpdate();
+    }
+    else if (myDocument.isInBulkUpdate()) {
+      throw new IllegalStateException("Current operation is not permitted in bulk mode");
+    }
+    if (myEditor.getInlayModel().isInBatchMode()) {
+      throw new IllegalStateException("Current operation is not permitted during batch inlay update");
+    }
   }
 }

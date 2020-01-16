@@ -82,7 +82,7 @@ public class EditorPainter implements TextDrawingCallback {
       float width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
       int xStart = (int)Math.floor(x - width);
       int xEnd = (int)Math.ceil(x + width);
-      editor.getContentComponent().repaintEditorComponentExact(xStart, y, xEnd - xStart, nominalLineHeight);
+      editor.getContentComponent().repaint(xStart, y, xEnd - xStart, nominalLineHeight);
     }
   }
 

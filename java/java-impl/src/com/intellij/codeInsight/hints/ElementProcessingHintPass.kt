@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.util.DocumentUtil
 import com.intellij.util.SmartList
 import gnu.trove.TIntObjectHashMap
 
@@ -88,7 +87,7 @@ abstract class ElementProcessingHintPass(
         else false
       }
 
-    DocumentUtil.executeInBulk(myEditor.document, toRemove.size + hints.values.flatMap { it as SmartList<*> }.count() > 1000) {
+    myEditor.inlayModel.execute(toRemove.size + hints.values.flatMap { it as SmartList<*> }.count() > 1000) {
       toRemove.forEach { Disposer.dispose(it) }
 
       hints.forEachEntry { offset, hintTexts ->

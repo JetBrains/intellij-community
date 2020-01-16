@@ -498,6 +498,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
         onInlayUpdated(inlay, changeFlags);
       }
+
+      @Override
+      public void onBatchModeFinish(@NotNull Editor editor) {
+        onInlayBatchModeFinish();
+      }
     }, myCaretModel);
 
     if (UISettings.getInstance().getPresentationMode()) {
@@ -585,7 +590,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter, boolean canImpactGutterSize, boolean fontStyleOrColorChanged) {
-    if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
+    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
 
     if (canImpactGutterSize) {
       updateGutterSize();
@@ -632,7 +637,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void onInlayUpdated(@NotNull Inlay inlay, int changeFlags) {
-    if (myDocument.isInBulkUpdate()) return;
+    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return;
     if ((changeFlags & InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED) != 0) updateGutterSize();
     if (myDocument.isInEventsHandling() ||
         (changeFlags & (InlayModel.ChangeFlags.WIDTH_CHANGED | InlayModel.ChangeFlags.HEIGHT_CHANGED)) == 0) {
@@ -653,6 +658,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int y = visualLineToY(visualLine) - EditorUtil.getTotalInlaysHeight(myInlayModel.getBlockElementsForVisualLine(visualLine, true));
       repaintToScreenBottomStartingFrom(y);
     }
+  }
+
+  private void onInlayBatchModeFinish() {
+    if (myDocument.isInBulkUpdate()) return;
+    validateSize();
+    updateGutterSize();
+    myEditorComponent.repaint();
+    myGutterComponent.repaint();
+    myMarkupModel.repaint();
+    updateCaretCursor();
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
@@ -1177,7 +1192,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void componentResized(@NotNull ComponentEvent e) {
         myMarkupModel.recalcEditorDimensions();
-        myMarkupModel.repaint(-1, -1);
+        myMarkupModel.repaint();
         if (!isRightAligned()) return;
         updateCaretCursor();
         myCaretCursor.repaint();
@@ -1531,7 +1546,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void repaint(int startOffset, int endOffset, boolean invalidateTextLayout) {
-    if (myDocument.isInBulkUpdate()) {
+    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) {
       return;
     }
     assertIsDispatchThread();
@@ -1568,7 +1583,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent.repaintEditorComponent(visibleArea.x, y, visibleArea.x + visibleArea.width, yEndLine - y);
     myGutterComponent.repaint(0, y, myGutterComponent.getWidth(), yEndLine - y);
-    ((EditorMarkupModelImpl)getMarkupModel()).repaint(-1, -1);
+    myMarkupModel.repaint();
   }
 
   /**
@@ -1599,6 +1614,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateStarted() {
+    if (myInlayModel.isInBatchMode()) LOG.error("Document bulk mode shouldn't be started from batch inlay operation");
+
     myView.getPreferredSize(); // make sure size is calculated (in case it will be required while bulk mode is active)
 
     myScrollingModel.onBulkDocumentUpdateStarted();
@@ -1611,6 +1628,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateFinished() {
+    if (myInlayModel.isInBatchMode()) LOG.error("Document bulk mode shouldn't be finished from batch inlay operation");
+
     myFoldingModel.onBulkDocumentUpdateFinished();
     mySoftWrapModel.onBulkDocumentUpdateFinished();
     myView.reset();
@@ -1650,7 +1669,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void invokeDelayedErrorStripeRepaint() {
     if (myErrorStripeNeedsRepaint) {
-      myMarkupModel.repaint(-1, -1);
+      myMarkupModel.repaint();
       myErrorStripeNeedsRepaint = false;
     }
   }
@@ -1754,7 +1773,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     Dimension dim = getPreferredSize();
 
-    if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
+    if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate() && !myInlayModel.isInBatchMode()) {
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
       if (!dim.equals(myPreferredSize)) {
         myPreferredSize = dim;
@@ -1765,14 +1784,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myEditorComponent.fireResized();
 
         myMarkupModel.recalcEditorDimensions();
-        myMarkupModel.repaint(-1, -1);
+        myMarkupModel.repaint();
       }
     }
   }
 
   void recalculateSizeAndRepaint() {
     validateSize();
-    myEditorComponent.repaintEditorComponent();
+    myEditorComponent.repaint();
   }
 
   @Override

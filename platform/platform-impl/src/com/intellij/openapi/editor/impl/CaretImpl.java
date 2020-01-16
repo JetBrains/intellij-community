@@ -1492,6 +1492,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
   }
 
+  void resetCachedState() {
+    myDocumentUpdateCounter = -1;
+  }
+
   void updateCachedStateIfNeeded() {
     if (!ApplicationManager.getApplication().isDispatchThread()) return;
     int modelCounter = myCaretModel.myDocumentUpdateCounter;

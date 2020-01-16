@@ -2,14 +2,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,22 +30,30 @@ public class EditorStressTest extends AbstractEditorTest {
   private static final String CHARS_TO_USE = "a\r\n\t" + SURROGATE_PAIR;
   private static final int MAX_CHARS_TO_ADD = 10;
   private static final int MAX_CHARS_TO_REMOVE = 5;
+  private static final int MIN_INLAY_WIDTH = 1;
+  private static final int MAX_INLAY_WIDTH = 9;
+  private static final int MAX_INLAY_OPERATIONS_IN_BATCH = 3;
+
+  private static final List<? extends Action> INLAY_PRIMITIVE_ACTIONS = Arrays.asList(
+    new AddInlay(),
+    new RemoveInlay(),
+    new UpdateInlay()
+  );
+  private final List<? extends Action> ACTIONS = ContainerUtil.concat(Arrays.asList(
+    new AddText(),
+    new RemoveText(),
+    new MoveText(),
+    new AddFoldRegion(),
+    new RemoveFoldRegion(),
+    new ExpandOrCollapseFoldRegions(),
+    new ClearFoldRegions(),
+    new ChangeBulkModeState(),
+    new ChangeEditorVisibility(),
+    new BatchInlayOperation(),
+    new MoveCaret()
+  ), INLAY_PRIMITIVE_ACTIONS);
 
   public void testRandomActions() {
-    List<? extends Action> actions = Arrays.asList(
-            new AddText(),
-            new RemoveText(),
-            new MoveText(),
-            new AddFoldRegion(),
-            new RemoveFoldRegion(),
-            new ExpandOrCollapseFoldRegions(),
-            new ClearFoldRegions(),
-            new ChangeBulkModeState(),
-            new ChangeEditorVisibility(),
-            new AddInlay(),
-            new RemoveInlay(),
-            new MoveCaret()
-    );
     LOG.debug("Seed is " + mySeed);
     int i = 0;
     try {
@@ -54,7 +62,7 @@ public class EditorStressTest extends AbstractEditorTest {
       configureSoftWraps(10);
       EditorImpl editor = (EditorImpl)getEditor();
       for (i = 0; i < ITERATIONS; i++) {
-        doRandomAction(editor, actions);
+        doRandomAction(editor, myRandom, ACTIONS);
         editor.validateState();
       }
       if (editor.getDocument().isInBulkUpdate()) editor.getDocument().setInBulkUpdate(false);
@@ -66,8 +74,8 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private void doRandomAction(EditorEx editor, List<? extends Action> actions) {
-    actions.get(myRandom.nextInt(actions.size())).perform(editor, myRandom);
+  private static void doRandomAction(EditorEx editor, Random random, List<? extends Action> actions) {
+    actions.get(random.nextInt(actions.size())).perform(editor, random);
   }
 
   @FunctionalInterface
@@ -191,27 +199,66 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private class AddInlay implements Action {
+  private static class AddInlay implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
-      addInlay(random.nextInt(editor.getDocument().getTextLength() + 1));
+      int offset = random.nextInt(editor.getDocument().getTextLength() + 1);
+      editor.getInlayModel().addInlineElement(offset, false, new MyInlayRenderer());
     }
   }
 
-  private class RemoveInlay implements Action {
+  private static class RemoveInlay implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
-      List<Inlay> inlays = getEditor().getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
+      List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
       if (!inlays.isEmpty()) Disposer.dispose(inlays.get(random.nextInt(inlays.size())));
     }
   }
 
-  private class MoveCaret implements Action {
+  private static class UpdateInlay implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      List<Inlay<? extends MyInlayRenderer>> inlays =
+        editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength(), MyInlayRenderer.class);
+      if (!inlays.isEmpty()) {
+        Inlay<? extends MyInlayRenderer> inlay = inlays.get(random.nextInt(inlays.size()));
+        inlay.getRenderer().width = MIN_INLAY_WIDTH + random.nextInt(MAX_INLAY_WIDTH - MIN_INLAY_WIDTH + 1);
+        inlay.update();
+      }
+    }
+  }
+
+  private static class BatchInlayOperation implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      editor.getInlayModel().execute(true, () -> {
+        int count = 1 + random.nextInt(MAX_INLAY_OPERATIONS_IN_BATCH);
+        for (int i = 0; i < count; i++) {
+          doRandomAction(editor, random, INLAY_PRIMITIVE_ACTIONS);
+        }
+      });
+    }
+  }
+
+  private static class MoveCaret implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
       if (document.isInBulkUpdate()) return;
-      getEditor().getCaretModel().moveToOffset(random.nextInt(document.getTextLength() + 1));
+      editor.getCaretModel().moveToOffset(random.nextInt(document.getTextLength() + 1));
     }
+  }
+
+  private static class MyInlayRenderer implements EditorCustomElementRenderer {
+    int width = 1;
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) { return width; }
+
+    @Override
+    public void paint(@NotNull Inlay inlay,
+                      @NotNull Graphics g,
+                      @NotNull Rectangle targetRegion,
+                      @NotNull TextAttributes textAttributes) {}
   }
 }

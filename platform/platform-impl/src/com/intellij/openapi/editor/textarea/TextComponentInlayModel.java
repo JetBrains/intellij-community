@@ -91,6 +91,16 @@ public class TextComponentInlayModel implements InlayModel {
   public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {}
 
   @Override
+  public void execute(boolean batchMode, @NotNull Runnable operation) {
+    operation.run();
+  }
+
+  @Override
+  public boolean isInBatchMode() {
+    return false;
+  }
+
+  @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
   }
 }

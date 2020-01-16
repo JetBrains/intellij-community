@@ -99,6 +99,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   private boolean myForceAdditionalColumns;
   private boolean myAfterLineEndInlayUpdated;
+  private boolean myInlayChangedInBatchMode;
 
   SoftWrapModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -481,6 +482,10 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
         (changeFlags & InlayModel.ChangeFlags.WIDTH_CHANGED) == 0) {
       return;
     }
+    if (myEditor.getInlayModel().isInBatchMode()) {
+      myInlayChangedInBatchMode = true;
+      return;
+    }
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;
@@ -497,6 +502,15 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
         offset = DocumentUtil.getLineEndOffset(offset, myEditor.getDocument());
       }
       myApplianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)));
+    }
+  }
+
+  @Override
+  public void onBatchModeFinish(@NotNull Editor editor) {
+    if (myEditor.getDocument().isInBulkUpdate()) return;
+    if (myInlayChangedInBatchMode) {
+      myInlayChangedInBatchMode = false;
+      recalculate();
     }
   }
 

@@ -246,14 +246,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  public void repaintEditorComponent() {
-    repaint();
-  }
-
-  public void repaintEditorComponentExact(int x, int y, int width, int height) {
-    repaint(x, y, width, height);
-  }
-
   public void repaintEditorComponent(int x, int y, int width, int height) {
     int topOverhang = Math.max(0, myEditor.myView.getTopOverhang());
     int bottomOverhang = Math.max(0, myEditor.myView.getBottomOverhang());
