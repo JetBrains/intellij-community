@@ -123,10 +123,10 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   @Override
   public void apply() throws ConfigurationException {
     if (myChangelistNameFormat.getText().trim().isEmpty()) {
-      throw new ConfigurationException("Change list name format should not be empty");
+      throw new ConfigurationException(TaskBundle.message("settings.change.list.name.format.should.not.be.empty"));
     }
     if (myBranchNameFormat.getText().trim().isEmpty()) {
-      throw new ConfigurationException("Branch name format should not be empty");
+      throw new ConfigurationException(TaskBundle.message("settings.Branch.name.format.should.not.be.empty"));
     }
     boolean oldUpdateEnabled = getConfig().updateEnabled;
     super.apply();
@@ -209,12 +209,13 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   private void setupAddAction(EditorTextField field) {
     field.addSettingsProvider(editor -> {
       ExtendableTextComponent.Extension extension =
-        ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, "Add placeholder", () -> {
+        ExtendableTextComponent.Extension
+          .create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, TaskBundle.message("settings.add.placeholder"), () -> {
           Set<String> placeholders = new HashSet<>();
           for (CommitPlaceholderProvider provider : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
             placeholders.addAll(Arrays.asList(provider.getPlaceholders(null)));
           }
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Placeholders",
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(TaskBundle.message("settings.placeholders"),
                                                                                      ArrayUtilRt.toStringArray(placeholders)) {
             @Override
             public PopupStep onChosen(String selectedValue, boolean finalChoice) {
