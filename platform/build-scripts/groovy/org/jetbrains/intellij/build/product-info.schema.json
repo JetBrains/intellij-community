@@ -29,6 +29,10 @@
       "description": "Product code (e.g. 'IC' for IntelliJ IDEA Community Edition) as used in full build number",
       "type": "string"
     },
+    "dataDirectoryName": {
+      "description": "Name of a directory used for storing settings, caches, etc.; the full path to the directory is OS-specific.",
+      "type": "string"
+    },
     "svgIconPath": {
       "description": "Path to an svg file which contains the product icon (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.svg'",
       "type": "string"
