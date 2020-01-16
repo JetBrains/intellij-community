@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
@@ -67,8 +68,8 @@ public class TerminalSettingsPanel {
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
 
-    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder("Project settings"));
-    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder("Application settings"));
+    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.terminal.project.settings")));
+    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.terminal.application.settings")));
 
     configureShellPathField();
     configureStartDirectoryField();
@@ -115,7 +116,7 @@ public class TerminalSettingsPanel {
   private void configureShellPathField() {
     myShellPathField.addBrowseFolderListener(
       "",
-      "Shell executable path",
+      IdeBundle.message("settings.terminal.shell.executable.path"),
       null,
       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
