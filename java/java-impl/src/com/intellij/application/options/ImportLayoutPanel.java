@@ -249,7 +249,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
       @Override
       public String getColumnName(int column) {
-        if (panel.areStaticImportsEnabled() && column == 0) return "Static";
+        if (panel.areStaticImportsEnabled() && column == 0) return ApplicationBundle.message("listbox.import.static");
         column -= panel.areStaticImportsEnabled() ? 1 : 0;
         return names[column];
       }
