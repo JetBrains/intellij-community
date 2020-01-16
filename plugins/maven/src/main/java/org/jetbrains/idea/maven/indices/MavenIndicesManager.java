@@ -13,6 +13,8 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
+import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.PathKt;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -35,6 +37,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public final class MavenIndicesManager implements Disposable {
   private static final String ELEMENT_ARCHETYPES = "archetypes";
@@ -430,20 +434,48 @@ public final class MavenIndicesManager implements Disposable {
 
   private static class IndexFixer {
     private final static Set<String> INDEXED = Collections.newSetFromMap(new WeakHashMap<>());
+    private final static List<File> queueToAdd = new SmartList<>();
+    private final ScheduledExecutorService executor = AppExecutorUtil.createBoundedScheduledExecutorService("Maven Index Fix Executor", 1);
 
     public void fixIndex(File file, MavenIndex index) {
+      if (index.getKind() != MavenSearchIndex.Kind.LOCAL) {
+        throw new IllegalArgumentException("File can be added only into local index");
+      }
       synchronized (INDEXED) {
         if (INDEXED.contains(file.getName())) {
           return;
         }
+        queueToAdd.add(file);
       }
+      executor.schedule(new AddToIndexRunnable(index), 500, TimeUnit.MILLISECONDS);
+    }
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        index.addArtifact(file);
+    private static class AddToIndexRunnable implements Runnable {
+      private final MavenIndex myIndex;
+
+      AddToIndexRunnable(MavenIndex index) {myIndex = index;}
+
+      @Override
+      public void run() {
+        List<File> filesToAdd;
         synchronized (INDEXED) {
-          INDEXED.add(file.getName());
+          if (queueToAdd.isEmpty()) {
+            return;
+          }
+          filesToAdd = new SmartList<>(queueToAdd);
+          queueToAdd.clear();
         }
-      });
+
+        for (File fileToAdd : filesToAdd) {
+          myIndex.addArtifact(fileToAdd);
+        }
+
+        synchronized (INDEXED) {
+          for (File fileToAdd : filesToAdd) {
+            INDEXED.add(fileToAdd.getName());
+          }
+        }
+      }
     }
   }
 }
