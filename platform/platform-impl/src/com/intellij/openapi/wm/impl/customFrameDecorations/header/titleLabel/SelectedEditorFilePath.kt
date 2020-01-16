@@ -278,7 +278,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     val shrinkedSimplePaths = simplePaths?.let { shrinkSimplePaths(it, width - (projectTitle.longWidth + classTitle.longWidth)) }
 
-    val pathPatterns = listOf( 
+    val pathPatterns = listOf(
       Pattern(projectTitle.longWidth + classTitle.shortWidth) {
         projectTitle.getLong() +
         classTitle.shrink(label, fm, width - projectTitle.longWidth)
@@ -294,9 +294,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     titleString = shrinkedSimplePaths?.let {
       projectTitle.getLong() +
       classTitle.getLong() + it
-    } ?: pathPatterns.first { it.preferredWidth < width }.let {
-        it.createTitle()
-    }
+    } ?: pathPatterns.firstOrNull { it.preferredWidth < width }?.let { it.createTitle() } ?: ""
 
     label.text = titleString
     label.toolTipText = if (!isClipped) null else components.joinToString(separator = "", transform = { it.toolTipPart })
