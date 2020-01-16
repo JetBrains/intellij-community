@@ -109,14 +109,14 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
           try {
             val store = createPersistentCredentialStore()
             if (store == null) {
-              throw ConfigurationException("Internal error, no available credential store implementation.")
+              throw ConfigurationException(IdeBundle.message("settings.password.internal.error.no.available.credential.store.implementation"))
             }
             passwordSafe.currentProvider = store
           }
           catch (e: UnsatisfiedLinkError) {
             LOG.warn(e)
             if (SystemInfo.isLinux) {
-              throw ConfigurationException("Package libsecret-1-0 is not installed (to install: sudo apt-get install libsecret-1-0 gnome-keyring).")
+              throw ConfigurationException(IdeBundle.message("settings.password.package.libsecret.1.0.is.not.installed"))
             }
             else {
               throw ConfigurationException(e.message)
@@ -125,7 +125,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
         }
 
         ProviderType.KEEPASS -> createAndSaveKeePassDatabaseWithNewOptions(settings)
-        else -> throw ConfigurationException("Unknown provider type: $providerType")
+        else -> throw ConfigurationException(IdeBundle.message("settings.password.unknown.provider.type", providerType))
       }
     }
     else if (isKeepassFileLocationChanged(settings)) {
@@ -141,7 +141,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
       }
       catch (e: Exception) {
         LOG.error(e)
-        throw ConfigurationException("Internal error: ${e.message}")
+        throw ConfigurationException(IdeBundle.message("settings.password.internal.error", e.message))
       }
     }
 
@@ -158,14 +158,14 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
   // for KeePass not clear - should we append in-memory credentials to existing database or not
   // (and if database doesn't exist, should we append or not), so, wait first user request (prefer to keep implementation simple)
   private fun createAndSaveKeePassDatabaseWithNewOptions(settings: PasswordSafeSettings) {
-    val newDbFile = getNewDbFile() ?: throw ConfigurationException("KeePass database path is empty.")
+    val newDbFile = getNewDbFile() ?: throw ConfigurationException(IdeBundle.message("settings.password.keepass.database.path.is.empty"))
     if (newDbFile.isDirectory()) {
       // we do not normalize as we do on file choose because if user decoded to type path manually,
       // it should be valid path and better to avoid any magic here
-      throw ConfigurationException("KeePass database file is directory.")
+      throw ConfigurationException(IdeBundle.message("settings.password.keepass.database.file.is.directory."))
     }
     if (!newDbFile.fileName.toString().endsWith(".kdbx")) {
-      throw ConfigurationException("KeePass database file should ends with \".kdbx\".")
+      throw ConfigurationException(IdeBundle.message("settings.password.keepass.database.file.should.ends.with.kdbx"))
     }
 
     settings.keepassDb = newDbFile.toString()
@@ -174,11 +174,11 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
       KeePassFileManager(newDbFile, getDefaultMasterPasswordFile(), getEncryptionSpec(), secureRandom).useExisting()
     }
     catch (e: IncorrectMasterPasswordException) {
-      throw ConfigurationException("Master password for KeePass database is not correct (\"Clear\" can be used to reset database).")
+      throw ConfigurationException(IdeBundle.message("settings.password.master.password.for.keepass.database.is.not.correct"))
     }
     catch (e: Exception) {
       LOG.error(e)
-      throw ConfigurationException("Internal error: ${e.message}")
+      throw ConfigurationException(IdeBundle.message("settings.password.internal.error", e.message))
     }
   }
 
@@ -199,7 +199,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
 
         row {
           keepassRadioButton = radioButton(IdeBundle.message("passwordSafeConfigurable.in.keepass"), ProviderType.KEEPASS).component
-          row("Database:") {
+          row(IdeBundle.message("settings.password.database")) {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
               it.isDirectory || it.name.endsWith(".kdbx")
             }
@@ -311,7 +311,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
 
       // even if current provider is not KEEPASS, all actions for db file must be applied immediately (show error if new master password not applicable for existing db file)
       if (createKeePassFileManager()?.askAndSetMasterKey(event) == true) {
-        templatePresentation.text = "Change Master Password"
+        templatePresentation.text = IdeBundle.message("settings.password.change.master.password")
       }
     }
 
