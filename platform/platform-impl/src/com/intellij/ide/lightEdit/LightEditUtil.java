@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
+import com.intellij.ide.lightEdit.project.LightEditProjectManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -45,8 +45,18 @@ public class LightEditUtil {
     return false;
   }
 
+  @NotNull
   public static Project getProject() {
-    return ProjectManager.getInstance().getDefaultProject();
+    return LightEditService.getInstance().getOrCreateProject();
+  }
+
+  @Nullable
+  public static Project getProjectIfCreated() {
+    return LightEditService.getInstance().getProject();
+  }
+
+  public static boolean isLightEditProject(@Nullable Project project) {
+    return LightEditProjectManager.isLightEditProject(project);
   }
 
   static boolean confirmClose(@NotNull String message,

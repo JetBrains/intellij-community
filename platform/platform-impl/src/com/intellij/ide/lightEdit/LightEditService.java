@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
+import com.intellij.ide.lightEdit.project.LightEditProjectManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -13,6 +14,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +35,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   private LightEditFrameWrapper myFrameWrapper;
   private final LightEditorManager myEditorManager;
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
+  private final LightEditProjectManager myLightEditProjectManager = new LightEditProjectManager();
 
   @Nullable
   @Override
@@ -75,6 +78,16 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
 
   private static String getAppName() {
     return ApplicationInfo.getInstance().getVersionName();
+  }
+
+  @Nullable
+  Project getProject() {
+    return myLightEditProjectManager.getProject();
+  }
+
+  @NotNull
+  Project getOrCreateProject() {
+    return myLightEditProjectManager.getOrCreateProject();
   }
 
   public void openFile(@NotNull VirtualFile file) {
@@ -154,6 +167,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
         disposeFrameWrapper();
         LOG.info("No open projects or welcome frame, exiting");
         try {
+          myLightEditProjectManager.close();
           ApplicationManager.getApplication().exit();
         }
         catch (Throwable t) {

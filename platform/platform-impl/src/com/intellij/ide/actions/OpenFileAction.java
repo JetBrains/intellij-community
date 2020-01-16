@@ -142,7 +142,12 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
   public static void openFile(VirtualFile file, @NotNull Project project) {
     NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
-    PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
+    if (LightEditUtil.isLightEditProject(project)) {
+      LightEditUtil.openFile(file);
+    }
+    else {
+      PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
+    }
   }
 
   private static class ProjectOnlyFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
