@@ -530,7 +530,7 @@ open class IdeStarter : ApplicationStarter {
         runActivity("mac touchbar on app init") {
           TouchBarsManager.onApplicationInitialized()
           if (TouchBarsManager.isTouchBarAvailable()) {
-            CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")
+            CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, IdeBundle.message("settings.menus.group.touch.bar"))
           }
         }
       }
