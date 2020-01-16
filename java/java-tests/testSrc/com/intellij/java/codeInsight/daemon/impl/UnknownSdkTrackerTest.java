@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -17,6 +18,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,6 +130,9 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   @NotNull
   private List<String> detectMissingSdks() {
     UnknownSdkTracker.getInstance(getProject()).updateUnknownSdks();
+
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    UIUtil.dispatchAllInvocationEvents();
 
     ArrayList<String> infos = new ArrayList<>();
     for (SdkFixInfo notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
