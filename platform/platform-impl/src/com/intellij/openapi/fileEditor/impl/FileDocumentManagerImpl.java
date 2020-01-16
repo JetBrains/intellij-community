@@ -746,7 +746,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
     PsiFile cachedPsiFile = project == null ? null : PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
-    return !(FileUtilRt.isTooLarge(file.getLength()) && file.getFileType().isBinary()) &&
+    return !(FileUtilRt.isTooLarge(file.getLength())) &&
            (cachedPsiFile == null || cachedPsiFile instanceof PsiFileImpl || isBinaryWithDecompiler(file));
   }
 
