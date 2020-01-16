@@ -3,88 +3,89 @@ package com.intellij.workspace.api
 import org.junit.Assert.*
 import org.junit.Test
 
-data class FirstEntityId(val name: String) : PersistentEntityId<ModuleEntity>() {
+data class EntityId(val name: String) : PersistentEntityId<ModuleEntity>() {
   override val parentId: PersistentEntityId<*>?
     get() = null
   override val presentableName: String
     get() = name
 }
 
-internal interface FirstEntity : TypedEntityWithPersistentId {
+internal interface EntityWithPersistentId : TypedEntityWithPersistentId {
   val name: String
+
   @JvmDefault
-  override fun persistentId(): FirstEntityId = FirstEntityId(name)
+  override fun persistentId(): EntityId = EntityId(name)
 }
 
-internal interface SecondEntity : TypedEntity {
-  val firstId: FirstEntityId
-  val property1: String
+private interface EntityWithIdAsField : TypedEntity {
+  val entityId: EntityId
+  val property: String
 }
 
-internal interface ThirdEntity : TypedEntity {
-  val property1: DummyClass
-  val property2: String
+private interface EntityWithIdAsFieldInInnerClass : TypedEntity {
+  val propertyWithId: IdAsFieldClass
+  val property: String
 }
 
-internal interface FourthEntity : TypedEntity {
-  val property1: List<FirstEntityId>
+private interface EntityWithIdsAsList : TypedEntity {
+  val propertyWithId: List<EntityId>
 }
 
-internal interface FifthEntity : TypedEntity {
-  val property1: DummyClass1
+private interface EntityWithIdAsListInInnerClass : TypedEntity {
+  val propertyWithId: IdInListClass
 }
 
-data class DummyClass(val firstId: FirstEntityId)
-data class DummyClass1(val dummyClass: DummyClass, val list: List<FirstEntityId>)
+data class IdAsFieldClass(val id: EntityId)
+data class IdInListClass(val idAsFieldClass: IdAsFieldClass, val list: List<EntityId>)
 
-private interface ModifiableFirstEntity : FirstEntity, ModifiableTypedEntity<FirstEntity> {
+private interface ModifiableEntityWithPersistentId : EntityWithPersistentId, ModifiableTypedEntity<EntityWithPersistentId> {
   override var name: String
 }
 
-private interface ModifiableSecondEntity : SecondEntity, ModifiableTypedEntity<SecondEntity> {
-  override var firstId: FirstEntityId
-  override var property1: String
+private interface ModifiableEntityWithIdAsField : EntityWithIdAsField, ModifiableTypedEntity<EntityWithIdAsField> {
+  override var entityId: EntityId
+  override var property: String
 }
 
-private interface ModifiableThirdEntity : ThirdEntity, ModifiableTypedEntity<ThirdEntity> {
-  override var property1: DummyClass
-  override var property2: String
+private interface ModifiableEntityWithIdAsFieldInInnerClass : EntityWithIdAsFieldInInnerClass, ModifiableTypedEntity<EntityWithIdAsFieldInInnerClass> {
+  override var propertyWithId: IdAsFieldClass
+  override var property: String
 }
 
-private interface ModifiableFourthEntity : FourthEntity, ModifiableTypedEntity<FourthEntity> {
-  override var property1: List<FirstEntityId>
+private interface ModifiableEntityWithIdsAsList : EntityWithIdsAsList, ModifiableTypedEntity<EntityWithIdsAsList> {
+  override var propertyWithId: List<EntityId>
 }
 
-private interface ModifiableFifthEntity : FifthEntity, ModifiableTypedEntity<FifthEntity> {
-  override var property1: DummyClass1
+private interface ModifiableEntityWithIdAsListInInnerClass : EntityWithIdAsListInInnerClass, ModifiableTypedEntity<EntityWithIdAsListInInnerClass> {
+  override var propertyWithId: IdInListClass
 }
 
-private fun TypedEntityStorageBuilder.addFirstEntity(name: String) =
-  addEntity(ModifiableFirstEntity::class.java, SampleEntitySource("test")) {
+private fun TypedEntityStorageBuilder.addEntityWithPersistentId(name: String) =
+  addEntity(ModifiableEntityWithPersistentId::class.java, SampleEntitySource("test")) {
     this.name = name
   }
 
-private fun TypedEntityStorageBuilder.addSecondEntity(persistentId: FirstEntityId,
-                                                      property1: String) =
-  addEntity(ModifiableSecondEntity::class.java, SampleEntitySource("test")) {
-    this.firstId = persistentId
-    this.property1 = property1
+private fun TypedEntityStorageBuilder.addEntityWithIdAsField(entityId: EntityId,
+                                                             property: String) =
+  addEntity(ModifiableEntityWithIdAsField::class.java, SampleEntitySource("test")) {
+    this.entityId = entityId
+    this.property = property
   }
 
-private fun TypedEntityStorageBuilder.addThirdEntity(property1: DummyClass, property2: String) =
-  addEntity(ModifiableThirdEntity::class.java, SampleEntitySource("test")) {
-    this.property1 = property1
-    this.property2 = property2
+private fun TypedEntityStorageBuilder.addEntityWithIdAsFieldInInnerClass(propertyWithId: IdAsFieldClass, property: String) =
+  addEntity(ModifiableEntityWithIdAsFieldInInnerClass::class.java, SampleEntitySource("test")) {
+    this.propertyWithId = propertyWithId
+    this.property = property
   }
 
-private fun TypedEntityStorageBuilder.addFourthEntity(property1: List<FirstEntityId>) =
-  addEntity(ModifiableFourthEntity::class.java, SampleEntitySource("test")) {
-    this.property1 = property1
+private fun TypedEntityStorageBuilder.addEntityWithIdsAsList(propertyWithId: List<EntityId>) =
+  addEntity(ModifiableEntityWithIdsAsList::class.java, SampleEntitySource("test")) {
+    this.propertyWithId = propertyWithId
   }
 
-private fun TypedEntityStorageBuilder.addFifthEntity(property1: DummyClass1) =
-  addEntity(ModifiableFifthEntity::class.java, SampleEntitySource("test")) {
-    this.property1 = property1
+private fun TypedEntityStorageBuilder.addEntityWithIdAsListInInnerClass(propertyWithId: IdInListClass) =
+  addEntity(ModifiableEntityWithIdAsListInInnerClass::class.java, SampleEntitySource("test")) {
+    this.propertyWithId = propertyWithId
   }
 
 class PersistentIdInProxyBasedStorageTest {
@@ -92,74 +93,167 @@ class PersistentIdInProxyBasedStorageTest {
   fun `rename persistent Id reference as root field`() {
     val newName = "ant"
     val builder = TypedEntityStorageBuilder.create()
-    val maven = builder.addFirstEntity("maven")
-    val originSecondEntity = builder.addSecondEntity(maven.persistentId(), "gradle")
+    val maven = builder.addEntityWithPersistentId("maven")
+    val originSecondEntity = builder.addEntityWithIdAsField(maven.persistentId(), "gradle")
     builder.checkConsistency()
-    builder.modifyEntity(ModifiableFirstEntity::class.java, maven) {
+    builder.modifyEntity(ModifiableEntityWithPersistentId::class.java, maven) {
       name = newName
     }
     builder.checkConsistency()
-    val newSecondEntity = builder.entities(SecondEntity::class.java).single()
+    val newSecondEntity = builder.entities(EntityWithIdAsField::class.java).single()
     assertFalse(newSecondEntity === originSecondEntity)
-    assertEquals(newSecondEntity.firstId.name, newName)
+    assertEquals(newSecondEntity.entityId.name, newName)
   }
 
   @Test
-  fun `rename persistent Id reference as field in inner object`() {
+  fun `rename persistent Id reference as field in inner class`() {
     val newName = "ant"
     val builder = TypedEntityStorageBuilder.create()
-    val maven = builder.addFirstEntity("maven")
-    val originThirdEntity = builder.addThirdEntity(DummyClass(maven.persistentId()), "gradle")
+    val maven = builder.addEntityWithPersistentId("maven")
+    val originThirdEntity = builder.addEntityWithIdAsFieldInInnerClass(IdAsFieldClass(maven.persistentId()), "gradle")
     builder.checkConsistency()
-    builder.modifyEntity(ModifiableFirstEntity::class.java, maven) {
+    builder.modifyEntity(ModifiableEntityWithPersistentId::class.java, maven) {
       name = newName
     }
     builder.checkConsistency()
-    val newThirdEntity = builder.entities(ThirdEntity::class.java).single()
+    val newThirdEntity = builder.entities(EntityWithIdAsFieldInInnerClass::class.java).single()
     assertFalse(newThirdEntity === originThirdEntity)
-    assertEquals(newThirdEntity.property1.firstId.name, newName)
+    assertEquals(newThirdEntity.propertyWithId.id.name, newName)
   }
 
   @Test
   fun `rename persistent Id reference as list`() {
     val newName = "ant"
     val builder = TypedEntityStorageBuilder.create()
-    val maven = builder.addFirstEntity("maven")
-    val gradle = builder.addFirstEntity("gradle")
+    val maven = builder.addEntityWithPersistentId("maven")
+    val gradle = builder.addEntityWithPersistentId("gradle")
     val originList = mutableListOf(maven.persistentId(), gradle.persistentId())
-    builder.addFourthEntity(originList)
+    builder.addEntityWithIdsAsList(originList)
     builder.checkConsistency()
-    builder.modifyEntity(ModifiableFirstEntity::class.java, maven) {
+    builder.modifyEntity(ModifiableEntityWithPersistentId::class.java, maven) {
       name = newName
     }
     builder.checkConsistency()
-    val newList = builder.entities(FourthEntity::class.java).single().property1
+    val newList = builder.entities(EntityWithIdsAsList::class.java).single().propertyWithId
     assertFalse(originList === newList)
-    assertTrue(newList.map { it.name }.contains(newName))
+    newList.first().apply { assertEquals(newName, name) }
   }
 
   @Test
   fun `rename persistent Id reference in all entities`() {
     val newName = "gant"
     val builder = TypedEntityStorageBuilder.create()
-    val ant = builder.addFirstEntity("ant")
-    val maven = builder.addFirstEntity("maven")
-    val gradle = builder.addFirstEntity("gradle")
+    val ant = builder.addEntityWithPersistentId("ant")
+    val maven = builder.addEntityWithPersistentId("maven")
+    val gradle = builder.addEntityWithPersistentId("gradle")
     val originList = mutableListOf(ant.persistentId(), gradle.persistentId())
     val originListTwo = mutableListOf(maven.persistentId(), ant.persistentId())
-    builder.addFourthEntity(originList)
-    builder.addFifthEntity(DummyClass1(DummyClass(ant.persistentId()), originListTwo))
+    builder.addEntityWithIdsAsList(originList)
+    builder.addEntityWithIdAsListInInnerClass(IdInListClass(IdAsFieldClass(ant.persistentId()), originListTwo))
     builder.checkConsistency()
-    builder.modifyEntity(ModifiableFirstEntity::class.java, ant) {
+    builder.modifyEntity(ModifiableEntityWithPersistentId::class.java, ant) {
       name = newName
     }
     builder.checkConsistency()
-    val newList = builder.entities(FourthEntity::class.java).single().property1
+    val newList = builder.entities(EntityWithIdsAsList::class.java).single().propertyWithId
     assertFalse(originList === newList)
-    assertTrue(newList.map { it.name }.contains(newName))
+    newList.first().apply { assertEquals(newName, name) }
 
-    val dummyClass1 = builder.entities(FifthEntity::class.java).single().property1
-    assertTrue(dummyClass1.list.map { it.name }.contains(newName))
-    assertEquals(dummyClass1.dummyClass.firstId.name, newName)
+    val dummyClass1 = builder.entities(EntityWithIdAsListInInnerClass::class.java).single().propertyWithId
+    dummyClass1.list.last().apply { assertEquals(newName, name) }
+    assertEquals(dummyClass1.idAsFieldClass.id.name, newName)
+  }
+
+  @Test
+  fun `replace property and rename persistent Id reference in all entities`() {
+    val gantName = "gant"
+    val bazelName = "bazel"
+    val builder = TypedEntityStorageBuilder.create()
+
+    val ant = builder.addEntityWithPersistentId("ant")
+    val maven = builder.addEntityWithPersistentId("maven")
+
+    val entityMavenIdAsField = builder.addEntityWithIdAsField(maven.persistentId(), "maven")
+    builder.addEntityWithIdAsField(ant.persistentId(), "ant")
+    val originList = listOf(maven.persistentId())
+    builder.addEntityWithIdsAsList(originList)
+    builder.checkConsistency()
+
+    builder.modifyEntity(ModifiableEntityWithIdAsField::class.java, entityMavenIdAsField) {
+      entityId = ant.persistentId()
+    }
+    builder.checkConsistency()
+
+    builder.entities(EntityWithIdAsField::class.java).forEach { assertEquals(ant.persistentId(), it.entityId) }
+    builder.entities(EntityWithIdsAsList::class.java).single().propertyWithId.forEach { assertEquals(maven.persistentId(), it) }
+
+    builder.modifyEntity(ModifiableEntityWithPersistentId::class.java, maven) {
+      name = gantName
+    }
+    builder.checkConsistency()
+
+    builder.entities(EntityWithIdAsField::class.java).forEach { assertEquals(ant.persistentId(), it.entityId) }
+    builder.entities(EntityWithIdsAsList::class.java).single().propertyWithId.forEach { assertEquals(gantName, it.name) }
+
+    builder.modifyEntity(ModifiableEntityWithPersistentId::class.java, ant) {
+      name = bazelName
+    }
+    builder.checkConsistency()
+    builder.entities(EntityWithIdAsField::class.java).forEach { assertEquals(bazelName, it.entityId.name) }
+  }
+
+  @Test
+  fun `remove id from list and rename persistent Id reference in all entities`() {
+    val newName = "gant"
+    val builder = TypedEntityStorageBuilder.create()
+
+    val ant = builder.addEntityWithPersistentId("ant")
+    val maven = builder.addEntityWithPersistentId("maven")
+
+    builder.addEntityWithIdAsField(maven.persistentId(), "gradle")
+    val originList = listOf(ant.persistentId(), maven.persistentId())
+    val entityIdsAsList = builder.addEntityWithIdsAsList(originList)
+    builder.checkConsistency()
+
+    builder.modifyEntity(ModifiableEntityWithIdsAsList::class.java, entityIdsAsList) {
+      propertyWithId = listOf(maven.persistentId())
+    }
+    builder.checkConsistency()
+
+    var newListWithIds = builder.entities(EntityWithIdsAsList::class.java).single().propertyWithId
+    assertEquals(1, newListWithIds.size)
+    assertEquals(maven.persistentId(), newListWithIds[0])
+
+    builder.modifyEntity(ModifiableEntityWithPersistentId::class.java, maven) {
+      name = newName
+    }
+    builder.checkConsistency()
+
+    newListWithIds = builder.entities(EntityWithIdsAsList::class.java).single().propertyWithId
+    assertEquals(1, newListWithIds.size)
+    assertEquals(newName, newListWithIds[0].name)
+    assertEquals(newName, builder.entities(EntityWithIdAsField::class.java).single().entityId.name)
+  }
+
+  @Test
+  fun `remove id from list and check consistency`() {
+    val builder = TypedEntityStorageBuilder.create()
+
+    val ant = builder.addEntityWithPersistentId("ant")
+    val maven = builder.addEntityWithPersistentId("maven")
+
+    builder.addEntityWithIdAsField(maven.persistentId(), "gradle")
+    val originList = listOf(ant.persistentId(), maven.persistentId())
+    val entityIdsAsList = builder.addEntityWithIdsAsList(originList)
+    builder.checkConsistency()
+
+    builder.modifyEntity(ModifiableEntityWithIdsAsList::class.java, entityIdsAsList) {
+      propertyWithId = listOf(ant.persistentId())
+    }
+    builder.checkConsistency()
+
+    val newListWithIds = builder.entities(EntityWithIdsAsList::class.java).single().propertyWithId
+    assertEquals(1, newListWithIds.size)
+    assertEquals(ant.persistentId(), newListWithIds[0])
   }
 }
