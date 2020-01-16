@@ -135,8 +135,8 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
       })
       .createPanel();
 
-    String text = XmlStringUtil.wrapInHtml("Specify a list of plugins required for your project. " +
-                                           ApplicationNamesInfo.getInstance().getFullProductName() + " will notify you if a required plugin is missing or needs an update. ");
+    String text = XmlStringUtil
+      .wrapInHtml(IdeBundle.message("settings.required.plugins.title", ApplicationNamesInfo.getInstance().getFullProductName()));
     return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(new JBLabel(text));
   }
 
