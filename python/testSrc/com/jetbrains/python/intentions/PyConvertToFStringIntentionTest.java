@@ -98,6 +98,11 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
     doTest();
   }
 
+  // PY-38319
+  public void testPercentOperatorAddingEscapingToCurlyBraces() {
+    doTest();
+  }
+
   public void testFormatMethodSimple() {
     doTest();
   }

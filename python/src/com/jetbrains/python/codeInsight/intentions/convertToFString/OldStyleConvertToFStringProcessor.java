@@ -136,6 +136,6 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
 
   @Override
   protected void processLiteralChunk(@NotNull String chunk, @NotNull StringBuilder fStringText) {
-    fStringText.append(chunk.replace("%%", "%"));
+    fStringText.append(chunk.replace("%%", "%").replace("{", "{{").replace("}", "}}"));
   }
 }
