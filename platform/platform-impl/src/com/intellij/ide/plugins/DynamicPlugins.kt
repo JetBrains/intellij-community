@@ -80,10 +80,6 @@ object DynamicPlugins {
   @JvmStatic
   @JvmOverloads
   fun allowLoadUnloadWithoutRestart(pluginDescriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
-    if (!ApplicationManager.getApplication().isInternal) {
-      return allowLoadUnloadSynchronously(pluginDescriptor)
-    }
-
     val anyProject = ProjectManager.getInstance().openProjects.firstOrNull() ?:
                      ProjectManager.getInstance().defaultProject
 
