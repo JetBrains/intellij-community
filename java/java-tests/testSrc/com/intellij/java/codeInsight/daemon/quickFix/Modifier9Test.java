@@ -16,10 +16,19 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class Modifier18Test extends LightQuickFixParameterizedTestCase {
+public class Modifier9Test extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/modifier18";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/modifier9";
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_9;
   }
 }
