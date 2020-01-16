@@ -15,17 +15,19 @@
  */
 package com.intellij.notification;
 
+import com.intellij.ide.IdeBundle;
+
 /**
  * @author spleaner
  */
 public enum NotificationDisplayType {
 
-  NONE("No popup"),
+  NONE(IdeBundle.message("notification.type.no.popup")),
   /** Expires automatically after 10 seconds. */
-  BALLOON("Balloon"),
+  BALLOON(IdeBundle.message("notification.type.balloon")),
   /** Needs to be closed by user. */
-  STICKY_BALLOON("Sticky balloon"),
-  TOOL_WINDOW("Tool window balloon");
+  STICKY_BALLOON(IdeBundle.message("notification.type.sticky.balloon")),
+  TOOL_WINDOW(IdeBundle.message("notification.type.tool.window.balloon"));
 
   private final String myTitle;
 
