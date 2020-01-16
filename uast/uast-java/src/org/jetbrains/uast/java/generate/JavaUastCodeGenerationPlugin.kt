@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.PsiDiamondTypeUtil
 import com.intellij.psi.impl.source.tree.CompositeElement
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.castSafelyTo
@@ -141,6 +142,12 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     else
       MethodCallUpgradeHelper(project, methodCall, expectedReturnType).tryUpgradeToExpectedType()
         ?.let { JavaUCallExpression(it, null) }
+  }
+
+  override fun createULiteralExpression(text: String, context: PsiElement?): UExpression? {
+    val literalExpr = psiFactory.createExpressionFromText(text, context)
+    if (literalExpr !is PsiLiteralExpressionImpl) return null
+    return JavaULiteralExpression(literalExpr, null)
   }
 
   private class MethodCallUpgradeHelper(val project: Project, val methodCall: PsiMethodCallExpression, val expectedReturnType: PsiType) {
