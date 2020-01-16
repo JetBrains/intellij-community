@@ -121,10 +121,10 @@ public class DumpIndexAction extends AnAction {
                     new IndexChunk(synthRoots, "SYNTH"))).collect(Collectors.toList());
   }
 
-  private static void exportIndices(@NotNull Project project,
-                                    @NotNull List<IndexChunk> chunks,
-                                    @NotNull Path out,
-                                    @NotNull ProgressIndicator indicator) {
+  public static void exportIndices(@NotNull Project project,
+                                   @NotNull List<IndexChunk> chunks,
+                                   @NotNull Path out,
+                                   @NotNull ProgressIndicator indicator) {
     Path indexRoot = PathKt.createDirectories(out.resolve("unpacked"));
     Path zipFile = out.resolve(out.getFileName() + ".zip");
 
