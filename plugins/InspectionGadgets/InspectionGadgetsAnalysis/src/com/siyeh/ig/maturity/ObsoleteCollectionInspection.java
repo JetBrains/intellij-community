@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,9 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       }
       final PsiType deepComponentType = type.getDeepComponentType();
       final String className = TypeUtils.resolvedClassName(deepComponentType);
-      return "java.util.Vector".equals(className) || "java.util.Hashtable".equals(className);
+      return "java.util.Vector".equals(className) ||
+             "java.util.Hashtable".equals(className) ||
+             "java.util.Stack".equals(className);
     }
 
     private boolean checkReferences(PsiNamedElement namedElement) {
