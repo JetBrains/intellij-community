@@ -128,8 +128,8 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
       }
 
       is EntityPropertyKind.DataClass -> {
-        if (classResolver.getRegistration(kind.aClass) == null) {
-          recursiveDataClass(kind.aClass, metaDataRegistry)
+        if (classResolver.getRegistration(kind.dataClass) == null) {
+          recursiveDataClass(kind.dataClass, metaDataRegistry)
         }
         Unit
       }
@@ -137,7 +137,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
       // It's Long
       is EntityPropertyKind.EntityValue -> Unit
       is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-        kind.subclassesProperties.forEach { subclassProperty ->
+        kind.subclassesKinds.forEach { subclassProperty ->
           val subclass = subclassProperty.key
           when {
             subclass.isData -> recursiveDataClass(subclass.java, metaDataRegistry)
@@ -166,7 +166,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
     }
     else {
       register(clazz)
-      val metadata = metaDataRegistry.getClassMetaData(clazz)
+      val metadata = metaDataRegistry.getDataClassMetaData(clazz)
       metadata.properties.values.forEach { recursiveRegister(it, metaDataRegistry) }
     }
   }
@@ -202,7 +202,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
 
       output.writeVarInt(allEntitySourceClasses.size, true)
       for (sourceClass in allEntitySourceClasses) {
-        val hash = storage.metaDataRegistry.getClassMetaData(sourceClass).hash(storage.metaDataRegistry)
+        val hash = storage.metaDataRegistry.getDataClassMetaData(sourceClass).hash(storage.metaDataRegistry)
         kryo.writeObject(output, TypeInfo(sourceClass.name, typeResolver.getPluginId(sourceClass), hash))
       }
 
@@ -274,7 +274,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
         }
 
         val expectedHash = typeInfo.hash
-        val actualHash = metaDataRegistry.getClassMetaData(clazz).hash(metaDataRegistry)
+        val actualHash = metaDataRegistry.getDataClassMetaData(clazz).hash(metaDataRegistry)
         if (!expectedHash.contentEquals(actualHash)) {
           error("Serialized entity source type and current runtime type are different: $clazz")
         }

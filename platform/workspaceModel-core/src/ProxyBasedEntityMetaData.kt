@@ -55,8 +55,8 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
           is EntityPropertyKind.List -> error("List of lists are not supported")
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
             (value as List<*>).forEach {
-              itemKind.subclassesProperties.forEach { subclassProperties ->
-                if (subclassProperties.key.isInstance(it)) subclassProperties.value.collectPersistentIdReferences(it, collector)
+              itemKind.subclassesKinds.forEach { subclassKinds ->
+                if (subclassKinds.key.isInstance(it)) subclassKinds.value.collectPersistentIdReferences(it, collector)
               }
             }
           }
@@ -66,8 +66,8 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
         }.let { } // exhaustive when
         is EntityPropertyKind.PersistentId -> collector((value as PersistentEntityId<*>))
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-          kind.subclassesProperties.forEach { subclassProperties ->
-            if (subclassProperties.key.isInstance(value)) subclassProperties.value.collectPersistentIdReferences(value, collector)
+          kind.subclassesKinds.forEach { subclassKinds ->
+            if (subclassKinds.key.isInstance(value)) subclassKinds.value.collectPersistentIdReferences(value, collector)
           }
         }
         is EntityPropertyKind.DataClass -> kind.collectPersistentIdReferences(value, collector)
@@ -89,8 +89,8 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
         is EntityPropertyKind.List -> when (val itemKind = kind.itemKind) {
           is EntityPropertyKind.List -> error("List of lists are not supported")
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (value as List<*>).map {
-            return@map itemKind.subclassesProperties.entries.filter { subclassProperties -> subclassProperties.key.isInstance(it) }
-              .map { subclassProperties -> subclassProperties.value.replaceAll(it, oldEntity, newEntity) }
+            return@map itemKind.subclassesKinds.entries.filter { subclassKinds -> subclassKinds.key.isInstance(it) }
+              .map { subclassKinds -> subclassKinds.value.replaceAll(it, oldEntity, newEntity) }
               .first()
           }
           is EntityPropertyKind.DataClass -> (value as List<*>).map { itemKind.replaceAll(it, oldEntity, newEntity) }
@@ -98,7 +98,7 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
           else -> value
         }
         is EntityPropertyKind.PersistentId -> if (value == oldEntity) newEntity else value
-        is EntityPropertyKind.SealedKotlinDataClassHierarchy -> kind.subclassesProperties.entries
+        is EntityPropertyKind.SealedKotlinDataClassHierarchy -> kind.subclassesKinds.entries
           .filter { subclassProperties -> subclassProperties.key.isInstance(value) }
           .map { subclassProperties -> subclassProperties.value.replaceAll(value, oldEntity, newEntity) }
           .first()
@@ -117,8 +117,8 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
 
 internal sealed class EntityPropertyKind {
   internal class Primitive(val clazz: Class<*>) : EntityPropertyKind()
-  internal class SealedKotlinDataClassHierarchy(val subclassesProperties: Map<KClass<*>, DataClass>) : EntityPropertyKind()
-  internal class DataClass(val aClass: Class<*>, val properties: Map<String, EntityPropertyKind>,
+  internal class SealedKotlinDataClassHierarchy(val subclassesKinds: Map<KClass<*>, DataClass>) : EntityPropertyKind()
+  internal class DataClass(val dataClass: Class<*>, val properties: Map<String, EntityPropertyKind>,
                            private val referenceIdAccessors: kotlin.collections.List<kotlin.collections.List<Method>>,
                            private val referencePersistentIdAccessors: kotlin.collections.List<kotlin.collections.List<Method>>) : EntityPropertyKind() {
 
@@ -185,9 +185,9 @@ internal sealed class EntityPropertyKind {
     }
 
     fun  replaceAll(instance: Any?,  oldElement: PersistentEntityId<*>, newElement: PersistentEntityId<*>) : Any?  {
-      fun collect(getters: kotlin.collections.List<Method>, getterIndex: Int, value: Any): Any {
+      fun replaceProperty(getters: kotlin.collections.List<Method>, getterIndex: Int, value: Any): Any {
         when {
-          value is kotlin.collections.List<*> -> return value.filterNotNull().map { collect(getters, getterIndex, it) }
+          value is kotlin.collections.List<*> -> return value.filterNotNull().map { replaceProperty(getters, getterIndex, it) }
           getterIndex >= getters.size -> {
             val id = value as PersistentEntityId<*>
             return if (id == oldElement) newElement else value
@@ -197,7 +197,7 @@ internal sealed class EntityPropertyKind {
             val originPropertyValue = getterMethod(value)
             if (originPropertyValue == null) return value
             val propertyName = getterMethod.name.removePrefix("get").decapitalize()
-            val propertyValue = collect(getters, getterIndex + 1, originPropertyValue)
+            val propertyValue = replaceProperty(getters, getterIndex + 1, originPropertyValue)
             return if (propertyValue != originPropertyValue) value.copyWithPropertyReplace(propertyName, propertyValue) else value
           }
         }
@@ -206,7 +206,7 @@ internal sealed class EntityPropertyKind {
       if (instance == null) return null
       var originInstance: Any = instance
       for (accessors in referencePersistentIdAccessors) {
-        val newInstance = collect(accessors, 0, originInstance)
+        val newInstance = replaceProperty(accessors, 0, originInstance)
         if (newInstance != originInstance) originInstance = newInstance
       }
       return originInstance
@@ -229,10 +229,10 @@ internal sealed class EntityPropertyKind {
 
 internal class EntityMetaDataRegistry {
   private val entityMetaData = ConcurrentFactoryMap.createMap { clazz: Class<out TypedEntity> -> calculateMetaData(clazz) }
-  private val classMetaData = ConcurrentFactoryMap.createMap { clazz: Class<*> -> calculateDataClassMeta(clazz) }
+  private val dataClassMetaData = ConcurrentFactoryMap.createMap { clazz: Class<*> -> calculateDataClassMeta(clazz) }
 
   fun getEntityMetaData(clazz: Class<out TypedEntity>): EntityMetaData = entityMetaData[clazz]!!
-  fun getClassMetaData(clazz: Class<*>): EntityPropertyKind.DataClass = classMetaData[clazz]!!
+  fun getDataClassMetaData(clazz: Class<*>): EntityPropertyKind.DataClass = dataClassMetaData[clazz]!!
 
   private fun calculateDataClassMeta(clazz: Class<*>): EntityPropertyKind.DataClass {
     // TODO Assert it's a data class
@@ -259,7 +259,7 @@ internal class EntityMetaDataRegistry {
         }
         is EntityPropertyKind.DataClass -> {
           for ((propertyName, propertyValue) in kind.properties) {
-            collect(propertyValue, currentAccessor + listOf(kind.aClass.getMethod("get${propertyName.capitalize()}")), result)
+            collect(propertyValue, currentAccessor + listOf(kind.dataClass.getMethod("get${propertyName.capitalize()}")), result)
           }
         }
       }
@@ -285,7 +285,7 @@ internal class EntityMetaDataRegistry {
         }
         is EntityPropertyKind.DataClass -> {
           for ((propertyName, propertyValue) in kind.properties) {
-            collect(propertyValue, currentAccessor + listOf(kind.aClass.getMethod("get${propertyName.capitalize()}")), result)
+            collect(propertyValue, currentAccessor + listOf(kind.dataClass.getMethod("get${propertyName.capitalize()}")), result)
           }
         }
       }
@@ -337,8 +337,8 @@ internal class EntityMetaDataRegistry {
       }
       // TODO Make compatible with Java. Check Modifier.isFinal(type.modifiers), all fields are final etc
       type.kotlin.isData || type.kotlin.objectInstance != null -> {
-        val classMetadata = classMetaData[type]!!
-        checkClassRestrictions(classMetadata, allowReferences = true)
+        val classMetadata = dataClassMetaData[type]!!
+        checkDataClassRestrictions(classMetadata, allowReferences = true)
         classMetadata
       }
       type.kotlin.isSealed -> {
@@ -364,19 +364,19 @@ internal class EntityMetaDataRegistry {
     else -> throw IllegalArgumentException("Properties of type $type aren't allowed in entities")
   }
 
-  private fun checkClassRestrictions(metadata: EntityPropertyKind.DataClass, allowReferences: Boolean) {
+  private fun checkDataClassRestrictions(metadata: EntityPropertyKind.DataClass, allowReferences: Boolean) {
     fun checkKind(kind: EntityPropertyKind) {
       when (kind) {
         is EntityPropertyKind.Primitive, is EntityPropertyKind.PersistentId, EntityPropertyKind.FileUrl -> Unit
         is EntityPropertyKind.EntityReference -> if (!allowReferences) {
-          error("EntityReferences are unsupported in data classes: ${metadata.aClass.name}")
+          error("EntityReferences are unsupported in data classes: ${metadata.dataClass.name}")
         }
         else Unit
-        is EntityPropertyKind.DataClass -> checkClassRestrictions(classMetaData[kind.aClass]!!, allowReferences)
+        is EntityPropertyKind.DataClass -> checkDataClassRestrictions(dataClassMetaData[kind.dataClass]!!, allowReferences)
         is EntityPropertyKind.List -> checkKind(kind.itemKind)
-        is EntityPropertyKind.EntityValue -> error("Entities are unsupported in data classes: " + metadata.aClass.name)
+        is EntityPropertyKind.EntityValue -> error("Entities are unsupported in data classes: " + metadata.dataClass.name)
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-          kind.subclassesProperties.forEach { checkClassRestrictions(classMetaData[it.key.java]!!, allowReferences) }
+          kind.subclassesKinds.forEach { checkDataClassRestrictions(dataClassMetaData[it.key.java]!!, allowReferences) }
         }
       }.let { }  // exhaustive when
     }
@@ -391,13 +391,13 @@ internal class EntityMetaDataRegistry {
       is EntityPropertyKind.EntityReference -> putEntityMetadata(metaDataRegistry.getEntityMetaData(kind.clazz), metaDataRegistry, visited)
       is EntityPropertyKind.List -> putEntityPropertyKind(kind.itemKind, metaDataRegistry, visited)
       is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-        kind.subclassesProperties.keys.sortedBy { it.jvmName }.forEach { putDataClassMetadata(metaDataRegistry.getClassMetaData(it.java), metaDataRegistry, visited) }
+        kind.subclassesKinds.keys.sortedBy { it.jvmName }.forEach { putDataClassMetadata(metaDataRegistry.getDataClassMetaData(it.java), metaDataRegistry, visited) }
         this
       }
       is EntityPropertyKind.DataClass -> putDataClassMetadata(kind, metaDataRegistry, visited)
       is EntityPropertyKind.EntityValue -> putEntityMetadata(metaDataRegistry.getEntityMetaData(kind.clazz), metaDataRegistry, visited)
       EntityPropertyKind.FileUrl -> this
-      is EntityPropertyKind.PersistentId -> putDataClassMetadata(metaDataRegistry.getClassMetaData(kind.clazz), metaDataRegistry, visited)
+      is EntityPropertyKind.PersistentId -> putDataClassMetadata(metaDataRegistry.getDataClassMetaData(kind.clazz), metaDataRegistry, visited)
       is EntityPropertyKind.Primitive -> {
         putUnencodedChars(kind.clazz.name)
 
@@ -428,14 +428,14 @@ private fun Hasher.putEntityMetadata(metadata: EntityMetaData, metaDataRegistry:
 
 private fun Hasher.putDataClassMetadata(metadata: EntityPropertyKind.DataClass, metaDataRegistry: EntityMetaDataRegistry, visited: MutableSet<Class<*>>): Hasher {
   putUnencodedChars("DATACLASS")
-  putUnencodedChars(metadata.aClass.name)
+  putUnencodedChars(metadata.dataClass.name)
 
-  if (!visited.add(metadata.aClass)) {
+  if (!visited.add(metadata.dataClass)) {
     putUnencodedChars("VISITED")
     return this
   }
 
-  putUnencodedChars("IS_OBJECT: ${metadata.aClass.kotlin.objectInstance != null}")
+  putUnencodedChars("IS_OBJECT: ${metadata.dataClass.kotlin.objectInstance != null}")
   for ((name, kind) in metadata.properties.entries.sortedBy { it.key }) {
     putUnencodedChars(name)
     putEntityPropertyKind(kind, metaDataRegistry, visited)

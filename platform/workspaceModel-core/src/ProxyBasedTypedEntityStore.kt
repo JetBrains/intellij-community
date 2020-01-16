@@ -271,7 +271,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
 
     if (updatePersistentIdReference) {
-      removePersistentIdFromDependency(oldData)
+      removePersistentIdReferrers(oldData)
       addPersistentIdReferrers(newData)
     }
     updatePersistentIdInDependentEntities(oldData, newData, updatePersistentIdReference)
@@ -309,11 +309,12 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
   private fun updatePersistentIdInDependentEntities(oldData: EntityData, newData: EntityData, updatePersistentIdReference: Boolean) {
     // Update persistentId in dependent entities
     if(!TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)
-       || !TypedEntityWithPersistentId::class.java.isAssignableFrom(newData.unmodifiableEntityType)
-       || oldData.persistentId() == newData.persistentId()) return
+       || !TypedEntityWithPersistentId::class.java.isAssignableFrom(newData.unmodifiableEntityType)) return
 
-    val oldPersistentId = oldData.persistentId()
     val newPersistentId = newData.persistentId()
+    val oldPersistentId = oldData.persistentId()
+    if (oldPersistentId == newPersistentId) return
+
     persistentIdReferrers[oldPersistentId.hashCode()]?.forEach { id ->
       val refOldData = entityById[id]
       if (refOldData == null) return
@@ -339,7 +340,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
   }
 
-  private fun removePersistentIdFromDependency(data: EntityData) {
+  private fun removePersistentIdReferrers(data: EntityData) {
     // If removed entity which is a dependency for others we don't remove the record from the collection,
     // customers code should do it manually
     data.collectPersistentIdReferences { persistentIdReference ->
@@ -378,7 +379,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       entitiesByPersistentIdHash.removeValue(persistentId.hashCode(), data)
     }
     removeReferences(data)
-    removePersistentIdFromDependency(data)
+    removePersistentIdReferrers(data)
   }
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
@@ -721,9 +722,9 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     return true
   }
 
-  private fun assertDataClassIsWithoutReferences(classKind: EntityPropertyKind.DataClass) {
-    if (classKind.hasReferences) {
-      TODO("DataClasses with references are not supported here yet: ${classKind.aClass}")
+  private fun assertDataClassIsWithoutReferences(dataClassKind: EntityPropertyKind.DataClass) {
+    if (dataClassKind.hasReferences) {
+      TODO("DataClasses with references are not supported here yet: ${dataClassKind.dataClass}")
     }
   }
 
