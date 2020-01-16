@@ -22,7 +22,12 @@ fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandl
 interface GitExecutableProblemHandler {
 
   @CalledInAwt
-  fun showError(exception: Throwable, errorNotifier: ErrorNotifier)
+  fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit)
+
+  @CalledInAwt
+  fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
+    showError(exception, errorNotifier, {})
+  }
 }
 
 interface ErrorNotifier {
@@ -87,7 +92,7 @@ internal fun getErrorTitle(text: String, description: String?) =
 internal fun getErrorMessage(text: String, description: String?) = description ?: text
 
 private class DefaultExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
-  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
+  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError(getPrettyErrorMessage(exception), getLinkToConfigure(project))
   }
 }

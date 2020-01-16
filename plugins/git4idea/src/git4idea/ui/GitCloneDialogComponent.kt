@@ -96,7 +96,9 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
     }
     catch (t: Throwable) {
       invokeAndWaitIfNeeded(modalityState) {
-        executableProblemHandler.showError(t, errorNotifier)
+        executableProblemHandler.showError(t, errorNotifier, onErrorResolved = {
+          dialogStateListener.onOkActionEnabled(true)
+        })
         dialogStateListener.onOkActionEnabled(false)
       }
     }

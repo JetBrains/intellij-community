@@ -20,13 +20,13 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
   private val gitexe = if (SystemInfo.is64Bit) "Git-2.24.1.2-64-bit.exe" else "Git-2.24.1.2-32-bit.exe"
   private val gitFile = File(PathManager.getTempPath(), gitexe)
 
-  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
+  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError("Git is not installed", ErrorNotifier.FixOption.Standard("Download and install") {
       errorNotifier.executeTask("Downloading...", false) {
         // todo display determinate inline progress for downloading
         if (downloadGit(errorNotifier)) {
           errorNotifier.changeProgressTitle("Installing...")
-          installGit(errorNotifier)
+          installGit(errorNotifier, onErrorResolved)
         }
       }
     })
@@ -47,7 +47,7 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
     }
   }
 
-  private fun installGit(errorNotifier: ErrorNotifier) {
+  private fun installGit(errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     val commandLine = GeneralCommandLine()
       .withExePath(gitFile.path)
       .withParameters("/verysilent")
@@ -61,6 +61,7 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
         LOG.info("Installed Git. ${output.dumpToString()}")
         errorNotifier.showMessage("Git has been installed")
         errorNotifier.resetGitExecutable()
+        onErrorResolved()
       }
     }
     catch (e: Exception) {

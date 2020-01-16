@@ -14,7 +14,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
     val LOG = logger<MacExecutableProblemHandler>()
   }
 
-  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
+  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     when {
       isXcodeLicenseError(exception) -> showXCodeLicenseError(errorNotifier)
       isInvalidActiveDeveloperPath(exception) -> showInvalidActiveDeveloperPathError(errorNotifier)
