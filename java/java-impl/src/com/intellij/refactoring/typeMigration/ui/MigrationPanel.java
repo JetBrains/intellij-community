@@ -82,7 +82,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     myRootsTree = new MyTree();
     TypeMigrationTreeStructure structure = new TypeMigrationTreeStructure(project);
     structure.setRoots(currentRoot);
-    StructureTreeModel model = new StructureTreeModel<>(structure, this, AlphaComparator.INSTANCE);
+    StructureTreeModel model = new StructureTreeModel<>(structure, AlphaComparator.INSTANCE, this);
     myRootsTree.setModel(new AsyncTreeModel(model, this));
 
     initTree(myRootsTree);

@@ -43,7 +43,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myArtifactsEditor = artifactsEditor;
     myTreeStructure = new SourceItemsTreeStructure(editorContext, artifactsEditor);
-    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, this, new WeightBasedComparator(true));
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, new WeightBasedComparator(true), this);
     setModel(new AsyncTreeModel(myStructureTreeModel, this));
     setRootVisible(false);
     setShowsRootHandles(true);

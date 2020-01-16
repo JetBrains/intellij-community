@@ -154,7 +154,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setTestResultsViewer(this);
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    StructureTreeModel structureTreeModel = new StructureTreeModel<>(structure, myProject, IndexComparator.INSTANCE);
+    StructureTreeModel structureTreeModel = new StructureTreeModel<>(structure, IndexComparator.INSTANCE, myProject);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, true, myProject);
     myTreeView.setModel(asyncTreeModel);
     myTreeBuilder.setModel(structureTreeModel);

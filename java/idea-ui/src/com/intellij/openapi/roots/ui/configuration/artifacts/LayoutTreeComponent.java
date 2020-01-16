@@ -77,7 +77,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myOriginalArtifact = originalArtifact;
     mySortElements = sortElements;
     myTreeStructure = new LayoutTreeStructure();
-    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, this, getComparator());
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, getComparator(), this);
     myTree = new LayoutTree(myArtifactsEditor, myStructureTreeModel);
     myTree.setModel(new AsyncTreeModel(myStructureTreeModel, this));
     Disposer.register(this, myTree);
