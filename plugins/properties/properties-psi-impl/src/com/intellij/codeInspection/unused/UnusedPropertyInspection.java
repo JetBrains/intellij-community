@@ -7,11 +7,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
-import com.intellij.lang.properties.findUsages.PropertySearcher;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,8 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,10 +113,6 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
 
     String name = property.getName();
     if (name == null) return true;
-    if (helper.getSearcher() != null) {
-      //name = helper.getSearcher().getKeyToSearch(name, property.getProject());
-      //if (name == null) return true;
-    }
 
     PsiSearchHelper searchHelper = helper.getSearchHelper();
     if (mayHaveUsages(property, name, searchHelper, helper.getOwnUseScope(), isOnTheFly, original)) return true;
@@ -146,15 +138,11 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
   private static class UnusedPropertiesSearchHelper {
     private final GlobalSearchScope myOwnUseScope;
     private final Module myModule;
-    private final PropertySearcher mySearcher;
     private final PsiSearchHelper mySearchHelper;
 
     UnusedPropertiesSearchHelper(Module module) {
       myOwnUseScope = GlobalSearchScope.moduleWithDependentsScope(module);
       myModule = module;
-      mySearcher = (PropertySearcher)ContainerUtil.find(
-        Extensions.getRootArea().getExtensionPoint("com.intellij.referencesSearch").getExtensions(),
-        new FilteringIterator.InstanceOf<>(PropertySearcher.class));
       mySearchHelper = PsiSearchHelper.getInstance(module.getProject());
     }
 
@@ -164,10 +152,6 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
 
     GlobalSearchScope getOwnUseScope() {
       return myOwnUseScope;
-    }
-
-    public PropertySearcher getSearcher() {
-      return mySearcher;
     }
 
     PsiSearchHelper getSearchHelper() {
