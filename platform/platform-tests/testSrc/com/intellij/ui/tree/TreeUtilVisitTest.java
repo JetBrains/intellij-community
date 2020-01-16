@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.util.ui.tree.TreeUtil;
@@ -278,6 +278,121 @@ public final class TreeUtilVisitTest {
     ));
   }
 
+
+  @Test
+  public void testCollapseAll() {
+    testCollapseAll(true, true, false, 0,
+                    "-Root\n" +
+                    " +1\n" +
+                    " +[2]\n" +
+                    " +3\n");
+  }
+
+  @Test
+  public void testCollapseAllStrict() {
+    testCollapseAll(true, true, true, 0,
+                    "+[Root]\n");
+  }
+
+  @Test
+  public void testCollapseAllWithoutRoot() {
+    testCollapseAll(false, true, false, 0,
+                    " +1\n" +
+                    " +[2]\n" +
+                    " +3\n");
+  }
+
+  @Test
+  public void testCollapseAllWithoutRootHandles() {
+    testCollapseAll(true, false, false, 0,
+                    "-Root\n" +
+                    " +1\n" +
+                    " +[2]\n" +
+                    " +3\n");
+  }
+
+  @Test
+  public void testCollapseAllWithoutRootAndHandles() {
+    testCollapseAll(false, false, false, 0,
+                    " -1\n" +
+                    "  +11\n" +
+                    "  +12\n" +
+                    "  +13\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  +[22]\n" +
+                    "  +23\n" +
+                    " -3\n" +
+                    "  +31\n" +
+                    "  +32\n" +
+                    "  +33\n");
+  }
+
+  @Test
+  public void testCollapseAllExceptSelectedNode() {
+    testCollapseAll(true, true, false, -1,
+                    "-Root\n" +
+                    " +1\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  -22\n" +
+                    "   +221\n" +
+                    "   -222\n" +
+                    "    2221\n" +
+                    "    [2222]\n" +
+                    "    2223\n" +
+                    "   +223\n" +
+                    "  +23\n" +
+                    " +3\n");
+  }
+
+  @Test
+  public void testCollapseAllExceptParentOfSelectedNode() {
+    testCollapseAll(true, true, false, 4,
+                    "-Root\n" +
+                    " +1\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  -22\n" +
+                    "   +221\n" +
+                    "   +[222]\n" +
+                    "   +223\n" +
+                    "  +23\n" +
+                    " +3\n");
+  }
+
+  @Test
+  public void testCollapseAllExceptGrandParentOfSelectedNode() {
+    testCollapseAll(true, true, false, 3,
+                    "-Root\n" +
+                    " +1\n" +
+                    " -2\n" +
+                    "  +21\n" +
+                    "  +[22]\n" +
+                    "  +23\n" +
+                    " +3\n");
+  }
+
+  private static void testCollapseAll(boolean visible, boolean showHandles, boolean strict, int keepSelectionLevel, String expected) {
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test
+      -> configureRoot(test, visible, showHandles, ()
+      -> TreeUtil.expandAll(test.getTree(), ()
+      -> select(test, convertArrayToVisitor("2", "22", "222", "2222"), path
+      -> collapseAll(test, strict, keepSelectionLevel, ()
+      -> test.assertTree(expected, true, test::done))))));
+  }
+
+  private static void collapseAll(@NotNull TreeTest test, boolean strict, int keepSelectionLevel, @NotNull Runnable onDone) {
+    TreeUtil.collapseAll(test.getTree(), strict, keepSelectionLevel);
+    onDone.run();
+  }
+
+  private static void configureRoot(@NotNull TreeTest test, boolean visible, boolean showHandles, @NotNull Runnable onDone) {
+    test.getTree().setRootVisible(visible);
+    test.getTree().setShowsRootHandles(showHandles);
+    onDone.run();
+  }
+
   @Test
   public void testMakeVisible1() {
     testMakeVisible("-Root\n" +
@@ -494,8 +609,12 @@ public final class TreeUtilVisitTest {
 
   private static void testSelect(TreeVisitor visitor, String expected) {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test
-      -> TreeUtil.promiseSelect(test.getTree(), visitor).onSuccess(path
+      -> select(test, visitor, path
       -> test.assertTree(expected, true, test::done)));
+  }
+
+  private static void select(@NotNull TreeTest test, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+    TreeUtil.promiseSelect(test.getTree(), visitor).onSuccess(consumer);
   }
 
   @Test

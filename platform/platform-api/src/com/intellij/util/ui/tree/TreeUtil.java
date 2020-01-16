@@ -817,6 +817,15 @@ public final class TreeUtil {
    * @param keepSelectionLevel a minimal path count of a lead selection path or {@code -1} to restore old selection
    */
   public static void collapseAll(@NotNull JTree tree, final int keepSelectionLevel) {
+    collapseAll(tree, false, keepSelectionLevel);
+  }
+
+  /**
+   * @param tree               a tree, which nodes should be collapsed
+   * @param strict             use {@code false} if a single top level node should not be collapsed
+   * @param keepSelectionLevel a minimal path count of a lead selection path or {@code -1} to restore old selection
+   */
+  public static void collapseAll(@NotNull JTree tree, boolean strict, int keepSelectionLevel) {
     assert EventQueue.isDispatchThread();
     int row = tree.getRowCount();
     if (row <= 1) return; // nothing to collapse
@@ -828,7 +837,6 @@ public final class TreeUtil {
     if (!tree.getShowsRootHandles()) threshold++;
 
     // Collapse all
-    boolean strict = false; // do not allow to collapse a top level node if is only one
     while (0 < row--) {
       if (!strict && row == 0) break;
       TreePath path = tree.getPathForRow(row);
