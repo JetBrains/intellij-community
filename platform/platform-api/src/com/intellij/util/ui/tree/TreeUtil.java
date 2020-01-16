@@ -853,7 +853,8 @@ public final class TreeUtil {
         int count = path.getPathCount() - Math.max(keepSelectionLevel, threshold);
         while (0 < count--) path = path.getParentPath(); // normalize to given level
       }
-      selectPath(tree, path);
+      tree.makeVisible(path);
+      internalSelect(tree, path);
     }
   }
 
