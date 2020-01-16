@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
-import com.intellij.xdebugger.XDebugProcess
-import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.*
 
 class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(RegistryOption("ide.title.debug", project), RegistryOption("ide.borderless.title.debug", project)) {
   private var subscriptionDisposable: Disposable? = null
@@ -43,6 +40,12 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
     connection.subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
       override fun processStarted(debugProcess: XDebugProcess) {
         debuggerSessionStarted = true
+
+        debugProcess.session.addSessionListener(object : XDebugSessionListener {
+          override fun sessionStopped() {
+            checkState()
+          }
+        })
       }
 
       override fun processStopped(debugProcess: XDebugProcess) {
