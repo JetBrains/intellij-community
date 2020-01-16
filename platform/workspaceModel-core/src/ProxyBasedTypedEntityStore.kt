@@ -114,10 +114,12 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
       ?.find {it.persistentId() == id }
   }
 
-  override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrersByPersistentId(id: PersistentEntityId<E>): Sequence<R> {
+  override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R> {
     return persistentIdReferrers[id.hashCode()]?.asSequence()?.map {
-      val entityData = entityById[it] ?: return@map null
-      return@map createEntityInstance(entityData) as R
+      val entityData = entityById[it] ?: error("Unknown id $id")
+      return@map createEntityInstance(entityData).let { typedEntity ->
+        if (entityClass.isInstance(typedEntity)) typedEntity as R else null
+      }
     }?.filterNotNull() ?: emptySequence()
   }
 
@@ -315,7 +317,6 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
   }
 
   private fun updatePersistentIdInDependentEntities(oldData: EntityData, newData: EntityData, updatePersistentIdReference: Boolean) {
-    // Update persistentId in dependent entities
     if(!TypedEntityWithPersistentId::class.java.isAssignableFrom(oldData.unmodifiableEntityType)
        || !TypedEntityWithPersistentId::class.java.isAssignableFrom(newData.unmodifiableEntityType)) return
 
