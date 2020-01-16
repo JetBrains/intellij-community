@@ -69,7 +69,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     myManager = (TaskManagerImpl)TaskManager.getManager(project);
 
     myRepositoriesList = new JBList();
-    myRepositoriesList.getEmptyText().setText("No servers");
+    myRepositoriesList.getEmptyText().setText(TaskBundle.message("settings.no.servers"));
 
     myServersLabel.setLabelFor(myRepositoriesList);
 
@@ -274,7 +274,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
   private abstract class AddServerAction extends IconWithTextAction implements DumbAware {
 
     AddServerAction(TaskRepositorySubtype subtype) {
-      super(subtype.getName(), "New " + subtype.getName() + " server", subtype.getIcon());
+      super(subtype.getName(), TaskBundle.message("settings.new.server", subtype.getName()), subtype.getIcon());
     }
 
     AddServerAction(TaskRepository repository) {
