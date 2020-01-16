@@ -73,16 +73,20 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   private void configControls() {
-    myMavenPanel.setBorder(IdeBorderFactory.createTitledBorder("Maven jar repositories:", false, JBUI.insetsTop(8)).setShowLine(false));
-    myServiceListPanel.setBorder(IdeBorderFactory.createTitledBorder("Artifactory, Nexus or Bintray Service URLs:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myMavenPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.remote.repo.maven.jar.repositories"), false, JBUI.insetsTop(8)).setShowLine(false));
+    myServiceListPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message(
+      "settings.remote.repo.artifactory.nexus.or.bintray.service.urls"), false, JBUI.insetsTop(8)).setShowLine(false));
 
     setupListControls(
       myServiceList, myServicesModel, myAddServiceButton, myEditServiceButton, myRemoveServiceButton,
-      "Artifactory, Nexus or Bintray Service URLs", "Service URL", "No services", DataAdapter.STRING_ADAPTER
+      IdeBundle.message("settings.remote.repo.artifactory.nexus.or.bintray"), IdeBundle.message("settings.remote.repo.service.url"),
+      IdeBundle.message("settings.remote.repo.no.services"), DataAdapter.STRING_ADAPTER
     );
     setupListControls(
       myJarRepositoryList, myReposModel, myAddRepoButton, myEditRepoButton, myRemoveRepoButton,
-      "Maven Repository URL", "maven Repository URL", "No remote repositories", DataAdapter.REPOSITORY_DESCRIPTION_ADAPTER
+      IdeBundle.message("settings.remote.repo.maven.repository.url"),
+      IdeBundle.message("settings.remote.repo.Maven.Repository.URL"),
+      IdeBundle.message("settings.remote.repo.no.remote.repositories"), DataAdapter.REPOSITORY_DESCRIPTION_ADAPTER
     );
 
     ListUtil.disableWhenNoSelection(myTestServiceButton, myServiceList);
@@ -95,7 +99,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
           JarRepositoryManager.searchRepositories(myProject, Collections.singletonList(value), infos -> {
             myTestServiceButton.setEnabled(true);
             if (infos.isEmpty()) {
-              Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());
+              Messages.showMessageDialog(IdeBundle.message("settings.remote.repo.no.repositories.found"),
+                                         IdeBundle.message("settings.remote.repo.service.connection.failed"), Messages.getWarningIcon());
             }
             else {
               final StringBuilder sb = new StringBuilder();
@@ -104,7 +109,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
               //  sb.append("\n  ");
               //  sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
               //}
-              Messages.showMessageDialog(sb.toString(), "Service Connection Successful", Messages.getInformationIcon());
+              Messages.showMessageDialog(sb.toString(), IdeBundle.message("settings.remote.repo.service.connection.successful"),
+                                         Messages.getInformationIcon());
             }
             return true;
           });
