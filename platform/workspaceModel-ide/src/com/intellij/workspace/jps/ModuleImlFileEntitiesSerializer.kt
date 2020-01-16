@@ -24,7 +24,7 @@ import java.io.StringReader
 private const val MODULE_ROOT_MANAGER_COMPONENT_NAME = "NewModuleRootManager"
 private const val URL_ATTRIBUTE = "url"
 
-internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePath,
+internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                override val fileUrl: VirtualFileUrl,
                                                override val entitySource: JpsFileEntitySource,
                                                private val serializeFacets: Boolean) : JpsFileEntitiesSerializer<ModuleEntity> {

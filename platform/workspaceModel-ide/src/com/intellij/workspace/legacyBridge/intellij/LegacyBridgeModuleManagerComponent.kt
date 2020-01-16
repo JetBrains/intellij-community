@@ -56,7 +56,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   private val modulesMap: ConcurrentMap<ModuleId, LegacyBridgeModule> = ConcurrentHashMap()
-  private val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
+  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
   private val newModuleInstances = mutableMapOf<ModuleId, LegacyBridgeModule>()
 
   @ApiStatus.Internal
@@ -131,8 +131,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                 is EntityChange.Added -> Unit // Add events are handled after adding new modules
               }.let {  } // exhaustive when
 
-
-              loadStateOfUnloadedModules(changes)
               val unloadedModulesSetOriginal = unloadedModules.keys.toList()
               val unloadedModulesSet = unloadedModulesSetOriginal.toMutableSet()
               val oldModuleNames = mutableMapOf<Module, String>()
@@ -244,38 +242,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       })
       myMessageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, FacetEntityChangeListener(project))
     }
-  }
-
-  private fun loadStateOfUnloadedModules(changes: List<EntityChange<ModuleEntity>>) {
-    val moduleEntitiesToLoad = changes.filterIsInstance<EntityChange.Added<ModuleEntity>>().map { it.entity }.toMutableList()
-    if (moduleEntitiesToLoad.isEmpty()) return
-    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
-
-    val modulePathsToLoad = mutableSetOf<ModulePath>()
-    val iterator = moduleEntitiesToLoad.listIterator()
-    val unloadedModulePaths: MutableList<ModulePath> = mutableListOf()
-    while (iterator.hasNext()) {
-      val element = getModulePath(iterator.next())
-      if (element.moduleName in unloadedModuleNames) {
-        unloadedModulePaths += element
-        iterator.remove()
-        continue
-      }
-      else {
-        modulePathsToLoad += element
-      }
-    }
-
-    val unloaded = createFromPaths(unloadedModulePaths, project).toMutableList()
-
-    if (unloaded.isNotEmpty()) {
-      val changeUnloaded = AutomaticModuleUnloader.getInstance(project).processNewModules(modulePathsToLoad, unloaded)
-      unloaded.addAll(changeUnloaded.toUnloadDescriptions)
-      unloadedModulePaths += changeUnloaded.toUnload
-    }
-
-    unloadedModules.clear()
-    unloaded.associateByTo(unloadedModules) { it.name }
   }
 
   internal fun addModule(moduleEntity: ModuleEntity): LegacyBridgeModule {

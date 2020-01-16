@@ -8,6 +8,10 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.module.impl.AutomaticModuleUnloader
+import com.intellij.openapi.module.impl.ModulePath
+import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
@@ -26,6 +30,7 @@ import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.EntityStoreChanged
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.ide.*
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -121,12 +126,45 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     this.serializationData.set(serializationData)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()
+
+    val modulePaths = serializationData.fileSerializersByUrl.values().filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
+    loadStateOfUnloadedModules(modulePaths)
+
     serializationData.loadAll(fileContentReader, builder)
     WriteAction.runAndWait<RuntimeException> {
       WorkspaceModel.getInstance(project).updateProjectModel { updater ->
         updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
       }
     }
+  }
+
+  // Logic from com.intellij.openapi.module.impl.ModuleManagerImpl.loadState(java.util.Set<com.intellij.openapi.module.impl.ModulePath>)
+  private fun loadStateOfUnloadedModules(modulePaths: List<ModulePath>) {
+    val modulePathsToLoad = modulePaths.toMutableSet()
+    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
+
+    val iterator = modulePathsToLoad.iterator()
+    val unloadedModulePaths = mutableListOf<ModulePath>()
+
+    while (iterator.hasNext()) {
+      val element = iterator.next()
+      if (element.moduleName in unloadedModuleNames) {
+        unloadedModulePaths += element
+        iterator.remove()
+      }
+    }
+
+    val unloaded = UnloadedModuleDescriptionImpl.createFromPaths(unloadedModulePaths, project).toMutableList()
+
+    if (unloaded.isNotEmpty()) {
+      val changeUnloaded = AutomaticModuleUnloader.getInstance(project).processNewModules(modulePathsToLoad, unloaded)
+      unloaded.addAll(changeUnloaded.toUnloadDescriptions)
+      unloadedModulePaths += changeUnloaded.toUnload
+    }
+
+    val unloadedModules = LegacyBridgeModuleManagerComponent.getInstance(project).unloadedModules
+    unloadedModules.clear()
+    unloaded.associateByTo(unloadedModules) { it.name }
   }
 
   internal fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
