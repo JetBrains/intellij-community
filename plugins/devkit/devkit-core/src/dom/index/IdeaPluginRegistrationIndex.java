@@ -18,7 +18,6 @@ package org.jetbrains.idea.devkit.dom.index;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -52,7 +51,7 @@ import java.util.Map;
 
 public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
-  private static final int INDEX_VERSION = 2;
+  private static final int INDEX_VERSION = 3;
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
@@ -107,12 +106,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML) {
-      @Override
-      public boolean acceptInput(@NotNull VirtualFile file) {
-        return file.isInLocalFileSystem();
-      }
-    };
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
   }
 
   public static boolean isRegisteredApplicationComponent(PsiClass psiClass, GlobalSearchScope scope) {
