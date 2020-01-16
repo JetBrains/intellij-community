@@ -79,7 +79,21 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
+  /**
+   * Runs the specified operation in non-cancellable manner synchronously on the same thread were it was called.
+   *
+   * @see ProgressManager#computeInNonCancelableSection(ThrowableComputable)
+   * @param runnable the operation to execute
+   */
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
+
+  /**
+   * Runs the specified operation and return its result in non-cancellable manner synchronously on the same thread were it was called.
+   *
+   * @see ProgressManager#executeNonCancelableSection(Runnable)
+   * @param computable the operation to execute
+   */
+  public abstract <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E;
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the

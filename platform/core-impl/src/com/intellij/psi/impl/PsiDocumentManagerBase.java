@@ -388,14 +388,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     FileViewProvider viewProvider = forceNoPsiCommit ? null : getCachedViewProvider(document);
 
     myIsCommitInProgress.set(true);
-    Ref<Boolean> success = new Ref<>(true);
+    boolean success = true;
     try {
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      success = ProgressManager.getInstance().computeInNonCancelableSection(() -> {
         if (viewProvider == null) {
           handleCommitWithoutPsi(document);
+          return true;
         }
         else {
-          success.set(commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile));
+          return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile);
         }
       });
     }
@@ -408,13 +409,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     finally {
-      if (success.get()) {
+      if (success) {
         myUncommittedDocuments.remove(document);
       }
       myIsCommitInProgress.set(null);
     }
-
-    return success.get();
+    return success;
   }
 
   private boolean commitToExistingPsi(@NotNull Document document,

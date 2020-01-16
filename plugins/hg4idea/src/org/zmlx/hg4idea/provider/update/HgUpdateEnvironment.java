@@ -55,7 +55,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
     List<VcsException> exceptions = new LinkedList<>();
 
-    boolean[] result = {true};
+    boolean result = true;
     for (FilePath contentRoot : contentRoots) {
       if (indicator != null) {
         indicator.checkCanceled();
@@ -65,17 +65,18 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       if (repository == null) {
         continue;
       }
-      ProgressManager.getInstance().executeNonCancelableSection(()->{
-        try {
+      try {
+        result &= ProgressManager.getInstance().computeInNonCancelableSection(() -> {
           HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
-          result[0] &= updater.update(updatedFiles, indicator, exceptions);
-        } catch (VcsException e) {
-          //TODO include module name where exception occurred
-          exceptions.add(e);
-        }
-      });
+          return updater.update(updatedFiles, indicator, exceptions);
+        });
+      }
+      catch (VcsException e) {
+        //TODO include module name where exception occurred
+        exceptions.add(e);
+      }
     }
-    return new UpdateSessionAdapter(exceptions, !result[0]);
+    return new UpdateSessionAdapter(exceptions, !result);
   }
 
   @Override

@@ -75,10 +75,9 @@ public class GitPreservingProcess {
 
   public void execute(@Nullable final Computable<Boolean> autoLoadDecision) {
     Runnable operation = () -> {
-      Ref<Boolean> savedSuccessfully = Ref.create();
-      ProgressManager.getInstance().executeNonCancelableSection(() -> savedSuccessfully.set(save()));
+      boolean savedSuccessfully = ProgressManager.getInstance().computeInNonCancelableSection(() -> save());
       LOG.debug("save result: " + savedSuccessfully);
-      if (savedSuccessfully.get()) {
+      if (savedSuccessfully) {
         try {
           LOG.debug("running operation");
           myOperation.run();

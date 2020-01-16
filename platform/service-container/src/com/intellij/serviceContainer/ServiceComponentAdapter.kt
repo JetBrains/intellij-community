@@ -41,11 +41,9 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
         return createAndInitialize(componentManager, implementationClass)
       }
       else {
-        var instance: T? = null
-        ProgressManager.getInstance().executeNonCancelableSection {
-          instance = createAndInitialize(componentManager, implementationClass)
+        return ProgressManager.getInstance().computeInNonCancelableSection<T, RuntimeException> {
+          createAndInitialize(componentManager, implementationClass)
         }
-        return instance!!
       }
     }
   }

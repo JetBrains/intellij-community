@@ -189,6 +189,29 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @Override
+  public <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
+    final Ref<T> result = Ref.create();
+    final Ref<Exception> exception = Ref.create();
+    executeNonCancelableSection(() -> {
+      try {
+        result.set(computable.compute());
+      }
+      catch (Exception t) {
+        exception.set(t);
+      }
+    });
+
+    Throwable t = exception.get();
+    if (t != null) {
+      ExceptionUtil.rethrowUnchecked(t);
+      @SuppressWarnings("unchecked") E e = (E)t;
+      throw e;
+    }
+
+    return result.get();
+  }
+
+  @Override
   public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                                      @NotNull @Nls String progressTitle,
                                                      boolean canBeCanceled,

@@ -117,11 +117,10 @@ object UpdateInstaller {
   @JvmStatic
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
     val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
-    var result: PluginUpdateResult? = null
-    ProgressManager.getInstance().executeNonCancelableSection {
-      result = installDownloadedPluginUpdates(downloadedPluginUpdates, null, false)
+    val result = ProgressManager.getInstance().computeInNonCancelableSection<PluginUpdateResult, RuntimeException> {
+      installDownloadedPluginUpdates(downloadedPluginUpdates, null, false)
     }
-    return result?.pluginsInstalled?.isNotEmpty() ?: false
+    return result.pluginsInstalled.isNotEmpty()
   }
 
   @JvmStatic
