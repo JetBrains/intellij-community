@@ -7,6 +7,7 @@ import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -21,6 +22,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationsImpl;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +60,9 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
   public static EditorNotificationPanel runOnText(@NotNull JavaCodeInsightTestFixture fixture,
                                                   @NotNull String fileName,
                                                   @NotNull String fileText) {
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    UIUtil.dispatchAllInvocationEvents();
+
     final PsiFile psiFile = fixture.configureByText(fileName, fileText);
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(fixture.getProject());
     VirtualFile virtualFile = psiFile.getVirtualFile();
