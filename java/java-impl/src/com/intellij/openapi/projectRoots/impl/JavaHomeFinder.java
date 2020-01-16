@@ -34,7 +34,17 @@ public abstract class JavaHomeFinder {
    */
   @NotNull
   public static List<String> suggestHomePaths() {
-    JavaHomeFinder javaFinder = getFinder();
+    return suggestHomePaths(false);
+  }
+
+  /**
+   * Do the same as {@link #suggestHomePaths()} but always considers the embedded JRE,
+   * for using in tests that are performed when the registry is not properly initialized
+   * or that need the embedded JetBrains Runtime.
+   */
+  @NotNull
+  public static List<String> suggestHomePaths(boolean forceEmbeddedJava) {
+    JavaHomeFinder javaFinder = getFinder(forceEmbeddedJava);
     Collection<String> foundPaths = javaFinder.findExistingJdks();
     ArrayList<String> paths = new ArrayList<>(foundPaths);
     paths.sort((o1, o2) -> Comparing.compare(JavaVersion.tryParse(o2), JavaVersion.tryParse(o1)));
@@ -44,8 +54,9 @@ public abstract class JavaHomeFinder {
   @NotNull
   protected abstract List<String> findExistingJdks();
 
-  private static JavaHomeFinder getFinder() {
-    if (!Registry.is("java.detector.enabled", true)) {
+  private static JavaHomeFinder getFinder(boolean forceEmbeddedJava) {
+    boolean detectorIsEnabled = forceEmbeddedJava || Registry.is("java.detector.enabled", true);
+    if (!detectorIsEnabled) {
       return new JavaHomeFinder() {
         @NotNull
         @Override
@@ -59,15 +70,15 @@ public abstract class JavaHomeFinder {
       return new WindowsJavaFinder();
     }
     if (SystemInfo.isMac) {
-      return new MacFinder();
+      return new MacFinder(forceEmbeddedJava);
     }
     if (SystemInfo.isLinux) {
-      return new DefaultFinder("/usr/java", "/opt/java", "/usr/lib/jvm");
+      return new DefaultFinder(forceEmbeddedJava, "/usr/java", "/opt/java", "/usr/lib/jvm");
     }
     if (SystemInfo.isSolaris) {
-      return new DefaultFinder("/usr/jdk");
+      return new DefaultFinder(forceEmbeddedJava, "/usr/jdk");
     }
-    return new DefaultFinder();
+    return new DefaultFinder(forceEmbeddedJava);
   }
 
   protected void scanFolder(@NotNull File folder, boolean includeNestDirs, @NotNull List<? super String> result) {
@@ -101,9 +112,9 @@ public abstract class JavaHomeFinder {
 
     private final String[] myPaths;
 
-    protected DefaultFinder(String... paths) {
+    protected DefaultFinder(boolean forceEmbeddedJava, String... paths) {
       File javaHome = null;
-      if (Registry.is("java.detector.include.embedded", true)) javaHome = getJavaHome();
+      if (forceEmbeddedJava || Registry.is("java.detector.include.embedded", false)) javaHome = getJavaHome();
       myPaths = javaHome == null ? paths : ArrayUtil.prepend(javaHome.getAbsolutePath(), paths);
     }
 
@@ -152,8 +163,8 @@ public abstract class JavaHomeFinder {
 
     public static final String JAVA_HOME_FIND_UTIL = "/usr/libexec/java_home";
 
-    MacFinder() {
-      super("/Library/Java/JavaVirtualMachines", "/System/Library/Java/JavaVirtualMachines");
+    MacFinder(boolean forceEmbeddedJava) {
+      super(forceEmbeddedJava, "/Library/Java/JavaVirtualMachines", "/System/Library/Java/JavaVirtualMachines");
     }
 
     @NotNull
