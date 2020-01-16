@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import net.miginfocom.swing.MigLayout
+import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Container
 import java.awt.Window
@@ -33,17 +34,13 @@ class CustomFrameDialogContent private constructor(val window: Window, content: 
     private val header: CustomHeader = CustomHeader.create(window)
 
     init {
-        layout = MigLayout("novisualpadding, ins 0, gap 0, fill, flowy, hidemode 2", "", "[min!][]")
+        layout = BorderLayout()
         titleBackgroundColor?.let {
             header.background = it
         }
 
-        val pane = JPanel(MigLayout("fill, ins 0, novisualpadding", "[grow]"))
-        pane.isOpaque = false
-        pane.add(content, "grow")
-
-        add(header, "growx")
-        add(pane, "wmin 100, grow")
+        add(header, BorderLayout.NORTH)
+        add(content, BorderLayout.CENTER)
     }
 
     fun updateLayout() {
