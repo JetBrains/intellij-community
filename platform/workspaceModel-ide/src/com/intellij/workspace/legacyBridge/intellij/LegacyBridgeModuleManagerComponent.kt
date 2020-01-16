@@ -147,6 +147,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                   val alreadyCreatedModule = newModuleInstances.remove(moduleId)
                   val module = if (alreadyCreatedModule != null) {
                     unloadedModulesSet.remove(change.entity.name)
+                    unloadedModules.remove(change.entity.name)
 
                     (alreadyCreatedModule as LegacyBridgeModuleImpl).entityStore = entityStore
                     alreadyCreatedModule.diff = null
@@ -172,6 +173,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
                   if (oldId != newId) {
                     unloadedModulesSet.remove(change.newEntity.name)
+                    unloadedModules.remove(change.newEntity.name)
                     renameModule(oldId, newId)
                     oldModuleNames[modulesMap.getValue(newId)] = oldId.name
                   }
@@ -208,10 +210,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                 project.messageBus
                   .syncPublisher(ProjectTopics.MODULES)
                   .modulesRenamed(project, oldModuleNames.keys.toList()) { module -> oldModuleNames[module] }
-              }
-
-              if (unloadedModulesSetOriginal != unloadedModulesSet) {
-                setUnloadedModules(unloadedModulesSet.toList())
               }
 
               if (unloadedModulesSet.isNotEmpty()) {
@@ -466,8 +464,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
     val moduleEntities = entityStore.current.entities(ModuleEntity::class.java).toList()
     val moduleEntitiesToLoad = moduleEntities.filter { findModuleByName(it.name) == null && it.name !in names }
-
-    if (moduleEntitiesToLoad.isEmpty() && modulesToUnload.isEmpty()) return
 
     unloadedModules.keys.removeAll { it !in names }
     runWriteAction {
