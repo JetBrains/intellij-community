@@ -118,8 +118,8 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
     String name = property.getName();
     if (name == null) return true;
     if (helper.getSearcher() != null) {
-      name = helper.getSearcher().getKeyToSearch(name, property.getProject());
-      if (name == null) return true;
+      //name = helper.getSearcher().getKeyToSearch(name, property.getProject());
+      //if (name == null) return true;
     }
 
     PsiSearchHelper searchHelper = helper.getSearchHelper();

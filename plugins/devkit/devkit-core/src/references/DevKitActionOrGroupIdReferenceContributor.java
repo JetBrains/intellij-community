@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
+import com.intellij.patterns.VirtualFilePattern;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.xml.XmlElement;
@@ -19,23 +22,24 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
 public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContributor {
-  @NonNls public static final String ACTION = "action.";
-  @NonNls public static final String GROUP = "group.";
-  @NonNls public static final String TEXT = ".text";
-  @NonNls public static final String DESC = ".description";
+  @NonNls private static final String ACTION = "action.";
+  @NonNls private static final String GROUP = "group.";
+  @NonNls private static final String TEXT = ".text";
+  @NonNls private static final String DESC = ".description";
+  @NonNls private static final String BUNDLE_PROPERTIES = "Bundle.properties";
+  
   public static final PsiElementResolveResult[] EMPTY_RESOLVE_RESULT = new PsiElementResolveResult[0];
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
-      PlatformPatterns.psiElement(PropertyKeyImpl.class)
-        .inVirtualFile(virtualFile().ofType(
-          PropertiesFileType.INSTANCE).withName(StandardPatterns.string().endsWith("Bundle.properties"))),
+      PlatformPatterns.psiElement(PropertyKeyImpl.class).inVirtualFile(bundleFile()),
       new PsiReferenceProvider() {
         @NotNull
         @Override
@@ -59,6 +63,10 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
           return new DevKitActionReference(id, prefix, element);
         }
       });
+  }
+
+  private static VirtualFilePattern bundleFile() {
+    return virtualFile().ofType(PropertiesFileType.INSTANCE).withName(StandardPatterns.string().endsWith(BUNDLE_PROPERTIES));
   }
 
   private static class DevKitActionReference extends PsiPolyVariantReferenceBase<PsiElement> {
@@ -92,4 +100,23 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
         }).filter(Objects::nonNull).toArray(EMPTY_RESOLVE_RESULT);
     }
   }
+
+  public static class ImplicitUsageProvider extends ImplicitPropertyUsageProvider {
+    @Override
+    protected boolean isUsed(@NotNull Property property) {
+      PsiFile file = property.getContainingFile();
+      String fileName = file.getName();
+      if (!fileName.endsWith(BUNDLE_PROPERTIES)) return false;
+      String name = property.getName();
+      if (name == null) return false;
+      if ((name.startsWith(ACTION) || name.startsWith(GROUP)) && 
+          (name.endsWith(TEXT) || name.endsWith(DESC))) {
+        PsiElement key = property.getFirstChild();
+        PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
+        return Arrays.stream(references).anyMatch(reference -> reference.resolve() != null);
+      }
+      return false;
+    }
+  }
+
 }
