@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -46,6 +47,7 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
         public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
                                                      @NotNull ProcessingContext context) {
           if (!(element instanceof PropertyKeyImpl)) return PsiReference.EMPTY_ARRAY;
+          if (!PsiUtil.isPluginProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
 
           String text = ((PropertyKeyImpl)element).getText();
           return JBIterable.of(
