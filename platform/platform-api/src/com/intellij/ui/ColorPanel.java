@@ -134,7 +134,7 @@ public class ColorPanel extends JComponent {
     }
     Color color = enabled ? myColor : null;
     if (color != null) {
-      myTextField.setText(' ' + StringUtil.toUpperCase(ColorUtil.toHex(color)) + ' ');
+      myTextField.setText(StringUtil.toUpperCase(ColorUtil.toHex(color)));
     }
     else {
       myTextField.setText(null);
