@@ -3,6 +3,7 @@ package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.*
 import com.intellij.util.Consumer
 import java.awt.Component
@@ -17,6 +18,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
         statusBar?.updateWidget(ID())
       }
     }, this)
+    Disposer.register(this, lightGitTracker)
   }
 
   override fun ID(): String = "light.edit.git"
