@@ -27,7 +27,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends BuildTarget<R> {
   protected final JpsModule myModule;
 
-  public ModuleBasedTarget(ModuleBasedBuildTargetType<?> targetType, @NotNull JpsModule module) {
+  public ModuleBasedTarget(ModuleBasedBuildTargetType<? extends ModuleBasedTarget<R>> targetType, @NotNull JpsModule module) {
     super(targetType);
     myModule = module;
   }

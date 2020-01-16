@@ -118,6 +118,8 @@ public class FormsBindingManager extends FormsBuilder {
       final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
       final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
 
+      final FSOperations.DirtyFilesHolderBuilder<JavaSourceRootDescriptor, ModuleBuildTarget> holderBuilder = FSOperations.createDirtyFilesHolderBuilder(context, CompilationRound.CURRENT);
+
       // force compilation of bound source file if the form is dirty
       for (final Map.Entry<File, ModuleBuildTarget> entry : formsToCompile.entrySet()) {
         final File form = entry.getKey();
@@ -126,7 +128,7 @@ public class FormsBindingManager extends FormsBuilder {
         for (File boundSource : sources) {
           if (!excludes.isExcluded(boundSource)) {
             addBinding(boundSource, form, srcToForms);
-            FSOperations.markDirty(context, CompilationRound.CURRENT, boundSource);
+            holderBuilder.markDirtyFile(target, boundSource);
             context.getScope().markIndirectlyAffected(target, boundSource);
             filesToCompile.put(boundSource, target);
             exitCode = ExitCode.OK;
@@ -145,7 +147,8 @@ public class FormsBindingManager extends FormsBuilder {
             final File formFile = new File(formPath);
             if (!excludes.isExcluded(formFile) && formFile.exists()) {
               addBinding(srcFile, formFile, srcToForms);
-              FSOperations.markDirty(context, CompilationRound.CURRENT, formFile);
+              holderBuilder.markDirtyFile(target, formFile);
+
               context.getScope().markIndirectlyAffected(target, formFile);
               formsToCompile.put(formFile, target);
               exitCode = ExitCode.OK;
@@ -153,6 +156,8 @@ public class FormsBindingManager extends FormsBuilder {
           }
         }
       }
+
+      BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holderBuilder.create());
     }
 
     FORMS_TO_COMPILE.set(context, srcToForms.isEmpty()? null : srcToForms);
