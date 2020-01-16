@@ -272,7 +272,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
 
-    myCapturePanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myCapturePanel.setBorder(
+      IdeBorderFactory.createTitledBorder(DebuggerBundle.message("settings.breakpoints.based"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
     myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
     return myPanel;
@@ -291,8 +293,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     public static final int INSERT_METHOD_COLUMN = 5;
     public static final int INSERT_KEY_EXPR = 6;
 
-    static final String[] COLUMN_NAMES =
-      new String[]{"", "Capture class name", "Capture method name", "Capture key expression", "Insert class name", "Insert method name", "Insert key expression"};
+    static final String[] COLUMN_NAMES = getColumns();
+
+    @NotNull
+    private static String[] getColumns() {
+      return new String[]{"",
+        DebuggerBundle.message("settings.capture.column.capture.class.name"),
+        DebuggerBundle.message("settings.capture.column.capture.method.name"),
+        DebuggerBundle.message("settings.capture.column.capture.key.expression"),
+        DebuggerBundle.message("settings.capture.column.insert.class.name"),
+        DebuggerBundle.message("settings.capture.column.insert.method.name"),
+        DebuggerBundle.message("settings.capture.column.insert.key.expression")};
+    }
+
     List<CapturePoint> myCapturePoints;
 
     private MyTableModel() {
@@ -564,19 +577,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       super(project, true);
       mySettings = DebuggerProjectSettings.getInstance(myProject);
       myAsyncSchedulePanel = new AnnotationsPanel(project,
-                                                  "Async Schedule",
+                                                  DebuggerBundle.message("settings.async.schedule"),
                                                   "",
                                                   getAsyncAnnotations(mySettings, true),
                                                   Collections.singletonList(getAnnotationName(true)),
                                                   Collections.emptySet(), false, false);
       myAsyncExecutePanel = new AnnotationsPanel(project,
-                                                 "Async Execute",
+                                                 DebuggerBundle.message("settings.async.execute"),
                                                  "",
                                                  getAsyncAnnotations(mySettings, false),
                                                  Collections.singletonList(getAnnotationName(false)),
                                                  Collections.emptySet(), false, false);
       init();
-      setTitle("Async Annotations Configuration");
+      setTitle(DebuggerBundle.message("settings.async.annotations.configuration"));
     }
 
     @Override
