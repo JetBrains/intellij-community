@@ -35,7 +35,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
 
   @Override
   @Nls
-    public String getDisplayName() {
+  public String getDisplayName() {
     return IdeBundle.message("configurable.CopyrightFormattingConfigurable.display.name");
   }
 
