@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.codeInspection.GlobalInspectionTool
+import com.intellij.codeInspection.InspectionEP
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -15,6 +17,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
@@ -311,6 +314,20 @@ class DynamicPluginsTest {
     }
   }
 
+  @Test
+  fun unloadEPCollection() {
+    val project = projectRule.project
+    val disposable = loadExtensionWithText("<projectConfigurable instance=\"${MyConfigurable::class.java.name}\" displayName=\"foo\"/>",
+                                           DynamicPlugins::class.java.classLoader)
+    try {
+      assertTrue(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name })
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+    assertFalse(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name })
+  }
+
   private fun loadPluginWithOptionalDependency(pluginXmlText: String, optionalDependencyDescriptorText: String): Disposable {
     val directory = FileUtil.createTempDirectory("test", "test", true)
     val plugin = File(directory, "/plugin/META-INF/plugin.xml")
@@ -370,5 +387,12 @@ class DynamicPluginsTest {
     }
 
     var executed = false
+  }
+
+  private class MyConfigurable : Configurable {
+    override fun isModified(): Boolean = TODO()
+    override fun getDisplayName(): String = TODO()
+    override fun apply() {}
+    override fun createComponent() = TODO()
   }
 }
