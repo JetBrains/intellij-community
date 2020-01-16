@@ -38,8 +38,12 @@ class CustomFrameDialogContent private constructor(val window: Window, content: 
             header.background = it
         }
 
-        add(header, "growx, wmin 100")
-        add(content, "grow")
+        val pane = JPanel(MigLayout("fill, ins 0, novisualpadding", "[grow]"))
+        pane.isOpaque = false
+        pane.add(content, "grow")
+
+        add(header, "growx")
+        add(pane, "wmin 100, grow")
     }
 
     fun updateLayout() {
