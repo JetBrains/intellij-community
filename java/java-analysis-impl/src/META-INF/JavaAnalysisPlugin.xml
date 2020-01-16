@@ -220,7 +220,6 @@
     <inspectionElementsMerger implementation="com.intellij.codeInspection.unneededThrows.RedundantThrowsInspectionMerger"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
-    <lang.psiTypeAnnotationModifier implementation="com.intellij.codeInsight.NullityAnnotationModifier"/>
     <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.DefaultInferredAnnotationProvider"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
                     serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>

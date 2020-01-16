@@ -30,9 +30,6 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
 
       PsiType exprType = myExpression.getType();
-      if (exprType != null) {
-        exprType = exprType.annotate(TypeAnnotationProvider.EMPTY);
-      }
 
       if (session.isProperType(myT)) {
         final boolean assignmentCompatible = exprType == null || TypeConversionUtil.isAssignable(myT, exprType);

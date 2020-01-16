@@ -1174,7 +1174,7 @@ public class InferenceSession {
       }
     }
     else {
-      type = InferenceVariable.modifyAnnotations(lowerBound, (lb, modifier) -> modifier.modifyLowerBoundAnnotations(lb, upperBound));
+      type = lowerBound;
     }
 
     if (type == PsiType.NULL) {

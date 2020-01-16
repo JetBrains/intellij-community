@@ -159,6 +159,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("ambiguous", myFixture);
     doTest();
   }
+  public void testTypeUseInferenceInsideRequireNotNull() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 
   public void testArrayComponentAndMethodAnnotationConflict() {
     setupAmbiguousAnnotations("withTypeUse", myFixture);

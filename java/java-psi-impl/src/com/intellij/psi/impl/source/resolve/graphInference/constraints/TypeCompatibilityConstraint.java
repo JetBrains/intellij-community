@@ -31,8 +31,8 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   private PsiType myS;
 
   public TypeCompatibilityConstraint(@NotNull PsiType t, @NotNull PsiType s) {
-    myT = t;
-    myS = s;
+    myT = t.annotate(TypeAnnotationProvider.EMPTY);
+    myS = s.annotate(TypeAnnotationProvider.EMPTY);
   }
 
   @Override
