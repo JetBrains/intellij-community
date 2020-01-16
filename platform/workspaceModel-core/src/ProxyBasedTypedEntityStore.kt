@@ -114,6 +114,13 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
       ?.find {it.persistentId() == id }
   }
 
+  override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrersByPersistentId(id: PersistentEntityId<E>): Sequence<R> {
+    return persistentIdReferrers[id.hashCode()]?.asSequence()?.map {
+      val entityData = entityById[it] ?: return@map null
+      return@map createEntityInstance(entityData) as R
+    }?.filterNotNull() ?: emptySequence()
+  }
+
   override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
                                                             entityClass: KClass<R>,
                                                             property: KProperty1<R, EntityReference<E>>): Sequence<R> {
@@ -271,6 +278,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
 
     if (updatePersistentIdReference) {
+      // TODO :: Improve is needed. In case of changing an irrelevant property, we scan all fields again and again
       removePersistentIdReferrers(oldData)
       addPersistentIdReferrers(newData)
     }

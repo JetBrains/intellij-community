@@ -53,23 +53,16 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
       when (kind) {
         is EntityPropertyKind.List -> when (val itemKind = kind.itemKind) {
           is EntityPropertyKind.List -> error("List of lists are not supported")
-          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-            (value as List<*>).forEach {
-              itemKind.subclassesKinds.forEach { subclassKinds ->
-                if (subclassKinds.key.isInstance(it)) subclassKinds.value.collectPersistentIdReferences(it, collector)
-              }
-            }
+          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (value as List<*>).forEach { itemKind.subclassesKinds.entries
+              .find { subclassKinds -> subclassKinds.key.isInstance(it) }?.value?.collectPersistentIdReferences(it, collector)
           }
           is EntityPropertyKind.DataClass -> (value as List<*>).forEach { itemKind.collectPersistentIdReferences(it, collector) }
           is EntityPropertyKind.PersistentId -> (value as List<PersistentEntityId<*>>).forEach { collector(it) }
           else -> Unit
         }.let { } // exhaustive when
         is EntityPropertyKind.PersistentId -> collector((value as PersistentEntityId<*>))
-        is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-          kind.subclassesKinds.forEach { subclassKinds ->
-            if (subclassKinds.key.isInstance(value)) subclassKinds.value.collectPersistentIdReferences(value, collector)
-          }
-        }
+        is EntityPropertyKind.SealedKotlinDataClassHierarchy -> kind.subclassesKinds.entries
+          .find { subclassKinds -> subclassKinds.key.isInstance(value) }?.value?.collectPersistentIdReferences(value, collector)
         is EntityPropertyKind.DataClass -> kind.collectPersistentIdReferences(value, collector)
         else -> Unit
       }.let { } // exhaustive when
@@ -88,10 +81,8 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
       val newValue = when (kind) {
         is EntityPropertyKind.List -> when (val itemKind = kind.itemKind) {
           is EntityPropertyKind.List -> error("List of lists are not supported")
-          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (value as List<*>).map {
-            return@map itemKind.subclassesKinds.entries.filter { subclassKinds -> subclassKinds.key.isInstance(it) }
-              .map { subclassKinds -> subclassKinds.value.replaceAll(it, oldEntity, newEntity) }
-              .first()
+          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (value as List<*>).map { itemKind.subclassesKinds.entries
+            .find { subclassKinds -> subclassKinds.key.isInstance(it) }?.value?.replaceAll(it, oldEntity, newEntity)
           }
           is EntityPropertyKind.DataClass -> (value as List<*>).map { itemKind.replaceAll(it, oldEntity, newEntity) }
           is EntityPropertyKind.PersistentId -> (value as List<PersistentEntityId<*>>).map { if (it == oldEntity) newEntity else it }
@@ -99,18 +90,14 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
         }
         is EntityPropertyKind.PersistentId -> if (value == oldEntity) newEntity else value
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> kind.subclassesKinds.entries
-          .filter { subclassProperties -> subclassProperties.key.isInstance(value) }
-          .map { subclassProperties -> subclassProperties.value.replaceAll(value, oldEntity, newEntity) }
-          .first()
+          .find { subclassProperties -> subclassProperties.key.isInstance(value) }?.value?.replaceAll(value, oldEntity, newEntity)
         is EntityPropertyKind.DataClass -> kind.replaceAll(value, oldEntity, newEntity)
         else -> value
       }
 
       // If object changed we should replace it in original map
-      if (value != newValue) newValuesMap[name] = newValue
+      if (value != newValue) values[name] = newValue
     }
-
-    newValuesMap.forEach { (propertyName, propertyValue) -> values.replace(propertyName, propertyValue) }
   }
 
 }
@@ -187,7 +174,7 @@ internal sealed class EntityPropertyKind {
     fun  replaceAll(instance: Any?,  oldElement: PersistentEntityId<*>, newElement: PersistentEntityId<*>) : Any?  {
       fun replaceProperty(getters: kotlin.collections.List<Method>, getterIndex: Int, value: Any): Any {
         when {
-          value is kotlin.collections.List<*> -> return value.filterNotNull().map { replaceProperty(getters, getterIndex, it) }
+          value is kotlin.collections.List<*> -> return value.map { replaceProperty(getters, getterIndex, it!!) }
           getterIndex >= getters.size -> {
             val id = value as PersistentEntityId<*>
             return if (id == oldElement) newElement else value
@@ -336,10 +323,11 @@ internal class EntityMetaDataRegistry {
         EntityPropertyKind.PersistentId(type)
       }
       // TODO Make compatible with Java. Check Modifier.isFinal(type.modifiers), all fields are final etc
+      // TODO Fix objectInstance properties store in DataClass
       type.kotlin.isData || type.kotlin.objectInstance != null -> {
-        val classMetadata = dataClassMetaData[type]!!
-        checkDataClassRestrictions(classMetadata, allowReferences = true)
-        classMetadata
+        val dataClassMetadata = dataClassMetaData[type]!!
+        checkDataClassRestrictions(dataClassMetadata, allowReferences = true)
+        dataClassMetadata
       }
       type.kotlin.isSealed -> {
         val subclasses = mutableListOf<KClass<*>>()
@@ -350,14 +338,9 @@ internal class EntityMetaDataRegistry {
         collectSubclasses(type.kotlin)
 
         if (subclasses.isEmpty()) error("Empty subclasses list for sealed hierarchy inherited from ${type.kotlin}")
-        val result = mutableMapOf<KClass<*>, EntityPropertyKind.DataClass>()
-        for (subclass in subclasses) {
-          if (!subclass.isData && subclass.objectInstance == null) error("Subclass $subclass must a data class or an object")
-          val propertyKind = getPropertyKind(subclass.java, owner)
-          result[subclass] = propertyKind as EntityPropertyKind.DataClass
-        }
-
-        EntityPropertyKind.SealedKotlinDataClassHierarchy(result)
+        val subclassesKinds = subclasses.filter { it.isData || it.objectInstance != null }
+          .associateWith { getPropertyKind(it.java, owner) as EntityPropertyKind.DataClass }
+        EntityPropertyKind.SealedKotlinDataClassHierarchy(subclassesKinds)
       }
       else -> throw IllegalArgumentException("Properties of type $type aren't allowed in entities")
     }
