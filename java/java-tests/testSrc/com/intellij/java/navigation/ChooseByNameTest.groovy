@@ -12,11 +12,16 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.idea.Bombed
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.ObjectUtils
 import com.intellij.util.indexing.FindSymbolParameters
-import org.jetbrains.annotations.Nullable
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
@@ -387,7 +392,7 @@ class Intf {
     def foo = myFixture.addClass('package foo; class List {}')
     def bar = myFixture.addClass('package bar; class List {}')
 
-    def contributor = createClassContributor(project, myFixture.addClass('class Context {}'))
+    def contributor = createClassContributor(project, myFixture.addClass('class Context {}').containingFile)
     assert calcContributorElements(contributor, "List") == [bar, foo]
 
     JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, 'bar')
@@ -556,27 +561,33 @@ class Intf {
   }
 
   static SearchEverywhereContributor<Object> createClassContributor(Project project, PsiElement context = null, boolean everywhere = false) {
-    def res = new TestClassContributor(project, context)
+    def res = new TestClassContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
     return res
   }
 
   static SearchEverywhereContributor<Object> createFileContributor(Project project, PsiElement context = null, boolean everywhere = false) {
-    def res = new TestFileContributor(project, context)
+    def res = new TestFileContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
     return res
   }
 
   static SearchEverywhereContributor<Object> createSymbolContributor(Project project, PsiElement context = null, boolean everywhere = false) {
-    def res = new TestSymbolContributor(project, context)
+    def res = new TestSymbolContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
     return res
   }
 
+  static AnActionEvent createEvent(Project project, PsiElement context = null) {
+    def dataContext = SimpleDataContext.getSimpleContext(
+      CommonDataKeys.PSI_FILE.name, ObjectUtils.tryCast(context, PsiFile.class), SimpleDataContext.getProjectContext(project))
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
+  }
+
   private static class TestClassContributor extends ClassSearchEverywhereContributor {
 
-    TestClassContributor(@Nullable Project project, @Nullable PsiElement context) {
-      super(project, context)
+    TestClassContributor(@NotNull AnActionEvent event) {
+      super(event)
     }
 
     void setEverywhere(boolean state) {
@@ -586,8 +597,8 @@ class Intf {
 
   private static class TestFileContributor extends FileSearchEverywhereContributor {
 
-    TestFileContributor(@Nullable Project project, @Nullable PsiElement context) {
-      super(project, context)
+    TestFileContributor(@NotNull AnActionEvent event) {
+      super(event)
     }
 
     void setEverywhere(boolean state) {
@@ -597,8 +608,8 @@ class Intf {
 
   private static class TestSymbolContributor extends SymbolSearchEverywhereContributor {
 
-    TestSymbolContributor(@Nullable Project project, @Nullable PsiElement context) {
-      super(project, context)
+    TestSymbolContributor(@NotNull AnActionEvent event) {
+      super(event)
     }
 
     void setEverywhere(boolean state) {
