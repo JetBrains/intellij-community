@@ -46,8 +46,8 @@
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="37" x="535" y="387.3047">active</text>
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="195" x="719" y="387.3047">disposed or dispose in progress</text>
     <rect fill="#FFFFFF" height="575.25" style="stroke: #000000; stroke-width: 1.5;" width="876" x="10" y="412.7227"/>
-    <path d="M168,413.7227 L168,422.1289 L158,432.1289 L10,432.1289 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
-    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="148" x="13" y="426.7109">synchronized on service</text>
+    <path d="M203,413.7227 L203,422.1289 L193,432.1289 L10,432.1289 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="183" x="13" y="426.7109">synchronized on service class</text>
     <polygon fill="#F8F8F8" points="220,499.332,304,499.332,316,511.332,304,523.332,220,523.332,208,511.332,220,499.332" style="stroke: #383838; stroke-width: 1.0;"/>
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="84" x="220" y="516.1172">Is Initializing?</text>
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="187" y="507.9141">yes</text>

@@ -22,7 +22,7 @@ endif
 if (Is Created and Initialized?) then (yes)
 else (no)
   if (Is Container Active?) then (active)
-    partition "synchronized on service" {
+    partition "synchronized on service class" {
       if (Is Created and Initialized?) then (yes)
       else (no)
         if (Is Initializing?) then (yes)
