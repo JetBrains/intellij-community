@@ -60,8 +60,8 @@ internal class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
                                                                          ?.files ?: VirtualFile.EMPTY_ARRAY
 
   override fun getUrls(rootType: OrderRootType): Array<String> = roots[LibraryRootTypeId(rootType.name())]
-                                                                   ?.urls?.map { it.url }?.toTypedArray()
-                                                                 ?: ArrayUtil.EMPTY_STRING_ARRAY
+                                                                   ?.run { urls + jarDirectories.map { it.directoryUrl } }
+                                                                   ?.map { it.url }?.toTypedArray() ?: ArrayUtil.EMPTY_STRING_ARRAY
 
   override fun getKind(): PersistentLibraryKind<*>? = libraryKind
 
