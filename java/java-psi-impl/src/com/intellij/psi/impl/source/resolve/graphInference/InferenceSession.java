@@ -1791,8 +1791,9 @@ public class InferenceSession {
     if (arg instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)arg).isExact()) {
       final PsiParameter[] sParameters = sInterfaceMethod.getParameterList().getParameters();
       final PsiParameter[] tParameters = tInterfaceMethod.getParameterList().getParameters();
-      LOG.assertTrue(sParameters.length == tParameters.length, 
-                     "s: " + sInterfaceMethod.getParameterList().getText() + "; t: " + tInterfaceMethod.getParameterList().getText());
+      if (sParameters.length != tParameters.length) {
+        LOG.error("s: " + sInterfaceMethod.getParameterList().getText() + "; t: " + tInterfaceMethod.getParameterList().getText());
+      }
       for (int i = 0; i < tParameters.length; i++) {
         final PsiType tSubstituted = tSubstitutor.substitute(tParameters[i].getType());
         final PsiType sSubstituted = sSubstitutor.substitute(sParameters[i].getType());
