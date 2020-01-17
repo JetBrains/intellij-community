@@ -46,7 +46,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
 
 class LightGitStatusBarWidgetProvider: StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? {
-    return LightGitStatusBarWidget(LightGitTracker(LightEditService.getInstance(), project))
+    return LightGitStatusBarWidget(LightGitTracker(LightEditService.getInstance()))
   }
 
   override fun isCompatibleWith(frame: IdeFrame): Boolean = frame is LightEditFrame
