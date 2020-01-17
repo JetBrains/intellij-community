@@ -51,12 +51,12 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   public StructureTreeModel(@NotNull Structure structure,
                             @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                             @NotNull Disposable parent) {
-    this(structure, Invoker.forBackgroundThreadWithReadAction(parent), comparator, parent);
+    this(structure, comparator, Invoker.forBackgroundThreadWithReadAction(parent), parent);
   }
 
   public StructureTreeModel(@NotNull Structure structure,
-                            @NotNull Invoker invoker,
                             @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                            @NotNull Invoker invoker,
                             @NotNull Disposable parent) {
     this.structure = structure;
     this.description = format(structure.toString());
