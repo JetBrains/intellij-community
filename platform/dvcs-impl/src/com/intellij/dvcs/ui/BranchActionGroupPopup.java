@@ -77,8 +77,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         myUserSizeChanged = true;
       }
       createTitlePanelToolbar(myKey);
-      mySpeedSearch.setAlwaysShown(true);
     }
+    setSpeedSearchAlwaysShown(true);
     myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
   }
 
@@ -226,13 +226,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected void afterShow() {
-    if (myKey != null) {
-      mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
-      mySpeedSearchPatternField.getTextEditor().setBorder(JBUI.Borders.empty());
-      setHeaderComponent(mySpeedSearchPatternField);
-      mySpeedSearchPatternField.getTextEditor().setFocusable(true);
-      IdeFocusManager.getGlobalInstance().requestFocus(mySpeedSearchPatternField, true);
-    }
     super.afterShow();
     myShown = true;
     Dimension size = getSize();

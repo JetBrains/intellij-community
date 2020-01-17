@@ -129,6 +129,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   private static final WeakList<JBPopup> all = new WeakList<>();
 
+  private boolean mySpeedSearchAlwaysShown;
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown;
 
@@ -137,7 +138,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       mySpeedSearchPatternField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
-      if (!myAlwaysShown) {
+      if (!mySpeedSearchAlwaysShown) {
         if (isHoldingFilter() && !searchFieldShown) {
           setHeaderComponent(mySpeedSearchPatternField);
           searchFieldShown = true;
@@ -1190,7 +1191,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         mySpeedSearch.reset();
       }
     };
-    mySpeedSearchPatternField.getTextEditor().setFocusable(false);
+    mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
+    if (mySpeedSearchAlwaysShown) {
+      setHeaderComponent(mySpeedSearchPatternField);
+      mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
+      mySpeedSearchPatternField.getTextEditor().setBorder(JBUI.Borders.empty());
+    }
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
@@ -1253,10 +1259,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private void _requestFocus() {
     if (!myFocusable) return;
 
-    if (myPreferredFocusedComponent != null) {
+    JComponent toFocus = ObjectUtils.chooseNotNull(myPreferredFocusedComponent,
+                                                   mySpeedSearchAlwaysShown ? mySpeedSearchPatternField : null);
+    if (toFocus != null) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
         if (!myDisposed) {
-          IdeFocusManager.getGlobalInstance().requestFocus(myPreferredFocusedComponent, true);
+          IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true);
         }
       });
     }
@@ -1685,6 +1693,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
   }
 
+  public void setSpeedSearchAlwaysShown(boolean value) {
+    assert myState == State.INIT;
+    mySpeedSearchAlwaysShown = value;
+  }
+
   private class MyWindowListener extends WindowAdapter {
 
     @Override
@@ -1807,10 +1820,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       myHeaderPanel.add(c, BorderLayout.CENTER);
       myHeaderComponent = c;
 
-      final Dimension size = myContent.getSize();
-      if (size.height < c.getPreferredSize().height * 2) {
-        size.height += c.getPreferredSize().height;
-        setSize(size);
+      if (isVisible()) {
+        final Dimension size = myContent.getSize();
+        if (size.height < c.getPreferredSize().height * 2) {
+          size.height += c.getPreferredSize().height;
+          setSize(size);
+        }
       }
 
       doRevalidate = true;
