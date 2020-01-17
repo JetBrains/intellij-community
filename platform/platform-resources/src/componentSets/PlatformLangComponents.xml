@@ -22,6 +22,8 @@
 
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyAnActionListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 
+    <listener class="com.intellij.internal.statistic.local.ActionsLocalSummaryListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+
     <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
   <projectListeners>
