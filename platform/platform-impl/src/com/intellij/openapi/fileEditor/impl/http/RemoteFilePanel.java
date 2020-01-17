@@ -31,9 +31,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author nik
- */
 public class RemoteFilePanel {
   private static final Logger LOG = Logger.getInstance(RemoteFilePanel.class);
   @NonNls private static final String ERROR_CARD = "error";

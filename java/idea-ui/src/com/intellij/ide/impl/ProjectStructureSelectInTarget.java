@@ -42,9 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Iterator;
 
-/**
- * @author nik
- */
 public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
   @Override
   public boolean canSelect(final SelectInContext context) {

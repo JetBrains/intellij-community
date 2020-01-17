@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class ArtifactEditorNavigateActionBase extends DumbAwareAction {
   public ArtifactEditorNavigateActionBase(JComponent contextComponent) {
     super(ProjectBundle.message("action.name.facet.navigate"));

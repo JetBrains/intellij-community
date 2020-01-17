@@ -31,9 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuilder {
   private final Map<String, JarInfo> myJarByPath;
   private final List<ArtifactRootDescriptor> myDescriptors;

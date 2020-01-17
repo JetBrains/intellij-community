@@ -8,9 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class HotSwapUI {
   public static HotSwapUI getInstance(Project project) {
     return project.getComponent(HotSwapUI.class);

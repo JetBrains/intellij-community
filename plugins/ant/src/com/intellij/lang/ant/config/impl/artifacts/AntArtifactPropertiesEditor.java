@@ -42,9 +42,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("ant-properties");
   private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN =

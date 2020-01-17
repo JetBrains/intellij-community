@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
-/**
- * @author nik
- */
 public class JpsJavaCompilerWorkspaceConfigurationSerializer extends JpsProjectExtensionSerializer {
   public JpsJavaCompilerWorkspaceConfigurationSerializer() {
     super(WORKSPACE_FILE, "CompilerWorkspaceConfiguration");

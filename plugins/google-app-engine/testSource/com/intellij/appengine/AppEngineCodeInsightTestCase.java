@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
   @NonNls private static final String DEFAULT_VERSION = "1.3.7";
   private JavaModuleFixtureBuilder myModuleBuilder;

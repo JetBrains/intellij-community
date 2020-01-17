@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
 
-/**
- * @author nik
- */
 public abstract class JpsModulePropertiesSerializer<P extends JpsElement> extends JpsElementPropertiesSerializer<P, JpsModuleType<P>> {
   private final String myComponentName;
 

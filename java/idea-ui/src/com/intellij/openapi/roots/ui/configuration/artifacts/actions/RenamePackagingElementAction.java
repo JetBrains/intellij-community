@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
 
-/**
- * @author nik
- */
 public class RenamePackagingElementAction extends DumbAwareAction {
   private final ArtifactEditorEx myArtifactEditor;
 

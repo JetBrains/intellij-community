@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   private Map<LibraryKind, LibraryPresentationProvider<?>> myPresentationProviders;
 

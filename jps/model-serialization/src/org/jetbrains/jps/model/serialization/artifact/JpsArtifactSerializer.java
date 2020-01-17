@@ -31,9 +31,6 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsArtifactSerializer {
   private static final JpsPackagingElementSerializer<?>[] STANDARD_SERIALIZERS = {
     new ArtifactRootElementSerializer(),

@@ -16,9 +16,6 @@
 
 package com.intellij.openapi.module;
 
-/**
- * @author nik
- */
 public abstract class ConfigurationErrorDescription {
   private final String myElementName;
   private final String myDescription;

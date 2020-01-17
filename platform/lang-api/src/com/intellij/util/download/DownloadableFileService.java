@@ -24,9 +24,6 @@ import javax.swing.*;
 import java.net.URL;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class DownloadableFileService {
   public static DownloadableFileService getInstance() {
     return ServiceManager.getService(DownloadableFileService.class);

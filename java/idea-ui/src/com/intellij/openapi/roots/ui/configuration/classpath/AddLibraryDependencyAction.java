@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* @author nik
-*/
 class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   private final StructureConfigurableContext myContext;
 

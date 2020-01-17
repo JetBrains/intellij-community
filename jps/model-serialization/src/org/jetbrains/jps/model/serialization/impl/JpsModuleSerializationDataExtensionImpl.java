@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleSerializationDataEx
 import java.io.File;
 import java.nio.file.Path;
 
-/**
- * @author nik
- */
 public class JpsModuleSerializationDataExtensionImpl extends JpsElementBase<JpsModuleSerializationDataExtensionImpl> implements
                                                                                                                      JpsModuleSerializationDataExtension {
   public static final JpsElementChildRole<JpsModuleSerializationDataExtension> ROLE = JpsElementChildRoleBase.create("module serialization data");

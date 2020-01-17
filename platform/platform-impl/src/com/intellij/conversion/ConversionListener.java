@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface ConversionListener {
   void conversionNeeded();
 

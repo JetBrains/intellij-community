@@ -9,9 +9,6 @@ import org.jetbrains.jps.maven.model.impl.MavenResourcesTargetType;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class MavenUpdateResourcesBuildContributor implements UpdateResourcesBuildContributor {
   @Override
   @NotNull

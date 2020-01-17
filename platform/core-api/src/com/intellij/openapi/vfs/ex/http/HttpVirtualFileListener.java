@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface HttpVirtualFileListener extends EventListener {
 
   void fileDownloaded(@NotNull VirtualFile file);

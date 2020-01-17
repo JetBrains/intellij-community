@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
   private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "dll", "so", "dylib");
 

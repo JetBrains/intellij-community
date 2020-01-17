@@ -27,9 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class ConfigFileMetaDataRegistryImpl implements ConfigFileMetaDataRegistry {
   private final List<ConfigFileMetaData> myMetaData = new ArrayList<>();
   private final Map<String, ConfigFileMetaData> myId2MetaData = new HashMap<>();

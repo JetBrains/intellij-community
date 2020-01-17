@@ -17,9 +17,6 @@ package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.util.io.URLUtil;
 
-/**
- * @author nik
- */
 public class HttpFileSystemImpl extends HttpFileSystemBase {
   public HttpFileSystemImpl() {
     super(URLUtil.HTTP_PROTOCOL);

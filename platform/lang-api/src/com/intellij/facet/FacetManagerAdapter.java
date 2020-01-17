@@ -18,9 +18,6 @@ package com.intellij.facet;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class FacetManagerAdapter implements FacetManagerListener {
   @Override
   public void beforeFacetAdded(@NotNull Facet facet) {

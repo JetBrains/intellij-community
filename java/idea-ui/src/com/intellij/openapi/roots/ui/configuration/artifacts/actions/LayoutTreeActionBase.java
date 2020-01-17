@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class LayoutTreeActionBase extends DumbAwareAction {
   protected final ArtifactEditorEx myArtifactEditor;
 

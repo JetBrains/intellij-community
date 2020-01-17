@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class LibraryKind {
   private final String myKindId;
   private static final Map<String, LibraryKind> ourAllKinds = new HashMap<>();

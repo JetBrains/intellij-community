@@ -10,9 +10,6 @@ import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class FacetTestCase extends HeavyPlatformTestCase {
   @Override
   protected void setUp() throws Exception {

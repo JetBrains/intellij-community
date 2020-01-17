@@ -22,9 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualFile, VirtualFilePattern> {
   public VirtualFilePattern() {
     super(VirtualFile.class);

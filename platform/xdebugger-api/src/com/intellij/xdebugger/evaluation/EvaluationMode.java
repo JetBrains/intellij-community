@@ -15,9 +15,6 @@
  */
 package com.intellij.xdebugger.evaluation;
 
-/**
- * @author nik
- */
 public enum EvaluationMode {
   EXPRESSION, CODE_FRAGMENT
 }

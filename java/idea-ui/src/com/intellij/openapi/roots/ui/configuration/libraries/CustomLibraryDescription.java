@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class CustomLibraryDescription {
   @Nullable
   public DownloadableLibraryType getDownloadableLibraryType() {

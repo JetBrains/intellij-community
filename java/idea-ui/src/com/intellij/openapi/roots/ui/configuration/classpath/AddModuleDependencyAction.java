@@ -29,9 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
-* @author nik
-*/
 class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   private final StructureConfigurableContext myContext;
   private final ClasspathPanel myClasspathPanel;

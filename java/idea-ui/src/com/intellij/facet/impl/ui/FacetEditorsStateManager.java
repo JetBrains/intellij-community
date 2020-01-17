@@ -21,9 +21,6 @@ import com.intellij.facet.FacetType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class FacetEditorsStateManager {
 
   public static FacetEditorsStateManager getInstance(@NotNull Project project) {

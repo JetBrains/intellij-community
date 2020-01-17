@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.diagnostic.Logger;
 
-/**
- * @author nik
- */
 public class RemoteRepositoryInfo {
   private static final Logger LOG = Logger.getInstance(RemoteRepositoryInfo.class);
   private final String myId;

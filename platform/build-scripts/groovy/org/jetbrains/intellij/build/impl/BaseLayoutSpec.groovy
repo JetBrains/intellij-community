@@ -15,9 +15,6 @@
  */
 package org.jetbrains.intellij.build.impl
 
-/**
- * @author nik
- */
 class BaseLayoutSpec {
   protected final BaseLayout layout
 

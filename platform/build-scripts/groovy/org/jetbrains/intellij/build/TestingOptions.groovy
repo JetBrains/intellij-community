@@ -4,9 +4,6 @@ package org.jetbrains.intellij.build
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 
-/**
- * @author nik
- */
 @CompileStatic
 class TestingOptions {
   /**

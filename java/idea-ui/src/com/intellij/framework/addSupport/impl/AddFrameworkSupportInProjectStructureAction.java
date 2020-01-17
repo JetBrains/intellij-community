@@ -32,9 +32,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureCo
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AddFrameworkSupportInProjectStructureAction.class);
   private final FrameworkTypeEx myFrameworkType;

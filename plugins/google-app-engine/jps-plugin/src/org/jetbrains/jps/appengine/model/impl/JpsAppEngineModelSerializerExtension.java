@@ -27,9 +27,6 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializ
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsAppEngineModelSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override

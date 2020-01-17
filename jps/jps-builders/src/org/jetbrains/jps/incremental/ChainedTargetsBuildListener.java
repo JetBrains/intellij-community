@@ -30,9 +30,7 @@ import java.io.IOException;
 
 /**
  * Notifies targets about changes in their sources made by other builders
- *
- * @author nik
-*/
+ */
 class ChainedTargetsBuildListener implements BuildListener {
   private final CompileContextImpl myContext;
 

@@ -24,9 +24,6 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author nik
-*/
 public class XValueTextRendererImpl extends XValueTextRendererBase {
   private final ColoredTextContainer myText;
 

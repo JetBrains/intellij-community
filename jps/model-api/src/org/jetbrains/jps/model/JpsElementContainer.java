@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-/**
- * @author nik
- */
 public interface JpsElementContainer {
   <T extends JpsElement>
   T getChild(@NotNull JpsElementChildRole<T> role);

@@ -27,9 +27,6 @@ import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * @author nik
- */
 class ClassFileBuilderTest {
   @Test
   fun `empty class`() {

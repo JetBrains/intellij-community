@@ -28,9 +28,6 @@ import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface ArtifactsStructureConfigurableContext extends PackagingElementResolvingContext {
   @NotNull
   ModifiableArtifactModel getOrCreateModifiableArtifactModel();

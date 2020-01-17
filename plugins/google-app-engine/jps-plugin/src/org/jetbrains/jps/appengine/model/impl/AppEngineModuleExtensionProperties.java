@@ -10,9 +10,6 @@ import org.jetbrains.jps.appengine.model.PersistenceApi;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineModuleExtensionProperties {
   @Tag("sdk-home-path")
   public String mySdkHomePath = "";

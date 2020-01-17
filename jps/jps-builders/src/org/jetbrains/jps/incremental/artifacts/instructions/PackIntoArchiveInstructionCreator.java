@@ -7,9 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
   private final DestinationInfo myJarDestination;
   private final JarInfo myJarInfo;

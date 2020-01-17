@@ -13,8 +13,6 @@ import java.util.Set;
 
 /**
  * Use {@link com.intellij.xdebugger.XDebuggerManager#getBreakpointManager()} to obtain instance of this service
- *
- * @author nik
  */
 public interface XBreakpointManager {
   @NotNull

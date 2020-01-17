@@ -28,8 +28,6 @@ import java.util.Set;
 
 /**
  * Consider using {@link com.intellij.util.io.DirectoryContentBuilder} instead, it provides more convenient Kotlin DSL.
- *
- * @author nik
  */
 public class TestFileSystemItem {
   private final boolean myDirectory;

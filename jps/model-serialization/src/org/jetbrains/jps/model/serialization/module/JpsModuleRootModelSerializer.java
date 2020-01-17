@@ -41,9 +41,6 @@ import java.util.List;
 
 import static com.intellij.openapi.util.JDOMUtil.getChildren;
 
-/**
- * @author nik
- */
 public class JpsModuleRootModelSerializer {
   private static final Logger LOG = Logger.getInstance(JpsModuleRootModelSerializer.class);
   public static final String URL_ATTRIBUTE = "url";

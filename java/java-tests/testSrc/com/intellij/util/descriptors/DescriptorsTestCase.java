@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public abstract class DescriptorsTestCase extends HeavyPlatformTestCase {
   protected ConfigFileMetaDataProvider myMetaDataProvider;
   protected ConfigFileMetaData myMetaData;

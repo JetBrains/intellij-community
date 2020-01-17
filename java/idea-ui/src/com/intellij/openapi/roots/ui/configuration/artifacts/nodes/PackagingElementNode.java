@@ -36,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class PackagingElementNode<E extends PackagingElement<?>> extends ArtifactsTreeNode {
   private final List<E> myPackagingElements;
   private final Map<PackagingElement<?>, CompositePackagingElement<?>> myParentElements = new HashMap<>(1);

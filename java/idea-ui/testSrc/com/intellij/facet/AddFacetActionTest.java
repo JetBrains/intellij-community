@@ -8,9 +8,6 @@ import com.intellij.facet.mock.MockFacetEditorFacade;
 import com.intellij.facet.mock.MockFacetType;
 import com.intellij.facet.mock.MockSubFacetType;
 
-/**
- * @author nik
- */
 public class AddFacetActionTest extends FacetTestCase {
   private MockFacetEditorFacade myEditorFacade;
 

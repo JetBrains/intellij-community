@@ -29,8 +29,6 @@ import javax.swing.event.HyperlinkListener;
  * and call {@link XDebuggerManager#startSession} from {@link com.intellij.execution.runners.ProgramRunner#execute} method
  *
  * Otherwise use method {@link XDebuggerManager#startSessionAndShowTab} to start new debugging session
- *
- * @author nik
  */
 public abstract class XDebugProcess {
   private final XDebugSession mySession;

@@ -11,9 +11,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.util.regex.Pattern
 
-/**
- * @author nik
- */
 class CrossPlatformDistributionBuilder {
   private final BuildContext buildContext
 

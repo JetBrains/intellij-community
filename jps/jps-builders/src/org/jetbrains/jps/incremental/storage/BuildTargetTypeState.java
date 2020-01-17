@@ -31,9 +31,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author nik
- */
 public class BuildTargetTypeState {
   private static final int VERSION = 1;
   private static final Logger LOG = Logger.getInstance(BuildTargetTypeState.class);

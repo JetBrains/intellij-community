@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.module;
 
-/**
- * @author nik
- */
 public class ConfigurationErrorType {
   private final String myElementKind;
   private final boolean myCanIgnore;

@@ -23,9 +23,6 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author nik
-*/
 public class GroovySdkForNewModuleWizardStep extends GroovySdkWizardStepBase {
 
   @Nullable

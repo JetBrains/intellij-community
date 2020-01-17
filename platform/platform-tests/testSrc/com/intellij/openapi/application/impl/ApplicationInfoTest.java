@@ -18,9 +18,6 @@ package com.intellij.openapi.application.impl;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * @author nik
- */
 public class ApplicationInfoTest {
   @Test
   public void shortenCompanyName() {

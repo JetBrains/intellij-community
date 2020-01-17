@@ -17,8 +17,5 @@ package com.intellij.facet.ui.libraries;
 
 import com.intellij.facet.ui.FacetEditorValidator;
 
-/**
- * @author nik
- */
 public abstract class FrameworkLibraryValidator extends FacetEditorValidator {
 }

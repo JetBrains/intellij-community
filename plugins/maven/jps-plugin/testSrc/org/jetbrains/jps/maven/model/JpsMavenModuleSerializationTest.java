@@ -6,9 +6,6 @@ import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsMavenModuleSerializationTest extends JpsSerializationTestCase {
   public void testLoadProject() {
     loadProject("plugins/maven/jps-plugin/testData/compiler/classpathTest");

@@ -25,9 +25,6 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import java.awt.event.InputEvent;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class ComplexPackagingElementNode extends PackagingElementNode<ComplexPackagingElement<?>> {
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
 

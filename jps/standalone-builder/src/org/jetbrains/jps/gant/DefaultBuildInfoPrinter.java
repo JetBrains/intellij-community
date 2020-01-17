@@ -15,9 +15,6 @@
  */
 package org.jetbrains.jps.gant;
 
-/**
- * @author nik
- */
 public class DefaultBuildInfoPrinter implements BuildInfoPrinter {
   @Override
   public void printProgressMessage(JpsGantProjectBuilder builder, String message) {

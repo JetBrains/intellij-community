@@ -49,9 +49,6 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author nik
- */
 public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration>
   extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
 

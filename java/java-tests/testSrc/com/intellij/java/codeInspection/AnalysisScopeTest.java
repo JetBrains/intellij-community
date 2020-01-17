@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
-/**
- * @author nik
- */
 public class AnalysisScopeTest extends JavaModuleTestCase {
   public void testGeneratedSourceRoot() throws Exception {
     VirtualFile genRoot = getVirtualFile(createTempDir("genSrcRoot"));

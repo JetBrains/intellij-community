@@ -22,9 +22,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 @ApiStatus.NonExtendable
 public abstract class ProjectWideFacetListenersRegistry {
 

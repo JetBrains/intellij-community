@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class XDebuggerUIConstants {
   /**
    * Use {code {@link #getCollectingDataMessage()}} instead

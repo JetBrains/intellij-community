@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface ModuleBuilderListener extends EventListener {
 
   void moduleCreated(@NotNull Module module);

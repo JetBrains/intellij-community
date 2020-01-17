@@ -20,9 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class FacetTypeRegistry {
 
   public static FacetTypeRegistry getInstance() {

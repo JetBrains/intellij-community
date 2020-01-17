@@ -36,9 +36,6 @@ import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<>();
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;

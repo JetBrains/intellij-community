@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public interface FacetRootsProvider {
 
   @NotNull

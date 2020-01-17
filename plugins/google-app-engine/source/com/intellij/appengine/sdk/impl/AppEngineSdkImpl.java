@@ -25,9 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.Attributes;
 
-/**
- * @author nik
- */
 public class AppEngineSdkImpl implements AppEngineSdk {
   private static final Logger LOG = Logger.getInstance(AppEngineSdkImpl.class);
   private Map<String, Set<String>> myClassesWhiteList;

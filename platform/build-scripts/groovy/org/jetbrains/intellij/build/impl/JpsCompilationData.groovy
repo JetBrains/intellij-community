@@ -35,9 +35,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.jps.gant.Log4jFileLoggerFactory
 
-/**
- * @author nik
- */
 @CompileStatic
 class JpsCompilationData {
   final File dataStorageRoot

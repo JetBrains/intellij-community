@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public interface SocketConnection<Request extends AbstractRequest, Response extends AbstractResponse> extends Disposable {
   @NotNull
   ConnectionState getState();

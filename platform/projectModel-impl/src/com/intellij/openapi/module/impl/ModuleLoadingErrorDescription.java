@@ -21,9 +21,6 @@ import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
   private final ModulePath myModulePath;
   private final ModuleManagerImpl myModuleManager;

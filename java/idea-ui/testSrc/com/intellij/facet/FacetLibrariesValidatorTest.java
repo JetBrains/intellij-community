@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FacetLibrariesValidatorTest extends FacetTestCase {
   private MockFacetValidatorsManager myValidatorsManager;
   private static final LibraryInfo JDOM = new LibraryInfo("jdom.jar", (String)null, null, null, "org.jdom.Element");

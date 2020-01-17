@@ -23,9 +23,6 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   @Override
   public void perform(@NotNull final Project project, final AnActionEvent event) {

@@ -25,8 +25,6 @@ import java.util.List;
  * The main entry point for the external build system plugins. Implementations of this class are registered as Java services, by
  * creating a file META-INF/services/org.jetbrains.jps.incremental.BuilderService containing the qualified name of your implementation
  * class.
- *
- * @author nik
  */
 public abstract class BuilderService {
   /**

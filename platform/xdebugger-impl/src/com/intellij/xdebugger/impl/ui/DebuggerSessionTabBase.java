@@ -25,9 +25,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class DebuggerSessionTabBase extends RunTab {
   protected ExecutionConsole myConsole;
 

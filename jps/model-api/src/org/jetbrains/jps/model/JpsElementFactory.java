@@ -26,9 +26,6 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-/**
- * @author nik
- */
 public abstract class JpsElementFactory {
   public static JpsElementFactory getInstance() {
     return JpsServiceManager.getInstance().getService(JpsElementFactory.class);

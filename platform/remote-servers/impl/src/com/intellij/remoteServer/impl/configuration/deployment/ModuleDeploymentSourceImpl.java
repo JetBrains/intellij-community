@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
-/**
- * @author nik
- */
 public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {
   private final ModulePointer myPointer;
 

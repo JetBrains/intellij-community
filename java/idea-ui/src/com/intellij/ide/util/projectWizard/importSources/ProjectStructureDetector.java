@@ -38,8 +38,6 @@ import java.util.List;
  * &nbsp;&nbsp;&lt;projectStructureDetector implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- *
- * @author nik
  */
 public abstract class ProjectStructureDetector {
   public static final ExtensionPointName<ProjectStructureDetector> EP_NAME = ExtensionPointName.create("com.intellij.projectStructureDetector");

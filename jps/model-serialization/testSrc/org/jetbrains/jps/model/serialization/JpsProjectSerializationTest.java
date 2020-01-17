@@ -29,9 +29,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- * @author nik
- */
 public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   public static final String SAMPLE_PROJECT_PATH = "/jps/model-serialization/testData/sampleProject";
   public static final String SAMPLE_PROJECT_IPR_PATH = "/jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr";

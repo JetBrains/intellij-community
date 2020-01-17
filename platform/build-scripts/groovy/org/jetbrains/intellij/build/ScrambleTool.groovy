@@ -21,8 +21,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 /**
  * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to support scrambling the product
  * JAR files.
- *
- * @author nik
  */
 @CompileStatic
 interface ScrambleTool {

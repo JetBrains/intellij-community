@@ -22,9 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase {
   private VirtualFile myContentRoot;
 

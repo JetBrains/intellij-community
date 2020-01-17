@@ -13,9 +13,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
 
   private final Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<>();

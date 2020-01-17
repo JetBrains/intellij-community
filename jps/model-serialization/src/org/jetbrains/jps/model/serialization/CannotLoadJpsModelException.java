@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class CannotLoadJpsModelException extends RuntimeException {
   @NotNull private final File myFile;
 

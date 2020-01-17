@@ -18,9 +18,6 @@ package org.jetbrains.jps;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 //todo[nik] inline this class later
 public class LayoutInfo {
   private final Set<String> myUsedModules = new HashSet<>();

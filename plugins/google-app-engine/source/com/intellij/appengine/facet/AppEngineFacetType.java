@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFacetConfiguration> {
   public static final String STRING_ID = "google-app-engine";
 

@@ -46,9 +46,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   public static final String NAME = "Google AppEngine Enhancer";
 

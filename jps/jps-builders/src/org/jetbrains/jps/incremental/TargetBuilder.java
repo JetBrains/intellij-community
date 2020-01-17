@@ -24,7 +24,6 @@ import java.util.Collection;
 /**
  * Produced the output of a single build target. Use {@link BuilderService} to register implementations of this class.
  *
- * @author nik
  * @see BuilderService#createBuilders()
  */
 public abstract class TargetBuilder<R extends BuildRootDescriptor, T extends BuildTarget<R>> extends Builder {

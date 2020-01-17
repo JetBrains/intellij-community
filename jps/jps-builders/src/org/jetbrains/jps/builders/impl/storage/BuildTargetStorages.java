@@ -31,9 +31,6 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author nik
- */
 public class BuildTargetStorages extends CompositeStorageOwner {
   private final BuildTarget<?> myTarget;
   private final BuildDataPaths myPaths;

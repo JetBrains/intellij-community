@@ -25,9 +25,6 @@ import java.awt.*;
 
 import static java.awt.GridBagConstraints.*;
 
-/**
- * @author nik
- */
 public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep {
   private static final Logger LOG = Logger.getInstance(AbstractStepWithProgress.class);
   @NonNls private static final String PROGRESS_PANEL = "progress_panel";

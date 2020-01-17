@@ -34,9 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author nik
- */
 public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   private static final Logger LOG = Logger.getInstance(IdeaProjectModelModifier.class);
 

@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * If debugger values have unique ids just return these ids from {@link #getMarker(XValue)} method.
  * Alternatively implement {@link #markValue(XValue)} to store a value in some registry and implement {@link #unmarkValue(XValue, Object)}
  * to remote it from the registry. In such a case the {@link #getMarker(XValue)} method can return {@code null} if the {@code value} isn't marked.
- *
- * @author nik
  */
 public abstract class XValueMarkerProvider<V extends XValue, M> {
   private final Class<V> myValueClass;

@@ -19,9 +19,6 @@ package com.intellij.ide.util.frameworkSupport;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class FrameworkVersion {
   public static final FrameworkVersion[] EMPTY_ARRAY = new FrameworkVersion[0];
   private final String myVersionName;

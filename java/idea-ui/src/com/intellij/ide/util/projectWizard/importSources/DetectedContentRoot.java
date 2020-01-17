@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public final class DetectedContentRoot extends DetectedProjectRoot {
   @NotNull private final String myRootTypeName;
   @NotNull private final ModuleType myModuleType;

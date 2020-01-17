@@ -9,9 +9,6 @@ import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 
-/**
- * @author nik
- */
 class WinExeInstallerBuilder {
   private final BuildContext buildContext
   private final AntBuilder ant

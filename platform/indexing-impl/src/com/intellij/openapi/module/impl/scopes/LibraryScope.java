@@ -21,9 +21,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class LibraryScope extends LibraryScopeBase {
   private final Library myLibrary;
   private final String myLibraryName;

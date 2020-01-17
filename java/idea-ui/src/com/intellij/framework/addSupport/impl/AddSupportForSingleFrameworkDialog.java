@@ -43,9 +43,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
   private final Module myModule;
   private final FrameworkSupportInModuleConfigurable myConfigurable;

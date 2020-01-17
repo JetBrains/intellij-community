@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerManager {
   public static final Topic<XDebuggerManagerListener> TOPIC =
     new Topic<>("XDebuggerManager events", XDebuggerManagerListener.class);

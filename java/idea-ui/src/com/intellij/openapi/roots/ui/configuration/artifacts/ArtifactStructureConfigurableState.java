@@ -18,9 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.util.xmlb.annotations.Property;
 
-/**
- * @author nik
- */
 public class ArtifactStructureConfigurableState extends MasterDetailsState {
   private ArtifactEditorSettings.ArtifactEditorSettingsState myDefaultArtifactSettings = new ArtifactEditorSettings.ArtifactEditorSettingsState();
 

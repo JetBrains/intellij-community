@@ -18,9 +18,6 @@ package com.intellij.conversion;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface ConversionResult {
   boolean conversionNotNeeded();
 

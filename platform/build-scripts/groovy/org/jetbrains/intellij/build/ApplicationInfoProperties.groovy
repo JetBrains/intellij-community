@@ -19,9 +19,6 @@ import com.intellij.openapi.util.text.StringUtil
 
 import java.text.MessageFormat
 
-/**
- * @author nik
- */
 class ApplicationInfoProperties {
   final String majorVersion
   final String minorVersion

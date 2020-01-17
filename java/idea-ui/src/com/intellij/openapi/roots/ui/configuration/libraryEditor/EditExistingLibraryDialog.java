@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   private final ExistingLibraryEditor myLibraryEditor;
   private final boolean myCommitChanges;

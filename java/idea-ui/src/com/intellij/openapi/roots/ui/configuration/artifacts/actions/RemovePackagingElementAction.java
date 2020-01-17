@@ -23,9 +23,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElem
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class RemovePackagingElementAction extends LayoutTreeActionBase {
 
   public RemovePackagingElementAction(ArtifactEditorEx artifactEditor) {

@@ -46,9 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class LibraryEditingUtil {
   private static final Logger LOG = Logger.getInstance(LibraryEditingUtil.class);
 

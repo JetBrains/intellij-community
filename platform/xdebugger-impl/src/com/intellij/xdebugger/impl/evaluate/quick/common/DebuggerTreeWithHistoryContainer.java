@@ -25,9 +25,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 abstract class DebuggerTreeWithHistoryContainer<D> {
   private static final Logger LOG = Logger.getInstance(DebuggerTreeWithHistoryContainer.class);
   private static final int HISTORY_SIZE = 11;

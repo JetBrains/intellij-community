@@ -29,9 +29,6 @@ import javax.swing.tree.TreePath;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerTreeActionBase extends AnAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

@@ -35,9 +35,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Predicate;
 
-/**
-* @author nik
-*/
 public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
   private static final Logger LOG = Logger.getInstance(LayoutTree.class);
   private final ArtifactEditorImpl myArtifactsEditor;

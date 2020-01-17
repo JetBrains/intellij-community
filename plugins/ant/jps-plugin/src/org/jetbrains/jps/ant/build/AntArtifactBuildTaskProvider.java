@@ -60,9 +60,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static final Logger LOG = Logger.getInstance(AntArtifactBuildTaskProvider.class);
 

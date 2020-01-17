@@ -19,9 +19,6 @@ import org.jetbrains.intellij.build.*
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
-/**
- * @author nik
- */
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   PyCharmCommunityProperties(String communityHome) {
     platformPrefix = "PyCharmCore"

@@ -24,9 +24,6 @@ import com.intellij.packaging.elements.PackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class PlaceInArtifact extends PlaceInProjectStructure {
   private final Artifact myArtifact;
   private final ArtifactsStructureConfigurableContext myContext;

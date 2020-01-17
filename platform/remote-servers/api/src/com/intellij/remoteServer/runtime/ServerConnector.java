@@ -4,9 +4,6 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguratio
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class ServerConnector<D extends DeploymentConfiguration> {
   public abstract void connect(@NotNull ConnectionCallback<D> callback);
 

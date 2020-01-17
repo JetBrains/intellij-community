@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class TestNGExternalLibraryResolver extends ExternalLibraryResolver {
   private static final Set<String> TEST_NG_ANNOTATIONS = ContainerUtil.set(
     "Test", "BeforeClass", "BeforeGroups", "BeforeMethod", "BeforeSuite", "BeforeTest", "AfterClass", "AfterGroups", "AfterMethod",

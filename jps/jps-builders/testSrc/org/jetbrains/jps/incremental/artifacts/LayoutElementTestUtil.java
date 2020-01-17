@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
 
-/**
- * @author nik
- */
 public class LayoutElementTestUtil {
   public static LayoutElementCreator root() {
     return new LayoutElementCreator(JpsPackagingElementFactory.getInstance().createArtifactRoot(), null);

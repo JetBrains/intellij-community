@@ -9,9 +9,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 
 import java.util.function.Consumer
 
-/**
- * @author nik
- */
 @CompileStatic
 class ProductModulesLayout {
   /**

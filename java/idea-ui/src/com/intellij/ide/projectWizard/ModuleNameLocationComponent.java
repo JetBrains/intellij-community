@@ -24,9 +24,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.io.File;
 
-/**
- * @author nik
- */
 public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
   private final WizardContext myWizardContext;
   private JTextField myModuleName;

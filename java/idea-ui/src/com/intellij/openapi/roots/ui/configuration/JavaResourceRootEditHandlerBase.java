@@ -34,9 +34,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEditHandler<JavaResourceRootProperties> {
   public JavaResourceRootEditHandlerBase(JpsModuleSourceRootType<JavaResourceRootProperties> rootType) {
     super(rootType);

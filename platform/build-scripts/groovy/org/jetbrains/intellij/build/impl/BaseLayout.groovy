@@ -23,8 +23,6 @@ import org.jetbrains.intellij.build.ResourcesGenerator
 
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
- *
- * @author nik
  */
 @CompileStatic
 abstract class BaseLayout {

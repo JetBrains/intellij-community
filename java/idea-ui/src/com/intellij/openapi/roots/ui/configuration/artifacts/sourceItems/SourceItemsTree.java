@@ -32,9 +32,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSource, Disposable{
   private final ArtifactEditorImpl myArtifactsEditor;
   private final StructureTreeModel<SourceItemsTreeStructure> myStructureTreeModel;

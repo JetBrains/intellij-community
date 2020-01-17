@@ -15,9 +15,6 @@
  */
 package org.jetbrains.jps.model.library;
 
-/**
- * @author nik
- */
 public abstract class JpsOrderRootType {
   public static final JpsOrderRootType COMPILED = new JpsOrderRootType() {
     @Override

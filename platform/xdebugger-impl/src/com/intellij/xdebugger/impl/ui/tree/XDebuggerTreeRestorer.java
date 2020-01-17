@@ -32,9 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelectionListener {
   public static final String SELECTION_PATH_PROPERTY = "selection.path";
   private final XDebuggerTree myTree;

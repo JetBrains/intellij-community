@@ -26,9 +26,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class CompileScopeImpl extends CompileScope {
   private final Collection<? extends BuildTargetType<?>> myTypes;
   private final Collection<BuildTargetType<?>> myTypesToForceBuild;

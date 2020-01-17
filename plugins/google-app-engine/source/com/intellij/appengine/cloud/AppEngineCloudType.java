@@ -35,9 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration> {
   public static AppEngineCloudType getInstance() {
     return EP_NAME.findExtension(AppEngineCloudType.class);

@@ -28,7 +28,6 @@ import java.util.ResourceBundle;
 /**
  * Declares a named component that enables to configure settings.
  *
- * @author nik
  * @see Configurable
  */
 @Tag("configurable")

@@ -24,9 +24,6 @@ import com.intellij.openapi.module.Module;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public interface FacetsProvider {
   
   Facet @NotNull [] getAllFacets(Module module);

@@ -20,9 +20,6 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public abstract class SourceFileFilter {
   public static final SourceFileFilter ALL = new SourceFileFilter() {
     @Override

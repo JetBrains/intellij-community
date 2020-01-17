@@ -30,9 +30,6 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private final ModulesComboBox myModulesComboBox;

@@ -5,9 +5,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ResourcesGenerator
 import org.jetbrains.intellij.build.impl.PluginLayout
 
-/**
- * @author nik
- */
 class PythonCommunityPluginModules {
   static List<String> COMMUNITY_MODULES = [
     "intellij.python.community",

@@ -84,9 +84,6 @@ import java.util.*;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
-/**
- * @author nik
- */
 public class XDebuggerUtilImpl extends XDebuggerUtil {
   private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
   private XLineBreakpointType<?>[] myLineBreakpointTypes;

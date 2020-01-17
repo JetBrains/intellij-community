@@ -18,9 +18,6 @@ package org.jetbrains.intellij.build.pycharm
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
-/**
- * @author nik
- */
 class PyCharmWindowsDistributionCustomizer extends WindowsDistributionCustomizer {
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {

@@ -16,9 +16,6 @@ import java.util.List;
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 
 
-/**
- * @author nik
- */
 public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   public void testLibrary() {

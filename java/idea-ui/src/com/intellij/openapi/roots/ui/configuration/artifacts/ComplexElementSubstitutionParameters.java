@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ComplexElementSubstitutionParameters {
   private final Set<ComplexPackagingElementType<?>> myTypesToSubstitute = new HashSet<>();
   private final Set<ComplexPackagingElement<?>> mySubstituted = new HashSet<>();

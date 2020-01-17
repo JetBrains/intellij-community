@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-/**
- * @author nik
- */
 abstract class FileIndexBase implements FileIndex {
   private final FileTypeRegistry myFileTypeRegistry;
   final DirectoryIndex myDirectoryIndex;

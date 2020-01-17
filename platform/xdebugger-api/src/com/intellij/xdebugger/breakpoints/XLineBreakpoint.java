@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represent a breakpoint which is set on some line in a file. This interface isn't supposed to be implemented by a plugin. In order to
  * support breakpoint provide {@link XLineBreakpointType} implementation
- *
- * @author nik
  */
 public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreakpoint<P> {
   XLineBreakpoint<?>[] EMPTY_ARRAY = new XLineBreakpoint[0];

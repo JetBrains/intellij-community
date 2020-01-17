@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class ArtifactInstructionsBuilderContextImpl implements ArtifactInstructionsBuilderContext {
   private final Set<JpsArtifact> myParentArtifacts;
   private final JpsModel myModel;

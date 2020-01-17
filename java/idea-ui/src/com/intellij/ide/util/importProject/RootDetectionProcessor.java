@@ -25,9 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class RootDetectionProcessor {
   private static final Logger LOG = Logger.getInstance(RootDetectionProcessor.class);
   private final File myBaseDir;

@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class ConfigFileFactoryImpl extends ConfigFileFactory {
   private static final Logger LOG = Logger.getInstance(ConfigFileFactoryImpl.class);
 

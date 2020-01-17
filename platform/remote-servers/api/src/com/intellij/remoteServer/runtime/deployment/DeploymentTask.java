@@ -6,9 +6,6 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguratio
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface DeploymentTask<D extends DeploymentConfiguration> {
   @NotNull
   DeploymentSource getSource();

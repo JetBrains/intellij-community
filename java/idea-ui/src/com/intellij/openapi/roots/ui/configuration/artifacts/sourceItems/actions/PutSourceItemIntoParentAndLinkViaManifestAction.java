@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefaultLocationActionBase {
   public PutSourceItemIntoParentAndLinkViaManifestAction(SourceItemsTree sourceItemsTree, ArtifactEditorEx artifactEditor) {
     super(sourceItemsTree, artifactEditor);

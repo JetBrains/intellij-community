@@ -6,8 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * The {@link com.intellij.pom.java.LanguageLevel} class is an IDE-side counterpart of this enum.
- *
- * @author nik
  */
 public enum LanguageLevel {
   JDK_1_3(3),

@@ -24,7 +24,6 @@ import org.jetbrains.jps.model.JpsElementType;
  * <p>
  * Use {@link org.jetbrains.jps.model.ex.JpsElementTypeBase} as a base class for implementations of this interface
  * </p>
- * @author nik
  */
 public interface JpsModuleType<P extends JpsElement> extends JpsElementType<P> {
 }

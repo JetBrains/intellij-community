@@ -28,9 +28,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> extends CheckedTreeNode {
   private static final Logger LOG = Logger.getInstance(FrameworkSupportNodeBase.class);
   private final FrameworkSupportNodeBase myParentNode;

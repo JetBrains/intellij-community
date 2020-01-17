@@ -31,9 +31,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class JpsArtifactUtil {
   public static boolean processPackagingElements(@NotNull JpsPackagingElement element,
                                                  @NotNull Processor<? super JpsPackagingElement> processor) {

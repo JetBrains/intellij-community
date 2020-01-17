@@ -38,9 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
   private final DownloadableLibraryDescription myDownloadableDescription;
   private final List<? extends FrameworkVersion> myVersions;

@@ -22,9 +22,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
-/**
- * @author nik
- */
 public class CheckboxTreeHelper {
   private static final Key<Runnable> TREE_LISTENERS_REMOVER = Key.create("TREE_LISTENERS_REMOVER");
   public static final CheckboxTreeBase.CheckPolicy DEFAULT_POLICY = new CheckboxTreeBase.CheckPolicy(true, true, false, true);

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class HideContentAction extends DumbAwareAction {
   private final ArtifactEditorEx myArtifactEditor;
 

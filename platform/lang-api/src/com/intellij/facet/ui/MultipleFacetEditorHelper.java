@@ -25,8 +25,6 @@ import javax.swing.*;
 
 /**
  * Use {@link com.intellij.facet.ui.FacetEditorsFactory#createMultipleFacetEditorHelper()} to create instance of this class.
- *
- * @author nik
  */
 @ApiStatus.NonExtendable
 public interface MultipleFacetEditorHelper {

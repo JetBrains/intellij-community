@@ -25,9 +25,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private final LibrariesValidatorContext myContext;
   private final FacetValidatorsManager myValidatorsManager;

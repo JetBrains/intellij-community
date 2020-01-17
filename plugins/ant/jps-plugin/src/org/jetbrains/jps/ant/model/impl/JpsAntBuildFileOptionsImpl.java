@@ -22,9 +22,6 @@ import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
   private int myMaxStackSize = 2;
   private String myAntCommandLineParameters = "";

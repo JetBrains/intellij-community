@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class RemoteServerListConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
 
   @NonNls

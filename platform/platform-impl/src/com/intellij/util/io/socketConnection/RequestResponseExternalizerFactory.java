@@ -21,9 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * @author nik
- */
 public abstract class RequestResponseExternalizerFactory<Request extends AbstractRequest, Response extends AbstractResponse> {
   @NotNull
   public abstract RequestWriter<Request> createRequestWriter(@NotNull OutputStream output) throws IOException;

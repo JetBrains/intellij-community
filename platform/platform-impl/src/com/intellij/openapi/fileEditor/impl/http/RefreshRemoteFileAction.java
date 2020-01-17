@@ -22,9 +22,6 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class RefreshRemoteFileAction extends AnAction {
   private final HttpVirtualFile myFile;
 

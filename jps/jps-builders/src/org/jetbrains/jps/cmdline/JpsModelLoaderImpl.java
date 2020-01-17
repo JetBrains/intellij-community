@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class JpsModelLoaderImpl implements JpsModelLoader {
   private static final Logger LOG = Logger.getInstance(JpsModelLoaderImpl.class);
   private final String myProjectPath;

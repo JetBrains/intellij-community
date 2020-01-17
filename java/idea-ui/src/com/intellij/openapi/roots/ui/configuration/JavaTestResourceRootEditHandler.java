@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class JavaTestResourceRootEditHandler extends JavaResourceRootEditHandlerBase {
   public JavaTestResourceRootEditHandler() {
     super(JavaResourceRootType.TEST_RESOURCE);

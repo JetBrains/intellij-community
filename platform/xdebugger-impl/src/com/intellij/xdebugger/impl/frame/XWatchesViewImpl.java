@@ -54,9 +54,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView {
   private WatchesRootNode myRootNode;
 

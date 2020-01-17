@@ -10,9 +10,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
-/**
- * @author nik
- */
 class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
   private final File ideaProperties

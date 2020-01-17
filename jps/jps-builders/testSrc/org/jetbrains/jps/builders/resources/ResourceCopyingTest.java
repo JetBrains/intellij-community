@@ -32,9 +32,6 @@ import java.nio.file.Files;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 
-/**
- * @author nik
- */
 public class ResourceCopyingTest extends JpsBuildTestCase {
   @Override
   protected void setUp() throws Exception {

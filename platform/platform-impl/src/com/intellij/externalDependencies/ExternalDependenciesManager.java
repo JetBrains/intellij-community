@@ -24,8 +24,6 @@ import java.util.List;
 /**
  * Stores list of external dependencies which are required for project to operate normally. Currently only one kind of dependencies
  * is supported ({@link DependencyOnPlugin}) but in future it may also store required JDKs, application servers and generic path variables.
- *
- * @author nik
  */
 public abstract class ExternalDependenciesManager {
   public static ExternalDependenciesManager getInstance(@NotNull Project project) {

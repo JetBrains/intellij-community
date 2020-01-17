@@ -21,9 +21,6 @@ import org.jetbrains.jps.appengine.model.PersistenceApi;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class PersistenceApiComboboxUtil {
   @NonNls public static final String NONE_ITEM = "None";
 

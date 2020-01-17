@@ -28,8 +28,6 @@ import java.util.Set;
 /**
  * Implement this class to customize how Java files are compiled. Implementations are registered as Java services, by creating
  * a file META-INF/services/org.jetbrains.jps.builders.java.JavaBuilderExtension containing the qualified name of your implementation class.
- *
- * @author nik
  */
 public abstract class JavaBuilderExtension {
   /**

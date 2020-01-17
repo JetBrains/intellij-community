@@ -35,9 +35,6 @@ import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class DeployToServerState<S extends ServerConfiguration, D extends DeploymentConfiguration> implements RunProfileState {
   @NotNull private final RemoteServer<S> myServer;
   @NotNull private final DeploymentSource mySource;

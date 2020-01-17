@@ -26,9 +26,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author nik
- */
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
   extends JavaCommandLineState implements RemoteConnectionCreator {
 

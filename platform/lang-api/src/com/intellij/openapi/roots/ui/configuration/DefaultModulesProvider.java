@@ -26,9 +26,6 @@ import com.intellij.facet.FacetManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class DefaultModulesProvider implements ModulesProvider {
 
   @NotNull

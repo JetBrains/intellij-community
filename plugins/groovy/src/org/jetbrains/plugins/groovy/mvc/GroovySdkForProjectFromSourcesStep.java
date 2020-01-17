@@ -25,9 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase {
   private final MvcProjectStructureDetector myDetector;
   private final ProjectFromSourcesBuilder myBuilder;

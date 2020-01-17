@@ -43,9 +43,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<List<? extends DetectedFrameworkDescription>>
   implements ProjectFromSourcesBuilderImpl.ProjectConfigurationUpdater {
   private final Icon myIcon;

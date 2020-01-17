@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnumeratorSettings {
   private static final Logger LOG = Logger.getInstance(OrderEnumeratorBase.class);
   private boolean myProductionOnly;

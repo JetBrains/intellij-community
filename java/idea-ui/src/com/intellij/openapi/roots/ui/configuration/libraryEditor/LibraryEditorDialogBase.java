@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
-* @author nik
-*/
 public abstract class LibraryEditorDialogBase extends DialogWrapper {
   protected JTextField myNameField;
   private final LibraryRootsComponent myLibraryRootsComponent;

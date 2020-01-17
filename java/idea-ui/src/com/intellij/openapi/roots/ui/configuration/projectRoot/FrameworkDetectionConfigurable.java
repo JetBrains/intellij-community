@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class FrameworkDetectionConfigurable extends NamedConfigurable<DetectionExcludesConfiguration> {
   private final DetectionExcludesConfiguration myExcludesConfiguration;
   private final DetectionExcludesConfigurable myConfigurable;

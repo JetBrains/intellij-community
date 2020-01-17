@@ -7,9 +7,6 @@ import com.intellij.remoteServer.runtime.RemoteOperationCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
 
   public abstract void deploy(@NotNull DeploymentTask<D> task, @NotNull DeploymentLogManager logManager,

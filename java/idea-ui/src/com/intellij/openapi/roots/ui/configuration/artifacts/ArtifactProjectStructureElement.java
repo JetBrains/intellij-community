@@ -39,9 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactProjectStructureElement extends ProjectStructureElement {
   private final ArtifactsStructureConfigurableContext myArtifactsStructureContext;
   private final Artifact myOriginalArtifact;

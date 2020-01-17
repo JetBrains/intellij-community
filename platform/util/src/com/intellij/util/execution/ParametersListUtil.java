@@ -12,9 +12,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
-/**
- * @author nik
- */
 public class ParametersListUtil {
   public static final Function<String, List<String>> DEFAULT_LINE_PARSER = text -> parse(text, true);
   public static final Function<List<String>, String> DEFAULT_LINE_JOINER = strings -> StringUtil.join(strings, " ");

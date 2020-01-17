@@ -19,9 +19,6 @@ import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 
-/**
- * @author nik
- */
 class PyCharmMacDistributionCustomizer extends MacDistributionCustomizer {
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {

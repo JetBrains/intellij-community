@@ -29,9 +29,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class LibraryScopeBase extends GlobalSearchScope {
   private final Set<VirtualFile> myEntries;
   protected final ProjectFileIndex myIndex;

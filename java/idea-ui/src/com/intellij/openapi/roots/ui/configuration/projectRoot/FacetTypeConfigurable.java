@@ -23,9 +23,6 @@ import com.intellij.openapi.ui.NamedConfigurable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
   private final FacetStructureConfigurable myFacetStructureConfigurable;
   private final FacetType myFacetType;

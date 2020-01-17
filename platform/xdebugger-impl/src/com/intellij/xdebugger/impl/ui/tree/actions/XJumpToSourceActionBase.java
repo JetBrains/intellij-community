@@ -26,9 +26,6 @@ import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class XJumpToSourceActionBase extends XDebuggerTreeActionBase {
   @Override
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {

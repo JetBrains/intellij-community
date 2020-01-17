@@ -19,9 +19,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 
-/**
- * @author nik
- */
 @Tag("properties")
 public class ArtifactPropertiesState {
   private String myId;

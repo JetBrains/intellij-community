@@ -29,9 +29,6 @@ import org.jetbrains.concurrency.Promises;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class JavaProjectModelModificationServiceImpl extends JavaProjectModelModificationService {
   private final Project myProject;
 

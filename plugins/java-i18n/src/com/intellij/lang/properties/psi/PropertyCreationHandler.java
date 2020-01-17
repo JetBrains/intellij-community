@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public interface PropertyCreationHandler {
 
   void createProperty(@NotNull Project project,

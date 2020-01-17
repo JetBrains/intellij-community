@@ -9,9 +9,6 @@ import groovy.transform.Immutable
 import groovy.xml.XmlUtil
 import org.jetbrains.intellij.build.BuildContext
 
-/**
- * @author nik
- */
 @CompileStatic
 class PluginRepositoryXmlGenerator {
   private final BuildContext buildContext

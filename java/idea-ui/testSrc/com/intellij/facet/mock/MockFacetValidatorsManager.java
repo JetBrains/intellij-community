@@ -11,9 +11,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class MockFacetValidatorsManager implements FacetValidatorsManager {
   private String myErrorMessage;
   private final List<FacetEditorValidator> myValidators = new ArrayList<>();

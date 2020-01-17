@@ -15,9 +15,6 @@
  */
 package org.jetbrains.jps.builders.java
 
-/**
- * @author nik
- */
 class ClassesWithMultipleSourcesTest: IncrementalBuildTestCase() {
   override val testDataDirectoryName: String
     get() = "multipleSources"

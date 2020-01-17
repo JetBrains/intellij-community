@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.ToIntFunction;
 
-/**
- * @author nik
- */
 public abstract class HyperlinkInfoFactory {
   @NotNull
   public static HyperlinkInfoFactory getInstance() {

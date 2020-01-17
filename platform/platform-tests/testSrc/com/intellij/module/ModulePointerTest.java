@@ -11,9 +11,6 @@ import org.assertj.core.util.Maps;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author nik
- */
 public class ModulePointerTest extends HeavyPlatformTestCase {
   public void testCreateByName() {
     final ModulePointer pointer = getPointerManager().create("m");

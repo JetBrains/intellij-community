@@ -32,9 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class XDebuggerFramesList extends DebuggerFramesList {
   private final Project myProject;
   private final Map<VirtualFile, Color> myFileColors = new HashMap<>();

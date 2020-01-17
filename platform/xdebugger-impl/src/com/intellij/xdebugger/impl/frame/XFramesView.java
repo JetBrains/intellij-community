@@ -41,9 +41,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
 

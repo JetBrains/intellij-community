@@ -17,9 +17,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FirefoxUtil {
   private static final Logger LOG = Logger.getInstance(FirefoxUtil.class);
   @NonNls public static final String PROFILES_INI_FILE = "profiles.ini";

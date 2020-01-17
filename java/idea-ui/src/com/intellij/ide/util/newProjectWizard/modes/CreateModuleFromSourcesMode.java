@@ -26,9 +26,6 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.io.File;
 
-/**
- * @author nik
- */
 public class CreateModuleFromSourcesMode extends CreateFromSourcesMode {
   private TextFieldWithBrowseButton myPathPanel;
 

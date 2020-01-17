@@ -24,9 +24,6 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface ConfigFile extends Disposable, ModificationTracker {
   ConfigFile[] EMPTY_ARRAY = new ConfigFile[0];
  

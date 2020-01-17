@@ -38,9 +38,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-/**
-* @author nik
-*/
 class AddFacetOfTypeAction extends DumbAwareAction {
   private final FacetType myFacetType;
   private final StructureConfigurableContext myContext;

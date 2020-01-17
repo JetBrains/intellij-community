@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.module.JpsModuleType;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class PluginJavaBuilderExtension extends JavaBuilderExtension {
   @NotNull
   @Override

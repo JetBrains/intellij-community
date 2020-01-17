@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AddFrameworkSupportDialog extends DialogWrapper {
   private final AddSupportForFrameworksPanel myAddSupportPanel;
   private final Module myModule;

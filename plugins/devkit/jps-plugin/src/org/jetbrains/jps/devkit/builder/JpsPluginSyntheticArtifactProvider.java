@@ -50,9 +50,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProvider {
   private static final Logger LOG = Logger.getInstance(JpsPluginSyntheticArtifactProvider.class);
 

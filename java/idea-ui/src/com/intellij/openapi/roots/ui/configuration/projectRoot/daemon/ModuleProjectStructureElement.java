@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ModuleProjectStructureElement extends ProjectStructureElement {
   private final Module myModule;
 

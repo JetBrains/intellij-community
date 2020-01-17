@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class CompositeLogger extends Logger {
   private final Logger[] myLoggers;
 

@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class AppEngineWebSchemaProvider extends XmlSchemaProvider {
   private static final Set<String> FILE_NAMES = ContainerUtil.set(AppEngineUtil.APP_ENGINE_WEB_XML_NAME,
                                                                   AppEngineUtil.APP_ENGINE_APPLICATION_XML_NAME,

@@ -17,9 +17,6 @@ package org.jetbrains.jps.model.java;
 
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 
-/**
- * @author nik
- */
 public class JpsNativeLibraryRootType extends JpsOrderRootType {
   public static final JpsNativeLibraryRootType INSTANCE = new JpsNativeLibraryRootType();
 

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usage {
   private final String myExplanationText;
 

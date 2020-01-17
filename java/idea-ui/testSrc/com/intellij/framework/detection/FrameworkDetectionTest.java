@@ -14,9 +14,6 @@ import com.intellij.testFramework.VfsTestUtil;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   private VirtualFile myTestDir;
   private FrameworkDetectionManager myDetectionManager;

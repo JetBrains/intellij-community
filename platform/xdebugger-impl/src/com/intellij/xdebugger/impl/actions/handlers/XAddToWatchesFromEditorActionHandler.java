@@ -19,9 +19,6 @@ import org.jetbrains.concurrency.Promises;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-/**
- * @author nik
- */
 public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {

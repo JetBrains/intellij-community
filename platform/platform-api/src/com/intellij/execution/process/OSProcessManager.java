@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class OSProcessManager {
   public static OSProcessManager getInstance() {
     return ServiceManager.getService(OSProcessManager.class);

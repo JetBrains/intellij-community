@@ -20,9 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class MarkLibraryRootAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

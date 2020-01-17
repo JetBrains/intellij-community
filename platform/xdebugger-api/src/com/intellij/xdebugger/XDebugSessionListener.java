@@ -3,9 +3,6 @@ package com.intellij.xdebugger;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface XDebugSessionListener extends EventListener {
   default void sessionPaused() {
   }

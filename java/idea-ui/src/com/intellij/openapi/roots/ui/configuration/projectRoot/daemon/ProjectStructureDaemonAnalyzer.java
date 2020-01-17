@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class ProjectStructureDaemonAnalyzer implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectStructureDaemonAnalyzer.class);
   private final Map<ProjectStructureElement, ProjectStructureProblemsHolderImpl> myProblemHolders = new HashMap<>();

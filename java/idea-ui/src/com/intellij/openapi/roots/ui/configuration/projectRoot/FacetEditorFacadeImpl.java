@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class FacetEditorFacadeImpl implements FacetEditorFacade {
   private static final Logger LOG = Logger.getInstance(FacetEditorFacadeImpl.class);
   private final ModuleStructureConfigurable myStructureConfigurable;

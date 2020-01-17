@@ -19,9 +19,6 @@ import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
   private static final Color DEFAULT_COLOR = JBColor.RED;
   @NotNull private final Set<String> myExistingMarkups;

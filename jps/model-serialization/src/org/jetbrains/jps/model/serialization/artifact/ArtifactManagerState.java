@@ -10,9 +10,6 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 @Tag("artifacts")
 public class ArtifactManagerState {
   private List<ArtifactState> myArtifacts = new ArrayList<>();

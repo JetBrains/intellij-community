@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class JavaSourceRootDetector extends ProjectStructureDetector {
   @NotNull
   @Override

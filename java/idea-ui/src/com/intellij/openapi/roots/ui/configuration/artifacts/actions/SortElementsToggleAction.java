@@ -22,9 +22,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class SortElementsToggleAction extends ToggleAction implements DumbAware {
   private final LayoutTreeComponent myLayoutTreeComponent;
 

@@ -11,9 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   private static final Logger LOG = Logger.getInstance(DirectoryInfoWithExcludePatterns.class);
   @Nullable private final FileTypeAssocTable<Boolean> myContentExcludePatterns;

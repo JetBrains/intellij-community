@@ -39,9 +39,6 @@ import org.junit.Assume;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   protected static void assertRoots(PathsList pathsList, VirtualFile... files) {
     assertOrderedEquals(pathsList.getRootDirs(), files);

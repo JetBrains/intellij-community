@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class ArtifactConfigurableBase extends ProjectStructureElementConfigurable<Artifact> {
   protected final Artifact myOriginalArtifact;
   protected final ArtifactsStructureConfigurableContextImpl myArtifactsStructureContext;

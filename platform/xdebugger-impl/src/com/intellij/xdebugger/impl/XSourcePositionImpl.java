@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class XSourcePositionImpl implements XSourcePosition {
   private final VirtualFile myFile;
 

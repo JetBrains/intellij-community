@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ImportFromSourcesTestCase extends HeavyPlatformTestCase {
   private ProjectFromSourcesBuilderImpl myBuilder;
   private File myRootDir;

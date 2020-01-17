@@ -20,9 +20,6 @@ import java.util.EnumSet;
 
 import static org.jetbrains.jps.model.java.JpsJavaClasspathKind.*;
 
-/**
- * @author nik
- */
 public enum JpsJavaDependencyScope {
   COMPILE(PRODUCTION_COMPILE, PRODUCTION_RUNTIME, TEST_COMPILE, TEST_RUNTIME),
   TEST(TEST_COMPILE, TEST_RUNTIME),

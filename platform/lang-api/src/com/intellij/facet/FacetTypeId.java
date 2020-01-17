@@ -18,9 +18,6 @@ package com.intellij.facet;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author nik
- */
 public final class FacetTypeId<F extends Facet> {
   private final String myDebugName;
 

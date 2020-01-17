@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 @State(name = "FacetEditorsStateManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager implements PersistentStateComponent<FacetEditorsStateManagerImpl.FacetEditorsStateBean>{
   private final Map<String, Object> myFacetTypeStates = new HashMap<>();

@@ -8,9 +8,6 @@ import org.apache.tools.ant.Project
 import org.apache.tools.ant.RuntimeConfigurable
 import org.jetbrains.intellij.build.BuildMessages
 
-/**
- * @author nik
- */
 @CompileStatic
 class AntTaskLogger implements BuildListener {
   BuildMessages defaultHandler

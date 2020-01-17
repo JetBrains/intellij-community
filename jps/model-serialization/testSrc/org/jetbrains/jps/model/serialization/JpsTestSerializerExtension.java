@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurati
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsTestSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override

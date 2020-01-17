@@ -33,9 +33,6 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.function.Function;
 
-/**
- * @author nik
- */
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;

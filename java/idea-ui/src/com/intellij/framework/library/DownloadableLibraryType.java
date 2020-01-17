@@ -29,9 +29,6 @@ import javax.swing.*;
 import java.net.URL;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
   private final Icon myIcon;
   private final String myLibraryCategoryName;

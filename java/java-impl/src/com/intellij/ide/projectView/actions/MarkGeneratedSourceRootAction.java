@@ -32,9 +32,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 import java.util.Locale;
 
-/**
- * @author nik
- */
 public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
   public MarkGeneratedSourceRootAction() {
     Presentation presentation = getTemplatePresentation();

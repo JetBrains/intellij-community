@@ -36,9 +36,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ExternalDependenciesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
   private final ExternalDependenciesManager myDependenciesManager;

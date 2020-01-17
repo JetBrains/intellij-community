@@ -26,9 +26,6 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ShowAddPackagingElementPopupAction extends DumbAwareAction {
   private final ArtifactEditorEx myArtifactEditor;
 

@@ -7,8 +7,6 @@ import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 
 /**
  * Defines information about licenses of libraries located in 'community', 'contrib' and 'android' repositories.
- *
- * @author nik
  */
 @CompileStatic
 class CommunityLibraryLicenses {

@@ -15,9 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class MovePackagingElementAction extends DumbAwareAction {
   private final LayoutTreeComponent myLayoutTreeComponent;
   private final int myDirection;

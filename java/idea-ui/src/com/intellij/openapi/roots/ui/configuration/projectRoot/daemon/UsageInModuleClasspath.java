@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
   private final ModuleProjectStructureElement myContainingElement;

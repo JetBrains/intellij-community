@@ -15,9 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsRunConfigurationSerializer {
   private static final Logger LOG = Logger.getInstance(JpsRunConfigurationSerializer.class);
 

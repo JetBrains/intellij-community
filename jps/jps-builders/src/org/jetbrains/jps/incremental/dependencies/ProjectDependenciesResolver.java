@@ -34,9 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ProjectDependenciesResolver extends TargetBuilder<BuildRootDescriptor, ProjectDependenciesResolver.ProjectDependenciesResolvingTarget> {
   public static final String TARGET_TYPE_ID = "project-dependencies-resolving";
 

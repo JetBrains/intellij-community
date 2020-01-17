@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 
-/**
- * @author nik
- */
 @CompileStatic
 abstract class BuildContext implements CompilationContext {
   ApplicationInfoProperties applicationInfo

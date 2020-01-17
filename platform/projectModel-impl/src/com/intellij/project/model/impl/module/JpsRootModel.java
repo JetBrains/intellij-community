@@ -29,9 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsRootModel extends RootModelBase implements ModuleRootModel {
   private final Module myModule;
   private final List<ContentEntry> myContentEntries;

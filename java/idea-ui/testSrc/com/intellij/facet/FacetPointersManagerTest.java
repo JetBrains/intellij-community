@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class FacetPointersManagerTest extends FacetTestCase {
   public void testCreatePointerFromFacet()  {
     final MockFacet mockFacet = addFacet();

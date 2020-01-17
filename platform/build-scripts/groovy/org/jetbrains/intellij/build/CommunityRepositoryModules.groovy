@@ -10,9 +10,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
-/**
- * @author nik
- */
 @CompileStatic
 class CommunityRepositoryModules {
   /**

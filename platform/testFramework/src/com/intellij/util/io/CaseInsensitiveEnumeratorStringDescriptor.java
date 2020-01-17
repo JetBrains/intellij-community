@@ -17,9 +17,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.text.StringUtil;
 
-/**
- * @author nik
- */
 public class CaseInsensitiveEnumeratorStringDescriptor extends EnumeratorStringDescriptor {
   @Override
   public int getHashCode(String value) {

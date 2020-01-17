@@ -18,9 +18,6 @@ package org.jetbrains.jps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.EmptyRunnable;
 
-/**
- * @author nik
- */
 public class TimingLog {
   public static final Logger LOG = Logger.getInstance(TimingLog.class);
 

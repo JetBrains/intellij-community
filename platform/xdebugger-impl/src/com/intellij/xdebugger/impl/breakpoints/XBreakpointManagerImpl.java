@@ -28,9 +28,6 @@ import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author nik
- */
 public class XBreakpointManagerImpl implements XBreakpointManager {
   private static final Logger LOG = Logger.getInstance(XBreakpointManagerImpl.class);
 

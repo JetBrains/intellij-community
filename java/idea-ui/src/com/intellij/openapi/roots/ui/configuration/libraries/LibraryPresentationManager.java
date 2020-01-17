@@ -29,9 +29,6 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class LibraryPresentationManager {
   public static LibraryPresentationManager getInstance() {
     return ServiceManager.getService(LibraryPresentationManager.class);

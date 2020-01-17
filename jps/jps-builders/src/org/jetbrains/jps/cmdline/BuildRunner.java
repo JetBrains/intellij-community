@@ -52,9 +52,6 @@ import java.util.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-/**
- * @author nik
- */
 public class BuildRunner {
   private static final Logger LOG = Logger.getInstance(BuildRunner.class);
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));

@@ -14,8 +14,6 @@ import org.jetbrains.concurrency.Promises;
  * Internal use only. Please use {@link com.intellij.execution.runners.GenericProgramRunner} or {@link com.intellij.execution.runners.AsyncProgramRunner}.
  * <p>
  * The callback used to execute a process from the {@link ExecutionManager#startRunProfile(RunProfileStarter, ExecutionEnvironment)}.
- *
- * @author nik
  */
 @ApiStatus.Internal
 public abstract class RunProfileStarter {

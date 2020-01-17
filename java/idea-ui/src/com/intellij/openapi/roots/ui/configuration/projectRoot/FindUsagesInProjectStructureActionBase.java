@@ -42,9 +42,6 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public abstract class FindUsagesInProjectStructureActionBase extends AnAction implements DumbAware {
   private final JComponent myParentComponent;
   private final Project myProject;

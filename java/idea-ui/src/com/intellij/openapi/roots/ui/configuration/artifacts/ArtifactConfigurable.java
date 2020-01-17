@@ -27,9 +27,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author nik
- */
 public class ArtifactConfigurable extends ArtifactConfigurableBase {
   private boolean myIsInUpdateName;
 

@@ -15,9 +15,6 @@
  */
 package org.jetbrains.jps.appengine.model;
 
-/**
-* @author nik
-*/
 public enum PersistenceApi {
   JDO("JDO 2", "JDO", 1), JDO3("JDO 3", "JDO", 2), JPA("JPA 1", "JPA", 1), JPA2("JPA 2", "JPA", 2);
   private final String myDisplayName;

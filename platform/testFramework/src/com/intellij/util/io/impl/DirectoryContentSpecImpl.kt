@@ -12,9 +12,6 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 
-/**
- * @author nik
- */
 sealed class DirectoryContentSpecImpl : DirectoryContentSpec
 
 abstract class DirectorySpecBase : DirectoryContentSpecImpl() {

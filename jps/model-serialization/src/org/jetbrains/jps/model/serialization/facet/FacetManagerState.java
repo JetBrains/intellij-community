@@ -9,9 +9,6 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
-*/
 public class FacetManagerState {
   private List<FacetState> myFacets = new ArrayList<>();
 

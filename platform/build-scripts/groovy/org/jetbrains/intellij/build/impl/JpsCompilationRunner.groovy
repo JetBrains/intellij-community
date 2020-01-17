@@ -66,9 +66,6 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-/**
- * @author nik
- */
 @CompileStatic
 class JpsCompilationRunner {
   private static boolean ourToolsJarAdded

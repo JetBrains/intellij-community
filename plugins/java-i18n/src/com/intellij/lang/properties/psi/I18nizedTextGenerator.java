@@ -19,9 +19,6 @@ package com.intellij.lang.properties.psi;
 import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class I18nizedTextGenerator {
 
   public abstract String getI18nizedText(String propertyKey, final @Nullable PropertiesFile propertiesFile,

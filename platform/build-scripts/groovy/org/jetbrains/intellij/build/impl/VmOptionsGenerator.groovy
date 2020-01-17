@@ -5,9 +5,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ProductProperties
 
-/**
- * @author nik
- */
 @CompileStatic
 class VmOptionsGenerator {
   static final List<String> COMMON_VM_OPTIONS =

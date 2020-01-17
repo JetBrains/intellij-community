@@ -40,9 +40,6 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 
-/**
- * @author nik
- */
 private val LOG = logger<ConvertToRepositoryLibraryActionBase>()
 
 abstract class ConvertToRepositoryLibraryActionBase(protected val context: StructureConfigurableContext) : DumbAwareAction(

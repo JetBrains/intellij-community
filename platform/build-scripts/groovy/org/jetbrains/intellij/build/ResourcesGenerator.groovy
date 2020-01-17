@@ -19,7 +19,6 @@ import groovy.transform.CompileStatic
 
 /**
  * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#withGeneratedResources
- * @author nik
  */
 @CompileStatic
 interface ResourcesGenerator {

@@ -26,7 +26,6 @@ import java.util.Collection;
  * Describes the detected framework
  *
  * @see FrameworkDetector#detect(java.util.Collection, FrameworkDetectionContext)
- * @author nik
  */
 public abstract class DetectedFrameworkDescription {
   /**

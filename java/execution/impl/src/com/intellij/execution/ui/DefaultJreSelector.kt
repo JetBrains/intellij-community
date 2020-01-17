@@ -18,9 +18,6 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.ui.EditorTextFieldWithBrowseButton
 
-/**
- * @author nik
- */
 abstract class DefaultJreSelector {
   companion object {
     @JvmStatic

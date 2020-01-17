@@ -25,9 +25,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class XValueMarkers<V extends XValue, M> {
   private final XValueMarkerProvider<V, M> myProvider;
   private final Map<M, ValueMarkup> myMarkers;

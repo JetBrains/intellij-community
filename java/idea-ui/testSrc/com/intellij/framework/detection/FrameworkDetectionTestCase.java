@@ -11,9 +11,6 @@ import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkDetectionTestCase extends FacetTestCase {
   @Override
   protected void setUp() throws Exception {

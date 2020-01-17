@@ -23,9 +23,6 @@ import org.junit.Test;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class KShortestPathsFinderTest extends GraphTestCase {
   @Test
   public void testEmpty() {

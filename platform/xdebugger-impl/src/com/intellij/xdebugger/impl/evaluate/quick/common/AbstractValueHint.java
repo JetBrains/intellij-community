@@ -40,9 +40,6 @@ import java.awt.event.*;
 import java.util.EventObject;
 import java.util.Objects;
 
-/**
- * @author nik
- */
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
 

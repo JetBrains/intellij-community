@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see OrderEnumerator#classes()
  * @see OrderEnumerator#sources()
- *
- * @author nik
  */
 @ApiStatus.NonExtendable
 public interface OrderRootsEnumerator {

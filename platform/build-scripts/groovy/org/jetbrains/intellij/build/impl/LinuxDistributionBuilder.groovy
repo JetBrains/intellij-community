@@ -5,9 +5,6 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
-/**
- * @author nik
- */
 class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
   private final File ideaProperties

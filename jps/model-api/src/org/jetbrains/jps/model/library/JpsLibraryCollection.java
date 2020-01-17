@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface JpsLibraryCollection {
   @NotNull
   <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>

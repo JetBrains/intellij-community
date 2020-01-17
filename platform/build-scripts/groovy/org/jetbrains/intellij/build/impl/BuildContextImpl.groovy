@@ -30,9 +30,6 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.util.function.BiFunction
 
-/**
- * @author nik
- */
 @CompileStatic
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global

@@ -21,9 +21,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class JpsEncodingConfigurationService {
   public static JpsEncodingConfigurationService getInstance() {
     return JpsServiceManager.getInstance().getService(JpsEncodingConfigurationService.class);

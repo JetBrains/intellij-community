@@ -23,9 +23,6 @@ import org.jetbrains.jps.maven.compiler.MavenPatternFileFilter;
 import java.io.File;
 import java.io.FileFilter;
 
-/**
- * @author nik
- */
 public class MavenResourceFileFilter implements FileFilter {
   private final File myRoot;
   private final String myRelativeDirectoryPath;

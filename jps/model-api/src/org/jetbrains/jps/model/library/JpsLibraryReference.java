@@ -20,9 +20,6 @@ import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsModel;
 
-/**
- * @author nik
- */
 public interface JpsLibraryReference extends JpsElementReference<JpsLibrary> {
   @NotNull
   String getLibraryName();

@@ -18,9 +18,6 @@ package org.jetbrains.jps.model.java.runConfiguration;
 import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
 
-/**
- * @author nik
- */
 public class JpsApplicationRunConfigurationType extends JpsElementTypeBase<JpsApplicationRunConfigurationProperties> implements JpsRunConfigurationType<JpsApplicationRunConfigurationProperties> {
   public static final JpsApplicationRunConfigurationType INSTANCE = new JpsApplicationRunConfigurationType();
 

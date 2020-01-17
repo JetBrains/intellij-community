@@ -13,9 +13,6 @@ import org.jetbrains.jps.model.serialization.facet.FacetManagerState;
 import org.junit.Assume;
 
 
-/**
- * @author nik
- */
 public class FacetManagerTest extends FacetTestCase {
   public void testAddDeleteFacet() {
     final FacetManager manager = getFacetManager();

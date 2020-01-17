@@ -25,9 +25,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class JpsFacetConfigurationSerializer<E extends JpsElement> {
   private final JpsElementChildRole<E> myRole;
   private final String myFacetTypeId;

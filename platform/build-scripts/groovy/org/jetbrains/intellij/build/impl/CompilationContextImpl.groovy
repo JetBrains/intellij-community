@@ -29,9 +29,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 
-/**
- * @author nik
- */
 @CompileStatic
 class CompilationContextImpl implements CompilationContext {
   final AntBuilder ant

@@ -40,9 +40,6 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class FacetEditorImpl extends UnnamedConfigurableGroup implements UnnamedConfigurable, FacetEditor {
   private final FacetEditorTab[] myEditorTabs;
   private final FacetErrorPanel myErrorPanel;

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsUrlList;
 
-/**
- * @author nik
- */
 public interface JpsJavaModuleExtension extends JpsElement {
   @NotNull
   JpsUrlList getJavadocRoots();

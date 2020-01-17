@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class ExecutionPointHighlighter {
   private final Project myProject;
   private RangeHighlighter myRangeHighlighter;

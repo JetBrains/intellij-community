@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class UsageViewTreeTest extends UsefulTestCase {
   private TestFixtureBuilder<IdeaProjectTestFixture> myFixtureBuilder;
   private CodeInsightTestFixture myFixture;

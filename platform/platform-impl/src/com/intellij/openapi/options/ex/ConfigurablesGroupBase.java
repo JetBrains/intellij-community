@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
  * @deprecated needed for {@link IdeConfigurablesGroup}
  */
 @Deprecated

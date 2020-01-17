@@ -23,7 +23,6 @@ import java.text.MessageFormat;
 import java.util.*;
 
 /**
- * @author nik
  * @author Sergey.Malenkov
  */
 public class ConfigurableExtensionPointUtil {

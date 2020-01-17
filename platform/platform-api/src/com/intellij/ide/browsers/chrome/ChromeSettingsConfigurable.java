@@ -33,9 +33,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class ChromeSettingsConfigurable implements Configurable {
   private final ChromeSettings mySettings;
   private JPanel myMainPanel;

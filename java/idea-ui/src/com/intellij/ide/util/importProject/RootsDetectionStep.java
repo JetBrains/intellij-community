@@ -23,9 +23,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRootData>> {
   private static final String ROOTS_FOUND_CARD = "roots_found";
   private static final String ROOTS_NOT_FOUND_CARD = "roots_not_found";

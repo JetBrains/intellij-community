@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class PackAndPutIntoDefaultLocationAction extends PutIntoDefaultLocationActionBase {
   public PackAndPutIntoDefaultLocationAction(SourceItemsTree sourceItemsTree, ArtifactEditorEx artifactEditor) {
     super(sourceItemsTree, artifactEditor);

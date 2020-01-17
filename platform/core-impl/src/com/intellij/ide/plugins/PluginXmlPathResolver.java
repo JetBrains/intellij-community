@@ -17,9 +17,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * @author nik
- */
 final class PluginXmlPathResolver extends BasePathResolver {
   private static final Logger LOG = Logger.getInstance(PluginXmlPathResolver.class);
 

@@ -27,9 +27,6 @@ import com.intellij.xml.util.XmlStringUtil;
 
 import java.util.List;
 
-/**
-* @author nik
-*/
 class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
   private final StructureConfigurableContext myContext;
 

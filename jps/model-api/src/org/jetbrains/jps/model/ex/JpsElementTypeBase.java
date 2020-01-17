@@ -26,7 +26,6 @@ import org.jetbrains.jps.model.JpsElementType;
  * <p>
  * If elements of your type don't have any specific properties extend {@link JpsElementTypeWithDummyProperties} instead.
  * </p>
- * @author nik
  */
 public abstract class JpsElementTypeBase<P extends JpsElement>implements JpsElementType<P> {
   private final JpsElementChildRole<P> myPropertiesRole = new JpsElementChildRole<>();

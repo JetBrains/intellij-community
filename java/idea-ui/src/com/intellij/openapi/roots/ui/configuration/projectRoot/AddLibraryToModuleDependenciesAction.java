@@ -25,9 +25,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
   @NotNull private final Project myProject;
   @NotNull private final BaseLibrariesConfigurable myConfigurable;

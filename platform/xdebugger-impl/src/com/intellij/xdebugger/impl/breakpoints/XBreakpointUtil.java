@@ -34,9 +34,6 @@ import java.util.List;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-/**
- * @author nik
- */
 public class XBreakpointUtil {
   private XBreakpointUtil() {
   }

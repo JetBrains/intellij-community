@@ -29,9 +29,6 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
-/**
-* @author nik
-*/
 class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
   private final StructureConfigurableContext myContext;
 

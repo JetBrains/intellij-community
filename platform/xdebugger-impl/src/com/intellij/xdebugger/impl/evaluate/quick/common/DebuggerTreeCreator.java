@@ -19,9 +19,6 @@ import com.intellij.concurrency.ResultConsumer;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author nik
-*/
 public interface DebuggerTreeCreator<D> {
   @NotNull
   String getTitle(@NotNull D descriptor);

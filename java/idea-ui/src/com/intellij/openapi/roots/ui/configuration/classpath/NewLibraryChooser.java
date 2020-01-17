@@ -33,9 +33,6 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-/**
-* @author nik
-*/
 class NewLibraryChooser implements ClasspathElementChooser<Library> {
   private final ModifiableRootModel myRootModel;
   private final StructureConfigurableContext myContext;

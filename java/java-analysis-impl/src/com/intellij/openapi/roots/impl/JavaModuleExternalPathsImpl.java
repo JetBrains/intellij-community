@@ -17,9 +17,6 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   private static final String ROOT_ELEMENT = JpsJavaModelSerializerExtension.ROOT_TAG;
 

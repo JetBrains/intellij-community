@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 
-/**
- * @author nik
- */
 public abstract class DownloadableLibraryService {
   public static DownloadableLibraryService getInstance() {
     return ServiceManager.getService(DownloadableLibraryService.class);

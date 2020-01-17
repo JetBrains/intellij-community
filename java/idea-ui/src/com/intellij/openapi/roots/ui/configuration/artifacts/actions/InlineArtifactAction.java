@@ -34,9 +34,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class InlineArtifactAction extends DumbAwareAction {
   private final ArtifactEditorEx myEditor;
 

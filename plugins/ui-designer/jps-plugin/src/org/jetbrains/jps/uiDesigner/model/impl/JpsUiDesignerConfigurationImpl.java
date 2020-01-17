@@ -6,9 +6,6 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 
-/**
- * @author nik
- */
 public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesignerConfigurationImpl> implements JpsUiDesignerConfiguration {
   public static final JpsElementChildRole<JpsUiDesignerConfiguration> ROLE = JpsElementChildRoleBase.create("ui designer configuration");
   private final UiDesignerConfigurationState myState = new UiDesignerConfigurationState();

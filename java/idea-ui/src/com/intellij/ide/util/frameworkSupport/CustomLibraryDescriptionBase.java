@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class CustomLibraryDescriptionBase extends CustomLibraryDescription {
   private final String myDefaultLibraryName;
 

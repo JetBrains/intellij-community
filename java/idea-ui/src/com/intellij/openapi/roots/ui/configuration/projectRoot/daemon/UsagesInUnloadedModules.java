@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class UsagesInUnloadedModules extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
   private final GeneralProjectSettingsElement myContainingElement;

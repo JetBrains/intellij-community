@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class XBreakpointCustomPropertiesPanel<B extends XBreakpoint<?>> implements Disposable {
 
   @NotNull

@@ -25,9 +25,6 @@ import java.io.FileFilter;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface BuildRootIndex {
 
   @NotNull

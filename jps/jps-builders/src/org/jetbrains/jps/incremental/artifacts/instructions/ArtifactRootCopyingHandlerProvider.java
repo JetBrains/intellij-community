@@ -31,8 +31,6 @@ import java.io.File;
  * external build system plugins. Implementations must be registered as Java services, by creating a file
  * META-INF/services/org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootCopyingHandlerProvider containing the qualified name
  * of the implementation class.
- *
- * @author nik
  */
 public abstract class ArtifactRootCopyingHandlerProvider {
 

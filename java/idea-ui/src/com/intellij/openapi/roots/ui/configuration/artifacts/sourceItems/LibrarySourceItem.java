@@ -37,9 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class LibrarySourceItem extends PackagingSourceItem {
   private final Library myLibrary;
 

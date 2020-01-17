@@ -24,9 +24,6 @@ import org.jetbrains.jps.incremental.artifacts.instructions.JarInfo;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class DependentJarsEvaluator {
   private final Set<JarInfo> myJars = new LinkedHashSet<>();
 

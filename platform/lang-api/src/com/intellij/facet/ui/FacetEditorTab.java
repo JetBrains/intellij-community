@@ -26,8 +26,6 @@ import javax.swing.*;
 
 /**
  * Base class for tabs of facet editors
- *
- * @author nik
  */
 public abstract class FacetEditorTab implements Configurable {
   @NotNull

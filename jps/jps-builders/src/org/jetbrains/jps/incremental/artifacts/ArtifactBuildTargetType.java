@@ -17,9 +17,6 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
-/**
- * @author nik
- */
 public class ArtifactBuildTargetType extends ArtifactBasedBuildTargetType<ArtifactBuildTarget> {
   public static final ArtifactBuildTargetType INSTANCE = new ArtifactBuildTargetType();
 

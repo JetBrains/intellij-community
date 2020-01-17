@@ -24,9 +24,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.util.PlatformIcons;
 
-/**
-* @author nik
-*/
 class AddNewModuleLibraryAction extends AddItemPopupAction<Library> {
   private static final Logger LOG = Logger.getInstance(AddNewModuleLibraryAction.class);
   private final StructureConfigurableContext myContext;

@@ -8,9 +8,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public final class ApplicationNamesInfo {
   private static final String COMPONENT_NAME = "ApplicationInfo";
 

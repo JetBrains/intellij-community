@@ -17,8 +17,6 @@ package com.intellij.xdebugger.frame;
 
 /**
  * Describes place where value can be shown.
- *
- * @author nik
  */
 public enum XValuePlace {
   TREE, TOOLTIP

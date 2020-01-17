@@ -41,9 +41,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FacetTypeEditor extends UnnamedConfigurableGroup {
   private final Project myProject;
   private final StructureConfigurableContext myContext;

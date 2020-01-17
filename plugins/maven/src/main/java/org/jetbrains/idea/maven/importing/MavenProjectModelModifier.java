@@ -38,9 +38,6 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;

@@ -24,9 +24,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-/**
- * @author nik
- */
 public class SimpleDnDAwareTree extends SimpleTree implements DnDAware {
   @Override
   public void processMouseEvent(MouseEvent e) {

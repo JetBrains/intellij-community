@@ -28,7 +28,6 @@ import java.util.List;
  * Implementations of this class are registered as Java services, by
  * creating a file META-INF/services/org.jetbrains.jps.builders.AdditionalRootsProviderService containing the qualified name of your implementation
  * class.
- * @author nik
  */
 public abstract class AdditionalRootsProviderService<R extends BuildRootDescriptor> {
   private final Collection<? extends BuildTargetType<? extends BuildTarget<R>>> myTargetTypes;

@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
   private final ArtifactsStructureConfigurableContext myContext;
   private final Artifact myOriginalArtifact;

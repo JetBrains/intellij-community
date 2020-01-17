@@ -40,9 +40,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override

@@ -20,9 +20,6 @@ import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class GroovyJavaBuilderExtension extends JavaBuilderExtension {
   @Override
   public boolean shouldHonorFileEncodingForCompilation(@NotNull File file) {

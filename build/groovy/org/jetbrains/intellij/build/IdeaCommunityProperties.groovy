@@ -7,9 +7,6 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 
 import java.util.function.Consumer
 
-/**
- * @author nik
- */
 @CompileStatic
 class IdeaCommunityProperties extends BaseIdeaProperties {
   IdeaCommunityProperties(String home) {

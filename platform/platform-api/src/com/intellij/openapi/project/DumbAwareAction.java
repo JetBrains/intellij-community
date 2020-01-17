@@ -13,8 +13,6 @@ import javax.swing.*;
 
 /**
  * An action allowed to be performed in dumb mode.
- *
- * @author nik
  */
 public abstract class DumbAwareAction extends AnAction implements DumbAware {
 

@@ -22,9 +22,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class JpsJavaExtensionService {
   public static JpsJavaExtensionService getInstance() {
     return JpsServiceManager.getInstance().getService(JpsJavaExtensionService.class);

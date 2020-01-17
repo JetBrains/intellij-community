@@ -12,8 +12,6 @@ import java.util.function.BiFunction
 
 /**
  * todo[nik] this is replacement for BuildInfoPrinter. BuildInfoPrinter should be deleted after we move its remaining methods to this class.
- *
- * @author nik
  */
 @CompileStatic
 class TeamCityBuildMessageLogger extends BuildMessageLogger {

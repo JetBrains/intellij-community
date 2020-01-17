@@ -21,8 +21,6 @@ import java.util.List;
 
 /**
  * Represents a {@link JpsDirectoryPackagingElement directory} or an {@link JpsArchivePackagingElement archive} node in the output layout.
- *
- * @author nik
  */
 public interface JpsCompositePackagingElement extends JpsPackagingElement {
   /**

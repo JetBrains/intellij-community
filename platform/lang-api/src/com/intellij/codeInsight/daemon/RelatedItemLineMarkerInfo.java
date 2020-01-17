@@ -28,9 +28,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLineMarkerInfo<T> {
   private final NotNullLazyValue<? extends Collection<? extends GotoRelatedItem>> myTargets;
 

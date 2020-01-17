@@ -26,8 +26,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
- * @author nik
- *
  * Class is not final since it is overridden in Upsource
  */
 public class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {

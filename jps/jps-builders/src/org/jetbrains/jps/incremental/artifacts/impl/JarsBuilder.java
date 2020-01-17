@@ -37,9 +37,6 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/**
- * @author nik
- */
 public class JarsBuilder {
   private static final Logger LOG = Logger.getInstance(JarsBuilder.class);
   private final Set<JarInfo> myJarsToBuild;

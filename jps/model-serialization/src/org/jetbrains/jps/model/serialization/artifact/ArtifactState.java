@@ -12,9 +12,6 @@ import org.jetbrains.jps.model.serialization.SerializationConstants;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 @Tag("artifact")
 public class ArtifactState {
   @NonNls public static final String NAME_ATTRIBUTE = "name";

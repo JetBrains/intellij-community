@@ -15,9 +15,6 @@
  */
 package org.jetbrains.jps.gant;
 
-/**
- * @author nik
- */
 public class TeamCityBuildInfoPrinter implements BuildInfoPrinter {
   private static char escapedChar(char c) {
     switch (c) {

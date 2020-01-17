@@ -23,9 +23,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsGlobalLoader extends JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsGlobalLoader.class);
   public static final String SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable";

@@ -22,9 +22,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
-*/
 public class XDebuggerRunToCursorActionHandler extends XDebuggerSuspendedActionHandler {
   private final boolean myIgnoreBreakpoints;
 

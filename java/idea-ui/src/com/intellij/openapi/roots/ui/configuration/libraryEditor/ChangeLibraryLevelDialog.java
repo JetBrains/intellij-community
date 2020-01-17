@@ -18,9 +18,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author nik
- */
 public class ChangeLibraryLevelDialog extends DialogWrapper {
   private JTextField myNameField;
   private JCheckBox myCopyFilesCheckBox;

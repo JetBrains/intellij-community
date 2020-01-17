@@ -45,9 +45,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class LibraryProjectStructureElement extends ProjectStructureElement {
   private final Library myLibrary;
 

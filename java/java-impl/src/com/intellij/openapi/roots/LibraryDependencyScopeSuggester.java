@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class LibraryDependencyScopeSuggester {
   public static final ExtensionPointName<LibraryDependencyScopeSuggester> EP_NAME = ExtensionPointName.create("com.intellij.library.dependencyScopeSuggester");
 

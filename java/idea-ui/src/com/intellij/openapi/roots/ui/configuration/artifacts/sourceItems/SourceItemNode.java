@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.InputEvent;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class SourceItemNode extends SourceItemNodeBase {
   private final PackagingSourceItem mySourceItem;
 

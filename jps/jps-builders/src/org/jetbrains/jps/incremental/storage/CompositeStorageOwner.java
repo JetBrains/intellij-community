@@ -17,9 +17,6 @@ package org.jetbrains.jps.incremental.storage;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public abstract class CompositeStorageOwner implements StorageOwner {
   protected abstract Iterable<? extends StorageOwner> getChildStorages();
 

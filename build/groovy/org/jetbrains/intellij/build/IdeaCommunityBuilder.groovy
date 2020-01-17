@@ -3,9 +3,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
-/**
- * @author nik
- */
 @CompileStatic
 class IdeaCommunityBuilder {
   private final BuildContext buildContext

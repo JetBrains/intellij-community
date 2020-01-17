@@ -22,9 +22,6 @@ import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ModuleDeploymentSourceType extends DeploymentSourceType<ModuleDeploymentSource> {
   private static final String NAME_ATTRIBUTE = "name";
 

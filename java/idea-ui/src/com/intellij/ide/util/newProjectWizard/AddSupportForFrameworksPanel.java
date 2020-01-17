@@ -47,9 +47,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class AddSupportForFrameworksPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(AddSupportForFrameworksPanel.class);
   @NonNls private static final String EMPTY_CARD = "empty";

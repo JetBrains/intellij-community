@@ -15,9 +15,6 @@
  */
 package com.intellij.remoteServer.runtime.deployment.debug;
 
-/**
- * @author nik
- */
 public class DebugConnectionDataNotAvailableException extends Exception {
   public DebugConnectionDataNotAvailableException(String message) {
     super(message);

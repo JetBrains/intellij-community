@@ -29,9 +29,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.Locale;
 
-/**
- * @author nik
- */
 public class UnmarkGeneratedSourceRootAction extends MarkRootActionBase {
   public UnmarkGeneratedSourceRootAction() {
     Presentation presentation = getTemplatePresentation();

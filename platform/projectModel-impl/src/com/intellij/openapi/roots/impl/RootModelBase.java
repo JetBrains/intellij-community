@@ -14,9 +14,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 @ApiStatus.Internal
 public abstract class RootModelBase implements ModuleRootModel {
   @Override

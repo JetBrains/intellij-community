@@ -38,9 +38,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class JpsModelSerializerExtension {
   public static Iterable<JpsModelSerializerExtension> getExtensions() {
     return JpsServiceManager.getInstance().getExtensions(JpsModelSerializerExtension.class);

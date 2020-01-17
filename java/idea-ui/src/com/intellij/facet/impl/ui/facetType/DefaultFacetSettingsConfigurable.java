@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> implements Configurable {
   private final FacetType<?, ? super C> myFacetType;
   private final Project myProject;

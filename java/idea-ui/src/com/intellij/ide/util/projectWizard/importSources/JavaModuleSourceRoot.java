@@ -24,9 +24,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JavaModuleSourceRoot extends DetectedSourceRoot {
   private final List<String> myLanguages;
   private final boolean myWithModuleInfoFile; // module-info.java

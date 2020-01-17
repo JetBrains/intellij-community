@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-/**
- * @author nik
- */
 public interface ServerConnection<D extends DeploymentConfiguration> {
   @NotNull
   RemoteServer<?> getServer();

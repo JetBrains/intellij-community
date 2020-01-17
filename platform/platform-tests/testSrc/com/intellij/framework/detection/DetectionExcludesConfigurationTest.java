@@ -26,9 +26,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class DetectionExcludesConfigurationTest extends HeavyPlatformTestCase {
   private VirtualFile myTempDir;
   private VirtualFile myTempFile;

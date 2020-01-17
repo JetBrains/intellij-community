@@ -19,9 +19,6 @@ import com.intellij.framework.FrameworkVersion;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface FrameworkVersionListener extends EventListener {
   void versionChanged(FrameworkVersion version);
 }

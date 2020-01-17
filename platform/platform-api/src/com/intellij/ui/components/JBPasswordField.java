@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class JBPasswordField extends JPasswordField implements ComponentWithEmptyText {
   private final TextComponentEmptyText myEmptyText;
 

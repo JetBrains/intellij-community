@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
-/**
- * @author nik
- */
 public class ConfigFileImpl extends SimpleModificationTracker implements ConfigFile {
   @NotNull private ConfigFileInfo myInfo;
   private final VirtualFilePointer myFilePointer;

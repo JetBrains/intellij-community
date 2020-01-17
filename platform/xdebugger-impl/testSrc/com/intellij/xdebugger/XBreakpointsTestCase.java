@@ -17,9 +17,6 @@ import java.util.List;
 import static com.intellij.configurationStore.XmlSerializer.deserialize;
 import static com.intellij.configurationStore.XmlSerializer.serialize;
 
-/**
- * @author nik
- */
 public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   protected XBreakpointManagerImpl myBreakpointManager;
 

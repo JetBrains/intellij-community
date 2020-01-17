@@ -10,8 +10,6 @@ import java.util.List;
 
 /**
  * Represents a suspended state of a debug process
- *
- * @author nik
  */
 public abstract class XSuspendContext {
 

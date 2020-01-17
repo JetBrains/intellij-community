@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface XDependentBreakpointListener extends EventListener {
   Topic<XDependentBreakpointListener> TOPIC = new Topic<>("XBreakpointManager events", XDependentBreakpointListener.class);
 

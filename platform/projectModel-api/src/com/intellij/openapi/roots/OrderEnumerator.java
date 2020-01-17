@@ -36,8 +36,6 @@ import java.util.List;
  * and use {@link #orderEntries(Project)} to process dependencies of all modules in a project.</p>
  *
  * <p>Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.</p>
- *
- * @author nik
  */
 @ApiStatus.NonExtendable
 public abstract class OrderEnumerator {

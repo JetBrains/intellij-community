@@ -17,9 +17,6 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class MockLocalFileSystem extends LocalFileSystem {
   private final MockVirtualFileSystem myDelegate = new MockVirtualFileSystem();
 

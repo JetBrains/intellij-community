@@ -22,9 +22,6 @@ import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class RemoteServersView {
   public static RemoteServersView getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, RemoteServersView.class);

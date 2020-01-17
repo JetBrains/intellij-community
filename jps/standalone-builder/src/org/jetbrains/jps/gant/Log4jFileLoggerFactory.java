@@ -28,9 +28,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.Logger.Factory {
   private final RollingFileAppender myAppender;
   private final List<String> myCategoriesWithDebugLevel;

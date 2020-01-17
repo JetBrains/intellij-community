@@ -7,9 +7,6 @@ import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class DeployToServerRunner extends DefaultProgramRunner {
   @NotNull
   @Override

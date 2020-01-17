@@ -22,9 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;import java.util.HashSet;import java.util.Map;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class BidirectionalMultiMap<K, V> {
   private final Map<K, Set<V>> myKey2Values;
   private final Map<V, Set<K>> myValue2Keys;

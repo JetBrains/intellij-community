@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 
-/**
- * @author nik
- */
 public abstract class JpsSdkType<P extends JpsElement> extends JpsElementTypeBase<JpsSdk<P>> implements JpsLibraryType<JpsSdk<P>> {
   private final JpsElementChildRole<P> mySdkPropertiesRole = new JpsElementChildRole<>();
 

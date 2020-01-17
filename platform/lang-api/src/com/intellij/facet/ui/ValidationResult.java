@@ -17,9 +17,6 @@ package com.intellij.facet.ui;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class ValidationResult {
   public static final ValidationResult OK = new ValidationResult(null, null);
 

@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class JavaModuleSourceRootTypes {
   public static final Set<JavaSourceRootType> SOURCES = ContainerUtil.newHashSet(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE);
   public static final Set<JavaResourceRootType> RESOURCES = ContainerUtil.newHashSet(JavaResourceRootType.RESOURCE, JavaResourceRootType.TEST_RESOURCE);

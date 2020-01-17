@@ -27,9 +27,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class ResourceRootDescriptor extends BuildRootDescriptor {
   @NotNull private final File myRoot;
   @NotNull private final ResourcesTarget myTarget;

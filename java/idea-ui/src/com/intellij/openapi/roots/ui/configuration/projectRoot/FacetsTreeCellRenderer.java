@@ -23,9 +23,6 @@ import com.intellij.ui.GroupedElementsRenderer;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree {
   @Override
   protected JComponent createItemComponent() {

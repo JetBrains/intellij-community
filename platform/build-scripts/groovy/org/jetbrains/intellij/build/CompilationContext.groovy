@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 
-/**
- * @author nik
- */
 @CompileStatic
 interface CompilationContext {
   AntBuilder getAnt()

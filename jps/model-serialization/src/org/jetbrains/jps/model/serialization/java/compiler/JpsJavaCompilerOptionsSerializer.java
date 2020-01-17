@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
-/**
- * @author nik
- */
 public class JpsJavaCompilerOptionsSerializer extends JpsProjectExtensionSerializer {
   private final String myCompilerId;
 

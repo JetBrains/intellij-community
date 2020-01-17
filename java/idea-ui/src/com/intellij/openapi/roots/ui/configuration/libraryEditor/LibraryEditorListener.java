@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface LibraryEditorListener extends EventListener {
   void libraryRenamed(@NotNull Library library, String oldName, String newName);
 }

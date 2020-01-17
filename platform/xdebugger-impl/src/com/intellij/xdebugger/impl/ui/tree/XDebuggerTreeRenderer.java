@@ -23,9 +23,6 @@ import java.awt.event.MouseEvent;
 
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
-/**
- * @author nik
- */
 class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
   private boolean myHaveLink;

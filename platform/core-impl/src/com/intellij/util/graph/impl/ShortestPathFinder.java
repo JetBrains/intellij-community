@@ -7,9 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ShortestPathFinder<Node> {
   private final InboundSemiGraph<Node> myGraph;
 

@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
 
-/**
- * @author nik
- */
 public class JpsEclipseModelSerializerExtension extends JpsModelSerializerExtension {
   private static final JpsEclipseClasspathSerializer CLASSPATH_SERIALIZER = new JpsEclipseClasspathSerializer();
 

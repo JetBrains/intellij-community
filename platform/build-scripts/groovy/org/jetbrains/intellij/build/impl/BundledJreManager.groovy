@@ -12,9 +12,6 @@ import org.jetbrains.intellij.build.OsFamily
 
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * @author nik
- */
 @CompileStatic
 class BundledJreManager {
   private final BuildContext buildContext

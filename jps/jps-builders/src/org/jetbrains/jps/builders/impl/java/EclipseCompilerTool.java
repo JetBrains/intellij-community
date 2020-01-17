@@ -33,8 +33,6 @@ import java.util.ServiceLoader;
 /**
  * The latest version of ecj batch compiler can be found here:
  * http://download.eclipse.org/eclipse/downloads/
- *
- * @author nik
  */
 public class EclipseCompilerTool extends JavaCompilingTool {
 

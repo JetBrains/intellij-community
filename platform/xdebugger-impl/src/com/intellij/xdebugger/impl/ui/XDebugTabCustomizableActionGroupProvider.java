@@ -19,9 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
-/**
- * @author nik
- */
 public class XDebugTabCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
   @Override
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {

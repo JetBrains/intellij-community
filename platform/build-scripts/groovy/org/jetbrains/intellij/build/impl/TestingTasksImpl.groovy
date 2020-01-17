@@ -24,9 +24,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.util.function.Predicate
 import java.util.jar.Manifest
 
-/**
- * @author nik
- */
 @CompileStatic
 class TestingTasksImpl extends TestingTasks {
   private final CompilationContext context

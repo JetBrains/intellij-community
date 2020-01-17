@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class DeploymentConfigurationManager {
   @NotNull
   public static DeploymentConfigurationManager getInstance(@NotNull Project project) {

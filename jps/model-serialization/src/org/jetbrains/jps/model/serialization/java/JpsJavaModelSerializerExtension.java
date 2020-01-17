@@ -47,9 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
   public static final String EXPORTED_ATTRIBUTE = "exported";
   public static final String SCOPE_ATTRIBUTE = "scope";

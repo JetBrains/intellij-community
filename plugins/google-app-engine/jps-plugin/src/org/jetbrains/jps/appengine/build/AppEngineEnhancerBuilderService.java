@@ -22,9 +22,6 @@ import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineEnhancerBuilderService extends BuilderService {
   @NotNull
   @Override

@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCase {
   private FrameworkSupportModelBase myFrameworkSupportModel;
   private Map<FrameworkType, FrameworkSupportInModuleConfigurable> myConfigurables;

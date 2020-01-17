@@ -29,9 +29,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class MvcProjectStructureDetector extends ProjectStructureDetector {
   private final MvcFramework myFramework;
   private final String myDirectoryName;

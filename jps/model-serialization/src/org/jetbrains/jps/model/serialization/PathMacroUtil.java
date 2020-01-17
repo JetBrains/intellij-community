@@ -15,9 +15,6 @@ import java.util.Map;
 
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
 
-/**
- * @author nik
- */
 public class PathMacroUtil {
   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
   @NonNls public static final String PROJECT_NAME_MACRO_NAME = "PROJECT_NAME";

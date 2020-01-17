@@ -21,9 +21,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.packaging.elements.PackagingElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author nik
-*/
 public class AddNewPackagingElementAction extends DumbAwareAction {
   private final PackagingElementType<?> myType;
   private final ArtifactEditorEx myArtifactEditor;

@@ -19,9 +19,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import java.nio.charset.StandardCharsets
 
-/**
- * @author nik
- */
 @CompileStatic
 class BuildUtils {
   static void addToClassPath(String path, AntBuilder ant) {

@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This extension allows to add an action group to the list of customizable actions in Settings | Menus and Toolbars.
  * Use {@code CustomActionsSchema.getInstance().getCorrectedAction(id)} to get customized version of a group.
- *
- * @author nik
  */
 public abstract class CustomizableActionGroupProvider {
   public static final ExtensionPointName<CustomizableActionGroupProvider> EP_NAME = ExtensionPointName.create("com.intellij.customizableActionGroupProvider");

@@ -23,9 +23,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class GlobalInspectionContextForTests extends GlobalInspectionContextImpl {
   private volatile boolean myFinished;
 

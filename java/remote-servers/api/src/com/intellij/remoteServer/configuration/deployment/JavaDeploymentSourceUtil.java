@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class JavaDeploymentSourceUtil {
   public static JavaDeploymentSourceUtil getInstance() {
     return ServiceManager.getService(JavaDeploymentSourceUtil.class);

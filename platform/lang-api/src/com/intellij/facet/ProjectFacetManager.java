@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 @ApiStatus.NonExtendable
 public abstract class ProjectFacetManager {
 

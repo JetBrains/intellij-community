@@ -18,9 +18,6 @@ package com.intellij.execution;
 
 import com.intellij.ide.IdeBundle;
 
-/**
- * @author nik
- */
 public class RunCanceledByUserException extends ExecutionException {
   public RunCanceledByUserException() {
     super(IdeBundle.message("run.canceled.by.user.message"));

@@ -16,9 +16,6 @@ import java.awt.event.ActionEvent
 import javax.swing.Action
 import javax.swing.JComponent
 
-/**
- * @author nik
- */
 class LibraryJarsDiffDialog(libraryFile: VirtualFile,
                             downloadedFile: VirtualFile,
                             private val mavenCoordinates: JpsMavenRepositoryLibraryDescriptor,

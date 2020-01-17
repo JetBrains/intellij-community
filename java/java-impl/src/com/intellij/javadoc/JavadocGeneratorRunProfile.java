@@ -46,9 +46,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author nik
- */
 public class JavadocGeneratorRunProfile implements ModuleRunProfile {
   private final Project myProject;
   private final AnalysisScope myGenerationScope;

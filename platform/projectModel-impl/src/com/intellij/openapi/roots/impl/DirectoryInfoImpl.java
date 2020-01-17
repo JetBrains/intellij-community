@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 class DirectoryInfoImpl extends DirectoryInfo {
   protected final VirtualFile myRoot;//original project root for which this information is calculated
   private final Module module; // module to which content it belongs or null

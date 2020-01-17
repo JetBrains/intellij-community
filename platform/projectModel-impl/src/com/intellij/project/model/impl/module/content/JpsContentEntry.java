@@ -28,9 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class JpsContentEntry implements ContentEntry, Disposable {
   private final VirtualFilePointer myRoot;
   private final JpsModule myModule;

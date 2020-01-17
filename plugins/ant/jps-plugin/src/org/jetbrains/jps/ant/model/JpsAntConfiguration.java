@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsElement;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public interface JpsAntConfiguration extends JpsElement {
   @NotNull
   JpsAntBuildFileOptions getOptions(@NotNull String buildFileUrl);

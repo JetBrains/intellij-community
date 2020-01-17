@@ -38,9 +38,6 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 
-/**
- * @author nik
- */
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 

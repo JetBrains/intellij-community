@@ -15,9 +15,6 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Stream;
 
-/**
- * @author nik
- */
 public class JpsPathUtil {
 
   public static boolean isUnder(Set<File> ancestors, File file) {

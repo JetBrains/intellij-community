@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class MockFrameworkType extends FrameworkType {
   public MockFrameworkType(@NotNull String id) {
     super(id);

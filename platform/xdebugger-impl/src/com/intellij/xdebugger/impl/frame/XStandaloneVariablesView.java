@@ -22,9 +22,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XStandaloneVariablesView extends XVariablesViewBase {
   private final XStackFrame myStackFrame;
 

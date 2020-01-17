@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
   private final StructureConfigurableContext myContext;
   private final NewLibraryEditor myLibraryEditor;

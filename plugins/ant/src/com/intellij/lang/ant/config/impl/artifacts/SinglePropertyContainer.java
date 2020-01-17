@@ -17,9 +17,6 @@ package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.util.config.AbstractProperty;
 
-/**
- * @author nik
- */
 class SinglePropertyContainer<T extends AbstractProperty> extends AbstractProperty.AbstractPropertyContainer<T> {
   private final T myProperty;
   private Object myValue;

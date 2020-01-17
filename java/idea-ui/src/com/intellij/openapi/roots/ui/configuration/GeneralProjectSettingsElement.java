@@ -37,9 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class GeneralProjectSettingsElement extends ProjectStructureElement {
   public GeneralProjectSettingsElement(@NotNull StructureConfigurableContext context) {
     super(context);

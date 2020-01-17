@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet> {
   private final Facet myFacet;
   private final ModulesConfigurator myModulesConfigurator;

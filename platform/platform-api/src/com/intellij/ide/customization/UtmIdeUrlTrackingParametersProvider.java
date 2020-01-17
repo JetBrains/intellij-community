@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URISyntaxException;
 
-/**
- * @author nik
- */
 public class UtmIdeUrlTrackingParametersProvider extends IdeUrlTrackingParametersProvider {
   private static final Logger LOG = Logger.getInstance(UtmIdeUrlTrackingParametersProvider.class);
 

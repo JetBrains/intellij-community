@@ -18,9 +18,6 @@ package org.jetbrains.jps.model.serialization.library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 
-/**
- * @author nik
- */
 public class JpsLibraryRootTypeSerializer implements Comparable<JpsLibraryRootTypeSerializer> {
   private final String myTypeId;
   private final JpsOrderRootType myType;

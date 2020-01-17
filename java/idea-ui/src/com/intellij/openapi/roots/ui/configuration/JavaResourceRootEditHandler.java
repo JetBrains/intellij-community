@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase {
   public JavaResourceRootEditHandler() {
     super(JavaResourceRootType.RESOURCE);

@@ -21,9 +21,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class FacetEditorsFactory {
   public static FacetEditorsFactory getInstance() {
     return ServiceManager.getService(FacetEditorsFactory.class);

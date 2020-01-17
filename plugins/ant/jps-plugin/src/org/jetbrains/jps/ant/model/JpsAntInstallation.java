@@ -20,9 +20,6 @@ import org.jetbrains.jps.model.JpsElement;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface JpsAntInstallation extends JpsElement {
   File getAntHome();
 

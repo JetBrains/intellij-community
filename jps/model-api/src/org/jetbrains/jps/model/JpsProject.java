@@ -29,9 +29,6 @@ import org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement<JpsProject> {
 
   @NotNull

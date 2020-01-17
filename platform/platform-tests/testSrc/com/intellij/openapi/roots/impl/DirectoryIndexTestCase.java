@@ -33,9 +33,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
   protected DirectoryIndexImpl myIndex;
   protected ProjectFileIndex myFileIndex;

@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public interface ArtifactEditorEx extends ArtifactEditor, Disposable {
   DataKey<ArtifactEditorEx> ARTIFACTS_EDITOR_KEY = DataKey.create("artifactsEditor");
 

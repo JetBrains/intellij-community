@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class LibraryDownloadInfo {
   @Nullable private final RemoteRepositoryInfo myRemoteRepository;
   private final String myRelativeDownloadUrl;

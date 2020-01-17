@@ -39,7 +39,6 @@ import java.util.List;
  * time in different threads.
  *
  * @see BuildTargetType
- * @author nik
  */
 public abstract class BuildTarget<R extends BuildRootDescriptor> {
   private final BuildTargetType<? extends BuildTarget<R>> myTargetType;

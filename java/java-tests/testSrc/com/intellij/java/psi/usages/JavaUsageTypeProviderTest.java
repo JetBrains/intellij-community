@@ -24,9 +24,6 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.impl.rules.JavaUsageTypeProvider;
 import com.intellij.usages.impl.rules.UsageType;
 
-/**
- * @author nik
- */
 public class JavaUsageTypeProviderTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNestedClassAccess() {
     myFixture.configureByFiles("NestedClassAccess.java", "Foo.java");

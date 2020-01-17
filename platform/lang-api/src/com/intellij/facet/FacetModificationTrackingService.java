@@ -24,9 +24,6 @@ import com.intellij.openapi.util.ModificationTrackerListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 @ApiStatus.NonExtendable
 public abstract class FacetModificationTrackingService {
 

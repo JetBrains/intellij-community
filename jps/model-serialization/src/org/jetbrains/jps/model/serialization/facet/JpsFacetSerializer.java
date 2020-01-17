@@ -29,9 +29,6 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsFacetSerializer {
   @NonNls public static final String FACET_TAG = "facet";
   @NonNls public static final String TYPE_ATTRIBUTE = "type";

@@ -4,8 +4,6 @@ package org.jetbrains.intellij.build
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
- *
- * @author nik
  */
 class CommunityStandaloneJpsBuilder {
   private final BuildContext buildContext

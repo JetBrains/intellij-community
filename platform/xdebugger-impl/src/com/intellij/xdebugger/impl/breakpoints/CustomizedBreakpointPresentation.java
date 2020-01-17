@@ -5,9 +5,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
-*/
 public class CustomizedBreakpointPresentation {
   private Icon myIcon;
   private String myErrorMessage;

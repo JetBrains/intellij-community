@@ -23,9 +23,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class DefaultProjectStructureDetector extends ProjectStructureDetector {
   @NotNull
   @Override

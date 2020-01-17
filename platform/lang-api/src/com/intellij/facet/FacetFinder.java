@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 @ApiStatus.NonExtendable
 public abstract class FacetFinder {
 

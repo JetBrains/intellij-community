@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Factory class for {@link XDebugProcess} implementation. Used by {@link XDebuggerManager} to start a new debugging session
- *
- * @author nik
  */
 public abstract class XDebugProcessStarter {
   /**

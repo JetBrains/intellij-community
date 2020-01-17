@@ -34,9 +34,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworksTree extends CheckboxTree {
   private boolean myProcessingMouseEventOnCheckbox;
 

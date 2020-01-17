@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class RequiredLibrariesInfo {
   private final List<LibraryInfo> myLibraryInfos = new ArrayList<>();
 

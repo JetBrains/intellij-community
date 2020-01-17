@@ -17,9 +17,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 class AddExtLibraryDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
   private final ExternalLibraryDescriptor myLibraryDescriptor;

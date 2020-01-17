@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationManager {
   private final Project myProject;
 

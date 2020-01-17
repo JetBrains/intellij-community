@@ -29,9 +29,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
   private @Nullable final Project myProject;
   private final boolean myShowCustomLibraryTables;

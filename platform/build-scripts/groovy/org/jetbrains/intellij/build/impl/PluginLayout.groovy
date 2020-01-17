@@ -11,8 +11,6 @@ import java.util.function.BiFunction
 
 /**
  * Describes layout of a plugin in the product distribution
- *
- * @author nik
  */
 class PluginLayout extends BaseLayout {
   final String mainModule

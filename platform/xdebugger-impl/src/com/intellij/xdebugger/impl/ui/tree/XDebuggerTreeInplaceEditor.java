@@ -32,9 +32,6 @@ import javax.swing.border.Border;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.tree.TreePath;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   protected final XDebuggerTreeNode myNode;
   protected final XDebuggerExpressionComboBox myExpressionEditor;

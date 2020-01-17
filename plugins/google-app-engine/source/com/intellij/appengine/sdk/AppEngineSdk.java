@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface AppEngineSdk {
 
   @NotNull

@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 @State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"))
 public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState> {
   private Map<String, XDebuggerSettings<?>> mySettingsById;

@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
   private final CustomLibraryDescription myLibraryDescription;
   private final LibrariesValidatorContext myContext;

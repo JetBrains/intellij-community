@@ -45,9 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* @author nik
-*/
 public class CreateNewLibraryAction extends DumbAwareAction {
   private final @Nullable LibraryType myType;
   private final BaseLibrariesConfigurable myLibrariesConfigurable;

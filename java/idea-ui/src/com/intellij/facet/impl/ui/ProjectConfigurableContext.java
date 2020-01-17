@@ -35,9 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class ProjectConfigurableContext extends FacetEditorContextBase {
   private final Module myModule;
   private final boolean myNewFacet;

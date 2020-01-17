@@ -20,9 +20,6 @@ import com.intellij.util.xmlb.annotations.MapAnnotation;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsJavaCompilerOptions implements CompilerOptions {
   public boolean PREFER_TARGET_JDK_COMPILER = true;
   public boolean DEBUGGING_INFO = true;

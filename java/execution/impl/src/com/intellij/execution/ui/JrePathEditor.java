@@ -31,9 +31,6 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWithAnchor {
   private static final String DEFAULT_JRE_TEXT = "Default";
   private final JreComboboxEditor myComboboxEditor;

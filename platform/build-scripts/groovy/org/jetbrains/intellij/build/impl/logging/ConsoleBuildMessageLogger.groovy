@@ -7,9 +7,6 @@ import org.jetbrains.intellij.build.LogMessage
 import org.jetbrains.intellij.build.impl.BuildUtils
 
 import java.util.function.BiFunction
-/**
- * @author nik
- */
 @CompileStatic
 class ConsoleBuildMessageLogger extends BuildMessageLoggerBase {
   public static final BiFunction<String, AntTaskLogger, BuildMessageLogger> FACTORY = { String taskName, AntTaskLogger logger ->

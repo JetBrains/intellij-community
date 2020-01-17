@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 
-/**
- * @author nik
- */
 public class ComponentSerializationUtil {
   @NotNull
   public static <S> Class<S> getStateClass(@NotNull Class<? extends PersistentStateComponent> aClass) {

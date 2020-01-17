@@ -48,9 +48,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class LibrariesContainerFactory {
   private static final Logger LOG = Logger.getInstance(LibrariesContainerFactory.class);
   private static final Library[] EMPTY_LIBRARIES_ARRAY = Library.EMPTY_ARRAY;

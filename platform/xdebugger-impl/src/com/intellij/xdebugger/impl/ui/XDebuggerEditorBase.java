@@ -55,9 +55,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerEditorBase implements Expandable {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;

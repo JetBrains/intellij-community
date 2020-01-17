@@ -32,8 +32,6 @@ import java.util.Set;
  * or Copy/Cut action in Swing component is invoked, and use native method calls to access system clipboard lock-free (?);</li>
  * <li>for X Window we temporary set short timeout and check for available formats (which should be fast if a clipboard owner is alive).</li>
  * </ul>
- *
- * @author nik
  */
 public final class ClipboardSynchronizer implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClipboardSynchronizer.class);

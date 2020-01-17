@@ -12,8 +12,6 @@ import java.util.function.Function;
 /**
  * Helper class for testing structure of Swing's trees. It's an improved version of {@link PlatformTestUtil#assertTreeEqual} which allows
  * using custom presentation for tree nodes. Later we can enhance this class to support other kinds of trees.
- *
- * @author nik
  */
 public class TreeNodeTester {
   private final TreeNode myNode;

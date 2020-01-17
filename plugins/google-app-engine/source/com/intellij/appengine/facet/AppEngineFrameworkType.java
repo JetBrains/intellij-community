@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class AppEngineFrameworkType extends FrameworkTypeEx {
   public static final String ID = "appengine-java";
 

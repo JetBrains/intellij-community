@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public final class DeployToServerConfigurationType extends ConfigurationTypeBase {
   private final ServerType<?> myServerType;
   private final MultiSourcesConfigurationFactory myMultiSourcesFactory;

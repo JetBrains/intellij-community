@@ -15,9 +15,6 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   private static final Logger LOG = Logger.getInstance(OrderRootsEnumeratorImpl.class);
   private final OrderEnumeratorBase myOrderEnumerator;

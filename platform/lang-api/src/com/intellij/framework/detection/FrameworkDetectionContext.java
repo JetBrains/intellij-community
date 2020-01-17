@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface FrameworkDetectionContext {
 
   @Nullable

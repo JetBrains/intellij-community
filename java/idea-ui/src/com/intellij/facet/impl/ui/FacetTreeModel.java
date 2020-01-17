@@ -29,9 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FacetTreeModel {
   private static final Logger LOG = Logger.getInstance(FacetTreeModel.class);
   private static final FacetInfo ROOT = new FacetInfo(null, "", null, null);

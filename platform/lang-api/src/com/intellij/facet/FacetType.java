@@ -23,8 +23,6 @@ import javax.swing.*;
  * &nbsp;&nbsp;&lt;facetType implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- *
- * @author nik
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType");

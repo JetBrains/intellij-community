@@ -23,9 +23,6 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class JarApplicationCommandLineState extends BaseJavaApplicationCommandLineState<JarApplicationConfiguration> {
   public JarApplicationCommandLineState(@NotNull final JarApplicationConfiguration configuration, final ExecutionEnvironment environment) {
     super(environment, configuration);

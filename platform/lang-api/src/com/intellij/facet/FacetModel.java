@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 @ApiStatus.NonExtendable
 public interface FacetModel {
   /**

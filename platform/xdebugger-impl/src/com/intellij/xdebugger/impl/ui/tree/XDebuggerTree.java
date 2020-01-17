@@ -47,9 +47,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override

@@ -33,9 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Proxy;
 import java.util.function.Predicate;
 
-/**
- * @author nik
- */
 public class InlineModuleDependencyAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(InlineModuleDependencyAction.class);
   private final ClasspathPanelImpl myClasspathPanel;

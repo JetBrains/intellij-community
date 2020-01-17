@@ -5,9 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class SkipAllInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
   public SkipAllInstructionCreator(ArtifactInstructionsBuilderImpl builder) {
     super(builder);

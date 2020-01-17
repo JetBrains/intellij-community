@@ -6,9 +6,6 @@ import groovy.transform.CompileStatic
 
 import java.util.regex.Pattern
 
-/**
- * @author nik
- */
 @CompileStatic
 class NsisFileListGenerator {
   private final Map<String, List<File>> directoryToFiles = [:]

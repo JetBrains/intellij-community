@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class GroovyLibraryPresentationProviderBase extends LibraryPresentationProvider<GroovyLibraryProperties> {
   public GroovyLibraryPresentationProviderBase(LibraryKind kind) {
     super(kind);

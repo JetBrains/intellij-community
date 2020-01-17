@@ -10,8 +10,6 @@ import java.util.Arrays;
 
 /**
  * Represents a version of Java SDK. Use {@code JavaSdk#getVersion(Sdk)} method to obtain a version of an {@code Sdk}.
- *
- * @author nik
  * @see LanguageLevel
  */
 public enum JavaSdkVersion {

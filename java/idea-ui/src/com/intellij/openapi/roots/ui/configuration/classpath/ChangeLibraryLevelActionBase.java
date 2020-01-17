@@ -38,9 +38,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class ChangeLibraryLevelActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance(ChangeLibraryLevelActionBase.class);
   protected final Project myProject;

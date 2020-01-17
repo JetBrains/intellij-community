@@ -3,9 +3,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
-/**
- * @author nik
- */
 @CompileStatic
 interface BuildMessages {
   void info(String message)

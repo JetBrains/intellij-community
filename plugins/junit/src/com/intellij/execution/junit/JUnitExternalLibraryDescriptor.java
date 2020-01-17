@@ -18,9 +18,6 @@ package com.intellij.execution.junit;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class JUnitExternalLibraryDescriptor extends ExternalLibraryDescriptor {
   public static final ExternalLibraryDescriptor JUNIT3 = new JUnitExternalLibraryDescriptor("3", "3.8.2");
   public static final ExternalLibraryDescriptor JUNIT4 = new JUnitExternalLibraryDescriptor("4", "4.12");
