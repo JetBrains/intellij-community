@@ -3,6 +3,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -59,8 +61,9 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
         if (inputString.length() > 0 && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
           return "This is not a valid Java qualified name";
         }
-        if (level.isAtLeast(LanguageLevel.JDK_10) && PsiKeyword.VAR.equals(StringUtil.getShortName(inputString))) {
-          return "var cannot be used for type declarations";
+        String shortName = StringUtil.getShortName(inputString);
+        if (HighlightClassUtil.isRestrictedIdentifier(shortName, level)) {
+          return JavaErrorBundle.message("restricted.identifier", shortName);
         }
         return null;
       }

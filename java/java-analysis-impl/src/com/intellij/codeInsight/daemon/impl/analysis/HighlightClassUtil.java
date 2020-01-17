@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -251,17 +252,28 @@ public class HighlightClassUtil {
     return errorResult;
   }
 
-  static HighlightInfo checkVarClassConflict(@NotNull PsiClass psiClass, @NotNull PsiIdentifier identifier) {
-    String className = psiClass.getName();
-    if (PsiKeyword.VAR.equals(className)) {
+  static HighlightInfo checkClassRestrictedKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {
+    String className = identifier.getText();
+    if (isRestrictedIdentifier(className, level)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .descriptionAndTooltip("'var' is a restricted local variable type and cannot be used for type declarations")
+        .descriptionAndTooltip(JavaErrorBundle.message("restricted.identifier", className))
         .range(identifier)
         .create();
     }
     return null;
   }
-  
+
+  /**
+   * @param typeName name of the type to test
+   * @param level language level
+   * @return true if given name cannot be used as a type name at given language level
+   */
+  public static boolean isRestrictedIdentifier(String typeName, @NotNull LanguageLevel level) {
+    return PsiKeyword.VAR.equals(typeName) && HighlightUtil.Feature.LVTI.isSufficient(level) ||
+           PsiKeyword.YIELD.equals(typeName) && HighlightUtil.Feature.SWITCH_EXPRESSION.isSufficient(level) ||
+           PsiKeyword.RECORD.equals(typeName) && HighlightUtil.Feature.RECORDS.isSufficient(level);
+  }
+
   static HighlightInfo checkClassAndPackageConflict(@NotNull PsiClass aClass) {
     String name = aClass.getQualifiedName();
 

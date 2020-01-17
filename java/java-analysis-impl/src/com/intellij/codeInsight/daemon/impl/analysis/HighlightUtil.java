@@ -412,9 +412,12 @@ public class HighlightUtil extends HighlightUtilBase {
     return highlightInfo;
   }
 
-  static HighlightInfo checkLegalVarReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiClass resolved) {
-    if (PsiKeyword.VAR.equals(resolved.getName()) && PsiUtil.getLanguageLevel(ref).isAtLeast(LanguageLevel.JDK_10)) {
-      String message = JavaErrorBundle.message("lvti.illegal");
+  static HighlightInfo checkRestrictedIdentifierReference(@NotNull PsiJavaCodeReferenceElement ref,
+                                                          @NotNull PsiClass resolved,
+                                                          @NotNull LanguageLevel languageLevel) {
+    String name = resolved.getName();
+    if (HighlightClassUtil.isRestrictedIdentifier(name, languageLevel)) {
+      String message = JavaErrorBundle.message("restricted.identifier.reference", name);
       PsiElement range = ObjectUtils.notNull(ref.getReferenceNameElement(), ref);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(range).create();
     }
@@ -3193,6 +3196,7 @@ public class HighlightUtil extends HighlightUtilBase {
     STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
+    LVTI(LanguageLevel.JDK_10, "feature.lvti"),
     ENHANCED_SWITCH(LanguageLevel.JDK_13_PREVIEW, "feature.enhanced.switch"){
       @Override
       boolean isSufficient(LanguageLevel useSiteLevel) {
