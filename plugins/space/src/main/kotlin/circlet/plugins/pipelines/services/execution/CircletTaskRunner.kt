@@ -2,6 +2,11 @@ package circlet.plugins.pipelines.services.execution
 
 import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
+import circlet.pipelines.engine.api.storage.*
+import circlet.pipelines.provider.*
+import circlet.pipelines.provider.io.*
+import circlet.pipelines.provider.local.*
+import circlet.pipelines.provider.local.docker.*
 import circlet.plugins.pipelines.services.*
 import com.intellij.execution.process.*
 import com.intellij.openapi.components.*
@@ -11,12 +16,22 @@ import libraries.klogging.*
 import runtime.*
 import java.io.*
 import com.intellij.execution.*
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.process.ProcessHandler
+import kotlinx.coroutines.*
+import libraries.io.*
+import libraries.process.*
+import java.nio.file.*
+import java.util.concurrent.*
 
 class CircletTaskRunner(val project: Project) {
 
     companion object : KLogging()
 
     fun run(taskName: String): ProcessHandler {
+
+        // todo: terminate lifetime.
+        val lifetime = LifetimeSource()
 
         val script = project.service<SpaceKtsModelBuilder>().script.value ?: throw ExecutionException("Script is null")
 
@@ -26,21 +41,80 @@ class CircletTaskRunner(val project: Project) {
 
         val processHandler = TaskProcessHandler(taskName)
 
-        val storage = CircletIdeaExecutionProviderStorage(task)
+        val storage = CircletIdeaExecutionProviderStorage()
+
         val orgInfo = OrgInfo("jetbrains.team")
 
-        // todo: better lifetime
-        val provider = CircletIdeaStepExecutionProvider(Lifetime.Eternal, { text -> processHandler.println(text) }, { _ -> processHandler.destroyProcess() }, storage)
+        val paths = DockerInDockerPaths(
+            CommonFile(Files.createTempDirectory("circlet")),
+            CommonFile(Files.createTempDirectory("circlet"))
+        )
+
+        val volumeProvider = LocalVolumeProvider(paths)
+
+        val orgUrlWrappedForDocker = {
+            ""
+        }
+
+        val dockerEventsListener = LocalDockerEventListenerImpl(lifetime)
+
+        val processes = OSProcesses("Space")
+
+        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, "Jetbrains Space", volumeProvider, dockerEventsListener, processes)
+
+        val batchSize = 1
+
+        val logMessageSink = object : LogMessagesSink {
+            override fun invoke(stepExecutionData: StepExecutionData<*>, batchIndex: Int, data: List<String>) {
+            }
+        }
+
+        val reporting = LocalReportingImpl(lifetime, processes, LocalReporting.Settings(batchSize), logMessageSink)
+
+        val dispatcher = Ui
 
         val tracer = CircletIdeaAutomationTracer()
 
+        val failureChecker = object : FailureChecker {
+            override fun check(tx: AutomationStorageTransaction, updates: Set<StepExecutionStatusUpdate>) {
+            }
+        }
+
+        val stepExecutionProvider = CircletIdeaStepExecutionProvider(lifetime, storage, volumeProvider, dockerFacade, reporting, dispatcher, tracer, failureChecker)
+
+        val executionScheduler = object : StepExecutionScheduler {
+
+            private val jobsSchedulingDispatcher = Executors.newFixedThreadPool(1, DaemonThreadFactory("Space Automation")).asCoroutineDispatcher()
+
+            override fun scheduleExecution(stepExecs: Iterable<StepExecutionData<*>>) {
+                launch(lifetime, jobsSchedulingDispatcher, "ServerJobExecutionScheduler:scheduleExecution") {
+                    logger.catch {
+                        stepExecs.forEach {
+                            stepExecutionProvider.startExecution(it)
+                        }
+                    }
+                }
+            }
+
+            override fun scheduleTermination(stepExecs: Iterable<StepExecutionData<*>>) {
+                launch(lifetime, jobsSchedulingDispatcher, "ServerJobExecutionScheduler:scheduleTermination") {
+                    logger.catch {
+                        stepExecs.forEach {
+                            stepExecutionProvider.startTermination(it)
+                        }
+                    }
+                }
+            }
+        }
+
+
         val automationGraphEngineCommon = AutomationGraphEngineImpl(
-            provider,
+            stepExecutionProvider,
             storage,
-            provider,
+            executionScheduler,
             SystemTimeTicker(),
             tracer,
-            listOf(provider))
+            listOf(stepExecutionProvider))
 
         val automationStarterCommon = AutomationGraphManagerImpl(
             orgInfo,
@@ -63,6 +137,7 @@ class CircletTaskRunner(val project: Project) {
                 val graphId = automationStarterCommon.createGraph(0L, repositoryData, branch, commit, task)
                 automationStarterCommon.startGraph(graphId)
             } catch (th: Throwable) {
+                logger.error(th)
                 processHandler.notifyTextAvailable("Run task failed. ${th.message}$newLine", ProcessOutputTypes.STDERR)
             } finally {
                 processHandler.dispose()
