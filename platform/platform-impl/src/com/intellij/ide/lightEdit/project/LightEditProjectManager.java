@@ -15,7 +15,7 @@ public class LightEditProjectManager {
 
   private volatile LightEditProject myProject;
 
-  @NotNull
+  @Nullable
   public Project getProject() {
     return myProject;
   }
