@@ -144,7 +144,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
         ?.let { JavaUCallExpression(it, null) }
   }
 
-  override fun createULiteralExpression(text: String, context: PsiElement?): UExpression? {
+  override fun createULiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
     val literalExpr = psiFactory.createExpressionFromText(text, context)
     if (literalExpr !is PsiLiteralExpressionImpl) return null
     return JavaULiteralExpression(literalExpr, null)

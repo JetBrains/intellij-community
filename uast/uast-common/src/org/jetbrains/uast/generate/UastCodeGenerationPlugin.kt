@@ -69,7 +69,7 @@ interface UastElementFactory {
 
   fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression? = null): UIfExpression?
 
-  fun createULiteralExpression(text: String, context: PsiElement?): UExpression?
+  fun createULiteralExpression(text: String, context: PsiElement?): ULiteralExpression?
 }
 
 @ApiStatus.Experimental
