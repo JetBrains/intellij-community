@@ -191,12 +191,19 @@ internal object BranchesDashboardActions {
   }
 
   class ShowBranchDiffAction : BranchesActionBase("Compare with Current", null, AllIcons.Actions.Diff) {
+    override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
+      if (branches.none { !it.isCurrent }) {
+        e.presentation.isEnabled = false
+        e.presentation.description = "Select non current branches only"
+      }
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       val branches = e.getData(GIT_BRANCHES)!!
       val project = e.project!!
       val gitBrancher = GitBrancher.getInstance(project)
 
-      for (branch in branches) {
+      for (branch in branches.filterNot(BranchInfo::isCurrent)) {
         gitBrancher.compare(branch.branchName, branch.repositories)
       }
     }
