@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -45,8 +45,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -63,7 +63,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   private String myTitle;
   private String myFileTitle;
-  private File myCurrentFile;
+  private Path myCurrentFile;
 
   private Project myProject;
 
@@ -259,7 +259,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @Override
-  public void setFileTitle(@Nullable String fileTitle, @Nullable File file) {
+  public void setFileTitle(@Nullable String fileTitle, @Nullable Path file) {
     myFileTitle = fileTitle;
     myCurrentFile = file;
     updateTitle();
@@ -279,8 +279,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
   }
 
-  public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
-    if (ourUpdatingTitle) return;
+  public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable Path currentFile) {
+    if (ourUpdatingTitle) {
+      return;
+    }
 
     try {
       ourUpdatingTitle = true;
