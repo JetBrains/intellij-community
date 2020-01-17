@@ -5,9 +5,9 @@ import com.intellij.ide.FrameStateListener
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
-import com.intellij.ide.lightEdit.LightEditorManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
@@ -15,8 +15,9 @@ import com.intellij.vcs.log.BaseSingleTaskController
 import git4idea.config.GitExecutableManager
 import java.util.*
 
-internal class LightGitTracker(private val lightEditService: LightEditService) : Disposable {
-  private val lightEditorManager: LightEditorManager = lightEditService.editorManager
+internal class LightGitTracker : Disposable {
+  private val lightEditService = LightEditService.getInstance()
+  private val lightEditorManager = lightEditService.editorManager
   private val eventDispatcher = EventDispatcher.create(LightGitTrackerListener::class.java)
   private val singleTaskController = MySingleTaskController()
   private val listener = MyLightEditorListener()
@@ -76,6 +77,12 @@ internal class LightGitTracker(private val lightEditService: LightEditService) :
       catch (_: VcsException) {
         return Optional.ofNullable(null)
       }
+    }
+  }
+
+  companion object {
+    fun getInstance(): LightGitTracker {
+      return ServiceManager.getService(LightGitTracker::class.java)
     }
   }
 }

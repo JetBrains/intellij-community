@@ -243,6 +243,8 @@
     <applicationService serviceImplementation="git4idea.DialogManager" />
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
+    <applicationService serviceImplementation="git4idea.light.LightGitTracker"/>
+
     <fileType name="PLAIN_TEXT" fileNames=".gitmodules"/>
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
