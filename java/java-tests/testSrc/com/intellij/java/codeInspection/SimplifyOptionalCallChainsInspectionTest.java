@@ -18,15 +18,15 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SimplifyOptionalCallChainsInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParameterizedTestCase {
+  @NotNull
   @Override
-  protected Sdk getProjectJDK() {
-    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk9());
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
   }
 
   @Override
