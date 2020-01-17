@@ -40,48 +40,57 @@ class ExternalDiffSettingsPanel {
     val settings = ExternalDiffSettings.instance
 
     panel = panel {
-      row {
+      blockRow {
         val diffEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.diff.tool"), settings::isDiffEnabled)
         enableSubRowsIfSelected(diffEnabled.component)
 
-        row(DiffBundle.message("settings.external.diff.path.to.executable")) {
-          executableTextField(DiffBundle.message("select.external.diff.program.dialog.title"),
-                              { settings.diffExePath }, { settings.diffExePath = it })
-        }
-        row(DiffBundle.message("settings.external.diff.parameters")) {
-          textField(settings::diffParameters)
-        }
         row {
-          checkBox(DiffBundle.message("settings.external.diff.use.by.default"), settings::isDiffDefault)
-        }
-        row {
-          cell {
-            button(DiffBundle.message("settings.external.diff.test.diff")) { showTestDiff() }
-            button(DiffBundle.message("settings.external.diff.test.three.side.diff")) { showTestThreeDiff() }
+          row(DiffBundle.message("settings.external.diff.path.to.executable")) {
+            executableTextField(DiffBundle.message("select.external.diff.program.dialog.title"),
+                                { settings.diffExePath }, { settings.diffExePath = it })
           }
-        }.largeGapAfter()
+          row(DiffBundle.message("settings.external.diff.parameters")) {
+            textField(settings::diffParameters)
+          }
+          row {
+            checkBox(DiffBundle.message("settings.external.diff.use.by.default"), settings::isDiffDefault)
+          }
+          row {
+            cell(isFullWidth = true) {
+              button(DiffBundle.message("settings.external.diff.test.diff")) { showTestDiff() }
+              button(DiffBundle.message("settings.external.diff.test.three.side.diff")) { showTestThreeDiff() }
+                .withLargeLeftGap()
+            }
+          }
+        }
       }
 
-      row {
+      blockRow {
         val mergeEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.merge.tool"), settings::isMergeEnabled)
         enableSubRowsIfSelected(mergeEnabled.component)
 
-        row(DiffBundle.message("settings.external.diff.path.to.executable.merge")) {
-          executableTextField(DiffBundle.message("select.external.merge.program.dialog.title"),
-                              { settings.mergeExePath }, { settings.mergeExePath = it })
-        }
-        row(DiffBundle.message("settings.external.diff.parameters.merge")) {
-          textField(settings::mergeParameters)
-        }
         row {
-          checkBox(DiffBundle.message("settings.external.diff.trust.process.exit.code"), settings::isMergeTrustExitCode)
-        }
-        row {
-          button(DiffBundle.message("settings.external.diff.test.merge")) { showTestMerge() }
+          row(DiffBundle.message("settings.external.diff.path.to.executable.merge")) {
+            executableTextField(DiffBundle.message("select.external.merge.program.dialog.title"),
+                                { settings.mergeExePath }, { settings.mergeExePath = it })
+          }
+          row(DiffBundle.message("settings.external.diff.parameters.merge")) {
+            textField(settings::mergeParameters)
+          }
+          row {
+            checkBox(DiffBundle.message("settings.external.diff.trust.process.exit.code"), settings::isMergeTrustExitCode)
+          }
+          row {
+            cell(isFullWidth = true) {
+              button(DiffBundle.message("settings.external.diff.test.merge")) { showTestMerge() }
+            }
+          }
         }
       }
 
-      commentRow(DiffBundle.message("settings.diff.tools.parameters"))
+      row {
+        comment(DiffBundle.message("settings.diff.tools.parameters"))
+      }
     }
   }
 
@@ -103,7 +112,10 @@ class ExternalDiffSettingsPanel {
 
   private fun Row.enableSubRowsIfSelected(button: AbstractButton): Row {
     subRowsEnabled = button.isSelected
-    button.addChangeListener { subRowsEnabled = button.isSelected }
+    button.addChangeListener {
+      subRowsEnabled = button.isSelected
+      button.parent?.repaint() // Repaint all dependent components in sync
+    }
     return this
   }
 

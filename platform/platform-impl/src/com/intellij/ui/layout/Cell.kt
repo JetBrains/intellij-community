@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -476,8 +477,16 @@ abstract class Cell : BaseBuilder {
     return component(JBScrollPane(component))
   }
 
+  fun comment(text: String, maxLineLength: Int = -1): CellBuilder<JLabel> {
+    return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength))
+  }
+
   fun placeholder(): CellBuilder<JComponent> {
-    return component(JPanel().apply { preferredSize = Dimension(0, 0) })
+    return component(JPanel().apply {
+      minimumSize = Dimension(0, 0)
+      preferredSize = Dimension(0, 0)
+      maximumSize = Dimension(0, 0)
+    })
   }
 
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>

@@ -184,7 +184,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
       separatorRow.enabled = subRowsEnabled
+      separatorRow.subRowsEnabled = subRowsEnabled
       separatorRow.visible = subRowsVisible
+      separatorRow.subRowsVisible = subRowsVisible
       row.getOrCreateSubRowsList().add(separatorRow)
     }
 
@@ -198,7 +200,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     subRows.add(insertIndex, row)
 
     row.enabled = subRowsEnabled
+    row.subRowsEnabled = subRowsEnabled
     row.visible = subRowsVisible
+    row.subRowsVisible = subRowsVisible
 
     if (label != null) {
       row.addComponent(label)
