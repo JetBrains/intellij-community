@@ -20,6 +20,4 @@ public abstract class CredentialsTypeEx<T> extends CredentialsType<T> {
                                                             boolean allowSynchronousInteraction);
 
   public abstract boolean useRemoteCredentials();
-
-  public abstract boolean isBrowsingAvailable();
 }

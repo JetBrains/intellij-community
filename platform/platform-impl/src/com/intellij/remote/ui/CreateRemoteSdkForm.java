@@ -624,7 +624,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     @Override
     public boolean isBrowsingAvailable() {
-      return myType.isBrowsingAvailable();
+      return myType instanceof PathsBrowserDialogProvider;
     }
   }
 
