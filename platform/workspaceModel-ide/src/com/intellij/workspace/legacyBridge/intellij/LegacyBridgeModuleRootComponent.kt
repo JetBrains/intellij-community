@@ -121,7 +121,7 @@ class LegacyBridgeModuleRootComponent(
   override fun getDependencies(): Array<Module> = moduleDependencies
   override fun getDependencies(includeTests: Boolean): Array<Module> = getModuleDependencies(includeTests = includeTests)
 
-  override fun isDependsOn(module: Module): Boolean = dependencyModuleNames.any { it == module.name }
+  override fun isDependsOn(module: Module): Boolean = orderEntries.any { it is ModuleOrderEntry && it.module == module }
 
   override fun getExcludeRoots(): Array<VirtualFile> = model.excludeRoots
   override fun orderEntries(): OrderEnumerator = ModuleOrderEnumerator(this, orderRootsCache)

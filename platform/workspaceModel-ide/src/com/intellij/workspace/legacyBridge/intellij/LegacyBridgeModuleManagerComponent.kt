@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.*
-import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl.Companion.createFromPaths
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.roots.ModuleRootManager
@@ -367,8 +366,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     return module
   }
 
-  override fun getModuleDependentModules(module: Module): MutableList<Module> =
-    ModuleRootManager.getInstance(module).dependencies.toMutableList()
+  override fun getModuleDependentModules(module: Module): List<Module> = modules.filter { isModuleDependent(it, module) }
 
   override fun getUnloadedModuleDescriptions(): Collection<UnloadedModuleDescription> = unloadedModules.values
 
