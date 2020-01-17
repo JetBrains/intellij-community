@@ -499,29 +499,34 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
   private abstract static class TypeHandler {
 
-    private final JBRadioButton myRadioButton;
-    private final JPanel myPanel;
+    @NotNull private final JBRadioButton myRadioButton;
+    @NotNull private final JPanel myPanel;
 
-    private String myInterpreterPath;
+    private @Nullable String myInterpreterPath;
 
-    TypeHandler(JBRadioButton radioButton, JPanel panel, String defaultInterpreterPath) {
+    TypeHandler(@NotNull JBRadioButton radioButton,
+                @NotNull JPanel panel,
+                @Nullable String defaultInterpreterPath) {
       myRadioButton = radioButton;
       myPanel = panel;
       myInterpreterPath = defaultInterpreterPath;
     }
 
+    @NotNull
     public JPanel getContentComponent() {
       return myPanel;
     }
 
+    @NotNull
     public JBRadioButton getRadioButton() {
       return myRadioButton;
     }
 
-    public void setInterpreterPath(String interpreterPath) {
+    public void setInterpreterPath(@Nullable String interpreterPath) {
       myInterpreterPath = interpreterPath;
     }
 
+    @Nullable
     public String getInterpreterPath() {
       return myInterpreterPath;
     }
@@ -534,6 +539,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       return true;
     }
 
+    @Nullable
     public abstract ValidationInfo validate();
 
     @Nullable
@@ -543,19 +549,20 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
   private class TypeHandlerEx extends TypeHandler {
 
-    private final CredentialsTypeEx myType;
-    private final CredentialsEditor<?> myEditor;
+    @NotNull private final CredentialsTypeEx myType;
+    @NotNull private final CredentialsEditor<?> myEditor;
 
-    TypeHandlerEx(JBRadioButton radioButton,
-                  JPanel panel,
-                  String defaultInterpreterPath,
-                  CredentialsTypeEx type,
-                  CredentialsEditor editor) {
+    TypeHandlerEx(@NotNull JBRadioButton radioButton,
+                  @NotNull JPanel panel,
+                  @Nullable String defaultInterpreterPath,
+                  @NotNull CredentialsTypeEx type,
+                  @NotNull CredentialsEditor editor) {
       super(radioButton, panel, defaultInterpreterPath);
       myType = type;
       myEditor = editor;
     }
 
+    @NotNull
     public CredentialsEditor getEditor() {
       return myEditor;
     }
@@ -570,6 +577,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       myEditor.onSelected();
     }
 
+    @Nullable
     @Override
     public ValidationInfo validate() {
       return myEditor.validate();
@@ -581,6 +589,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       return myEditor.validateFinal(() -> createSdkDataInner(), helpersPath -> updateHelpersPath(helpersPath));
     }
 
+    @NotNull
     public CredentialsType getType() {
       return myType;
     }
