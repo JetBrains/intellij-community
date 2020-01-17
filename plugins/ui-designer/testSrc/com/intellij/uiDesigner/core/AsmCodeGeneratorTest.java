@@ -341,6 +341,15 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
   }
 
+  public void testTitledBorder() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
+    assertTrue(panel.getBorder() instanceof TitledBorder);
+    TitledBorder border = (TitledBorder) panel.getBorder();
+    assertEquals("Test Value", border.getTitle());
+    assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
+    assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
+  }
+
   public void testMnemonic() throws Exception {
     JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonics.form", "BindingTest");
     JLabel label = (JLabel) panel.getComponent(0);
