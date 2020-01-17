@@ -1106,6 +1106,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
     debugState("popup shown", State.SHOWING);
     myState = State.SHOWN;
+
+    afterShowSync();
   }
 
   public void focusPreferredComponent() {
@@ -1144,7 +1146,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     UiActivityMonitor.getInstance().removeActivity(myActivityKey);
   }
 
-  private void prepareToShow() {
+  protected void prepareToShow() {
     final MouseAdapter mouseAdapter = new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
@@ -1246,6 +1248,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   protected void afterShow() {
+  }
+
+  protected void afterShowSync() {
   }
 
   protected final boolean requestFocus() {

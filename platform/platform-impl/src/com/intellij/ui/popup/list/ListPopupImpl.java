@@ -130,7 +130,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   @Override
-  protected void afterShow() {
+  protected void afterShowSync() {
+    super.afterShowSync();
     tryToAutoSelect(false);
   }
 
