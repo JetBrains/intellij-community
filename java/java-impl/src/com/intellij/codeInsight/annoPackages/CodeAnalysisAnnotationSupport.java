@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ public class CodeAnalysisAnnotationSupport implements AnnotationPackageSupport {
     if (superPackage) return null;
     String name = anno.getQualifiedName();
     if (name == null) return null;
+    if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return null;
     Nullability nullability;
     switch (name) {
       case DEFAULT_NULLABLE:
