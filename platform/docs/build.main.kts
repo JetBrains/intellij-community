@@ -77,7 +77,7 @@ fun transformSvg(svgFile: Path?) {
   val dBuilder = dbFactory.newDocumentBuilder()
   val document = Files.newInputStream(svgFile).buffered().use { dBuilder.parse(it) }
 
-  document.documentElement.removeAttribute("xmlns:xlink")
+  //document.documentElement.removeAttribute("xmlns:xlink")
 
   val classNameToBuilder = linkedMapOf<String, String>()
 

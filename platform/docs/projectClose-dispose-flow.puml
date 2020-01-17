@@ -15,6 +15,10 @@ if (canClose
   :Stop Service Preloading]
   :Fire ""projectClosingBeforeSave"" Event
   ""(l=ProjectManagerListener)""]
+  note right
+    In unit test mode in a light tests,
+    light project is not closed and not disposed.
+  end note
 
   :Save Project Files]
 
@@ -37,7 +41,8 @@ if (canClose
       note right
         Getting services and publishing to message bus
         is prohibited from now on.
-        ""Project.isDisposed"" returns ""true"".
+        ""Project.isDisposed"" returns ""true"" (not changed in a read action,
+        because state is set in a write action).
       end note
 
       :Dispose Project Message Bus Connection Disposable]

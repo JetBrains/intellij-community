@@ -9,8 +9,7 @@ note right
   Do not request in constructor unless needed.
 end note
 
-' add link to docs about Light Service once https://github.com/JetBrains/intellij-sdk-docs/pull/242 will be merged
-if (Is Light Service) then (yes)
+if (Is [[http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html?search=ser#light-service Light Service]]) then (yes)
 else (no)
   if (Is Adapter Found) then (yes)
   else (no)
@@ -37,14 +36,10 @@ else (no)
               As less dependencies, as more faster and reliable.
             end note
 
-            if (Implements ""Disposable"") then (yes)
-              :Register to be disposed]
-            else (no)
-            endif
-            if (Implements ""PersistentStateComponent"") then (yes)
-              :Load Persistent State]
-            else (no)
-            endif
+            :Register to be Disposed on Container Dispose
+            if Implements ""Disposable""]
+            :Load Persistent State
+            if Implements ""PersistentStateComponent""]
           }
         endif
       endif
