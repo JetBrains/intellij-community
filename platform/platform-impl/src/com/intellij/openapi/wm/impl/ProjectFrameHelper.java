@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -8,7 +8,10 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -46,8 +49,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 
@@ -62,7 +65,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   private String myTitle;
   private String myFileTitle;
-  private File myCurrentFile;
+  private Path myCurrentFile;
 
   private Project myProject;
 
@@ -258,7 +261,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @Override
-  public void setFileTitle(@Nullable String fileTitle, @Nullable File file) {
+  public void setFileTitle(@Nullable String fileTitle, @Nullable Path file) {
     myFileTitle = fileTitle;
     myCurrentFile = file;
     updateTitle();
@@ -284,9 +287,11 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   public static void updateTitle(@NotNull JFrame frame,
                                  @Nullable String title,
                                  @Nullable String fileTitle,
-                                 @Nullable File currentFile,
+                                 @Nullable Path currentFile,
                                  @Nullable List<TitleInfoProvider> extensions) {
-    if (ourUpdatingTitle) return;
+    if (ourUpdatingTitle) {
+      return;
+    }
 
     try {
       ourUpdatingTitle = true;
@@ -296,7 +301,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
 
       Builder builder = new Builder().append(title).append(fileTitle);
-
       if (extensions != null && !extensions.isEmpty()) {
         extensions.stream().filter(it -> it.isActive()).map(it -> it.getValue()).filter(it -> !it.isEmpty()).forEach(it -> builder.append(it, " "));
       }
@@ -332,10 +336,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
         sb.append(s);
       }
       return this;
-    }
-
-    boolean isEmpty() {
-      return sb.length() == 0;
     }
 
     @Override

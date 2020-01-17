@@ -57,7 +57,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -408,14 +409,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     IdeFrameEx frame = getFrame(project);
     if (frame != null) {
       String fileTitle = null;
-      File ioFile = null;
-
+      Path ioFile = null;
       VirtualFile file = getCurrentFile();
       if (file != null) {
-        ioFile = file instanceof LightVirtualFileBase ? null : new File(file.getPresentableUrl());
+        ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
         fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
-
       frame.setFileTitle(fileTitle, ioFile);
     }
   }

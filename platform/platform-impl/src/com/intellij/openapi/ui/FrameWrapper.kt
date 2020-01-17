@@ -39,7 +39,7 @@ import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.io.File
+import java.nio.file.Path
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
@@ -288,7 +288,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
     private var frameTitle: String? = null
     private var fileTitle: String? = null
-    private var file: File? = null
+    private var file: Path? = null
 
     init {
       FrameState.setFrameStateListener(this)
@@ -326,7 +326,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       updateTitle()
     }
 
-    override fun setFileTitle(fileTitle: String, ioFile: File) {
+    override fun setFileTitle(fileTitle: String?, ioFile: Path?) {
       this.fileTitle = fileTitle
       file = ioFile
       updateTitle()

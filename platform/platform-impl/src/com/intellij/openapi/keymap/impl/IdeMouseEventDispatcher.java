@@ -256,9 +256,9 @@ public final class IdeMouseEventDispatcher {
       return false;
     }
 
-    final MouseShortcut shortcut = new MouseShortcut(button, modifiersEx, clickCount);
+    MouseShortcut shortcut = new MouseShortcut(button, modifiersEx, clickCount);
     fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (actionManager != null) {
       AnAction[] actions = myActions.toArray(AnAction.EMPTY_ARRAY);
       for (AnAction action : actions) {
