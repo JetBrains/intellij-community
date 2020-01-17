@@ -10,7 +10,7 @@ class CircletIdeaAGraphExecutionEntity(
     override var endTime: Long?,
     override var status: ExecutionStatus,
     override var executionMeta: ScriptAction,
-    override val graphContext: AGraphExecutionContext,
+    override val graphContext: AGraphExecutionContext?,
     val jobsList: MutableList<AStepExecutionEntity<*>>
 ) : AGraphExecutionEntity {
 
