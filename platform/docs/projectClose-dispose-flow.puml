@@ -1,5 +1,4 @@
 @startuml
-
 !include jb-plantuml-theme.puml
 
 :closeProject;

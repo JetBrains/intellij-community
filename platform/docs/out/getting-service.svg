@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" contentScriptType="application/ecmascript" contentStyleType="text/css" height="1099px" preserveAspectRatio="none" style="width:1192px;height:1099px;" version="1.1" viewBox="0 0 1192 1099" width="1192px" zoomAndPan="magnify">
+  <style>
+  @import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&amp;display=swap');
+  .text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+  }
+  .code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 14px;
+  }
+  .process {
+    stroke: #383838; stroke-width: 1.0;
+    fill: #F8F8F8;
+  }
+  .note {
+    stroke: #383838; stroke-width: 1.0;
+    fill: #ECECEC;
+  }
+</style>
+  <defs/>
+  <g>
+    <path class="note" d="M707.5,10 L707.5,43.8125 L687.5,47.8125 L707.5,51.8125 L707.5,85.625 A0,0 0 0 0 707.5,85.625 L1004.5,85.625 A0,0 0 0 0 1004.5,85.625 L1004.5,20 L994.5,10 L707.5,10 A0,0 0 0 0 707.5,10 "/>
+    <path class="note" d="M994.5,10 L994.5,20 L1004.5,20 L994.5,10 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="86" x="713.5" y="27.9883">In any thread.</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="128" x="713.5" y="44.3945">Get on demand only.</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="123" x="713.5" y="60.8008">Do not cache result.</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="276" x="713.5" y="77.207">Do not request in constructor unless needed.</text>
+    <rect class="process" height="36.4063" rx="12.5" ry="12.5" width="84" x="603.5" y="29.6094"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="64" x="613.5" y="52.5977">getService</text>
+    <rect class="process" height="36.4883" rx="12.5" ry="12.5" width="91" x="600" y="206.0313"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="42" x="610" y="229.1016">Return</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="26" x="655" y="229.5664">null</text>
+    <polygon fill="#F8F8F8" points="592,155.8281,699,155.8281,711,167.8281,699,179.8281,592,179.8281,580,167.8281,592,155.8281" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="16" x="649.5" y="192.8164">no</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="107" x="592" y="172.6133">Is Adapter Found</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="711" y="164.4102">yes</text>
+    <polygon fill="#F8F8F8" points="599,105.625,692,105.625,704,117.625,692,129.625,599,129.625,587,117.625,599,105.625" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="16" x="649.5" y="142.6133">no</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="93" x="599" y="122.4102">Is Light Service</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="704" y="114.207">yes</text>
+    <polygon fill="#F8F8F8" points="645.5,284.5195,657.5,296.5195,645.5,308.5195,633.5,296.5195,645.5,284.5195" style="stroke: #383838; stroke-width: 1.0;"/>
+    <polygon fill="#F8F8F8" points="584,378.7227,707,378.7227,719,390.7227,707,402.7227,584,402.7227,572,390.7227,584,378.7227" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="123" x="584" y="395.5078">Is Container Active?</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="37" x="535" y="387.3047">active</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="195" x="719" y="387.3047">disposed or dispose in progress</text>
+    <rect fill="#FFFFFF" height="575.25" style="stroke: #000000; stroke-width: 1.5;" width="876" x="10" y="412.7227"/>
+    <path d="M168,413.7227 L168,422.1289 L158,432.1289 L10,432.1289 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="148" x="13" y="426.7109">synchronized on service</text>
+    <polygon fill="#F8F8F8" points="220,499.332,304,499.332,316,511.332,304,523.332,220,523.332,208,511.332,220,499.332" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="84" x="220" y="516.1172">Is Initializing?</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="187" y="507.9141">yes</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="16" x="316" y="507.9141">no</text>
+    <rect class="process" height="52.8945" rx="12.5" ry="12.5" width="182" x="40" y="533.332"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="40" x="54" y="556.4023">Throw</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="111" x="97" y="556.8672">PluginException</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="162" x="50" y="572.8086">Cyclic Service Initialization</text>
+    <rect fill="#FFFFFF" height="398.6406" style="stroke: #000000; stroke-width: 1.5;" width="602" x="242" y="533.332"/>
+    <path d="M345,534.332 L345,542.7383 L335,552.7383 L242,552.7383 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="93" x="245" y="547.3203">non cancelable</text>
+    <path class="note" d="M472,569.7383 L472,587.1445 L452,591.1445 L472,595.1445 L472,612.5508 A0,0 0 0 0 472,612.5508 L834,612.5508 A0,0 0 0 0 834,612.5508 L834,579.7383 L824,569.7383 L472,569.7383 A0,0 0 0 0 472,569.7383 "/>
+    <path class="note" d="M824,569.7383 L824,579.7383 L834,579.7383 L824,569.7383 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="341" x="478" y="587.7266">Avoid getting other services to reduce initialization tree.</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="305" x="478" y="604.1328">As less dependencies, as more faster and reliable.</text>
+    <rect class="process" height="36.4063" width="118" x="334" y="572.9414"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="98" x="344" y="595.9297">Create Instance</text>
+    <rect class="process" height="36.4063" width="164" x="311" y="682.7539"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="144" x="321" y="705.7422">Register to be disposed</text>
+    <polygon fill="#F8F8F8" points="317.5,632.5508,468.5,632.5508,480.5,644.5508,468.5,656.5508,317.5,656.5508,305.5,644.5508,317.5,632.5508" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="397" y="669.5391">yes</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="73" x="317.5" y="649.377">Implements</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="75" x="393.5" y="649.8418">Disposable</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="16" x="480.5" y="641.1328">no</text>
+    <polygon fill="#F8F8F8" points="393,745.3633,405,757.3633,393,769.3633,381,757.3633,393,745.3633" style="stroke: #383838; stroke-width: 1.0;"/>
+    <rect class="process" height="36.4063" width="154" x="316" y="839.5664"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="134" x="326" y="862.5547">Load Persistent State</text>
+    <polygon fill="#F8F8F8" points="264,789.3633,522,789.3633,534,801.3633,522,813.3633,264,813.3633,252,801.3633,264,789.3633" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="397" y="826.3516">yes</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="73" x="264" y="806.1895">Implements</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="182" x="340" y="806.6543">PersistentStateComponent</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="16" x="534" y="797.9453">no</text>
+    <polygon fill="#F8F8F8" points="393,895.9727,405,907.9727,393,919.9727,381,907.9727,393,895.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <polygon fill="#F8F8F8" points="182.5,449.1289,341.5,449.1289,353.5,461.1289,341.5,473.1289,182.5,473.1289,170.5,461.1289,182.5,449.1289" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="16" x="266" y="486.1172">no</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="159" x="182.5" y="465.9141">Is Created and Initialized?</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="353.5" y="457.7109">yes</text>
+    <polygon fill="#F8F8F8" points="262,951.9727,274,963.9727,262,975.9727,250,963.9727,262,951.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <rect class="process" height="36.4883" rx="12.5" ry="12.5" width="246" x="906" y="412.7227"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="40" x="916" y="435.793">Throw</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="183" x="959" y="436.2578">ProcessCanceledException</text>
+    <polygon fill="#F8F8F8" points="566,328.5195,725,328.5195,737,340.5195,725,352.5195,566,352.5195,554,340.5195,566,328.5195" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="16" x="649.5" y="365.5078">no</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="159" x="566" y="345.3047">Is Created and Initialized?</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="737" y="337.1016">yes</text>
+    <polygon fill="#F8F8F8" points="645.5,1007.9727,657.5,1019.9727,645.5,1031.9727,633.5,1019.9727,645.5,1007.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <rect class="process" height="36.4063" rx="12.5" ry="12.5" width="119" x="586" y="1051.9727"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="99" x="596" y="1074.9609">Return Instance</text>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="645.5" x2="645.5" y1="179.8281" y2="206.0313"/>
+    <polygon fill="#383838" points="641.5,196.0313,645.5,206.0313,649.5,196.0313,645.5,200.0313" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="711" x2="723" y1="167.8281" y2="167.8281"/>
+    <polygon fill="#383838" points="719,211.2754,723,221.2754,727,211.2754,723,215.2754" style="stroke: #383838; stroke-width: 1.5;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="723" x2="723" y1="167.8281" y2="264.5195"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="723" x2="645.5" y1="264.5195" y2="264.5195"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="645.5" x2="645.5" y1="264.5195" y2="284.5195"/>
+    <polygon fill="#383838" points="641.5,274.5195,645.5,284.5195,649.5,274.5195,645.5,278.5195" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="645.5" x2="645.5" y1="129.625" y2="155.8281"/>
+    <polygon fill="#383838" points="641.5,145.8281,645.5,155.8281,649.5,145.8281,645.5,149.8281" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="704" x2="733" y1="117.625" y2="117.625"/>
+    <polygon fill="#383838" points="729,205.2754,733,215.2754,737,205.2754,733,209.2754" style="stroke: #383838; stroke-width: 1.5;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="733" x2="733" y1="117.625" y2="296.5195"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="733" x2="657.5" y1="296.5195" y2="296.5195"/>
+    <polygon fill="#383838" points="667.5,292.5195,657.5,296.5195,667.5,300.5195,663.5,296.5195" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="645.5" x2="645.5" y1="66.0156" y2="105.625"/>
+    <polygon fill="#383838" points="641.5,95.625,645.5,105.625,649.5,95.625,645.5,99.625" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="393" y1="656.5508" y2="682.7539"/>
+    <polygon fill="#383838" points="389,672.7539,393,682.7539,397,672.7539,393,676.7539" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="480.5" x2="492.5" y1="644.5508" y2="644.5508"/>
+    <polygon fill="#383838" points="488.5,690.957,492.5,700.957,496.5,690.957,492.5,694.957" style="stroke: #383838; stroke-width: 1.5;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="492.5" x2="492.5" y1="644.5508" y2="757.3633"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="492.5" x2="405" y1="757.3633" y2="757.3633"/>
+    <polygon fill="#383838" points="415,753.3633,405,757.3633,415,761.3633,411,757.3633" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="393" y1="719.1602" y2="745.3633"/>
+    <polygon fill="#383838" points="389,735.3633,393,745.3633,397,735.3633,393,739.3633" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="393" y1="609.3477" y2="632.5508"/>
+    <polygon fill="#383838" points="389,622.5508,393,632.5508,397,622.5508,393,626.5508" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="393" y1="813.3633" y2="839.5664"/>
+    <polygon fill="#383838" points="389,829.5664,393,839.5664,397,829.5664,393,833.5664" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="534" x2="546" y1="801.3633" y2="801.3633"/>
+    <polygon fill="#383838" points="542,847.7695,546,857.7695,550,847.7695,546,851.7695" style="stroke: #383838; stroke-width: 1.5;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="546" x2="546" y1="801.3633" y2="907.9727"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="546" x2="405" y1="907.9727" y2="907.9727"/>
+    <polygon fill="#383838" points="415,903.9727,405,907.9727,415,911.9727,411,907.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="393" y1="875.9727" y2="895.9727"/>
+    <polygon fill="#383838" points="389,885.9727,393,895.9727,397,885.9727,393,889.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="393" y1="769.3633" y2="789.3633"/>
+    <polygon fill="#383838" points="389,779.3633,393,789.3633,397,779.3633,393,783.3633" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="208" x2="131" y1="511.332" y2="511.332"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="131" x2="131" y1="511.332" y2="533.332"/>
+    <polygon fill="#383838" points="127,523.332,131,533.332,135,523.332,131,527.332" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="316" x2="393" y1="511.332" y2="511.332"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="393" y1="511.332" y2="572.9414"/>
+    <polygon fill="#383838" points="389,562.9414,393,572.9414,397,562.9414,393,566.9414" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="393" y1="919.9727" y2="936.9727"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="393" x2="262" y1="936.9727" y2="936.9727"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="262" x2="262" y1="936.9727" y2="951.9727"/>
+    <polygon fill="#383838" points="258,941.9727,262,951.9727,266,941.9727,262,945.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="262" x2="262" y1="473.1289" y2="499.332"/>
+    <polygon fill="#383838" points="258,489.332,262,499.332,266,489.332,262,493.332" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="353.5" x2="864" y1="461.1289" y2="461.1289"/>
+    <polygon fill="#383838" points="860,715.7539,864,725.7539,868,715.7539,864,719.7539" style="stroke: #383838; stroke-width: 1.5;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="864" x2="864" y1="461.1289" y2="963.9727"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="864" x2="274" y1="963.9727" y2="963.9727"/>
+    <polygon fill="#383838" points="284,959.9727,274,963.9727,284,967.9727,280,963.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="572" x2="262" y1="390.7227" y2="390.7227"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="262" x2="262" y1="390.7227" y2="449.1289"/>
+    <polygon fill="#383838" points="258,439.1289,262,449.1289,266,439.1289,262,443.1289" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="719" x2="1029" y1="390.7227" y2="390.7227"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="1029" x2="1029" y1="390.7227" y2="412.7227"/>
+    <polygon fill="#383838" points="1025,402.7227,1029,412.7227,1033,402.7227,1029,406.7227" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="262" x2="262" y1="975.9727" y2="992.9727"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="262" x2="645.5" y1="992.9727" y2="992.9727"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="645.5" x2="645.5" y1="992.9727" y2="1007.9727"/>
+    <polygon fill="#383838" points="641.5,997.9727,645.5,1007.9727,649.5,997.9727,645.5,1001.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="645.5" x2="645.5" y1="352.5195" y2="378.7227"/>
+    <polygon fill="#383838" points="641.5,368.7227,645.5,378.7227,649.5,368.7227,645.5,372.7227" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="737" x2="1166" y1="340.5195" y2="340.5195"/>
+    <polygon fill="#383838" points="1162,693.5508,1166,703.5508,1170,693.5508,1166,697.5508" style="stroke: #383838; stroke-width: 1.5;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="1166" x2="1166" y1="340.5195" y2="1019.9727"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="1166" x2="657.5" y1="1019.9727" y2="1019.9727"/>
+    <polygon fill="#383838" points="667.5,1015.9727,657.5,1019.9727,667.5,1023.9727,663.5,1019.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="645.5" x2="645.5" y1="308.5195" y2="328.5195"/>
+    <polygon fill="#383838" points="641.5,318.5195,645.5,328.5195,649.5,318.5195,645.5,322.5195" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="645.5" x2="645.5" y1="1031.9727" y2="1051.9727"/>
+    <polygon fill="#383838" points="641.5,1041.9727,645.5,1051.9727,649.5,1041.9727,645.5,1045.9727" style="stroke: #383838; stroke-width: 1.0;"/>
+  </g>
+</svg>
