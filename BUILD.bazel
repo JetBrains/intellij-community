@@ -543,6 +543,8 @@ iml_project(
     ],
     tags = [
         "no_windows",
+        # http://b/147879669
+        "manual",
     ],
     visibility = ["//visibility:public"],
 )
