@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,7 +238,7 @@ public interface InlayModel {
     /**
      * @param changeFlags see {@link ChangeFlags}
      */
-    default void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+    default void onUpdated(@NotNull Inlay inlay, @MagicConstant(flagsFromClass = ChangeFlags.class) int changeFlags) {
       onUpdated(inlay);
     }
 
