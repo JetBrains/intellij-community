@@ -498,7 +498,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           int idCountOrSingleValue = DataInputOutputUtil.readINT(stream);
 
           if (idCountOrSingleValue > 0) {
-            addValue(idCountOrSingleValue, value);
+            addValue(inputRemapping.fun(idCountOrSingleValue), value);
             if (mapping != null) mapping.associateFileIdToValue(inputRemapping.fun(idCountOrSingleValue), value);
           } else {
             idCountOrSingleValue = -idCountOrSingleValue;

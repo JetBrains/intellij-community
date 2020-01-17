@@ -9,9 +9,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import junit.framework.TestCase
 import java.nio.file.Path
 
 @SkipSlowTestLocally
@@ -20,8 +22,15 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
   private val tempDirPath: Path by lazy { FileUtil.createTempDirectory("shared-indexes-test", "").toPath() }
   private val indexZip: Path by lazy {  tempDirPath.resolve(tempDirPath.fileName.toString() + ".zip") }
 
-  fun _testSharedIndexesForProject() {
-    val javaPsiFile = myFixture.configureByText("A.java", "public class A { }")
+  fun testSharedIndexesForProject() {
+    val javaPsiFile = myFixture.configureByText("A.java", """
+      public class A { 
+        public void foo() {
+          //Comment
+        }
+      }
+    """.trimIndent())
+
     val virtualFile = javaPsiFile.virtualFile
 
     val indexZip = tempDirPath.resolve(tempDirPath.fileName.toString() + ".zip")
@@ -44,11 +53,12 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     val fileBasedIndex = FileBasedIndex.getInstance()
-    val map = fileBasedIndex.getFileData(StubUpdatingIndex.INDEX_ID, virtualFile, project)
-    println(map)
 
-    val values = fileBasedIndex.getValues(IdIndex.NAME, IdIndexEntry("A", false), GlobalSearchScope.allScope(project))
-    println(values)
+    val map = fileBasedIndex.getFileData(StubUpdatingIndex.INDEX_ID, virtualFile, project)
+    TestCase.assertTrue(map.isNotEmpty())
+
+    val values = fileBasedIndex.getValues(IdIndex.NAME, IdIndexEntry("Comment", true), GlobalSearchScope.allScope(project))
+    TestCase.assertEquals(UsageSearchContext.IN_COMMENTS.toInt(), values.single())
   }
 
 }
