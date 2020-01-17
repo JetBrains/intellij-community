@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
@@ -51,7 +51,7 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
     }
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getToolWindowId() {
     return getToolWindowIdFor(myProject, LOCAL_CHANGES);

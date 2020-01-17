@@ -175,8 +175,8 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     }
 
     @JvmStatic
-    fun getToolWindowIdFor(project: Project, contentName: String): String =
-      (getInstance(project) as ChangesViewContentManager).getToolWindowIdFor(contentName)
+    fun getToolWindowIdFor(project: Project, contentName: String): String? =
+      (getInstance(project) as? ChangesViewContentManager)?.getToolWindowIdFor(contentName)
 
     @JvmStatic
     fun getToolWindowFor(project: Project, contentName: String): ToolWindow? =
