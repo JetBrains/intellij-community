@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
-import git4idea.branch.GitBranchUtil
+import git4idea.config.GitExecutableManager
 import java.util.*
 
 internal class LightGitTracker(private val lightEditService: LightEditService, private val project: Project) : Disposable {
@@ -21,6 +21,9 @@ internal class LightGitTracker(private val lightEditService: LightEditService, p
   private val eventDispatcher = EventDispatcher.create(LightGitTrackerListener::class.java)
   private val singleTaskController = MySingleTaskController()
   private val listener = MyLightEditorListener()
+
+  private val gitExecutable: String
+    get() = GitExecutableManager.getInstance().pathToGit
 
   var currentLocation: String? = null
 
@@ -31,12 +34,12 @@ internal class LightGitTracker(private val lightEditService: LightEditService, p
   }
 
   @Throws(VcsException::class)
-  private fun getLocation(project: Project, directory: VirtualFile): String {
-    val localBranch = GitBranchUtil.getCurrentBranchFromGitOrThrow(project, directory)
+  private fun getLocation(directory: VirtualFile): String {
+    val localBranch = getCurrentBranchFromGitOrThrow(directory, gitExecutable)
     if (localBranch != null) {
       return localBranch.name
     }
-    return GitBranchUtil.getCurrentRevisionFromGitOrThrow(project, directory).toShortString()
+    return getCurrentRevisionFromGitOrThrow(directory, gitExecutable).toShortString()
   }
 
   private fun updateCurrentLocation(location: Optional<String>) {
@@ -78,7 +81,7 @@ internal class LightGitTracker(private val lightEditService: LightEditService, p
     BaseSingleTaskController<VirtualFile, Optional<String>>("Light Git Tracker", this::updateCurrentLocation, this) {
     override fun process(requests: List<VirtualFile>): Optional<String> {
       try {
-        return Optional.of(getLocation(project, requests.last().parent))
+        return Optional.of(getLocation(requests.last().parent))
       }
       catch (_: VcsException) {
         return Optional.ofNullable(null)
