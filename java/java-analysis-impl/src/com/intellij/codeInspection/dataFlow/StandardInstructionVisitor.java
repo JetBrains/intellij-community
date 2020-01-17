@@ -233,7 +233,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue defaultResult = runner.getFactory().getObjectType(returnType, DfaPsiUtil.getElementNullability(returnType, method));
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments));
     for (MethodContract contract : contracts) {
-      currentStates = addContractResults(contract, currentStates, runner.getFactory(), new HashSet<>(), defaultResult, methodRef);
+      Set<DfaMemoryState> results = new HashSet<>();
+      currentStates = addContractResults(contract, currentStates, runner.getFactory(), results, defaultResult, methodRef);
+      for (DfaMemoryState result : results) {
+        pushExpressionResult(result.pop(), new ResultOfInstruction(methodRef), result);
+      }
     }
     for (DfaCallState currentState: currentStates) {
       pushExpressionResult(defaultResult, new ResultOfInstruction(methodRef), currentState.myMemoryState);
@@ -366,7 +370,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     for (DfaCallState callState : currentStates) {
-      pushExpressionResult(defaultResult, instruction, callState.myMemoryState);
+      callState.myMemoryState.push(defaultResult);
       finalStates.add(callState.myMemoryState);
     }
 
@@ -376,6 +380,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (instruction.shouldFlushFields()) {
         state.flushFields();
       }
+      pushExpressionResult(state.pop(), instruction, state);
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }
     return result;
@@ -507,7 +512,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       if(state != null) {
         DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, new DfaCallState(state, arguments));
-        pushExpressionResult(result, new ResultOfInstruction(expression), state);
+        state.push(result);
         finalStates.add(state);
       }
     }
