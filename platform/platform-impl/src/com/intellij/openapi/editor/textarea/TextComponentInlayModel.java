@@ -13,7 +13,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class TextComponentInlayModel implements InlayModel {
+class TextComponentInlayModel implements InlayModel {
   @Nullable
   @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,

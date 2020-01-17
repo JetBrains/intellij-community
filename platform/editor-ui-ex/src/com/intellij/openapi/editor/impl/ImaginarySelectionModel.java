@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -24,43 +23,8 @@ class ImaginarySelectionModel implements SelectionModel {
 
   @Nullable
   @Override
-  public String getSelectedText() {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public String getSelectedText(boolean allCarets) {
     return null;
-  }
-
-
-  @Nullable
-  @Override
-  public VisualPosition getSelectionStartPosition() {
-    throw myEditor.notImplemented();
-  }
-
-  @Nullable
-  @Override
-  public VisualPosition getSelectionEndPosition() {
-    throw myEditor.notImplemented();
-  }
-
-  @Override
-  public int getLeadSelectionOffset() {
-    throw myEditor.notImplemented();
-  }
-
-  @Nullable
-  @Override
-  public VisualPosition getLeadSelectionPosition() {
-    throw myEditor.notImplemented();
-  }
-
-  @Override
-  public void removeSelection(boolean allCarets) {
-    throw myEditor.notImplemented();
   }
 
   @Override

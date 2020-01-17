@@ -9,23 +9,18 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.JTextComponent;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author yole
  */
-public class TextComponentCaretModel implements CaretModel {
-  private final JTextComponent myTextComponent;
+class TextComponentCaretModel implements CaretModel {
   private final TextComponentEditor myEditor;
   private final Caret myCaret;
   private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);
 
-  public TextComponentCaretModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor editor) {
-    myTextComponent = textComponent;
+  TextComponentCaretModel(@NotNull TextComponentEditorImpl editor) {
     myEditor = editor;
     myCaret = new TextComponentCaret(editor);
   }
@@ -42,78 +37,6 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   @Override
-  public void moveToLogicalPosition(@NotNull final LogicalPosition pos) {
-    moveToOffset(myEditor.logicalPositionToOffset(pos), false);
-  }
-
-  @Override
-  public void moveToVisualPosition(@NotNull final VisualPosition pos) {
-    moveToLogicalPosition(myEditor.visualToLogicalPosition(pos));
-  }
-
-  @Override
-  public void moveToOffset(int offset) {
-    moveToOffset(offset, false);
-  }
-
-  @Override
-  public void moveToOffset(final int offset, boolean locateBeforeSoftWrap) {
-    int targetOffset = Math.min(offset, myTextComponent.getText().length());
-    int currentPosition = myTextComponent.getCaretPosition();
-    // We try to preserve selection, to match EditorImpl behaviour.
-    // It's only possible though, if target offset is located at either end of existing selection.
-    if (targetOffset != currentPosition) {
-      if (targetOffset == myTextComponent.getCaret().getMark()) {
-        myTextComponent.setCaretPosition(currentPosition);
-        myTextComponent.moveCaretPosition(targetOffset);
-      }
-      else {
-        myTextComponent.setCaretPosition(targetOffset);
-      }
-    }
-  }
-
-  @Override
-  public boolean isUpToDate() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public LogicalPosition getLogicalPosition() {
-    int caretPos = myTextComponent.getCaretPosition();
-    int line;
-    int lineStart;
-    if (myTextComponent instanceof JTextArea) {
-      final JTextArea textArea = (JTextArea)myTextComponent;
-      try {
-        line = textArea.getLineOfOffset(caretPos);
-        lineStart = textArea.getLineStartOffset(line);
-      }
-      catch (BadLocationException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else {
-      line = 0;
-      lineStart = 0;
-    }
-    return new LogicalPosition(line, caretPos - lineStart);
-  }
-
-  @Override
-  @NotNull
-  public VisualPosition getVisualPosition() {
-    LogicalPosition pos = getLogicalPosition();
-    return new VisualPosition(pos.line, pos.column);
-  }
-
-  @Override
-  public int getOffset() {
-    return myTextComponent.getCaretPosition();
-  }
-
-  @Override
   public void addCaretListener(@NotNull final CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
@@ -121,16 +44,6 @@ public class TextComponentCaretModel implements CaretModel {
   @Override
   public void removeCaretListener(@NotNull final CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public int getVisualLineStart() {
-    return 0;
-  }
-
-  @Override
-  public int getVisualLineEnd() {
-    return 0;
   }
 
   @Override

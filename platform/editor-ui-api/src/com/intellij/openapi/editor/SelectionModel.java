@@ -41,7 +41,9 @@ public interface SelectionModel {
    * @return    object that encapsulates information about visual position of selected text start if any
    */
   @Nullable
-  VisualPosition getSelectionStartPosition();
+  default VisualPosition getSelectionStartPosition() {
+    return getEditor().getCaretModel().getCurrentCaret().getSelectionStartPosition();
+  }
 
   /**
    * Returns the end offset in the document of the selected text range, or the caret
@@ -57,7 +59,9 @@ public interface SelectionModel {
    * @return    object that encapsulates information about visual position of selected text end if any;
    */
   @Nullable
-  VisualPosition getSelectionEndPosition();
+  default VisualPosition getSelectionEndPosition() {
+    return getEditor().getCaretModel().getCurrentCaret().getSelectionEndPosition();
+  }
 
   /**
    * Returns the text selected in the editor.
@@ -65,14 +69,33 @@ public interface SelectionModel {
    * @return the selected text, or {@code null} if there is currently no selection.
    */
   @Nullable
-  String getSelectedText();
+  default String getSelectedText() {
+    return getSelectedText(false);
+  }
 
   /**
    * If {@code allCarets} is {@code true}, returns the concatenation of selections for all carets, or {@code null} if there
    * are no selections. If {@code allCarets} is {@code false}, works just like {@link #getSelectedText}.
    */
   @Nullable
-  String getSelectedText(boolean allCarets);
+  default String getSelectedText(boolean allCarets) {
+    if (allCarets && getEditor().getCaretModel().supportsMultipleCarets()) {
+      final StringBuilder buf = new StringBuilder();
+      String separator = "";
+      for (Caret caret : getEditor().getCaretModel().getAllCarets()) {
+        buf.append(separator);
+        String caretSelectedText = caret.getSelectedText();
+        if (caretSelectedText != null) {
+          buf.append(caretSelectedText);
+        }
+        separator = "\n";
+      }
+      return buf.toString();
+    }
+    else {
+      return getEditor().getCaretModel().getCurrentCaret().getSelectedText();
+    }
+  }
 
   /**
    * Returns the offset from which the user started to extend the selection (the selection start
@@ -82,13 +105,17 @@ public interface SelectionModel {
    * @return the offset from which the selection was started, or the caret offset if there is
    *         currently no selection.
    */
-  int getLeadSelectionOffset();
+  default int getLeadSelectionOffset() {
+    return getEditor().getCaretModel().getCurrentCaret().getLeadSelectionOffset();
+  }
 
   /**
    * @return    object that encapsulates information about visual position from which the user started to extend the selection if any
    */
   @Nullable
-  VisualPosition getLeadSelectionPosition();
+  default VisualPosition getLeadSelectionPosition() {
+    return getEditor().getCaretModel().getCurrentCaret().getLeadSelectionPosition();
+  }
 
   /**
    * Checks if a range of text is currently selected.
@@ -169,7 +196,16 @@ public interface SelectionModel {
    * Removes the selection in the editor. If {@code allCarets} is {@code true}, removes selections from all carets in the
    * editor, otherwise, does this just for the current caret.
    */
-  void removeSelection(boolean allCarets);
+  default void removeSelection(boolean allCarets) {
+    if (!allCarets) {
+      getEditor().getCaretModel().getCurrentCaret().removeSelection();
+    }
+    else {
+      for (Caret caret : getEditor().getCaretModel().getAllCarets()) {
+        caret.removeSelection();
+      }
+    }
+  }
 
   /**
    * Adds a listener for receiving information about selection changes.

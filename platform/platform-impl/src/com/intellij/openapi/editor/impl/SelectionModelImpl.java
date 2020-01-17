@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -50,18 +49,6 @@ public class SelectionModelImpl implements SelectionModel {
     return myEditor;
   }
 
-  @NotNull
-  @Override
-  public VisualPosition getSelectionStartPosition() {
-    return myEditor.getCaretModel().getCurrentCaret().getSelectionStartPosition();
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition getSelectionEndPosition() {
-    return myEditor.getCaretModel().getCurrentCaret().getSelectionEndPosition();
-  }
-
   void fireSelectionChanged(SelectionEvent event) {
     TextRange[] oldRanges = event.getOldRanges();
     TextRange[] newRanges = event.getNewRanges();
@@ -92,18 +79,6 @@ public class SelectionModelImpl implements SelectionModel {
       }
       catch (Exception e) {
         LOG.error(e);
-      }
-    }
-  }
-
-  @Override
-  public void removeSelection(boolean allCarets) {
-    if (!allCarets) {
-      myEditor.getCaretModel().getCurrentCaret().removeSelection();
-    }
-    else {
-      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-        caret.removeSelection();
       }
     }
   }
@@ -147,33 +122,6 @@ public class SelectionModelImpl implements SelectionModel {
     LOG.assertTrue(success);
   }
 
-  @Override
-  public String getSelectedText() {
-    return getSelectedText(false);
-  }
-
-  @Override
-  public String getSelectedText(boolean allCarets) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    if (myEditor.getCaretModel().supportsMultipleCarets() && allCarets) {
-      final StringBuilder buf = new StringBuilder();
-      String separator = "";
-      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-        buf.append(separator);
-        String caretSelectedText = caret.getSelectedText();
-        if (caretSelectedText != null) {
-          buf.append(caretSelectedText);
-        }
-        separator = "\n";
-      }
-      return buf.toString();
-    }
-    else {
-      return myEditor.getCaretModel().getCurrentCaret().getSelectedText();
-    }
-  }
-
   public static void doSelectLineAtCaret(Caret caret) {
     Editor editor = caret.getEditor();
     int lineNumber = caret.getLogicalPosition().line;
@@ -192,17 +140,6 @@ public class SelectionModelImpl implements SelectionModel {
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     caret.removeSelection();
     caret.setSelection(start, end);
-  }
-
-  @Override
-  public int getLeadSelectionOffset() {
-    return myEditor.getCaretModel().getCurrentCaret().getLeadSelectionOffset();
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition getLeadSelectionPosition() {
-    return myEditor.getCaretModel().getCurrentCaret().getLeadSelectionPosition();
   }
 
   @Override

@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Denis Zhdanov
  */
-public class TextComponentSoftWrapModel implements SoftWrapModel {
+class TextComponentSoftWrapModel implements SoftWrapModel {
 
   @Override
   public boolean isSoftWrappingEnabled() {
