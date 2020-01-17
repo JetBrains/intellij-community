@@ -293,6 +293,7 @@ class VariableExtractor {
           PsiPolyadicExpression polyadic = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiPolyadicExpression.class);
           if (polyadic != null && JavaTokenType.ANDAND.equals(polyadic.getOperationTokenType())) {
             PsiExpression operand = ContainerUtil.find(polyadic.getOperands(), op -> PsiTreeUtil.isAncestor(op, firstOccurrence, false));
+            operand = PsiUtil.skipParenthesizedExprDown(operand);
             LOG.assertTrue(operand != null);
             return operand;
           }

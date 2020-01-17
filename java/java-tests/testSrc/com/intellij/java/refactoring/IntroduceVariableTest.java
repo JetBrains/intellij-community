@@ -95,6 +95,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testWhileConditionNoBrace() { doTest("temp", true, false, false, "int"); }
   public void testWhileConditionPlusNormal() { doTest("temp", true, false, false, "int"); }
   public void testWhileConditionPlusNormal2() { doTest("temp", true, false, false, "int"); }
+  public void testWhileConditionAndOr() { doTest("temp", true, false, false, "boolean");}
   public void testField() { doTest("temp", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
   public void testFieldAll() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
   public void testCaseLabel() { doTest("temp", true, false, false, "int"); }
