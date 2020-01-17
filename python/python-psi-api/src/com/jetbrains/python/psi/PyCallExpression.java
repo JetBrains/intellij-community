@@ -13,7 +13,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import org.jetbrains.annotations.NonNls;
@@ -167,7 +166,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @NotNull
   default List<PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.mapNotNull(multiResolveCallee(resolveContext, 0), PyMarkedCallee::getElement);
+    return ContainerUtil.mapNotNull(multiResolveCallee(resolveContext), PyCallableType::getCallable);
   }
 
   /**
@@ -178,7 +177,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  default List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
+  default List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
     return multiResolveCallee(resolveContext, 0);
   }
 
@@ -191,7 +190,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
+  List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
   /**
    * Resolves the callee to possible functions and maps arguments to parameters for all of them.
@@ -251,7 +250,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
   class PyArgumentsMapping {
     @NotNull private final PyCallSiteExpression myCallSiteExpression;
-    @Nullable private final PyMarkedCallee myMarkedCallee;
+    @Nullable private final PyCallableType myCallableType;
     @NotNull private final List<PyCallableParameter> myImplicitParameters;
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
     @NotNull private final List<PyCallableParameter> myUnmappedParameters;
@@ -261,7 +260,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedTupleParameters;
 
     public PyArgumentsMapping(@NotNull PyCallSiteExpression callSiteExpression,
-                              @Nullable PyMarkedCallee markedCallee,
+                              @Nullable PyCallableType callableType,
                               @NotNull List<PyCallableParameter> implicitParameters,
                               @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
                               @NotNull List<PyCallableParameter> unmappedParameters,
@@ -270,7 +269,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
                               @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
                               @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
       myCallSiteExpression = callSiteExpression;
-      myMarkedCallee = markedCallee;
+      myCallableType = callableType;
       myImplicitParameters = implicitParameters;
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
@@ -299,8 +298,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
 
     @Nullable
-    public PyMarkedCallee getMarkedCallee() {
-      return myMarkedCallee;
+    public PyCallableType getCallableType() {
+      return myCallableType;
     }
 
     @NotNull
@@ -336,71 +335,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @NotNull
     public Map<PyExpression, PyCallableParameter> getMappedTupleParameters() {
       return myMappedTupleParameters;
-    }
-  }
-
-  /**
-   * Couples function with a flag describing the way it is called.
-   */
-  class PyMarkedCallee extends RatedResolveResult {
-    @NotNull private final PyCallableType myCallableType;
-    @Nullable private final PyFunction.Modifier myModifier;
-    private final int myImplicitOffset;
-    private final boolean myImplicitlyResolved;
-
-    /**
-     * Method-oriented constructor.
-     *
-     * @param callableType       type describing callable object
-     * @param function           the method (or any other callable, but why bother then).
-     * @param modifier           classmethod or staticmethod modifier
-     * @param offset             implicit argument offset; parameters up to this are implicitly filled in the call.
-     * @param implicitlyResolved value for {@link #isImplicitlyResolved()}
-     * @param rate               callee rate
-     */
-    public PyMarkedCallee(@NotNull PyCallableType callableType,
-                          @Nullable PyCallable function,
-                          @Nullable PyFunction.Modifier modifier,
-                          int offset,
-                          boolean implicitlyResolved,
-                          int rate) {
-      super(rate, function);
-      myCallableType = callableType;
-      myModifier = modifier;
-      myImplicitOffset = offset;
-      myImplicitlyResolved = implicitlyResolved;
-    }
-
-    @NotNull
-    public PyCallableType getCallableType() {
-      return myCallableType;
-    }
-
-    @Override
-    @Nullable
-    public PyCallable getElement() {
-      return (PyCallable)super.getElement();
-    }
-
-    @Nullable
-    public PyFunction.Modifier getModifier() {
-      return myModifier;
-    }
-
-    /**
-     * @return number of implicitly passed positional parameters; 0 means no parameters are passed implicitly.
-     * Note that a <tt>*args</tt> is never marked as passed implicitly.
-     * E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.
-     */
-    public int getImplicitOffset() {
-      return myImplicitOffset;
-    }
-
-    /**
-     * @return true iff the result is resolved based on divination and name similarity rather than by proper resolution process.
-     */
-    public boolean isImplicitlyResolved() {
-      return myImplicitlyResolved;
     }
   }
 }

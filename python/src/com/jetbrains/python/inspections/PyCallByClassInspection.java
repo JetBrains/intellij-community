@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
@@ -71,10 +72,10 @@ public class PyCallByClassInspection extends PyInspection {
             if (qual_class_type.isDefinition()) {
               PyClass qual_class = qual_class_type.getPyClass();
               final PyCallExpression.PyArgumentsMapping mapping = ContainerUtil.getFirstItem(call.multiMapArguments(getResolveContext()));
-              final PyCallExpression.PyMarkedCallee markedCallee = mapping == null ? null : mapping.getMarkedCallee();
-              if (markedCallee != null && markedCallee.getModifier() != STATICMETHOD) {
+              final PyCallableType callableType = mapping == null ? null : mapping.getCallableType();
+              if (callableType != null && callableType.getModifier() != STATICMETHOD) {
                 final PyCallableParameter firstParameter =
-                  ContainerUtil.getFirstItem(markedCallee.getCallableType().getParameters(myTypeEvalContext));
+                  ContainerUtil.getFirstItem(callableType.getParameters(myTypeEvalContext));
                 if (firstParameter != null) {
                   for (Map.Entry<PyExpression, PyCallableParameter> entry : mapping.getMappedParameters().entrySet()) {
                     // we ignore *arg and **arg which we cannot analyze
@@ -84,7 +85,7 @@ public class PyCallByClassInspection extends PyInspection {
                       PyType first_arg_type = myTypeEvalContext.getType(first_arg);
                       if (first_arg_type instanceof PyClassType) {
                         final PyClassType first_arg_class_type = (PyClassType)first_arg_type;
-                        if (first_arg_class_type.isDefinition() && markedCallee.getModifier() != CLASSMETHOD) {
+                        if (first_arg_class_type.isDefinition() && callableType.getModifier() != CLASSMETHOD) {
                           registerProblem(
                             first_arg,
                             PyBundle.message("INSP.instance.of.$0.excpected", qual_class.getQualifiedName())
@@ -93,7 +94,7 @@ public class PyCallByClassInspection extends PyInspection {
                         PyClass first_arg_class = first_arg_class_type.getPyClass();
                         if (first_arg_class != qual_class) {
                           // delegating to a parent is fine
-                          if (markedCallee.getElement() instanceof PyFunction) {
+                          if (callableType.getCallable() instanceof PyFunction) {
                             PyCallable callable = PsiTreeUtil.getParentOfType(call, PyCallable.class);
                             if (callable != null) {
                               PyFunction method = callable.asMethod();

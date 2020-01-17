@@ -213,12 +213,12 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Nullable
     private AnalyzeCalleeResults analyzeCallee(@NotNull PyCallSiteExpression callSite, @NotNull PyCallExpression.PyArgumentsMapping mapping) {
-      final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
-      if (markedCallee == null) return null;
+      final PyCallableType callableType = mapping.getCallableType();
+      if (callableType == null) return null;
 
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
 
-      final PyExpression receiver = callSite.getReceiver(markedCallee.getElement());
+      final PyExpression receiver = callSite.getReceiver(callableType.getCallable());
       final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
       final Map<PyExpression, PyCallableParameter> mappedParameters = mapping.getMappedParameters();
 
@@ -238,7 +238,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (keywordContainer != null) {
         result.addAll(analyzeContainerMapping(keywordContainer, getArgumentsMappedToKeywordContainer(mappedParameters), substitutions));
       }
-      return new AnalyzeCalleeResults(markedCallee.getCallableType(), markedCallee.getElement(), result);
+      return new AnalyzeCalleeResults(callableType, callableType.getCallable(), result);
     }
 
     @NotNull

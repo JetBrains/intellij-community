@@ -12,6 +12,7 @@ import com.jetbrains.python.codeInsight.parameterInfo.ParameterHints;
 import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.types.PyCallableType;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -27,12 +28,12 @@ public final class PySignatureHelpProvider implements SignatureHelpProvider {
       return null;
     }
 
-    List<Pair<PyCallExpression, PyCallExpression.PyMarkedCallee>> signatures = PyParameterInfoUtils.findCallCandidates(argumentList);
+    List<Pair<PyCallExpression, PyCallableType>> signatures = PyParameterInfoUtils.findCallCandidates(argumentList);
 
     int currentParamOffset = PyParameterInfoUtils.findCurrentParameter(argumentList, offset, file);
 
     List<SignatureInfo> signatureInfos = new ArrayList<>();
-    for (Pair<PyCallExpression, PyCallExpression.PyMarkedCallee> signature : signatures) {
+    for (Pair<PyCallExpression, PyCallableType> signature : signatures) {
       ParameterHints parameterHints = PyParameterInfoUtils.buildParameterHints(signature, currentParamOffset);
       if (parameterHints == null) {
         continue;

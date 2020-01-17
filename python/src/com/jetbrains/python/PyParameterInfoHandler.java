@@ -12,14 +12,13 @@ import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.codeInsight.parameterInfo.ParameterHints;
 import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyCallableType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
-
-public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyMarkedCallee>> {
+public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
 
   @Override
   public boolean couldShowInLookup() {
@@ -38,7 +37,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     int offset = context.getOffset();
     final PyArgumentList argumentList = PyParameterInfoUtils.findArgumentList(file, offset, -1);
 
-    List<Pair<PyCallExpression, PyMarkedCallee>> parameterInfos = PyParameterInfoUtils.findCallCandidates(argumentList);
+    List<Pair<PyCallExpression, PyCallableType>> parameterInfos = PyParameterInfoUtils.findCallCandidates(argumentList);
     if (parameterInfos != null) {
       Object[] infoArr = parameterInfos.toArray();
       context.setItemsToShow(infoArr);
@@ -80,7 +79,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   @Override
-  public void updateUI(@NotNull Pair<PyCallExpression, PyMarkedCallee> callAndCallee, @NotNull ParameterInfoUIContext context) {
+  public void updateUI(@NotNull Pair<PyCallExpression, PyCallableType> callAndCallee, @NotNull ParameterInfoUIContext context) {
     final int currentParamOffset = context.getCurrentParameterIndex(); // in Python mode, we get an offset here, not an index!
     ParameterHints parameterHints = PyParameterInfoUtils.buildParameterHints(callAndCallee, currentParamOffset);
     if (parameterHints == null) return;
