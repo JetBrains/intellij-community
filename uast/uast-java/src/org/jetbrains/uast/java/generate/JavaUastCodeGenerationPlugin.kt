@@ -47,7 +47,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
       }
     }
 
-    return methodCall
+    return JavaCodeStyleManager.getInstance(methodCall.project).shortenClassReferences(methodCall) as PsiMethodCallExpression
   }
 
   private fun adjustChainStyleToMethodCalls(oldPsi: PsiElement, newPsi: PsiElement) {

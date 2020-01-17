@@ -24,6 +24,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
@@ -95,6 +97,12 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
 
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
         String bundleName = propertiesFile.getVirtualFile().getNameWithoutExtension();
+        PsiClass[] classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(bundleName, 
+                                                                                            GlobalSearchScope.projectScope(project));
+        if (classesByName.length == 1) {
+          bundleName = classesByName[0].getQualifiedName();
+          LOG.assertTrue(bundleName != null, propertiesFile.getName());
+        }
         for (ReplacementBean bean : keyValuePairs) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         Collections.singletonList(propertiesFile),
@@ -114,7 +122,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
           arguments.add(pluginElementFactory.createULiteralExpression("\"" + bean.getKey() + "\"", psiElement));
           arguments.addAll(bean.getArgs());
           UCallExpression callExpression = pluginElementFactory
-            .createCallExpression(pluginElementFactory.createSimpleReference(bundleName),
+            .createCallExpression(pluginElementFactory.createQualifiedReference(bundleName, uExpression),
                                   "message",
                                   arguments,
                                   null,
