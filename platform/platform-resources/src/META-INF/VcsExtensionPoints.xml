@@ -96,8 +96,10 @@
                     interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider" dynamic="true"/>
 
     <extensionPoint name="ignoredFileProvider"
+                    dynamic="true"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
     <extensionPoint name="ignoredFileContentProvider"
+                    dynamic="true"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileContentProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
