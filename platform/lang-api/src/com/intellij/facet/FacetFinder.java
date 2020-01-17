@@ -34,10 +34,10 @@ public abstract class FacetFinder {
   }
 
   @Nullable
-  public abstract <F extends Facet & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type);
+  public abstract <F extends Facet<?> & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type);
 
   @NotNull
-  public abstract <F extends Facet & FacetRootsProvider> Collection<F> findFacets(VirtualFile file, FacetTypeId<F> type);
+  public abstract <F extends Facet<?> & FacetRootsProvider> Collection<F> findFacets(VirtualFile file, FacetTypeId<F> type);
 
-  public abstract <F extends Facet> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type);
+  public abstract <F extends Facet<?>> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type);
 }

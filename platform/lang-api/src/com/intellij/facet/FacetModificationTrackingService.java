@@ -31,16 +31,16 @@ public abstract class FacetModificationTrackingService {
     return ModuleServiceManager.getService(module, FacetModificationTrackingService.class);
   }
 
-  public static FacetModificationTrackingService getInstance(@NotNull Facet facet) {
+  public static FacetModificationTrackingService getInstance(@NotNull Facet<?> facet) {
     return ModuleServiceManager.getService(facet.getModule(), FacetModificationTrackingService.class);
   }
 
   @NotNull
-  public abstract ModificationTracker getFacetModificationTracker(@NotNull Facet facet);
+  public abstract ModificationTracker getFacetModificationTracker(@NotNull Facet<?> facet);
 
-  public abstract void incFacetModificationTracker(@NotNull Facet facet);
+  public abstract void incFacetModificationTracker(@NotNull Facet<?> facet);
 
-  public abstract <T extends Facet> void addModificationTrackerListener(final T facet, final ModificationTrackerListener<? super T> listener, final Disposable parent);
+  public abstract <T extends Facet<?>> void addModificationTrackerListener(final T facet, final ModificationTrackerListener<? super T> listener, final Disposable parent);
 
-  public abstract void removeModificationTrackerListener(final Facet facet, final ModificationTrackerListener<?> listener);
+  public abstract void removeModificationTrackerListener(final Facet<?> facet, final ModificationTrackerListener<?> listener);
 }

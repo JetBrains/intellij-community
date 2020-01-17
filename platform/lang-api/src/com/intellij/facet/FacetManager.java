@@ -39,5 +39,5 @@ public abstract class FacetManager implements FacetModel {
   /**
    * This method must be called when configuration of {@code facet} is changed via its API.
    */
-  public abstract void facetConfigurationChanged(@NotNull Facet facet);
+  public abstract void facetConfigurationChanged(@NotNull Facet<?> facet);
 }

@@ -33,10 +33,10 @@ public abstract class ProjectFacetManager {
 
   public abstract boolean hasFacets(@NotNull FacetTypeId<?> typeId);
 
-  public abstract <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules);
+  public abstract <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules);
 
   @NotNull
-  public abstract <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId);
+  public abstract <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId);
 
   @NotNull
   public abstract List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId);

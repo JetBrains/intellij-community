@@ -30,19 +30,19 @@ public abstract class FacetTypeRegistry {
    * @deprecated register {@code facetType} as an extension instead
    */
   @Deprecated
-  public abstract void registerFacetType(FacetType facetType);
+  public abstract void registerFacetType(FacetType<?, ?> facetType);
 
   /**
    * @deprecated register {@code facetType} as an extension instead
    */
   @Deprecated
-  public abstract void unregisterFacetType(FacetType facetType);
+  public abstract void unregisterFacetType(FacetType<?, ?> facetType);
 
-  public abstract FacetTypeId @NotNull [] getFacetTypeIds();
+  public abstract FacetTypeId<?> @NotNull [] getFacetTypeIds();
 
-  public abstract FacetType @NotNull [] getFacetTypes();
+  public abstract FacetType<?, ?> @NotNull [] getFacetTypes();
 
-  public abstract FacetType @NotNull [] getSortedFacetTypes();
+  public abstract FacetType<?, ?> @NotNull [] getSortedFacetTypes();
 
   @Nullable
   public abstract FacetType findFacetType(String id);

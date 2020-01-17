@@ -25,20 +25,20 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.NonExtendable
 public interface ModifiableFacetModel extends FacetModel {
 
-  void addFacet(Facet facet);
-  void addFacet(Facet facet, @Nullable ProjectModelExternalSource externalSource);
-  void removeFacet(Facet facet);
+  void addFacet(Facet<?> facet);
+  void addFacet(Facet<?> facet, @Nullable ProjectModelExternalSource externalSource);
+  void removeFacet(Facet<?> facet);
 
-  void rename(Facet facet, String newName);
+  void rename(Facet<?> facet, String newName);
 
   @Nullable
-  String getNewName(Facet facet);
+  String getNewName(Facet<?> facet);
 
   void commit();
 
   boolean isModified();
 
-  boolean isNewFacet(Facet facet);
+  boolean isNewFacet(Facet<?> facet);
 
   void addListener(@NotNull Listener listener, @NotNull Disposable parentDisposable);
 
