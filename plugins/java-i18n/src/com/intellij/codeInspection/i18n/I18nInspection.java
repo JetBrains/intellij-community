@@ -545,8 +545,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         
         List<LocalQuickFix> fixes = new ArrayList<>();
 
-        if (sourcePsi instanceof PsiLiteralExpression) {
-          if (myOnTheFly) {
+        if (myOnTheFly) {
+          if (sourcePsi instanceof PsiLiteralExpression) {
             if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
               fixes.add(new I18nizeConcatenationQuickFix());
             }
@@ -568,10 +568,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
               }
             }
           }
-          else if (Registry.is("i18n.for.idea.project") &&
-                   I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) == null) {
-            fixes.add(new I18nizeBatchQuickFix());
-          }
+        }
+        else if (Registry.is("i18n.for.idea.project") &&
+                 I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) == null) {
+          fixes.add(new I18nizeBatchQuickFix());
         }
 
         LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
