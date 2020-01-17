@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.openapi.components.service
@@ -61,7 +62,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     get() = ourKey
 
   override fun createConfigurable(settings: Settings) = object : ImmediateConfigurable {
-    val uniqueTypeCountName = "Minimal unique type count to show hints"
+    val uniqueTypeCountName = CodeInsightBundle.message("settings.inlay.java.minimal.unique.type.count.to.show.hints")
 
     private val uniqueTypeCount = JBIntSpinner(1, 1, 10)
 
@@ -96,7 +97,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
   override fun createSettings() = Settings()
 
   override val name: String
-    get() = "Method chains"
+    get() = CodeInsightBundle.message("settings.inlay.java.method.chains")
 
   override val previewText: String?
     @Language("JAVA")

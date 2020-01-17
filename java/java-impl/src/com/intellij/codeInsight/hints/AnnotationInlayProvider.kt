@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
@@ -89,8 +90,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           val makeExplicit = InsertAnnotationAction(project, file, element)
           listOf(
             makeExplicit,
-            ToggleSettingsAction("Turn off external annotations", settings::showExternal, settings),
-            ToggleSettingsAction("Turn off inferred annotations", settings::showInferred, settings)
+            ToggleSettingsAction(CodeInsightBundle.message("settings.inlay.java.turn.off.external.annotations"), settings::showExternal, settings),
+            ToggleSettingsAction(CodeInsightBundle.message("settings.inlay.java.turn.off.inferred.annotations"), settings::showInferred, settings)
           )
         }
       }
@@ -147,7 +148,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
   override fun createSettings(): Settings = Settings()
 
   override val name: String
-    get() = "Annotations"
+    get() = CodeInsightBundle.message("settings.inlay.java.annotations")
   override val key: SettingsKey<Settings>
     get() = ourKey
   override val previewText: String?
@@ -164,12 +165,12 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
       override fun createComponent(listener: ChangeListener): JComponent = panel {}
 
       override val mainCheckboxText: String
-        get() = "Show hints for:"
+        get() = CodeInsightBundle.message("settings.inlay.java.show.hints.for")
 
       override val cases: List<ImmediateConfigurable.Case>
         get() = listOf(
-          ImmediateConfigurable.Case("Inferred annotations", "inferred.annotations", settings::showInferred),
-          ImmediateConfigurable.Case("External annotations", "external.annotations", settings::showExternal)
+          ImmediateConfigurable.Case(CodeInsightBundle.message("settings.inlay.java.inferred.annotations"), "inferred.annotations", settings::showInferred),
+          ImmediateConfigurable.Case(CodeInsightBundle.message("settings.inlay.java.external.annotations"), "external.annotations", settings::showExternal)
         )
     }
   }
@@ -204,7 +205,7 @@ class InsertAnnotationAction(
   private val element: PsiModifierListOwner
 ) : AnAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.text = "Insert annotation"
+    e.presentation.text = CodeInsightBundle.message("settings.inlay.java.insert.annotation")
   }
 
   override fun actionPerformed(e: AnActionEvent) {

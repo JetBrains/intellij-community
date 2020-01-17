@@ -111,7 +111,7 @@ public interface InlayParameterHintsProvider {
    * @return text of main checkbox in hints settings
    */
   default String getMainCheckboxText() {
-    return "Show parameter hints";
+    return CodeInsightBundle.message("settings.inlay.show.parameter.hints");
   }
 
   /**
