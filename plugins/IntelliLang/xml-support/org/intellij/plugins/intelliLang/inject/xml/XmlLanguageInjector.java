@@ -119,7 +119,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
               if (element instanceof XmlText) {
                 if (!(element instanceof PsiLanguageInjectionHost) || element.getTextLength() == 0) return;
 
-                if (!injection.isIgnoredPlace(element)) {
+                if (!injection.shouldBeIgnored(element)) {
                   List<TextRange> list = injection.getInjectedArea(element);
                   InjectedLanguage l =
                     InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
@@ -172,7 +172,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = injections.size(); i < size; i++) {
         BaseInjection injection = injections.get(i);
-        if (injection.acceptsPsiElement(attribute) && !injection.isIgnoredPlace(value)) {
+        if (injection.acceptsPsiElement(attribute) && !injection.shouldBeIgnored(value)) {
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
           if (language == null) continue;
           final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());

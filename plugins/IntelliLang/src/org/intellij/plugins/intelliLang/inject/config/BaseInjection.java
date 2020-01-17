@@ -147,16 +147,18 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   /**
-   * Determines whether injection to multiple hosts or concatenation must be ignored. If at least one place in the passed collection
-   * is ignored then the entire element collection must be ignored and language must not be injected.
+   * Determines whether injection must not be applied to the given elements.
    * <br>
    * This is typically used when we want to disable language injection for complex edge cases.
-   * Real life example: inject XPath to Java annotation only when there is no '%s' substring in hosts which means template processing.
+   * Real-life example: inject XPath to Java annotation only when there is no '%s' substring in hosts which means template processing.
    * <br>
    * NOTE: In case of concatenation: ignore-pattern is checked only once per concatenation where all injection hosts added to the single
    * string with the passed delimiter. If ignore-pattern is found in this concatenated string then all injected hosts must be ignored.
+   *
+   * @param elements injection hosts
+   * @param delimiter char sequence that will be used for concatenation of element texts to apply regular expression
    */
-  public boolean hasIgnoredPlace(@NotNull Iterator<PsiLanguageInjectionHost> elements, @Nullable String delimiter) {
+  public boolean shouldBeIgnored(@NotNull Iterator<PsiLanguageInjectionHost> elements, @Nullable String delimiter) {
     if (myCompiledIgnorePattern == null) {
       return false;
     }
@@ -178,16 +180,16 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   /**
    * Determines whether injection to element must be ignored.
    *
-   * @see #hasIgnoredPlace(Iterator, String)
+   * @see #shouldBeIgnored(Iterator, String)
    */
-  public boolean isIgnoredPlace(@NotNull PsiElement element) {
+  public boolean shouldBeIgnored(@NotNull PsiElement element) {
     if (!(element instanceof PsiLanguageInjectionHost)) {
       return false;
     }
 
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
 
-    return hasIgnoredPlace(Collections.singleton(host).iterator(), null);
+    return shouldBeIgnored(Collections.singleton(host).iterator(), null);
   }
 
   @Override

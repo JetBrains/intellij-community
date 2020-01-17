@@ -400,7 +400,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
       }
 
       // important: here we use \n only as a good-enough delimiter for regexp matching of concatenation parts
-      if (injection.hasIgnoredPlace(mapIterator(result.iterator(), r -> r.first), "\n")) {
+      if (injection.shouldBeIgnored(mapIterator(result.iterator(), r -> r.first), "\n")) {
         return emptyList();
       }
 
