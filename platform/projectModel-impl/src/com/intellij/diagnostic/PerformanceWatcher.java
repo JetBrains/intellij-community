@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -444,10 +445,16 @@ public final class PerformanceWatcher implements Disposable {
         cleanup(dir);
         reportDir = new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + TimeUnit.MILLISECONDS.toSeconds(durationMs) + "sec");
         if (!dir.renameTo(reportDir)) {
-          reportDir = null;
+          reportDir = dir;
+        }
+        String message = "UI was frozen for " + durationMs + "ms, details saved to " + reportDir;
+        if (PluginManagerCore.isRunningFromSources()) {
+          LOG.info(message);
+        }
+        else {
+          LOG.warn(message);
         }
       }
-      LOG.warn("UI was frozen for " + durationMs + "ms, details saved to " + reportDir);
       getPublisher().uiFreezeFinished(durationMs, reportDir);
     }
 

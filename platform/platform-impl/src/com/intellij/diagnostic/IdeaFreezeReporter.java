@@ -123,10 +123,12 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     }
   }
 
-  private static void cleanup(File dir) {
-    FileUtil.delete(new File(dir, MESSAGE_FILE_NAME));
-    FileUtil.delete(new File(dir, THROWABLE_FILE_NAME));
-    FileUtil.delete(new File(dir, APPINFO_FILE_NAME));
+  private static void cleanup(@Nullable File dir) {
+    if (dir != null) {
+      FileUtil.delete(new File(dir, MESSAGE_FILE_NAME));
+      FileUtil.delete(new File(dir, THROWABLE_FILE_NAME));
+      FileUtil.delete(new File(dir, APPINFO_FILE_NAME));
+    }
   }
 
   @Override
@@ -295,7 +297,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     String reportText = root.dump();
 
     try {
-      FileUtil.writeToFile(new File(reportDir, REPORT_PREFIX + ".txt"), reportText);
+      if (reportDir != null) {
+        FileUtil.writeToFile(new File(reportDir, REPORT_PREFIX + ".txt"), reportText);
+      }
     }
     catch (IOException ignored) {
     }
