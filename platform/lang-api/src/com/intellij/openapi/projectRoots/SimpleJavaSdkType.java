@@ -3,14 +3,17 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
+import java.util.Comparator;
 
 /**
  * @author Gregory.Shrago
@@ -83,6 +86,14 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   public final String getVersionString(final String sdkHome) {
     JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(sdkHome);
     return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
+  }
+
+  @NotNull
+  @Override
+  public Comparator<String> versionStringComparator() {
+    return (sdk1, sdk2) -> {
+      return Comparing.compare(JavaVersion.tryParse(sdk1), JavaVersion.tryParse(sdk2));
+    };
   }
 
   private static final Condition<SdkTypeId> NOT_SIMPLE_JAVA_TYPE = sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
