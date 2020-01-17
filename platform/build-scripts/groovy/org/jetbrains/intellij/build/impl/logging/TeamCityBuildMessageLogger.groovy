@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.logging
 
+import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
@@ -28,7 +29,10 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
   TeamCityBuildMessageLogger(String parallelTaskId, AntTaskLogger antTaskLogger) {
     this.parallelTaskId = parallelTaskId
     this.antTaskLogger = antTaskLogger
-    isTeamCityListenerRegistered = antTaskLogger.antProject.buildListeners.any { it.class.name.startsWith("jetbrains.buildServer.") }
+    //if Ant script is started directly by TeamCity Ant runner its BuildListener will be present in antProject;
+    //if Ant script is started from a forked Java task we cannot detect this automatically so explicit property should be passed
+    isTeamCityListenerRegistered = antTaskLogger.antProject.buildListeners.any { it.class.name.startsWith("jetbrains.buildServer.") } ||
+                                   SystemProperties.getBooleanProperty("intellij.build.teamcity.build.listener.available", false)
   }
 
   @Override
