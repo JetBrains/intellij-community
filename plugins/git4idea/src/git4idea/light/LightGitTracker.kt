@@ -33,15 +33,6 @@ internal class LightGitTracker(private val lightEditService: LightEditService, p
                                                                            MyFrameStateListener())
   }
 
-  @Throws(VcsException::class)
-  private fun getLocation(directory: VirtualFile): String {
-    val localBranch = getCurrentBranchFromGitOrThrow(directory, gitExecutable)
-    if (localBranch != null) {
-      return localBranch.name
-    }
-    return getCurrentRevisionFromGitOrThrow(directory, gitExecutable).toShortString()
-  }
-
   private fun updateCurrentLocation(location: Optional<String>) {
     currentLocation = location.orElse(null)
     eventDispatcher.multicaster.update()
@@ -81,7 +72,7 @@ internal class LightGitTracker(private val lightEditService: LightEditService, p
     BaseSingleTaskController<VirtualFile, Optional<String>>("Light Git Tracker", this::updateCurrentLocation, this) {
     override fun process(requests: List<VirtualFile>): Optional<String> {
       try {
-        return Optional.of(getLocation(requests.last().parent))
+        return Optional.of(getLocation(requests.last().parent, gitExecutable))
       }
       catch (_: VcsException) {
         return Optional.ofNullable(null)
