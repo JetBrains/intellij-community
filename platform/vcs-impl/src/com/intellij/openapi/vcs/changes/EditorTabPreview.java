@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -79,11 +78,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   protected abstract void doRefresh();
 
   protected boolean skipPreviewUpdate() {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-
-    //todo use Commit tw name when it will be in platform
-    return toolWindowManager.isEditorComponentActive()
-      || !Objects.equals(toolWindowManager.getActiveToolWindowId(), ToolWindowId.VCS);
+    return ToolWindowManager.getInstance(myProject).isEditorComponentActive();
   }
 
   protected boolean isContentEmpty() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -370,13 +370,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
           @Override
           protected boolean skipPreviewUpdate() {
-            if (super.skipPreviewUpdate()) {
-              return true;
-            }
-
-            if (!IdeFocusManager.getInstance(myProject).getFocusOwner().equals(myView)) {
-              return true;
-            }
+            if (super.skipPreviewUpdate()) return true;
+            if (!myView.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
 
             return !myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN || myModelUpdateInProgress;
           }
