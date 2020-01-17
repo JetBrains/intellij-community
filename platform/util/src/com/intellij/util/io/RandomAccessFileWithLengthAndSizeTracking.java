@@ -24,6 +24,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import static com.intellij.util.io.FileChannelUtil.unInterruptible;
+
 /**
  * Replacement of read-write random-access file with shadow file pointer / size, valid when file manipulations happen in with this class only.
  * Note that sharing policy is the same as RandomAccessFile
@@ -38,7 +40,7 @@ class RandomAccessFileWithLengthAndSizeTracking {
   private volatile long myPointer;
 
   RandomAccessFileWithLengthAndSizeTracking(Path name) throws IOException {
-    myChannel = FileChannel.open(name, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+    myChannel = unInterruptible(FileChannel.open(name, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
     mySize = myChannel.size();
     myPath = name;
 

@@ -21,6 +21,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.intellij.util.io.FileChannelUtil.unInterruptible;
+
 /**
  * @author max
  */
@@ -31,7 +33,7 @@ public class ReadOnlyMappedBufferWrapper extends MappedBufferWrapper {
 
   @Override
   protected MappedByteBuffer map() throws IOException {
-    try (FileChannel channel = FileChannel.open(myFile)) {
+    try (FileChannel channel = unInterruptible(FileChannel.open(myFile))) {
       return channel.map(FileChannel.MapMode.READ_ONLY, myPosition, myLength);
     }
   }

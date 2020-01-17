@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -14,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+
+import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
 public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   private static final Logger LOG = Logger.getInstance(ReadWriteDirectBufferWrapper.class);
@@ -46,7 +47,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
         @Override
         public FileChannel execute(boolean finalAttempt) throws IOException {
           try {
-            return FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+            return unInterruptible(FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
           }
           catch (NoSuchFileException ex) {
             Path parentFile = path.getParent();
