@@ -3,68 +3,64 @@ package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class CountingInputStream extends InputStream {
-  private final InputStream myInputStream;
+/**
+ * This implementation is <em>not</em> thread safe.
+ */
+public class CountingInputStream extends FilterInputStream {
+
   private long myBytesRead = 0;
+  private long myMark = 1;
 
   public CountingInputStream(@NotNull InputStream inputStream) {
-    myInputStream = inputStream;
+    super(inputStream);
   }
 
   @Override
   public int read() throws IOException {
-    int data = myInputStream.read();
-    myBytesRead++;
-    return data;
-  }
-
-  @Override
-  public int read(byte @NotNull [] b) throws IOException {
-    int bytesRead = myInputStream.read(b);
-    myBytesRead += bytesRead;
+    int bytesRead = in.read();
+    if (bytesRead != -1) {
+      myBytesRead++;
+    }
     return bytesRead;
   }
 
   @Override
   public int read(byte @NotNull [] b, int off, int len) throws IOException {
-    int bytesRead = myInputStream.read(b, off, len);
-    myBytesRead += bytesRead;
+    int bytesRead = in.read(b, off, len);
+    if (bytesRead != -1) {
+      myBytesRead += bytesRead;
+    }
     return bytesRead;
   }
 
   @Override
   public long skip(long n) throws IOException {
-    long bytesSkipped = myInputStream.skip(n);
+    long bytesSkipped = in.skip(n);
     myBytesRead += bytesSkipped;
     return bytesSkipped;
   }
 
   @Override
-  public int available() throws IOException {
-    return myInputStream.available();
-  }
-
-  @Override
-  public void close() throws IOException {
-    myInputStream.close();
-  }
-
-  @Override
   public synchronized void mark(int readlimit) {
-    myInputStream.mark(readlimit);
+    in.mark(readlimit);
+    myMark = myBytesRead;
   }
 
   @Override
   public synchronized void reset() throws IOException {
-    myInputStream.reset();
-  }
+    if (!in.markSupported()) {
+      throw new IOException("Mark not supported");
+    }
+    if (myMark == -1) {
+      throw new IOException("Mark not set");
+    }
 
-  @Override
-  public boolean markSupported() {
-    return myInputStream.markSupported();
+    in.reset();
+    myBytesRead = myMark;
   }
 
   public long getBytesRead() {
