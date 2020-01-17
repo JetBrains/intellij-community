@@ -68,6 +68,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
+  private final boolean myLightEditMode;
 
   private final boolean myIsInternal;
 
@@ -112,6 +113,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myTestModeFlag = isUnitTestMode;
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
+    myLightEditMode = Main.isLightEdit();
 
     mySaveAllowed = !(isUnitTestMode || isHeadless);
 
@@ -215,6 +217,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean isCommandLine() {
     return myCommandLineMode;
+  }
+
+  public boolean isLightEditMode() {
+    return myLightEditMode;
   }
 
   @NotNull

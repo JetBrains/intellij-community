@@ -213,6 +213,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                               @Nullable ProgressIndicator indicator,
                               @Nullable Project project,
                               @Nullable PluginDescriptor pluginDescriptor) {
+      if (!provider.preloadNeeded()) return;
       if (indicator != null && indicator.isCanceled()) return;  // if application is closed
       if (project != null && project.isDisposed()) return; // if project is closed
       getCachedOptions(provider, project, pluginDescriptor);
