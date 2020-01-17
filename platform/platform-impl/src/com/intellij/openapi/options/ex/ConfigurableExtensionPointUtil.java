@@ -232,7 +232,7 @@ public class ConfigurableExtensionPointUtil {
     if (node.myValue == null) {
       int weight = getInt(bundle, id + ".settings.weight");
       String help = getString(bundle, id + ".settings.help.topic");
-      String name = getString(bundle, id + ".settings.display.name");
+      String name = getName(bundle, id + ".settings.display.name");
       if (name != null && project != null) {
         if (!project.isDefault() && !name.contains("{")) {
           String named = getString(bundle, id + ".named.settings.display.name");
@@ -432,8 +432,18 @@ public class ConfigurableExtensionPointUtil {
   private static String getString(ResourceBundle bundle, @NonNls String resource) {
     if (bundle == null) return null;
     try {
-      // mimic CommonBundle.message(..) behavior
-      return BundleBase.replaceMnemonicAmpersand(bundle.getString(resource));
+      return bundle.getString(resource);
+    }
+    catch (MissingResourceException ignored) {
+      return null;
+    }
+  }
+  
+  private static String getName(ResourceBundle bundle, @NonNls String resource) {
+    if (bundle == null) return null;
+    try {
+      // mimics CommonBundle.message(..) behavior
+      return BundleBase.addLocalizationMaker(BundleBase.replaceMnemonicAmpersand(getString(bundle, resource)));
     }
     catch (MissingResourceException ignored) {
       return null;

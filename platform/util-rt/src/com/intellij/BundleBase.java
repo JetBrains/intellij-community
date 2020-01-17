@@ -3,6 +3,8 @@ package com.intellij;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.text.OrdinalFormat;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +33,6 @@ public abstract class BundleBase {
     return messageOrDefault(bundle, key, null, params);
   }
 
-
   public static String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
                                         @Nullable String defaultValue,
@@ -48,6 +49,11 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
+    return addLocalizationMaker(result);
+  }
+
+  @ApiStatus.Internal
+  public static String addLocalizationMaker(@Nullable String result) {
     if (SHOW_LOCALIZED_MESSAGES) {
       return result + L10N_MARKER;
     }
@@ -67,7 +73,7 @@ public abstract class BundleBase {
   }
 
   @Nullable
-  static String postprocessValue(@NotNull ResourceBundle bundle, String value, @NotNull Object[] params) {
+  static String postprocessValue(@NotNull ResourceBundle bundle, @Nullable String value, @NotNull Object[] params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {
@@ -90,6 +96,7 @@ public abstract class BundleBase {
     return params.length > 0 && value.indexOf('{') >= 0 ? MessageFormat.format(value, params) : value;
   }
 
+  @Contract("null -> null")
   public static String replaceMnemonicAmpersand(@Nullable String value) {
     if (value == null || value.indexOf('&') < 0) {
       return value;
