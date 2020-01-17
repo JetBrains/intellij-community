@@ -534,9 +534,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
       if (canBeI18ned(myManager.getProject(), expression, stringValue, nonNlsTargets)) {
-        UField parentField = UastUtils.getParentOfType(expression, UField.class); // PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        UField parentField =
+          UastUtils.getParentOfType(expression, UField.class); // PsiTreeUtil.getParentOfType(expression, PsiField.class);
         if (parentField != null) {
-          nonNlsTargets.add(parentField);
+          nonNlsTargets.add((PsiModifierListOwner)parentField.getJavaPsi());
         }
 
         final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value", "#ref");
@@ -830,7 +831,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         if (annotatedAsNonNls(newVariable.getPsi())) {
           return true;
         }
-        nonNlsTargets.add(newVariable);
+        PsiElement variableJavaPsi = newVariable.getJavaPsi();
+        if (variableJavaPsi instanceof PsiModifierListOwner) {
+          nonNlsTargets.add(((PsiModifierListOwner)variableJavaPsi));
+        }
         return false;
       }
     }

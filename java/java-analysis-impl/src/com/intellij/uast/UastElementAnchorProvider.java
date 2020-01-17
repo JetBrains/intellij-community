@@ -15,6 +15,7 @@
  */
 package com.intellij.uast;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.reference.SoftReference;
@@ -25,12 +26,19 @@ import org.jetbrains.uast.UastContextKt;
 
 /**
  * @author yole
+ * @deprecated relies on usage UElement as a PsiElement, which is considered as a bad practice (IDEA-182835),
+ * and also leads to inappropriate caching of UElements
  */
+@Deprecated
 public class UastElementAnchorProvider extends SmartPointerAnchorProvider {
   @Nullable
   @Override
   public PsiElement getAnchor(@NotNull PsiElement element) {
     if (element instanceof UElement) {
+      Logger.getInstance(UastElementAnchorProvider.class)
+        .error("creating a SmartPointer on a UElement " + element +
+               ", please avoid doing that, using UElement as PsiElement is a bad practice," +
+               " use UastSmartPointer instead");
       PsiElement psi = ((UElement)element).getPsi();
       if (psi != null) {
         psi.putUserData(UastContextKt.getCACHED_UELEMENT_KEY(), new SoftReference<>((UElement)element));

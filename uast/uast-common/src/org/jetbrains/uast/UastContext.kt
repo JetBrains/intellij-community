@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.reference.SoftReference
 
+@Deprecated("no proper caching for UAST is implemented, please avoid relying on this key")
 internal val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
 
 
