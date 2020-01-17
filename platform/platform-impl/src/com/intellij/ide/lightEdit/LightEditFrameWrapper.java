@@ -5,6 +5,7 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
 import com.intellij.ide.lightEdit.statusBar.LightEditAutosaveWidget;
 import com.intellij.ide.lightEdit.statusBar.LightEditEncodingWidgetWrapper;
+import com.intellij.ide.lightEdit.statusBar.LightEditLineSeparatorWidgetWrapper;
 import com.intellij.ide.lightEdit.statusBar.LightEditPositionWidget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -54,6 +55,8 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
               StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(this, statusBar, new LightEditEncodingWidgetWrapper(),
               StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
+    addWidget(this, statusBar, new LightEditLineSeparatorWidgetWrapper(),
+              StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID));
     for (StatusBarWidgetProvider provider : StatusBarWidgetProvider.EP_NAME.getExtensionList()) {
       if (provider.isCompatibleWith(this)) {
         final StatusBarWidget widget = provider.getWidget(project);
