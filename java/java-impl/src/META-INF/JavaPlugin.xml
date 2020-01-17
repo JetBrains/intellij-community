@@ -954,6 +954,7 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.PsiPackageRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
+    <renameInputValidator implementation="com.intellij.refactoring.rename.JavaTypeRenameValidator"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiPackageProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor"/>
