@@ -31,6 +31,7 @@ internal class LegacyBridgeModifiableContentEntryImpl(
   private val modifiableRootModel: LegacyBridgeModifiableRootModel,
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
+  private val LOG = Logger.getInstance(javaClass)
 
   private val currentContentEntry = CachedValueImpl<ContentEntryViaTypedEntity> {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryViaTypedEntity
@@ -41,6 +42,12 @@ internal class LegacyBridgeModifiableContentEntryImpl(
   private fun <P : JpsElement?> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
     if (!contentEntryUrl.isEqualOrParentOf(sourceFolderUrl)) {
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
+    }
+
+    val sourceFolder = sourceFolders.find { it.url == sourceFolderUrl.url && it.rootType == type }
+    if (sourceFolder != null) {
+      LOG.debug("Source folder for '$sourceFolderUrl' and type '$type' already exist")
+      return sourceFolder
     }
 
     @Suppress("UNCHECKED_CAST")
