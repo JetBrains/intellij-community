@@ -163,7 +163,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
           InlayPresentation[] withSettings = ArrayUtil.mergeArrays(trimmedSpace, spaceAndSettings);
           return factory.seq(withSettings);
         }, e -> true);
-        sink.addBlockElement(lineStart, true, true, BlockInlayPriority.LENS, withAppearingSettings);
+        sink.addBlockElement(lineStart, true, true, BlockInlayPriority.CODE_VISION, withAppearingSettings);
       }
       return true;
     };
