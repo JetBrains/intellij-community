@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
@@ -40,6 +41,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
         ProjectViewNode<?> node = (ProjectViewNode)o;
         Object element = node.getValue();
         if (element instanceof PsiFile) {
+          ProgressManager.checkCanceled();
           if (XsltSupport.isXsltFile((PsiFile)element)) {
             if (l == children && l.getClass() != ArrayList.class) {
               l = new ArrayList<>(children);
