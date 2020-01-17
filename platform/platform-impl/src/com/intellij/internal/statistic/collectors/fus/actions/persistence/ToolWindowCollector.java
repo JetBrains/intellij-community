@@ -12,7 +12,9 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
@@ -76,11 +78,21 @@ public final class ToolWindowCollector {
 
   private ToolWindowCollector() {
     for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensionList()) {
-      PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
-      PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : null;
-      if (info != null && info.isDevelopedByJetBrains()) {
-        ourToolwindowWhitelist.put(extension.id, new ToolWindowInfo(extension.id, info));
+      addToolwindowToWhitelist(extension);
+    }
+    ToolWindowWhitelistEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<ToolWindowWhitelistEP>() {
+      @Override
+      public void extensionAdded(@NotNull ToolWindowWhitelistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+        addToolwindowToWhitelist(extension);
       }
+    }, ApplicationManager.getApplication());
+  }
+
+  private static void addToolwindowToWhitelist(ToolWindowWhitelistEP extension) {
+    PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
+    PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : null;
+    if (info != null && info.isDevelopedByJetBrains()) {
+      ourToolwindowWhitelist.put(extension.id, new ToolWindowInfo(extension.id, info));
     }
   }
 
