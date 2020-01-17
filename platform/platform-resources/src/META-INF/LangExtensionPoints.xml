@@ -407,7 +407,7 @@
 
     <extensionPoint name="createFromTemplateActionReplacer" interface="com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer" dynamic="true"/>
 
-    <extensionPoint name="filetype.stubBuilder" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+    <extensionPoint name="filetype.stubBuilder" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
     </extensionPoint>
 
