@@ -48,6 +48,8 @@ internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage:
   }
 
   private fun removeFacetEntityWithSubFacets(entity: FacetEntity) {
+    if (entity !in entityToFacet) return
+
     entity.subFacets.forEach {
       removeFacetEntityWithSubFacets(it)
     }
