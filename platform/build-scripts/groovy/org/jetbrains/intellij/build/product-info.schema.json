@@ -30,7 +30,7 @@
       "type": "string"
     },
     "dataDirectoryName": {
-      "description": "Name of a directory used for storing settings, caches, etc.; the full path to the directory is OS-specific.",
+      "description": "Name of a directory used for storing settings, caches, etc. (e.g. 'IntelliJIdea2020.1' for IntelliJ IDEA 2020.1); the full path to the directory is OS-specific.",
       "type": "string"
     },
     "svgIconPath": {
