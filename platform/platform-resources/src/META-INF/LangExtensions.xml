@@ -1232,6 +1232,8 @@
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.HectorComponentFactory"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.HectorComponentFactoryImpl"/>
     <editorFactoryListener implementation="com.intellij.internal.statistic.fileTypes.UpdateComponentEditorListener"/>
+
+    <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
   </extensions>
 </idea-plugin>
 
