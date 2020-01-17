@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeConcatenationQuickFix.class);
-  @NonNls private static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
+  @NonNls static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   @Override
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
@@ -66,14 +66,8 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   @Override
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
-    String formatString = "";
     final List<PsiExpression> args = new ArrayList<>();
-    try {
-      formatString = StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args));
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    String formatString = getValueString(concatenation, args);
 
     return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, null, true, true) {
       @Override
@@ -98,6 +92,18 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
         attributes.put(PARAMETERS_OPTION_KEY, composeParametersText(args));
       }
     };
+  }
+
+  @NotNull
+  static String getValueString(PsiPolyadicExpression concatenation, List<PsiExpression> args) {
+    String formatString = "";
+    try {
+      formatString = StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args));
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return formatString;
   }
 
   @Nullable

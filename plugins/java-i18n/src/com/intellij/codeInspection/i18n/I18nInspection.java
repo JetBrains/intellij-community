@@ -569,8 +569,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
             }
           }
         }
-        else if (Registry.is("i18n.for.idea.project") &&
-                 I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) == null) {
+        else if (Registry.is("i18n.for.idea.project") ) {
           fixes.add(new I18nizeBatchQuickFix());
         }
 
