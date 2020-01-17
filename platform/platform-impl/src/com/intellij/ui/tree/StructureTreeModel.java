@@ -44,30 +44,25 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final Structure structure;
   private volatile Comparator<? super Node> comparator;
 
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Invoker invoker, @NotNull Disposable parent) {
-    this.structure = structure;
-    description = format(structure.toString());
-    this.invoker = invoker;
-    Disposer.register(parent, this);
+  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent) {
+    this(structure, null, parent);
+  }
+
+  public StructureTreeModel(@NotNull Structure structure,
+                            @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                            @NotNull Disposable parent) {
+    this(structure, Invoker.forBackgroundThreadWithReadAction(parent), comparator, parent);
   }
 
   public StructureTreeModel(@NotNull Structure structure,
                             @NotNull Invoker invoker,
                             @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                             @NotNull Disposable parent) {
-    this(structure, invoker, parent);
-    if (comparator != null) this.comparator = wrapToNodeComparator(comparator);
-  }
-
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent) {
-    this(structure, Invoker.forBackgroundThreadWithReadAction(parent), parent);
-  }
-
-  public StructureTreeModel(@NotNull Structure structure,
-                            @Nullable Comparator<? super NodeDescriptor<?>> comparator,
-                            @NotNull Disposable parent) {
-    this(structure, parent);
+    this.structure = structure;
+    this.description = format(structure.toString());
+    this.invoker = invoker;
     this.comparator = comparator == null ? null : wrapToNodeComparator(comparator);
+    Disposer.register(parent, this);
   }
 
   @NotNull
