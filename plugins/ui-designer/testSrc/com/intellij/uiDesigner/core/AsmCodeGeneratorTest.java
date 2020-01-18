@@ -355,6 +355,11 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   public void testTitledSeparator() throws Exception {
     JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledSeparator.form", "BindingTest");
     assertEquals("Test Value", ((JLabel)((JPanel)panel.getComponent(2)).getComponent(0)).getText());
+  }  
+  
+  public void testGotItPanel() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("GotItPanel.form", "GotItPanel");
+    assertInstanceOf(panel.getComponent(2), JEditorPane.class);
   }
 
   public void testMnemonic() throws Exception {
