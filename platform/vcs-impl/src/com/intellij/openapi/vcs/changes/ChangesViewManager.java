@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
@@ -67,6 +68,8 @@ import java.util.function.Function;
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.ToggleChangesViewCommitUiActionKt.isToggleCommitUi;
@@ -360,8 +363,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       JComponent mainPanel;
       if (isPreviewInEditor) {
-        myDiffPreview = new EditorTabPreview(changeProcessor, contentPanel, myView) {
-
+        EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
           @Override
           protected String getCurrentName() {
             return changeProcessor.getCurrentChangeName();
@@ -387,6 +389,14 @@ public class ChangesViewManager implements ChangesViewEx,
             super.updatePreview(fromModelRefresh);
           }
         };
+        editorPreview.setEscapeHandler(() -> {
+          ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
+          if (toolWindow != null) toolWindow.activate(null);
+        });
+        editorPreview.installOn(myView);
+        editorPreview.installNextDiffActionOn(contentPanel);
+
+        myDiffPreview = editorPreview;
         mainPanel = contentPanel;
 
         myView.setExpandableItemsEnabled(false);

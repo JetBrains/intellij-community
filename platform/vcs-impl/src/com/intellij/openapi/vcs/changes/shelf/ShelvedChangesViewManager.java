@@ -700,8 +700,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myRootPanel.add(toolbar.getComponent(), isToolbarHorizontal ? BorderLayout.NORTH : BorderLayout.WEST);
 
       if (Registry.is("show.diff.preview.as.editor.tab")) {
-        myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree) {
-
+        EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
           @Override
           protected String getCurrentName() {
             ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
@@ -721,7 +720,14 @@ public class ShelvedChangesViewManager implements Disposable {
             return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
           }
         };
+        editorPreview.setEscapeHandler(() -> {
+          ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
+          if (toolWindow != null) toolWindow.activate(null);
+        });
+        editorPreview.installOn(myTree);
+        editorPreview.installNextDiffActionOn(pane);
 
+        myDiffPreview = editorPreview;
         myRootPanel.add(pane);
       } else {
         PreviewDiffSplitterComponent previewSplitter =

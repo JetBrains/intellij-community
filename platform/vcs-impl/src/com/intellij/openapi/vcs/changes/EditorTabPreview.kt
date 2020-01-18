@@ -2,15 +2,13 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.wm.ToolWindowManager
@@ -18,12 +16,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import javax.swing.JComponent
 
-abstract class EditorTabPreview(
-  private val diffProcessor: DiffRequestProcessor,
-  contentPanel: JComponent,
-  changesTree: ChangesTree
-) : ChangesViewPreview {
-
+abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) : ChangesViewPreview {
   private val project get() = diffProcessor.project!!
   private val previewFile = PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor) { getCurrentName() })
   private val updatePreviewQueue =
@@ -31,27 +24,24 @@ abstract class EditorTabPreview(
       setRestartTimerOnAdd(true)
     }
 
-  init {
+  var escapeHandler: Runnable? = null
+
+  fun installOn(tree: ChangesTree) =
     //do not open file aggressively on start up, do it later
     DumbService.getInstance(project).smartInvokeLater {
-      if (project.isDisposed) return@smartInvokeLater
-
-      changesTree.addSelectionListener {
+      tree.addSelectionListener {
         updatePreviewQueue.queue(Update.create(this) {
           if (skipPreviewUpdate()) return@create
           setPreviewVisible(true)
         })
       }
     }
-    object : DumbAwareAction() {
-      init {
-        copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF))
-      }
 
-      override fun actionPerformed(e: AnActionEvent) {
-        openPreview(true)
-      }
-    }.registerCustomShortcutSet(contentPanel, null)
+  fun installNextDiffActionOn(component: JComponent) {
+    DumbAwareAction.create { openPreview(true) }.apply {
+      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF))
+      registerCustomShortcutSet(component, null)
+    }
   }
 
   protected abstract fun getCurrentName(): String?
@@ -77,23 +67,19 @@ abstract class EditorTabPreview(
 
   fun closePreview() = FileEditorManager.getInstance(project).closeFile(previewFile)
 
-  fun openPreview(focus: Boolean) {
-    if (hasContent()) {
-      val wasOpen = FileEditorManager.getInstance(project).isFileOpen(previewFile)
-      val fileEditors = FileEditorManager.getInstance(project).openFile(previewFile, focus, true)
-      if (!wasOpen) {
-        val action = object : DumbAwareAction() {
-          init {
-            shortcutSet = CommonShortcuts.ESCAPE
-          }
+  fun openPreview(focusEditor: Boolean) {
+    if (!hasContent()) return
 
-          override fun actionPerformed(e: AnActionEvent) {
-            ToolWindowManager.getInstance(project).getToolWindow("Commit")!!.activate {}
-          }
-        }
-        action.registerCustomShortcutSet(fileEditors[0].component, null)
-        Disposer.register(fileEditors[0], Disposable { action.unregisterCustomShortcutSet(fileEditors[0].component) })
-      }
+    openPreview(project, previewFile, focusEditor, escapeHandler)
+  }
+
+  companion object {
+    fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean, escapeHandler: Runnable? = null) {
+      val wasAlreadyOpen = FileEditorManager.getInstance(project).isFileOpen(file)
+      val editor = FileEditorManager.getInstance(project).openFile(file, focusEditor, true).singleOrNull() ?: return
+
+      if (wasAlreadyOpen) return
+      escapeHandler?.let { r -> DumbAwareAction.create { r.run() }.registerCustomShortcutSet(ESCAPE, editor.component, editor) }
     }
   }
 }
