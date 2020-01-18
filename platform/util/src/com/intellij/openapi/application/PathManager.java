@@ -11,7 +11,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Reader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -284,7 +287,7 @@ public class PathManager {
     if (explicit != null) {
       ourPluginsPath = explicit;
     }
-    else if (PATHS_SELECTOR != null) {
+    else if (PATHS_SELECTOR != null && (SystemInfoRt.isWindows || SystemInfoRt.isMac || System.getProperty(PROPERTY_CONFIG_PATH) == null)) {
       ourPluginsPath = getDefaultPluginPathFor(PATHS_SELECTOR);
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
@@ -41,10 +41,19 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
+    checkPluginDirectory();
     checkRuntime();
     checkReservedCodeCacheSize();
     checkSignalBlocking();
     startDiskSpaceMonitoring();
+  }
+
+  private static void checkPluginDirectory() {
+    if (SystemInfo.isXWindow &&
+        System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null &&
+        System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
+      showNotification("unix.plugin.directory.path", null);
+    }
   }
 
   private static void checkRuntime() {
