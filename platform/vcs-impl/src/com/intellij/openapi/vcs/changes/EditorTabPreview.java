@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -30,7 +29,6 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
 public abstract class EditorTabPreview implements ChangesViewPreview {
   private final Project myProject;
   @NotNull private final PreviewDiffVirtualFile myPreviewDiffVirtualFile;
-  private final VcsConfiguration myVcsConfiguration;
   private final DiffRequestProcessor myChangeProcessor;
 
   private final MergingUpdateQueue mySelectInEditor;
@@ -45,7 +43,6 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
     myChangeProcessor = changeProcessor;
     MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(changeProcessor, this::getCurrentName);
     myPreviewDiffVirtualFile = new PreviewDiffVirtualFile(previewProvider);
-    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
 
     //do not open file aggressively on start up, do it later
     DumbService.getInstance(myProject).smartInvokeLater(() -> {
@@ -87,9 +84,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   @Override
   public void updatePreview(boolean fromModelRefresh) {
-    if (myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
-      doRefresh();
-    }
+    doRefresh();
   }
 
   @Override
