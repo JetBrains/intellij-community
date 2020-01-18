@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.icons.AllIcons
@@ -25,10 +25,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -103,7 +100,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       isOpaque = false
       add(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
       add(Box.createRigidArea(JBDimension(0, 12)))
-      add(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
+      add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(avatarIconsProvider)))
     }
 
     if (reviewService.canComment()) {
