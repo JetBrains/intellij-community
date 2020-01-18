@@ -4,7 +4,7 @@ import circlet.pipelines.common.api.*
 import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.api.storage.*
 
-class CircletIdeaAContainerStepExecutionEntity(
+class CircletIdeaContainerStepExecutionEntity(
     override val id: Long,
     override var startTime: Long,
     override var endTime: Long?,
@@ -17,7 +17,7 @@ class CircletIdeaAContainerStepExecutionEntity(
     override var workerId: String? = null
 ) : AContainerStepExecutionEntity {
     override fun equals(other: Any?): Boolean {
-        return (other as? CircletIdeaAContainerStepExecutionEntity)?.id == this.id
+        return (other as? CircletIdeaContainerStepExecutionEntity)?.id == this.id
     }
 
     override fun hashCode(): Int {

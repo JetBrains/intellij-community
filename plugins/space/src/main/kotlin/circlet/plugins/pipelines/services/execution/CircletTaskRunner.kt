@@ -1,5 +1,6 @@
 package circlet.plugins.pipelines.services.execution
 
+import circlet.pipelines.common.api.*
 import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
@@ -15,7 +16,6 @@ import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
 import java.io.*
-import com.intellij.execution.*
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessHandler
 import kotlinx.coroutines.*
@@ -60,12 +60,15 @@ class CircletTaskRunner(val project: Project) {
 
         val processes = OSProcesses("Space")
 
-        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, "Jetbrains Space", volumeProvider, dockerEventsListener, processes)
+        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, LocalDockerContainerStartIdentity, volumeProvider, dockerEventsListener, processes)
 
         val batchSize = 1
 
         val logMessageSink = object : LogMessagesSink {
             override fun invoke(stepExecutionData: StepExecutionData<*>, batchIndex: Int, data: List<String>) {
+                data.forEach {
+                    processHandler.message(it, TraceLevel.INFO)
+                }
             }
         }
 
@@ -73,7 +76,7 @@ class CircletTaskRunner(val project: Project) {
 
         val dispatcher = Ui
 
-        val tracer = CircletIdeaAutomationTracer()
+        val tracer = CircletIdeaAutomationTracer(processHandler)
 
         val failureChecker = object : FailureChecker {
             override fun check(tx: AutomationStorageTransaction, updates: Set<StepExecutionStatusUpdate>) {
@@ -90,6 +93,7 @@ class CircletTaskRunner(val project: Project) {
                 launch(lifetime, jobsSchedulingDispatcher, "ServerJobExecutionScheduler:scheduleExecution") {
                     logger.catch {
                         stepExecs.forEach {
+                            logger.info { "scheduleExecution ${it.meta.data.exec}" }
                             stepExecutionProvider.startExecution(it)
                         }
                     }
@@ -134,13 +138,11 @@ class CircletTaskRunner(val project: Project) {
         // todo: better lifetime
         launch(Lifetime.Eternal, Ui) {
             try {
-                val graphId = automationStarterCommon.createGraph(0L, repositoryData, branch, commit, task)
+                val graphId = automationStarterCommon.createGraph(0L, repositoryData, branch, commit, task, bootstrapJobRequired = false)
                 automationStarterCommon.startGraph(graphId)
             } catch (th: Throwable) {
                 logger.error(th)
                 processHandler.notifyTextAvailable("Run task failed. ${th.message}$newLine", ProcessOutputTypes.STDERR)
-            } finally {
-                processHandler.dispose()
             }
         }
 
@@ -148,11 +150,6 @@ class CircletTaskRunner(val project: Project) {
     }
 
     private val newLine: String = System.getProperty("line.separator", "\n")
-
-    private fun ProcessHandler.println(text: String) {
-        this.notifyTextAvailable("$text$newLine", ProcessOutputTypes.SYSTEM)
-
-    }
 }
 
 class TaskProcessHandler(private val taskName: String) : ProcessHandler() {

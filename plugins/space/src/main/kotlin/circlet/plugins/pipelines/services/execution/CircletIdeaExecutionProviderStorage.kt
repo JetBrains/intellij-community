@@ -6,6 +6,7 @@ import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
 import circlet.pipelines.provider.api.*
 import circlet.pipelines.provider.local.*
+import circlet.platform.api.*
 import libraries.io.random.*
 import libraries.klogging.*
 
@@ -13,9 +14,11 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
     companion object : KLogging()
 
     private val idStorage = TaskLongIdStorage()
-    private val storedStepExecutions = mutableMapOf<Long, AStepExecutionEntity<*>>()
+
+    private val stepExecutions = mutableListOf<AStepExecutionEntity<*>>()
 
     val executions = mutableListOf<CircletIdeaAGraphExecutionEntity>()
+
     val volumeSnapshots = mutableListOf<CircletIdeaVolumeSnapshotEntity>()
 
     override fun findVolumeId(volumeName: String): String? {
@@ -31,7 +34,8 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
     }
 
     override fun registerSnapshot(snapshotId: String, stepExecutionId: Long) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val step = findStepExecution(stepExecutionId, false) ?: error("Execution step is not found")
+        volumeSnapshots.add(CircletIdeaVolumeSnapshotEntity(Random.nextLong(), snapshotId, nowMs, step.graph.id, stepExecutionId, this))
     }
 
     override fun deleteSnapshotsByGraphExecution(graphExecution: AGraphExecutionEntity): Int {
@@ -43,11 +47,11 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
     }
 
     override fun findStepExecution(id: Long, forUpdate: Boolean): AStepExecutionEntity<ScriptStep.Process<*, *>>? {
-        return storedStepExecutions[id]
+        return stepExecutions.firstOrNull { it.id == id }
     }
 
     override fun findStepExecutions(ids: List<Long>, forUpdate: Boolean): Sequence<AStepExecutionEntity<ScriptStep.Process<*, *>>> {
-        return storedStepExecutions.filterKeys { it in ids }.map { it.value }.asSequence()
+        return stepExecutions.filter { it.id in ids }.asSequence()
     }
 
     override fun findAuthClient(graphExecution: AGraphExecutionEntity): ServiceCredentials? {
@@ -55,8 +59,8 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         return ServiceCredentials("", "")
     }
 
-    override fun findSnapshotForJobExecution(stepExec: AStepExecutionEntity<*>): AVolumeSnapshotEntity? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun findSnapshotForStepExecution(stepExec: AStepExecutionEntity<*>): AVolumeSnapshotEntity? {
+        return volumeSnapshots.firstOrNull { it.stepExecutionId == stepExec.id }
     }
 
     override fun findSnapshotCreationPoint(graphExecutionId: Long): AStepExecutionEntity<ScriptStep.Process<*, *>>? {
@@ -128,7 +132,7 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
 
     private fun createAStepExecutionEntity(bootstrapJob: ScriptStep.Process.Container, graphExecution: AGraphExecutionEntity): AStepExecutionEntity<*> {
         val jobExecId = idStorage.getOrCreateId(bootstrapJob.id)
-        val entity = CircletIdeaAContainerStepExecutionEntity(
+        val entity = CircletIdeaContainerStepExecutionEntity(
             jobExecId,
             System.currentTimeMillis(),
             null,
@@ -139,7 +143,7 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
             false,
             null
         )
-        storedStepExecutions[jobExecId] = entity
+        stepExecutions.add(entity)
         return entity
     }
 
