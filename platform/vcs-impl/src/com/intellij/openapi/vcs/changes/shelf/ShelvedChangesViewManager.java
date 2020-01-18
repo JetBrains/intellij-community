@@ -717,12 +717,6 @@ public class ShelvedChangesViewManager implements Disposable {
           }
 
           @Override
-          protected void doRefresh() {
-            changeProcessor.refresh(false);
-            closeEditorPreviewIfEmpty();
-          }
-
-          @Override
           protected boolean hasContent() {
             return changeProcessor.myCurrentShelvedElement != null;
           }

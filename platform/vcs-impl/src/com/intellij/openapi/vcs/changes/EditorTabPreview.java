@@ -72,30 +72,27 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   @Nullable
   protected abstract String getCurrentName();
 
-  protected abstract void doRefresh();
-
   protected boolean skipPreviewUpdate() {
     return ToolWindowManager.getInstance(myProject).isEditorComponentActive();
   }
 
-  protected boolean isContentEmpty() {
-    return false;
-  }
-
   @Override
   public void updatePreview(boolean fromModelRefresh) {
-    doRefresh();
+    if (myChangeProcessor instanceof DiffPreviewUpdateProcessor) {
+      ((DiffPreviewUpdateProcessor)myChangeProcessor).refresh(false);
+    }
+    if (!hasContent()) closeEditorPreview();
   }
 
   @Override
   public void setDiffPreviewVisible(boolean isVisible) {
     updatePreview(false);
 
-    if (!isVisible || isContentEmpty()) {
-      FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
+    if (isVisible) {
+      openEditorPreview(false);
     }
     else {
-      openEditorPreview(false);
+      closeEditorPreview();
     }
   }
 
@@ -103,11 +100,6 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   public void setAllowExcludeFromCommit(boolean value) {
     myChangeProcessor.putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, value);
     myChangeProcessor.updateRequest(true);
-  }
-
-  @NotNull
-  private PreviewDiffVirtualFile getVcsContentFile() {
-    return myPreviewDiffVirtualFile;
   }
 
   private static class MyDiffPreviewProvider implements DiffPreviewProvider {
@@ -141,19 +133,15 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   protected abstract boolean hasContent();
 
-  public void closeEditorPreviewIfEmpty() {
-    if (!hasContent()) closeEditorPreview();
-  }
-
   public void closeEditorPreview() {
-    FileEditorManager.getInstance(myProject).closeFile(getVcsContentFile());
+    FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
   }
 
   public void openEditorPreview(boolean focus) {
     if (hasContent()) {
       boolean wasOpen = FileEditorManager.getInstance(myProject).isFileOpen(myPreviewDiffVirtualFile);
 
-      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(getVcsContentFile(), focus, true);
+      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, focus, true);
 
       if (!wasOpen) {
         DumbAwareAction action = new DumbAwareAction() {

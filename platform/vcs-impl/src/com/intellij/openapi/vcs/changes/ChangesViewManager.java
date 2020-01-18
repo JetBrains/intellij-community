@@ -387,13 +387,6 @@ public class ChangesViewManager implements ChangesViewEx,
           protected boolean hasContent() {
             return changeProcessor.getCurrentChangeName() != null;
           }
-
-          @Override
-          protected void doRefresh() {
-            changeProcessor.refresh(false);
-
-            closeEditorPreviewIfEmpty();
-          }
         };
         mainPanel = contentPanel;
 
