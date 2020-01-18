@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
@@ -15,13 +15,9 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   @NotNull private final DiffPreviewUpdateProcessor myProcessor;
   private boolean myDetailsOn;
 
-  public PreviewDiffSplitterComponent(@NotNull JComponent firstComponent,
-                                      @NotNull DiffPreviewUpdateProcessor processor,
-                                      @NotNull String splitterDimensionKey, boolean detailsOn) {
-    super(splitterDimensionKey, 0.3f);
+  public PreviewDiffSplitterComponent(@NotNull DiffPreviewUpdateProcessor processor, @NotNull String proportionKey) {
+    super(proportionKey, 0.3f);
     myProcessor = processor;
-    setFirstComponent(firstComponent);
-    setDetailsOn(detailsOn);
   }
 
   public void updatePreview(boolean fromModelRefresh) {

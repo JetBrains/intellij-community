@@ -393,12 +393,13 @@ public class ChangesViewManager implements ChangesViewEx,
         myView.setExpandableItemsEnabled(false);
       }
       else {
-        PreviewDiffSplitterComponent splitter =
-          new PreviewDiffSplitterComponent(contentPanel, changeProcessor,
-                                           CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                           myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
-        myDiffPreview = new PanelPreview(splitter);
-        mainPanel = splitter;
+        PreviewDiffSplitterComponent previewSplitter =
+          new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
+        previewSplitter.setFirstComponent(contentPanel);
+        previewSplitter.setDetailsOn(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+
+        myDiffPreview = new PanelPreview(previewSplitter);
+        mainPanel = previewSplitter;
 
         myView.addTreeSelectionListener(e -> {
           boolean fromModelRefresh = myModelUpdateInProgress;

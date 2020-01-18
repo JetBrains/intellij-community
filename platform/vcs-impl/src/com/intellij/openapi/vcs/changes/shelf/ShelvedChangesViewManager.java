@@ -724,14 +724,16 @@ public class ShelvedChangesViewManager implements Disposable {
 
         myRootPanel.add(pane);
       } else {
-        PreviewDiffSplitterComponent previewDiffSplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
-          myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+        PreviewDiffSplitterComponent previewSplitter =
+          new PreviewDiffSplitterComponent(changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
+        previewSplitter.setFirstComponent(pane);
+        previewSplitter.setDetailsOn(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
 
         myDiffPreview = new ChangesViewPreview() {
 
           @Override
           public void updatePreview(boolean fromModelRefresh) {
-            previewDiffSplitterComponent.updatePreview(fromModelRefresh);
+            previewSplitter.updatePreview(fromModelRefresh);
           }
 
           @Override
@@ -741,11 +743,11 @@ public class ShelvedChangesViewManager implements Disposable {
 
           @Override
           public void setDiffPreviewVisible(boolean isVisible) {
-            previewDiffSplitterComponent.setDetailsOn(isVisible);
+            previewSplitter.setDetailsOn(isVisible);
           }
         };
 
-        myRootPanel.add(previewDiffSplitterComponent, BorderLayout.CENTER);
+        myRootPanel.add(previewSplitter, BorderLayout.CENTER);
         myTree.addSelectionListener(() -> myDiffPreview.updatePreview(false));
       }
 
