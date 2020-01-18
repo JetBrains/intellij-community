@@ -32,24 +32,9 @@ internal constructor(private val project: Project,
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent {
     val wrapper = RoundedPanel()
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
-
-    val commentsPanel = GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(avatarIconsProvider))
-    val panel = JBUI.Panels.simplePanel(commentsPanel)
-      .withBorder(JBUI.Borders.empty(12, 12))
-      .andTransparent()
-
-    if (reviewService.canComment()) {
-      val replyField = GHPRCommentsUIUtil.createTogglableCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
-        reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
-          thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
-        }
-      }.apply {
-        border = JBUI.Borders.emptyTop(12)
-      }
-      panel.addToBottom(replyField)
-    }
-
-    wrapper.setContent(panel)
+    wrapper.setContent(GHPRReviewThreadComponent.create(project, thread, reviewService, avatarIconsProvider, currentUser).apply {
+      border = JBUI.Borders.empty(8, 8)
+    })
     return wrapper
   }
 

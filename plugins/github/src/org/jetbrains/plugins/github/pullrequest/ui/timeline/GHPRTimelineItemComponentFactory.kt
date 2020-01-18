@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -25,11 +24,10 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.*
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.*
 import javax.swing.*
 import kotlin.math.ceil
@@ -75,7 +73,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           border = JBUI.Borders.emptyBottom(12)
         })
       }
-      add(GHPRReviewThreadsPanel(reviewThreadsModel, ::createReviewThread))
+      add(GHPRReviewThreadsPanel(reviewThreadsModel) {
+        GHPRReviewThreadComponent.createWithDiff(project, it, reviewService, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
+      })
     }
 
     val icon = when (review.state) {
@@ -93,25 +93,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)
-  }
-
-  private fun createReviewThread(thread: GHPRReviewThreadModel): JComponent {
-    val panel = VerticalBox().apply {
-      isOpaque = false
-      add(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      add(Box.createRigidArea(JBDimension(0, 12)))
-      add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(avatarIconsProvider)))
-    }
-
-    if (reviewService.canComment()) {
-      panel.add(Box.createRigidArea(JBDimension(0, 12)))
-      panel.add(GHPRCommentsUIUtil.createTogglableCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
-        reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
-          thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
-        }
-      })
-    }
-    return panel
   }
 
   private fun userAvatar(user: GHActor?): JLabel {
