@@ -11,17 +11,18 @@ import javax.swing.*;
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 import static com.intellij.util.ui.JBUI.emptySize;
 
-public class PreviewDiffSplitterComponent extends OnePixelSplitter {
+public class PreviewDiffSplitterComponent extends OnePixelSplitter implements ChangesViewPreview {
   @NotNull private final DiffPreviewUpdateProcessor myProcessor;
-  private boolean myDetailsOn;
+  private boolean myDiffPreviewVisible;
 
   public PreviewDiffSplitterComponent(@NotNull DiffPreviewUpdateProcessor processor, @NotNull String proportionKey) {
     super(proportionKey, 0.3f);
     myProcessor = processor;
   }
 
+  @Override
   public void updatePreview(boolean fromModelRefresh) {
-    if (isDetailsOn()) {
+    if (isDiffPreviewVisible()) {
       myProcessor.refresh(fromModelRefresh);
     }
     else {
@@ -29,17 +30,31 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
     }
   }
 
-  void setAllowExcludeFromCommit(boolean value) {
+  public boolean isDiffPreviewVisible() {
+    return myDiffPreviewVisible;
+  }
+
+  @Override
+  public void setDiffPreviewVisible(boolean isVisible) {
+    myDiffPreviewVisible = isVisible;
+    if (myDiffPreviewVisible == (getSecondComponent() == null)) {
+      updateVisibility();
+    }
+    updatePreview(false);
+  }
+
+  @Override
+  public void setAllowExcludeFromCommit(boolean value) {
     if (!(myProcessor instanceof DiffRequestProcessor)) return;
 
     DiffRequestProcessor diffRequestProcessor = (DiffRequestProcessor)myProcessor;
 
     diffRequestProcessor.putContextUserData(ALLOW_EXCLUDE_FROM_COMMIT, value);
-    if (isDetailsOn()) diffRequestProcessor.updateRequest(true);
+    if (isDiffPreviewVisible()) diffRequestProcessor.updateRequest(true);
   }
 
   private void updateVisibility() {
-    setSecondComponent(myDetailsOn ? myProcessor.getComponent() : null);
+    setSecondComponent(myDiffPreviewVisible ? myProcessor.getComponent() : null);
     JComponent secondComponent = getSecondComponent();
     if (secondComponent != null) {
       IJSwingUtilities.updateComponentTreeUI(secondComponent);
@@ -47,18 +62,5 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
     }
     validate();
     repaint();
-  }
-
-
-  public boolean isDetailsOn() {
-    return myDetailsOn;
-  }
-
-  public void setDetailsOn(boolean detailsOn) {
-    myDetailsOn = detailsOn;
-    if (myDetailsOn == (getSecondComponent() == null)) {
-      updateVisibility();
-    }
-    updatePreview(false);
   }
 }

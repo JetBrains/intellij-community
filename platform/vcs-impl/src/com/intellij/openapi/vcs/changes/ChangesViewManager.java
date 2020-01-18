@@ -396,9 +396,9 @@ public class ChangesViewManager implements ChangesViewEx,
         PreviewDiffSplitterComponent previewSplitter =
           new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
         previewSplitter.setFirstComponent(contentPanel);
-        previewSplitter.setDetailsOn(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+        previewSplitter.setDiffPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
-        myDiffPreview = new PanelPreview(previewSplitter);
+        myDiffPreview = previewSplitter;
         mainPanel = previewSplitter;
 
         myView.addTreeSelectionListener(e -> {
@@ -501,7 +501,8 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void setCommitSplitOrientation() {
-      boolean hasPreviewPanel = myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && myDiffPreview instanceof PanelPreview;
+      boolean hasPreviewPanel =
+        myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && myDiffPreview instanceof PreviewDiffSplitterComponent;
       myCommitPanelSplitter.setOrientation(hasPreviewPanel || !isCommitSplitHorizontal.asBoolean());
     }
 
@@ -740,31 +741,6 @@ public class ChangesViewManager implements ChangesViewEx,
         return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
       }
     }
-
-    private class PanelPreview implements ChangesViewPreview {
-      @NotNull private final PreviewDiffSplitterComponent myPreviewSplitter;
-
-      private PanelPreview(@NotNull PreviewDiffSplitterComponent previewSplitter) {
-        myPreviewSplitter = previewSplitter;
-      }
-
-      @Override
-      public void updatePreview(boolean fromModelRefresh) {
-        myPreviewSplitter.updatePreview(fromModelRefresh);
-      }
-
-      @Override
-      public void setDiffPreviewVisible(boolean isVisible) {
-        myPreviewSplitter.setDetailsOn(isVisible);
-      }
-
-      @Override
-      public void setAllowExcludeFromCommit(boolean value) {
-        myPreviewSplitter.setAllowExcludeFromCommit(value);
-      }
-    }
-
-
   }
 
   protected ChangesViewCommitPanel createCommitPanel(@NotNull ChangesListView myView, @NotNull ChangesViewToolWindowPanel changesViewToolWindowPanel) {

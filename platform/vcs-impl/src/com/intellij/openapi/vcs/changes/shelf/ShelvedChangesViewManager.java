@@ -727,26 +727,9 @@ public class ShelvedChangesViewManager implements Disposable {
         PreviewDiffSplitterComponent previewSplitter =
           new PreviewDiffSplitterComponent(changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
         previewSplitter.setFirstComponent(pane);
-        previewSplitter.setDetailsOn(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+        previewSplitter.setDiffPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
 
-        myDiffPreview = new ChangesViewPreview() {
-
-          @Override
-          public void updatePreview(boolean fromModelRefresh) {
-            previewSplitter.updatePreview(fromModelRefresh);
-          }
-
-          @Override
-          public void setAllowExcludeFromCommit(boolean value) {
-            throw new UnsupportedOperationException("should not be called in shelved view");
-          }
-
-          @Override
-          public void setDiffPreviewVisible(boolean isVisible) {
-            previewSplitter.setDetailsOn(isVisible);
-          }
-        };
-
+        myDiffPreview = previewSplitter;
         myRootPanel.add(previewSplitter, BorderLayout.CENTER);
         myTree.addSelectionListener(() -> myDiffPreview.updatePreview(false));
       }
