@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -18,8 +17,11 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffComment
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val project: Project,
@@ -30,16 +32,21 @@ internal constructor(private val project: Project,
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent {
-    val wrapper = RoundedPanel()
+    val wrapper = RoundedPanel(BorderLayout(0, 0))
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
-    wrapper.setContent(GHPRReviewThreadComponent.create(project, thread, reviewService, avatarIconsProvider, currentUser).apply {
+    val component = GHPRReviewThreadComponent.create(project, thread, reviewService, avatarIconsProvider, currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
+    }
+    wrapper.add(component, BorderLayout.NORTH)
+    component.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) =
+        wrapper.dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))
     })
     return wrapper
   }
 
   override fun createCommentComponent(side: Side, line: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
-    val wrapper = RoundedPanel()
+    val wrapper = RoundedPanel(BorderLayout(0, 0))
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
     val commentField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Comment") { text ->
@@ -53,11 +60,15 @@ internal constructor(private val project: Project,
       border = JBUI.Borders.empty(12)
     }
 
-    wrapper.setContent(commentField)
+    wrapper.add(commentField, BorderLayout.NORTH)
+    commentField.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) =
+        wrapper.dispatchEvent(ComponentEvent(commentField, ComponentEvent.COMPONENT_RESIZED))
+    })
     return wrapper
   }
 
-  private class RoundedPanel : Wrapper() {
+  private class RoundedPanel(layout: LayoutManager?) : JPanel(layout) {
     private var borderLineColor: Color? = null
 
     init {
