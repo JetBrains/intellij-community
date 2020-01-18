@@ -11,6 +11,7 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -72,6 +73,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
 
     List<URL> cp = new ArrayList<>();
     appendPath(cp, JBTabbedPane.class);
+    appendPath(cp, TitledSeparator.class);
     appendPath(cp, TIntObjectHashMap.class);
     appendPath(cp, UIUtil.class);
     appendPath(cp, UIUtilities.class);
@@ -348,6 +350,11 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals("Test Value", border.getTitle());
     assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
+  }
+  
+  public void testTitledSeparator() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledSeparator.form", "BindingTest");
+    assertEquals("Test Value", ((JLabel)((JPanel)panel.getComponent(2)).getComponent(0)).getText());
   }
 
   public void testMnemonic() throws Exception {
