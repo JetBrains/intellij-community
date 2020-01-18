@@ -12,32 +12,32 @@ import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListD
 import static com.intellij.util.ui.JBUI.emptySize;
 
 public class PreviewDiffSplitterComponent extends OnePixelSplitter implements ChangesViewPreview {
-  @NotNull private final DiffPreviewUpdateProcessor myProcessor;
-  private boolean myDiffPreviewVisible;
+  @NotNull private final DiffPreviewUpdateProcessor myUpdatePreviewProcessor;
+  private boolean myPreviewVisible;
 
-  public PreviewDiffSplitterComponent(@NotNull DiffPreviewUpdateProcessor processor, @NotNull String proportionKey) {
+  public PreviewDiffSplitterComponent(@NotNull DiffPreviewUpdateProcessor updatePreviewProcessor, @NotNull String proportionKey) {
     super(proportionKey, 0.3f);
-    myProcessor = processor;
+    myUpdatePreviewProcessor = updatePreviewProcessor;
   }
 
   @Override
   public void updatePreview(boolean fromModelRefresh) {
-    if (isDiffPreviewVisible()) {
-      myProcessor.refresh(fromModelRefresh);
+    if (isPreviewVisible()) {
+      myUpdatePreviewProcessor.refresh(fromModelRefresh);
     }
     else {
-      myProcessor.clear();
+      myUpdatePreviewProcessor.clear();
     }
   }
 
-  public boolean isDiffPreviewVisible() {
-    return myDiffPreviewVisible;
+  public boolean isPreviewVisible() {
+    return myPreviewVisible;
   }
 
   @Override
-  public void setDiffPreviewVisible(boolean isVisible) {
-    myDiffPreviewVisible = isVisible;
-    if (myDiffPreviewVisible == (getSecondComponent() == null)) {
+  public void setPreviewVisible(boolean isPreviewVisible) {
+    myPreviewVisible = isPreviewVisible;
+    if (myPreviewVisible == (getSecondComponent() == null)) {
       updateVisibility();
     }
     updatePreview(false);
@@ -45,16 +45,16 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter implements Ch
 
   @Override
   public void setAllowExcludeFromCommit(boolean value) {
-    if (!(myProcessor instanceof DiffRequestProcessor)) return;
+    if (!(myUpdatePreviewProcessor instanceof DiffRequestProcessor)) return;
 
-    DiffRequestProcessor diffRequestProcessor = (DiffRequestProcessor)myProcessor;
+    DiffRequestProcessor diffProcessor = (DiffRequestProcessor)myUpdatePreviewProcessor;
 
-    diffRequestProcessor.putContextUserData(ALLOW_EXCLUDE_FROM_COMMIT, value);
-    if (isDiffPreviewVisible()) diffRequestProcessor.updateRequest(true);
+    diffProcessor.putContextUserData(ALLOW_EXCLUDE_FROM_COMMIT, value);
+    if (isPreviewVisible()) diffProcessor.updateRequest(true);
   }
 
   private void updateVisibility() {
-    setSecondComponent(myDiffPreviewVisible ? myProcessor.getComponent() : null);
+    setSecondComponent(myPreviewVisible ? myUpdatePreviewProcessor.getComponent() : null);
     JComponent secondComponent = getSecondComponent();
     if (secondComponent != null) {
       IJSwingUtilities.updateComponentTreeUI(secondComponent);

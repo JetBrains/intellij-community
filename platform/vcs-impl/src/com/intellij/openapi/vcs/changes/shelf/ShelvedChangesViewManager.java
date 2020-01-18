@@ -289,7 +289,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     ChangesViewPreview diffPreview = myContent.myPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).closeEditorPreview();
+      ((EditorTabPreview)diffPreview).closePreview();
     }
   }
 
@@ -302,7 +302,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     ChangesViewPreview diffPreview = myContent.myPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).openEditorPreview(false);
+      ((EditorTabPreview)diffPreview).openPreview(false);
     }
   }
 
@@ -727,7 +727,7 @@ public class ShelvedChangesViewManager implements Disposable {
         PreviewDiffSplitterComponent previewSplitter =
           new PreviewDiffSplitterComponent(changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
         previewSplitter.setFirstComponent(pane);
-        previewSplitter.setDiffPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+        previewSplitter.setPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
 
         myDiffPreview = previewSplitter;
         myRootPanel.add(previewSplitter, BorderLayout.CENTER);
@@ -762,7 +762,7 @@ public class ShelvedChangesViewManager implements Disposable {
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myDiffPreview.setDiffPreviewVisible(state);
+        myDiffPreview.setPreviewVisible(state);
         myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
       }
 

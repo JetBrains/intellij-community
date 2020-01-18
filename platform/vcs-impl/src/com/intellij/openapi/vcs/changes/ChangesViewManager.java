@@ -261,7 +261,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).closeEditorPreview();
+      ((EditorTabPreview)diffPreview).closePreview();
     }
   }
 
@@ -276,7 +276,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).openEditorPreview(false);
+      ((EditorTabPreview)diffPreview).openPreview(false);
     }
   }
 
@@ -360,8 +360,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       JComponent mainPanel;
       if (isPreviewInEditor) {
-        myDiffPreview = new EditorTabPreview(changeProcessor,
-          contentPanel, myView){
+        myDiffPreview = new EditorTabPreview(changeProcessor, contentPanel, myView) {
 
           @Override
           protected String getCurrentName() {
@@ -396,7 +395,7 @@ public class ChangesViewManager implements ChangesViewEx,
         PreviewDiffSplitterComponent previewSplitter =
           new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
         previewSplitter.setFirstComponent(contentPanel);
-        previewSplitter.setDiffPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+        previewSplitter.setPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
         myDiffPreview = previewSplitter;
         mainPanel = previewSplitter;
@@ -732,7 +731,7 @@ public class ChangesViewManager implements ChangesViewEx,
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
-        myDiffPreview.setDiffPreviewVisible(state);
+        myDiffPreview.setPreviewVisible(state);
         setCommitSplitOrientation();
       }
 

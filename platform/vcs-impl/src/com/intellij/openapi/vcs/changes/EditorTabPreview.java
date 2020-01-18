@@ -28,31 +28,31 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public abstract class EditorTabPreview implements ChangesViewPreview {
   private final Project myProject;
-  @NotNull private final PreviewDiffVirtualFile myPreviewDiffVirtualFile;
-  private final DiffRequestProcessor myChangeProcessor;
+  @NotNull private final PreviewDiffVirtualFile myPreviewFile;
+  private final DiffRequestProcessor myDiffProcessor;
 
-  private final MergingUpdateQueue mySelectInEditor;
+  private final MergingUpdateQueue myUpdatePreviewQueue;
 
-  public EditorTabPreview(@NotNull DiffRequestProcessor changeProcessor,
-                          @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
-    myProject = ObjectUtils.assertNotNull(changeProcessor.getProject());
+  public EditorTabPreview(@NotNull DiffRequestProcessor diffProcessor, @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
+    myProject = ObjectUtils.assertNotNull(diffProcessor.getProject());
 
-    mySelectInEditor = new MergingUpdateQueue("selectInEditorQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, myProject, null, true);
-    mySelectInEditor.setRestartTimerOnAdd(true);
+    myUpdatePreviewQueue =
+      new MergingUpdateQueue("updatePreviewQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, myProject, null, true);
+    myUpdatePreviewQueue.setRestartTimerOnAdd(true);
 
-    myChangeProcessor = changeProcessor;
-    MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(changeProcessor, this::getCurrentName);
-    myPreviewDiffVirtualFile = new PreviewDiffVirtualFile(previewProvider);
+    myDiffProcessor = diffProcessor;
+    MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(diffProcessor, this::getCurrentName);
+    myPreviewFile = new PreviewDiffVirtualFile(previewProvider);
 
     //do not open file aggressively on start up, do it later
     DumbService.getInstance(myProject).smartInvokeLater(() -> {
       if (myProject.isDisposed()) return;
 
       changesTree.addSelectionListener(() -> {
-        mySelectInEditor.queue(Update.create(this, () -> {
+        myUpdatePreviewQueue.queue(Update.create(this, () -> {
           if (skipPreviewUpdate()) return;
 
-          setDiffPreviewVisible(true);
+          setPreviewVisible(true);
         }));
       });
     });
@@ -64,7 +64,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        openEditorPreview(true);
+        openPreview(true);
       }
     }.registerCustomShortcutSet(contentPanel, null);
   }
@@ -78,45 +78,45 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   @Override
   public void updatePreview(boolean fromModelRefresh) {
-    if (myChangeProcessor instanceof DiffPreviewUpdateProcessor) {
-      ((DiffPreviewUpdateProcessor)myChangeProcessor).refresh(false);
+    if (myDiffProcessor instanceof DiffPreviewUpdateProcessor) {
+      ((DiffPreviewUpdateProcessor)myDiffProcessor).refresh(false);
     }
-    if (!hasContent()) closeEditorPreview();
+    if (!hasContent()) closePreview();
   }
 
   @Override
-  public void setDiffPreviewVisible(boolean isVisible) {
+  public void setPreviewVisible(boolean isPreviewVisible) {
     updatePreview(false);
 
-    if (isVisible) {
-      openEditorPreview(false);
+    if (isPreviewVisible) {
+      openPreview(false);
     }
     else {
-      closeEditorPreview();
+      closePreview();
     }
   }
 
   @Override
   public void setAllowExcludeFromCommit(boolean value) {
-    myChangeProcessor.putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, value);
-    myChangeProcessor.updateRequest(true);
+    myDiffProcessor.putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, value);
+    myDiffProcessor.updateRequest(true);
   }
 
   private static class MyDiffPreviewProvider implements DiffPreviewProvider {
     @NotNull
-    private final DiffRequestProcessor myChangeProcessor;
+    private final DiffRequestProcessor myDiffProcessor;
     @NotNull
     private final Supplier<String> myGetName;
 
-    private MyDiffPreviewProvider(@NotNull DiffRequestProcessor changeProcessor, @NotNull Supplier<String> getName) {
-      myChangeProcessor = changeProcessor;
+    private MyDiffPreviewProvider(@NotNull DiffRequestProcessor diffProcessor, @NotNull Supplier<String> getName) {
+      myDiffProcessor = diffProcessor;
       myGetName = getName;
     }
 
     @NotNull
     @Override
     public DiffRequestProcessor createDiffRequestProcessor() {
-      return myChangeProcessor;
+      return myDiffProcessor;
     }
 
     @NotNull
@@ -133,15 +133,15 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   protected abstract boolean hasContent();
 
-  public void closeEditorPreview() {
-    FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
+  public void closePreview() {
+    FileEditorManager.getInstance(myProject).closeFile(myPreviewFile);
   }
 
-  public void openEditorPreview(boolean focus) {
+  public void openPreview(boolean focus) {
     if (hasContent()) {
-      boolean wasOpen = FileEditorManager.getInstance(myProject).isFileOpen(myPreviewDiffVirtualFile);
+      boolean wasOpen = FileEditorManager.getInstance(myProject).isFileOpen(myPreviewFile);
 
-      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, focus, true);
+      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(myPreviewFile, focus, true);
 
       if (!wasOpen) {
         DumbAwareAction action = new DumbAwareAction() {
