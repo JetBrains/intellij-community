@@ -703,14 +703,6 @@ public class ShelvedChangesViewManager implements Disposable {
         myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree) {
 
           @Override
-          protected boolean skipPreviewUpdate() {
-            if (super.skipPreviewUpdate()) return true;
-            if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
-
-            return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
-          }
-
-          @Override
           protected String getCurrentName() {
             ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
             return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : "Shelf";
@@ -719,6 +711,14 @@ public class ShelvedChangesViewManager implements Disposable {
           @Override
           protected boolean hasContent() {
             return changeProcessor.myCurrentShelvedElement != null;
+          }
+
+          @Override
+          protected boolean skipPreviewUpdate() {
+            if (super.skipPreviewUpdate()) return true;
+            if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
+
+            return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
           }
         };
 

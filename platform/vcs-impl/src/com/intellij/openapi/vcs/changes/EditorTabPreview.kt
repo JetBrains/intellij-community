@@ -1,165 +1,111 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.diff.impl.DiffRequestProcessor;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
-import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.util.function.Supplier;
+abstract class EditorTabPreview(
+  private val diffProcessor: DiffRequestProcessor,
+  contentPanel: JComponent,
+  changesTree: ChangesTree
+) : ChangesViewPreview {
 
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
+  private val project get() = diffProcessor.project!!
+  private val previewFile = PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor) { getCurrentName() })
+  private val updatePreviewQueue =
+    MergingUpdateQueue("updatePreviewQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, project, null, true).apply {
+      setRestartTimerOnAdd(true)
+    }
 
-public abstract class EditorTabPreview implements ChangesViewPreview {
-  private final Project myProject;
-  @NotNull private final PreviewDiffVirtualFile myPreviewFile;
-  private final DiffRequestProcessor myDiffProcessor;
-
-  private final MergingUpdateQueue myUpdatePreviewQueue;
-
-  public EditorTabPreview(@NotNull DiffRequestProcessor diffProcessor, @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
-    myProject = ObjectUtils.assertNotNull(diffProcessor.getProject());
-
-    myUpdatePreviewQueue =
-      new MergingUpdateQueue("updatePreviewQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, myProject, null, true);
-    myUpdatePreviewQueue.setRestartTimerOnAdd(true);
-
-    myDiffProcessor = diffProcessor;
-    MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(diffProcessor, this::getCurrentName);
-    myPreviewFile = new PreviewDiffVirtualFile(previewProvider);
-
+  init {
     //do not open file aggressively on start up, do it later
-    DumbService.getInstance(myProject).smartInvokeLater(() -> {
-      if (myProject.isDisposed()) return;
+    DumbService.getInstance(project).smartInvokeLater {
+      if (project.isDisposed) return@smartInvokeLater
 
-      changesTree.addSelectionListener(() -> {
-        myUpdatePreviewQueue.queue(Update.create(this, () -> {
-          if (skipPreviewUpdate()) return;
-
-          setPreviewVisible(true);
-        }));
-      });
-    });
-
-    new DumbAwareAction() {
-      {
-        copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF));
+      changesTree.addSelectionListener {
+        updatePreviewQueue.queue(Update.create(this) {
+          if (skipPreviewUpdate()) return@create
+          setPreviewVisible(true)
+        })
+      }
+    }
+    object : DumbAwareAction() {
+      init {
+        copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF))
       }
 
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        openPreview(true);
+      override fun actionPerformed(e: AnActionEvent) {
+        openPreview(true)
       }
-    }.registerCustomShortcutSet(contentPanel, null);
+    }.registerCustomShortcutSet(contentPanel, null)
   }
 
-  @Nullable
-  protected abstract String getCurrentName();
+  protected abstract fun getCurrentName(): String?
 
-  protected boolean skipPreviewUpdate() {
-    return ToolWindowManager.getInstance(myProject).isEditorComponentActive();
+  protected abstract fun hasContent(): Boolean
+
+  protected open fun skipPreviewUpdate(): Boolean = ToolWindowManager.getInstance(project).isEditorComponentActive
+
+  override fun updatePreview(fromModelRefresh: Boolean) {
+    (diffProcessor as? DiffPreviewUpdateProcessor)?.refresh(false)
+    if (!hasContent()) closePreview()
   }
 
-  @Override
-  public void updatePreview(boolean fromModelRefresh) {
-    if (myDiffProcessor instanceof DiffPreviewUpdateProcessor) {
-      ((DiffPreviewUpdateProcessor)myDiffProcessor).refresh(false);
-    }
-    if (!hasContent()) closePreview();
+  override fun setPreviewVisible(isPreviewVisible: Boolean) {
+    updatePreview(false)
+    if (isPreviewVisible) openPreview(false) else closePreview()
   }
 
-  @Override
-  public void setPreviewVisible(boolean isPreviewVisible) {
-    updatePreview(false);
-
-    if (isPreviewVisible) {
-      openPreview(false);
-    }
-    else {
-      closePreview();
-    }
+  override fun setAllowExcludeFromCommit(value: Boolean) {
+    diffProcessor.putContextUserData(ALLOW_EXCLUDE_FROM_COMMIT, value)
+    diffProcessor.updateRequest(true)
   }
 
-  @Override
-  public void setAllowExcludeFromCommit(boolean value) {
-    myDiffProcessor.putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, value);
-    myDiffProcessor.updateRequest(true);
-  }
+  fun closePreview() = FileEditorManager.getInstance(project).closeFile(previewFile)
 
-  private static class MyDiffPreviewProvider implements DiffPreviewProvider {
-    @NotNull
-    private final DiffRequestProcessor myDiffProcessor;
-    @NotNull
-    private final Supplier<String> myGetName;
-
-    private MyDiffPreviewProvider(@NotNull DiffRequestProcessor diffProcessor, @NotNull Supplier<String> getName) {
-      myDiffProcessor = diffProcessor;
-      myGetName = getName;
-    }
-
-    @NotNull
-    @Override
-    public DiffRequestProcessor createDiffRequestProcessor() {
-      return myDiffProcessor;
-    }
-
-    @NotNull
-    @Override
-    public Object getOwner() {
-      return this;
-    }
-
-    @Override
-    public String getEditorTabName() {
-      return notNullize(myGetName.get());
-    }
-  }
-
-  protected abstract boolean hasContent();
-
-  public void closePreview() {
-    FileEditorManager.getInstance(myProject).closeFile(myPreviewFile);
-  }
-
-  public void openPreview(boolean focus) {
+  fun openPreview(focus: Boolean) {
     if (hasContent()) {
-      boolean wasOpen = FileEditorManager.getInstance(myProject).isFileOpen(myPreviewFile);
-
-      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(myPreviewFile, focus, true);
-
+      val wasOpen = FileEditorManager.getInstance(project).isFileOpen(previewFile)
+      val fileEditors = FileEditorManager.getInstance(project).openFile(previewFile, focus, true)
       if (!wasOpen) {
-        DumbAwareAction action = new DumbAwareAction() {
-          {
-            setShortcutSet(CommonShortcuts.ESCAPE);
+        val action = object : DumbAwareAction() {
+          init {
+            shortcutSet = CommonShortcuts.ESCAPE
           }
 
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            ToolWindowManager.getInstance(myProject).getToolWindow("Commit").activate(() -> { });
+          override fun actionPerformed(e: AnActionEvent) {
+            ToolWindowManager.getInstance(project).getToolWindow("Commit")!!.activate {}
           }
-        };
-        action.registerCustomShortcutSet(fileEditors[0].getComponent(), null);
-
-        Disposer.register(fileEditors[0], () -> {
-          action.unregisterCustomShortcutSet(fileEditors[0].getComponent());
-        });
+        }
+        action.registerCustomShortcutSet(fileEditors[0].component, null)
+        Disposer.register(fileEditors[0], Disposable { action.unregisterCustomShortcutSet(fileEditors[0].component) })
       }
     }
   }
+}
+
+private class EditorTabDiffPreviewProvider(
+  private val diffProcessor: DiffRequestProcessor,
+  private val tabNameProvider: () -> String?
+) : DiffPreviewProvider {
+
+  override fun createDiffRequestProcessor(): DiffRequestProcessor = diffProcessor
+
+  override fun getOwner(): Any = this
+
+  override fun getEditorTabName(): String = tabNameProvider().orEmpty()
 }

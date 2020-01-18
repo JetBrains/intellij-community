@@ -368,6 +368,11 @@ public class ChangesViewManager implements ChangesViewEx,
           }
 
           @Override
+          protected boolean hasContent() {
+            return changeProcessor.getCurrentChangeName() != null;
+          }
+
+          @Override
           protected boolean skipPreviewUpdate() {
             if (super.skipPreviewUpdate()) return true;
             if (!myView.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
@@ -380,11 +385,6 @@ public class ChangesViewManager implements ChangesViewEx,
             if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
 
             super.updatePreview(fromModelRefresh);
-          }
-
-          @Override
-          protected boolean hasContent() {
-            return changeProcessor.getCurrentChangeName() != null;
           }
         };
         mainPanel = contentPanel;
