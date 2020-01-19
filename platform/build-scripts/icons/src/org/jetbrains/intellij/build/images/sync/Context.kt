@@ -36,6 +36,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val iconsCommitHashesToSync: MutableSet<String>
   val devIconsCommitHashesToSync: MutableSet<String>
   val devIconsSyncAll: Boolean
+  var doPush: Boolean = true
 
   init {
     val devRepoArg = "dev.repo"

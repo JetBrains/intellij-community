@@ -8,6 +8,8 @@ import java.io.File
 import java.nio.file.Path
 import java.util.*
 
+fun main() = DotnetIconSync.sync()
+
 @Suppress("unused")
 internal object DotnetIconSync {
   private class SyncPath(val iconsPath: String, val devPath: String)
@@ -47,6 +49,7 @@ internal object DotnetIconSync {
     val tmpCommit = transformIconsToIdeaFormat()
     try {
       syncPaths.forEach {
+        context.doPush = false
         context.devRepoDir = context.devRepoRoot.resolve(it.devPath)
         context.iconsRepoDir = context.iconsRepo.resolve(it.iconsPath)
         step("Syncing icons for ${it.devPath}..")
@@ -92,11 +95,11 @@ internal object DotnetIconSync {
         commit.hash == tmpCommit.hash
       }
     }
-    val commit = context.devRepoRoot.commit(changes.commitMessage(), committer.name, committer.email) {
+    val commit = context.devRepoRoot.commit(changes.commitMessage(context.iconsRepo), committer.name, committer.email) {
       it.fileName.toString().endsWith(".java")
     }
     if (commit != null) {
-      println("Committed ${commit.hash} ${commit.subject}")
+      println("Committed ${commit.hash} '${commit.subject}'")
     }
     else {
       println("Nothing to commit")
@@ -105,7 +108,9 @@ internal object DotnetIconSync {
   }
 
   private fun File.commit(message: String, user: String, email: String, filter: (Path) -> Boolean = { false }) =
-    gitStatus(this, includeUntracked = true).filter {
+    with(gitStatus(this, includeUntracked = true)) {
+      modified + added
+    }.filter {
       val path = toPath().resolve(it)
       isImage(path) || filter(path)
     }.let {

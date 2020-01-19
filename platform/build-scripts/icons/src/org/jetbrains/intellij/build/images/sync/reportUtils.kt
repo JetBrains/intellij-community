@@ -45,11 +45,15 @@ internal fun findCommitsToSync(context: Context) {
   }
 }
 
-internal fun Map<File, Collection<CommitInfo>>.commitMessage() = entries.joinToString("\n\n") { entry ->
-  entry.value.joinToString("\n") {
-    "'${it.subject}' from ${it.hash.substring(0..8)}"
-  } + " from ${getOriginUrl(entry.key)}"
-}
+internal fun Map<File, Collection<CommitInfo>>.commitMessage(repo: File? = null) =
+  if (flatMap { it.value }.isEmpty()) {
+    "Synced from ${getOriginUrl(repo ?: error("Unable to form commit message"))}"
+  }
+  else entries.joinToString("\n\n") { entry ->
+    entry.value.joinToString("\n") {
+      "'${it.subject}' from ${it.hash.substring(0..8)}"
+    } + " from ${getOriginUrl(entry.key)}"
+  }
 
 internal fun commitAndPush(context: Context) {
   if (context.iconsCommitsToSync.isEmpty()) return
@@ -73,8 +77,8 @@ private fun verifyDevIcons(context: Context, repos: Collection<File>) {
     context.verifyDevIcons(repos)
   }
   repos.forEach { repo ->
-    gitStatus(repo).forEach {
-      stageFiles(listOf(it), repo)
+    with(gitStatus(repo)) {
+      stageFiles(modified + added, repo)
     }
   }
 }
@@ -98,7 +102,7 @@ internal fun pushToIconsRepo(context: Context): Collection<CommitInfo> {
       }
       else {
         commitAndPush(master, committer.name, committer.email,
-                                                               commits.groupBy(CommitInfo::repo).commitMessage(), repos)
+                      commits.groupBy(CommitInfo::repo).commitMessage(), repos)
       }
     }
 }

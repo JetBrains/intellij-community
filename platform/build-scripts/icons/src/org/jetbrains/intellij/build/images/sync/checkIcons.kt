@@ -47,7 +47,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
         }
         throw e
       }
-      if (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty()) {
+      if (context.doPush && (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty())) {
         commitAndPush(context)
       }
     }

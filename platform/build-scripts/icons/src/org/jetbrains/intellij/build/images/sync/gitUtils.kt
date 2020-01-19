@@ -349,15 +349,24 @@ internal data class CommitInfo(
 
 internal data class Committer(val name: String, val email: String)
 
-internal fun gitStatus(repo: File, includeUntracked: Boolean = false) =
+internal fun gitStatus(repo: File, includeUntracked: Boolean = false) = Changes().apply {
   execute(repo, GIT, "status", "--short", "--untracked-files=${if (includeUntracked) "all" else "no"}", "--ignored=no")
     .lineSequence()
-    .map(String::trim)
-    .filter(String::isNotEmpty)
-    .map { if (it.contains("->")) it.split("->").last() else it }
-    .map { if (it.contains(" ")) it.split(" ").last() else it }
-    .map(String::trim)
-    .toList()
+    .filter(String::isNotBlank)
+    .forEach {
+      val (status, path) = it.splitToSequence("->", " ")
+        .filter(String::isNotBlank)
+        .map(String::trim)
+        .toList()
+      val type = when(status) {
+        "A", "??" -> Changes.Type.ADDED
+        "M" -> Changes.Type.MODIFIED
+        "D" -> Changes.Type.DELETED
+        else -> error("Unknown change type: $status. Git status line: $it")
+      }
+      register(type, listOf(path))
+    }
+}
 
 internal fun gitStage(repo: File) = execute(repo, GIT, "diff", "--cached", "--name-status")
 
