@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -94,7 +95,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
         @NotNull
         @Override
         public Result visitFileEx(@NotNull VirtualFile file) {
-          if (shouldProcess(file, project)) {
+          if (shouldProcess(file)) {
             changeLineSeparators(project, file, mySeparator);
           }
           return file.isDirectory() && (file.equals(projectVirtualDirectory) || fileTypeManager.isFileIgnored(file)) ? SKIP_CHILDREN : CONTINUE;
@@ -103,19 +104,18 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     }
   }
 
-  public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
+  public static boolean shouldProcess(@NotNull VirtualFile file) {
     return !(file.isDirectory()
              || !file.isWritable()
              || file instanceof VirtualFileWindow
              || FileTypeRegistry.getInstance().isFileIgnored(file)
              || file.getFileType().isBinary()
-             || file.equals(project.getProjectFile())
-             || file.equals(project.getWorkspaceFile()));
+             || file.getFileType() instanceof InternalFileType);
   }
 
-  public static void changeLineSeparators(@NotNull final Project project,
-                                          @NotNull final VirtualFile virtualFile,
-                                          @NotNull final String newSeparator) {
+  public static void changeLineSeparators(@NotNull Project project,
+                                          @NotNull VirtualFile virtualFile,
+                                          @NotNull String newSeparator) {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getCachedDocument(virtualFile);
     if (document != null) {
