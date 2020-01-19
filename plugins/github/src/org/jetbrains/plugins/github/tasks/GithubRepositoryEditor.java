@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
@@ -94,7 +95,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myTokenPanel.add(myToken, BorderLayout.CENTER);
     myTokenPanel.add(myTokenButton, BorderLayout.EAST);
 
-    myShowNotAssignedIssues = new JBCheckBox("Include issues not assigned to me");
+    myShowNotAssignedIssues = new JBCheckBox(VcsBundle.message("checkbox.include.issues.not.assigned.to.me"));
 
     installListener(myRepoAuthor);
     installListener(myRepoName);

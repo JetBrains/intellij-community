@@ -26,9 +26,9 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
 
   public JsonSchemaCatalogConfigurable(@NotNull final Project project) {
     myProject = project;
-    myCatalogCheckBox = new JBCheckBox("Use schemastore.org JSON Schema catalog");
-    myRemoteCheckBox = new JBCheckBox("Allow downloading JSON Schemas from remote sources");
-    myPreferRemoteCheckBox = new JBCheckBox("Always download the most recent version of schemas");
+    myCatalogCheckBox = new JBCheckBox(JsonBundle.message("checkbox.use.schemastore.org.json.schema.catalog"));
+    myRemoteCheckBox = new JBCheckBox(JsonBundle.message("checkbox.allow.downloading.json.schemas.from.remote.sources"));
+    myPreferRemoteCheckBox = new JBCheckBox(JsonBundle.message("checkbox.always.download.the.most.recent.version.of.schemas"));
   }
 
   @Nullable

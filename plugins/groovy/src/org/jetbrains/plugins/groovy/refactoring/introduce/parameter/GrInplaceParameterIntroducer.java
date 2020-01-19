@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtilRt;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -71,7 +72,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
     previewPanel.add(getPreviewEditor().getComponent(), BorderLayout.CENTER);
     previewPanel.setBorder(new EmptyBorder(2, 2, 6, 2));
 
-    myDelegateCB = new JBCheckBox("Delegate via overloading method");
+    myDelegateCB = new JBCheckBox(GroovyBundle.message("checkbox.delegate.via.overloading.method"));
     myDelegateCB.setMnemonic('l');
     myDelegateCB.setFocusable(false);
 
