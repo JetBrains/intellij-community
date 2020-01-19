@@ -3,7 +3,6 @@ package com.intellij;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.text.OrdinalFormat;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +48,6 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
-    return addLocalizationMaker(result);
-  }
-
-  @ApiStatus.Internal
-  public static String addLocalizationMaker(@Nullable String result) {
     if (SHOW_LOCALIZED_MESSAGES) {
       return result + L10N_MARKER;
     }
