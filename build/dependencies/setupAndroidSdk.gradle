@@ -45,11 +45,11 @@ if (kotlinVersionLen == -1) {
 }
 
 ext.kotlin_version = kotlinPluginBuild.substring(0, kotlinVersionLen)
-ext.android_m2_version = "26.5.0.1"
+ext.android_m2_version = "26.6.0.0"
 ext.android_sdk_version = "${osFamily}.3.3.5"
 
 dependencies {
-  androidOfflineRepo "org.jetbrains.intellij.deps.android.tools:android-sdk-offline-repo:${android_m2_version}@zip"
+  androidOfflineRepo "org.jetbrains.intellij.deps.android.tools.base:android-sdk-offline-repo:${android_m2_version}@zip"
   androidSdk "android-sdk:android-sdk:${android_sdk_version}:@tar.gz"
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
