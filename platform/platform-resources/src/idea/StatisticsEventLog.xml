@@ -9,13 +9,13 @@
               class="com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction"/>
       <action internal="true" id="CleanupLocalWhitelistAction"
               class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"/>
-      <action internal="true" id="OpenLocalWhitelistFileAction" class="com.intellij.internal.statistic.actions.OpenLocalWhitelistFileAction"/>
-      <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"/>
-      <action internal="true" id="OpenWhitelistFileAction" class="com.intellij.internal.statistic.actions.OpenWhitelistFileAction"/>
-      <group internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.groups.OpenEventLogFileActionGroup"/>
-      <group internal="true" id="CleanupEventLog" class="com.intellij.internal.statistic.groups.CleanupEventLogByIdActionGroup"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction"/>
+    <action internal="true" id="OpenLocalWhitelistFileAction" class="com.intellij.internal.statistic.actions.OpenLocalWhitelistFileAction"/>
+    <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"/>
+    <action internal="true" id="OpenWhitelistFileAction" class="com.intellij.internal.statistic.actions.OpenWhitelistFileAction"/>
+    <group internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.groups.OpenEventLogFileActionGroup"/>
+    <group internal="true" id="CleanupEventLog" class="com.intellij.internal.statistic.groups.CleanupEventLogByIdActionGroup"/>
   </actions>
 </idea-plugin>

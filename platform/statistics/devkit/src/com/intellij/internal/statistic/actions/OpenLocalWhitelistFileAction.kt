@@ -27,9 +27,10 @@ class OpenLocalWhitelistFileAction(private val myRecorderId: String = "FUS")
   override fun update(e: AnActionEvent) {
     val localWhitelistSize = WhitelistTestGroupStorage.getInstance(myRecorderId).size()
     val text = if (localWhitelistSize < 100) localWhitelistSize.toString() else "99+"
-    val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 2)
-    sizeCountIcon.setFont(Font(UIUtil.getLabelFont().name, Font.BOLD, JBUIScale.scale(10)))
-    ICON.setIcon(sizeCountIcon, 2, 20, 18)
+    val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 1)
+    sizeCountIcon.setFont(Font(UIUtil.getLabelFont().name, Font.BOLD, JBUIScale.scale(9)))
+    sizeCountIcon.setInsets(1, 1, 0, 0)
+    ICON.setIcon(sizeCountIcon, 2, JBUIScale.scale(10), JBUIScale.scale(10))
     e.presentation.icon = ICON
   }
 
