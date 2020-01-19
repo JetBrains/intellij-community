@@ -119,8 +119,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
     if (ProjectKt.isDirectoryBased(myProject)) {
       final JPanel namePanel = new JPanel(new BorderLayout());
-      final JLabel label =
-        new JLabel("<html><body><b>Project name:</b></body></html>", SwingConstants.LEFT);
+      final JLabel label = new JLabel(ProjectBundle.message("settings.project.name"), SwingConstants.LEFT);
       namePanel.add(label, BorderLayout.NORTH);
 
       myProjectName = new JTextField();
