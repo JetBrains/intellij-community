@@ -109,6 +109,11 @@ while true; do
   # TODO: Replace cut with trim or something better
   url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 13-)"
   wget "$url" -O "$developer_log" && cat "$developer_log" || true
+  issues=$(python -c "import sys, json; print(json.load(sys.stdin)['issues'])" < "$developer_log")
+  if [ "$issues" != "None" ] && [ "$issues" != "[]" ]; then
+    log "Notarization has issues"
+    ec=1
+  fi
   if [ $ec != 0 ]; then
     log "Publishing $developer_log"
     publish-log "$notarization_info" "$developer_log"
