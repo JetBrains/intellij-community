@@ -578,8 +578,8 @@ public class Messages {
   @YesNoResult
   public static int showYesNoDialog(String message,
                                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                    @NotNull String yesText,
-                                    @NotNull String noText,
+                                    @Nls @NotNull String yesText,
+                                    @Nls @NotNull String noText,
                                     @Nullable Icon icon,
                                     @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -610,8 +610,8 @@ public class Messages {
   @YesNoResult
   public static int showYesNoDialog(String message,
                                     @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                    String yesText,
-                                    String noText,
+                                    @Nls String yesText,
+                                    @Nls String noText,
                                     @Nullable Icon icon) {
     return showYesNoDialog(message, title, yesText, noText, icon, null);
   }

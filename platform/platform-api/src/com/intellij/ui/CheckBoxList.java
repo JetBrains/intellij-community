@@ -9,6 +9,7 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -388,6 +389,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     }
   }
 
+  @Nls
   @Nullable
   protected String getSecondaryText(int index) {
     return null;
