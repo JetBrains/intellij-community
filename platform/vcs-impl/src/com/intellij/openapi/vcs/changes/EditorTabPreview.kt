@@ -20,7 +20,7 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   private val project get() = diffProcessor.project!!
   private val previewFile = PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor) { getCurrentName() })
   private val updatePreviewQueue =
-    MergingUpdateQueue("updatePreviewQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, project, null, true).apply {
+    MergingUpdateQueue("updatePreviewQueue", 100, true, null, project).apply {
       setRestartTimerOnAdd(true)
     }
 
