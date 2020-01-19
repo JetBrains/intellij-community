@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -319,7 +320,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       super(parent, name);
     }
 
-    private byte[] myContent = new byte[0];
+    private byte[] myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
 
     @Override
     public boolean isDirectory() {

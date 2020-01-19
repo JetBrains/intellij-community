@@ -492,7 +492,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   @NotNull
   public static String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
-    String lineSeparator = LoadTextUtil.getDetectedLineSeparator(file);
+    String lineSeparator = file.getDetectedLineSeparator();
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
       assert lineSeparator != null : document;
@@ -503,7 +503,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   @Override
   @NotNull
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
-    String lineSeparator = file == null ? null : LoadTextUtil.getDetectedLineSeparator(file);
+    String lineSeparator = file == null ? null : file.getDetectedLineSeparator();
     if (lineSeparator == null) {
       lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
     }

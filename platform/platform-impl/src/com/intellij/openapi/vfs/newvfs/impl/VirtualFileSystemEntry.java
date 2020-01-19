@@ -33,15 +33,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
-          static final int IS_WRITABLE_FLAG = 0x01000000;
-          static final int IS_HIDDEN_FLAG =   0x02000000;
-  private static final int INDEXED_FLAG =     0x04000000;
-          static final int CHILDREN_CACHED =  0x08000000; // makes sense for directory only
+  static final int IS_WRITABLE_FLAG = 0x0100_0000;
+  static final int IS_HIDDEN_FLAG = 0x0200_0000;
+  private static final int INDEXED_FLAG = 0x0400_0000;
+  static final int CHILDREN_CACHED = 0x0800_0000; // makes sense for directory only
   static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense for non-directory file only
-  private static final int DIRTY_FLAG =       0x10000000;
-          static final int IS_SYMLINK_FLAG =  0x20000000;
-  private static final int HAS_SYMLINK_FLAG = 0x40000000;
-          static final int IS_SPECIAL_FLAG =  0x80000000;
+  private static final int DIRTY_FLAG = 0x1000_0000;
+  static final int IS_SYMLINK_FLAG = 0x2000_0000;
+  private static final int HAS_SYMLINK_FLAG = 0x4000_0000;
+  static final int IS_SPECIAL_FLAG = 0x8000_0000;
 
   static final int ALL_FLAGS_MASK =
     DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;

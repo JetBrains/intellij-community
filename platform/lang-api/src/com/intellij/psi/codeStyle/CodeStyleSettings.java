@@ -219,7 +219,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public String LINE_SEPARATOR;
 
   /**
-   * @return line separator. If choosen line separator is "System-dependent" method returns default separator for this OS.
+   * @return line separator. If the chosen line separator is "System-dependent", return default separator for this OS.
    */
   public String getLineSeparator() {
     return LINE_SEPARATOR != null ? LINE_SEPARATOR : ourSystemLineSeparator;

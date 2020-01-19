@@ -40,7 +40,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -320,11 +319,8 @@ public abstract class XmlTagDelegate {
 
     // We put cached value in any case to cause its value update on e.g. mapping change
     map.put(namespace, NullableLazyValue.createValue(() -> {
-      final XmlFile[] file = new XmlFile[1];
-      List<XmlNSDescriptor> descriptors = fileLocations.stream().map(s -> {
-        file[0] = retrieveFile(tag, s, version, namespace, nsDecl);
-        return getDescriptor(tag, file[0], s, namespace);
-      }).filter(Objects::nonNull).collect(Collectors.toList());
+      List<XmlNSDescriptor> descriptors =
+      ContainerUtil.mapNotNull(fileLocations, s->getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
 
       XmlNSDescriptor descriptor = null;
       if (descriptors.size() == 1) {

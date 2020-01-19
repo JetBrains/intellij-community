@@ -174,6 +174,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   public String getDetectedLineSeparator() {
     if (getFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED)) {
+      // optimization: do not waste space in user data for system line separator
       return LineSeparator.getSystemLineSeparator().getSeparatorString();
     }
     return super.getDetectedLineSeparator();
@@ -181,8 +182,10 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   public void setDetectedLineSeparator(String separator) {
+    // optimization: do not waste space in user data for system line separator
     boolean hasSystemSeparator = LineSeparator.getSystemLineSeparator().getSeparatorString().equals(separator);
     setFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
+
     super.setDetectedLineSeparator(hasSystemSeparator ? null : separator);
   }
 
