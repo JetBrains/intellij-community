@@ -20,7 +20,7 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   private val project get() = diffProcessor.project!!
   private val previewFile = PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor) { getCurrentName() })
   private val updatePreviewQueue =
-    MergingUpdateQueue("updatePreviewQueue", 100, true, null, project).apply {
+    MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {
       setRestartTimerOnAdd(true)
     }
 
@@ -29,18 +29,21 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   fun installOn(tree: ChangesTree) =
     //do not open file aggressively on start up, do it later
     DumbService.getInstance(project).smartInvokeLater {
-      tree.addSelectionListener {
-        updatePreviewQueue.queue(Update.create(this) {
-          if (skipPreviewUpdate()) return@create
-          setPreviewVisible(true)
-        })
-      }
+      tree.addSelectionListener(
+        Runnable {
+          updatePreviewQueue.queue(Update.create(this) {
+            if (skipPreviewUpdate()) return@create
+            setPreviewVisible(true)
+          })
+        },
+        updatePreviewQueue
+      )
     }
 
   fun installNextDiffActionOn(component: JComponent) {
     DumbAwareAction.create { openPreview(true) }.apply {
       copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF))
-      registerCustomShortcutSet(component, null)
+      registerCustomShortcutSet(component, diffProcessor)
     }
   }
 
