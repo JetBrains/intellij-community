@@ -135,7 +135,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     Runtime.getRuntime().addShutdownHook(thread(start = false) {
       tmp.deleteRecursively()
     })
-    val uri = "ssh://git@github.com/JetBrains/IntelliJIcons.git"
+    val uri = "ssh://git@git.jetbrains.team/IntelliJIcons.git"
     return callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
   }
 
