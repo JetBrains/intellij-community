@@ -438,6 +438,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
+  public void clearKind() {
+    myKind = null;
+    myProperties = null;
+  }
+
+  @Override
   public void addExcludedRoot(@NotNull String url) {
     VirtualFilePointerContainer roots = getOrCreateExcludedRoots();
     if (roots.findByUrl(url) == null) {

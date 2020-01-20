@@ -274,6 +274,16 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     }
   }
 
+  override fun clearKind() {
+    assertModelIsLive()
+    if (kind == null) return
+
+    val properties = currentLibrary.libraryEntity.referrers(LibraryPropertiesEntity::library).toList()
+    for (propertiesEntity in properties) {
+      diff.removeEntity(propertiesEntity)
+    }
+  }
+
   private fun isUnderRoots(url: VirtualFileUrl, roots: Collection<LibraryRoot>): Boolean {
     return VfsUtilCore.isUnder(url.url, roots.map { it.url.url })
   }

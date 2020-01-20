@@ -80,6 +80,11 @@ public interface LibraryEx extends Library {
     PersistentLibraryKind<?> getKind();
 
     /**
+     * Removes custom library kind and associated properties if any
+     */
+    void clearKind();
+
+    /**
      * Add a URL to list of directories excluded from the library. The directory specified by {@code url} must be located under some
      * of the library roots.
      * @see LibraryEx#getExcludedRootUrls()

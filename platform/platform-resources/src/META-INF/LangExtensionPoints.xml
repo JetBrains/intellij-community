@@ -309,7 +309,7 @@
     <extensionPoint name="sdkFinder" interface="com.intellij.openapi.roots.impl.SdkFinder"/>
     <extensionPoint name="projectSdkSetupValidator" interface="com.intellij.codeInsight.daemon.ProjectSdkSetupValidator" dynamic="true"/>
     <extensionPoint name="library.presentationProvider" interface="com.intellij.openapi.roots.libraries.LibraryPresentationProvider" dynamic="true"/>
-    <extensionPoint name="library.type" interface="com.intellij.openapi.roots.libraries.LibraryType"/>
+    <extensionPoint name="library.type" interface="com.intellij.openapi.roots.libraries.LibraryType" dynamic="true"/>
 
     <extensionPoint name="lang.implementationTextSelectioner" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.ImplementationTextSelectioner"/>
