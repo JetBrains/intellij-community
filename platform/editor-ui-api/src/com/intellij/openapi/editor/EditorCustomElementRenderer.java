@@ -124,7 +124,7 @@ public interface EditorCustomElementRenderer {
    */
   @ApiStatus.Experimental
   @Nullable
-  default GutterIconRenderer calcGutterIconProvider(@NotNull Inlay inlay) {
+  default GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
     return null;
   }
 }

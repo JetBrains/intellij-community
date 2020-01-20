@@ -263,14 +263,14 @@ public interface InlayModel {
     public void onAdded(@NotNull Inlay inlay) {
       onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
                        ChangeFlags.HEIGHT_CHANGED |
-                       (inlay.getGutterIconProvider() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
+                       (inlay.getGutterIconRenderer() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
     }
 
     @Override
     public void onRemoved(@NotNull Inlay inlay) {
       onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
                        ChangeFlags.HEIGHT_CHANGED |
-                       (inlay.getGutterIconProvider() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
+                       (inlay.getGutterIconRenderer() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
     }
   }
 

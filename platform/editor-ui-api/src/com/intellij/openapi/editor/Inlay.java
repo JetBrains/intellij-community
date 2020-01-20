@@ -92,11 +92,11 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    * at the moment). This provider is defined at inlay's creation using information returned by inlay's renderer. To change it,
    * {@link #update()} method should be called.
    *
-   * @see EditorCustomElementRenderer#calcGutterIconProvider(Inlay)
+   * @see EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)
    */
   @ApiStatus.Experimental
   @Nullable
-  GutterIconRenderer getGutterIconProvider();
+  GutterIconRenderer getGutterIconRenderer();
 
   /**
    * @deprecated Use {@link #update()} instead.
@@ -111,7 +111,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    *
    * @see EditorCustomElementRenderer#calcWidthInPixels(Inlay)
    * @see EditorCustomElementRenderer#calcHeightInPixels(Inlay)
-   * @see EditorCustomElementRenderer#calcGutterIconProvider(Inlay)
+   * @see EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)
    * @see #repaint()
    */
   void update();

@@ -892,7 +892,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     myHasInlaysWithGutterIcons = false;
     myEditor.getInlayModel().getBlockElementsInRange(0, myEditor.getDocument().getTextLength()).forEach(inlay -> {
-      GutterIconRenderer iconRenderer = inlay.getGutterIconProvider();
+      GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
       if (iconRenderer != null && checkDumbAware(iconRenderer) && !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
         Icon icon = scaleIcon(iconRenderer.getIcon());
         if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
@@ -1001,7 +1001,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintInlayIcon(Inlay inlay, Graphics2D g, int y) {
-    GutterIconRenderer iconRenderer = inlay.getGutterIconProvider();
+    GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
     if (iconRenderer != null && checkDumbAware(iconRenderer)) {
       Icon icon = scaleIcon(iconRenderer.getIcon());
       if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
@@ -2150,7 +2150,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Nullable
   private PointInfo getPointInfo(@NotNull Inlay inlay, int inlayY, int x, int y) {
-    GutterIconRenderer renderer = inlay.getGutterIconProvider();
+    GutterIconRenderer renderer = inlay.getGutterIconRenderer();
     if (renderer == null || !checkDumbAware(renderer)) return null;
     Icon icon = scaleIcon(renderer.getIcon());
     int iconHeight = icon.getIconHeight();

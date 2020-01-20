@@ -49,12 +49,12 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
     EditorImpl.assertIsDispatchThread();
     int oldWidth = getWidthInPixels();
     int oldHeight = getHeightInPixels();
-    GutterIconRenderer oldIconProvider = getGutterIconProvider();
+    GutterIconRenderer oldIconRenderer = getGutterIconRenderer();
     doUpdate();
     int changeFlags = 0;
     if (oldWidth != getWidthInPixels()) changeFlags |= InlayModel.ChangeFlags.WIDTH_CHANGED;
     if (oldHeight != getHeightInPixels()) changeFlags |= InlayModel.ChangeFlags.HEIGHT_CHANGED;
-    if (!Objects.equals(oldIconProvider, getGutterIconProvider())) changeFlags |= InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED;
+    if (!Objects.equals(oldIconRenderer, getGutterIconRenderer())) changeFlags |= InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED;
     if (changeFlags != 0) {
       myEditor.getInlayModel().notifyChanged(this, changeFlags);
     }
@@ -127,7 +127,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Nullable
   @Override
-  public GutterIconRenderer getGutterIconProvider() {
+  public GutterIconRenderer getGutterIconRenderer() {
     return null;
   }
 }

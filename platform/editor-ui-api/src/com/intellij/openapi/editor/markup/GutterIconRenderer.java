@@ -26,14 +26,14 @@ import java.util.regex.Pattern;
  * Daemon code analyzer checks newly arrived gutter icon renderer against the old one and if they are equal, does not redraw the icon.
  * So it is highly advisable to override hashCode()/equals() methods to avoid icon flickering when old gutter renderer gets replaced with
  * the new. Proper implementation of {@code equals} is also important for instances used to specify gutter icons for inlays
- * (see {@link EditorCustomElementRenderer#calcGutterIconProvider(Inlay)})<p/>
+ * (see {@link EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)})<p/>
  *
  * During indexing, methods are only invoked for renderers implementing {@link DumbAware}.
  *
  * @author max
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
- * @see Inlay#getGutterIconProvider()
- * @see EditorCustomElementRenderer#calcGutterIconProvider(Inlay)
+ * @see Inlay#getGutterIconRenderer()
+ * @see EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)
  */
 public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware, SimpleAccessible {
   /**
