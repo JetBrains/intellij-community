@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,8 +42,11 @@ public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
     expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyElement.class,
                                                        stringBuilder.toString()));
 
-    final PyFromImportStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyFromImportStatement.class,
-                                                                      "from __future__ import print_function");
-    file.addBefore(statement, file.getStatements().get(0));
+    AddImportHelper.addOrUpdateFromImportStatement(file,
+                                                   "__future__",
+                                                   "print_function",
+                                                   null,
+                                                   AddImportHelper.ImportPriority.FUTURE,
+                                                   null);
   }
 }

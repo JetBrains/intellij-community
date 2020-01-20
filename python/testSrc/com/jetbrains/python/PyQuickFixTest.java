@@ -123,6 +123,11 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyCompatibilityInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
   }
 
+  // PY-22045
+  public void testBatchReplacePrintInsertsFutureImportOnlyOnce() {
+    doInspectionTest(PyCompatibilityInspection.class, "Fix all 'Code compatibility inspection' problems in file", true, true);
+  }
+
   // PY-4556
   public void testAddSelfFunction() {
     doInspectionTest("AddSelfFunction.py", PyUnresolvedReferencesInspection.class,
