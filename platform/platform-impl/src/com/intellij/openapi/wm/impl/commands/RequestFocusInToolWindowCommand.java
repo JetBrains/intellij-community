@@ -44,7 +44,7 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
             manager.getFocusManager().requestFocusInProject(component, manager.getProject());
             bringOwnerToFront(toolWindow);
           }
-          manager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(component));
+          manager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(toolWindow, component));
         }
       }
     }, 0);
@@ -103,12 +103,9 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
     return component;
   }
 
-  private void updateToolWindow(@NotNull Component component) {
+  private static void updateToolWindow(@NotNull ToolWindowImpl toolWindow, @NotNull Component component) {
     if (component.isFocusOwner()) {
-      toolWindow.setFocusedComponent(component);
-      if (toolWindow.isAvailable() && !toolWindow.isActive()) {
-        toolWindow.activate(null, true, false);
-      }
+      toolWindow.getToolWindowManager().updateToolWindow(toolWindow, component);
     }
 
     updateFocusedComponentForWatcher(component);
