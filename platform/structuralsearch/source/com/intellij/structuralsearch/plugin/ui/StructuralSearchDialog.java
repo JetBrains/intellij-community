@@ -759,7 +759,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
   public Configuration getConfiguration() {
     saveConfiguration();
-    return myConfiguration;
+    return myConfiguration.copy();
   }
 
   private CompiledPattern compilePattern() {

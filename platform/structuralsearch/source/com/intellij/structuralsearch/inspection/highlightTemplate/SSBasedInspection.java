@@ -32,6 +32,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -99,6 +100,10 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     final List<Configuration> configurations;
     final InspectionProfileImpl profile;
     if (Registry.is("ssr.separate.inspections")) {
+      for (Configuration configuration : myConfigurations) {
+        configuration.initialize();
+      }
+
       profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
       configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
       if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
@@ -116,7 +121,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return new PsiElementVisitor() {
       final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
         final PsiElement element = matchResult.getMatch();
-        final String name = configuration.getName();
+        final String name = ObjectUtils.notNull(configuration.getProblemDescriptor(), configuration.getName());
         final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
         final ProblemDescriptor descriptor =
           holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
@@ -213,6 +218,27 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   public List<Configuration> getConfigurations() {
-    return myConfigurations;
+    return Collections.unmodifiableList(myConfigurations);
+  }
+
+  public void addConfiguration(Configuration configuration) {
+    for (int i = 0, size = myConfigurations.size(); i < size; i++) {
+      final Configuration c = myConfigurations.get(i);
+      if (c.getName().equals(configuration.getName())) {
+        myConfigurations.set(i, configuration);
+        return;
+      }
+    }
+    myConfigurations.add(configuration);
+  }
+
+  public void removeConfiguration(String shortName) {
+    for (int i = 0, size = myConfigurations.size(); i < size; i++) {
+      final Configuration c = myConfigurations.get(i);
+      if (c.getUuid().toString().equals(shortName)) {
+        myConfigurations.remove(i);
+        return;
+      }
+    }
   }
 }

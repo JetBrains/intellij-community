@@ -1,26 +1,44 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog;
+import com.intellij.ui.EditorTextField;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Bas Leijdekkers
@@ -77,13 +95,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
       assert wrapper != null;
       final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
-      final List<Configuration> configurations = inspection.getConfigurations();
-      for (final Iterator<Configuration> iterator = configurations.iterator(); iterator.hasNext(); ) {
-        final Configuration configuration = iterator.next();
-        if (configuration.getUuid().toString().equals(shortName)) {
-          iterator.remove();
-        }
-      }
+      inspection.removeConfiguration(shortName);
       profile.removeTool(shortName);
       profile.getProfileManager().fireProfileChanged(profile);
     }
@@ -116,7 +128,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Configuration configuration = dialog.getConfiguration();
 
       configuration.resetUuid();
-      if (!ConfigurationManager.showSaveTemplateAsDialog(inspection.getConfigurations(), configuration, project)) {
+      if (!saveInspection(project, inspection, configuration)) {
         return;
       }
       addConfigurationToProfile(project, profile, configuration);
@@ -127,18 +139,133 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     private static void addConfigurationToProfile(@NotNull Project project,
                                                   InspectionProfileImpl profile,
                                                   Configuration configuration) {
-      final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(configuration.getUuid().toString(), project);
+      final String shortName = configuration.getUuid().toString();
+      final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
       if (toolWrapper != null) {
         // already added
         return;
       }
-      final LocalInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
+      final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
+      wrapped.setProfile(profile);
       profile.addTool(project, wrapped, null);
 
       // enable inspection even when profile is locked, because either:
       // - user just added this inspection explicitly
       // - or inspection was just imported from enabled old SSR inspection
-      profile.setToolEnabled(configuration.getUuid().toString(), true);
+      profile.setToolEnabled(shortName, true);
+    }
+  }
+
+  public static boolean saveInspection(Project project,
+                                       SSBasedInspection inspection,
+                                       Configuration configuration) {
+    final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
+    final boolean result = dialog.showAndGet();
+    if (result) {
+      configuration.setName(dialog.getName());
+      configuration.setDescription(dialog.getDescription());
+      configuration.setSuppressId(dialog.getSuppressId());
+      configuration.setProblemDescriptor(dialog.getProblemDescriptor());
+      inspection.addConfiguration(configuration);
+    }
+    return result;
+  }
+
+  private static class InspectionDataDialog extends DialogWrapper {
+    private final Pattern mySuppressIdPattern = Pattern.compile(LocalInspectionTool.VALID_ID_PATTERN);
+
+    private final SSBasedInspection myInspection;
+    @NotNull private final Configuration myConfiguration;
+    private final JTextField myNameTextField;
+    private final JTextField myProblemDescriptorTextField;
+    private final EditorTextField myDescriptionTextArea;
+    private final JTextField mySuppressIdTextField;
+
+    InspectionDataDialog(Project project, SSBasedInspection inspection, Configuration configuration) {
+      super(null);
+      myInspection = inspection;
+
+      myConfiguration = configuration;
+      myNameTextField = new JTextField(configuration.getName());
+      myProblemDescriptorTextField = new JTextField(configuration.getProblemDescriptor());
+      myDescriptionTextArea = new EditorTextField(ObjectUtils.notNull(configuration.getDescription(), ""), project, StdFileTypes.HTML);
+      myDescriptionTextArea.setOneLineMode(false);
+      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      myDescriptionTextArea.setFont(scheme.getFont(EditorFontType.PLAIN));
+      myDescriptionTextArea.setPreferredSize(new Dimension(375, 125));
+      myDescriptionTextArea.setMinimumSize(new Dimension(200, 50));
+      mySuppressIdTextField = new JTextField(configuration.getNewSuppressId());
+      init();
+    }
+
+    @Override
+    protected @NotNull List<ValidationInfo> doValidateAll() {
+      final List<ValidationInfo> result = new SmartList<>();
+      final String name = getName();
+      if (name.isEmpty()) {
+        result.add(new ValidationInfo("Name must not be empty", myNameTextField));
+      }
+      final List<Configuration> configurations = myInspection.getConfigurations();
+      for (Configuration configuration : configurations) {
+        if (!configuration.equals(myConfiguration) && configuration.getName().equals(name)) {
+          result.add(new ValidationInfo("Inspection with name '" + name + "' already exists", myNameTextField));
+          break;
+        }
+      }
+      final String suppressId = getSuppressId();
+      if (!suppressId.isEmpty()) {
+        if (!mySuppressIdPattern.matcher(suppressId).matches()) {
+          result.add(new ValidationInfo("Suppress ID must match regex [a-zA-Z_0-9.-]+", mySuppressIdTextField));
+        }
+        else {
+          final HighlightDisplayKey key = HighlightDisplayKey.findById(suppressId);
+          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuid().toString())) {
+            result.add(new ValidationInfo("Suppress ID '" + suppressId + "' is already in use by another inspection",
+                                          mySuppressIdTextField));
+          }
+          else {
+            for (Configuration configuration : configurations) {
+              if (suppressId.equals(configuration.getNewSuppressId())) {
+                result.add(new ValidationInfo("Suppress ID '" + suppressId + "' is already in use by another inspection",
+                                              mySuppressIdTextField));
+                break;
+              }
+            }
+          }
+        }
+      }
+      return result;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      final FormBuilder builder = FormBuilder.createFormBuilder()
+        .addLabeledComponent("Inspection name:", myNameTextField, true)
+        .addLabeledComponent("Problem tool tip (use macro #ref to insert highlighted code):", myProblemDescriptorTextField, true)
+        .addLabeledComponentFillVertically("Description:", myDescriptionTextArea)
+        .addLabeledComponent("Suppress ID:", mySuppressIdTextField);
+      return builder.getPanel();
+    }
+
+    public String getName() {
+      return convertEmptyToNull(myNameTextField.getText().trim());
+    }
+
+    public String getDescription() {
+      return convertEmptyToNull(myDescriptionTextArea.getText().trim());
+    }
+
+    public String getSuppressId() {
+      return convertEmptyToNull(mySuppressIdTextField.getText().trim());
+    }
+
+    public String getProblemDescriptor() {
+      return convertEmptyToNull(myProblemDescriptorTextField.getText().trim());
+    }
+
+    private static String convertEmptyToNull(String s) {
+      return StringUtil.isEmpty(s) ? null : s;
     }
   }
 }
