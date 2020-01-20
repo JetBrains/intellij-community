@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiDirectory;
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyStubPackages;
@@ -23,7 +25,9 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
@@ -33,8 +37,6 @@ import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 public class ResolveImportUtil {
   private ResolveImportUtil() {
   }
-
-  private static final ThreadLocal<Set<String>> ourBeingImported = ThreadLocal.withInitial(() -> new HashSet<>());
 
   public static boolean isAbsoluteImportEnabledFor(PsiElement foothold) {
     if (foothold != null) {
@@ -162,22 +164,20 @@ public class ResolveImportUtil {
     final PsiFile sourceFile = params.getFile();
     final boolean importIsAbsolute = params.isAbsolute();
 
-    final String marker = qualifiedName + "#" + relativeLevel;
-    final Set<String> beingImported = ourBeingImported.get();
-    if (beingImported.contains(marker)) {
-      return Collections.emptyList(); // break endless loop in import
-    }
-    try {
-      beingImported.add(marker);
-      final PyQualifiedNameResolveContext initialContext = PyResolveImportUtil.fromFoothold(sourceFile);
-      final PyQualifiedNameResolveContext context = relativeLevel > 0 ?
-                                                    initialContext.copyWithRelative(relativeLevel).copyWithoutRoots() :
-                                                    importIsAbsolute ? initialContext : initialContext.copyWithRelative(0);
-      return PyResolveImportUtil.resolveQualifiedName(qualifiedName, context);
-    }
-    finally {
-      beingImported.remove(marker);
-    }
+    return ObjectUtils.notNull(
+      RecursionManager.doPreventingRecursion(
+        params,
+        false,
+        () -> {
+          final PyQualifiedNameResolveContext initialContext = PyResolveImportUtil.fromFoothold(sourceFile);
+          final PyQualifiedNameResolveContext context = relativeLevel > 0 ?
+                                                        initialContext.copyWithRelative(relativeLevel).copyWithoutRoots() :
+                                                        importIsAbsolute ? initialContext : initialContext.copyWithRelative(0);
+          return PyResolveImportUtil.resolveQualifiedName(qualifiedName, context);
+        }
+      ),
+      Collections.emptyList()
+    );
   }
 
   @NotNull
