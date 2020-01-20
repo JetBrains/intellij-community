@@ -274,7 +274,7 @@ internal class SdkOrderEntryViaTypedEntity(
   override val rootProvider: RootProvider?
     get() = jdk?.rootProvider
 
-  override fun getPresentableName() = "<${jdk?.name ?: sdkDependencyItem.sdkName}>"
+  override fun getPresentableName() = "< ${jdk?.name ?: sdkDependencyItem.sdkName} >"
 
   override fun getJdk(): Sdk? {
     val jdkTable = ProjectJdkTable.getInstance()
