@@ -93,7 +93,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item.
    */
-  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text){
+  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
     this(text, null, null);
   }
 

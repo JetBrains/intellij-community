@@ -29,6 +29,11 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   }
 
   protected DumbAwareAction() {
+    super((Icon)null);
+  }
+
+  protected DumbAwareAction(@Nullable Icon icon) {
+    super(icon);
   }
 
   protected DumbAwareAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {

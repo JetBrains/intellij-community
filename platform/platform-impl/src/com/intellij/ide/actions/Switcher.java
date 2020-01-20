@@ -612,7 +612,7 @@ public final class Switcher extends AnAction implements DumbAware {
       Disposer.register(myPopup, this);
 
       if (isPinnedMode()) {
-        new DumbAwareAction(Presentation.NULL_STRING, Presentation.NULL_STRING, null) {
+        new DumbAwareAction() {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
