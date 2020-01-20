@@ -52,6 +52,8 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(inspection);
     doTest();
   }
+  
+  public void testSwitchExpressionInside() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) {

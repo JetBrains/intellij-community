@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -22,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,7 +34,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +45,10 @@ public class ConditionalExpressionInspection extends BaseInspection {
 
   private static final Logger LOG = Logger.getInstance(ConditionalExpressionInspection.class);
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreSimpleAssignmentsAndReturns = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreExpressionContext = true;
 
   @Override
@@ -117,31 +118,25 @@ public class ConditionalExpressionInspection extends BaseInspection {
         }
       }
       PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
-      if (statement == null) {
-        return;
-      }
 
       if (statement instanceof PsiExpressionStatement && statement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
         expression = RefactoringUtil.ensureCodeBlock(expression);
         LOG.assertTrue(expression != null);
         statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
       }
+      if (statement == null) return;
 
       final PsiVariable variable =
         statement instanceof PsiDeclarationStatement ? PsiTreeUtil.getParentOfType(expression, PsiVariable.class) : null;
-      PsiExpression thenExpression = ParenthesesUtils.stripParentheses(expression.getThenExpression());
-      PsiExpression elseExpression = ParenthesesUtils.stripParentheses(expression.getElseExpression());
+      PsiExpression thenExpression = expression.getThenExpression();
+      PsiExpression elseExpression = expression.getElseExpression();
       final PsiExpression condition = ParenthesesUtils.stripParentheses(expression.getCondition());
       CommentTracker tracker = new CommentTracker();
-      final StringBuilder newStatement = new StringBuilder();
-      newStatement.append("if(");
-      if (condition != null) {
-        newStatement.append(tracker.text(condition));
-      }
-      newStatement.append(')');
+      String ifText = "if(" + (condition == null ? "" : tracker.text(condition)) + ");\nelse;";
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(ifText, condition);
       if (variable != null) {
         final String name = variable.getName();
-        newStatement.append(name).append('=');
         PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
           return;
@@ -163,95 +158,71 @@ public class ConditionalExpressionInspection extends BaseInspection {
             elseExpression = expression.getElseExpression();
           }
         }
-        appendElementTextWithoutParentheses(initializer, expression, thenExpression, newStatement, tracker);
-        newStatement.append("; else ").append(name).append('=');
-        appendElementTextWithoutParentheses(initializer, expression, elseExpression, newStatement, tracker);
-        newStatement.append(';');
+        String thenAssignment = name + "=" +
+                                getReplacement(initializer, expression, thenExpression, tracker).getText() + ";";
+        String elseAssignment = name + "=" +
+                                getReplacement(initializer, expression, elseExpression, tracker).getText() + ";";
+        ifStatement.setThenBranch(factory.createStatementFromText(thenAssignment, initializer));
+        ifStatement.setElseBranch(factory.createStatementFromText(elseAssignment, initializer));
         tracker.delete(initializer);
-        final PsiManager manager = statement.getManager();
-        final PsiStatement ifStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatement.toString(), statement);
         final PsiElement parent = statement.getParent();
-        final PsiElement addedElement = parent.addAfter(ifStatement, statement);
-        tracker.insertCommentsBefore(addedElement);
-        final CodeStyleManager styleManager = CodeStyleManager.getInstance(manager.getProject());
-        styleManager.reformat(addedElement);
+        ifStatement = (PsiIfStatement)parent.addAfter(ifStatement, statement);
+        tracker.insertCommentsBefore(ifStatement);
       }
       else {
         final boolean addBraces = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class, true, PsiStatement.class) != null;
-        if (addBraces || thenExpression == null) {
-          newStatement.append('{');
-        }
-        appendElementTextWithoutParentheses(statement, expression, thenExpression, newStatement, tracker);
+        PsiStatement thenBranch = (PsiStatement)getReplacement(statement, expression, thenExpression, tracker);
+        PsiStatement elseBranch = (PsiStatement)getReplacement(statement, expression, elseExpression, tracker);
         if (addBraces) {
-          newStatement.append("} else {");
+          thenBranch = (PsiStatement)BlockUtils.expandSingleStatementToBlockStatement(thenBranch).getParent().getParent();
+          elseBranch = (PsiStatement)BlockUtils.expandSingleStatementToBlockStatement(elseBranch).getParent().getParent();
         }
-        else {
-          if (thenExpression == null) {
-            newStatement.append('}');
-          }
-          newStatement.append(" else ");
-          if (elseExpression == null) {
-            newStatement.append('{');
-          }
-        }
-        appendElementTextWithoutParentheses(statement, expression, elseExpression, newStatement, tracker);
-        if (addBraces || elseExpression == null) {
-          newStatement.append('}');
-        }
-        final PsiIfStatement result = (PsiIfStatement)PsiReplacementUtil.replaceStatement(statement, newStatement.toString(), tracker);
-        if (!ControlFlowUtils.statementMayCompleteNormally(result.getThenBranch())) {
-          final PsiStatement elseBranch = result.getElseBranch();
-          if (elseBranch != null) {
-            result.getParent().addAfter(ControlFlowUtils.stripBraces(elseBranch), result);
-            elseBranch.delete();
-          }
+        ifStatement.setThenBranch(thenBranch);
+        ifStatement.setElseBranch(elseBranch);
+        ifStatement = (PsiIfStatement)tracker.replaceAndRestoreComments(statement, ifStatement);
+      }
+      ifStatement = (PsiIfStatement)CodeStyleManager.getInstance(project).reformat(
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(ifStatement));
+      if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch())) {
+        final PsiStatement resultingElse = ifStatement.getElseBranch();
+        if (resultingElse != null) {
+          ifStatement.getParent().addAfter(ControlFlowUtils.stripBraces(resultingElse), ifStatement);
+          resultingElse.delete();
         }
       }
     }
 
-    private static void appendElementTextWithoutParentheses(@NotNull PsiElement element,
-                                                            @NotNull PsiExpression expressionToReplace,
-                                                            @Nullable PsiExpression replacementExpression,
-                                                            @NotNull StringBuilder out,
-                                                            CommentTracker tracker) {
-      final PsiElement expressionParent = expressionToReplace.getParent();
-      if (expressionParent instanceof PsiParenthesizedExpression) {
-        final PsiElement grandParent = expressionParent.getParent();
-        if (replacementExpression == null || !(grandParent instanceof PsiExpression) ||
-            !ParenthesesUtils.areParenthesesNeeded(replacementExpression, (PsiExpression) grandParent, false)) {
-          appendElementTextWithoutParentheses(element, (PsiExpression)expressionParent, replacementExpression, out, tracker);
-          return;
+    private static PsiElement getReplacement(@NotNull PsiElement element,
+                                             @NotNull PsiExpression expressionToReplace,
+                                             @Nullable PsiExpression replacementExpression,
+                                             @NotNull CommentTracker tracker) {
+      Object marker = new Object();
+      while (expressionToReplace.getParent() instanceof PsiParenthesizedExpression) {
+        expressionToReplace = (PsiExpression)expressionToReplace.getParent();
+      }
+      PsiTreeUtil.mark(expressionToReplace, marker);
+      PsiElement copy = element.copy();
+      PsiExpression copyToReplace = (PsiExpression)PsiTreeUtil.releaseMark(copy, marker);
+      assert copyToReplace != null;
+      replacementExpression = PsiUtil.skipParenthesizedExprDown(replacementExpression);
+      if (replacementExpression == null) {
+        replacementExpression = JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("()", null);
+      } else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expressionToReplace, replacementExpression) ||
+          isExplicitBoxingNecessary(expressionToReplace, replacementExpression)) {
+        PsiType type = expressionToReplace.getType();
+        if (type != null) {
+          replacementExpression = JavaPsiFacade.getElementFactory(element.getProject())
+            .createExpressionFromText("(" + type.getCanonicalText() + ")" + tracker.text(replacementExpression), null);
         }
       }
-      final boolean needsCast =
-        replacementExpression != null && MethodCallUtils.isNecessaryForSurroundingMethodCall(expressionToReplace, replacementExpression);
-      appendElementText(element, expressionToReplace, replacementExpression, needsCast, out, tracker);
+      PsiTreeUtil.findChildrenOfType(copy, PsiComment.class).forEach(PsiElement::delete);
+      PsiElement result = copyToReplace.replace(tracker.markUnchanged(replacementExpression));
+      return copy == copyToReplace ? result : copy;
     }
 
-    private static void appendElementText(@NotNull PsiElement element,
-                                          @NotNull PsiExpression elementToReplace,
-                                          @Nullable PsiExpression replacementExpression,
-                                          boolean insertCast,
-                                          @NotNull StringBuilder out,
-                                          CommentTracker tracker) {
-      if (element.equals(elementToReplace)) {
-        final String replacementText = (replacementExpression == null) ? "" : replacementExpression.getText();
-        final PsiType type = GenericsUtil.getVariableTypeByExpressionType(ExpectedTypeUtils.findExpectedType(elementToReplace, true));
-        if (insertCast && type != null) {
-          out.append('(').append(type.getCanonicalText()).append(')');
-        }
-        out.append(replacementText);
-        return;
-      }
-      final PsiElement[] children = element.getChildren();
-      if (children.length == 0) {
-        if (!(element instanceof PsiComment)) {
-          out.append(tracker.text(element));
-        }
-      }
-      for (PsiElement child : children) {
-        appendElementText(child, elementToReplace, replacementExpression, insertCast, out, tracker);
-      }
+    private static boolean isExplicitBoxingNecessary(PsiExpression expressionToReplace, PsiExpression replacementExpression) {
+      PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expressionToReplace);
+      return call != null && replacementExpression.getType() instanceof PsiPrimitiveType;
     }
   }
 
