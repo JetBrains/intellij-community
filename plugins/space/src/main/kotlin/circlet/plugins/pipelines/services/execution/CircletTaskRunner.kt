@@ -35,9 +35,9 @@ class CircletTaskRunner(val project: Project) {
         // todo: terminate lifetime.
         val lifetime = LifetimeSource()
 
-        val script = project.service<SpaceKtsModelBuilder>().script.value ?: throw ExecutionException("Script is null")
+        val config = project.service<SpaceKtsModelBuilder>().script.value?.config ?: throw ExecutionException("Script is null")
 
-        val task = script.config.jobs.firstOrNull { x -> x.name == taskName } ?: throw ExecutionException("Task $taskName doesn't exist")
+        val task = config.jobs.firstOrNull { x -> x.name == taskName } ?: throw ExecutionException("Task $taskName doesn't exist")
 
         val processHandler = TaskProcessHandler(taskName)
 

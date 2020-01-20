@@ -16,9 +16,6 @@ class SmokeTest : HeavyPlatformTestCase() {
 
     private var testLifetimeImpl: LifetimeSource? = null
 
-    private val testLifetime: Lifetime
-        get() = testLifetimeImpl!!
-
     override fun setUp() {
         testLifetimeImpl = Lifetime.Eternal.nested()
         super.setUp()
@@ -72,9 +69,9 @@ class SmokeTest : HeavyPlatformTestCase() {
         project.guessProjectDir()!!.writeChild(".space.kts", myTask)
     }
 
-    private fun ScriptViewModel.isScriptEmpty(): Boolean {
+    private fun ScriptModel.isScriptEmpty(): Boolean {
         val config = this.config
-        return config.pipelines.isEmpty() && config.targets.isEmpty() && config.jobs.isEmpty()
+        return config != null && config.pipelines.isEmpty() && config.targets.isEmpty() && config.jobs.isEmpty()
     }
 
     private fun createGoldModel(): ScriptConfig {

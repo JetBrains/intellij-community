@@ -1,20 +1,17 @@
 package circlet.plugins.pipelines.viewmodel
 
 import circlet.pipelines.config.api.*
-import circlet.plugins.pipelines.services.*
 import libraries.coroutines.extra.*
 import runtime.reactive.*
-import java.util.*
 import javax.swing.tree.*
 
-class ScriptViewModel internal constructor(
-    val id: String,
-    val config: ScriptConfig) {
-}
 
-object ScriptViewModelFactory {
-    fun create(config: ScriptConfig) = ScriptViewModel(UUID.randomUUID().toString(), config)
+enum class ScriptState { NotInitialised, Building, Ready }
 
+interface ScriptModel {
+    val config: Property<ScriptConfig?>
+    val error: Property<String?>
+    val state: Property<ScriptState>
 }
 
 class LogData {
@@ -37,12 +34,4 @@ class LogData {
 
 }
 
-
-fun createEmptyScriptViewModel(): ScriptViewModel {
-    return ScriptViewModelFactory.create(ScriptConfig(emptyList(), emptyList(), emptyList()))
-}
-
-
-class CircletModelTreeNode(text: String? = null, val isRunnable: Boolean = false) : DefaultMutableTreeNode(text) {
-
-}
+class CircletModelTreeNode(text: String? = null, val isRunnable: Boolean = false) : DefaultMutableTreeNode(text)

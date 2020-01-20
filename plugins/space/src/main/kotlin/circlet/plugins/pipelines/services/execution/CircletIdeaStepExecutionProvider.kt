@@ -4,6 +4,7 @@ import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.utils.*
 import circlet.pipelines.provider.*
 import circlet.pipelines.provider.local.*
+import circlet.pipelines.provider.local.docker.*
 import libraries.coroutines.extra.*
 import kotlin.coroutines.*
 

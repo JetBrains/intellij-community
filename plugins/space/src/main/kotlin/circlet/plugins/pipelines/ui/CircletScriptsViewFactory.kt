@@ -42,9 +42,13 @@ class CircletToolWindowViewModel(val lifetime: Lifetime) {
 class CircletToolWindowService(val project: Project) : LifetimedDisposable by LifetimedDisposableImpl(), KLogging() {
 
     val modelBuilder = project.service<SpaceKtsModelBuilder>()
+
     val viewModel = CircletToolWindowViewModel(lifetime)
 
     fun createToolWindowContent(toolWindow: ToolWindow) {
+
+        // ping script builder first so that it starts building the model for the first time.
+        modelBuilder.requestModel()
 
         val panel = Panel(title = null).apply {
             add(createView())
@@ -66,6 +70,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         val treeView = createModelTreeView(lifetime, project)
         panel.add(treeView, treeCompName)
         panel.add(createViewForMissedDsl(project), missedDslCompName)
+
         modelBuilder.script.forEach(lifetime) { script ->
             logger.debug("createView. view viewModel. $script")
             if (script == null) {
@@ -75,6 +80,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
                 layout.show(panel, treeCompName)
             }
         }
+
         logger.debug("createView. end")
         return panel
     }
@@ -88,13 +94,13 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
             viewModel.selectedNode.value = if (selectedNode is CircletModelTreeNode) selectedNode else null
 
         }
-        resetNodes(root, modelBuilder.script.value, viewModel.extendedViewModeEnabled.value)
+        resetNodes(root, modelBuilder.script.value?.config?.value, viewModel.extendedViewModeEnabled.value)
         TreeUtil.expandAll(tree)
         tree.isRootVisible = false
 
         fun recalcTree() {
-            val model = modelBuilder.script.value
-            resetNodes(root, model, viewModel.extendedViewModeEnabled.value)
+            val config = modelBuilder.script.value?.config?.value
+            resetNodes(root, config, viewModel.extendedViewModeEnabled.value)
             (tree.model as DefaultTreeModel).reload()
         }
 
@@ -118,7 +124,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
 
         val runAction = object : DumbAwareActionButton(ExecutionBundle.message("run.configurable.display.name"), AllIcons.RunConfigurations.TestState.Run) {
             override fun actionPerformed(e: AnActionEvent) {
-                if (modelBuilder.modelBuildIsRunning.value) {
+                if (modelBuilder.script.value?.state?.value == ScriptState.Building) {
                     return
                 }
                 val selectedNode = viewModel.selectedNode.value ?: return
@@ -132,20 +138,18 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
 
         val expandAllAction = object : DumbAwareActionButton(IdeBundle.message("action.expand.all"), AllIcons.Actions.Expandall) {
             override fun actionPerformed(e: AnActionEvent) {
-                if (modelBuilder.modelBuildIsRunning.value) {
+                if (modelBuilder.script.value?.state?.value == ScriptState.Building) {
                     return
                 }
-
                 TreeUtil.expandAll(tree)
             }
         }
 
         val collapseAllAction = object : DumbAwareActionButton(IdeBundle.message("action.collapse.all"), AllIcons.Actions.Collapseall) {
             override fun actionPerformed(e: AnActionEvent) {
-                if (modelBuilder.modelBuildIsRunning.value) {
+                if (modelBuilder.script.value?.state?.value == ScriptState.Building) {
                     return
                 }
-
                 TreeUtil.collapseAll(tree, 0)
             }
         }
@@ -161,7 +165,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         }
 
         fun updateActionsIsEnabledStates() {
-            val smthIsRunning = modelBuilder.modelBuildIsRunning.value || viewModel.taskIsRunning.value
+            val smthIsRunning = modelBuilder.script.value?.state?.value == ScriptState.Building || viewModel.taskIsRunning.value
             val isSelectedNodeRunnable = viewModel.selectedNode.value?.isRunnable ?: false
             refreshAction.isEnabled = !smthIsRunning
             runAction.isEnabled = !smthIsRunning && isSelectedNodeRunnable
@@ -170,9 +174,13 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         viewModel.selectedNode.forEach(lifetime) {
             updateActionsIsEnabledStates()
         }
-        modelBuilder.modelBuildIsRunning.forEach(lifetime) {
-            updateActionsIsEnabledStates()
+
+        modelBuilder.script.view(lifetime) { lt, script ->
+            script.state.forEach(lt) {
+                updateActionsIsEnabledStates()
+            }
         }
+
         viewModel.taskIsRunning.forEach(lifetime) {
             updateActionsIsEnabledStates()
         }
@@ -190,14 +198,12 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         return panel
     }
 
-    private fun resetNodes(root: DefaultMutableTreeNode, model: ScriptViewModel?, extendedViewModeEnabled: Boolean) {
+    private fun resetNodes(root: DefaultMutableTreeNode, config: ScriptConfig?, extendedViewModeEnabled: Boolean) {
         root.removeAllChildren()
-        if (model == null) {
+        if (config == null) {
             root.add(CircletModelTreeNode("model is empty"))
             return
         }
-
-        val config = model.config
 
         val tasks = config.jobs
         val targets = config.targets

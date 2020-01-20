@@ -19,9 +19,14 @@ class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
         service.createToolWindowContent(toolWindow)
     }
 
+    override fun isDoNotActivateOnStart(): Boolean {
+        return true
+    }
+
     companion object {
         const val TOOL_WINDOW_ID = ProductName
     }
+
 }
 
 val Project.toolWindow: ToolWindow?

@@ -1,6 +1,7 @@
 package circlet.plugins.pipelines.services
 
 import circlet.pipelines.*
+import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.resolve.*
 import circlet.pipelines.config.dsl.script.exec.common.*
@@ -14,6 +15,7 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
+import org.jetbrains.eval4j.*
 import org.slf4j.event.*
 import org.slf4j.helpers.*
 import runtime.reactive.*
@@ -22,115 +24,146 @@ import java.io.*
 @Service
 class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by LifetimedDisposableImpl(), KLogging() {
 
-    private val sync = Any()
-    private val _script = mutableProperty<ScriptViewModel?>(null)
-    private val _modelBuildIsRunning = mutableProperty(false)
-    private val logBuildData = mutableProperty<LogData?>(null)
-    private val detector = project.service<SpaceKtsFileDetector>()
+    private val _model = mutableProperty<ScriptModelHolder?>(null)
 
-    val script: Property<ScriptViewModel?> = _script
-    val modelBuildIsRunning: Property<Boolean> = _modelBuildIsRunning
+    private val _modelBuildIsRequested = mutableProperty(false)
 
-    init {
+    // script is null when no build file is found in project
+    val script = map(_model) { it as ScriptModel? }
 
-        detector.dslFile.view(lifetime) { lt, file ->
-            rebuildModel()
-        }
-
-        // push to IDE build log
-        logBuildData.view(lifetime) { lt, log ->
-            if (log != null) {
-                publishBuildLog(project, log)
-            }
-        }
+    fun requestModel() {
+        _modelBuildIsRequested.value = true
     }
 
     fun rebuildModel() {
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Build DSL Model", false) {
-            override fun run(pi: ProgressIndicator) {
-
-                // todo: implement build cancellation and re-building
-                synchronized(sync) {
-                    if (_modelBuildIsRunning.value)
-                        return
-                    _modelBuildIsRunning.value = true
-                }
-
-                val data = LogData()
-                try {
-                    logBuildData.value = data
-                    val model = build(project, data)
-                    _script.value = model
-                } finally {
-                    data.close()
-                    _modelBuildIsRunning.value = false
-                }
-
-            }
-        })
+        _model.value?.rebuildModel()
     }
 
-    private fun build(project: Project, logData: LogData): ScriptViewModel {
-        lifetime.using { lt ->
-            val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
+    init {
+        project.service<SpaceKtsFileDetector>().dslFile.view(lifetime) { lt, file ->
+            _model.value = ScriptModelHolder(lifetime, _modelBuildIsRequested)
+        }
+    }
 
-            events.change.forEach(lt) {
-                val ev = it.index
-                val prefix = if (ev.level == Level.ERROR) "Error: " else ""
-                val resMessage = "$prefix${ev.message}"
-                logData.add(resMessage)
-                logger.debug(resMessage)
+    // this class is created per automation script file found and it is responsible for building model content
+    private inner class ScriptModelHolder(val lifetime: Lifetime, modelBuildIsRequested: Property<Boolean>) : ScriptModel {
+
+        val sync = Any()
+
+        private val _config = mutableProperty<ScriptConfig?>(null)
+        private val _error = mutableProperty<String?>(null)
+        private val _state = mutableProperty(ScriptState.NotInitialised)
+
+        override val config: Property<ScriptConfig?> get() = _config
+        override val error: Property<String?> get() = _error
+        override val state: Property<ScriptState> get() = _state
+
+        val logBuildData = mutableProperty<LogData?>(null)
+
+        init {
+            // push to IDE build log
+            logBuildData.view(lifetime) { lt, log ->
+                if (log != null) {
+                    publishBuildLog(project, log)
+                }
             }
 
-            val eventLogger = KLogger(
-                JVMLogger(
-                    SubstituteLogger("ScriptModelBuilderLogger", events, false)
+            modelBuildIsRequested.whenTrue(lifetime) { lt ->
+                if (_state.value == ScriptState.NotInitialised)
+                    rebuildModel()
+            }
+
+        }
+
+        fun rebuildModel() {
+            ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Build DSL Model", false) {
+                override fun run(pi: ProgressIndicator) {
+                    // todo: implement build cancellation and re-building
+                    synchronized(sync) {
+                        if (_state.value == ScriptState.Building)
+                            return
+                        _state.value = ScriptState.Building
+                    }
+                    val data = LogData()
+                    try {
+                        logBuildData.value = data
+                        build(project, data)
+                    } finally {
+                        data.close()
+                        _state.value = ScriptState.Ready
+                    }
+                }
+            })
+        }
+
+        private fun build(project: Project, logData: LogData) {
+            lifetime.using { lt ->
+                val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
+
+                events.change.forEach(lt) {
+                    val ev = it.index
+                    val prefix = if (ev.level == Level.ERROR) "Error: " else ""
+                    val resMessage = "$prefix${ev.message}"
+                    logData.add(resMessage)
+                    logger.debug(resMessage)
+                }
+
+                val eventLogger = KLogger(
+                    JVMLogger(
+                        SubstituteLogger("ScriptModelBuilderLogger", events, false)
+                    )
                 )
-            )
 
-            val dslFile = DslFileFinder.find(project)
+                val dslFile = DslFileFinder.find(project)
 
-            if (dslFile == null) {
-                logger.info("Can't find `$DefaultDslFileName`")
-                return createEmptyScriptViewModel()
-            }
+                if (dslFile == null) {
+                    logger.info("Can't find `$DefaultDslFileName`")
+                    _error.value = "Can't find `$DefaultDslFileName`"
+                    return
+                }
 
-            try {
-                val p = PathManager.getSystemPath() + "/.kotlinc/"
-                val path = normalizePath(p)
+                try {
+                    val p = PathManager.getSystemPath() + "/.kotlinc/"
+                    val path = normalizePath(p)
 
-                val kotlinCompilerPath = KotlinCompilerFinder(eventLogger)
-                    .find(if (path.endsWith('/')) path else "$path/")
-                logger.debug("build. path to kotlinc: $kotlinCompilerPath")
+                    val kotlinCompilerPath = KotlinCompilerFinder(eventLogger)
+                        .find(if (path.endsWith('/')) path else "$path/")
+                    logger.debug("build. path to kotlinc: $kotlinCompilerPath")
 
-                val scriptDefFile = JarFinder.find("pipelines-config-dsl-scriptdefinition")
-                logger.debug("build. path to `pipelines-config-dsl-scriptdefinition` jar: $scriptDefFile")
+                    val scriptDefFile = JarFinder.find("pipelines-config-dsl-scriptdefinition")
+                    logger.debug("build. path to `pipelines-config-dsl-scriptdefinition` jar: $scriptDefFile")
 
-                val outputFolder = createTempDir().absolutePath + "/"
-                val targetJar = outputFolder + "compiledJar.jar"
-                val resolveResultPath = outputFolder + "compilationResolveResult"
+                    val outputFolder = createTempDir().absolutePath + "/"
+                    val targetJar = outputFolder + "compiledJar.jar"
+                    val resolveResultPath = outputFolder + "compilationResolveResult"
 
-                DslJarCompiler(eventLogger).compile(
-                    DslSourceFileDelegatingFileProvider(dslFile.path),
-                    targetJar,
-                    resolveResultPath,
-                    kotlinCompilerPath,
-                    scriptDefFile.absolutePath,
-                    allowNotReadyDsl = false)
+                    DslJarCompiler(eventLogger).compile(
+                        DslSourceFileDelegatingFileProvider(dslFile.path),
+                        targetJar,
+                        resolveResultPath,
+                        kotlinCompilerPath,
+                        scriptDefFile.absolutePath,
+                        allowNotReadyDsl = false)
 
-                val scriptResolveResult = ScriptResolveResult.readFromFileOrEmpty(resolveResultPath)
-                val config = DslScriptExecutor().evaluateModel(targetJar, scriptResolveResult.classpath, "", "")
+                    val scriptResolveResult = ScriptResolveResult.readFromFileOrEmpty(resolveResultPath)
+                    val config = DslScriptExecutor().evaluateModel(targetJar, scriptResolveResult.classpath, "", "")
 
-                return ScriptViewModelFactory.create(config)
-            } catch (e: Exception) {
-                val errors = StringWriter()
-                e.printStackTrace(PrintWriter(errors))
-                logger.error("${e.message}. $errors")
-                return createEmptyScriptViewModel()
+                    _error.value = null
+                    _config.value = config
+                } catch (e: Exception) {
+                    val errors = StringWriter()
+                    e.printStackTrace(PrintWriter(errors))
+                    logger.error("${e.message}. $errors")
+
+                    // do not touch last config, just update the error state.
+                    _error.value = errors.toString()
+                }
+
             }
 
         }
 
     }
+
 
 }
