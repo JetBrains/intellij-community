@@ -24,6 +24,7 @@
 
     <stubElementTypeHolder class="com.jetbrains.python.PyStubElementTypes" externalIdPrefix="py."/>
 
+    <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.psi.impl.PyGotoDeclarationHandler"/>
 
     <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
