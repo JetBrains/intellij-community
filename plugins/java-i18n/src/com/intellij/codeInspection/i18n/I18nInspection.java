@@ -613,8 +613,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
 
     if (ignoreForAllButNls) {
-      return JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NLS, null) || 
-             isReturnedFromNonNlsMethod(expression, AnnotationUtil.NLS, null);
+      return JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NLS, null) ||
+             isReturnedFromAnnotatedMethod(expression, AnnotationUtil.NLS, null);
     }
 
     if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, nonNlsTargets)) {
@@ -637,7 +637,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return false;
     }
 
-    if (isReturnedFromNonNlsMethod(expression, AnnotationUtil.NON_NLS, nonNlsTargets)) {
+    if (isReturnedFromAnnotatedMethod(expression, AnnotationUtil.NON_NLS, nonNlsTargets)) {
       return false;
     }
     if (ignoreForAssertStatements && isArgOfAssertStatement(expression)) {
@@ -860,9 +860,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isReturnedFromNonNlsMethod(final ULiteralExpression expression,
-                                                    final String fqn, 
-                                                    @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isReturnedFromAnnotatedMethod(final ULiteralExpression expression,
+                                                       final String fqn,
+                                                       @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
     PsiMethod method;
     UNamedExpression nameValuePair = UastUtils.getParentOfType(expression, UNamedExpression.class);
     if (nameValuePair != null) {
@@ -883,6 +883,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       method = uMethod != null ? uMethod.getJavaPsi() : null;
     }
     if (method == null) return false;
+
+    String oppositeFQN = fqn.equals(AnnotationUtil.NLS) ? AnnotationUtil.NON_NLS : AnnotationUtil.NLS;
+    if (method.hasAnnotation(oppositeFQN)) {
+      return false;
+    }
 
     if (AnnotationUtil.isAnnotated(method, fqn, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
       return true;
