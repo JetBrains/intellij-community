@@ -25,6 +25,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.management.ManagementFactory;
 
@@ -266,5 +267,11 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   public void setAutosaveMode(boolean autosaveMode) {
     myConfiguration.autosaveMode = autosaveMode;
     myEditorManager.fireAutosaveModeChanged(autosaveMode);
+  }
+
+  @TestOnly
+  public void disposeCurrentSession() {
+    myEditorManager.releaseEditors();
+    myLightEditProjectManager.close();
   }
 }
