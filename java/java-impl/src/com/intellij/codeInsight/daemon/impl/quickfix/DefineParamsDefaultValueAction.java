@@ -179,7 +179,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     CreateFromUsageBaseFix.startTemplate(editor, template, project);
   }
 
-  private PsiParameter @Nullable [] getParams(@NotNull PsiElement element, @NotNull PsiParameterList parameterList) {
+  private static PsiParameter @Nullable [] getParams(@NotNull PsiElement element, @NotNull PsiParameterList parameterList) {
     final PsiParameter[] parameters = parameterList.getParameters();
     if (parameters.length == 1) {
       return parameters;
