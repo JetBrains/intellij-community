@@ -3,9 +3,12 @@ package com.intellij.filePrediction
 
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.util.registry.Registry
 
 class FilePredictionEditorManagerListener : FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
-    event.newFile?.let { FileUsagePredictor.onFileOpened(event.manager.project, it, event.oldFile) }
+    if (Registry.get("filePrediction.calculate.features").asBoolean()) {
+      event.newFile?.let { FileUsagePredictor.onFileOpened(event.manager.project, it, event.oldFile) }
+    }
   }
 }
