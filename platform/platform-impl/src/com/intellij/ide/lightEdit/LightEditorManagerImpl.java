@@ -25,9 +25,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LightEditorManager implements Disposable {
-  private final List<LightEditorInfo> myEditors = new ArrayList<>();
-  private final EventDispatcher<LightEditorListener> myEventDispatcher = EventDispatcher.create(LightEditorListener.class);
+public class LightEditorManagerImpl implements LightEditorManager, Disposable {
+  private final List<LightEditorInfo>                myEditors         = new ArrayList<>();
+  private final EventDispatcher<LightEditorListener> myEventDispatcher =
+    EventDispatcher.create(LightEditorListener.class);
 
   final static Key<Boolean> NO_IMPLICIT_SAVE = Key.create("light.edit.no.implicit.save");
 
@@ -39,7 +40,7 @@ public class LightEditorManager implements Disposable {
       document, LightEditUtil.getProject(), EditorKind.MAIN_EDITOR);
     ObjectUtils.consumeIfCast(editor, EditorImpl.class,
                               editorImpl -> editorImpl.setDropHandler(new LightEditDropHandler()));
-    final LightEditorInfo editorInfo = new LightEditorInfo(editor, file);
+    final LightEditorInfo editorInfo = new LightEditorInfoImpl(editor, file);
     myEditors.add(editorInfo);
     return editorInfo;
   }
@@ -56,8 +57,9 @@ public class LightEditorManager implements Disposable {
     return createEditor(document, file);
   }
 
+  @Override
   @Nullable
-  LightEditorInfo createEditor(@NotNull VirtualFile file) {
+  public LightEditorInfo createEditor(@NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       document.putUserData(NO_IMPLICIT_SAVE, true);
@@ -83,7 +85,8 @@ public class LightEditorManager implements Disposable {
     myEditors.clear();
   }
 
-  void closeEditor(@NotNull LightEditorInfo editorInfo) {
+  @Override
+  public void closeEditor(@NotNull LightEditorInfo editorInfo) {
     Editor editor = editorInfo.getEditor();
     myEditors.remove(editorInfo);
     if (!editor.isDisposed()) {
@@ -92,10 +95,12 @@ public class LightEditorManager implements Disposable {
     myEventDispatcher.getMulticaster().afterClose(editorInfo);
   }
 
+  @Override
   public void addListener(@NotNull LightEditorListener listener) {
     myEventDispatcher.addListener(listener);
   }
 
+  @Override
   public void addListener(@NotNull LightEditorListener listener, @NotNull Disposable parent) {
     myEventDispatcher.addListener(listener, parent);
   }
@@ -124,11 +129,14 @@ public class LightEditorManager implements Disposable {
       .findFirst().orElse(null);
   }
 
-  boolean isImplicitSaveAllowed(@NotNull Document document) {
-    return LightEditService.getInstance().isAutosaveMode() || !ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), false);
+  @Override
+  public boolean isImplicitSaveAllowed(@NotNull Document document) {
+    return LightEditService.getInstance().isAutosaveMode() ||
+           !ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), false);
   }
 
-  boolean containsUnsavedDocuments() {
+  @Override
+  public boolean containsUnsavedDocuments() {
     return myEditors.stream().anyMatch(editorInfo -> editorInfo.isUnsaved());
   }
 
@@ -141,8 +149,9 @@ public class LightEditorManager implements Disposable {
     }
   }
 
+  @Override
   @NotNull
-  LightEditorInfo saveAs(@NotNull LightEditorInfo info, @NotNull VirtualFile targetFile) {
+  public LightEditorInfo saveAs(@NotNull LightEditorInfo info, @NotNull VirtualFile targetFile) {
     LightEditorInfo newInfo = createEditor(targetFile);
     if (newInfo != null) {
       ApplicationManager.getApplication().runWriteAction(() -> {
@@ -158,5 +167,4 @@ public class LightEditorManager implements Disposable {
   LightEditorInfo getEditorInfo(@NotNull Editor editor) {
     return myEditors.stream().filter(editorInfo -> editor == editorInfo.getEditor()).findFirst().orElse(null);
   }
-
 }

@@ -7,26 +7,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class LightEditorInfo {
+public class LightEditorInfoImpl implements LightEditorInfo {
 
   private final Editor myEditor;
   private final VirtualFile myFile;
 
-  LightEditorInfo(@NotNull Editor editor, @NotNull VirtualFile file) {
+  LightEditorInfoImpl(@NotNull Editor editor, @NotNull VirtualFile file) {
     myEditor = editor;
     myFile = file;
   }
 
+  @Override
   @NotNull
   public Editor getEditor() {
     return myEditor;
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @Override
   public boolean isUnsaved() {
     if (isNew()) {
       return true;
@@ -36,6 +39,7 @@ public class LightEditorInfo {
     }
   }
 
+  @Override
   public boolean isNew() {
     return myFile instanceof LightVirtualFile;
   }

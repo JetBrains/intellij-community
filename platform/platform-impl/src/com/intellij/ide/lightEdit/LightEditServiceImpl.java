@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,11 +29,14 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.management.ManagementFactory;
 
 @State(name = "LightEdit", storages =  @Storage("lightEdit.xml"))
-public class LightEditService implements Disposable, LightEditorListener, PersistentStateComponent<LightEditConfiguration> {
-  private static final Logger LOG = Logger.getInstance(LightEditService.class);
+public class LightEditServiceImpl implements LightEditService,
+                                             Disposable,
+                                             LightEditorListener,
+                                             PersistentStateComponent<LightEditConfiguration> {
+  private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
 
   private LightEditFrameWrapper myFrameWrapper;
-  private final LightEditorManager myEditorManager;
+  private final LightEditorManagerImpl myEditorManager;
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
   private final LightEditProjectManager myLightEditProjectManager = new LightEditProjectManager();
 
@@ -49,12 +51,8 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     XmlSerializerUtil.copyBean(state, myConfiguration);
   }
 
-  public static LightEditService getInstance() {
-    return ServiceManager.getService(LightEditService.class);
-  }
-
-  public LightEditService() {
-    myEditorManager = new LightEditorManager();
+  public LightEditServiceImpl() {
+    myEditorManager = new LightEditorManagerImpl();
     myEditorManager.addListener(this);
     Disposer.register(this, myEditorManager);
   }
@@ -81,16 +79,19 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     return ApplicationInfo.getInstance().getVersionName();
   }
 
+  @Override
   @Nullable
-  Project getProject() {
+  public Project getProject() {
     return myLightEditProjectManager.getProject();
   }
 
+  @Override
   @NotNull
-  Project getOrCreateProject() {
+  public Project getOrCreateProject() {
     return myLightEditProjectManager.getOrCreateProject();
   }
 
+  @Override
   public void openFile(@NotNull VirtualFile file) {
     doWhenActionManagerInitialized(() -> {
       doOpenFile(file);
@@ -154,12 +155,14 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     }
   }
 
+  @Override
   public void createNewFile() {
     showEditorWindow();
     LightEditorInfo newEditorInfo = myEditorManager.createEditor();
     addEditorTab(newEditorInfo);
   }
 
+  @Override
   public boolean closeEditorWindow() {
     if (canClose()) {
       myFrameWrapper.getFrame().setVisible(false);
@@ -206,6 +209,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     return myFrameWrapper.getLightEditPanel();
   }
 
+  @Override
   @Nullable
   public VirtualFile getSelectedFile() {
     LightEditFrameWrapper frameWrapper = myFrameWrapper;
@@ -244,11 +248,13 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     }
   }
 
+  @Override
   @NotNull
   public LightEditorManager getEditorManager() {
     return myEditorManager;
   }
 
+  @Override
   public void saveToAnotherFile(@NotNull Editor editor) {
     LightEditorInfo editorInfo = myEditorManager.getEditorInfo(editor);
     if (editorInfo != null) {
@@ -260,10 +266,12 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     }
   }
 
+  @Override
   public boolean isAutosaveMode() {
     return myConfiguration.autosaveMode;
   }
 
+  @Override
   public void setAutosaveMode(boolean autosaveMode) {
     myConfiguration.autosaveMode = autosaveMode;
     myEditorManager.fireAutosaveModeChanged(autosaveMode);

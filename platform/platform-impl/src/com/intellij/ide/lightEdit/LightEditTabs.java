@@ -23,9 +23,9 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 final class LightEditTabs extends JBEditorTabs {
-  private final LightEditorManager myEditorManager;
+  private final LightEditorManagerImpl myEditorManager;
 
-  LightEditTabs(@NotNull Disposable parent, LightEditorManager editorManager) {
+  LightEditTabs(@NotNull Disposable parent, LightEditorManagerImpl editorManager) {
     super(LightEditUtil.getProject(), null, parent);
 
     myEditorManager = editorManager;

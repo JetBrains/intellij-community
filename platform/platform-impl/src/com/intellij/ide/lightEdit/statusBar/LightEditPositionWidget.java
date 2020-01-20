@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.statusBar;
 
-import com.intellij.ide.lightEdit.LightEditUtil;
-import com.intellij.ide.lightEdit.LightEditorInfo;
-import com.intellij.ide.lightEdit.LightEditorListener;
-import com.intellij.ide.lightEdit.LightEditorManager;
+import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.status.PositionPanel;

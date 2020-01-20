@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
-import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditServiceImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LightEditProjectManager {
-  private static final Logger LOG = Logger.getInstance(LightEditService.class);
+  private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
   private static final Object LOCK = new Object();
 
   private volatile LightEditProject myProject;
