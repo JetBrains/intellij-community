@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
@@ -27,6 +27,10 @@ import java.util.ResourceBundle;
 public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry> implements InspectionProfileEntry.DefaultNameProvider {
   private static final Logger LOG = Logger.getInstance(InspectionEP.class);
 
+  private String effectiveDisplayName;
+  private String effectiveGroupDisplayName;
+  private String effectiveShortName;
+
   /**
    * @see GlobalInspectionTool
    */
@@ -49,21 +53,29 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }
-    return shortName == null ? shortName = InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
+    if (effectiveShortName == null) {
+      effectiveShortName = shortName != null ? shortName : InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
+    }
+    return effectiveShortName;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
   public String getDisplayName() {
-    return displayName == null ? displayName = getLocalizedString(bundle, key) : displayName;
+    if (effectiveDisplayName == null) {
+      effectiveDisplayName = displayName != null ? displayName : getLocalizedString(bundle, key);
+    }
+    return effectiveDisplayName;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
   public String getGroupDisplayName() {
-    return groupDisplayName == null ? groupDisplayName = getLocalizedString(groupBundle, groupKey) : groupDisplayName;
+    if (effectiveGroupDisplayName == null) {
+      effectiveGroupDisplayName = groupDisplayName != null ? groupDisplayName : getLocalizedString(groupBundle, groupKey);
+    }
+    return effectiveGroupDisplayName;
   }
-
 
   @Override
   @Nullable

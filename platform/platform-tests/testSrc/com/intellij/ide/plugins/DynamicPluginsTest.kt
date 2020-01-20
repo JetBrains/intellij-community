@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.codeInspection.GlobalInspectionTool
+import com.intellij.codeInspection.InspectionEP
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -310,6 +312,18 @@ class DynamicPluginsTest {
       Disposer.dispose(disposable)
     }
   }
+  @Test
+  fun unloadEPWithDefaultAttributes() {
+    val disposable = loadExtensionWithText("<globalInspection implementationClass=\"${MyInspectionTool::class.java.name}\" cleanupTool=\"false\"/>",
+                                           DynamicPlugins::class.java.classLoader)
+    try {
+      assertTrue(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name })
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+    assertFalse(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name })
+  }
 
   @Test
   fun unloadEPCollection() {
@@ -385,6 +399,8 @@ class DynamicPluginsTest {
 
     var executed = false
   }
+
+  private class MyInspectionTool : GlobalInspectionTool()
 
   private class MyConfigurable : Configurable {
     override fun isModified(): Boolean = TODO()
