@@ -148,10 +148,10 @@ internal class LegacyBridgeLibraryImpl(
           originalLibrarySnapshot = librarySnapshot,
           diff = diff,
           committer = { _, diffBuilder ->
-          WorkspaceModel.getInstance(project).updateProjectModel {
-            it.addDiff(diffBuilder)
-          }
-        })
+            WorkspaceModel.getInstance(project).updateProjectModel {
+              it.addDiff(diffBuilder)
+            }
+          })
       }
     )
   }
