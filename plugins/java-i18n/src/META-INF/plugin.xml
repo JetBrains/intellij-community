@@ -12,7 +12,8 @@
   <extensionPoints>
     <extensionPoint name="resourceBundleManager"
                     interface="com.intellij.lang.properties.psi.ResourceBundleManager"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint name="i18nizeHandlerProvider" interface="com.intellij.codeInspection.i18n.I18nizeHandlerProvider" dynamic="true"/>
   </extensionPoints>
 
