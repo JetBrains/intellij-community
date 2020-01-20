@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -14,11 +14,10 @@ import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
-import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
@@ -957,18 +956,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
-  public class PriorityEventCollector implements PrioritizedInternalDocumentListener {
+  public class PriorityEventCollector implements PrioritizedDocumentListener {
     @Override
     public int getPriority() {
       return EditorDocumentPriorities.RANGE_MARKER;
-    }
-
-    @Override
-    public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-      UncommittedInfo info = getUncommittedInfo(document);
-      if (info != null) {
-        info.myEvents.add(new RetargetRangeMarkers(document, start, end, base));
-      }
     }
 
     @Override

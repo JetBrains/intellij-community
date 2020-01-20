@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -522,6 +522,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void insertString(int offset, @NotNull CharSequence s) {
+    insertString(offset, s, offset);
+  }
+
+  private void insertString(int offset, @NotNull CharSequence s, int moveSrcOffset) {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
       throw new IndexOutOfBoundsException(
@@ -541,7 +545,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     ImmutableCharSequence newText = myText.insert(offset, s);
     ImmutableCharSequence newString = newText.subtext(offset, offset + s.length());
-    updateText(newText, offset, "", newString, false, LocalTimeCounter.currentTime(), offset, 0);
+    updateText(newText, offset, "", newString, false, LocalTimeCounter.currentTime(),
+               offset, 0, moveSrcOffset);
     trimToSize();
   }
 
@@ -553,6 +558,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void deleteString(int startOffset, int endOffset) {
+    deleteString(startOffset, endOffset, startOffset);
+  }
+
+  public void deleteString(int startOffset, int endOffset, int moveDstOffset) {
     assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
@@ -566,7 +575,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     ImmutableCharSequence newText = myText.delete(startOffset, endOffset);
     ImmutableCharSequence oldString = myText.subtext(startOffset, endOffset);
-    updateText(newText, startOffset, oldString, "", false, LocalTimeCounter.currentTime(), startOffset, endOffset - startOffset);
+    updateText(newText, startOffset, oldString, "", false, LocalTimeCounter.currentTime(),
+               startOffset, endOffset - startOffset, moveDstOffset);
   }
 
   @Override
@@ -574,26 +584,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertBounds(srcStart, srcEnd);
     if (dstOffset == srcStart || dstOffset == srcEnd) return;
     ProperTextRange srcRange = new ProperTextRange(srcStart, srcEnd);
-    assert !srcRange.containsOffset(dstOffset) : "Can't perform text move from range [" +srcStart+ "; " + srcEnd+ ") to offset "+dstOffset;
+    assert !srcRange.containsOffset(dstOffset) : "Can't perform text move from range [" + srcStart + "; " + srcEnd + ") to offset " + dstOffset;
 
     String replacement = getCharsSequence().subSequence(srcStart, srcEnd).toString();
+    int shift = dstOffset < srcStart ? srcEnd - srcStart : 0;
 
-    insertString(dstOffset, replacement);
-    int shift = 0;
-    if (dstOffset < srcStart) {
-      shift = srcEnd - srcStart;
-    }
-    fireMoveText(srcStart + shift, srcEnd + shift, dstOffset);
-
-    deleteString(srcStart + shift, srcEnd + shift);
-  }
-
-  private void fireMoveText(int start, int end, int newBase) {
-    for (DocumentListener listener : getListeners()) {
-      if (listener instanceof PrioritizedInternalDocumentListener) {
-        ((PrioritizedInternalDocumentListener)listener).moveTextHappened(this, start, end, newBase);
-      }
-    }
+    insertString(dstOffset, replacement, srcStart + shift);
+    deleteString(srcStart + shift, srcEnd + shift, dstOffset);
   }
 
   @Override
@@ -656,7 +653,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       newText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
       changedPart = newText.subtext(startOffset, startOffset + changedPart.length());
     }
-    updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp, initialStartOffset, initialOldLength);
+    updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp,
+               initialStartOffset, initialOldLength, startOffset);
     trimToSize();
   }
 
@@ -776,16 +774,19 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           boolean wholeTextReplaced,
                           long newModificationStamp,
                           int initialStartOffset,
-                          int initialOldLength) {
+                          int initialOldLength,
+                          int moveOffset) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("updating document " + this + ".\nNext string:'" + newString + "'\nOld string:'" + oldString + "'");
     }
 
+    assert moveOffset >= 0 && moveOffset <= getTextLength() : "Invalid moveOffset: " + moveOffset;
     assertNotNestedModification();
     myChangeInProgress = true;
     DelayedExceptions exceptions = new DelayedExceptions();
     try {
-      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced, initialStartOffset, initialOldLength);
+      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced,
+                                                  initialStartOffset, initialOldLength, moveOffset);
       beforeChangedUpdate(event, exceptions);
       myTextString = null;
       ImmutableCharSequence prevText = myText;
@@ -798,7 +799,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       exceptions.rethrowPCE();
     }
   }
-  
+
   private class DelayedExceptions {
     Throwable myException;
 
@@ -809,7 +810,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       else {
         myException.addSuppressed(e);
       }
-      
+
       if (!(e instanceof ProcessCanceledException)) {
         LOG.error(e);
       }

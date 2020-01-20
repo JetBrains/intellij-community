@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -7,7 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class InlayModelImpl implements InlayModel, PrioritizedInternalDocumentListener, Disposable, Dumpable {
+public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
   private static final Comparator<Inlay> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((Inlay i) -> i.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText());
@@ -95,14 +96,12 @@ public class InlayModelImpl implements InlayModel, PrioritizedInternalDocumentLi
       }
       myInlaysAtCaret = null;
     }
-  }
-
-  @Override
-  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-    for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
-      notifyRemoved(inlay);
+    if (((DocumentEventImpl)event).isPreMoveInsertion()) {
+      for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
+        notifyRemoved(inlay);
+      }
+      myInlaysInvalidatedOnMove.clear();
     }
-    myInlaysInvalidatedOnMove.clear();
   }
 
   void reinitSettings() {

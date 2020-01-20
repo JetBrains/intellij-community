@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
@@ -42,7 +43,7 @@ import java.util.List;
  * @author Denis Zhdanov
  */
 public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
-  implements SoftWrapModelEx, PrioritizedInternalDocumentListener, FoldingListener,
+  implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
              PropertyChangeListener, Dumpable, Disposable
 {
 
@@ -417,24 +418,19 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
     myUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
-      return;
-    }
-    myApplianceManager.documentChanged(event, myAfterLineEndInlayUpdated);
-  }
-
-  @Override
-  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-    if (myBulkUpdateInProgress) {
-      return;
-    }
-    if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;
     }
-    int textLength = document.getTextLength();
-    // adding +1, as inlays at the end of the moved range stick to the following text (and impact its layout)
-    myApplianceManager.recalculate(Arrays.asList(new TextRange(start, Math.min(textLength, end + 1)),
-                                                 new TextRange(base, Math.min(textLength, base + end - start + 1))));
+    myApplianceManager.documentChanged(event, myAfterLineEndInlayUpdated);
+    if (((DocumentEventImpl)event).isPreMoveInsertion()) {
+      DocumentEventImpl e = (DocumentEventImpl)event;
+      int dstOffset = e.getOffset();
+      int srcOffset = e.getMoveOffset();
+      int textLength = event.getDocument().getTextLength();
+      // adding +1, as inlays at the end of the moved range stick to the following text (and impact its layout)
+      myApplianceManager.recalculate(Arrays.asList(new TextRange(srcOffset, Math.min(textLength, srcOffset + e.getOldLength() + 1)),
+                                                   new TextRange(dstOffset, Math.min(textLength, dstOffset + e.getOldLength() + 1))));
+    }
   }
 
   void onBulkDocumentUpdateStarted() {

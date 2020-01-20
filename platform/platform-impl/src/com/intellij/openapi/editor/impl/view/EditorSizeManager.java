@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -9,8 +9,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
 /**
  * Calculates width (in pixels) of editor contents.
  */
-class EditorSizeManager implements PrioritizedInternalDocumentListener, Disposable, FoldingListener, InlayModel.Listener, Dumpable {
+class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener, InlayModel.Listener, Dumpable {
   private static final Logger LOG = Logger.getInstance(EditorSizeManager.class);
 
   private static final int UNKNOWN_WIDTH = Integer.MAX_VALUE;
@@ -104,8 +105,11 @@ class EditorSizeManager implements PrioritizedInternalDocumentListener, Disposab
     myAfterLineEndInlayUpdated = false;
     myDuringDocumentUpdate = true;
     if (myDocument.isInBulkUpdate()) return;
-    myDocumentChangeStartOffset = event.getOffset();
-    myDocumentChangeEndOffset = event.getOffset() + event.getNewLength();
+    final int offset = event.getOffset();
+    final int moveOffset = ((DocumentEventImpl)event).getMoveOffsetBeforeChanged();
+    final int length = event.getNewLength();
+    myDocumentChangeStartOffset = Math.min(offset, moveOffset);
+    myDocumentChangeEndOffset = Math.max(offset, moveOffset) + length;
   }
 
   @Override
@@ -118,12 +122,6 @@ class EditorSizeManager implements PrioritizedInternalDocumentListener, Disposab
       doInvalidateRange(lineEndOffset, lineEndOffset);
     }
     assertValidState();
-  }
-
-  @Override
-  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-    if (myDocument.isInBulkUpdate()) return;
-    doInvalidateRange(Math.min(start, base), Math.max(end, base + end - start));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.AttachmentFactory;
@@ -1616,7 +1616,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     @Override
-    protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+    protected void onReTarget(@NotNull DocumentEvent e, int reTargetShift) {
       int offset = intervalStart();
       if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
         setIntervalStart(offset - 1);
@@ -1672,7 +1672,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     @Override
-    protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+    protected void onReTarget(@NotNull DocumentEvent e, int reTargetShift) {
       int start = intervalStart();
       if (DocumentUtil.isInsideSurrogatePair(getDocument(), start)) {
         setIntervalStart(start - 1);

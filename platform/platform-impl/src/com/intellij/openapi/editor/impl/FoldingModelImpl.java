@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -11,9 +11,10 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -33,7 +34,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FoldingModelImpl extends InlayModel.SimpleAdapter
-  implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
+  implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
 
   public static final Key<Boolean> SELECT_REGION_ON_CARET_NEARBY = Key.create("select.region.on.caret.nearby");
@@ -511,19 +512,16 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     try {
-      if (!event.getDocument().isInBulkUpdate()) {
+      if (event.getDocument().isInBulkUpdate()) return;
+      if (((DocumentEventImpl)event).isPreMoveInsertion()) {
+        myFoldTree.rebuild();
+      }
+      else {
         updateCachedOffsets();
       }
     }
     finally {
       myDocumentChangeProcessed = true;
-    }
-  }
-
-  @Override
-  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-    if (!myEditor.getDocument().isInBulkUpdate()) {
-      myFoldTree.rebuild();
     }
   }
 
@@ -737,13 +735,13 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     @Override
     boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
-                                                   @NotNull DocumentEvent e,
+                                                   @NotNull DocumentEvent e, int start, int end, int lengthDelta,
                                                    @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
-      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, e, start, end, lengthDelta, affected);
       inCollectCall = true;
       boolean result;
       try {
-        result = super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+        result = super.collectAffectedMarkersAndShiftSubtrees(root, e, start, end, lengthDelta, affected);
       }
       finally {
         inCollectCall = false;
