@@ -280,6 +280,8 @@ object DynamicPlugins {
           application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(pluginDescriptor, isUpdate)
         }
       }
+    } catch (e: Exception) {
+      Logger.getInstance(DynamicPlugins.javaClass).error(e)
     } finally {
       UIUtil.dispatchAllInvocationEvents()
 

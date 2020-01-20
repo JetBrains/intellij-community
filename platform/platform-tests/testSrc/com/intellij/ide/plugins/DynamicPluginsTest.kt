@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
-import com.intellij.codeInspection.GlobalInspectionTool
-import com.intellij.codeInspection.InspectionEP
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -37,7 +35,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.lang.AssertionError
 
 @RunsInEdt
 class DynamicPluginsTest {
