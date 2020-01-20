@@ -1,6 +1,7 @@
 package circlet.vcs.clone
 
 import circlet.client.api.*
+import circlet.platform.api.*
 import circlet.platform.client.*
 import circlet.workspaces.*
 import com.intellij.util.ui.cloneDialog.*
@@ -28,7 +29,7 @@ class CircletCloneComponentViewModel(
 
             val projectsWithRepos = repositoryService.getRepositories(allProjects.map { project -> project.key }).groupBy { it.project.key }
 
-            val starredProjectKeys = starService.starredProjects().map(PR_Project::key).toHashSet()
+            val starredProjectKeys = starService.starredProjects().resolveAll().map(PR_Project::key).toHashSet()
 
             val result = mutableListOf<CircletCloneListItem?>()
             allProjects.forEach { project ->
@@ -53,13 +54,13 @@ class CircletCloneComponentViewModel(
                     }
                 }
             }
-            while(result.size < allProjects.size) {
+            while (result.size < allProjects.size) {
                 result.add(null)
             }
             result
         }
     ) { batch ->
-        projectService.projectsBatch(batch, "", "", false)
+        projectService.projectsBatch(batch, "", "").map { it.resolve() }
     }
 
 }

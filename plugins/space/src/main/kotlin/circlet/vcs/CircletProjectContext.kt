@@ -57,7 +57,7 @@ class CircletProjectContext(project: Project) : Disposable {
         val repoService: RepositoryService = ws.client.repoService
         val repoProjectKeys = repoService.findByRepositoryUrl(url) ?: return null
         val projectService: Projects = ws.client.pr
-        val list = repoProjectKeys.second.map { CircletProjectDescription(it, projectService.projectByKey(it)) }.toList()
+        val list = repoProjectKeys.second.map { CircletProjectDescription(it, projectService.getProjectByKey(it).resolve()) }.toList()
         return repoProjectKeys.first to list
     }
 
