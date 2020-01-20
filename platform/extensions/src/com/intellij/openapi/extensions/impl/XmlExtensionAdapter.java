@@ -82,15 +82,10 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return instance;
   }
 
-  boolean isLoadedFromAnyElement(List<Element> candidateElements) {
+  boolean isLoadedFromAnyElement(List<Element> candidateElements, Map<String, String> defaultAttributes) {
     SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
     Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance, filter);
     Map<String, String> serializedAttributes = getExtensionAttributesMap(serializedElement);
-    Map<String, String> defaultAttributes = Collections.emptyMap();
-    if (extensionInstance != null) {
-      Element defaultElement = XmlSerializer.serialize(filter.getDefaultValue(extensionInstance.getClass()));
-      defaultAttributes = getExtensionAttributesMap(defaultElement);
-    }
 
     for (Element candidateElement : candidateElements) {
       Map<String, String> candidateAttributes = getExtensionAttributesMap(candidateElement);
@@ -109,7 +104,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return false;
   }
 
-  private static Map<String, String> getExtensionAttributesMap(Element serializedElement) {
+  static Map<String, String> getExtensionAttributesMap(Element serializedElement) {
     Map<String, String> attributes = new HashMap<>();
     for (Attribute attribute : serializedElement.getAttributes()) {
       if (!attribute.getName().equals("id") && !attribute.getName().equals("order")) {

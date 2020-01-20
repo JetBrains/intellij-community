@@ -54,7 +54,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private ComponentManager myComponentManager;
 
   @NotNull
-  private final PluginDescriptor myDescriptor;
+  protected final PluginDescriptor myDescriptor;
 
   @NotNull
   private List<ExtensionComponentAdapter> myAdapters = Collections.emptyList(); // guarded by this
@@ -610,7 +610,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return found;
   }
 
-  public abstract boolean unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks);
+  public abstract void unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks);
 
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull T extensionObject,
