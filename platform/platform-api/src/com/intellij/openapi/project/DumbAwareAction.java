@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * An action allowed to be performed in dumb mode.
@@ -34,10 +35,18 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(text);
   }
 
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
+  }
+
   protected DumbAwareAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
                             @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                             @Nullable Icon icon) {
     super(text, description, icon);
+  }
+
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   private static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
