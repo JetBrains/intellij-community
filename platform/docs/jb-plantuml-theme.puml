@@ -1,6 +1,6 @@
 ' https://plantuml-documentation.readthedocs.io/en/latest/formatting/all-skin-params.html
 skinparam monochrome true
-skinparam shadowing false
+skinparam shadowing true
 
 skinparam DefaultFontName Roboto
 skinparam DefaultMonospacedFontName "Roboto Mono"
