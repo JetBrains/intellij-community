@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.SystemProperties
@@ -157,8 +157,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     //todo[nik] don't mix properties for idea.properties file with properties for Info.plist
     Map<String, String> properties = readIdeaProperties(ideaPropertiesFile, customIdeaProperties)
+    properties["idea.vendor.name"] = buildContext.applicationInfo.shortCompanyName
 
-    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
+    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable", "idea.vendor.name"]
 
     String coreProperties = submapToXml(properties, coreKeys)
 

@@ -21,6 +21,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashMap;
@@ -49,13 +50,12 @@ import java.util.zip.ZipFile;
 import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
 public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
-  public static final String CONFIG = "config";
+  private static final String CONFIG = "config";
   private static final String[] OPTIONS = {
     OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE,
     OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,
@@ -64,6 +64,9 @@ public final class ConfigImportHelper {
   private static final String CONTENTS = "Contents";
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
+  private static final String SYSTEM = "system";
+
+  private static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
 
   private ConfigImportHelper() { }
 
@@ -147,28 +150,25 @@ public final class ConfigImportHelper {
   }
 
   static boolean isConfigDirectory(@NotNull Path candidate) {
-    for (String name : OPTIONS) {
-      if (Files.exists(candidate.resolve(name))) return true;
-    }
-    return false;
+    return Arrays.stream(OPTIONS).anyMatch(name -> Files.exists(candidate.resolve(name)));
   }
 
   static @NotNull List<Path> findConfigDirectories(@NotNull Path newConfigDir) {
-    // looks for existing config directories in the vicinity of the new one, assuming standard layout
-    // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
-    boolean isMacOs = SystemInfo.isMac;
+    // looking for existing config directories ...
+    Set<Path> homes = new HashSet<>();
+    homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
+    homes.add(newConfigDir.getFileSystem().getPath(PathManager.getDefaultConfigPathFor("X")).getParent());  // ... in the default location
+    Path historic = newConfigDir.getFileSystem().getPath(defaultConfigPath("X2019.3"));
+    homes.add(SystemInfo.isMac ? historic.getParent() : historic.getParent().getParent());  // ... in the historic location
 
-    List<Path> homes = new ArrayList<>(2);
-    homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
-    String defaultPrefix = StringUtil.replace(StringUtil.notNullize(
-      ApplicationNamesInfo.getInstance().getFullProductName(), PlatformUtils.getPlatformPrefix()), " ", "");
-    Path configDir = newConfigDir.getFileSystem().getPath(PathManager.getDefaultConfigPathFor(defaultPrefix));
-    Path configHome = (isMacOs ? configDir : configDir.getParent()).getParent();
-    if (!homes.contains(configHome)) homes.add(configHome);
-
-    String nameWithSelector = StringUtil.notNullize(PathManager.getPathsSelector(), getNameWithVersion(newConfigDir, isMacOs));
-    String prefix = getPrefixFromSelector(nameWithSelector, isMacOs);
-    if (prefix == null) prefix = defaultPrefix;
+    String prefix = getPrefixFromSelector(PathManager.getPathsSelector());
+    if (prefix == null) prefix = getPrefixFromSelector(getNameWithVersion(newConfigDir));
+    if (prefix == null) {
+      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+      if (productName != null) prefix = productName.replace(" ", "");
+    }
+    if (prefix == null) prefix = PlatformUtils.getPlatformPrefix();
+    String dotPrefix = '.' + prefix;
 
     List<Path> candidates = new ArrayList<>();
     for (Path home : homes) {
@@ -176,10 +176,11 @@ public final class ConfigImportHelper {
 
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(home)) {
         for (Path path : stream) {
-          if (!path.equals(isMacOs ? newConfigDir : newConfigDir.getParent()) &&
-              startsWithIgnoreCase(path.getFileName().toString(), prefix) &&
-              Files.isDirectory(path)) {
-            candidates.add(path);
+          if (!path.equals(newConfigDir)) {
+            String name = path.getFileName().toString();
+            if ((StringUtil.startsWithIgnoreCase(name, prefix) || StringUtil.startsWithIgnoreCase(name, dotPrefix)) && Files.isDirectory(path)) {
+              candidates.add(path);
+            }
           }
         }
       }
@@ -191,7 +192,9 @@ public final class ConfigImportHelper {
 
     Map<Path, FileTime> lastModified = new THashMap<>();
     for (Path child : candidates) {
-      Path candidate = isMacOs ? child : child.resolve(CONFIG);
+      Path candidate = child, config = child.resolve(CONFIG);
+      if (Files.isDirectory(config)) candidate = config;
+
       FileTime max = null;
       for (String name : OPTIONS) {
         try {
@@ -200,9 +203,9 @@ public final class ConfigImportHelper {
             max = cur;
           }
         }
-        catch (IOException ignore) {
-        }
+        catch (IOException ignore) { }
       }
+
       lastModified.put(candidate, max != null ? max : FileTime.fromMillis(0));
     }
 
@@ -217,14 +220,20 @@ public final class ConfigImportHelper {
     return result;
   }
 
-  private static String getNameWithVersion(Path configDir, boolean isMacOs) {
-    return (isMacOs ? configDir : configDir.getParent()).getFileName().toString();
+  private static String getNameWithVersion(Path configDir) {
+    String name = configDir.getFileName().toString();
+    if (CONFIG.equals(name)) name = StringUtil.trimStart(configDir.getParent().getFileName().toString(), ".");
+    return name;
   }
 
-  private static @Nullable String getPrefixFromSelector(String nameWithSelector, boolean isMacOs) {
-    Matcher m = Pattern.compile("\\.?([^\\d]+)\\d+(\\.\\d+)?").matcher(nameWithSelector);
-    String selector = m.matches() ? m.group(1) : null;
-    return StringUtil.isEmpty(selector) ? null : isMacOs ? selector : '.' + selector;
+  private static @Nullable String getPrefixFromSelector(@Nullable String nameWithSelector) {
+    if (nameWithSelector != null) {
+      Matcher m = SELECTOR_PATTERN.matcher(nameWithSelector);
+      if (m.matches()) {
+        return m.group(1);
+      }
+    }
+    return null;
   }
 
   private static @Nullable Pair<Path, Path> findConfigDirectoryByPath(Path selectedDir) {
@@ -241,7 +250,7 @@ public final class ConfigImportHelper {
     }
 
     if (Files.isDirectory(selectedDir.resolve(SystemInfo.isMac ? CONTENTS : BIN))) {
-      Path configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, PathManager::getDefaultConfigPathFor);
+      Path configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, ConfigImportHelper::defaultConfigPath);
       if (configDir != null && isConfigDirectory(configDir)) {
         return pair(configDir, selectedDir);
       }
@@ -368,13 +377,18 @@ public final class ConfigImportHelper {
     }
 
     Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
-    if (SystemInfo.isMac && !Files.isDirectory(oldPluginsDir)) {
+    if (!Files.isDirectory(oldPluginsDir)) {
       oldPluginsDir = null;
       if (oldIdeHome != null) {
-        oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
+        oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, ConfigImportHelper::defaultPluginsPath);
       }
       if (oldPluginsDir == null) {
-        oldPluginsDir = oldConfigDir.getFileSystem().getPath(PathManager.getDefaultPluginPathFor(oldConfigDir.getFileName().toString()));
+        oldPluginsDir = oldConfigDir.getFileSystem().getPath(defaultPluginsPath(getNameWithVersion(oldConfigDir)));
+        // temporary code; safe to remove after 2020.1 branch is created
+        if (!Files.isDirectory(oldPluginsDir) && oldPluginsDir.toString().contains("2020.1")) {
+          oldPluginsDir = oldConfigDir.getFileSystem().getPath(
+            defaultPluginsPath(getNameWithVersion(oldConfigDir).replace("2020.1", "2019.3")).replace("2019.3", "2020.1"));
+        }
       }
     }
 
@@ -415,13 +429,15 @@ public final class ConfigImportHelper {
 
     // apply stale plugin updates
     if (Files.isDirectory(oldPluginsDir)) {
-      Path oldSystemDir = null;
-      if (oldIdeHome != null) {
-        oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, PathManager::getDefaultSystemPathFor);
-      }
-      if (oldSystemDir == null) {
-        String selector = SystemInfo.isMac ? oldConfigDir.getFileName().toString() : StringUtil.trimLeading(oldConfigDir.getParent().getFileName().toString(), '.');
-        oldSystemDir = oldConfigDir.getFileSystem().getPath(PathManager.getDefaultSystemPathFor(selector));
+      Path oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
+      if (!Files.isDirectory(oldSystemDir)) {
+        oldSystemDir = null;
+        if (oldIdeHome != null) {
+          oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, ConfigImportHelper::defaultSystemPath);
+        }
+        if (oldSystemDir == null) {
+          oldSystemDir = oldConfigDir.getFileSystem().getPath(defaultSystemPath(getNameWithVersion(oldConfigDir)));
+        }
       }
       Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
       if (Files.isRegularFile(script)) {
@@ -446,7 +462,7 @@ public final class ConfigImportHelper {
   }
 
   static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
-    String nameWithVersion = getNameWithVersion(oldConfigDir, true);
+    String nameWithVersion = getNameWithVersion(oldConfigDir);
     Matcher m = Pattern.compile("\\.?[^\\d]+(\\d+\\.\\d+)?").matcher(nameWithVersion);
     if (!m.matches() || VersionComparatorUtil.compare("2019.1", m.group(1)) < 0) {
       return;
@@ -505,5 +521,28 @@ public final class ConfigImportHelper {
              path.startsWith(oldPluginsDir);
     }
     return false;
+  }
+
+  private static String defaultConfigPath(String selector) {
+    return newOrUnknown(selector) ? PathManager.getDefaultConfigPathFor(selector) :
+           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Preferences/" + selector
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG;
+  }
+
+  private static String defaultPluginsPath(String selector) {
+    return newOrUnknown(selector) ? PathManager.getDefaultPluginPathFor(selector) :
+           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Application Support/" + selector
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG + '/' + PLUGINS;
+  }
+
+  private static String defaultSystemPath(String selector) {
+    return newOrUnknown(selector) ? PathManager.getDefaultSystemPathFor(selector) :
+           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Caches/" + selector
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
+  }
+
+  private static boolean newOrUnknown(String selector) {
+    Matcher m = SELECTOR_PATTERN.matcher(selector);
+    return !m.matches() || "2020.1".compareTo(m.group(2)) <= 0;
   }
 }
