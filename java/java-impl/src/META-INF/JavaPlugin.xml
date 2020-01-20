@@ -204,7 +204,7 @@
     <extensionPoint qualifiedName="com.intellij.compiler.updateResourcesBuildContributor" interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.junitPatcher"
-                    interface="com.intellij.execution.JUnitPatcher"/>
+                    interface="com.intellij.execution.JUnitPatcher" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.junitRecognizer"
                     interface="com.intellij.execution.JUnitRecognizer" dynamic="true"/>
