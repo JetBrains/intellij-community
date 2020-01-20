@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys.LOG_UI_PROPERTIES
 import git4idea.GitUtil
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchType
@@ -296,6 +297,25 @@ internal object BranchesDashboardActions {
                                                                                                AllIcons.Actions.GroupByPackage) {
     override fun setSelected(key: GroupingKey, state: Boolean) {
       tree.toggleDirectoryGrouping(state)
+    }
+  }
+
+  class ShowBranchesAction : ToggleAction(), DumbAware {
+    override fun update(e: AnActionEvent) {
+      val project = e.project
+      val branchesUiController = e.getData(BRANCHES_UI_CONTROLLER)
+      if (project == null || branchesUiController == null) {
+        e.presentation.isEnabledAndVisible = false
+        return
+      }
+      super.update(e)
+    }
+
+    override fun isSelected(e: AnActionEvent) = e.getData(LOG_UI_PROPERTIES)?.exists(SHOW_GIT_BRANCHES_LOG_PROPERTY) == true
+                                                && e.getData(LOG_UI_PROPERTIES)?.get(SHOW_GIT_BRANCHES_LOG_PROPERTY) == true
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      e.getData(LOG_UI_PROPERTIES)?.set(SHOW_GIT_BRANCHES_LOG_PROPERTY, state)
     }
   }
 

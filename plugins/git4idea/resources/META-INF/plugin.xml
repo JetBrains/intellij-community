@@ -46,6 +46,10 @@
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
     <action id="Git.Checkout.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$CheckoutSelectedBranchAction"/>
+    <action id="Git.Log.Show.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$ShowBranchesAction"
+            icon="AllIcons.Vcs.Branch">
+      <add-to-group group-id="Vcs.Log.Toolbar.Internal"/>
+    </action>
     <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction"/>
     <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction"/>
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction"/>
@@ -298,8 +302,7 @@
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
 
-    <changesViewContent id="git.branches" tabName="Branches" className="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider"
-                        predicateClassName="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider$BranchesTabVisibilityPredicate" order="last"/>
+    <customVcsLogUiFactoryProvider implementation="git4idea.ui.branch.dashboard.BranchesInGitLogUiFactoryProvider"/>
 
     <statusBarWidgetProvider implementation="git4idea.light.LightGitStatusBarWidgetProvider"/>
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>

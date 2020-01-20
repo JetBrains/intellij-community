@@ -4,6 +4,8 @@ package git4idea.ui.branch.dashboard
 import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -12,15 +14,25 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThreeState
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.branch.GitBranchType
 import git4idea.ui.branch.GitBranchManager
 import kotlin.properties.Delegates
 
+internal val BRANCHES_UI_CONTROLLER = DataKey.create<BranchesDashboardController>("GitBranchesUiControllerKey")
+
 internal class BranchesDashboardController(private val project: Project,
-                                           private val ui: BranchesDashboardUi) : Disposable {
+                                           private val ui: BranchesDashboardUi) : Disposable, DataProvider {
 
   private val changeListener = DataPackChangeListener { ui.updateBranchesTree(false) }
+  private val logUiPropertiesListener = object: VcsLogUiProperties.PropertiesChangeListener {
+    override fun <T : Any?> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
+      if (property == SHOW_GIT_BRANCHES_LOG_PROPERTY) {
+        ui.toggleBranchesPanelVisibility()
+      }
+    }
+  }
 
   val localBranches = hashSetOf<BranchInfo>()
   val remoteBranches = hashSetOf<BranchInfo>()
@@ -138,5 +150,20 @@ internal class BranchesDashboardController(private val project: Project,
 
   fun removeDataPackListener(vcsLogData: VcsLogData) {
     vcsLogData.removeDataPackChangeListener(changeListener)
+  }
+
+  fun registerLogUiPropertiesListener(vcsLogUiProperties: VcsLogUiProperties) {
+    vcsLogUiProperties.addChangeListener(logUiPropertiesListener)
+  }
+
+  fun removeLogUiPropertiesListener(vcsLogUiProperties: VcsLogUiProperties) {
+    vcsLogUiProperties.removeChangeListener(logUiPropertiesListener)
+  }
+
+  override fun getData(dataId: String): Any? {
+    if (BRANCHES_UI_CONTROLLER.`is`(dataId)) {
+      return this
+    }
+    return null
   }
 }

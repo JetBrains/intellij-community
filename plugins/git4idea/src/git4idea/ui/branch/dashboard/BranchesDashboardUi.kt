@@ -2,6 +2,7 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.ide.CommonActionsManager
+import com.intellij.ide.DataManager
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -27,9 +28,12 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
+import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
+import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.MAIN_LOG_ID
 import com.intellij.vcs.log.impl.VcsLogUiProperties
-import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.*
+import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
+import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview
 import com.intellij.vcs.log.ui.frame.MainFrame
@@ -51,7 +55,7 @@ import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.event.TreeSelectionListener
 
-internal class BranchesDashboardUi(val project: Project) : Disposable {
+internal class BranchesDashboardUi(project: Project, private val logUi: BranchesVcsLogUi) : Disposable {
   private val uiController = BranchesDashboardController(project, this)
 
   private val tree = FilteringBranchesTree(project, BranchesTreeComponent(project), uiController)
@@ -61,63 +65,41 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(tree.component, true)
   private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val branchesTreeWithLogPanel = simplePanel()
-  private val mainPanel = simplePanel()
+  private val mainPanel = simplePanel().apply { DataManager.registerDataProvider(this, uiController) }
   private val branchesSearchFieldPanel = simplePanel()
   private val branchesSearchField = Wrapper(tree.installSearchField(false, JBUI.Borders.emptyLeft(5)))
 
-  private lateinit var logUi: MainVcsLogUi
-  private var logUiDisposed = false
-
-  private val vcsLogListener = object : VcsProjectLog.ProjectLogListener {
-    override fun logCreated(manager: VcsLogManager) {
-      if (logUiDisposed) {
-        initLogUi(manager) //re-init log UI if it was disposed (e.g. on mappings change)
-      }
-    }
-
-    override fun logDisposed(manager: VcsLogManager) {
-      disposeLogUi(manager)
-    }
-  }
-
   private val treeSelectionListener = TreeSelectionListener {
-    if (::logUi.isInitialized) {
-      val ui = logUi
-      val branchNames = tree.getSelectedBranchNames()
-      ui.filterUi.setFilter(if (branchNames.isNotEmpty()) VcsLogFilterObject.fromBranches(branchNames) else null)
-    }
+    if (!branchesTreeWithToolbarPanel.isVisible) return@TreeSelectionListener
+
+    val ui = logUi
+    val branchNames = tree.getSelectedBranchNames()
+    ui.filterUi.setFilter(if (branchNames.isNotEmpty()) VcsLogFilterObject.fromBranches(branchNames) else null)
   }
 
   init {
-    project.messageBus.connect(this).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, vcsLogListener)
     initMainUi()
-    initLogUiWhenLogIsReady()
+    installLogUi()
+    updateBranchesTree(true)
   }
 
   @CalledInAwt
-  private fun initLogUi(logManager: VcsLogManager) {
-    val ui = logManager.createLogUi("BRANCHES_LOG")
-    Disposer.register(this, ui)
-    uiController.registerDataPackListener(logManager.dataManager)
-    branchViewSplitter.secondComponent = VcsLogPanel(logManager, ui)
-    val diffPreview = ui.createDiffPreview()
-    mainPanel.add(DiffPreviewSplitter(diffPreview, ui.properties, branchesTreeWithLogPanel).mainComponent)
-    logUi = ui
-    logUiDisposed = false
-    branchesSearchField.setVerticalSizeReferent(ui.toolbar)
+  private fun installLogUi() {
+    uiController.registerDataPackListener(logUi.logData)
+    uiController.registerLogUiPropertiesListener(logUi.properties)
+    branchesSearchField.setVerticalSizeReferent(logUi.toolbar)
+    branchViewSplitter.secondComponent = logUi.mainFrame
+    val diffPreview = logUi.createDiffPreview()
+    mainPanel.add(DiffPreviewSplitter(diffPreview, logUi.properties, branchesTreeWithLogPanel).mainComponent)
     tree.component.addTreeSelectionListener(treeSelectionListener)
   }
 
   @CalledInAwt
-  private fun disposeLogUi(logManager: VcsLogManager) {
+  private fun disposeBranchesUi() {
     branchViewSplitter.secondComponent.removeAll()
-    uiController.removeDataPackListener(logManager.dataManager)
-    if (::logUi.isInitialized) {
-      tree.component.removeTreeSelectionListener(treeSelectionListener)
-      val ui = logUi
-      Disposer.dispose(ui)
-      logUiDisposed = true
-    }
+    uiController.removeDataPackListener(logUi.logData)
+    uiController.removeLogUiPropertiesListener(logUi.properties)
+    tree.component.removeTreeSelectionListener(treeSelectionListener)
   }
 
   private fun initMainUi() {
@@ -166,15 +148,11 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     branchViewSplitter.firstComponent = branchesTreeWithToolbarPanel
     branchesTreeWithLogPanel.addToCenter(branchViewSplitter)
     startLoadingBranches()
+    toggleBranchesPanelVisibility()
   }
 
-  private fun initLogUiWhenLogIsReady() {
-    VcsProjectLog.runWhenLogIsReady(project) { _, logManager ->
-      if (!::logUi.isInitialized) { //logUi can be already initialized in ProjectLogListener
-        initLogUi(logManager)
-      }
-      updateBranchesTree(true)
-    } // schedule initialization: need the log for other actions
+  fun toggleBranchesPanelVisibility() {
+    branchesTreeWithToolbarPanel.isVisible = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)
   }
 
   private fun createFocusFilterFieldAction(searchField: Component) {
@@ -223,13 +201,11 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
   }
 
   override fun dispose() {
+    disposeBranchesUi()
   }
 }
 
-private fun VcsLogManager.createLogUi(logId: String) =
-  createLogUi(BranchesVcsLogUiFactory(this, logId), VcsLogManager.LogWindowKind.TOOL_WINDOW, false)
-
-private class BranchesVcsLogUiFactory(logManager: VcsLogManager, logId: String, filters: VcsLogFilterCollection? = null)
+internal class BranchesVcsLogUiFactory(logManager: VcsLogManager, logId: String, filters: VcsLogFilterCollection? = null)
   : BaseVcsLogUiFactory<BranchesVcsLogUi>(logId, filters, logManager.uiProperties, logManager.colorManager) {
   override fun createVcsLogUiImpl(logId: String,
                                   logData: VcsLogData,
@@ -240,19 +216,30 @@ private class BranchesVcsLogUiFactory(logManager: VcsLogManager, logId: String, 
     BranchesVcsLogUi(logId, logData, colorManager, properties, refresher, filters)
 }
 
-private class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: VcsLogColorManager,
-                               uiProperties: MainVcsLogUiProperties, refresher: VisiblePackRefresher,
-                               initialFilters: VcsLogFilterCollection?) :
+internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: VcsLogColorManager,
+                                uiProperties: MainVcsLogUiProperties, refresher: VisiblePackRefresher,
+                                initialFilters: VcsLogFilterCollection?) :
   VcsLogUiImpl(id, logData, colorManager, uiProperties, refresher, initialFilters) {
+
+  private val branchesUi =
+    BranchesDashboardUi(logData.project, this)
+      .also { branchesUi -> Disposer.register(this, branchesUi) }
 
   override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties, filterUi: VcsLogFilterUiEx): MainFrame {
     return MainFrame(logData, this, uiProperties, filterUi, false)
   }
 
+  override fun getMainComponent() = branchesUi.getMainComponent()
+
   fun createDiffPreview(): VcsLogChangeProcessor {
     return mainFrame.createDiffPreview(false, mainFrame.changesBrowser)
   }
 }
+
+internal val SHOW_GIT_BRANCHES_LOG_PROPERTY =
+  object : VcsLogProjectTabsProperties.CustomBooleanTabProperty("Show.Git.Branches") {
+    override fun defaultValue(logId: String) = logId == MAIN_LOG_ID
+  }
 
 private class BranchViewSplitter(first: JComponent? = null, second: JComponent? = null)
   : OnePixelSplitter(false, "vcs.branch.view.splitter.proportion", 0.3f) {
