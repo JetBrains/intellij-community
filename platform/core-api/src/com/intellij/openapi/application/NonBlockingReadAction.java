@@ -22,6 +22,11 @@ import java.util.function.Consumer;
  * Code blocks running inside should be prepared to get this exception at any moment,
  * and they should call {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} frequently enough.
  * They should also be side-effect-free or at least idempotent, to avoid consistency issues when restarted in the middle.
+ * <p></p>
+ * The recommended usage is {@code ReadAction.nonBlocking(...).withXxx()....finishOnUiThread(...).submit(...)}.
+ * It's the only way that allows to access the computation result safely. The alternatives
+ * (e.g. {@link #executeSynchronously()}, {@link org.jetbrains.concurrency.Promise} methods) mean that you might get the computation result
+ * in a background thread after a read action is finished, so a write action can then occur at any time and make the result outdated.
  *
  * @see ReadAction#nonBlocking
  */
