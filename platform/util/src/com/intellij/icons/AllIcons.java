@@ -1001,7 +1001,6 @@ public class AllIcons {
 
   public final static class Graph {
     /** 16x16 */ public static final Icon ActualZoom = load("/graph/actualZoom.svg");
-    /** 16x16 */ public static final Icon FitContent = load("/graph/fitContent.svg");
     /** 16x16 */ public static final Icon Grid = load("/graph/grid.svg");
     /** 16x16 */ public static final Icon Layout = load("/graph/layout.svg");
     /** 16x16 */ public static final Icon NodeSelectionMode = load("/graph/nodeSelectionMode.svg");
@@ -1014,6 +1013,12 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon Export = load("/toolbarDecorator/export.svg");
+
+    /** @deprecated to be removed in IDEA 2021 - use AllIcons.General.FitContent */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021")
+    /** 16x16 */ public static final Icon FitContent = load("/general/fitContent.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Print */
     @SuppressWarnings("unused")

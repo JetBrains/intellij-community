@@ -72,7 +72,7 @@
       </action>
       <action class="org.intellij.images.editor.actions.FitZoomToWindowAction"
               id="Images.Editor.FitZoomToWindow"
-              icon="AllIcons.Graph.FitContent"/>
+              icon="AllIcons.General.FitContent"/>
       <separator/>
 
       <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
