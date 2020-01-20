@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -229,7 +230,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
           PsiElement anchor = Objects.requireNonNull(ifStatement.getFirstChild());
           ProblemHighlightType level =
             ignoreChainedIf && chainedIf ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-          registerError(anchor, level, chainedIf);
+          boolean addIgnoreFix = chainedIf && !ignoreChainedIf &&
+                                 !InspectionProjectProfileManager.isInformationLevel(getShortName(), ifStatement);
+          registerError(anchor, level, addIgnoreFix);
         }
       }
     };
