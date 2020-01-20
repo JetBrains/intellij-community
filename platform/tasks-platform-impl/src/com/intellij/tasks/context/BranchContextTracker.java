@@ -78,7 +78,8 @@ public class BranchContextTracker implements BranchChangeListener {
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         new ConfigureBranchContextDialog(myProject).show();
       }
-    }).setContextHelpAction(new AnAction("What is a workspace?", "A workspace is a set of opened files, the current run configuration, and breakpoints.", null) {
+    }).setContextHelpAction(new AnAction(() -> TaskBundle.message("action.BranchContextTracker.Anonymous.text.what.is.a.workspace"),
+                                         () -> TaskBundle.message("action.BranchContextTracker.Anonymous.description"), null) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
 

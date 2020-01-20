@@ -119,7 +119,7 @@ public class ThemeColorAnnotator implements Annotator {
     public AnAction getClickAction() {
       if (!canChooseColor()) return null;
 
-      return new AnAction("Choose Color...") {
+      return new AnAction(() -> DevKitBundle.message("action.Anonymous.text.choose.color")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Editor editor = e.getData(CommonDataKeys.EDITOR);

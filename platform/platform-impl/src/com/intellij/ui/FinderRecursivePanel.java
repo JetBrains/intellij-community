@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -262,7 +263,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   private void installListActions(JBList list) {
-    AnAction previousPanelAction = new AnAction("Previous", null, AllIcons.Actions.Back) {
+    AnAction previousPanelAction = new AnAction(() -> IdeBundle.message("action.FinderRecursivePanel.text.previous"), AllIcons.Actions.Back) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!isRootPanel());
@@ -276,7 +277,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     };
     previousPanelAction.registerCustomShortcutSet(KeyEvent.VK_LEFT, 0, list);
 
-    AnAction nextPanelAction = new AnAction("Next", null, AllIcons.Actions.Forward) {
+    AnAction nextPanelAction = new AnAction(() -> IdeBundle.message("action.FinderRecursivePanel.text.next"), AllIcons.Actions.Forward) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final T value = getSelectedValue();
@@ -293,7 +294,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     };
     nextPanelAction.registerCustomShortcutSet(KeyEvent.VK_RIGHT, 0, list);
 
-    AnAction editAction = new AnAction("Edit", null, AllIcons.Actions.Edit) {
+    AnAction editAction = new AnAction(() -> IdeBundle.message("action.FinderRecursivePanel.text.edit"), AllIcons.Actions.Edit) {
 
       @Override
       public void update(@NotNull AnActionEvent e) {

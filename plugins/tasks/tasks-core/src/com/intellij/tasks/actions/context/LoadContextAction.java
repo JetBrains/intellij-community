@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.actions.BaseTaskAction;
 import com.intellij.tasks.actions.SwitchTaskAction;
@@ -177,7 +178,7 @@ public class LoadContextAction extends BaseTaskAction {
     if (!StringUtil.isEmpty(comment)) {
       text = comment + " (" + text + ")";
     }
-    final AnAction loadAction = new AnAction("Load") {
+    final AnAction loadAction = new AnAction(() -> TaskBundle.message("action.LoadContextAction.Anonymous.text.load")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         holder.load(!shiftPressed.get());
@@ -192,7 +193,7 @@ public class LoadContextAction extends BaseTaskAction {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return new AnAction[]{loadAction,
-          new AnAction("Remove") {
+          new AnAction(() -> TaskBundle.message("action.LoadContextAction.Anonymous.text.remove")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
               holder.remove();

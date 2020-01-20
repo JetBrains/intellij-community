@@ -7,7 +7,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -853,7 +852,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
         group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
         group.addSeparator();
-        group.add(new AnAction("Propagate Value Across of Resource Bundle") {
+        group.add(new AnAction(() -> EditorBundle.message("action.ResourceBundleEditor.Anonymous.text.propagate.value.across.of.resource.bundle")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             final String valueToPropagate = editor.getDocument().getText();

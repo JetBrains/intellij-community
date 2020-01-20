@@ -26,6 +26,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +86,8 @@ public class AdvancedDtdOptions implements AdvancedOptions {
     myNamespaceMap.getColumnModel().getColumn(0).setMaxWidth((int)(new JLabel("Prefix").getPreferredSize().width * 1.2));
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AnAction(null, "Remove Entry", AllIcons.General.Remove) {
+    group.add(new AnAction(Presentation.NULL_STRING, () -> XmlBundle.message("action.AdvancedDtdOptions.Anonymous.text.remove.entry"),
+                           AllIcons.General.Remove) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         if (myNamespaceMap.getModel().getRowCount() == 0 || myNamespaceMap.getSelectedRow() == -1) {
