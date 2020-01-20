@@ -38,27 +38,20 @@ class CircletIdeaExecutionProviderStorage(private val job: ScriptJob) : Executio
         TODO("findGraphExecutionById not implemented")
     }
 
-    override fun createGraphExecution(repoName: String,
-                                      branch: String,
-                                      commit: CommitHash,
-                                      actionMeta: ScriptAction,
+    override fun createGraphExecution(actionMeta: ScriptAction,
                                       bootstrapStepFactory: (AGraphExecutionEntity) -> ScriptStep.Process.Container?): AGraphExecutionEntity {
 
         logger.debug { "createJobExecution $actionMeta" }
         val now = System.currentTimeMillis()
         val jobs = mutableListOf<AStepExecutionEntity<*>>()
-        val graphContext = CircletIdeaAGraphExecutionContextEntity(
-            branch,
-            commit,
-            repoName
-        )
+
         val graphExecutionEntity = CircletIdeaAGraphExecutionEntity(
             Random.nextLong(),
             now,
             null,
             ExecutionStatus.PENDING,
             actionMeta,
-            graphContext,
+            null,
             jobs
         )
 

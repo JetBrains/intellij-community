@@ -74,12 +74,10 @@ class CircletTaskRunner(val project: Project) {
         val bootstraper = CircletIdeaAutomationBootstrapper()
 
         val repositoryData = RepositoryData("repoId", null)
-        val branch = "myBranch"
-        val commit = "myCommit"
 
         async(lifetime, Ui) {
             storage("run-graph") {
-                val graph = automationStarterCommon.createGraph(this, repositoryData.id, branch, commit, task) { graphExecution ->
+                val graph = automationStarterCommon.createGraph(this, task) { graphExecution ->
                     bootstraper.createBootstrapStep(graphExecution, 0L, repositoryData, orgInfo.url) //something definitely wrong with this fake project/repo/branch/commit
                 }
                 automationStarterCommon.startGraph(this, graph)

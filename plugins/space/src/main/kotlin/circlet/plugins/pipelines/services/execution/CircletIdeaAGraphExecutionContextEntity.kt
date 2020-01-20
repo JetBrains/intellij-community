@@ -5,5 +5,6 @@ import circlet.pipelines.engine.api.storage.*
 class CircletIdeaAGraphExecutionContextEntity(
     override val branch: String,
     override val commit: String,
-    override val repoId: String
+    override val repoId: String,
+    override val projectKey: String
 ): AGraphExecutionContext
