@@ -119,7 +119,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
           }
           UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
           List<UExpression> arguments = new ArrayList<>();
-          arguments.add(pluginElementFactory.createULiteralExpression("\"" + bean.getKey() + "\"", psiElement));
+          arguments.add(pluginElementFactory.createStringLiteralExpression(bean.getKey(), psiElement));
           arguments.addAll(bean.getArgs());
           UCallExpression callExpression = pluginElementFactory
             .createCallExpression(pluginElementFactory.createQualifiedReference(bundleName, uExpression),

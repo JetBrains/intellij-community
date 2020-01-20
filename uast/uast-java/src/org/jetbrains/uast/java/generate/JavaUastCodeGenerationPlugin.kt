@@ -6,6 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -144,8 +145,8 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
         ?.let { JavaUCallExpression(it, null) }
   }
 
-  override fun createULiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
-    val literalExpr = psiFactory.createExpressionFromText(text, context)
+  override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
+    val literalExpr = psiFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(text), context)
     if (literalExpr !is PsiLiteralExpressionImpl) return null
     return JavaULiteralExpression(literalExpr, null)
   }
