@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -32,8 +34,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
-  private Map<LibraryKind, LibraryPresentationProvider<?>> myPresentationProviders;
+public class LibraryPresentationManagerImpl extends LibraryPresentationManager implements Disposable {
+  private volatile Map<LibraryKind, LibraryPresentationProvider<?>> myPresentationProviders;
+
+  public LibraryPresentationManagerImpl() {
+    ExtensionPointChangeListener listener = () -> myPresentationProviders = null;
+    LibraryType.EP_NAME.addExtensionPointListener(listener, this);
+    LibraryPresentationProvider.EP_NAME.addExtensionPointListener(listener, this);
+  }
 
   public static List<LibraryKind> getLibraryKinds(@NotNull Library library, @Nullable StructureConfigurableContext context) {
     final List<LibraryKind> result = new SmartList<>();
@@ -60,8 +68,9 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   }
 
   private <P extends LibraryProperties> LibraryPresentationProvider<P> getPresentationProvider(LibraryKind kind) {
-    if (myPresentationProviders == null) {
-      final Map<LibraryKind, LibraryPresentationProvider<?>> providers = new HashMap<>();
+    Map<LibraryKind, LibraryPresentationProvider<?>> providers = myPresentationProviders;
+    if (providers == null) {
+      providers = new HashMap<>();
       for (LibraryType<?> type : LibraryType.EP_NAME.getExtensions()) {
         providers.put(type.getKind(), type);
       }
@@ -71,7 +80,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       myPresentationProviders = providers;
     }
     //noinspection unchecked
-    return (LibraryPresentationProvider<P>)myPresentationProviders.get(kind);
+    return (LibraryPresentationProvider<P>)providers.get(kind);
   }
 
   @NotNull
@@ -187,5 +196,9 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
       }
     }
     return libraries;
+  }
+
+  @Override
+  public void dispose() {
   }
 }
