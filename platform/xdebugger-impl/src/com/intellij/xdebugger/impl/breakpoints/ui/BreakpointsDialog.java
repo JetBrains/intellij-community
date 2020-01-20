@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -286,7 +287,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
-    new AnAction("BreakpointDialog.GoToSource") {
+    new AnAction(() -> IdeBundle.message("action.Anonymous.text.breakpointdialog.gotosource")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
@@ -294,7 +295,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree, myDisposable);
 
-    new AnAction("BreakpointDialog.ShowSource") {
+    new AnAction(() -> IdeBundle.message("action.Anonymous.text.breakpointdialog.showsource")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);

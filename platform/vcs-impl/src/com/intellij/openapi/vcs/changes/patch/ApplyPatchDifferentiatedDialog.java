@@ -8,6 +8,7 @@ import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,6 +73,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
@@ -526,8 +528,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         @Override
         public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           return new AnAction[]{
-            new MapDirectory(), new StripUp("Remove Leading Directory"), new ZeroStrip(),
-            new StripDown("Restore Leading Directory"), new ResetStrip()};
+            new MapDirectory(), new StripUp(() -> IdeBundle.message("action.Anonymous.text.remove.leading.directory")), new ZeroStrip(),
+            new StripDown(() -> IdeBundle.message("action.Anonymous.text.restore.leading.directory")), new ResetStrip()};
         }
       };
       mapDirectoryActionGroup.setPopup(true);
@@ -1034,7 +1036,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class ZeroStrip extends StripUp {
     ZeroStrip() {
-      super("Remove All Leading Directories");
+      super(() -> VcsBundle.message("action.Anonymous.text.remove.all.leading.directories"));
     }
 
     @Override
@@ -1045,7 +1047,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private class StripDown extends DumbAwareAction {
-    StripDown(@Nullable String text) {
+    StripDown(@NotNull Supplier<String> text) {
       super(text);
     }
 
@@ -1063,7 +1065,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private class StripUp extends DumbAwareAction {
-    StripUp(@Nullable String text) {
+    StripUp(Supplier<String> text) {
       super(text);
     }
 
@@ -1082,7 +1084,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class ResetStrip extends StripDown {
     ResetStrip() {
-      super("Restore All Leading Directories");
+      super(() -> VcsBundle.message("action.Anonymous.text.restore.all.leading.directories"));
     }
 
     @Override

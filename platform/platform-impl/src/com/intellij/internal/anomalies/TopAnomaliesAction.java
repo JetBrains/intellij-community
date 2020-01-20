@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.anomalies;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,6 +32,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 
 public class TopAnomaliesAction extends ActionGroup {
   private static final int LIMIT = 10;
@@ -43,7 +45,7 @@ public class TopAnomaliesAction extends ActionGroup {
       return Integer.compare(o1.hashCode(), o2.hashCode());
     };
 
-    private static final ResettableAction TOP_PARENTS = new ResettableAction("Parents") {
+    private static final ResettableAction TOP_PARENTS = new ResettableAction(() -> IdeBundle.message("action.Anonymous.text.parents")) {
       final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
       TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
@@ -91,7 +93,7 @@ public class TopAnomaliesAction extends ActionGroup {
       }
     };
 
-    private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction("ClientProperties") {
+    private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction(() -> IdeBundle.message("action.Anonymous.text.clientproperties")) {
       final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
       TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
@@ -151,7 +153,8 @@ public class TopAnomaliesAction extends ActionGroup {
     };
 
 
-    private static final ResettableAction RESET_THEM_ALL = new ResettableAction("Reset Statistics") {
+    private static final ResettableAction RESET_THEM_ALL = new ResettableAction(() -> IdeBundle
+      .message("action.Anonymous.text.reset.statistics")) {
       @Override
       void reset() {
       }
@@ -201,8 +204,8 @@ public class TopAnomaliesAction extends ActionGroup {
   }
 
   private static abstract class ResettableAction extends AnAction {
-    protected ResettableAction(@Nullable String text) {
-      super(text);
+    protected ResettableAction(@NotNull Supplier<String> dynamicText) {
+      super(dynamicText);
     }
 
     abstract void reset();

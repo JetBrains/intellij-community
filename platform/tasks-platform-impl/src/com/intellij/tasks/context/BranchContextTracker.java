@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.BranchChangeListener;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +65,7 @@ public class BranchContextTracker implements BranchChangeListener {
     Notification notification =
       NOTIFICATION.createNotification("Workspace associated with branch '" + branchName + "' has been restored", NotificationType.INFORMATION);
     if (myLastBranch != null && contextManager.hasContext(getContextName(myLastBranch))) {
-      notification.addAction(new NotificationAction("Rollback") {
+      notification.addAction(new NotificationAction(() -> TaskBundle.message("action.Anonymous.text.rollback")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
           contextManager.clearContext();
@@ -72,7 +73,7 @@ public class BranchContextTracker implements BranchChangeListener {
         }
       });
     }
-    notification.addAction(new NotificationAction("Configure...") {
+    notification.addAction(new NotificationAction(() -> TaskBundle.message("action.Anonymous.text.configure.tree.dots")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         new ConfigureBranchContextDialog(myProject).show();

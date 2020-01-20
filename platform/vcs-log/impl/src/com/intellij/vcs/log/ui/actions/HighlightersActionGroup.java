@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,7 +26,7 @@ public class HighlightersActionGroup extends ActionGroup implements DumbAware {
 
     if (e != null) {
       if (e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES) != null) {
-        actions.add(new Separator("Highlight"));
+        actions.add(new Separator(() -> IdeBundle.message("action.Anonymous.text.highlight")));
         for (VcsLogHighlighterFactory factory : AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(e.getProject())) {
           if (factory.showMenuItem()) {
             actions.add(new EnableHighlighterAction(factory));

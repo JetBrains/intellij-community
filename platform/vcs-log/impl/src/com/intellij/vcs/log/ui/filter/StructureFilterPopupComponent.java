@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
@@ -187,12 +188,12 @@ public class StructureFilterPopupComponent
 
     if (roots.size() > 15) {
       return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
-                                    new Separator("Recent"), new DefaultActionGroup(structureActions),
-                                    new Separator("Roots"), new DefaultActionGroup(rootActions));
+                                    new Separator(() -> VcsBundle.message("action.Anonymous.text.recent")), new DefaultActionGroup(structureActions),
+                                    new Separator(() -> VcsBundle.message("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions));
     }
     return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
-                                  new Separator("Roots"), new DefaultActionGroup(rootActions),
-                                  new Separator("Recent"), new DefaultActionGroup(structureActions));
+                                  new Separator(() -> VcsBundle.message("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions),
+                                  new Separator(() -> VcsBundle.message("action.Anonymous.text.recent")), new DefaultActionGroup(structureActions));
   }
 
   @NotNull

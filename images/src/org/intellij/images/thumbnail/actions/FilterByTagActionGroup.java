@@ -17,6 +17,7 @@
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,7 +64,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
 
         List<MyToggleAction> tagActions =
           ContainerUtil.map(tagManager.getAllTags(), tag -> new MyToggleAction(view, new TagFilter(tag, tagManager)));
-        group.add(new AnAction("All") {
+        group.add(new AnAction(() -> IdeBundle.message("action.Anonymous.text.all")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
                 for (MyToggleAction tagAction : tagActions) {

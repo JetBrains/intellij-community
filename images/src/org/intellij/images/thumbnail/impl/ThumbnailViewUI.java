@@ -4,6 +4,7 @@ package org.intellij.images.thumbnail.impl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.CopyPasteSupport;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -730,7 +731,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
           };
         }
-        actions[tagsNumber] = new AnAction("New Tag") {
+        actions[tagsNumber] = new AnAction(() -> IdeBundle.message("action.Anonymous.text.new.tag")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);

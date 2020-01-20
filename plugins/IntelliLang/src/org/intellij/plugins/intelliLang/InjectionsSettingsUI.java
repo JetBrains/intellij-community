@@ -4,6 +4,7 @@ package org.intellij.plugins.intelliLang;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
@@ -169,7 +170,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         }
       });
 
-    new DumbAwareAction("Toggle") {
+    new DumbAwareAction(() -> IdeBundle.message("action.Anonymous.text.toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myInjectionsTable);

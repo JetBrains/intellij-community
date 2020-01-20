@@ -261,7 +261,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.RIGHT));
       group.add(diffGroup);
 
-      group.add(new Separator("Apply non-conflicting changes:"));
+      group.add(new Separator(() -> DiffBundle.message("action.Anonymous.text.apply.non.conflicting.changes")));
       group.add(new ApplyNonConflictsAction(ThreeSide.LEFT, "Left"));
       group.add(new ApplyNonConflictsAction(ThreeSide.BASE, "All"));
       group.add(new ApplyNonConflictsAction(ThreeSide.RIGHT, "Right"));

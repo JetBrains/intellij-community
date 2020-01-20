@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.DumbAware;
@@ -178,7 +179,7 @@ public class CommonActionsPanel extends JPanel {
   }
 
   private static void registerDeleteHook(final MyActionButton removeButton) {
-    new AnAction("Delete Hook") {
+    new AnAction(() -> IdeBundle.message("action.Anonymous.text.delete.hook")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeButton.actionPerformed(e);

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
@@ -78,6 +79,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
@@ -160,7 +162,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (location != null) setLocation(location);
 
       DefaultActionGroup actions = new DefaultActionGroup();
-      actions.addAction(new MyTextAction("Highlight") {
+      actions.addAction(new MyTextAction(() -> IdeBundle.message("action.Anonymous.text.highlight")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myIsHighlighted = !myIsHighlighted;
@@ -176,7 +178,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       actions.addSeparator();
 
-      actions.add(new MyTextAction("Refresh") {
+      actions.add(new MyTextAction(() -> IdeBundle.message("action.Anonymous.text.refresh")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -356,7 +358,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private abstract static class MyTextAction extends IconWithTextAction implements DumbAware {
-      private MyTextAction(String text) {
+      private MyTextAction(Supplier<String> text) {
         super(text);
       }
     }
