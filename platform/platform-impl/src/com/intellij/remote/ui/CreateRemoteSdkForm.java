@@ -345,7 +345,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     TypeHandler typeHandler = myCredentialsType2Handler.get(myConnectionType);
     if (typeHandler == null) {
-      typeHandler = createUnsupportedConnectionTypeHandler();
+      typeHandler = createUnsupportedConnectionTypeHandler(myConnectionType.getName());
       myUnsupportedConnectionTypes.add(myConnectionType);
       myCredentialsType2Handler.put(myConnectionType, typeHandler);
       myTypeButtonGroup.add(typeHandler.getRadioButton());
@@ -377,33 +377,14 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   }
 
   @NotNull
-  private TypeHandler createUnsupportedConnectionTypeHandler() {
-    JBRadioButton typeButton = new JBRadioButton(myConnectionType.getName());
+  private static TypeHandler createUnsupportedConnectionTypeHandler(@Nullable String credentialsTypeName) {
+    JBRadioButton typeButton = new JBRadioButton(credentialsTypeName);
     JPanel typeComponent = new JPanel(new BorderLayout());
-    String errorMessage = ExecutionBundle.message("remote.interpreter.cannot.load.interpreter.message", myConnectionType.getName());
+    String errorMessage = ExecutionBundle.message("remote.interpreter.cannot.load.interpreter.message", credentialsTypeName);
     JBLabel errorLabel = new JBLabel(errorMessage);
     errorLabel.setIcon(AllIcons.General.BalloonError);
     typeComponent.add(errorLabel, BorderLayout.CENTER);
-    return new TypeHandler(typeButton, typeComponent, null) {
-      @Override
-      public void onInit() {
-      }
-
-      @Override
-      public void onSelected() {
-      }
-
-      @Override
-      public ValidationInfo validate() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public String validateFinal() {
-        return null;
-      }
-    };
+    return new UnsupportedCredentialsTypeHandler(typeButton, typeComponent);
   }
 
   private void setTempFilesPath(RemoteSdkAdditionalData data) {
@@ -546,6 +527,31 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     public abstract String validateFinal();
   }
 
+  private static class UnsupportedCredentialsTypeHandler extends TypeHandler {
+    private UnsupportedCredentialsTypeHandler(@NotNull JBRadioButton radioButton, @NotNull JPanel panel) {
+      super(radioButton, panel, null);
+    }
+
+    @Override
+    public void onInit() {
+    }
+
+    @Override
+    public void onSelected() {
+    }
+
+    @Nullable
+    @Override
+    public ValidationInfo validate() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public String validateFinal() {
+      return null;
+    }
+  }
 
   private class TypeHandlerEx extends TypeHandler {
 
