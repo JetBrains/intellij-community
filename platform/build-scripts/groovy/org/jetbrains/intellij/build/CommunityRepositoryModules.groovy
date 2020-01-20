@@ -88,6 +88,12 @@ class CommunityRepositoryModules {
       mainJarName = "antIntegration.jar"
       withModule("intellij.ant.jps")
     },
+    plugin("intellij.laf.macos") {
+      bundlingRestrictions.supportedOs = [OsFamily.MACOS]
+    },
+    plugin("intellij.laf.win10") {
+      bundlingRestrictions.supportedOs = [OsFamily.WINDOWS]
+    },
     plugin("intellij.java.guiForms.designer") {
       directoryName = "uiDesigner"
       mainJarName = "uiDesigner.jar"
