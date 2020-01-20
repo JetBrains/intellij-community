@@ -151,7 +151,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {
-      registerPluginActions(plugin, plugin.getActionDescriptionElements());
+      registerPluginActions(plugin, plugin.getActionDescriptionElements(), true);
     }
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
@@ -498,7 +498,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons);
   }
 
-  public void registerPluginActions(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable List<Element> actionDescriptionElements) {
+  public void registerPluginActions(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable List<Element> actionDescriptionElements, boolean initialStartup) {
     if (actionDescriptionElements == null) {
       return;
     }
@@ -507,7 +507,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (Element e : actionDescriptionElements) {
       Element parent = e.getParentElement();
       String bundleName = parent == null ? null : parent.getAttributeValue(RESOURCE_BUNDLE_ATTR_NAME);
-      processActionsChildElement(e, plugin, getActionsResourceBundle(plugin, bundleName));
+      processActionsChildElement(e, plugin, getActionsResourceBundle(plugin, bundleName), initialStartup);
     }
     StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
   }
@@ -842,10 +842,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private void processReferenceNode(final Element element, final PluginId pluginId) {
+  private void processReferenceNode(final Element element, final PluginId pluginId, boolean initialStartup) {
     final AnAction action = processReferenceElement(element, pluginId);
     if (action == null) return;
-    assertActionIsGroupOrStub(action);
+    if (initialStartup) {
+      assertActionIsGroupOrStub(action);
+    }
 
     for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
@@ -1066,7 +1068,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private void processActionsChildElement(@NotNull Element child,
                                           @NotNull IdeaPluginDescriptorImpl plugin,
-                                          @Nullable ResourceBundle bundle) {
+                                          @Nullable ResourceBundle bundle,
+                                          boolean initialStartup) {
     String name = child.getName();
     if (ACTION_ELEMENT_NAME.equals(name)) {
       AnAction action = processActionElement(child, plugin, bundle);
@@ -1081,7 +1084,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       processSeparatorNode(null, child, plugin.getPluginId());
     }
     else if (REFERENCE_ELEMENT_NAME.equals(name)) {
-      processReferenceNode(child, plugin.getPluginId());
+      processReferenceNode(child, plugin.getPluginId(), initialStartup);
     }
     else if (UNREGISTER_ELEMENT_NAME.equals(name)) {
       processUnregisterNode(child, plugin.getPluginId());

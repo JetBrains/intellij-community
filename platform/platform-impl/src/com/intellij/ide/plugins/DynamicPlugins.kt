@@ -417,7 +417,7 @@ object DynamicPlugins {
     }
     listenerCallbacks.forEach(Runnable::run)
     for (descriptorToLoad in pluginsToLoad) {
-      (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(baseDescriptor, descriptorToLoad.descriptor.actionDescriptionElements)
+      (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(baseDescriptor, descriptorToLoad.descriptor.actionDescriptionElements, false)
     }
   }
 
