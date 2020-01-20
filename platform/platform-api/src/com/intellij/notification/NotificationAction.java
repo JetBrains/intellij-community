@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
@@ -18,6 +19,10 @@ public abstract class NotificationAction extends DumbAwareAction {
 
   public NotificationAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
     super(text);
+  }
+
+  public NotificationAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
   }
 
   @Override
