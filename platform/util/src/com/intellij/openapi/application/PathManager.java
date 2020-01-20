@@ -606,7 +606,7 @@ public class PathManager {
     if (SystemInfoRt.isUnix) {
       String dir = System.getenv(xdgVar);
       if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
-      dir = dir + '/' + selector;
+      dir = dir + '/' + IDE_VENDOR_NAME + '/' + selector;
       if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
       return dir;
     }
