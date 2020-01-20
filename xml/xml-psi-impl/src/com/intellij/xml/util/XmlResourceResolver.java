@@ -146,6 +146,15 @@ public class XmlResourceResolver implements XMLEntityResolver {
           relativePath = systemId.substring(systemId.lastIndexOf('/') + 1);
         }
 
+        String res = myExternalResourcesMap.get(relativePath);
+        if (res != null) {
+          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(res);
+          if (file != null) {
+            psiFile = PsiManager.getInstance(myProject).findFile(file);
+            if (psiFile != null) return psiFile;
+          }
+        }
+
         if (LOG.isDebugEnabled()) {
           LOG.debug("next to relative file checking:"+relativePath+","+myExternalResourcesMap.size()+")");
         }
