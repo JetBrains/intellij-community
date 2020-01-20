@@ -1965,4 +1965,12 @@ class Abc {
     selectItem(myItems.find { it.lookupString.contains('Inner') })
     checkResult()
   }
+
+  void "test completing qualified class name"() {
+    myFixture.configureByText("a.java", "class C implements java.util.Li<caret>")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, 'List')
+    myFixture.type('\n')
+    myFixture.checkResult("class C implements java.util.List<caret>")
+  }
 }
