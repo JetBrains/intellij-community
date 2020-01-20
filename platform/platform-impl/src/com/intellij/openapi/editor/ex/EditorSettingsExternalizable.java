@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -125,6 +126,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
   private OptionSet myOptions = new OptionSet();
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final Map<String, Boolean> myDefaultBreadcrumbVisibility = new HashMap<>();
 
   private int myBlockIndent;
   //private int myTabSize = 4;
@@ -301,7 +303,23 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    */
   public boolean isBreadcrumbsShownFor(String languageID) {
     Boolean visible = myOptions.mapLanguageBreadcrumbs.get(languageID);
-    return visible == null || visible;
+    if (visible == null) {
+      Boolean defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
+      if (defaultVisible == null) {
+        for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensionList()) {
+          for (Language language : provider.getLanguages()) {
+            myDefaultBreadcrumbVisibility.put(language.getID(), provider.isShownByDefault());
+          }
+        }
+        defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
+      }
+      return defaultVisible == null || defaultVisible;
+    }
+    return visible;
+  }
+
+  public void resetDefaultBreadcrumbVisibility() {
+    myDefaultBreadcrumbVisibility.clear();
   }
 
   public boolean hasBreadcrumbSettings(String languageID) {
