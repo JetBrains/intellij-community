@@ -242,6 +242,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private void update() {
     getCurrentLayout().update();
+    getCurrentLayout().layout();
 
     tabComponent.revalidate();
     tabComponent.repaint();
