@@ -133,6 +133,18 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item. Use it if you need to localize action text.
    *
+   * @param icon Action's icon
+   */
+  public AnAction(@NotNull Supplier<String> dynamicText, @NotNull Icon icon) {
+    this(dynamicText, Presentation.NULL_STRING, icon);
+  }
+
+  /**
+   * Constructs a new action with the specified dynamicText, dynamicDescription and icon.
+   *
+   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
+   *  menu item when the presentation is a menu item. Use it if you need to localize action text.
+   *
    * @param dynamicDescription Describes current action, this dynamicDescription will appear on
    *  the status bar when presentation has focus. Use it if you need to localize description.
    *
