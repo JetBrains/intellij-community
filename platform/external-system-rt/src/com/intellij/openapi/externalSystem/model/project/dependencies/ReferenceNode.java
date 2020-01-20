@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 public class ReferenceNode implements DependencyNode, Serializable {
   private final long id;
@@ -32,9 +32,10 @@ public class ReferenceNode implements DependencyNode, Serializable {
     return null;
   }
 
+  @NotNull
   @Override
-  public Set<DependencyNode> getDependencies() {
-    return Collections.emptySet();
+  public List<DependencyNode> getDependencies() {
+    return Collections.emptyList();
   }
 
   @Override

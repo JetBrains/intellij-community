@@ -4,7 +4,7 @@ package com.intellij.openapi.externalSystem.model.project.dependencies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+import java.util.List;
 
 public interface DependencyNode {
   long getId();
@@ -15,5 +15,6 @@ public interface DependencyNode {
   @Nullable
   String getResolutionState();
 
-  Set<DependencyNode> getDependencies();
+  @NotNull
+  List<DependencyNode> getDependencies();
 }
