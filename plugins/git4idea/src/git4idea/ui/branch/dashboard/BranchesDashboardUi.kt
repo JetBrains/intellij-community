@@ -57,9 +57,10 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
   private val tree = FilteringBranchesTree(project, BranchesTreeComponent(project), uiController)
   private val branchViewSplitter = BranchViewSplitter()
   private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
+  private val branchesTreeWithToolbarPanel = simplePanel()
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(tree.component, true)
   private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
-  private val branchesTreeWithLogPanel = simplePanel(branchesTreePanel)
+  private val branchesTreeWithLogPanel = simplePanel()
   private val mainPanel = simplePanel()
   private val branchesSearchFieldPanel = simplePanel()
   private val branchesSearchField = Wrapper(tree.installSearchField(false, JBUI.Borders.emptyLeft(5)))
@@ -157,11 +158,12 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     val toolbar = ActionManager.getInstance().createActionToolbar("Git.Cleanup.Branches", group, false)
     toolbar.setTargetComponent(branchesTreePanel)
 
-    branchesTreeWithLogPanel.addToLeft(toolbar.component)
+    branchesTreeWithToolbarPanel.addToLeft(toolbar.component)
     branchesSearchFieldPanel.withBackground(UIUtil.getListBackground()).withBorder(createBorder(JBColor.border(), SideBorder.BOTTOM))
     branchesSearchFieldPanel.addToCenter(branchesSearchField)
     branchesTreePanel.addToTop(branchesSearchFieldPanel).addToCenter(branchesProgressStripe)
-    branchViewSplitter.firstComponent = branchesTreePanel
+    branchesTreeWithToolbarPanel.addToCenter(branchesTreePanel)
+    branchViewSplitter.firstComponent = branchesTreeWithToolbarPanel
     branchesTreeWithLogPanel.addToCenter(branchViewSplitter)
     startLoadingBranches()
   }
