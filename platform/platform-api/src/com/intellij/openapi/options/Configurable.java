@@ -194,7 +194,7 @@ public interface Configurable extends UnnamedConfigurable {
    * Examples: postfix template configurable. If we have added a plugin with new postfix templates we have to re-create the configurable
    * (but only if the content of the configurable was loaded)
    *
-   * @apiNote configurable must not initialize EP-depend resources in the constructor
+   * @apiNote if the configurable is not marked as dynamic=true it must not initialize EP-depend resources in the constructor
    */
   interface WithEpDependencies {
     /**
