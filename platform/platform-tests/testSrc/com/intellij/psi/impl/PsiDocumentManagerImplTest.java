@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -948,24 +949,21 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testDoNotLeakForgottenUncommittedDocument() throws Exception {
-    ensureNoLeftoversFromOtherTests();
+    Key<Boolean> myKey = Key.create(getName());
 
     GCWatcher watcher = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
       Document document = createFreeThreadedDocument();
+      document.putUserData(myKey, true);
       document.insertString(0, " ");
       assertTrue(getPsiDocumentManager().isUncommited(document));
       assertSameElements(getPsiDocumentManager().getUncommittedDocuments(), document);
       return GCWatcher.tracking(document);
     })).get();
 
-    LeakHunter.checkLeak(getPsiDocumentManager(), Document.class);
+    LeakHunter.checkLeak(getPsiDocumentManager(), Document.class, doc -> doc.getUserData(myKey) != null);
     watcher.tryGc();
 
     assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
-  }
-
-  private void ensureNoLeftoversFromOtherTests() {
-    LeakHunter.checkLeak(getPsiDocumentManager(), Document.class);
   }
 
 }
