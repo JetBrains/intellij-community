@@ -2,6 +2,7 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -843,7 +844,7 @@ public final class TreeUtil {
       assert path != null : "path is not found at row " + row;
       int count = path.getPathCount();
       if (count == threshold && row > 0) strict = true;
-      if (count >= threshold) tree.collapsePath(path);
+      if (count >= threshold && !isAlwaysExpand(path)) tree.collapsePath(path);
     }
     if (!strict) threshold++; // top level node is not collapsed
 
@@ -856,6 +857,16 @@ public final class TreeUtil {
       tree.makeVisible(path);
       internalSelect(tree, path);
     }
+  }
+
+  /**
+   * @param path a path to expand (or to collapse)
+   * @return {@code true} if node should be expanded (or should not be collapsed) automatically
+   * @see AbstractTreeNode#isAlwaysExpand
+   */
+  private static boolean isAlwaysExpand(@NotNull TreePath path) {
+    AbstractTreeNode<?> node = getLastUserObject(AbstractTreeNode.class, path);
+    return node != null && node.isAlwaysExpand();
   }
 
   public static void selectNode(@NotNull final JTree tree, final TreeNode node) {
