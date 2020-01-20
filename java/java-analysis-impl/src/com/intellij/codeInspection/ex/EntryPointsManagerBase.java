@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
@@ -16,11 +15,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -80,15 +79,19 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     DEAD_CODE_EP_NAME.addExtensionPointListener(() -> {
       if (ADDITIONAL_ANNOS != null) {
         ADDITIONAL_ANNOS = null;
-        UIUtil.invokeLaterIfNeeded(() -> {
-          if (!project.isDisposed()) {
-            ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-          }
-        });
       }
-      // annotations changed
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
+
+      updateLoadedProfiles(InspectionProfileManager.getInstance());
+      updateLoadedProfiles(InspectionProfileManager.getInstance(project));
+
     }, this);
+  }
+
+  //need to create unused declaration from scratch as entry points are cached there
+  private static void updateLoadedProfiles(InspectionProfileManager instance) {
+    for (InspectionProfileImpl profile : instance.getProfiles()) {
+      profile.modifyProfile(m -> {});
+    }
   }
 
   public static EntryPointsManagerBase getInstance(Project project) {

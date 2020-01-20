@@ -16,7 +16,7 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.deadCode"
-                    interface="com.intellij.codeInspection.reference.EntryPoint"/>
+                    interface="com.intellij.codeInspection.reference.EntryPoint" dynamic="true"/>
 
     <!-- PsiMember -->
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary"
