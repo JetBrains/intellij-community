@@ -1864,10 +1864,10 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "live-sql-proto",
+    name = "sqlite-inspector-proto",
     visibility = ["//visibility:public"],
-    exports = ["//tools/base/experimental/live-sql-inspector:live_sql_java_proto"],
-    runtime_deps = ["//tools/base/experimental/live-sql-inspector:live_sql_java_proto"],
+    exports = ["//prebuilts/tools/common/app-inspection/androidx/sqlite:sqlite_inspector_proto"],
+    runtime_deps = ["//prebuilts/tools/common/app-inspection/androidx/sqlite:sqlite_inspector_proto"],
 )
 
 # managed by go/iml_to_build
