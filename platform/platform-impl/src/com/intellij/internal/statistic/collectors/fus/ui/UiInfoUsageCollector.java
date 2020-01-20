@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.ide.GeneralSettings;
@@ -52,6 +52,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     Set<MetricEvent> set = new THashSet<>();
 
     addValue(set, "Nav.Bar", navbar() ? "visible" : "floating");
+    addValue(set, "Nav.Bar.members", UISettings.getInstance().getShowMembersInNavigationBar() ? "visible" : "hidden");
     addValue(set, "Toolbar", toolbar() ? "visible" : "hidden");
     addValue(set, "Status.bar", status() ? "visible" : "hidden");
     addValue(set, "Tool.Window.buttons", stripes() ? "visible" : "hidden");

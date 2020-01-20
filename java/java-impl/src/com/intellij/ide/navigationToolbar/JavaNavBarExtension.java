@@ -2,6 +2,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -9,7 +10,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.psi.*;
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import static com.intellij.psi.util.PsiFormatUtilBase.*;
-import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_TYPE;
 
 /**
  * @author anna
@@ -87,11 +86,11 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
             }
           }
         }
-        if (!Registry.is("navBar.show.members") && psiElement instanceof PsiClass) {
+        if (!UISettings.getInstance().getShowMembersInNavigationBar() && psiElement instanceof PsiClass) {
           return psiElement;
         }
       }
-      if (!Registry.is("navBar.show.members")) {
+      if (!UISettings.getInstance().getShowMembersInNavigationBar()) {
         return containingFile;
       }
     }
@@ -101,7 +100,7 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
   @Nullable
   @Override
   public PsiElement getLeafElement(@NotNull DataContext dataContext) {
-    if (Registry.is("navBar.show.members")) {
+    if (UISettings.getInstance().getShowMembersInNavigationBar()) {
       PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       if (psiFile == null || editor == null) return null;

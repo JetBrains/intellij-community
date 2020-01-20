@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -30,6 +30,11 @@ private val cdShowNavigationBar
     message("show.navigation.bar"),
     settings::showNavigationBar,
     groupName = viewOptionGroupName)
+private val cdShowMembersInNavigationBar
+  get() = CheckboxDescriptor(
+    message("show.members.in.navigation.bar"),
+    settings::showMembersInNavigationBar,
+    groupName = viewOptionGroupName)
 private val cdUseSmallTabLabels
   get() = CheckboxDescriptor(
     message("small.labels.in.editor.tabs"),
@@ -55,6 +60,7 @@ private val optionDescriptors = listOf(
   cdShowMainToolbar,
   cdShowStatusBar,
   cdShowNavigationBar,
+  cdShowMembersInNavigationBar,
   cdUseSmallTabLabels,
   cdNavigateToPreview,
   cdShowEditorPreview,

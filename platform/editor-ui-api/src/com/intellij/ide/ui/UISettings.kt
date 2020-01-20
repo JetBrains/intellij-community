@@ -173,6 +173,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.showNavigationBar = value
     }
 
+  var showMembersInNavigationBar: Boolean
+    get() = state.showMembersInNavigationBar
+    set(value) {
+      state.showMembersInNavigationBar = value
+    }
+
   var showStatusBar: Boolean
     get() = state.showStatusBar
     set(value) {

@@ -188,6 +188,11 @@
       <override-text place="NavBar"/>
     </action>
 
+    <action id="ViewMembersInNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarMembersAction">
+      <add-to-group group-id="UIToggleActions" relative-to-action="ViewNavigationBar" anchor="after"/>
+      <override-text place="NavBar"/>
+    </action>
+
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
       <add-to-group group-id="EditorToggleActions"/>
     </action>
@@ -565,6 +570,7 @@
       <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
       <reference ref="ViewNavigationBar"/>
+      <reference ref="ViewMembersInNavigationBar"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
