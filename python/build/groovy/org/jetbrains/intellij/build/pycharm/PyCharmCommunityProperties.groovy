@@ -34,7 +34,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       "intellij.platform.main",
       "intellij.pycharm.community"
     ]
-    productLayout.bundledPluginModules =
+    productLayout.bundledPluginModules +=
       ["intellij.python.community.plugin",
        "intellij.pycharm.community.customization"
       ] + new File("$communityHome/python/build/plugin-list.txt").readLines()
