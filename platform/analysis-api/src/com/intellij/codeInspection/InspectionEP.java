@@ -27,10 +27,6 @@ import java.util.ResourceBundle;
 public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry> implements InspectionProfileEntry.DefaultNameProvider {
   private static final Logger LOG = Logger.getInstance(InspectionEP.class);
 
-  private String effectiveDisplayName;
-  private String effectiveGroupDisplayName;
-  private String effectiveShortName;
-
   /**
    * @see GlobalInspectionTool
    */
@@ -53,28 +49,19 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }
-    if (effectiveShortName == null) {
-      effectiveShortName = shortName != null ? shortName : InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
-    }
-    return effectiveShortName;
+    return shortName != null ? shortName : InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
   public String getDisplayName() {
-    if (effectiveDisplayName == null) {
-      effectiveDisplayName = displayName != null ? displayName : getLocalizedString(bundle, key);
-    }
-    return effectiveDisplayName;
+    return displayName != null ? displayName : getLocalizedString(bundle, key);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
   public String getGroupDisplayName() {
-    if (effectiveGroupDisplayName == null) {
-      effectiveGroupDisplayName = groupDisplayName != null ? groupDisplayName : getLocalizedString(groupBundle, groupKey);
-    }
-    return effectiveGroupDisplayName;
+    return groupDisplayName != null ? groupDisplayName : getLocalizedString(groupBundle, groupKey);
   }
 
   @Override
