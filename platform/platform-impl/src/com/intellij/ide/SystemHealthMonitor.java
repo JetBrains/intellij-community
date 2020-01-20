@@ -49,10 +49,13 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkPluginDirectory() {
-    if (!SystemInfo.isMac &&
-        System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null &&
-        System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
-      showNotification("implicit.plugin.directory.path", null);
+    if (!SystemInfo.isMac && System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
+      if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
+        showNotification("implicit.plugin.directory.path", null);
+      }
+      if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
+        showNotification("implicit.log.directory.path", null);
+      }
     }
   }
 
