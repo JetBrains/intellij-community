@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.remote.CredentialsType;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkCredentials;
@@ -26,6 +25,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -190,7 +190,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
               myCredentialsType2Handler.put(typeEx,
                                             new TypeHandlerEx(typeButton,
                                                               editorMainPanel,
-                                                              null, editorProvider.getDefaultInterpreterPath(myBundleAccessor),
+                                                              editorProvider.getDefaultInterpreterPath(myBundleAccessor),
                                                               typeEx,
                                                               editor));
               // set initial connection type
@@ -240,10 +240,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       myInterpreterPathField.setText(typeHandler.getInterpreterPath());
 
       typeHandler.onSelected();
-      if (typeHandler.getPreferredFocusedComponent() != null) {
-        IdeFocusManager.getGlobalInstance()
-          .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(typeHandler.getPreferredFocusedComponent(), true));
-      }
     }
     else {
       myCredentialsType2Handler.get(selectedType).onInit();
@@ -283,6 +279,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return sdkData.getRemoteSdkCredentials(myProject, true);
   }
 
+  @Nullable
   public JComponent getPreferredFocusedComponent() {
     if (myNameVisible) {
       return myNameField;
@@ -290,8 +287,9 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     else {
       final CredentialsType selectedType = getSelectedType();
       final TypeHandler typeHandler = myCredentialsType2Handler.get(selectedType);
-      if (typeHandler != null && typeHandler.getPreferredFocusedComponent() != null) {
-        return typeHandler.getPreferredFocusedComponent();
+      if (typeHandler != null) {
+        JComponent preferredFocusedComponent = UIUtil.getPreferredFocusedComponent(typeHandler.getContentComponent());
+        if (preferredFocusedComponent != null) return preferredFocusedComponent;
       }
       return myTypesPanel;
     }
@@ -386,7 +384,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     JBLabel errorLabel = new JBLabel(errorMessage);
     errorLabel.setIcon(AllIcons.General.BalloonError);
     typeComponent.add(errorLabel, BorderLayout.CENTER);
-    return new TypeHandler(typeButton, typeComponent, null, null) {
+    return new TypeHandler(typeButton, typeComponent, null) {
       @Override
       public void onInit() {
       }
@@ -502,19 +500,17 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   private abstract static class TypeHandler {
 
     private final JBRadioButton myRadioButton;
-    private final Component myPanel;
-    @Nullable private final JComponent myPreferredFocusedComponent;
+    private final JPanel myPanel;
 
     private String myInterpreterPath;
 
-    TypeHandler(JBRadioButton radioButton, Component panel, @Nullable JComponent preferredFocusedComponent, String defaultInterpreterPath) {
+    TypeHandler(JBRadioButton radioButton, JPanel panel, String defaultInterpreterPath) {
       myRadioButton = radioButton;
       myPanel = panel;
-      myPreferredFocusedComponent = preferredFocusedComponent;
       myInterpreterPath = defaultInterpreterPath;
     }
 
-    public Component getContentComponent() {
+    public JPanel getContentComponent() {
       return myPanel;
     }
 
@@ -542,11 +538,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     @Nullable
     public abstract String validateFinal();
-
-    @Nullable
-    public JComponent getPreferredFocusedComponent() {
-      return myPreferredFocusedComponent;
-    }
   }
 
 
@@ -557,10 +548,10 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     TypeHandlerEx(JBRadioButton radioButton,
                   JPanel panel,
-                  @Nullable JComponent preferredFocusedComponent, String defaultInterpreterPath,
+                  String defaultInterpreterPath,
                   CredentialsTypeEx type,
                   CredentialsEditor editor) {
-      super(radioButton, panel, preferredFocusedComponent, defaultInterpreterPath);
+      super(radioButton, panel, defaultInterpreterPath);
       myType = type;
       myEditor = editor;
     }
