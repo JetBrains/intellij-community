@@ -46,6 +46,12 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     }
   }
 
+  @Test fun `find pre-migration config directory`() {
+    val cfg201 = createConfigDir("2020.1", modern = false)
+    val newConfigPath = createConfigDir("2020.1", modern = true)
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg201)
+  }
+
   @Test fun `find both historic and current config directories`() {
     val cfg15 = createConfigDir("15", storageTS = 1448928000000)
     val cfg193 = createConfigDir("2019.1", storageTS = 1574845200000)
@@ -77,19 +83,19 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `sort some real historic config dirs`() {
-    val cfg10 = createConfigDir("10", "DataGrip", 1455035096000)
-    val cfg162 = createConfigDir("2016.2", "DataGrip", 1466345662000)
-    val cfg161 = createConfigDir("2016.1", "DataGrip", 1485460719000)
-    val cfg171 = createConfigDir("2017.1", "DataGrip", 1503006763000)
-    val cfg172 = createConfigDir("2017.2", "DataGrip", 1510866492000)
-    val cfg163 = createConfigDir("2016.3", "DataGrip", 1520869009000)
-    val cfg181 = createConfigDir("2018.1", "DataGrip", 1531238044000)
-    val cfg183 = createConfigDir("2018.3", "DataGrip", 1545844523000)
-    val cfg182 = createConfigDir("2018.2", "DataGrip", 1548076635000)
-    val cfg191 = createConfigDir("2019.1", "DataGrip", 1548225505000)
-    val cfg173 = createConfigDir("2017.3", "DataGrip", 1549092322000)
+    val cfg10 = createConfigDir("10", product = "DataGrip", storageTS = 1455035096000)
+    val cfg162 = createConfigDir("2016.2", product = "DataGrip", storageTS = 1466345662000)
+    val cfg161 = createConfigDir("2016.1", product = "DataGrip", storageTS = 1485460719000)
+    val cfg171 = createConfigDir("2017.1", product = "DataGrip", storageTS = 1503006763000)
+    val cfg172 = createConfigDir("2017.2", product = "DataGrip", storageTS = 1510866492000)
+    val cfg163 = createConfigDir("2016.3", product = "DataGrip", storageTS = 1520869009000)
+    val cfg181 = createConfigDir("2018.1", product = "DataGrip", storageTS = 1531238044000)
+    val cfg183 = createConfigDir("2018.3", product = "DataGrip", storageTS = 1545844523000)
+    val cfg182 = createConfigDir("2018.2", product = "DataGrip", storageTS = 1548076635000)
+    val cfg191 = createConfigDir("2019.1", product = "DataGrip", storageTS = 1548225505000)
+    val cfg173 = createConfigDir("2017.3", product = "DataGrip", storageTS = 1549092322000)
 
-    val newConfigPath = createConfigDir("2020.1", "DataGrip")
+    val newConfigPath = createConfigDir("2020.1", product = "DataGrip")
     assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(
       cfg173, cfg191, cfg182, cfg183, cfg181, cfg163, cfg172, cfg171, cfg161, cfg162, cfg10)
   }
@@ -107,8 +113,8 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   private fun doKeyMapTest(version: String, isMigrationExpected: Boolean) {
     assumeTrue("macOS-only", SystemInfo.isMac)
 
-    val oldConfigDir = createConfigDir(version, "DataGrip")
-    val newConfigDir = createConfigDir("2019.2", "DataGrip")
+    val oldConfigDir = createConfigDir(version, product = "DataGrip")
+    val newConfigDir = createConfigDir("2019.2", product = "DataGrip")
     ConfigImportHelper.setKeymapIfNeeded(oldConfigDir, newConfigDir, LOG)
 
     val optionFile = newConfigDir.resolve("${PathManager.OPTIONS_DIRECTORY}/keymap.xml")
@@ -154,9 +160,12 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       .isDirectoryNotContaining { it.fileName == oldPluginZip.fileName }
   }
 
-  private fun createConfigDir(version: String, product: String = "IntelliJIdea", storageTS: Long = 0): Path {
-    val path = if (SystemInfo.isMac || version >= "2020.1") PathManager.getDefaultConfigPathFor("${product}${version}")
-               else "${SystemProperties.getUserHome()}/.${product}${version}/config"
+  private fun createConfigDir(version: String, modern: Boolean = version >= "2020.1", product: String = "IntelliJIdea", storageTS: Long = 0): Path {
+    val path = when {
+      modern -> PathManager.getDefaultConfigPathFor("${product}${version}")
+      SystemInfo.isMac -> "${SystemProperties.getUserHome()}/Library/Preferences/${product}${version}"
+      else -> "${SystemProperties.getUserHome()}/.${product}${version}/config"
+    }
     val dir = Files.createDirectories(memoryFs.fs.getPath(path).normalize())
     if (storageTS > 0) writeStorageFile(dir, storageTS)
     return dir

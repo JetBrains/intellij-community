@@ -266,7 +266,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultConfigPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Preferences", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
+    return platformPath(selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
   }
 
   @NotNull
@@ -299,7 +299,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultPluginPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Application Support", "APPDATA", PLUGINS_DIRECTORY, "XDG_DATA_HOME", ".local/share", "");
+    return platformPath(selector, "Application Support", PLUGINS_DIRECTORY, "APPDATA", PLUGINS_DIRECTORY, "XDG_DATA_HOME", ".local/share", "");
   }
 
   @Nullable
@@ -330,7 +330,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultSystemPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Caches", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
+    return platformPath(selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
   }
 
   @NotNull
@@ -354,7 +354,7 @@ public class PathManager {
       ourLogPath = explicit;
     }
     else if (PATHS_SELECTOR != null && (SystemInfoRt.isMac || System.getProperty(PROPERTY_SYSTEM_PATH) == null)) {
-      ourLogPath = platformPath(PATHS_SELECTOR, "Library/Logs", "LOCALAPPDATA", LOG_DIRECTORY, "XDG_CACHE_HOME", ".cache", LOG_DIRECTORY);
+      ourLogPath = platformPath(PATHS_SELECTOR, "Logs", "", "LOCALAPPDATA", LOG_DIRECTORY, "XDG_CACHE_HOME", ".cache", LOG_DIRECTORY);
     }
     else {
       ourLogPath = getSystemPath() + '/' + LOG_DIRECTORY;
@@ -588,11 +588,13 @@ public class PathManager {
     return path != null ? getAbsolutePath(StringUtilRt.unquoteString(path, '"')) : null;
   }
 
-  private static String platformPath(String selector, String macDir, String winVar, String winSub, String xdgVar, String xdgDfl, String xdgSub) {
+  private static String platformPath(String selector, String macDir, String macSub, String winVar, String winSub, String xdgVar, String xdgDfl, String xdgSub) {
     String userHome = SystemProperties.getUserHome();
 
     if (SystemInfoRt.isMac) {
-      return userHome + '/' + macDir + '/' + selector;
+      String dir = userHome + "/Library/" + macDir + '/' + IDE_VENDOR_NAME + '/' + selector;
+      if (!macSub.isEmpty()) dir = dir + '/' + macSub;
+      return dir;
     }
 
     if (SystemInfoRt.isWindows) {

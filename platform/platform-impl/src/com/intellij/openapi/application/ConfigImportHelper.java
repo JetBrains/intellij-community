@@ -157,10 +157,9 @@ public final class ConfigImportHelper {
     // looking for existing config directories ...
     Set<Path> homes = new HashSet<>();
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
-    homes.add(newConfigDir.getFileSystem().getPath(PathManager.getDefaultConfigPathFor("JB-IDE")).getParent());  // ... in the default location
-    if (!SystemInfo.isMac) {
-      homes.add(newConfigDir.getFileSystem().getPath(SystemProperties.getUserHome()));  // ... in the historic location ("~/.<selector>/config")
-    }
+    homes.add(newConfigDir.getFileSystem().getPath(PathManager.getDefaultConfigPathFor("X")).getParent());  // ... in the default location
+    Path historic = newConfigDir.getFileSystem().getPath(defaultConfigPath("X2019.3"));
+    homes.add(SystemInfo.isMac ? historic.getParent() : historic.getParent().getParent());  // ... in the historic location
 
     String prefix = getPrefixFromSelector(PathManager.getPathsSelector());
     if (prefix == null) prefix = getPrefixFromSelector(getNameWithVersion(newConfigDir));
@@ -385,6 +384,11 @@ public final class ConfigImportHelper {
       }
       if (oldPluginsDir == null) {
         oldPluginsDir = oldConfigDir.getFileSystem().getPath(defaultPluginsPath(getNameWithVersion(oldConfigDir)));
+        // temporary code; safe to remove after 2020.1 branch is created
+        if (!Files.isDirectory(oldPluginsDir) && oldPluginsDir.toString().contains("2020.1")) {
+          oldPluginsDir = oldConfigDir.getFileSystem().getPath(
+            defaultPluginsPath(getNameWithVersion(oldConfigDir).replace("2020.1", "2019.3")).replace("2019.3", "2020.1"));
+        }
       }
     }
 
@@ -520,22 +524,25 @@ public final class ConfigImportHelper {
   }
 
   private static String defaultConfigPath(String selector) {
-    return newOrUnknown(selector) ? PathManager.getDefaultConfigPathFor(selector)
-                                  : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG;
+    return newOrUnknown(selector) ? PathManager.getDefaultConfigPathFor(selector) :
+           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Preferences/" + selector
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG;
   }
 
   private static String defaultPluginsPath(String selector) {
-    return newOrUnknown(selector) ? PathManager.getDefaultPluginPathFor(selector)
-                                  : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG + '/' + PLUGINS;
+    return newOrUnknown(selector) ? PathManager.getDefaultPluginPathFor(selector) :
+           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Application Support/" + selector
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG + '/' + PLUGINS;
   }
 
   private static String defaultSystemPath(String selector) {
-    return newOrUnknown(selector) ? PathManager.getDefaultSystemPathFor(selector)
-                                  : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
+    return newOrUnknown(selector) ? PathManager.getDefaultSystemPathFor(selector) :
+           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Caches/" + selector
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
   }
 
   private static boolean newOrUnknown(String selector) {
     Matcher m = SELECTOR_PATTERN.matcher(selector);
-    return !m.matches() || "2020.1".compareTo(m.group(2)) >= 0;
+    return !m.matches() || "2020.1".compareTo(m.group(2)) <= 0;
   }
 }
