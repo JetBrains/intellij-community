@@ -41,4 +41,26 @@ public class ArtifactDependencyNodeImpl extends AbstractDependencyNode implement
   public String getDisplayName() {
     return group + ':' + module + ':' + version;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    ArtifactDependencyNodeImpl node = (ArtifactDependencyNodeImpl)o;
+    if (!group.equals(node.group)) return false;
+    if (!module.equals(node.module)) return false;
+    if (!version.equals(node.version)) return false;
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + group.hashCode();
+    result = 31 * result + module.hashCode();
+    result = 31 * result + version.hashCode();
+    return result;
+  }
 }

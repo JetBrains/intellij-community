@@ -38,4 +38,24 @@ public class ComponentDependenciesImpl implements ComponentDependencies, Seriali
   public DependencyScopeNode getRuntimeDependenciesGraph() {
     return runtimeDependencies;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ComponentDependenciesImpl that = (ComponentDependenciesImpl)o;
+    if (!componentName.equals(that.componentName)) return false;
+    if (!compileDependencies.equals(that.compileDependencies)) return false;
+    if (!runtimeDependencies.equals(that.runtimeDependencies)) return false;
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = componentName.hashCode();
+    result = 31 * result + compileDependencies.hashCode();
+    result = 31 * result + runtimeDependencies.hashCode();
+    return result;
+  }
 }

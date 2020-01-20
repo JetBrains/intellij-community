@@ -19,4 +19,18 @@ public class ProjectDependenciesImpl implements ProjectDependencies, Serializabl
   public void add(ComponentDependencies componentDependencies) {
     dependencies.add(componentDependencies);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ProjectDependenciesImpl that = (ProjectDependenciesImpl)o;
+    if (!dependencies.equals(that.dependencies)) return false;
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return dependencies.hashCode();
+  }
 }

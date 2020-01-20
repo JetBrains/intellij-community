@@ -36,4 +36,18 @@ public class ReferenceNode implements DependencyNode, Serializable {
   public Set<DependencyNode> getDependencies() {
     return Collections.emptySet();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ReferenceNode node = (ReferenceNode)o;
+    if (id != node.id) return false;
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return (int)(id ^ (id >>> 32));
+  }
 }

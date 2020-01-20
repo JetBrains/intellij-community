@@ -30,4 +30,24 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
   public void setResolutionState(String resolutionState) {
     this.resolutionState = resolutionState;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AbstractDependencyNode node = (AbstractDependencyNode)o;
+    if (id != node.id) return false;
+    if (!dependencies.equals(node.dependencies)) return false;
+    if (resolutionState != null ? !resolutionState.equals(node.resolutionState) : node.resolutionState != null) return false;
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (int)(id ^ (id >>> 32));
+    result = 31 * result + dependencies.hashCode();
+    result = 31 * result + (resolutionState != null ? resolutionState.hashCode() : 0);
+    return result;
+  }
 }

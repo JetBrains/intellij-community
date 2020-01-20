@@ -9,11 +9,12 @@ public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements
   private final String projectName;
 
   @PropertyMapping({"id", "projectName"})
-  public ProjectDependencyNodeImpl(long id, String projectName) {
+  public ProjectDependencyNodeImpl(long id, @NotNull String projectName) {
     super(id);
     this.projectName = projectName;
   }
 
+  @NotNull
   @Override
   public String getProjectName() {
     return projectName;
@@ -23,5 +24,22 @@ public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements
   @Override
   public String getDisplayName() {
     return "project " + projectName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    ProjectDependencyNodeImpl node = (ProjectDependencyNodeImpl)o;
+    if (!projectName.equals(node.projectName)) return false;
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + projectName.hashCode();
+    return result;
   }
 }
