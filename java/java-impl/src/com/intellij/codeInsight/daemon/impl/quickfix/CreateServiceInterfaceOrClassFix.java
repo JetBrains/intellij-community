@@ -142,7 +142,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
 
     protected CreateServiceInterfaceDialog(@Nullable Project project, @NotNull Map<Module, PsiDirectory[]> psiRootDirs) {
       super(project);
-      setTitle("Create Service");
+      setTitle(QuickFixBundle.message("create.service"));
 
       myModuleCombo.setRenderer(SimpleListCellRenderer.create("", Module::getName));
 

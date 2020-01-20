@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.codeInsight.hint.HintManager;
@@ -64,7 +65,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Generate overloaded method with default parameter values";
+    return QuickFixBundle.message("generate.overloaded.method.with.default.parameter.values");
   }
 
   @Override
@@ -90,7 +91,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(method))) {
       return false;
     }
-    setText("Generate overloaded " + (method.isConstructor() ? "constructor" : "method") + " with default parameter values");
+    setText(QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values", method.isConstructor() ? "constructor" : "method"));
     return true;
   }
 
@@ -201,7 +202,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     else {
       chooser.selectElements(members);
     }
-    chooser.setTitle("Choose Default Value Parameters");
+    chooser.setTitle(QuickFixBundle.message("choose.default.value.parameters.popup.title"));
     chooser.setCopyJavadocVisible(false);
     if (chooser.showAndGet()) {
       final List<ParameterClassMember> elements = chooser.getSelectedElements();

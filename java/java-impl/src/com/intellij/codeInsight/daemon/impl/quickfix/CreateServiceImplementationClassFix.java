@@ -165,7 +165,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
                                                 PsiDirectory @NotNull [] psiRootDirs,
                                                 @NotNull String superClassName) {
       super(project);
-      setTitle("Create Service Implementation");
+      setTitle(QuickFixBundle.message("create.service.implementation"));
 
       mySubclassButton.setText("Subclass of '" + superClassName + "'");
       mySubclassButton.setSelected(true);

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -74,7 +75,7 @@ public class IterateOverIterableIntention implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Iterate";
+    return QuickFixBundle.message("iterate.iterable");
   }
 
   @Nullable

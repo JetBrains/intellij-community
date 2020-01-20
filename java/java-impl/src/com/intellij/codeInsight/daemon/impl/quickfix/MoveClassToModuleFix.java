@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -74,10 +75,10 @@ public class MoveClassToModuleFix implements IntentionAction {
   public String getText() {
     if (myModules.size() == 1) {
       final PsiClass aClass = myModules.keySet().iterator().next();
-      return "Move '" + aClass.getQualifiedName() + "' from module '" + myModules.get(aClass).getName() +
-             "' to '" + myCurrentModule.getName() + "'";
+      return QuickFixBundle
+        .message("move.0.from.module.1.to.2", aClass.getQualifiedName(), myModules.get(aClass).getName(), myCurrentModule.getName());
     }
-    return "Move '" + myReferenceName + "' in '" + myCurrentModule.getName() + "'...";
+    return QuickFixBundle.message("move.0.in.1", myReferenceName, myCurrentModule.getName());
   }
 
   @Override
@@ -100,7 +101,7 @@ public class MoveClassToModuleFix implements IntentionAction {
       LOG.assertTrue(editor != null);
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(new ArrayList<>(myModules.keySet()))
-        .setTitle("Choose Class to Move")
+        .setTitle(QuickFixBundle.message("choose.class.to.move.popup.title"))
         .setRenderer(new PsiElementListCellRenderer<PsiClass>() {
           @Override
           public String getElementText(PsiClass psiClass) {

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -48,7 +49,7 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace 'for each' loop with iterator 'for' loop";
+    return QuickFixBundle.message("replace.for.each.loop.with.iterator.for.loop");
   }
 
   @Override

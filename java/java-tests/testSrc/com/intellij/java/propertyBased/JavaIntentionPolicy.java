@@ -3,6 +3,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -76,35 +77,35 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   public boolean checkComments(IntentionAction intention) {
     String intentionText = intention.getText();
     boolean isCommentChangingAction = intentionText.startsWith("Replace with end-of-line comment") ||
-                                     intentionText.startsWith("Replace with block comment") ||
-                                     intentionText.startsWith("Remove //noinspection") ||
-                                     intentionText.startsWith("Unwrap 'if' statement") || //remove ifs content
-                                     intentionText.startsWith("Remove 'if' statement") || //remove content of the if with everything inside
-                                     intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") || //remove methods in batch
-                                     intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
-                                     intentionText.startsWith("Move comment to separate line") || //merge comments on same line
-                                     intentionText.startsWith("Remove redundant arguments to call") || //removes arg with all comments inside
-                                     intentionText.startsWith("Convert to 'enum'") || //removes constructor with javadoc?
-                                     intentionText.startsWith("Remove redundant constructor") ||
-                                     intentionText.startsWith("Remove block marker comments") ||
-                                     intentionText.startsWith("Remove redundant method") ||
-                                     intentionText.startsWith("Delete unnecessary import") ||
-                                     intentionText.startsWith("Delete empty class initializer") ||
-                                     intentionText.startsWith("Replace with 'throws Exception'") ||
-                                     intentionText.startsWith("Replace unicode escape with character") ||
-                                     intentionText.startsWith("Remove 'serialVersionUID' field") ||
-                                     intentionText.startsWith("Remove unnecessary") ||
-                                     intentionText.startsWith("Remove 'try-finally' block") ||
-                                     intentionText.startsWith("Fix doc comment") ||
-                                     intentionText.startsWith("Add Javadoc") ||
-                                     intentionText.startsWith("Replace qualified name with import") || //may change references in javadoc, making refs always qualified in javadoc makes them expand on "reformat"
-                                     intentionText.startsWith("Qualify with outer class") || // may change links in javadoc
-                                     intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
-                                     intentionText.matches("Simplify '.*' to .*") ||
-                                     intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
-                                     intentionText.matches("Remove '.*' from '.*' throws list") ||
-                                     intentionText.matches("Remove type arguments") ||
-                                     intentionText.matches("Remove .+ suppression");
+                                      intentionText.startsWith("Replace with block comment") ||
+                                      intentionText.startsWith("Remove //noinspection") ||
+                                      intentionText.startsWith("Unwrap 'if' statement") ||//remove ifs content
+                                      intentionText.startsWith("Remove 'if' statement") ||//remove content of the if with everything inside
+                                      intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") ||//remove methods in batch
+                                      intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
+                                      intentionText.startsWith("Move comment to separate line") ||//merge comments on same line
+                                      intentionText.startsWith("Remove redundant arguments to call") ||//removes arg with all comments inside
+                                      intentionText.startsWith("Convert to 'enum'") ||//removes constructor with javadoc?
+                                      intentionText.startsWith("Remove redundant constructor") ||
+                                      intentionText.startsWith("Remove block marker comments") ||
+                                      intentionText.startsWith("Remove redundant method") ||
+                                      intentionText.startsWith("Delete unnecessary import") ||
+                                      intentionText.startsWith("Delete empty class initializer") ||
+                                      intentionText.startsWith("Replace with 'throws Exception'") ||
+                                      intentionText.startsWith("Replace unicode escape with character") ||
+                                      intentionText.startsWith("Remove 'serialVersionUID' field") ||
+                                      intentionText.startsWith("Remove unnecessary") ||
+                                      intentionText.startsWith("Remove 'try-finally' block") ||
+                                      intentionText.startsWith("Fix doc comment") ||
+                                      intentionText.startsWith("Add Javadoc") ||
+                                      intentionText.startsWith("Replace qualified name with import") ||//may change references in javadoc, making refs always qualified in javadoc makes them expand on "reformat"
+                                      intentionText.startsWith("Qualify with outer class") ||// may change links in javadoc
+                                      intentionText.contains("'ordering inconsistent with equals'") ||//javadoc will be changed
+                                      intentionText.matches("Simplify '.*' to .*") ||
+                                      intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
+                                      intentionText.matches("Remove '.*' from '.*' throws list") ||
+                                      intentionText.matches(InspectionsBundle.message("inspection.redundant.type.remove.quickfix")) ||
+                                      intentionText.matches("Remove .+ suppression");
     return !isCommentChangingAction;
   }
 

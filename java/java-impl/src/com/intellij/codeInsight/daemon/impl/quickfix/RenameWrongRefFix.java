@@ -203,7 +203,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
       }
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(Arrays.asList(myItems))
-        .setTitle("Rename Reference")
+        .setTitle(QuickFixBundle.message("rename.reference"))
         .setRenderer(new DefaultListCellRenderer() {
           @Override
           public Component getListCellRendererComponent(JList<?> list,

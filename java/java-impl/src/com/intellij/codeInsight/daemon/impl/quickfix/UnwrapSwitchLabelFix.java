@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -24,7 +25,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Remove unreachable branches";
+    return QuickFixBundle.message("remove.unreachable.branches");
   }
 
   @Override

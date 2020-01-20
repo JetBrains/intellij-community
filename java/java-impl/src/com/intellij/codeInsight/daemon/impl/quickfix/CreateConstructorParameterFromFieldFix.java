@@ -73,7 +73,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    if (getFieldsToFix().size() > 1 && myConstructorsLength <= 1) return "Add constructor parameters";
+    if (getFieldsToFix().size() > 1 && myConstructorsLength <= 1) return QuickFixBundle.message("add.constructor.parameters");
     return QuickFixBundle.message("add.constructor.parameter.name");
   }
 
@@ -135,7 +135,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         elements = Arrays.asList(members);
       } else {
         final MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(members, false, true, project);
-        chooser.setTitle("Choose Constructors to Add Parameter to");
+        chooser.setTitle(QuickFixBundle.message("choose.constructors.to.add.parameter.to"));
         chooser.show();
         elements = chooser.getSelectedElements();
         if (elements == null) return;
@@ -166,7 +166,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
             members[i++] = new PsiFieldMember(field);
           }
           MemberChooser<PsiElementClassMember> chooser = new MemberChooser<>(members, false, true, project);
-          chooser.setTitle("Choose Fields to Generate Constructor Parameters for");
+          chooser.setTitle(QuickFixBundle.message("choose.fields.to.generate.constructor.parameters.for"));
           chooser.show();
           if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
           final List<PsiElementClassMember> selectedElements = chooser.getSelectedElements();
