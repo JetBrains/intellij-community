@@ -38,7 +38,6 @@ object LegacyBridgeTestFrameworkUtils {
       for (library in LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries) {
         (library as LegacyBridgeLibraryImpl).filePointerProvider.disposeAndClearCaches()
       }
-      LegacyBridgeRootsWatcher.getInstance(project).clear()
     }
   }
 }
