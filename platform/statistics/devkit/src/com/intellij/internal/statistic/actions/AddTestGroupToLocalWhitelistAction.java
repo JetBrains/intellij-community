@@ -41,7 +41,7 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
       return;
     }
 
-    final AddGroupToLocalWhitelistDialog dialog = new AddGroupToLocalWhitelistDialog(project);
+    final AddGroupToLocalWhitelistDialog dialog = new AddGroupToLocalWhitelistDialog(project, null, null);
     final boolean result = dialog.showAndGet();
     if (!result || StringUtil.isEmpty(dialog.getGroupId()) || StringUtil.isEmpty(dialog.getRecorderId())) {
       return;

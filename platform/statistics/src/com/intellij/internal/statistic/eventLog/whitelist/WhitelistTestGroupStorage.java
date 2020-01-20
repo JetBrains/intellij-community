@@ -53,7 +53,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   public void update() {
   }
 
-  private void updateValidators() {
+  public void updateValidators() {
     synchronized (myLock) {
       eventsValidators.clear();
       isWhiteListInitialized.set(false);

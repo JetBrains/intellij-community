@@ -27,7 +27,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
     Logger.getInstance(EventLogTestWhitelistPersistence.class);
 
   private static final String TEST_RULE = "{util#fus_test_mode}";
-  private static final String TEST_WHITE_LIST_DATA_FILE = "test-white-list.json";
+  public static final String TEST_WHITE_LIST_DATA_FILE = "test-white-list.json";
   @NotNull
   private final String myRecorderId;
 
@@ -61,12 +61,17 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
 
   public static void addGroupWithCustomRules(@NotNull String recorderId, @NotNull String groupId, @NotNull String rules)
     throws IOException {
+    final WLGroup newGroup = createGroupWithCustomRules(groupId, rules);
+    addNewGroup(recorderId, newGroup);
+  }
+
+  @NotNull
+  public static WLGroup createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules) {
     final String content =
       "{\"id\":\"" + groupId + "\"," +
       "\"versions\":[ {\"from\" : \"1\"}]," +
       "\"rules\":" + rules + "}";
-    final WLGroup newGroup = new GsonBuilder().create().fromJson(content, WLGroup.class);
-    addNewGroup(recorderId, newGroup);
+    return new GsonBuilder().create().fromJson(content, WLGroup.class);
   }
 
   public static void addTestGroup(@NotNull String recorderId, @NotNull String groupId) throws IOException {
@@ -79,11 +84,16 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
     final EventLogTestWhitelistPersistence persistence = new EventLogTestWhitelistPersistence(recorderId);
     final WLGroups whitelist = loadTestWhitelist(persistence);
 
+    saveNewGroup(group, whitelist, persistence.getWhitelistFile());
+  }
+
+  public static void saveNewGroup(@NotNull WLGroup group,
+                                   @NotNull WLGroups whitelist,
+                                   @NotNull File file) throws IOException {
     whitelist.groups.stream().
       filter(g -> StringUtil.equals(g.id, group.id)).findFirst().
       ifPresent(whitelist.groups::remove);
     whitelist.groups.add(group);
-    final File file = persistence.getWhitelistFile();
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     FileUtil.writeToFile(file, gson.toJson(whitelist));
   }
@@ -101,7 +111,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
   }
 
   @NotNull
-  private static WLGroup createTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) {
+  public static WLGroup createTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) {
     final WLGroup group = new WLGroup();
     group.id = groupId;
     if (group.versions != null) {
