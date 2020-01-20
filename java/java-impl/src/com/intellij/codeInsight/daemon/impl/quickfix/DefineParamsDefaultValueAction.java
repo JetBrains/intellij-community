@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -93,9 +96,11 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiParameter[] parameters = getParams(element);
+    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    assert method != null;
+    PsiParameterList parameterList = method.getParameterList();
+    final PsiParameter[] parameters = getParams(element, parameterList);
     if (parameters == null || parameters.length == 0) return;
-    final PsiMethod method = (PsiMethod)parameters[0].getDeclarationScope();
     final PsiMethod methodPrototype = generateMethodPrototype(method, parameters);
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return;
@@ -116,7 +121,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
       PsiCodeBlock body = prototype.getBody();
       final String callArgs =
-        "(" + StringUtil.join(method.getParameterList().getParameters(), psiParameter -> {
+        "(" + StringUtil.join(parameterList.getParameters(), psiParameter -> {
           if (ArrayUtil.find(parameters, psiParameter) > -1) return "IntelliJIDEARulezzz";
           return psiParameter.getName();
         }, ",") + ");";
@@ -143,7 +148,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       }
       if (expr instanceof PsiMethodCallExpression) {
         PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
-        PsiExpression[] toDefaults = ContainerUtil.map2Array(parameters, PsiExpression.class, (parameter -> args[method.getParameterList().getParameterIndex(parameter)]));
+        PsiExpression[] toDefaults = ContainerUtil.map2Array(parameters, PsiExpression.class, (parameter -> args[parameterList.getParameterIndex(parameter)]));
         startTemplate(project, editor, toDefaults, prototype);
       }
     };
@@ -174,10 +179,8 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     CreateFromUsageBaseFix.startTemplate(editor, template, project);
   }
 
-  protected PsiParameter @Nullable [] getParams(PsiElement element) {
-    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    assert method != null;
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
+  private PsiParameter @Nullable [] getParams(@NotNull PsiElement element, @NotNull PsiParameterList parameterList) {
+    final PsiParameter[] parameters = parameterList.getParameters();
     if (parameters.length == 1) {
       return parameters;
     }
@@ -191,7 +194,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       return idx >= 0 ? new PsiParameter[] {selectedParam} : null;
     }
     final MemberChooser<ParameterClassMember> chooser =
-      new MemberChooser<>(members, false, true, element.getProject());
+      new MemberChooser<>(members, false, true, parameterList.getProject());
     if (idx >= 0) {
       chooser.selectElements(new ClassMember[] {members[idx]});
     }
@@ -214,10 +217,11 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
   }
 
   private static PsiMethod generateMethodPrototype(PsiMethod method, PsiParameter... params) {
-    final PsiMethod prototype = (PsiMethod)method.copy();
+    final PsiMethod prototype = JavaPsiRecordUtil.isCompactConstructor(method) ?
+                                new RecordConstructorMember(method.getContainingClass(), false).generateRecordConstructor() :                            
+                                (PsiMethod)method.copy();
     final PsiCodeBlock body = prototype.getBody();
-    final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createMethodFromText("void foo(){}", prototype).getBody();
-    assert emptyBody != null;
+    final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
     if (body != null) {
       body.replace(emptyBody);
     } else {
@@ -231,11 +235,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     }
 
     final PsiParameterList parameterList = method.getParameterList();
-    Arrays.sort(params, (p1, p2) -> {
-      final int parameterIndex1 = parameterList.getParameterIndex(p1);
-      final int parameterIndex2 = parameterList.getParameterIndex(p2);
-      return parameterIndex1 > parameterIndex2 ? -1 : 1;
-    });
+    Arrays.sort(params, Comparator.comparingInt(parameterList::getParameterIndex).reversed());
 
     for (PsiParameter param : params) {
       final int parameterIndex = parameterList.getParameterIndex(param);
