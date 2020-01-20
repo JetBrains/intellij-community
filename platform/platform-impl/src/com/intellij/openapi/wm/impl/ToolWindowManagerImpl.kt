@@ -557,8 +557,20 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (autoFocusContents && ApplicationManager.getApplication().isActive) {
       RequestFocusInToolWindowCommand(entry.toolWindow).run()
     }
+    else {
+      activeStack.push(entry)
+    }
 
     fireStateChanged()
+  }
+
+  @ApiStatus.Internal
+  open fun updateToolWindow(toolWindow: ToolWindowImpl, component: Component) {
+    toolWindow.setFocusedComponent(component)
+    if (toolWindow.isAvailable && !toolWindow.isActive) {
+      toolWindow.activate(null, true, false)
+    }
+    activeStack.push(idToEntry.get(toolWindow.id) ?: return)
   }
 
   // mutate operation must use info from layout and not from decorator
@@ -574,11 +586,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun doDeactivateToolWindow(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean = false) {
     LOG.debug { "enter: deactivateToolWindowImpl(${info.id})" }
 
-    info.isActiveOnStart = false
-    info.isVisible = false
+    setHiddenState(info, entry)
     updateStateAndRemoveDecorator(info, entry, dirtyMode = dirtyMode)
 
     entry.applyWindowInfo(info.copy())
+  }
+
+  private fun setHiddenState(info: WindowInfoImpl, entry: ToolWindowEntry) {
+    info.isActiveOnStart = false
+    info.isVisible = false
+    activeStack.remove(entry, true)
   }
 
   override val toolWindowIds: Array<String>
@@ -616,17 +633,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   override fun getLastActiveToolWindowId(condition: Condition<in JComponent>?): String? {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    var lastActiveToolWindowId: String? = null
     for (i in 0 until activeStack.persistentSize) {
       val toolWindow = activeStack.peekPersistent(i).toolWindow
-      if (toolWindow.isAvailable) {
-        if (condition == null || condition.value(toolWindow.component)) {
-          lastActiveToolWindowId = toolWindow.id
-          break
-        }
+      if (toolWindow.isAvailable && (condition == null || condition.value(toolWindow.component))) {
+        return toolWindow.id
       }
     }
-    return lastActiveToolWindowId
+    return null
   }
 
   /**
@@ -722,9 +735,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val entry = idToEntry.get(info.id!!)!!
 
     info.isShowStripeButton = false
-    info.isActiveOnStart = false
-    info.isVisible = false
-    activeStack.remove(entry, true)
+    setHiddenState(info, entry)
     updateStateAndRemoveDecorator(info, entry, dirtyMode = false)
     entry.applyWindowInfo(info.copy())
 
@@ -850,8 +861,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         val otherInfo = layout.getInfo(otherId) ?: continue
         if (otherInfo.isVisible && otherInfo.type == info.type && otherInfo.anchor == info.anchor && otherInfo.isSplit == info.isSplit) {
           // hide and deactivate tool window
-          otherInfo.isVisible = false
-          otherInfo.isActiveOnStart = false
+          setHiddenState(otherInfo, otherEntry)
 
           otherEntry.applyWindowInfo(otherInfo.copy())
 
