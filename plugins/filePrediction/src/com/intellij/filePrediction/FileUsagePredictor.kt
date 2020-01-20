@@ -13,7 +13,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.NonUrgentExecutor
 
 internal object FileUsagePredictor {
-  private const val CALCULATE_CANDIDATE_PROBABILITY: Double = 0.2
+  private const val CALCULATE_CANDIDATE_PROBABILITY: Double = 0.1
   private const val MAX_CANDIDATE: Int = 10
 
   fun onFileOpened(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
