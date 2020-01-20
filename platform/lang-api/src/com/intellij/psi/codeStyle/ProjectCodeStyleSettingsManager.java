@@ -3,6 +3,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -159,7 +160,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   private static class ShowMoreInfoAction extends DumbAwareAction {
     ShowMoreInfoAction() {
-      super("More info");
+      super(() -> IdeBundle.message("action.ProjectCodeStyleSettingsManager.ShowMoreInfoAction.text.more.info"));
     }
 
     @Override
