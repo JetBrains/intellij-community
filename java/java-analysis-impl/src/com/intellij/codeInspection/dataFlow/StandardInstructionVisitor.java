@@ -466,12 +466,32 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     if (!(value.getType() instanceof PsiArrayType) &&
         (TypeConstraint.fromDfType(dfType).isComparedByEquals() ||
-         instruction.shouldFlushFields() || !(instruction.getResultType() instanceof PsiPrimitiveType))) {
-      // For now drop locality on every qualified call except primitive returning pure calls
-      // as value might escape through the return value
+         instruction.shouldFlushFields() || mayLeakFromType(instruction.getResultType()))) {
       value = dropLocality(value, memState);
     }
     return value;
+  }
+
+  private boolean mayLeakFromType(PsiType type) {
+    // Complex value from field or method return call may contain back-reference to the object, so
+    // local value could leak. Do not drop locality only for some simple values.
+    if (type == null) return true;
+    type = type.getDeepComponentType();
+    return !(type instanceof PsiPrimitiveType) && !TypeUtils.isJavaLangString(type);
+  }
+
+  @Override
+  public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction,
+                                         DataFlowRunner runner,
+                                         DfaMemoryState memState,
+                                         DfaValue value) {
+    if (value instanceof DfaVariableValue && mayLeakFromType(value.getType())) {
+      DfaVariableValue qualifier = ((DfaVariableValue)value).getQualifier();
+      if (qualifier != null) {
+        dropLocality(qualifier, memState);
+      }
+    }
+    return super.visitPush(instruction, runner, memState, value);
   }
 
   private Set<DfaCallState> addContractResults(MethodContract contract,
