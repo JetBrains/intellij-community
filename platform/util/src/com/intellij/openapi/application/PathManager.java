@@ -287,7 +287,7 @@ public class PathManager {
     if (explicit != null) {
       ourPluginsPath = explicit;
     }
-    else if (PATHS_SELECTOR != null && (SystemInfoRt.isWindows || SystemInfoRt.isMac || System.getProperty(PROPERTY_CONFIG_PATH) == null)) {
+    else if (PATHS_SELECTOR != null && (SystemInfoRt.isMac || System.getProperty(PROPERTY_CONFIG_PATH) == null)) {
       ourPluginsPath = getDefaultPluginPathFor(PATHS_SELECTOR);
     }
     else {
