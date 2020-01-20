@@ -11,7 +11,7 @@ end note
 
 if (Is [[http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html?search=ser#light-service Light Service]]) then (yes)
 else (no)
-  if (Is Adapter Found) then (yes)
+  if (Is [[http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html?search=ser#how-to-declare-a-service Service Declaration]] Found) then (yes)
   else (no)
     :Return ""null"";
     detach
