@@ -61,6 +61,13 @@ public class InconsistentLineSeparatorsTest extends LightDaemonAnalyzerTestCase 
     doTestConfiguredFile(true, false,null);
   }
 
+  public void testMustNotWarnAboutOneLiners() throws IOException {
+    String rawText = "abc";
+    configureFromLiteralText(rawText);
+    CodeStyle.getSettings(getProject()).LINE_SEPARATOR = "\n";
+    doTestConfiguredFile(true, false,null);
+  }
+
 
   private void configureFromLiteralText(@NotNull String rawText) throws IOException {
     WriteAction.run(() -> {

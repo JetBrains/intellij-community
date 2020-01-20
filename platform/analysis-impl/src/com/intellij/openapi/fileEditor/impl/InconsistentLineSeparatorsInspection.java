@@ -44,7 +44,7 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
         Project project = holder.getProject();
         String projectLineSeparator = FileDocumentManager.getInstance().getLineSeparator(null, project);
         Set<String> allLineSeparators = LoadTextUtil.detectAllLineSeparators(virtualFile);
-        if (allLineSeparators.size() != 1 || !allLineSeparators.contains(projectLineSeparator)) {
+        if (allLineSeparators.size() > 1 || !allLineSeparators.isEmpty() && !allLineSeparators.contains(projectLineSeparator)) {
           List<String> allSorted = new ArrayList<>(allLineSeparators);
           Collections.sort(allSorted);
           String presentableSeparators = StringUtil.join(allSorted, sep->StringUtil.escapeStringCharacters(sep), ", ");
