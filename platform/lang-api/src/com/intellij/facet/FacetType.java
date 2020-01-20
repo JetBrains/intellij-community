@@ -7,6 +7,8 @@ import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -24,13 +26,14 @@ import javax.swing.*;
  * &lt;/extensions&gt;
  * </pre>
  */
-public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
+public abstract class FacetType<F extends Facet, C extends FacetConfiguration> implements PluginAware {
   public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType");
 
   private final @NotNull FacetTypeId<F> myId;
   private final @NotNull String myStringId;
   private final @NotNull String myPresentableName;
   private final @Nullable FacetTypeId myUnderlyingFacetType;
+  private PluginDescriptor myPluginDescriptor;
 
   public static <T extends FacetType> T findInstance(Class<T> aClass) {
     return EP_NAME.findExtension(aClass);
@@ -88,6 +91,15 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   @Nullable
   public FacetTypeId<?> getUnderlyingFacetType() {
     return myUnderlyingFacetType;
+  }
+
+  @Override
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    myPluginDescriptor = pluginDescriptor;
+  }
+
+  public final PluginDescriptor getPluginDescriptor() {
+    return myPluginDescriptor;
   }
 
   /**

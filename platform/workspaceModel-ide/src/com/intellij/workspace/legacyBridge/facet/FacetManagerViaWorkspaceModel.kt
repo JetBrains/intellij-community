@@ -74,7 +74,7 @@ internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule
         name = entity.name
         setFacetType(entity.facetType)
         configuration = entity.configurationXmlTag?.let { JDOMUtil.load(it) }
-      }, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", entity.facetType), true)
+      }, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", entity.facetType), true, true)
     }
 
     val configuration = facetType.createDefaultConfiguration()

@@ -29,6 +29,13 @@ public interface ModifiableFacetModel extends FacetModel {
   void addFacet(Facet<?> facet, @Nullable ProjectModelExternalSource externalSource);
   void removeFacet(Facet<?> facet);
 
+  /**
+   * Replaces {@code original} facet by {@code replacement}. The only difference with {@code removeFacet(original); addFacet(replacement); }
+   * is that this method preserves order of facets in internal structures to avoid modifications of *.iml files.
+   */
+  @ApiStatus.Internal
+  void replaceFacet(@NotNull Facet<?> original, @NotNull Facet<?> replacement);
+
   void rename(Facet<?> facet, String newName);
 
   @Nullable

@@ -422,7 +422,7 @@
     <extensionPoint name="projectTemplateParameterFactory" interface="com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory"/>
     <extensionPoint name="projectTemplateFileProcessor" interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor"/>
 
-    <extensionPoint name="facetType" interface="com.intellij.facet.FacetType"/>
+    <extensionPoint name="facetType" interface="com.intellij.facet.FacetType" dynamic="true"/>
 
     <extensionPoint name="facet.toolWindow" beanClass="com.intellij.facet.ui.FacetDependentToolWindow">
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>

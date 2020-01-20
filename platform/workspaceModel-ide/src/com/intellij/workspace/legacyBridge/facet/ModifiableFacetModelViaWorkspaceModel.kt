@@ -47,6 +47,11 @@ internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage:
     facetsChanged()
   }
 
+  override fun replaceFacet(original: Facet<*>, replacement: Facet<*>) {
+    removeFacet(original)
+    addFacet(replacement)
+  }
+
   private fun removeFacetEntityWithSubFacets(entity: FacetEntity) {
     if (entity !in entityToFacet) return
 

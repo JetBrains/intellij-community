@@ -6,6 +6,8 @@ import com.intellij.facet.mock.MockFacetConfiguration;
 import com.intellij.facet.mock.MockFacetType;
 import com.intellij.facet.mock.MockSubFacetType;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +34,14 @@ public abstract class FacetTestCase extends HeavyPlatformTestCase {
   }
 
   protected void removeAllFacets() {
-    final FacetManager manager = getFacetManager();
-    final ModifiableFacetModel model = manager.createModifiableModel();
-    for (Facet facet : manager.getAllFacets()) {
-      model.removeFacet(facet);
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      FacetManager manager = FacetManager.getInstance(module);
+      ModifiableFacetModel model = manager.createModifiableModel();
+      for (Facet<?> facet : manager.getAllFacets()) {
+        model.removeFacet(facet);
+      }
+      commit(model);
     }
-    commit(model);
   }
 
   protected FacetManager getFacetManager() {
