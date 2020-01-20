@@ -83,6 +83,20 @@ object DynamicPlugins {
     val anyProject = ProjectManager.getInstance().openProjects.firstOrNull() ?:
                      ProjectManager.getInstance().defaultProject
 
+    val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl
+    
+    if (loadedPluginDescriptor != null) {
+      if (!pluginDescriptor.useIdeaClassLoader) {
+        val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
+        if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
+          val loader = baseDescriptor ?: pluginDescriptor
+          LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of UrlClassLoader as the default class loader. " +
+                   "For example, the IDE is started from the sources with the plugin.")
+          return false
+        }
+      }
+    }
+    
     val extensions = pluginDescriptor.extensions
     if (extensions != null) {
       for (epName in extensions.keys) {
@@ -244,7 +258,10 @@ object DynamicPlugins {
           }
 
           if (!pluginDescriptor.useIdeaClassLoader) {
-            IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
+            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader || 
+                ApplicationManager.getApplication().isUnitTestMode) {
+              IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
+            }
           }
 
           pluginDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
