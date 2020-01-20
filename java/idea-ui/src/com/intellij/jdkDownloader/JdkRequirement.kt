@@ -4,13 +4,16 @@ package com.intellij.jdkDownloader
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.containers.Predicate
 import com.intellij.util.lang.JavaVersion
 
 
 interface JdkRequirement {
   fun matches(sdk: Sdk): Boolean
   fun matches(sdk: JdkItem): Boolean
-  fun matches(version: String): Boolean
+  fun matches(sdk: UnknownSdkLocalSdkFix): Boolean
 }
 
 object JdkRequirements {
@@ -42,13 +45,83 @@ object JdkRequirements {
   }
 
   fun parseRequirement(request: UnknownSdk) : JdkRequirement? {
-    val name = request.sdkName
-    if (name != null) {
-      return parseRequirement(name)
+    val nameFilter = request.sdkName?.let { parseRequirement(it) }
+    val homePredicate = request.sdkHomePredicate
+    val versionStringPredicate = request.sdkVersionStringPredicate
+
+    if (nameFilter == null && homePredicate == null && versionStringPredicate == null) {
+      return null
     }
 
-    //TODO: include version filter here
-    return null
+    if (homePredicate == null && versionStringPredicate == null) {
+      return nameFilter
+    }
+
+    return object: JdkRequirement {
+      override fun matches(sdk: Sdk): Boolean {
+        if (nameFilter != null) {
+          if (!nameFilter.matches(sdk)) return false
+        }
+
+        if (homePredicate != null) {
+          val homePath = sdk.homePath ?: return false
+          if (!homePredicate.test(homePath)) return false
+        }
+
+        if (versionStringPredicate != null) {
+          val versionString = sdk.versionString ?: return false
+          if (!versionStringPredicate.test(versionString)) return false
+        }
+
+        return true
+      }
+
+      override fun matches(sdk: JdkItem) : Boolean {
+        if (nameFilter != null) {
+          if (!nameFilter.matches(sdk)) return false
+        }
+
+        //NOTE: There is no way to test for SdkHome for an to-be-downloaded item
+
+        if (versionStringPredicate != null) {
+          val versionString = sdk.versionString
+          if (!versionStringPredicate.test(versionString)) return false
+        }
+
+        return true
+      }
+
+      override fun matches(sdk: UnknownSdkLocalSdkFix): Boolean {
+        if (nameFilter != null) {
+          if (!nameFilter.matches(sdk)) return false
+        }
+
+        if (homePredicate != null) {
+          val homePath = sdk.existingSdkHome
+          if (!homePredicate.test(homePath)) return false
+        }
+
+        if (versionStringPredicate != null) {
+          val versionString = sdk.versionString
+          if (!versionStringPredicate.test(versionString)) return false
+        }
+
+        return true
+      }
+
+      override fun toString() =
+        sequence {
+          if (nameFilter != null) {
+            yield("$nameFilter")
+          }
+          if (homePredicate != null) {
+            yield("homePredicate: $homePredicate")
+          }
+          if (versionStringPredicate != null) {
+            yield("versionPredicate: $versionStringPredicate")
+          }
+        }.joinToString(", ", prefix = "JdkRequirement:{ ", postfix = "}")
+    }
   }
 
   fun parseRequirement(request: String): JdkRequirement? {
@@ -65,8 +138,8 @@ object JdkRequirements {
         val matcher = versionMatcher(javaVersion)
 
         return object : JdkRequirement {
-          override fun matches(sdk: Sdk) = false /*TODO[jo]*/
-          override fun matches(version: String) = false /*TODO[jo]*/
+          override fun matches(sdk: Sdk) = false /*TODO[jo]: no vendor information*/
+          override fun matches(sdk: UnknownSdkLocalSdkFix) = false /*TODO[jo]: no vendor information*/
           override fun matches(sdk: JdkItem) = matcher.matchVersion(sdk.versionString) && sdk.product.matchesVendor(vendor)
           override fun toString() = "JdkRequirement { $vendor && $matcher }"
         }
@@ -77,9 +150,10 @@ object JdkRequirements {
         val javaVersion = JavaVersion.tryParse(text) ?: return null
         val matcher = versionMatcher(javaVersion)
         return object : JdkRequirement {
+          fun matches(version: String) = matcher.matchVersion(version)
           override fun matches(sdk: Sdk) = sdk.versionString?.let { matches(it) } == true
           override fun matches(sdk: JdkItem) = matches(sdk.versionString)
-          override fun matches(version: String) = matcher.matchVersion(version)
+          override fun matches(sdk: UnknownSdkLocalSdkFix) = matcher.matchVersion(sdk.versionString)
           override fun toString() = "JdkRequirement { $matcher }"
         }
       }
@@ -90,4 +164,3 @@ object JdkRequirements {
     }
   }
 }
-

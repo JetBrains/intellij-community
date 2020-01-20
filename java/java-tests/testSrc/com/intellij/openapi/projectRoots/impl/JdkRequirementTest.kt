@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.jdkDownloader.JdkItem
-import com.intellij.jdkDownloader.JdkPackageType
-import com.intellij.jdkDownloader.JdkProduct
-import com.intellij.jdkDownloader.JdkRequirements
+import com.intellij.jdkDownloader.*
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
 import org.junit.Assert
 import org.junit.Test
 
@@ -112,6 +110,14 @@ class JdkRequirementTest {
     for (match in fails) {
       Assert.assertFalse("$req !matches $match", req.matches(match))
     }
+  }
+
+  private fun JdkRequirement.matches(version: String) = matches(toLocalMatch(version))
+
+  private fun toLocalMatch(versionString: String) = object : UnknownSdkLocalSdkFix {
+    override fun getExistingSdkHome() = "mock-home"
+    override fun getVersionString() = versionString
+    override fun getSuggestedSdkName() = versionString
   }
 
   private val Corretto = JdkProduct("Amazon", "Corretto", null)

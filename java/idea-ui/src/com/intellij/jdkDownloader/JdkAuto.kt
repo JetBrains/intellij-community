@@ -83,7 +83,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         fun List<JavaLocalSdkFix>.pickBestMatch() = this.minBy { it.version }
 
         return tryUsingExistingSdk(req, sdk.sdkType, indicator).pickBestMatch()
-               ?: lazyLocalJdks.filter { req.matches(it.versionString) }.pickBestMatch()
+               ?: lazyLocalJdks.filter { req.matches(it) }.pickBestMatch()
       }
 
       private fun tryUsingExistingSdk(req: JdkRequirement, sdkType: SdkType, indicator: ProgressIndicator): List<JavaLocalSdkFix> {
