@@ -185,6 +185,7 @@
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
       <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBar" anchor="after"/>
+      <override-text place="NavBar"/>
     </action>
 
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
@@ -562,6 +563,8 @@
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
       <reference ref="ChangesView.ApplyPatch"/>
+      <separator/>
+      <reference ref="ViewNavigationBar"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
