@@ -345,7 +345,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     TypeHandler typeHandler = myCredentialsType2Handler.get(myConnectionType);
     if (typeHandler == null) {
-      typeHandler = createUnsupportedConnectionTypeHandler(myConnectionType.getName());
+      typeHandler = new UnsupportedCredentialsTypeHandler(myConnectionType.getName());
       myUnsupportedConnectionTypes.add(myConnectionType);
       myCredentialsType2Handler.put(myConnectionType, typeHandler);
       myTypeButtonGroup.add(typeHandler.getRadioButton());
@@ -374,17 +374,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     if (isSshSudoSupported()) {
       myRunAsRootViaSudoJBCheckBox.setSelected(data.isRunAsRootViaSudo());
     }
-  }
-
-  @NotNull
-  private static TypeHandler createUnsupportedConnectionTypeHandler(@Nullable String credentialsTypeName) {
-    JBRadioButton typeButton = new JBRadioButton(credentialsTypeName);
-    JPanel typeComponent = new JPanel(new BorderLayout());
-    String errorMessage = ExecutionBundle.message("remote.interpreter.cannot.load.interpreter.message", credentialsTypeName);
-    JBLabel errorLabel = new JBLabel(errorMessage);
-    errorLabel.setIcon(AllIcons.General.BalloonError);
-    typeComponent.add(errorLabel, BorderLayout.CENTER);
-    return new UnsupportedCredentialsTypeHandler(typeButton, typeComponent);
   }
 
   private void setTempFilesPath(RemoteSdkAdditionalData data) {
@@ -478,58 +467,56 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return myBundleAccessor;
   }
 
-  private abstract static class TypeHandler {
+  private interface TypeHandler {
+    @NotNull JPanel getContentComponent();
 
-    @NotNull private final JBRadioButton myRadioButton;
+    @NotNull JBRadioButton getRadioButton();
+
+    void onInit();
+
+    void onSelected();
+
+    @Nullable String getInterpreterPath();
+
+    void setInterpreterPath(@Nullable String interpreterPath);
+
+    @Nullable ValidationInfo validate();
+
+    @Nullable String validateFinal();
+
+    boolean isBrowsingAvailable();
+  }
+
+  private static class UnsupportedCredentialsTypeHandler implements TypeHandler {
+    @NotNull private final JBRadioButton myTypeButton;
     @NotNull private final JPanel myPanel;
 
-    private @Nullable String myInterpreterPath;
-
-    TypeHandler(@NotNull JBRadioButton radioButton,
-                @NotNull JPanel panel,
-                @Nullable String defaultInterpreterPath) {
-      myRadioButton = radioButton;
-      myPanel = panel;
-      myInterpreterPath = defaultInterpreterPath;
+    private UnsupportedCredentialsTypeHandler(@Nullable String credentialsTypeName) {
+      myTypeButton = new JBRadioButton(credentialsTypeName);
+      myPanel = new JPanel(new BorderLayout());
+      String errorMessage = ExecutionBundle.message("remote.interpreter.cannot.load.interpreter.message", credentialsTypeName);
+      JBLabel errorLabel = new JBLabel(errorMessage);
+      errorLabel.setIcon(AllIcons.General.BalloonError);
+      myPanel.add(errorLabel, BorderLayout.CENTER);
     }
 
-    @NotNull
-    public JPanel getContentComponent() {
+    @Override
+    public @NotNull JPanel getContentComponent() {
       return myPanel;
     }
 
-    @NotNull
-    public JBRadioButton getRadioButton() {
-      return myRadioButton;
+    @Override
+    public @NotNull JBRadioButton getRadioButton() {
+      return myTypeButton;
     }
 
+    @Override
+    public @Nullable String getInterpreterPath() {
+      return null;
+    }
+
+    @Override
     public void setInterpreterPath(@Nullable String interpreterPath) {
-      myInterpreterPath = interpreterPath;
-    }
-
-    @Nullable
-    public String getInterpreterPath() {
-      return myInterpreterPath;
-    }
-
-    public abstract void onInit();
-
-    public abstract void onSelected();
-
-    public boolean isBrowsingAvailable() {
-      return true;
-    }
-
-    @Nullable
-    public abstract ValidationInfo validate();
-
-    @Nullable
-    public abstract String validateFinal();
-  }
-
-  private static class UnsupportedCredentialsTypeHandler extends TypeHandler {
-    private UnsupportedCredentialsTypeHandler(@NotNull JBRadioButton radioButton, @NotNull JPanel panel) {
-      super(radioButton, panel, null);
     }
 
     @Override
@@ -551,9 +538,19 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     public String validateFinal() {
       return null;
     }
+
+    @Override
+    public boolean isBrowsingAvailable() {
+      return false;
+    }
   }
 
-  private class TypeHandlerEx extends TypeHandler {
+  private class TypeHandlerEx implements TypeHandler {
+
+    @NotNull private final JBRadioButton myRadioButton;
+    @NotNull private final JPanel myPanel;
+
+    private @Nullable String myInterpreterPath;
 
     @NotNull private final CredentialsTypeEx myType;
     @NotNull private final CredentialsEditor<?> myEditor;
@@ -563,7 +560,9 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
                   @Nullable String defaultInterpreterPath,
                   @NotNull CredentialsTypeEx type,
                   @NotNull CredentialsEditor editor) {
-      super(radioButton, panel, defaultInterpreterPath);
+      myRadioButton = radioButton;
+      myPanel = panel;
+      myInterpreterPath = defaultInterpreterPath;
       myType = type;
       myEditor = editor;
     }
@@ -581,6 +580,29 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     public void onSelected() {
       myConnectionType = myType;
       myEditor.onSelected();
+    }
+
+    @Override
+    @NotNull
+    public JPanel getContentComponent() {
+      return myPanel;
+    }
+
+    @Override
+    @NotNull
+    public JBRadioButton getRadioButton() {
+      return myRadioButton;
+    }
+
+    @Override
+    public void setInterpreterPath(@Nullable String interpreterPath) {
+      myInterpreterPath = interpreterPath;
+    }
+
+    @Override
+    @Nullable
+    public String getInterpreterPath() {
+      return myInterpreterPath;
     }
 
     @Nullable
