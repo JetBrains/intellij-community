@@ -87,7 +87,7 @@ object DynamicPlugins {
 
     val loadedPluginDescriptor = if (pluginDescriptor.pluginId != null) PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl else null
     
-    if (loadedPluginDescriptor != null) {
+    if (loadedPluginDescriptor != null && loadedPluginDescriptor.isEnabled) {
       if (!pluginDescriptor.useIdeaClassLoader) {
         val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
         if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -314,13 +314,16 @@ object DynamicPlugins {
       UIUtil.dispatchAllInvocationEvents()
 
       val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
-      if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable() && !ApplicationManager.getApplication().isUnitTestMode) {
-        val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
-        val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
-        val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
-        MemoryDumpHelper.captureMemoryDump(snapshotPath)
-        GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath",
-                                 NotificationType.WARNING).notify(null)
+      if (!classLoaderUnloaded) {
+        if (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable() && !ApplicationManager.getApplication().isUnitTestMode) {
+          val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
+          val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
+          val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
+          MemoryDumpHelper.captureMemoryDump(snapshotPath)
+          GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath",
+                                   NotificationType.WARNING).notify(null)
+        }
+        LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
       }
 
       return classLoaderUnloaded
