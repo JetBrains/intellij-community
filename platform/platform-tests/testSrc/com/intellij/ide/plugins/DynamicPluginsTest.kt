@@ -348,7 +348,7 @@ class DynamicPluginsTest {
     
     val descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
     descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
-    Assertions.assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue
+    Assertions.assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
     
     DynamicPlugins.loadPlugin(descriptor, false)
     
