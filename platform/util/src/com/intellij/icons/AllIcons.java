@@ -1000,42 +1000,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Export = load("/toolbarDecorator/export.svg");
     /** 16x16 */ public static final Icon Import = load("/toolbarDecorator/import.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Add */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Add = load("/general/add.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddFolder */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon AddPackage = load("/toolbarDecorator/addFolder.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Edit = load("/actions/edit.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon MoveDown = load("/actions/moveDown.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon MoveUp = load("/actions/moveUp.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Remove */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Remove = load("/general/remove.svg");
-
   }
 
   public final static class Toolwindows {
