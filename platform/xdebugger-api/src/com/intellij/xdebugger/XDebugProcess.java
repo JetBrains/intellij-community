@@ -5,7 +5,9 @@ package com.intellij.xdebugger;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -15,6 +17,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -304,5 +307,10 @@ public abstract class XDebugProcess {
    */
   public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
     XDebuggerUtil.getInstance().logStack(suspendContext, session);
+  }
+
+  @ApiStatus.Experimental
+  public boolean dependsOnPlugin(@NotNull IdeaPluginDescriptor descriptor) {
+    return false;
   }
 }

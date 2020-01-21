@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -46,6 +47,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JComponent
 
+
+class CannotUnloadPluginException(value: String) : ProcessCanceledException(RuntimeException(value))
+
 interface DynamicPluginListener {
   @JvmDefault
   fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
@@ -64,6 +68,16 @@ interface DynamicPluginListener {
 
   @JvmDefault
   fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+  }
+
+
+  /**
+   * Checks if the plugin can be dynamically unloaded at this moment. 
+   * Method should throw {@link CannotUnloadPluginException} if it isn't possible by some reason
+   */
+  @Throws(CannotUnloadPluginException::class)
+  @JvmDefault 
+  fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
   }
 
   companion object {
@@ -86,6 +100,14 @@ object DynamicPlugins {
                      ProjectManager.getInstance().defaultProject
 
     val loadedPluginDescriptor = if (pluginDescriptor.pluginId != null) PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl else null
+
+    try {
+      ApplicationManager.getApplication().messageBus.syncPublisher(DynamicPluginListener.TOPIC).checkUnloadPlugin(pluginDescriptor)
+    } catch (e: CannotUnloadPluginException) {
+      val localizedMessage = e.cause?.localizedMessage
+      LOG.info(localizedMessage)
+      return false
+    }
     
     if (loadedPluginDescriptor != null && loadedPluginDescriptor.isEnabled) {
       if (!pluginDescriptor.useIdeaClassLoader) {

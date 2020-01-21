@@ -14,6 +14,9 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.ide.plugins.CannotUnloadPluginException;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -153,6 +156,20 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         if (descriptor != null && executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
           mySessions.remove(descriptor.getProcessHandler());
+        }
+      }
+    });
+
+    ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      
+      @Override
+      public void checkUnloadPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        XDebugSession[] sessions = getDebugSessions();
+        for (XDebugSession session : sessions) {
+          XDebugProcess process = session.getDebugProcess();
+          if (process.dependsOnPlugin(pluginDescriptor)) {
+            throw new CannotUnloadPluginException("Plugin is not unload-safe because of the started debug session");
+          }
         }
       }
     });
