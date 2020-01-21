@@ -865,7 +865,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/providers/apacheDerby.png",
     "/providers/azure.png",
     "/providers/bea.png",
-    "/providers/cvs.png",
     "/providers/DB2.png",
     "/providers/eclipse.png",
     "/providers/exasol.png",

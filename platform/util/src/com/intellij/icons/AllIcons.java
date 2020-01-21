@@ -922,12 +922,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Teradata = load("/providers/teradata.svg");
     /** 16x16 */ public static final Icon Vertica = load("/providers/vertica.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Cvs_global */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Cvs = load("/nodes/cvs_global.svg");
-
   }
 
   public final static class RunConfigurations {
