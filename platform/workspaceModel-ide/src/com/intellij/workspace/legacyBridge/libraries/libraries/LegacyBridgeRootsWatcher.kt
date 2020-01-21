@@ -3,6 +3,7 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.util.Disposer
@@ -77,25 +78,19 @@ class LegacyBridgeRootsWatcher(
     }
 
     for (removed in currentRoots.keys - newRoots) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Removed root $removed")
-      }
+      LOG.debug { "Removed root $removed" }
 
       Disposer.dispose(currentRoots.getValue(removed))
     }
 
     for (removedJarDirectory in currentJarDirectories.keys - newJarDirectories) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Removed jar directory root $removedJarDirectory")
-      }
+      LOG.debug { "Removed jar directory root $removedJarDirectory" }
 
       Disposer.dispose(currentJarDirectories.getValue(removedJarDirectory))
     }
 
     for (removedRecursiveJarDirectory in currentRecursiveJarDirectories.keys - newRecursiveJarDirectories) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Removed recursive jar directory root $removedRecursiveJarDirectory")
-      }
+      LOG.debug { "Removed recursive jar directory root $removedRecursiveJarDirectory" }
 
       Disposer.dispose(currentRecursiveJarDirectories.getValue(removedRecursiveJarDirectory))
     }
@@ -105,9 +100,7 @@ class LegacyBridgeRootsWatcher(
       currentRoots[added] = dispose
       virtualFilePointerManager.create(added.url, dispose, rootsValidityChangedListener)
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Added root $added")
-      }
+      LOG.debug { "Added root $added" }
     }
 
     for (addedJarDirectory in newJarDirectories - currentJarDirectories.keys) {
@@ -115,9 +108,7 @@ class LegacyBridgeRootsWatcher(
       currentRoots[addedJarDirectory] = dispose
       virtualFilePointerManager.createDirectoryPointer(addedJarDirectory.url, false, dispose, rootsValidityChangedListener)
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Added jar directory $addedJarDirectory")
-      }
+      LOG.debug { "Added jar directory $addedJarDirectory" }
     }
 
     for (addedRecursiveJarDirectory in newRecursiveJarDirectories - currentRecursiveJarDirectories.keys) {
@@ -125,9 +116,7 @@ class LegacyBridgeRootsWatcher(
       currentRoots[addedRecursiveJarDirectory] = dispose
       virtualFilePointerManager.createDirectoryPointer(addedRecursiveJarDirectory.url, true, dispose, rootsValidityChangedListener)
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Added recursive jar directory $addedRecursiveJarDirectory")
-      }
+      LOG.debug { "Added recursive jar directory $addedRecursiveJarDirectory" }
     }
   }
 
