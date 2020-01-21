@@ -278,7 +278,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/diff/compare4MiddleRight.png",
     "/diff/compare4RightBottom.png",
     "/diff/currentLine.png",
-    "/diff/Diff.png",
     "/diff/gutterCheckBox.png",
     "/diff/gutterCheckBoxSelected.png",
     "/diff/magicResolve.png",

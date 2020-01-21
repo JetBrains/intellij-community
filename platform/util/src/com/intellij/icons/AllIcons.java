@@ -287,12 +287,6 @@ public class AllIcons {
     /** 12x12 */ public static final Icon Remove = load("/diff/remove.svg");
     /** 12x12 */ public static final Icon Revert = load("/diff/revert.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Diff */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Diff = load("/diff/Diff.png");
-
   }
 
   public final static class Duplicates {
