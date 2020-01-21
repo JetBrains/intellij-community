@@ -182,25 +182,6 @@ public class AllIcons {
 
   }
 
-  public final static class Css {
-
-    /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Atrule = load("/css/atrule.png");
-
-    /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Import = load("/css/import.png");
-
-    /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Property = load("/css/property.png");
-
-  }
-
   public final static class Debugger {
     /** 16x16 */ public static final Icon AddToWatch = load("/debugger/addToWatch.svg");
     /** 16x16 */ public static final Icon AttachToProcess = load("/debugger/attachToProcess.svg");
