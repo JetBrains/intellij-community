@@ -50,6 +50,7 @@ public class HgUserFilterTest extends HgPlatformTest {
           myProject.getBaseDir().refresh(false, true);
           hg("add " + file);
           hg("commit -m ' Commit by " + user.getName() + "' --user '" + VcsUserUtil.toExactString(user) + "'");
+          debug(hg("tip"));
         }
         catch (RuntimeException e) {
           // nothing changed error (hg wrong file status)
