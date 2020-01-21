@@ -87,4 +87,15 @@ class ObjectAllocationInLoop {
   }
 
   static native Integer key();
+
+  final int CONST = 10;
+  
+  void concat() {
+    for (int i = 0; i < 10; i++) {
+      String s = <warning descr="Object allocation via string concatenation in loop">"value: " + i</warning>;
+      String s2 = "value: " + CONST;
+      System.out.println(s);
+      System.out.println(s2);
+    }
+  }
 }

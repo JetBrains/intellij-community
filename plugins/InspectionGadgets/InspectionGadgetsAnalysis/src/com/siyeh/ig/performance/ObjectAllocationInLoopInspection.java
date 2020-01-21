@@ -22,12 +22,15 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -40,7 +43,8 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     NEW_OPERATOR("object.allocation.in.loop.new.descriptor"),
     METHOD_CALL("object.allocation.in.loop.problem.call.descriptor"),
     METHOD_REFERENCE("object.allocation.in.loop.problem.methodref.descriptor"),
-    CAPTURING_LAMBDA("object.allocation.in.loop.problem.lambda.descriptor");
+    CAPTURING_LAMBDA("object.allocation.in.loop.problem.lambda.descriptor"),
+    STRING_CONCAT("object.allocation.in.loop.problem.string.concat");
 
     private final String myMessage;
 
@@ -103,6 +107,16 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
       if (isPerformedRepeatedlyInLoop(expression)) {
         registerNewExpressionError(expression, Kind.NEW_OPERATOR);
       }
+    }
+
+    @Override
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      IElementType type = expression.getOperationTokenType();
+      if (JavaTokenType.PLUS.equals(type) && TypeUtils.isJavaLangString(expression.getType()) &&
+          !PsiUtil.isConstantExpression(expression) && isPerformedRepeatedlyInLoop(expression)) {
+        registerError(expression, Kind.STRING_CONCAT);
+      }
+      super.visitPolyadicExpression(expression);
     }
 
     private static boolean isPerformedRepeatedlyInLoop(@NotNull PsiExpression expression) {
