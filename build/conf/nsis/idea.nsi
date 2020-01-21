@@ -1769,7 +1769,7 @@ read_line:
   IntOp $6 $6 + $5
   ${unStrStr} $7 $4 "#" ;check if the property has been customized
   StrCmp $7 "" custom
-  StrCpy $2 "$PROFILE/${PRODUCT_SETTINGS_DIR}/$0" ;no. use the default value.
+  StrCpy $2 $0 ;no. use the default value.
   goto complete
 custom:
   StrCpy $2 $4 "" $6
@@ -1777,7 +1777,7 @@ custom:
 complete:
   FileClose $3
   ${UnStrRep} $2 $2 "/" "\"
-  DetailPrint "path to config/system: $2"
+  DetailPrint "App directory: $2"
 FunctionEnd
 
 Function un.isIDEInUse
@@ -1859,50 +1859,50 @@ remove_link:
   RMDir  "$SMPROGRAMS\$3"
 
 delete_caches:
-  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
-  DetailPrint "Data: $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\"
-  StrCmp $R2 1 0 skip_delete_caches
-; find the path to caches (system) folder
-   StrCpy $0 "system"
-   StrCpy $1 "idea.system.path="
-   Call un.getPath
-   StrCmp $2 "" skip_delete_caches
-   StrCpy $system_path $2
-   RmDir /r "$system_path"
-   RmDir "$system_path\\.." ; remove parent of system dir if the dir is empty
-
-skip_delete_caches:
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
-  StrCmp $R3 1 "" skip_delete_settings
-; find the path to settings (config) folder
-    StrCpy $0 "config"
-    StrCpy $1 "idea.config.path="
-    Call un.getPath
-    StrCmp $2 "" skip_delete_settings
-    StrCpy $config_path $2
-    RmDir /r "$config_path"
-    Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
-    Delete "$INSTDIR\bin\idea.properties"
-    StrCmp $R2 1 "" skip_delete_settings
-    RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
-
-skip_delete_settings:
-  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
-  StrCmp $R0 "${MUI_PRODUCT}" 0 skip_delete_tools
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
-  StrCmp $R3 1 "" skip_delete_tools
+  ${If} $baseRegKey == "HKLM"
     SetShellVarContext current
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 delete_downloaded_jdk8
-    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
-delete_downloaded_jdk8:
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 continue_uninstall
-    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
+  ${EndIf}
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
+  StrCmp $R2 1 0 delete_settings
+  ; find the path to caches (system) folder
+  StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+  StrCpy $1 "idea.system.path="
+  Call un.getPath
+  StrCmp $2 "" delete_settings
+  StrCpy $system_path $2
+  RmDir /r "$system_path"
+  RmDir "$system_path\\.." ; remove parent of system dir if the dir is empty
+
+delete_settings:
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
+  StrCmp $R3 1 0 delete_rider_tools
+  ; find the path to settings (config) folder
+  StrCpy $0 "$APPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+  StrCpy $1 "idea.config.path="
+  Call un.getPath
+  StrCmp $2 "" delete_rider_tools
+  StrCpy $config_path $2
+  RmDir /r "$config_path"
+  Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
+  Delete "$INSTDIR\bin\idea.properties"
+  StrCmp $R2 1 "" delete_rider_tools
+  RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
+
+delete_rider_tools:
+  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
+  StrCmp $R0 "${MUI_PRODUCT}" 0 continue_uninstall
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
+  StrCmp $R3 1 "" continue_uninstall
+  IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 +2
+  RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
+  IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 +2
+  RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
 
 continue_uninstall:
-  StrCmp $baseRegKey "HKLM" 0 skip_delete_tools
-  SetShellVarContext all
-skip_delete_tools:
-; Delete uninstaller itself
+  ${If} $baseRegKey == "HKLM"
+    SetShellVarContext all
+  ${EndIf}
+  ; delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
   Delete "$INSTDIR\jbr\bin\server\classes.jsa"

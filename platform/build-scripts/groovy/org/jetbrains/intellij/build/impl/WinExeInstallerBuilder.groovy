@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
@@ -210,7 +210,6 @@ class WinExeInstallerBuilder {
 !define INSTALL_DIR_AND_SHORTCUT_NAME "${installDirAndShortcutName}"
 !define PRODUCT_WITH_VER "\${MUI_PRODUCT} $versionString"
 !define PRODUCT_PATHS_SELECTOR "${buildContext.systemSelector}"
-!define PRODUCT_SETTINGS_DIR ".\${PRODUCT_PATHS_SELECTOR}"
 """
   }
 }
