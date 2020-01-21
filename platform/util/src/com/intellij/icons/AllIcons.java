@@ -591,24 +591,6 @@ public class AllIcons {
   public final static class Mac {
     /** 55x55 */ public static final Icon AppIconOk512 = load("/mac/appIconOk512.png");
 
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Tree_black_right_arrow = load("/mac/tree_black_right_arrow.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Tree_white_down_arrow = load("/mac/tree_white_down_arrow.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Tree_white_right_arrow = load("/mac/tree_white_right_arrow.png");
-
   }
 
   public final static class Modules {
