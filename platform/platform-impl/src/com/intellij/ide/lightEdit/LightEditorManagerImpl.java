@@ -26,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LightEditorManagerImpl implements LightEditorManager, Disposable {
   private final List<LightEditorInfo>                myEditors         = new ArrayList<>();
@@ -147,6 +148,12 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
   public boolean isImplicitSaveAllowed(@NotNull Document document) {
     return LightEditService.getInstance().isAutosaveMode() ||
            !ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), false);
+  }
+
+  @Override
+  @NotNull
+  public Collection<VirtualFile> getOpenFiles() {
+    return myEditors.stream().map(info -> info.getFile()).collect(Collectors.toSet());
   }
 
   @Override
