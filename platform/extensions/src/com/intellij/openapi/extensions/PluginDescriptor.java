@@ -11,6 +11,11 @@ import java.util.Date;
 import java.util.List;
 
 public interface PluginDescriptor {
+
+  /**
+   * @return plugin id or null if the descriptor is the nested (optional dependency) descriptor
+   */
+  @Nullable
   PluginId getPluginId();
 
   ClassLoader getPluginClassLoader();
