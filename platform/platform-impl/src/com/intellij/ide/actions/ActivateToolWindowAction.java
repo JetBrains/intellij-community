@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.SizedIcon;
-import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,25 +95,12 @@ public class ActivateToolWindowAction extends DumbAwareAction {
 
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     ToolWindow window = windowManager.getToolWindow(myToolWindowId);
-    InputEvent event = e.getInputEvent();
-    Runnable run = null;
-    if (event instanceof KeyEvent && event.isShiftDown()) {
-      Content[] contents = window.getContentManager().getContents();
-      if (contents.length > 0 && window.getContentManager().getSelectedContent() != contents[0]) {
-        run = () -> window.getContentManager().setSelectedContent(contents[0], true, true);
-      }
-    }
 
-    if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId()) || run != null) {
-      if (run != null && window.isActive()) {
-        run.run();
-      }
-      else {
-        window.activate(run);
-      }
+    if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
+      window.activate(null);
     }
     else {
-      windowManager.getToolWindow(myToolWindowId).hide(null);
+      window.hide(null);
     }
   }
 
