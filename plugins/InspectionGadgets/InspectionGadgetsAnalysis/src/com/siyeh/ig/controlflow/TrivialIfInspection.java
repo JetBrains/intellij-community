@@ -87,7 +87,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   @Nullable
-  static String getReplacementText(ConditionalModel model, CommentTracker ct) {
+  private static String getReplacementText(ConditionalModel model, CommentTracker ct) {
     PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(model.getThenExpression());
     PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(model.getElseExpression());
     if (thenLiteral != null && elseLiteral != null) {
@@ -105,14 +105,10 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     return null;
   }
 
-  static PsiExpression getRedundantComparisonReplacement(@NotNull ConditionalModel model) {
-    return getRedundantComparisonReplacement(model.getCondition(), model.getThenExpression(), model.getElseExpression());
-  }
-
-  static PsiExpression getRedundantComparisonReplacement(@NotNull PsiExpression condition,
-                                                         @NotNull PsiExpression thenExpression,
-                                                         @NotNull PsiExpression elseExpression) {
-    PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiBinaryExpression.class);
+  private static PsiExpression getRedundantComparisonReplacement(@NotNull ConditionalModel model) {
+    @NotNull PsiExpression thenExpression = model.getThenExpression();
+    @NotNull PsiExpression elseExpression = model.getElseExpression();
+    PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(model.getCondition()), PsiBinaryExpression.class);
     if (binOp == null) return null;
     IElementType tokenType = binOp.getOperationTokenType();
     boolean equals = tokenType.equals(JavaTokenType.EQEQ);
