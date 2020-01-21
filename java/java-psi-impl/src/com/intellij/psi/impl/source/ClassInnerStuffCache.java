@@ -16,10 +16,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -196,6 +193,18 @@ public class ClassInnerStuffCache {
       @Override
       public int getTextOffset() {
         return myClass.getTextOffset();
+      }
+
+      @Override
+      public boolean equals(Object another) {
+        return another.getClass() == getClass() &&
+               myClass.equals(((LightMethod)another).getContainingClass()) &&
+               text.equals(((LightMethod)another).getText());
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(text, myClass);
       }
     };
   }
