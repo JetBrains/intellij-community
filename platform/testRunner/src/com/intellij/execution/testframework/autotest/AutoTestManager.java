@@ -15,8 +15,11 @@
  */
 package com.intellij.execution.testframework.autotest;
 
-import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.openapi.components.*;
+import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +46,7 @@ public class AutoTestManager extends AbstractAutoTestManager {
   @NotNull
   protected AutoTestWatcher createWatcher(Project project) {
     return new DelayedDocumentWatcher(project, myDelayMillis, this::restartAllAutoTests, file -> {
-      if (ScratchFileService.getInstance().getRootType(file) != null) {
+      if (ScratchUtil.isScratch(file)) {
         return false;
       }
       // Vladimir.Krivosheev - I don't know, why AutoTestManager checks it, but old behavior is preserved
