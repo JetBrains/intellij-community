@@ -32,7 +32,7 @@ public class StudioCrashDetails {
   /**
    * Represents a crash for which there is no additional details. Assumed to be not a JVM crash.
    */
-  public final static StudioCrashDetails UNKNOWN = new StudioCrashDetails("<unknown>", false, -1, "", "", "");
+  public final static StudioCrashDetails UNKNOWN = new StudioCrashDetails("<unknown>", false, -1, "", "", "", "");
   private final static String JVM_CRASH_FILE_STRING_FORMAT =
     System.getProperty("user.home") + File.separator + "java_error_in_STUDIO_%d.log";
 
@@ -42,14 +42,24 @@ public class StudioCrashDetails {
   private final String myErrorSignal;
   private final String myErrorFrame;
   private final String myErrorThread;
+  private final String myNativeStack;
 
-  private StudioCrashDetails(String description, boolean isJvmCrash, long uptimeInMs, String errorSignal, String errorFrame, String errorThread) {
+  private StudioCrashDetails(
+    String description,
+    boolean isJvmCrash,
+    long uptimeInMs,
+    String errorSignal,
+    String errorFrame,
+    String errorThread,
+    String nativeStack
+  ) {
     myDescription = description;
     myJvmCrash = isJvmCrash;
     myUptimeInMs = uptimeInMs;
     myErrorSignal = errorSignal;
     myErrorFrame = errorFrame;
     myErrorThread = errorThread;
+    myNativeStack = nativeStack;
   }
 
   @NotNull
@@ -78,6 +88,7 @@ public class StudioCrashDetails {
     String errorSignal = "";
     String errorFrame = "";
     String errorThread = "";
+    String nativeStack = "";
     // Assume it was not a JVM crash if there is no startup time or pid
     if (startupDateInMs != -1 && pid >= 0) {
       // Check time of creation of the crash report file. If it happened after the app startup time then
@@ -90,7 +101,7 @@ public class StudioCrashDetails {
           isJvmCrash = true;
           uptimeInMs = crashDateInMs - startupDateInMs;
           try (Scanner scanner = new Scanner(jvmCrashReportFile)) {
-            while (scanner.hasNext() && (errorSignal.isEmpty() || errorFrame.isEmpty() || errorThread.isEmpty())) {
+            while (scanner.hasNext() && (errorSignal.isEmpty() || errorFrame.isEmpty() || errorThread.isEmpty() || nativeStack.isEmpty())) {
               if (scanner.findInLine("#  SIG") != null) {
                 errorSignal = "SIG" + scanner.nextLine();
               } else if (scanner.findInLine("#  EXCEPTION") != null) {
@@ -100,6 +111,17 @@ public class StudioCrashDetails {
                 errorFrame = scanner.nextLine().substring(2);
               } else if (scanner.findInLine("Current thread \\(.+\\):") != null) {
                 errorThread = scanner.nextLine().trim();
+              } else if (scanner.findInLine("Native frames:") != null) {
+                scanner.nextLine();
+                StringBuilder nativeStackBuilder = new StringBuilder();
+                while (scanner.hasNext()) {
+                  String line = scanner.nextLine();
+                  if (line.isEmpty()) {
+                    nativeStack = nativeStackBuilder.toString();
+                    break;
+                  }
+                  nativeStackBuilder.append(line.trim()).append('\n');
+                }
               } else {
                 scanner.nextLine();
               }
@@ -109,7 +131,7 @@ public class StudioCrashDetails {
       }
     }
     String description = buildNumber + "\n" + runtimeVersion;
-    return new StudioCrashDetails(description, isJvmCrash, uptimeInMs, errorSignal, errorFrame, errorThread);
+    return new StudioCrashDetails(description, isJvmCrash, uptimeInMs, errorSignal, errorFrame, errorThread, nativeStack);
   }
 
   public boolean isJvmCrash() {
@@ -134,5 +156,9 @@ public class StudioCrashDetails {
 
   public String getErrorThread() {
     return myErrorThread;
+  }
+
+  public String getNativeStack() {
+    return myNativeStack;
   }
 }
