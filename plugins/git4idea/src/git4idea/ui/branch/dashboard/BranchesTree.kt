@@ -153,7 +153,7 @@ internal class FilteringBranchesTree(project: Project,
       remoteBranchesNode.getNodeDescriptor() to remoteBranchesNode
     )
 
-  private var useDirectoryGrouping = GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY) //TODO make configurable
+  private var useDirectoryGrouping = GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY)
 
   fun toggleDirectoryGrouping(state: Boolean) {
     useDirectoryGrouping = state
