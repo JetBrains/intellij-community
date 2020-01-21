@@ -423,13 +423,12 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
     myApplianceManager.documentChanged(event, myAfterLineEndInlayUpdated);
     if (((DocumentEventImpl)event).isPreMoveInsertion()) {
-      DocumentEventImpl e = (DocumentEventImpl)event;
-      int dstOffset = e.getOffset();
-      int srcOffset = e.getMoveOffset();
+      int dstOffset = event.getOffset();
+      int srcOffset = event.getMoveOffset();
       int textLength = event.getDocument().getTextLength();
       // adding +1, as inlays at the end of the moved range stick to the following text (and impact its layout)
-      myApplianceManager.recalculate(Arrays.asList(new TextRange(srcOffset, Math.min(textLength, srcOffset + e.getNewLength() + 1)),
-                                                   new TextRange(dstOffset, Math.min(textLength, dstOffset + e.getNewLength() + 1))));
+      myApplianceManager.recalculate(Arrays.asList(new TextRange(srcOffset, Math.min(textLength, srcOffset + event.getNewLength() + 1)),
+                                                   new TextRange(dstOffset, Math.min(textLength, dstOffset + event.getNewLength() + 1))));
     }
   }
 

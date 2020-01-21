@@ -51,7 +51,7 @@ public class ManualRangeMarker implements Segment {
 
     int delta = 0;
     if (((DocumentEventImpl)event).isPreMoveInsertion()) {
-      int srcOffset = ((DocumentEventImpl)event).getMoveOffset();
+      int srcOffset = event.getMoveOffset();
       if (srcOffset <= range.getStartOffset() && range.getEndOffset() <= srcOffset + event.getNewLength()) {
         delta = event.getOffset() - srcOffset;
       }

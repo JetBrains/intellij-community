@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.editor.Document;
@@ -28,10 +14,24 @@ public abstract class DocumentEvent extends EventObject {
   @NotNull
   public abstract Document getDocument();
 
+  /**
+   * The start offset of a text change.
+   */
   public abstract int getOffset();
 
-  public abstract int getOldLength();
+  /**
+   * Moving a text fragment using `DocumentEx.moveText` is accomplished by a combination of insertion and deletion.
+   * For these two events this method returns the offset of the complementary deletion/insertion event: <ul>
+   *   <li/> On insertion: returns the source offset, that is, the offset of the original text fragment, which will be removed.
+   *   <li/> On deletion: returns the destination offset, that is, the offset of the newly inserted text fragment.
+   * </ul>
+   * In case of any document modifications other than moving text, this method returns the same as {@link #getOffset()}.
+   */
+  public int getMoveOffset() {
+    return getOffset();
+  }
 
+  public abstract int getOldLength();
   public abstract int getNewLength();
 
   @NotNull

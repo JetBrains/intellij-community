@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.*;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
@@ -108,7 +107,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     final int offset = event.getOffset();
     // Although the result of getMoveOffset() can point to invalid offset when used from within beforeDocumentChange(),
     // the actual value is not used until doInvalidateRange() called from documentChanged().
-    final int moveOffset = ((DocumentEventImpl)event).getMoveOffset();
+    final int moveOffset = event.getMoveOffset();
     final int length = event.getNewLength();
     myDocumentChangeStartOffset = Math.min(offset, moveOffset);
     myDocumentChangeEndOffset = Math.max(offset, moveOffset) + length;

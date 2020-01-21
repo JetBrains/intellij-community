@@ -98,7 +98,7 @@ class MarkerCache {
                                                             event.getOldTimeStamp(), event.isWholeTextReplaced(),
                                                             ((DocumentEventImpl)event).getInitialStartOffset(),
                                                             ((DocumentEventImpl)event).getInitialOldLength(),
-                                                            ((DocumentEventImpl)event).getMoveOffset());
+                                                            event.getMoveOffset());
 
       int i = 0;
       while (i < resultMarkers.length) {
@@ -183,7 +183,7 @@ class MarkerCache {
                                                                  event.getNewFragment(), event.getOldTimeStamp(), true,
                                                                  ((DocumentEventImpl)event).getInitialStartOffset(),
                                                                  ((DocumentEventImpl)event).getInitialOldLength(),
-                                                                 ((DocumentEventImpl)event).getMoveOffset()) : event);
+                                                                 event.getMoveOffset()) : event);
     UpdatedRanges updated = applyEvents(newEvents, ranges);
     return updated.myMarkers[0];
   }

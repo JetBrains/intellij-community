@@ -123,6 +123,7 @@ public class DocumentEventImpl extends DocumentEvent {
     return myMoveOffset != myOffset;
   }
 
+  @Override
   public int getMoveOffset() {
     return myMoveOffset;
   }
