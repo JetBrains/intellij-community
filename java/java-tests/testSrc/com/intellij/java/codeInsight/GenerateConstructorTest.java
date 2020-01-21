@@ -34,7 +34,9 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
  * @author ven
@@ -107,22 +109,34 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testNullableField() { doTest(); }
-  
-  public void testRecordCompactConstructor() { doTestRecordConstructor(true); }
-  
-  public void testRecordCanonicalConstructor() { doTestRecordConstructor(false); }
+
+  public void testRecordCompactConstructor() {
+    doTestRecordConstructor((aClass, m) -> new ClassMember[]{new RecordConstructorMember(aClass, true)});
+  }
+
+  public void testRecordCanonicalConstructor() {
+    doTestRecordConstructor((aClass, m) -> new ClassMember[]{new RecordConstructorMember(aClass, false)});
+  }
+
+  public void testRecordCustomConstructor() {
+    doTestRecordConstructor((aClass, m) -> m);
+  }
+
+  public void testRecordCustomConstructor2() {
+    doTestRecordConstructor((aClass, m) -> Arrays.copyOf(m, 2));
+  }
 
   private void doTest() {
     doTest(false);
   }
-  
-  private void doTestRecordConstructor(boolean compact) {
+
+  private void doTestRecordConstructor(BiFunction<PsiClass, ClassMember[], ClassMember[]> chooser) {
     String name = getTestName(false);
     myFixture.configureByFile("before" + name + ".java");
     new GenerateConstructorHandler() {
       @Override
       protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
-        return new ClassMember[]{new RecordConstructorMember(aClass, compact)};
+        return chooser.apply(aClass, getAllOriginalMembers(aClass));
       }
     }.invoke(getProject(), getEditor(), getFile());
     myFixture.checkResultByFile("after" + name + ".java");
