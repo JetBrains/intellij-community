@@ -775,88 +775,22 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Weblistener = load("/nodes/weblistener.svg");
     /** 16x16 */ public static final Icon Write_access = load("/nodes/write-access.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Tag */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Advice = load("/nodes/tag.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon CollapseNode = load("/general/arrowDown.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.DatabaseGroup */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DataSource = load("/nodes/DataSource.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DataView = load("/nodes/dataView.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon ExpandNode = load("/general/arrowRight.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Module */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon JavaModuleRoot = load("/nodes/Module.svg");
-
     /** @deprecated to be removed in IDEA 2020.2 - use Jsr45debugIcons.Jsr45 */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.2")
     public static final Icon Jsr45 = load("/nodes/jsr45.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Package */
+    /** @deprecated to be removed in IDEA 2021 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon SourceFolder = load("/nodes/package.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon TreeClosed = load("/nodes/folder.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon TreeCollapseNode = load("/general/arrowDown.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
+    @ScheduledForRemoval(inVersion = "2021")
     public static final Icon TreeDownArrow = load("/nodes/treeDownArrow.png");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
+    /** @deprecated to be removed in IDEA 2021 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon TreeExpandNode = load("/general/arrowRight.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon TreeOpen = load("/nodes/folder.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
+    @ScheduledForRemoval(inVersion = "2021")
     public static final Icon TreeRightArrow = load("/nodes/treeRightArrow.png");
 
   }
