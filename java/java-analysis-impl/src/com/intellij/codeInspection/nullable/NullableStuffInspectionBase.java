@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
@@ -877,10 +878,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   AddAnnotationPsiFix.isAvailable(parameter, defaultNotNull)) {
                 PsiIdentifier identifier = parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameters[i]);
-                LOG.assertTrue(info != null);
-                PsiAnnotation annotation = info.getAnnotation();
-                PsiElement psiElement = annotation;
-                if (!annotation.isPhysical()) {
+                PsiElement psiElement = info == null ? null : info.getAnnotation();
+                if (psiElement == null || !psiElement.isPhysical()) {
                   psiElement = identifier;
                   if (psiElement == null) continue;
                 }
