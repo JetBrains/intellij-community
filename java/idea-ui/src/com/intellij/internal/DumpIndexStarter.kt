@@ -8,9 +8,11 @@ import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
@@ -116,7 +118,13 @@ class DumpIndexStarter : ApplicationStarter {
 
       info("Building indices for ${jdkItem.fullPresentationText} to $jdkIndicesPath")
       try {
-        buildIndexes(project, sdk, jdkItem.fullPresentationText, jdkIndicesPath)
+        buildIndexes(project,
+                     sdk,
+                     jdkItem.fullPresentationText,
+                     jdkIndicesPath,
+                     jdkIndicesPath.resolve(jdkIndicesPath.fileName.toString() + ".zip"),
+                     EmptyProgressIndicator()
+        )
       }
       finally {
         SdkConfigurationUtil.removeSdk(sdk)
@@ -131,22 +139,33 @@ class DumpIndexStarter : ApplicationStarter {
 private fun buildIndexes(project: Project,
                          sdk: Sdk,
                          indexChunkName: String,
-                         out: Path) {
-  val roots = (sdk.rootProvider.getFiles(OrderRootType.CLASSES) + sdk.rootProvider.getFiles(OrderRootType.SOURCES)).toSet()
+                         temp: Path,
+                         outZipFile: Path,
+                         indicator: ProgressIndicator) {
+  LOG.info("Collecting SDK roots...")
+
+  val rootProvider = sdk.rootProvider
+  val roots = (rootProvider.getFiles(OrderRootType.CLASSES) + rootProvider.getFiles(OrderRootType.SOURCES)).toSet()
+  LOG.info("Collected ${roots.size} SDK roots")
   val indexChunk = DumpIndexAction.IndexChunk(roots, indexChunkName)
-  DumpIndexAction.exportSingleIndexChunk(project, indexChunk, out, EmptyProgressIndicator())
+  DumpIndexAction.exportSingleIndexChunk(project, indexChunk, temp, outZipFile, indicator)
 }
 
 class DumpJdkIndexStarter : ApplicationStarter {
-  private val LOG = Logger.getInstance(javaClass)
   override fun getCommandName() = "dump-jdk-index"
 
-  private fun Array<out String>.arg(arg: String): String {
+  private fun Array<out String>.arg(arg: String, default: String? = null): String {
     val key = "/$arg="
     val values = filter { it.startsWith(key) }.map { it.removePrefix(key) }
+
+    if (values.isEmpty() && default != null) {
+      return default
+    }
     require(values.size == 1) { "Commandline argument $key is missing or defined multiple times" }
     return values.first()
   }
+
+  private fun Array<out String>.argFile(arg: String, default: String? = null) = File(arg(arg, default)).canonicalFile
 
   private fun <Y: Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?) : Y {
     try {
@@ -175,17 +194,30 @@ class DumpJdkIndexStarter : ApplicationStarter {
     println("Dump JDK indexes command:")
     val jdkHomeKey = "jdk-home"
     val tempKey = "temp"
-    val outputKey = "output"
+    val outputKey = "index-zip"
 
-    println("  [idea] ${commandName} /$jdkHomeKey=<home to JDK> /$outputKey=<target output path> /$tempKey=<temp folder>")
+    println("  [idea] ${commandName} [/$jdkHomeKey=<home to JDK>] /$outputKey=<target output path> /$tempKey=<temp folder>")
 
-    val jdkHome = File(args.arg(jdkHomeKey)).canonicalFile
-    val tempDir = File(args.arg(tempKey)).canonicalFile.recreateDir()
-    val outputDir = File(args.arg(outputKey)).canonicalFile.recreateDir()
+    val jdkHome = args.argFile(jdkHomeKey, System.getProperty("java.home"))
+    val tempDir = args.argFile(tempKey).recreateDir()
+    val indexZip = args.argFile(outputKey).apply {
+      FileUtil.delete(this)
+      FileUtil.createParentDirs(this)
+    }
+    val projectDir = File(tempDir, "project").recreateDir()
+    val unpackedIndexDir = File(tempDir, "unpacked-index").recreateDir()
 
     LOG.info("Resolved jdkHome = $jdkHome")
-    LOG.info("Resolved outputDir = $outputDir")
+    LOG.info("Resolved indexZip = $indexZip")
     LOG.info("Resolved tempDir = $tempDir")
+
+    runWriteAction {
+      val jdkTable = ProjectJdkTable.getInstance()
+      jdkTable.allJdks.forEach {
+        LOG.info("Detected SDK $it - removing!")
+        jdkTable.removeJdk(it)
+      }
+    }
 
     val javaSdkType = JavaSdk.getInstance()
     val javaSdk = runAndCatchNotNull("create SDK for $jdkHome") {
@@ -199,28 +231,31 @@ class DumpJdkIndexStarter : ApplicationStarter {
     }
 
     LOG.info("Resolved JDK. Version is $jdkVersion, home = ${javaSdk.homePath}")
-
-    val projectDir = File(tempDir, "project").recreateDir()
-
     val project = runAndCatchNotNull("create project") {
       ProjectManager.getInstance().createProject("jdk-$jdkVersion", projectDir.absolutePath)
     }
 
     LOG.info("Project is read. isOpen=${project.isOpen}")
     runWriteAction {
-      ProjectRootManager.getInstance(project).projectSdk = javaSdk
+      ProjectRootManager.getInstance(project).projectSdk = null
     }
 
     val time = measureTimeMillis {
-      buildIndexes(project, javaSdk, "jdk-$jdkVersion", outputDir.toPath())
+      buildIndexes(project,
+                   javaSdk,
+                   "jdk-$jdkVersion",
+                   unpackedIndexDir.toPath(),
+                   indexZip.toPath(),
+                   EmptyProgressIndicator())
     }
 
     val jdkSize = jdkHome.totalSize()
-    val indexSize = outputDir.totalSize()
+    val indexSize = indexZip.totalSize()
 
     LOG.info("Indexes build completed in ${StringUtil.formatDuration(time)}")
     LOG.info("JDK size   = ${StringUtil.formatFileSize(jdkSize)}")
     LOG.info("Index size = ${StringUtil.formatFileSize(indexSize)}")
+    LOG.info("Generated index in $indexZip")
     exitProcess(0)
   }
 
@@ -234,3 +269,16 @@ class DumpJdkIndexStarter : ApplicationStarter {
     }.sum()
   }
 }
+
+private object LOG {
+  fun info(message: String) {
+    println(message)
+  }
+
+  fun error(message: String, cause: Throwable? = null) {
+    Logger.getInstance(DumpJdkIndexStarter::class.java).error(message, cause)
+    println("ERROR - $message")
+    cause?.printStackTrace()
+  }
+}
+

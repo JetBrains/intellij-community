@@ -72,22 +72,23 @@ public class DumpIndexAction extends AnAction {
         public void run(@NotNull ProgressIndicator indicator) {
           File out = VfsUtilCore.virtualToIoFile(file);
           FileUtil.delete(out);
-          exportIndices(project, out.toPath(), indicator);
+          exportIndices(project, out.toPath(), new File(out, "index.zip").toPath(), indicator);
         }
       });
     }
   }
 
-  public static void exportIndices(@NotNull Project project, @NotNull Path out, @NotNull ProgressIndicator indicator) {
+  public static void exportIndices(@NotNull Project project, @NotNull Path temp, @NotNull Path outZipFile, @NotNull ProgressIndicator indicator) {
     List<IndexChunk> chunks = ReadAction.compute(() -> buildChunks(project));
-    exportIndices(project, chunks, out, indicator);
+    exportIndices(project, chunks, temp, outZipFile, indicator);
   }
 
   public static void exportSingleIndexChunk(@NotNull Project project,
                                             @NotNull IndexChunk chunk,
-                                            @NotNull Path out,
+                                            @NotNull Path temp,
+                                            @NotNull Path outZipFile,
                                             @NotNull ProgressIndicator indicator) {
-    exportIndices(project, Collections.singletonList(chunk), out, indicator);
+    exportIndices(project, Collections.singletonList(chunk), temp, outZipFile, indicator);
   }
 
   @NotNull
@@ -124,9 +125,9 @@ public class DumpIndexAction extends AnAction {
   public static void exportIndices(@NotNull Project project,
                                    @NotNull List<IndexChunk> chunks,
                                    @NotNull Path out,
+                                   @NotNull Path zipFile,
                                    @NotNull ProgressIndicator indicator) {
     Path indexRoot = PathKt.createDirectories(out.resolve("unpacked"));
-    Path zipFile = out.resolve(out.getFileName() + ".zip");
 
     indicator.setIndeterminate(false);
     AtomicInteger idx = new AtomicInteger();
@@ -165,7 +166,7 @@ public class DumpIndexAction extends AnAction {
 
   private static void deleteEmptyIndices(@NotNull List<HashBasedIndexGenerator<?, ?>> generators,
                                          @NotNull Path dumpEmptyIndicesNamesFile) {
-    Set<String> emptyIndices = new HashSet<>();
+    Set<String> emptyIndices = new TreeSet<>();
     for (HashBasedIndexGenerator<?, ?> generator : generators) {
       if (generator.isEmpty()) {
         emptyIndices.add(generator.getExtension().getName().getName());
@@ -179,7 +180,7 @@ public class DumpIndexAction extends AnAction {
         PathKt.write(dumpEmptyIndicesNamesFile, emptyIndicesText);
       }
       catch (IOException e) {
-        LOG.error(e);
+        throw new RuntimeException("Failed to write indexes file " + dumpEmptyIndicesNamesFile + ". " + e.getMessage(), e);
       }
     }
   }
