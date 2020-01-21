@@ -676,9 +676,6 @@
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
 
     <!-- NumPy -->
-    <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
-    <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
-    <pyClassMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyClassMembersProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
 
     <!-- PyDocstring -->
