@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.ui;
 
 import com.intellij.CvsBundle;
@@ -22,8 +22,8 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.util.ui.ErrorTreeView;
@@ -52,7 +52,7 @@ public class CvsTabbedWindow implements Disposable {
 
     final ToolWindow toolWindow = getToolWindow();
     final ContentManager contentManager = toolWindow.getContentManager();
-    contentManager.addContentManagerListener(new ContentManagerAdapter() {
+    contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
         final JComponent component = event.getContent().getComponent();

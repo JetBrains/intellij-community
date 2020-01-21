@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -24,8 +24,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class XDebugSessionTab extends DebuggerSessionTabBase {
+public final class XDebugSessionTab extends DebuggerSessionTabBase {
   public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   private XWatchesViewImpl myWatchesView;
@@ -110,7 +110,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
     myUi.getOptions().setAdditionalFocusActions(focus).setMinimizeActionEnabled(true).setMoveToGridActionEnabled(true);
 
-    myUi.addListener(new ContentManagerAdapter() {
+    myUi.addListener(new ContentManagerListener() {
       @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();

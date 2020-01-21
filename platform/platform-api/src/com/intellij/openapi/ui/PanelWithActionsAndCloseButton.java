@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
@@ -35,7 +33,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     myCloseEnabled = true;
 
     if (myContentManager != null) {
-      myContentManager.addContentManagerListener(new ContentManagerAdapter(){
+      myContentManager.addContentManagerListener(new ContentManagerListener() {
         @Override
         public void contentRemoved(@NotNull ContentManagerEvent event) {
           if (event.getContent().getComponent() == PanelWithActionsAndCloseButton.this) {

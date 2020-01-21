@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.preview.impl;
 
 import com.intellij.icons.AllIcons;
@@ -27,8 +27,8 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -135,7 +135,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       myToolWindow.setAutoHide(true);
       myEmptyStateContent = myContentManager.getContent(0);
       final MoveToStandardViewAction moveToStandardViewAction = new MoveToStandardViewAction();
-      myContentManager.addContentManagerListener(new ContentManagerAdapter() {
+      myContentManager.addContentManagerListener(new ContentManagerListener() {
         @Override
         public void selectionChanged(@NotNull ContentManagerEvent event) {
           if (myInnerSelectionChange || event.getOperation() != ContentManagerEvent.ContentOperation.add) return;

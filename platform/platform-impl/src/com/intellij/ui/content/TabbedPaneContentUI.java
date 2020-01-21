@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.actionSystem.*;
@@ -271,7 +271,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     }
   }
 
-  private class MyContentManagerListener extends ContentManagerAdapter {
+  private class MyContentManagerListener implements ContentManagerListener {
     @Override
     public void contentAdded(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();

@@ -139,7 +139,7 @@ public class MessageViewHelper {
     }
   }
 
-  private static class CloseListener extends ContentManagerAdapter {
+  private static class CloseListener implements ContentManagerListener {
     private final String myContentName;
 
     private NewErrorTreeViewPanel myErrorsView;
@@ -182,7 +182,7 @@ public class MessageViewHelper {
     }
   }
 
-  private static class MyContentDisposer extends ContentManagerAdapter {
+  private static class MyContentDisposer implements ContentManagerListener {
     private final Content myContent;
     private final MessageView myMessageView;
     private final Key<NewErrorTreeViewPanel> myKey;

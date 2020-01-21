@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -35,8 +35,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -59,9 +59,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
-/**
- * @author egor
- */
 public class JavaDebugProcess extends XDebugProcess {
   private final DebuggerSession myJavaSession;
   private final JavaDebuggerEditorsProvider myEditorsProvider;
@@ -329,7 +326,7 @@ public class JavaDebugProcess extends XDebugProcess {
           null, panel.getDefaultFocusedComponent());
         threadsContent.setCloseable(false);
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
-        ui.addListener(new ContentManagerAdapter() {
+        ui.addListener(new ContentManagerListener() {
           @Override
           public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (event.getContent() == threadsContent) {
@@ -375,7 +372,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
         ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
         final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
-        ui.addListener(new ContentManagerAdapter() {
+        ui.addListener(new ContentManagerListener() {
           @Override
           public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (event.getContent() == memoryViewContent) {

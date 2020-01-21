@@ -34,7 +34,7 @@ final class PanelContentUI implements ContentUI {
   public void setManager(@NotNull ContentManager manager) {
     assert myContentManager == null;
     myContentManager = manager;
-    manager.addContentManagerListener(new ContentManagerAdapter() {
+    manager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void selectionChanged(@NotNull final ContentManagerEvent event) {
         initUI();
