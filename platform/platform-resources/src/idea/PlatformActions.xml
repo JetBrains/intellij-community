@@ -722,6 +722,9 @@
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
+        <group id="ShowLogGroup" internal="true">
+          <reference ref="ShowLog"/>
+        </group>
         <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
