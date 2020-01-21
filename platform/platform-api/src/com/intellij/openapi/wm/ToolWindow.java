@@ -172,6 +172,9 @@ public interface ToolWindow extends BusyObject {
   @NotNull
   ContentManager getContentManager();
 
+  @Nullable
+  ContentManager getContentManagerIfCreated();
+
   void addContentManagerListener(@NotNull ContentManagerListener listener);
 
   void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);

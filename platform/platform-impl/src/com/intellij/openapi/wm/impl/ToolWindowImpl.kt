@@ -328,7 +328,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     return if (contentManager.isInitialized()) contentManager.value.component else null
   }
 
-  fun getContentManagerIfInitialized(): ContentManager? {
+  override fun getContentManagerIfCreated(): ContentManager? {
     return if (contentManager.isInitialized()) contentManager.value else null
   }
 
@@ -483,7 +483,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     group.addSeparator()
     group.add(object : ContextHelpAction() {
       override fun getHelpId(dataContext: DataContext): String? {
-        val content = getContentManagerIfInitialized()?.selectedContent
+        val content = getContentManagerIfCreated()?.selectedContent
         if (content != null) {
           val helpId = content.helpId
           if (helpId != null) {

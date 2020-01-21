@@ -44,10 +44,15 @@ class DependencySearchService(private val myProject: Project) {
       }, myProject)
   }
 
-  fun updateProviders() { remoteProviders.clear()
+  fun updateProviders() {
+    remoteProviders.clear()
     localProviders.clear()
-    DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList.filter { it.isApplicable(myProject) }.forEach { f ->
-      f.getProviders(myProject).forEach { provider ->
+    for (f in DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList) {
+      if (!f.isApplicable(myProject)) {
+        continue
+      }
+
+      for (provider in f.getProviders(myProject)) {
         if (provider.isLocal) {
           localProviders.add(provider)
         }
@@ -80,7 +85,7 @@ class DependencySearchService(private val myProject: Project) {
     }
 
     val promises: MutableList<Promise<Void>> = ArrayList(remoteProviders.size)
-    val resultSet = Collections.synchronizedSet(localResultSet);
+    val resultSet = Collections.synchronizedSet(localResultSet)
     for (provider in remoteProviders) {
       val promise = AsyncPromise<Void>()
       promises.add(promise)
@@ -130,9 +135,7 @@ class DependencySearchService(private val myProject: Project) {
     }
   }
 
-  private fun foundInCache(searchString: String,
-                           parameters: SearchParameters,
-                           consumer: ResultConsumer): Promise<Int>? {
+  private fun foundInCache(searchString: String, parameters: SearchParameters, consumer: ResultConsumer): Promise<Int>? {
     val future = cache[searchString]
     if (future != null) {
       val p: AsyncPromise<Int> = AsyncPromise()

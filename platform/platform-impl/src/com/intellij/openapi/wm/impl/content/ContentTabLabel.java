@@ -70,7 +70,7 @@ class ContentTabLabel extends BaseLabel {
     @Override
     public Runnable getAction() {
       return () -> {
-        ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+        ContentManager contentManager = myUi.myWindow.getContentManagerIfCreated();
         if (contentManager != null) {
           contentManager.removeContent(getContent(), true);
         }
@@ -301,7 +301,7 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Color getActiveFg(boolean selected) {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    ContentManager contentManager = myUi.myWindow.getContentManagerIfCreated();
     if (contentManager != null && contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
@@ -311,7 +311,7 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Color getPassiveFg(boolean selected) {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    ContentManager contentManager = myUi.myWindow.getContentManagerIfCreated();
     if (contentManager != null && contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
@@ -334,7 +334,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public boolean isSelected() {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    ContentManager contentManager = myUi.myWindow.getContentManagerIfCreated();
     return contentManager != null && contentManager.isSelected(myContent);
   }
 

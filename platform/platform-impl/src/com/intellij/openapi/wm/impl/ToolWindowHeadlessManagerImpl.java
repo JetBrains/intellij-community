@@ -364,6 +364,12 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    @Nullable
+    public ContentManager getContentManagerIfCreated() {
+      return myContentManager;
+    }
+
+    @Override
     public void addContentManagerListener(@NotNull ContentManagerListener listener) {
     }
 

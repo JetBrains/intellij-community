@@ -4,7 +4,6 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -26,8 +25,8 @@ public interface RunDashboardManager {
   Topic<RunDashboardListener> DASHBOARD_TOPIC =
     Topic.create("run dashboard", RunDashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  static RunDashboardManager getInstance(Project project) {
-    return ServiceManager.getService(project, RunDashboardManager.class);
+  static RunDashboardManager getInstance(@NotNull Project project) {
+    return project.getService(RunDashboardManager.class);
   }
 
   ContentManager getDashboardContentManager();
