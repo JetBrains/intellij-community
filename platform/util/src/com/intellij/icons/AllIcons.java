@@ -443,29 +443,11 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ZoomIn = load("/graph/zoomIn.svg");
     /** 16x16 */ public static final Icon ZoomOut = load("/graph/zoomOut.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Export = load("/toolbarDecorator/export.svg");
-
     /** @deprecated to be removed in IDEA 2021 - use AllIcons.General.FitContent */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2021")
     /** 16x16 */ public static final Icon FitContent = load("/general/fitContent.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Print */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Print = load("/general/print.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Preview */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon PrintPreview = load("/actions/preview.svg");
 
   }
 
