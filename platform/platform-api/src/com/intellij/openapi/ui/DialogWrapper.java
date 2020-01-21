@@ -2007,13 +2007,13 @@ public abstract class DialogWrapper {
         }
 
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
+        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
       });
     }
     else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
-          myErrorText.appendError(vi.message);
+          myErrorText.appendError(vi);
         }
       };
       if (headless) {
@@ -2057,7 +2057,7 @@ public abstract class DialogWrapper {
 
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private final List<String> errors = new ArrayList<>();
+    private final List<ValidationInfo> errors = new ArrayList<>();
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
@@ -2094,26 +2094,28 @@ public abstract class DialogWrapper {
       }
     }
 
-    private void appendError(String text) {
-      errors.add(text);
-      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(ERROR_FOREGROUND_COLOR) + "'>");
-      errors.forEach(error -> sb.append("<left>").append(error).append("</left><br/>"));
-      sb.append("</font></html>");
+    private void appendError(@NotNull ValidationInfo info) {
+      errors.add(info);
+
+      StringBuilder sb = new StringBuilder("<html>");
+      errors.forEach(
+        vi -> {
+          Color color = vi.warning ? MessageType.WARNING.getTitleForeground() : ERROR_FOREGROUND_COLOR;
+          sb.append("<font color='#").append(ColorUtil.toHex(color)).append("'>")
+            .append("<left>")
+            .append(vi.message)
+            .append("</left></font><br/>");
+        }
+      );
+      sb.append("</html>");
+
       myLabel.setText(sb.toString());
       setVisible(true);
       updateSize();
     }
 
     private boolean isTextSet(@NotNull List<ValidationInfo> info) {
-      if (info.isEmpty()) {
-        return errors.isEmpty();
-      }
-      else if (errors.size() == info.size()) {
-        return errors.equals(ContainerUtil.map(info, i -> i.message));
-      }
-      else {
-        return false;
-      }
+      return errors.equals(info);
     }
   }
 
