@@ -3,6 +3,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.notification.NotificationDisplayType
@@ -229,16 +231,23 @@ object DynamicPlugins {
                                disable: Boolean = false,
                                isUpdate: Boolean = false): Boolean {
     var result = false
+    runInAutoSaveDisabledMode {
+      val saveAndSyncHandler = SaveAndSyncHandler.getInstance()
+      saveAndSyncHandler.saveSettingsUnderModalProgress(ApplicationManager.getApplication())
+      for (openProject in ProjectManager.getInstance().openProjects) {
+        saveAndSyncHandler.saveSettingsUnderModalProgress(openProject)
+      }
+    }
     val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", null, parentComponent, null)
     indicator.runInSwingThread {
-      result = unloadPlugin(pluginDescriptor, disable, isUpdate)
+      result = unloadPlugin(pluginDescriptor, disable, isUpdate, save = false)
     }
     return result
   }
 
   @JvmStatic
   @JvmOverloads
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false, isUpdate: Boolean = false): Boolean {
+  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false, isUpdate: Boolean = false, save: Boolean = true): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
 
     // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
@@ -247,7 +256,9 @@ object DynamicPlugins {
                                  ?: return false
 
     try {
-      saveDocumentsAndProjectsAndApp(true)
+      if (save) {
+        saveDocumentsAndProjectsAndApp(true)
+      }
       application.runWriteAction {
         try {
           application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, isUpdate)
