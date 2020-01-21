@@ -129,6 +129,20 @@ fun fieldWithGear(): JPanel {
   }
 }
 
+fun fieldWithGearWithIndent(): JPanel {
+  return panel {
+    row {
+      row("Database:") {
+        JTextField()()
+        gearButton()
+      }
+      row("Master Password:") {
+        JBPasswordField()()
+      }
+    }
+  }
+}
+
 fun alignFieldsInTheNestedGrid(): JPanel {
   return panel {
     buttonGroup {
