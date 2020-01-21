@@ -10,10 +10,20 @@ class DvcsBranchSettings : BaseState() {
   @get:Tag("excluded-from-favorite")
   var excludedFavorites by property(BranchStorage())
   @get:Tag("branch-grouping")
-  var groupingKeyIds by stringSet()
+  var groupingKeyIds by stringSet(defaultGroupingKey.id)
 }
 
-fun DvcsBranchSettings.isGroupingEnabled(key: GroupingKey) = groupingKeyIds.contains(key.id)
+private val defaultGroupingKey = GroupingKey.GROUPING_BY_DIRECTORY
+
+fun DvcsBranchSettings.isGroupingEnabled(key: GroupingKey): Boolean {
+  return groupingKeyIds.contains(key.id)
+}
+
+fun DvcsBranchSettings.setGrouping(key: GroupingKey, state: Boolean) {
+  if (state) groupingKeyIds.add(key.id) else groupingKeyIds.remove(key.id)
+
+  intIncrementModificationCount();
+}
 
 enum class GroupingKey(val id: String, val text: String? = null, val description: String? = null) {
   GROUPING_BY_DIRECTORY("directory", "Group By Directory")
