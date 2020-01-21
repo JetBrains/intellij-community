@@ -627,16 +627,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Split = load("/modules/split.svg");
     /** 16x16 */ public static final Icon TestResourcesRoot = load("/modules/testResourcesRoot.svg");
     /** 16x16 */ public static final Icon TestRoot = load("/modules/testRoot.svg");
-
-    public final static class Types {
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.User */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon UserDefined = load("/general/user.svg");
-
-    }
     /** 16x16 */ public static final Icon UnloadedModule = load("/modules/unloadedModule.svg");
     /** 16x16 */ public static final Icon UnmarkWebroot = load("/modules/unmarkWebroot.svg");
 

@@ -630,7 +630,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/modules/testResourcesRoot.png",
     "/modules/testRoot.png",
     "/modules/testSourceFolder.png",
-    "/modules/types/userDefined.png",
     "/modules/unloadedModule.png",
     "/modules/unmarkWebroot.png",
     "/modules/webRoot.png",
