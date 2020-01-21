@@ -459,10 +459,6 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (isEnum()) {
-      if (!PsiClassImplUtil.processDeclarationsInEnum(processor, state, myInnersCache)) return false;
-    }
-
     LanguageLevel level = processor instanceof MethodsProcessor ? ((MethodsProcessor)processor).getLanguageLevel() : PsiUtil.getLanguageLevel(place);
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, level, false);
   }

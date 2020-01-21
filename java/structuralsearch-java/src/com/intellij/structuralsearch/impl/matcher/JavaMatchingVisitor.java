@@ -451,9 +451,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
 
-      final PsiField[] fields = patternClass.getFields();
-
-      if (fields.length > 0) {
+      PsiField[] fields = PsiTreeUtil.getChildrenOfType(patternClass, PsiField.class);
+      if (fields != null) {
         final PsiField[] fields2 = javaPattern.isRequestsSuperFields() ?
                                    matchClass.getAllFields() :
                                    matchClass.getFields();
@@ -463,9 +462,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
 
-      final PsiMethod[] methods = patternClass.getMethods();
-
-      if (methods.length > 0) {
+      PsiMethod[] methods = PsiTreeUtil.getChildrenOfType(patternClass, PsiMethod.class);
+      if (methods != null) {
         final PsiMethod[] methods2 = javaPattern.isRequestsSuperMethods() ?
                                      matchClass.getAllMethods() :
                                      matchClass.getMethods();
@@ -475,9 +473,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
 
-      final PsiClass[] nestedClasses = patternClass.getInnerClasses();
-
-      if (nestedClasses.length > 0) {
+      PsiClass[] nestedClasses = PsiTreeUtil.getChildrenOfType(patternClass, PsiClass.class);
+      if (nestedClasses != null) {
         final PsiClass[] nestedClasses2 = javaPattern.isRequestsSuperInners() ?
                                           matchClass.getAllInnerClasses() :
                                           matchClass.getInnerClasses();

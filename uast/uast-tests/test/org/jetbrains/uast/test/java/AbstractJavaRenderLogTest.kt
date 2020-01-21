@@ -15,7 +15,7 @@ abstract class AbstractJavaRenderLogTest : AbstractJavaUastTest(), RenderLogTest
 
     file.accept(object : UastVisitor {
       override fun visitElement(node: UElement): Boolean {
-        if (node is PsiElement) {
+        if (node is PsiElement && node.isPhysical) {
           UsefulTestCase.assertInstanceOf(node.containingFile, PsiJavaFile::class.java)
         }
         return false

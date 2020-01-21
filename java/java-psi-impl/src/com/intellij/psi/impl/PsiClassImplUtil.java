@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +49,6 @@ import java.util.concurrent.ConcurrentMap;
 public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
   private static final Key<ParameterizedCachedValue<Map<GlobalSearchScope, MembersMap>, PsiClass>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
-  private static final String VALUES_METHOD = "values";
-  private static final String VALUE_OF_METHOD = "valueOf";
 
   private PsiClassImplUtil() { }
 
@@ -370,22 +369,15 @@ public class PsiClassImplUtil {
     }
   }
 
+  /**
+   * @deprecated synthetic enum methods are included into {@link PsiClass#getMethods()}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static boolean processDeclarationsInEnum(@NotNull PsiScopeProcessor processor,
                                                   @NotNull ResolveState state,
                                                   @NotNull ClassInnerStuffCache innerStuffCache) {
-    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-      NameHint nameHint = processor.getHint(NameHint.KEY);
-      if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
-        PsiMethod method = innerStuffCache.getValuesMethod();
-        if (method != null && !processor.execute(method, ResolveState.initial())) return false;
-      }
-      if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
-        PsiMethod method = innerStuffCache.getValueOfMethod();
-        if (method != null && !processor.execute(method, ResolveState.initial())) return false;
-      }
-    }
-
     return true;
   }
 

@@ -82,12 +82,12 @@ public class ClassInnerStuffCache {
   }
 
   @Nullable
-  public PsiMethod getValuesMethod() {
+  PsiMethod getValuesMethod() {
     return myClass.isEnum() && myClass.getName() != null ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValuesMethod())) : null;
   }
 
   @Nullable
-  public PsiMethod getValueOfMethod() {
+  private PsiMethod getValueOfMethod() {
     return myClass.isEnum() && myClass.getName() != null ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValueOfMethod())) : null;
   }
 
@@ -108,6 +108,10 @@ public class ClassInnerStuffCache {
   private PsiMethod @NotNull [] calcMethods() {
     List<PsiMethod> own = myClass.getOwnMethods();
     List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class);
+    if (myClass.isEnum()) {
+      ext.add(getValuesMethod());
+      ext.add(getValueOfMethod());
+    }
     return ArrayUtil.mergeCollections(own, ext, PsiMethod.ARRAY_FACTORY);
   }
 

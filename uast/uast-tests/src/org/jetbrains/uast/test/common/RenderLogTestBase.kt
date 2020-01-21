@@ -85,7 +85,7 @@ interface RenderLogTestBase {
   fun UFile.checkContainingFileForAllElements() {
     accept(object : UastVisitor {
       override fun visitElement(node: UElement): Boolean {
-        if (node is PsiElement) {
+        if (node is PsiElement && node.isPhysical) {
           val uElement = node.sourcePsi.toUElement()!!
           Assert.assertEquals("getContainingUFile should be equal to source for ${uElement.javaClass}",
                                 this@checkContainingFileForAllElements,

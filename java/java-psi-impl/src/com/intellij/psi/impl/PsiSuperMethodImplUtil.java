@@ -6,12 +6,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
-import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
-import com.intellij.util.*;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -158,13 +159,6 @@ public class PsiSuperMethodImplUtil {
     });
 
     PsiMethod[] methods = nameHint == null ? aClass.getMethods() : aClass.findMethodsByName(nameHint, false);
-    if ((nameHint == null || "values".equals(nameHint)) && aClass instanceof PsiClassImpl) {
-      final PsiMethod valuesMethod = ((PsiClassImpl)aClass).getValuesMethod();
-      if (valuesMethod != null) {
-        methods = ArrayUtil.append(methods, valuesMethod);
-      }
-    }
-
     for (PsiMethod method : methods) {
       if (!method.isValid()) {
         throw new PsiInvalidElementAccessException(method, "class.valid=" + aClass.isValid() + "; name=" + method.getName());

@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.*
@@ -217,10 +218,13 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
 
   internal val transformationResult: TransformationResult
     get() = TransformationResult(
-      methods.toArray(PsiMethod.EMPTY_ARRAY),
+      (methods + enumMethods()).toArray(PsiMethod.EMPTY_ARRAY),
       fields.toArray(GrField.EMPTY_ARRAY),
       innerClasses.toArray(PsiClass.EMPTY_ARRAY),
       implementsTypes.toArray(PsiClassType.EMPTY_ARRAY),
       extendsTypes.toArray(PsiClassType.EMPTY_ARRAY)
     )
+
+  private fun enumMethods() : List<PsiMethod> =
+    if (myCodeClass is GrEnumTypeDefinitionImpl) myCodeClass.defEnumMethods else emptyList()
 }

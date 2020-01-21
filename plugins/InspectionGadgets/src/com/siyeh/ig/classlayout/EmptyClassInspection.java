@@ -189,16 +189,8 @@ public class EmptyClassInspection extends BaseInspection {
       if (aClass instanceof PsiTypeParameter) {
         return;
       }
-      final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length > 0) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.getMethods();
-      if (methods.length > 0) {
-        return;
-      }
-      final PsiField[] fields = aClass.getFields();
-      if (fields.length > 0) {
+      if (PsiTreeUtil.getChildOfType(aClass, PsiMethod.class) != null ||
+          PsiTreeUtil.getChildOfType(aClass, PsiField.class) != null) {
         return;
       }
       final PsiClassInitializer[] initializers = aClass.getInitializers();
