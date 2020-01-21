@@ -101,7 +101,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final UIDefaults ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
 
   private UIManager.LookAndFeelInfo myCurrentLaf;
-  private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
+  private final Map<LafReference, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
 
   // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
   public static final String WINDOW_ALPHA = "Window.alpha";
@@ -825,7 +825,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void restoreOriginalFontDefaults(UIDefaults defaults) {
-    UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
+    LafReference lf = myCurrentLaf == null ? null : getCurrentLookAndFeelReference();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults != null) {
       for (String resource : ourPatchableFontResources) {
@@ -836,7 +836,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
-    UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
+    LafReference lf = myCurrentLaf == null ? null : getCurrentLookAndFeelReference();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
       lfDefaults = new HashMap<>();
