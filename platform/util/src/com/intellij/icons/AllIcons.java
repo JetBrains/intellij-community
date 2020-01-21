@@ -584,18 +584,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Array = load("/json/array.svg");
     /** 16x16 */ public static final Icon Object = load("/json/object.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Json.Object */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Property_braces = load("/json/object.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Json.Array */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Property_brackets = load("/json/array.svg");
-
   }
   /** 80x80 */ public static final Icon Logo_welcomeScreen = load("/Logo_welcomeScreen.png");
   /** 80x80 */ public static final Icon Logo_welcomeScreen_CE = load("/Logo_welcomeScreen_CE.png");

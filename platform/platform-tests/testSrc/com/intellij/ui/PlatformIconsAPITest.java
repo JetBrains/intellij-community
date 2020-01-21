@@ -594,8 +594,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/javaee/WebServiceClient2.png",
     "/json/array.png",
     "/json/object.png",
-    "/json/property_braces.png",
-    "/json/property_brackets.png",
     "/Logo_welcomeScreen.png",
     "/mac/appIconOk512.png",
     "/mac/text.png",
