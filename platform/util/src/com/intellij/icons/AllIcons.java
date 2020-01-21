@@ -489,34 +489,6 @@ public class AllIcons {
   }
 
   public final static class Ide {
-
-    public final static class Dnd {
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowUp */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Bottom = load("/general/arrowUp.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Left = load("/general/arrowRight.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Right = load("/general/arrowLeft.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Top = load("/general/arrowDown.svg");
-
-    }
     /** 6x6 */ public static final Icon ErrorPoint = load("/ide/errorPoint.svg");
     /** 14x14 */ public static final Icon External_link_arrow = load("/ide/external_link_arrow.svg");
     /** 16x16 */ public static final Icon FatalError_read = load("/ide/fatalError-read.svg");

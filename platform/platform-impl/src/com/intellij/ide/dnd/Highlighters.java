@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
 import com.intellij.icons.AllIcons;
@@ -227,16 +227,16 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
     @Override
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
-      final Rectangle rectangle = new Rectangle(aRectangle.x - AllIcons.Ide.Dnd.Left.getIconWidth(), aRectangle.y - AllIcons.Ide.Dnd.Left
-        .getIconHeight(), aRectangle.width + AllIcons.Ide.Dnd.Left.getIconWidth() + AllIcons.Ide.Dnd.Right.getIconWidth(), aRectangle.height + AllIcons.Ide.Dnd.Left
+      final Rectangle rectangle = new Rectangle(aRectangle.x - AllIcons.General.ArrowRight.getIconWidth(), aRectangle.y - AllIcons.General.ArrowRight
+        .getIconHeight(), aRectangle.width + AllIcons.General.ArrowRight.getIconWidth() + AllIcons.General.ArrowLeft.getIconWidth(), aRectangle.height + AllIcons.General.ArrowRight
         .getIconHeight());
       setBounds(rectangle);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      AllIcons.Ide.Dnd.Left.paintIcon(this, g, 0, (getHeight() / 2));
-      AllIcons.Ide.Dnd.Right.paintIcon(this, g, getWidth() - AllIcons.Ide.Dnd.Right.getIconWidth(), (getHeight() / 2));
+      AllIcons.General.ArrowRight.paintIcon(this, g, 0, (getHeight() / 2));
+      AllIcons.General.ArrowLeft.paintIcon(this, g, getWidth() - AllIcons.General.ArrowLeft.getIconWidth(), (getHeight() / 2));
     }
 
     @Override
@@ -246,8 +246,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class VerticalLinesHighlighter extends AbstractComponentHighlighter {
-    private static final Icon TOP = AllIcons.Ide.Dnd.Top;
-    private static final Icon BOTTOM = AllIcons.Ide.Dnd.Bottom;
+    private static final Icon TOP = AllIcons.General.ArrowDown;
+    private static final Icon BOTTOM = AllIcons.General.ArrowUp;
 
     @Override
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
