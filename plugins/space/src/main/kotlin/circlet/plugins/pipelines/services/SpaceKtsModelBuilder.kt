@@ -1,6 +1,5 @@
 package circlet.plugins.pipelines.services
 
-import circlet.pipelines.*
 import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.resolve.*
@@ -13,9 +12,9 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
+import com.intellij.openapi.vfs.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
-import org.jetbrains.eval4j.*
 import org.slf4j.event.*
 import org.slf4j.helpers.*
 import runtime.reactive.*
@@ -41,12 +40,12 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
 
     init {
         project.service<SpaceKtsFileDetector>().dslFile.view(lifetime) { lt, file ->
-            _model.value = ScriptModelHolder(lifetime, _modelBuildIsRequested)
+            _model.value = file?.let { ScriptModelHolder(lt, file, _modelBuildIsRequested) }
         }
     }
 
     // this class is created per automation script file found and it is responsible for building model content
-    private inner class ScriptModelHolder(val lifetime: Lifetime, modelBuildIsRequested: Property<Boolean>) : ScriptModel {
+    private inner class ScriptModelHolder(val lifetime: Lifetime, val scriptFile: VirtualFile, modelBuildIsRequested: Property<Boolean>) : ScriptModel {
 
         val sync = Any()
 
@@ -87,7 +86,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                     val data = LogData()
                     try {
                         logBuildData.value = data
-                        build(project, data)
+                        build(data)
                     } finally {
                         data.close()
                         _state.value = ScriptState.Ready
@@ -96,7 +95,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
             })
         }
 
-        private fun build(project: Project, logData: LogData) {
+        private fun build(logData: LogData) {
             lifetime.using { lt ->
                 val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
 
@@ -114,14 +113,6 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                     )
                 )
 
-                val dslFile = DslFileFinder.find(project)
-
-                if (dslFile == null) {
-                    logger.info("Can't find `$DefaultDslFileName`")
-                    _error.value = "Can't find `$DefaultDslFileName`"
-                    return
-                }
-
                 try {
                     val p = PathManager.getSystemPath() + "/.kotlinc/"
                     val path = normalizePath(p)
@@ -138,7 +129,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                     val resolveResultPath = outputFolder + "compilationResolveResult"
 
                     DslJarCompiler(eventLogger).compile(
-                        DslSourceFileDelegatingFileProvider(dslFile.path),
+                        DslSourceFileDelegatingFileProvider(scriptFile.path),
                         targetJar,
                         resolveResultPath,
                         kotlinCompilerPath,

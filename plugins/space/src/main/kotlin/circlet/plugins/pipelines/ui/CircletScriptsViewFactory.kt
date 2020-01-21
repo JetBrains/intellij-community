@@ -28,6 +28,8 @@ import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
 import runtime.reactive.*
+import runtime.reactive.combineLatest
+import runtime.reactive.property.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.BoxLayout
@@ -68,11 +70,11 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         val treeCompName = "tree"
         val missedDslCompName = "empty"
         val treeView = createModelTreeView(lifetime, project)
+
         panel.add(treeView, treeCompName)
         panel.add(createViewForMissedDsl(project), missedDslCompName)
 
-        modelBuilder.script.forEach(lifetime) { script ->
-            logger.debug("createView. view viewModel. $script")
+        modelBuilder.script.view(lifetime) { lt, script ->
             if (script == null) {
                 layout.show(panel, missedDslCompName)
             }
@@ -87,34 +89,38 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
 
     private fun createModelTreeView(lifetime: Lifetime, project: Project): JComponent {
         val tree = Tree()
+
         tree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+
         val root = tree.model.root as DefaultMutableTreeNode
+
         tree.selectionModel.addTreeSelectionListener {
             val selectedNode = it.path.lastPathComponent
             viewModel.selectedNode.value = if (selectedNode is CircletModelTreeNode) selectedNode else null
-
         }
-        resetNodes(root, modelBuilder.script.value?.config?.value, viewModel.extendedViewModeEnabled.value)
+
         TreeUtil.expandAll(tree)
         tree.isRootVisible = false
 
-        fun recalcTree() {
-            val config = modelBuilder.script.value?.config?.value
-            resetNodes(root, config, viewModel.extendedViewModeEnabled.value)
-            (tree.model as DefaultTreeModel).reload()
-        }
-
-        modelBuilder.script.forEach(lifetime) {
-            launch(lifetime, Ui) {
-                recalcTree()
+        lifetime.bind(modelBuilder.script) { script ->
+            bind(viewModel.extendedViewModeEnabled) { extendedViewModeEnabled ->
+                if (script != null) {
+                    bind(script.config) { config ->
+                        bind(script.error) { error ->
+                            bind(script.state) { state ->
+                                resetNodes(root, config, error, state, viewModel.extendedViewModeEnabled.value)
+                                (tree.model as DefaultTreeModel).reload()
+                            }
+                        }
+                    }
+                }
+                else {
+                    // seems unreachable state.
+                    root.removeAllChildren()
+                }
             }
         }
 
-        viewModel.extendedViewModeEnabled.forEach(lifetime) {
-            launch(lifetime, Ui) {
-                recalcTree()
-            }
-        }
 
         val refreshAction = object : DumbAwareActionButton(IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh) {
             override fun actionPerformed(e: AnActionEvent) {
@@ -176,7 +182,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         }
 
         modelBuilder.script.view(lifetime) { lt, script ->
-            script.state.forEach(lt) {
+            script?.state?.forEach(lt) {
                 updateActionsIsEnabledStates()
             }
         }
@@ -198,10 +204,17 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         return panel
     }
 
-    private fun resetNodes(root: DefaultMutableTreeNode, config: ScriptConfig?, extendedViewModeEnabled: Boolean) {
+    private fun resetNodes(root: DefaultMutableTreeNode, config: ScriptConfig?, error: String?, state: ScriptState, extendedViewModeEnabled: Boolean) {
         root.removeAllChildren()
         if (config == null) {
-            root.add(CircletModelTreeNode("model is empty"))
+            if (error != null) {
+                root.add(CircletModelTreeNode("Script failed to compile"))
+                return
+            }
+            if (state == ScriptState.Building) {
+                root.add(CircletModelTreeNode("Compiling script..."))
+                return
+            }
             return
         }
 
