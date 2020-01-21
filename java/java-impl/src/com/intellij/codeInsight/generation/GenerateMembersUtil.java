@@ -516,14 +516,7 @@ public class GenerateMembersUtil {
     if (PsiUtil.isRawSubstitutor(owner, substitutor)) {
       return TypeConversionUtil.erasure(type);
     }
-    final PsiType psiType = substitutor.substitute(type);
-    if (psiType != null) {
-      final PsiType deepComponentType = psiType.getDeepComponentType();
-      if (!(deepComponentType instanceof PsiCapturedWildcardType || deepComponentType instanceof PsiWildcardType)){
-        return psiType;
-      }
-    }
-    return TypeConversionUtil.erasure(type);
+    return GenericsUtil.eliminateWildcards(substitutor.substitute(type), false, true);
   }
 
   public static boolean isChildInRange(PsiElement child, PsiElement first, PsiElement last) {

@@ -460,11 +460,13 @@ public class GenericsUtil {
 
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
-        type = factory.createType(aClass, substitutor);
+        type = factory.createType(aClass, substitutor).annotate(classType.getAnnotationProvider());
       }
     }
     else if (type instanceof PsiArrayType) {
-      return eliminateWildcards(((PsiArrayType)type).getComponentType(), false).createArrayType();
+      PsiType component = eliminateWildcards(((PsiArrayType)type).getComponentType(), false);
+      PsiType newArray = type instanceof PsiEllipsisType ? new PsiEllipsisType(component) : new PsiArrayType(component);
+      return newArray.annotate(type.getAnnotationProvider());
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();
