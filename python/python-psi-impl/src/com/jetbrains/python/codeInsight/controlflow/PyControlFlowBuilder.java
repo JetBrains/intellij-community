@@ -42,9 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author oleg
- */
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @NotNull

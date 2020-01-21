@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -17,9 +17,6 @@ import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * @author max
- */
 public final class ClasspathCache {
   static final int NUMBER_OF_ACCESSES_FOR_LAZY_CACHING = 1000;
   private final IntObjectHashMap myResourcePackagesCache = new IntObjectHashMap();

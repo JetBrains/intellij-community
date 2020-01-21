@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.codeFragment;
 
 import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
@@ -15,7 +15,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -30,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author oleg
- */
 public class PyCodeFragmentUtil {
   private PyCodeFragmentUtil() {
   }

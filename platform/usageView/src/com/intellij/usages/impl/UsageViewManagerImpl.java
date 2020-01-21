@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
@@ -39,9 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author max
- */
 public class UsageViewManagerImpl extends UsageViewManager {
   private static final Logger LOG = Logger.getInstance(UsageViewManagerImpl.class);
   private final Project myProject;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -29,9 +29,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.Collection;
 
-/**
-* @author egor
-*/
 public abstract class CompilingEvaluator implements ExpressionEvaluator {
   @NotNull protected final Project myProject;
   @NotNull protected final PsiElement myPsiContext;

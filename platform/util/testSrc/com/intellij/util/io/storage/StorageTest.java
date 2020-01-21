@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,9 +12,6 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author max
- */
 public class StorageTest extends StorageTestBase {
   private static final Logger LOG = Logger.getInstance(StorageTest.class);
   @Test

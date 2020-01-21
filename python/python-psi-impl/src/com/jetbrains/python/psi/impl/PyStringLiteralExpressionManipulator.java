@@ -24,9 +24,6 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
 public class PyStringLiteralExpressionManipulator extends AbstractElementManipulator<PyStringLiteralExpressionImpl> {
 
   @Override

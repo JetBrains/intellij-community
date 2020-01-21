@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -23,9 +23,6 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.stream.Stream;
 
-/**
- * @author max
- */
 public class AnnotationUtil {
   public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
@@ -119,7 +116,7 @@ public class AnnotationUtil {
   private static boolean isApplicableToDeclaration(PsiAnnotation annotation, PsiModifierList list) {
     PsiAnnotation.TargetType[] allTargets = AnnotationTargetUtil.getTargetsForLocation(list);
     if (allTargets.length == 0) return true;
-                                
+
     PsiAnnotation.TargetType[] nonTypeUse = Stream
       .of(allTargets)
       .filter(t -> t != PsiAnnotation.TargetType.TYPE_USE)
@@ -309,7 +306,7 @@ public class AnnotationUtil {
       }
       else if (listOwner instanceof PsiParameter &&
                listOwner.getParent() instanceof PsiParameterList &&
-               listOwner.getParent().getParent() instanceof PsiLambdaExpression) {        
+               listOwner.getParent().getParent() instanceof PsiLambdaExpression) {
         if (((PsiParameter)listOwner).getTypeElement() != null) {
           // Avoid lambda parameter type inference: anyway it doesn't have any explicit annotations
           type = ((PsiParameter)listOwner).getType();

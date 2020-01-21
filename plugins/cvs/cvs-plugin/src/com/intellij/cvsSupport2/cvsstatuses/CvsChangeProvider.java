@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.CvsBundle;
@@ -41,9 +41,6 @@ import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
-/**
- * @author max
- */
 public class CvsChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance(CvsChangeProvider.class);
 
@@ -571,7 +568,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
     @NonNls
     public String toString() {
-      return "CvsUpToDateRevision:" + myPath; 
+      return "CvsUpToDateRevision:" + myPath;
     }
   }
 

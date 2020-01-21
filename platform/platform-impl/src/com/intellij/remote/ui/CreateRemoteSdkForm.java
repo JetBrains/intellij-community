@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -18,7 +18,6 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.remote.ext.*;
-import com.intellij.remote.ui.*;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.StatusPanel;
@@ -42,9 +41,6 @@ import java.awt.event.ComponentListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author traff
- */
 abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> extends JPanel implements RemoteSdkEditorForm, Disposable {
   private JPanel myMainPanel;
   private JBLabel myInterpreterPathLabel;

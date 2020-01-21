@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.engine.RemoteStateState;
@@ -42,9 +42,6 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author egor
- */
 public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
   private static final Logger LOG = Logger.getInstance(JavaAttachDebuggerProvider.class);
 

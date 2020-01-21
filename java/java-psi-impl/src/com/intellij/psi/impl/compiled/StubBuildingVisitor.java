@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,9 +34,6 @@ import java.util.*;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
 
-/**
- * @author max
- */
 public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final Logger LOG = Logger.getInstance(StubBuildingVisitor.class);
 

@@ -10,9 +10,6 @@ import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author traff
- */
 public class PyConsoleParsingContext extends ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;

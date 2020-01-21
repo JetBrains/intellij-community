@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.command.impl;
 
@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-/**
- * @author max
- */
 public class CannotUndoReportDialog extends DialogWrapper implements DataProvider {
   private static final int FILE_TEXT_PREVIEW_CHARS_LIMIT = 40;
   private final Project myProject;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -9,9 +9,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ik
- */
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
 
@@ -28,7 +25,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testFileScope1() { 
+  public void testFileScope1() {
     doTest(8, "package", "public", "import", "final", "class", "interface", "abstract", "enum");
     assertNotContainItems("private", "default");
   }

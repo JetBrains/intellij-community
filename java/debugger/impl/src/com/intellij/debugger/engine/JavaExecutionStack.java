@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -22,7 +22,6 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +32,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author egor
- */
 public class JavaExecutionStack extends XExecutionStack {
   private static final Logger LOG = Logger.getInstance(JavaExecutionStack.class);
 

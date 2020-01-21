@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -58,9 +58,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-/**
- * @author max
- */
 public class JdkUtil {
   public static final Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
 
@@ -428,7 +425,7 @@ public class JdkUtil {
         commandLine.addFileToDeleteOnTermination(appParamsFile);
         CommandLineWrapperUtil.writeWrapperFile(appParamsFile, javaParameters.getProgramParametersList().getList(), lineSeparator, cs);
       }
-      
+
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       commandLine.addFileToDeleteOnTermination(classpathFile);
 
@@ -549,7 +546,7 @@ public class JdkUtil {
       String jarFileContentPrefix = manifestText + "Class-Path: ";
       Map<String, String> commandLineContent = new HashMap<>();
       commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
-      
+
       File classpathJarFile = FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
       commandLine.addFileToDeleteOnTermination(classpathJarFile);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.ide.PowerSaveMode;
@@ -21,9 +21,6 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.CacheableAnnotationProvider;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author egor
- */
 public class AnnotationsPreloader {
   private static final Logger LOG = Logger.getInstance(AnnotationsPreloader.class);
 

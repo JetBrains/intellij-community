@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
@@ -18,9 +18,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author max
- */
 public final class BuildNumber implements Comparable<BuildNumber> {
   private static final Set<String> BUILD_NUMBER_PLACEHOLDERS = ContainerUtil.set("__BUILD_NUMBER__", "__BUILD__");
   private static final String STAR = "*";

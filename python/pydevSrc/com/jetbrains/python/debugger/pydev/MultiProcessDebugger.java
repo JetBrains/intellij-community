@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Collections2;
@@ -23,9 +23,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
-/**
- * @author traff
- */
 public class MultiProcessDebugger implements ProcessDebugger {
   private static final Logger LOG = Logger.getInstance(MultiProcessDebugger.class);
 

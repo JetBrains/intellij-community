@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author egor
- */
 public class ClassLoadingUtils {
   private static final int BATCH_SIZE = 4096;
   private ClassLoadingUtils() {}

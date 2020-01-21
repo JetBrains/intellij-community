@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -12,9 +12,6 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 
-/**
- * @author egor
- */
 public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
   public UnboxableTypeRenderer(String className) {
     super(StringUtil.getShortName(className), new LabelRenderer() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -18,10 +18,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-
-/**
- * @author egor
- */
 
 class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "debugger.breakpoints"

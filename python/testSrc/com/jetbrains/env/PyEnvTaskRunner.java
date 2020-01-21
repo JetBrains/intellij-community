@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
@@ -28,9 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author traff
- */
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
   private final List<String> myRoots;

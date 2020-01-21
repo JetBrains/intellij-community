@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -50,9 +50,6 @@ import java.util.*;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CONST;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
 
-/**
- * @author max
- */
 public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(SameParameterValueInspection.class);
   @PsiModifier.ModifierConstant
@@ -202,8 +199,8 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         stringPresentation = PsiFormatUtil.formatVariable((PsiVariable)value,
                                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME,
                                                           PsiSubstitutor.EMPTY);
-        shortName = PsiFormatUtil.formatVariable((PsiVariable)value, 
-                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 
+        shortName = PsiFormatUtil.formatVariable((PsiVariable)value,
+                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
                                                  PsiSubstitutor.EMPTY);
       }
       else {
@@ -265,7 +262,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         }
       }
       if (parameter == null) return;
-     
+
 
       final PsiExpression defToInline;
       try {

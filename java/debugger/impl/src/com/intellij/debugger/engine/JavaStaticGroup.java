@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -8,7 +8,9 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueGroup;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author egor
- */
 public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvider {
   private final StaticDescriptorImpl myStaticDescriptor;
   private final EvaluationContextImpl myEvaluationContext;

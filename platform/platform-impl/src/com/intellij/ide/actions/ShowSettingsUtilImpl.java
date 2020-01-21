@@ -28,9 +28,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * @author max
- */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
@@ -26,9 +26,6 @@ import java.util.List;
 
 import static com.jetbrains.python.debugger.PyDebugSupportUtils.DEBUGGER_WARNING_MESSAGE;
 
-/**
- * @author traff
- */
 public class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final PyDebuggerOptionsProvider mySettings;
   private JPanel myMainPanel;

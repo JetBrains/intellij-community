@@ -70,9 +70,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @author traff
- */
 public class TerminalView {
   private final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
 
@@ -371,9 +368,6 @@ public class TerminalView {
     myToolWindow.getContentManager().removeContent(content, true);
   }
 
-  /**
-   * @author traff
-   */
   public class TerminalDockContainer implements DockContainer {
     private final ToolWindow myToolWindow;
 

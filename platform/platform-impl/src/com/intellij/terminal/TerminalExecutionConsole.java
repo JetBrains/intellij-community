@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.execution.ExecutionBundle;
@@ -46,9 +46,6 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author traff
- */
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private static final Logger LOG = Logger.getInstance(TerminalExecutionConsole.class);
 

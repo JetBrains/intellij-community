@@ -28,9 +28,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author max
- */
 public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElementBase<T> implements PyElement {
   public PyBaseElementImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);

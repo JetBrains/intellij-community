@@ -76,9 +76,6 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author max
- */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   static {

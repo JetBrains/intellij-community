@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -16,9 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * @author egor
- */
 public class CaptureSettingsProvider {
   private static final Logger LOG = Logger.getInstance(CaptureSettingsProvider.class);
 
@@ -136,7 +133,7 @@ public class CaptureSettingsProvider {
   private interface KeyProvider {
     String asString();
   }
- 
+
   private static KeyProvider param(int idx) {
     return new StringKeyProvider(Integer.toString(idx));
   }

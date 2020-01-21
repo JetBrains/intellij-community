@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
@@ -16,9 +16,6 @@ import com.intellij.testFramework.LightIdeaTestCase;
 
 import java.io.File;
 
-/**
- * @author max
- */
 public class ClsStubBuilderTest extends LightIdeaTestCase {
   public void testUtilList() { doClassTest("java.util.List"); }
   public void testNullable() { doClassTest("org.jetbrains.annotations.Nullable"); }

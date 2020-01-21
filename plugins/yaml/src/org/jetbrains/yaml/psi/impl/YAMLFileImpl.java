@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -16,9 +16,6 @@ import org.jetbrains.yaml.psi.YAMLFile;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author oleg
- */
 public class YAMLFileImpl extends PsiFileBase implements YAMLFile {
   public YAMLFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, YAMLLanguage.INSTANCE);

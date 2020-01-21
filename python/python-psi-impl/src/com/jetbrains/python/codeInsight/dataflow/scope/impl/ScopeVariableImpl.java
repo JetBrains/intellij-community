@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author oleg
- */
 public class ScopeVariableImpl implements ScopeVariable {
   private final String myName;
   private final Collection<PsiElement> myDeclarations;

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.util.SmartList;
@@ -12,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author egor
- */
 public class XDebuggerWatchesManager {
   private final Map<String, List<XExpression>> watches = ContainerUtil.newConcurrentMap();
 

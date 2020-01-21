@@ -12,9 +12,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author oleg
- */
 public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> {
   @Override
   public boolean eq(DFAMap<ScopeVariable> e1, DFAMap<ScopeVariable> e2) {

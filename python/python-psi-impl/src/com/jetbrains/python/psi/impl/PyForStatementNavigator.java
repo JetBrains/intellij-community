@@ -22,9 +22,6 @@ import com.jetbrains.python.psi.PyForPart;
 import com.jetbrains.python.psi.PyForStatement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
 public class PyForStatementNavigator {
   private PyForStatementNavigator() {
   }

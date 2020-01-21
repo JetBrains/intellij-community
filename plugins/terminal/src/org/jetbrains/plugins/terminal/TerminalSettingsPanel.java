@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
@@ -35,9 +35,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-/**
- * @author traff
- */
 public class TerminalSettingsPanel {
   private JPanel myWholePanel;
   private TextFieldWithBrowseButton myShellPathField;

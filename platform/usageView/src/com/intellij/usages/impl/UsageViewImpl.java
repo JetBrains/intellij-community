@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -80,9 +80,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-/**
- * @author max
- */
 public class UsageViewImpl implements UsageViewEx {
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";

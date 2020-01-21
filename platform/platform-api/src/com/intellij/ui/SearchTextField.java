@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -27,9 +27,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
 public class SearchTextField extends JPanel {
   public static final DataKey<SearchTextField> KEY = DataKey.create("search.text.field");
   public static final KeyStroke SHOW_HISTORY_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK);

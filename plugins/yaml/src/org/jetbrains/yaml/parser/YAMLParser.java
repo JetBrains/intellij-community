@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.parser;
 
 import com.intellij.lang.ASTNode;
@@ -15,9 +15,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 
 import java.util.List;
 
-/**
- * @author oleg
- */
 public class YAMLParser implements PsiParser, YAMLTokenTypes {
   public static final TokenSet HASH_STOP_TOKENS = TokenSet.create(RBRACE, COMMA);
   public static final TokenSet ARRAY_STOP_TOKENS = TokenSet.create(RBRACKET, COMMA);

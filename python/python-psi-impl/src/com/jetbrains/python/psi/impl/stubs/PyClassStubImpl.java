@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author max
- */
 public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
 
   @Nullable

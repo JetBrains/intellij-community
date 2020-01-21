@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -60,9 +60,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author traff
- */
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
   static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);

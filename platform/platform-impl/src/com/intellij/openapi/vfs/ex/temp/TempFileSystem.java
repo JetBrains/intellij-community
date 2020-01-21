@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
@@ -23,9 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author max
- */
 public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem {
   private static final String TEMP_PROTOCOL = "temp";
   private final FSItem myRoot = new FSDir(null, "/");

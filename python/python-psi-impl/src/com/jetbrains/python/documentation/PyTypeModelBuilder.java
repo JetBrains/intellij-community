@@ -18,9 +18,6 @@ import java.util.*;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
 
-/**
- * @author traff
- */
 public class PyTypeModelBuilder {
   private final Map<PyType, TypeModel> myVisited = Maps.newHashMap();
   private final TypeEvalContext myContext;
