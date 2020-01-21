@@ -251,42 +251,6 @@ public class AllIcons {
       /** 16x16 */ public static final Icon Idle = load("/debugger/threadStates/idle.svg");
       /** 16x16 */ public static final Icon Socket = load("/debugger/threadStates/socket.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ProfileCPU */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon EdtBusy = load("/actions/profileCPU.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Lightning */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Exception = load("/actions/lightning.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_saveall */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon IO = load("/actions/menu-saveall.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.MuteBreakpoints */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Locked = load("/debugger/muteBreakpoints.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Pause */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Paused = load("/actions/pause.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Resume */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Running = load("/actions/resume.svg");
-
     }
     /** 16x16 */ public static final Icon ThreadSuspended = load("/debugger/threadSuspended.svg");
     /** 16x16 */ public static final Icon Value = load("/debugger/value.svg");
