@@ -344,7 +344,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     String text = toolWindow.getStripeTitle();
     if (UISettings.getInstance().getShowToolWindowsNumbers()) {
       String toolWindowId = toolWindow.getId();
-      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindowId);
+      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindow.getToolWindowManager().getProject(), toolWindowId);
       if (mnemonic != -1) {
         text = (char)mnemonic + ": " + text;
         setMnemonic2(mnemonic);

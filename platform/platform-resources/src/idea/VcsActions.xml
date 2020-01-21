@@ -459,6 +459,8 @@
       <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
     </group>
 
+    <action id="ActivateVersionControlToolWindow" class="com.intellij.openapi.vcs.changes.ui.ActivateVersionControlToolWindowAction"/>
+
     <group id="Vcs.Show.Toolwindow.Tab">
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
       <action id="Vcs.Show.Local.Changes" class="com.intellij.vcs.VcsShowLocalChangesAction"/>
