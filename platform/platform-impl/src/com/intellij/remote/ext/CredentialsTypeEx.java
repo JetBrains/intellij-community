@@ -12,6 +12,4 @@ public abstract class CredentialsTypeEx<T> extends CredentialsType<T> {
   protected CredentialsTypeEx(@Nls(capitalization = Nls.Capitalization.Title) String name, String prefix) {
     super(name, prefix);
   }
-
-  public abstract boolean useRemoteCredentials();
 }
