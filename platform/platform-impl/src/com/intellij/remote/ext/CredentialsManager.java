@@ -29,9 +29,7 @@ public abstract class CredentialsManager {
     return ServiceManager.getService(CredentialsManager.class);
   }
 
-  public abstract List<CredentialsType> getAllTypes();
-
-  public abstract List<CredentialsTypeEx> getExTypes();
+  public abstract List<CredentialsType<?>> getAllTypes();
 
   public abstract void loadCredentials(String interpreterPath, @Nullable Element element, RemoteSdkAdditionalData data);
 }
