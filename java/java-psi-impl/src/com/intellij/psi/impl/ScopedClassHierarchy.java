@@ -153,6 +153,12 @@ class ScopedClassHierarchy {
 
       list.add(result);
     }
+    if (list.isEmpty() && myPlaceClass.getExtendsListTypes().length > 0 && !myPlaceClass.isInterface()) {
+      PsiClassType.ClassResolveResult objectResult = PsiType.getJavaLangObject(myPlaceClass.getManager(), myResolveScope).resolveGenerics();
+      if (objectResult.getElement() != null) {
+        list.add(objectResult);
+      }
+    }
     return list;
   }
 

@@ -1973,4 +1973,17 @@ class Abc {
     myFixture.type('\n')
     myFixture.checkResult("class C implements java.util.List<caret>")
   }
+
+  void "test suggest Object methods when super is unresolved"() {
+    def checkGetClassPresent = { String text ->
+      myFixture.configureByText("a.java", text)
+      myFixture.completeBasic()
+      myFixture.assertPreferredCompletionItems 0, 'getClass'
+    }
+    checkGetClassPresent("class C extends Unresolved {{ getCl<caret>x }}")
+    checkGetClassPresent("class C implements Unresolved {{ getCl<caret>x }}")
+    checkGetClassPresent("class C extends Unresolved implements Runnable {{ getCl<caret>x }}")
+    checkGetClassPresent("class C extends Unresolved1 implements Unresolved2 {{ getCl<caret>x }}")
+
+  }
 }
