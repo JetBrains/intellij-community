@@ -1,4 +1,4 @@
-public class TestCase extends Zzz {
+public class TestCase {
 
     Object ooo() {}
 
