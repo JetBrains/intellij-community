@@ -25,9 +25,11 @@ import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
 import java.awt.*
 import java.awt.event.*
+import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
+import kotlin.math.roundToInt
 
 abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
@@ -258,10 +260,77 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
         val thickness = 1
         private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
-        private val affectsBorders: Boolean = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
-        private val activeColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color? ?:
-         Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color? ?: menuBarBorderColor
+        private var colorizationAffectsBorders: Boolean
+        private var activeColor: Color
+
+        // In reality, Windows uses alpha-blending with alpha=0.34 by default, but we have no (easy) way of doing the same, so let's just
+        // use the value without alpha. Unfortunately, DWM doesn't offer an API to determine this value.
+        private val defaultActiveBorder = Color(0x262626)
         private val inactiveColor = Color(0xaaaaaa)
+
+        private fun calculateAffectsBorders(): Boolean {
+            val windowsVersion = WINDOWS_VERSION?.toIntOrNull() ?: 0
+            if (windowsVersion < 1809) return false
+            return Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
+        }
+
+        private fun calculateActiveBorderColor(): Color {
+            if (!colorizationAffectsBorders)
+                return defaultActiveBorder
+
+            Toolkit.getDefaultToolkit().apply {
+                val colorizationColor = getDesktopProperty("win.dwm.colorizationColor") as Color?
+                if (colorizationColor != null) {
+                    // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
+                    // colorization color balance.
+                    var colorizationColorBalance = getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
+                    if (colorizationColorBalance != null) {
+                        // If the desktop setting "Automatically pick an accent color from my background" is active, then the border color
+                        // should be the same as the colorization color read from the registry. To detect that setting, we use the fact that
+                        // colorization color balance is set to 0xfffffff3 when the setting is active.
+                        if (colorizationColorBalance < 0)
+                            colorizationColorBalance = 100
+
+                        return when (colorizationColorBalance) {
+                            0 -> Color(0xD9D9D9)
+                            100 -> colorizationColor
+                            else -> {
+                                val alpha = colorizationColorBalance / 100.0f
+                                val remainder = 1 - alpha
+                                val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
+                                val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
+                                val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
+                                Color(r, g, b)
+                            }
+                        }
+                    }
+                }
+                return colorizationColor
+                       ?: getDesktopProperty("win.frame.activeBorderColor") as Color?
+                       ?: menuBarBorderColor
+            }
+        }
+
+        private inline fun listenForPropertyChanges(vararg propertyNames: String, crossinline action: () -> Unit) {
+            val toolkit = Toolkit.getDefaultToolkit()
+            val listener = PropertyChangeListener { action() }
+            for (property in propertyNames) {
+                toolkit.addPropertyChangeListener(property, listener)
+            }
+        }
+
+        init {
+            colorizationAffectsBorders = calculateAffectsBorders()
+            listenForPropertyChanges("win.dwm.colorizationColor.affects.borders") {
+                colorizationAffectsBorders = calculateAffectsBorders()
+                activeColor = calculateActiveBorderColor() // active border color is dependent on whether colorization affects borders or not
+            }
+
+            activeColor = calculateActiveBorderColor()
+            listenForPropertyChanges("win.dwm.colorizationColor", "win.dwm.colorizationColorBalance", "win.frame.activeBorderColor") {
+                activeColor = calculateActiveBorderColor()
+            }
+        }
 
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
@@ -271,7 +340,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            if (isTopNeeded() && (myActive && isAffectsBorder()) || (!myActive && UIUtil.isUnderIntelliJLaF())) {
+            if (isTopNeeded() && myActive || (!myActive && UIUtil.isUnderIntelliJLaF())) {
                 g.color = if (myActive) activeColor else inactiveColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
             }
@@ -283,16 +352,9 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
-      private fun isAffectsBorder(): Boolean {
-          if (WINDOWS_VERSION.isNullOrEmpty()) return true
-
-        val winVersion = WINDOWS_VERSION.toIntOrNull() ?: return affectsBorders
-        return if(winVersion >= 1809) affectsBorders else true
-      }
-
         override fun getBorderInsets(c: Component): Insets {
             val scale = JBUI.scale(thickness)
-            return Insets(if (isTopNeeded() && isAffectsBorder()) thickness else 0, 0, if (isBottomNeeded()) scale else 0, 0)
+            return Insets(if (isTopNeeded()) thickness else 0, 0, if (isBottomNeeded()) scale else 0, 0)
         }
 
         override fun isBorderOpaque(): Boolean {
