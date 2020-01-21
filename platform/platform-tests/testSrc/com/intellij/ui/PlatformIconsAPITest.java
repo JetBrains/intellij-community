@@ -312,7 +312,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/fileTypes/manifest.png",
     "/fileTypes/properties.png",
     "/fileTypes/text.png",
-    "/fileTypes/typeScript.png",
     "/fileTypes/uiForm.png",
     "/fileTypes/unknown.png",
     "/fileTypes/wsdlFile.png",
