@@ -885,18 +885,6 @@ public class AllIcons {
     /** 12x12 */ public static final Icon StopSmall = load("/process/stopSmall.svg");
     /** 12x12 */ public static final Icon StopSmallHovered = load("/process/stopSmallHovered.svg");
 
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DisabledDebug = load("/process/disabledDebug.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DisabledRun = load("/process/disabledRun.png");
-
   }
 
   public final static class Providers {

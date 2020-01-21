@@ -815,8 +815,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/process/big/step_8.png",
     "/process/big/step_9.png",
     "/process/big/step_passive.png",
-    "/process/disabledDebug.png",
-    "/process/disabledRun.png",
     "/process/fs/step_1.png",
     "/process/fs/step_10.png",
     "/process/fs/step_11.png",
