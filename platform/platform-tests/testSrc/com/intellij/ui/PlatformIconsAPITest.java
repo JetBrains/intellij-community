@@ -169,7 +169,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/actions/unshare.png",
     "/actions/upload.png",
     "/codeStyle/AddNewSectionRule.png",
-    "/codeStyle/Gear.png",
     "/codeStyle/mac/AddNewSectionRule.png",
     "/css/atrule.png",
     "/css/import.png",

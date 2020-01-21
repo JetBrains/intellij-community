@@ -180,12 +180,6 @@ public class AllIcons {
   public final static class CodeStyle {
     /** 16x16 */ public static final Icon AddNewSectionRule = load("/codeStyle/AddNewSectionRule.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Gear = load("/general/gearPlain.svg");
-
   }
 
   public final static class Css {
