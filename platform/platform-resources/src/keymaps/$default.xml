@@ -911,13 +911,19 @@
   <action id="ActivateServicesToolWindow">
     <keyboard-shortcut first-keystroke="alt 8"/>
   </action>
-  <action id="ActivateVersionControlToolWindow">
+  <action id="ActivateCommitToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
+  </action>
+  <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="alt shift 9"/>
+    <keyboard-shortcut first-keystroke="alt 9"/>
+  </action>
+  <action id="Vcs.Show.Log">
+    <keyboard-shortcut first-keystroke="alt control 9"/>
   </action>
   <action id="NewElement">
-     <keyboard-shortcut first-keystroke="alt INSERT"/>
-   </action>
+    <keyboard-shortcut first-keystroke="alt INSERT"/>
+  </action>
   <action id="NewElementSamePlace">
     <keyboard-shortcut first-keystroke="control alt INSERT"/>
   </action>

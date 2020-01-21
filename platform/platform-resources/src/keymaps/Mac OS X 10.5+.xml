@@ -213,9 +213,15 @@
   <action id="ActivateServicesToolWindow">
     <keyboard-shortcut first-keystroke="meta 8"/>
   </action>
-  <action id="ActivateVersionControlToolWindow">
+  <action id="ActivateCommitToolWindow">
     <keyboard-shortcut first-keystroke="meta 9"/>
+  </action>
+  <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="meta shift 9"/>
+    <keyboard-shortcut first-keystroke="meta 9"/>
+  </action>
+  <action id="Vcs.Show.Log">
+    <keyboard-shortcut first-keystroke="meta control 9"/>
   </action>
   <action id="NextWindow">
     <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>

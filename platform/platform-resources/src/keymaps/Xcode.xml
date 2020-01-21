@@ -22,8 +22,15 @@
     <keyboard-shortcut first-keystroke="meta 7" />
     <keyboard-shortcut first-keystroke="shift meta Y" />
   </action>
+  <action id="ActivateCommitToolWindow">
+    <keyboard-shortcut first-keystroke="meta 2"/>
+  </action>
   <action id="ActivateVersionControlToolWindow">
+    <keyboard-shortcut first-keystroke="meta shift 2"/>
     <keyboard-shortcut first-keystroke="meta 2" />
+  </action>
+  <action id="Vcs.Show.Log">
+    <keyboard-shortcut first-keystroke="meta control 2"/>
   </action>
   <action id="FileStructurePopup">
     <keyboard-shortcut first-keystroke="control 6"/>
