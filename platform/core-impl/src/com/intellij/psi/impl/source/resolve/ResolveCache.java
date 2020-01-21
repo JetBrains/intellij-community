@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.Disposable;
@@ -108,6 +108,19 @@ public class ResolveCache implements Disposable {
         V v = super.get(key);
         return v == NULL_RESULT ? null : v;
       }
+
+      @Override
+      public boolean equals(Object obj) {
+        // The map instance is used as recursion prevention key.
+        // Each instance is determined by several flags: physical, incomplete, poly;
+        // Each instance is unique, so we don't need to store flags to check equality.
+        return this == obj;
+      }
+
+      @Override
+      public int hashCode() {
+        return System.identityHashCode(this);
+      }
     };
   }
 
@@ -136,38 +149,7 @@ public class ResolveCache implements Disposable {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
     int index = getIndex(incompleteCode, isPoly);
-    Map<TRef, TResult> map = getMap(isPhysical, index);
-    TResult result = map.get(ref);
-    if (result != null) {
-      if (IdempotenceChecker.areRandomChecksEnabled()) {
-        IdempotenceChecker.applyForRandomCheck(result, ref, () -> resolver.resolve(ref, incompleteCode));
-      }
-      return result;
-    }
-
-    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-    Computable<TResult> doResolve = () -> {
-      if (IdempotenceChecker.isLoggingEnabled()) {
-        IdempotenceChecker.logTrace("Resolving " + ref + " of " + ref.getClass());
-      }
-      return resolver.resolve(ref, incompleteCode);
-    };
-    result = needToPreventRecursion ? RecursionManager.doPreventingRecursion(Trinity.create(ref, incompleteCode, isPoly), true, doResolve)
-                                    : doResolve.compute();
-    if (result instanceof ResolveResult) {
-      ensureValidPsi((ResolveResult)result);
-    }
-    else if (result instanceof ResolveResult[]) {
-      ensureValidResults((ResolveResult[])result);
-    }
-    else if (result instanceof PsiElement) {
-      PsiUtilCore.ensureValid((PsiElement)result);
-    }
-
-    if (stamp.mayCacheNow()) {
-      cache(ref, map, result, doResolve);
-    }
-    return result;
+    return resolve(ref, getMap(isPhysical, index), needToPreventRecursion, () -> resolver.resolve(ref, incompleteCode));
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
@@ -197,31 +179,46 @@ public class ResolveCache implements Disposable {
     boolean physical = containingFile.isPhysical();
     int index = getIndex(incompleteCode, true);
     Map<T, ResolveResult[]> map = getMap(physical, index);
-    ResolveResult[] result = map.get(ref);
-    if (result != null) {
+    ResolveResult[] results = resolve(ref, map, needToPreventRecursion, () -> resolver.resolve(ref, containingFile, incompleteCode));
+    return results == null ? ResolveResult.EMPTY_ARRAY : results;
+  }
+
+  private static <TRef, TResult>
+  @Nullable TResult resolve(@NotNull TRef ref,
+                            @NotNull Map<TRef, TResult> cache,
+                            boolean preventRecursion,
+                            @NotNull Computable<? extends TResult> resolver) {
+    TResult cachedResult = cache.get(ref);
+    if (cachedResult != null) {
       if (IdempotenceChecker.areRandomChecksEnabled()) {
-        IdempotenceChecker.applyForRandomCheck(result, ref, () -> resolver.resolve(ref, containingFile, incompleteCode));
+        IdempotenceChecker.applyForRandomCheck(cachedResult, ref, resolver);
       }
-      return result;
+      return cachedResult;
     }
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-    Computable<ResolveResult[]> doResolve = () -> {
+    Computable<TResult> doResolve = () -> {
       if (IdempotenceChecker.isLoggingEnabled()) {
         IdempotenceChecker.logTrace("Resolving " + ref + " of " + ref.getClass());
       }
-      return resolver.resolve(ref, containingFile, incompleteCode);
+      return resolver.get();
     };
-    result = needToPreventRecursion ? RecursionManager.doPreventingRecursion(Pair.create(ref, incompleteCode), true, doResolve)
-                                    : doResolve.get();
-    if (result != null) {
-      ensureValidResults(result);
+    TResult result = preventRecursion
+                     ? RecursionManager.doPreventingRecursion(Pair.create(ref, cache), true, doResolve)
+                     : doResolve.get();
+    if (result instanceof ResolveResult) {
+      ensureValidPsi((ResolveResult)result);
     }
-
+    else if (result instanceof ResolveResult[]) {
+      ensureValidResults((ResolveResult[])result);
+    }
+    else if (result instanceof PsiElement) {
+      PsiUtilCore.ensureValid((PsiElement)result);
+    }
     if (stamp.mayCacheNow()) {
-      cache(ref, map, result, doResolve);
+      cache(ref, cache, result, doResolve);
     }
-    return result == null ? ResolveResult.EMPTY_ARRAY : result;
+    return result;
   }
 
   private static void ensureValidResults(ResolveResult[] result) {
@@ -270,10 +267,11 @@ public class ResolveCache implements Disposable {
   }
 
   private static final Object NULL_RESULT = ObjectUtils.sentinel("ResolveCache.NULL_RESULT");
-  private static <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
-                                                                 @NotNull Map<? super TRef, TResult> map,
-                                                                 TResult result,
-                                                                 @NotNull Computable<TResult> doResolve) {
+
+  private static <TRef, TResult> void cache(@NotNull TRef ref,
+                                            @NotNull Map<? super TRef, TResult> map,
+                                            TResult result,
+                                            @NotNull Computable<TResult> doResolve) {
     // optimization: less contention
     TResult cached = map.get(ref);
     if (cached != null) {
