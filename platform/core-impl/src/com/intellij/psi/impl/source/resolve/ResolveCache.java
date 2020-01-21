@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class ResolveCache implements Disposable {
-  private final AtomicReferenceArray<Map> myPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
-  private final AtomicReferenceArray<Map> myNonPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
+  private final AtomicReferenceArray<Map<?, ?>> myPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
+  private final AtomicReferenceArray<Map<?, ?>> myNonPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
 
   public static ResolveCache getInstance(@NotNull Project project) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
@@ -253,16 +253,16 @@ public class ResolveCache implements Disposable {
     return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   private <TRef extends PsiReference, TResult> Map<TRef, TResult> getMap(boolean physical, int index) {
-    AtomicReferenceArray<Map> array = physical ? myPhysicalMaps : myNonPhysicalMaps;
-    Map map = array.get(index);
+    AtomicReferenceArray<Map<?, ?>> array = physical ? myPhysicalMaps : myNonPhysicalMaps;
+    Map<?, ?> map = array.get(index);
     while (map == null) {
-      Map newMap = createWeakMap();
+      Map<?, ?> newMap = createWeakMap();
       map = array.compareAndSet(index, null, newMap) ? newMap : array.get(index);
     }
-    //noinspection unchecked
-    return map;
+    return (Map<TRef, TResult>)map;
   }
 
   private static int getIndex(boolean incompleteCode, boolean isPoly) {
@@ -293,15 +293,17 @@ public class ResolveCache implements Disposable {
     map.put(ref, cached);
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   private static <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
-    //noinspection unchecked
-    return value == NULL_RESULT ? NULL_VALUE_REFERENCE : value == ResolveResult.EMPTY_ARRAY ? EMPTY_RESOLVE_RESULT : new StrongValueReference<>(
-      value);
+    return value == NULL_RESULT ? (StrongValueReference<K, V>)NULL_VALUE_REFERENCE
+                                : value == ResolveResult.EMPTY_ARRAY ? (StrongValueReference<K, V>)EMPTY_RESOLVE_RESULT
+                                                                     : new StrongValueReference<>(value);
   }
 
-  private static final StrongValueReference NULL_VALUE_REFERENCE = new StrongValueReference<>(NULL_RESULT);
-  private static final StrongValueReference EMPTY_RESOLVE_RESULT = new StrongValueReference<>(ResolveResult.EMPTY_ARRAY);
+  private static final StrongValueReference<?, ?> NULL_VALUE_REFERENCE = new StrongValueReference<>(NULL_RESULT);
+  private static final StrongValueReference<?, ?> EMPTY_RESOLVE_RESULT = new StrongValueReference<>(ResolveResult.EMPTY_ARRAY);
+
   @SuppressWarnings("deprecation")
   private static class StrongValueReference<K, V> implements ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
     private final V myValue;
