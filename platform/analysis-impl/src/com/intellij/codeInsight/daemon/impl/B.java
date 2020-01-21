@@ -53,7 +53,8 @@ class B implements AnnotationBuilder {
     this.message = message;
     myCurrentElement = currentElement;
     holder.annotationBuilderCreated(this);
-    myDebugCreationPlace = ApplicationManager.getApplication().isUnitTestMode() ? ThrowableInterner.intern(new Throwable()) : null;
+    myDebugCreationPlace = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal() ?
+                           ThrowableInterner.intern(new Throwable()) : null;
   }
 
   private void assertNotSet(Object o, String description) {
