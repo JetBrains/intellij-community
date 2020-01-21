@@ -169,13 +169,13 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   }
 
   private void installExtendedTypes(@Nullable Project project) {
-    for (final CredentialsTypeEx typeEx : CredentialsManager.getInstance().getExTypes()) {
-      CredentialsEditorProvider editorProvider = ObjectUtils.tryCast(typeEx, CredentialsEditorProvider.class);
+    for (final CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
+      CredentialsEditorProvider editorProvider = ObjectUtils.tryCast(type, CredentialsEditorProvider.class);
       if (editorProvider != null) {
         final List<CredentialsLanguageContribution> contributions = getContributions();
         if (!contributions.isEmpty()) {
           for (CredentialsLanguageContribution contribution : contributions) {
-            if (contribution.getType() == typeEx && editorProvider.isAvailable(contribution)) {
+            if (contribution.getType() == type && editorProvider.isAvailable(contribution)) {
               final CredentialsEditor<?> editor = editorProvider.createEditor(project, contribution, this);
 
               trackEditorLabelsColumn(editor);
@@ -185,17 +185,17 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
               myRadioPanel.add(typeButton);
 
               final JPanel editorMainPanel = editor.getMainPanel();
-              myTypesPanel.add(editorMainPanel, typeEx.getName());
+              myTypesPanel.add(editorMainPanel, type.getName());
 
-              myCredentialsType2Handler.put(typeEx,
+              myCredentialsType2Handler.put(type,
                                             new TypeHandlerEx(typeButton,
                                                               editorMainPanel,
                                                               editorProvider.getDefaultInterpreterPath(myBundleAccessor),
-                                                              typeEx,
+                                                              type,
                                                               editor));
               // set initial connection type
               if (myConnectionType == null) {
-                myConnectionType = typeEx;
+                myConnectionType = type;
               }
             }
           }
@@ -552,13 +552,13 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     private @Nullable String myInterpreterPath;
 
-    @NotNull private final CredentialsTypeEx myType;
+    @NotNull private final CredentialsType<?> myType;
     @NotNull private final CredentialsEditor<?> myEditor;
 
     TypeHandlerEx(@NotNull JBRadioButton radioButton,
                   @NotNull JPanel panel,
                   @Nullable String defaultInterpreterPath,
-                  @NotNull CredentialsTypeEx type,
+                  @NotNull CredentialsType<?> type,
                   @NotNull CredentialsEditor editor) {
       myRadioButton = radioButton;
       myPanel = panel;
@@ -618,7 +618,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     }
 
     @NotNull
-    public CredentialsType getType() {
+    public CredentialsType<?> getType() {
       return myType;
     }
 
