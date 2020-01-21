@@ -15,11 +15,17 @@
  */
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.TrivialIfInspection;
 
 public class TrivialIfFixTest extends IGQuickFixesTestCase {
-
+  @Override
+  protected void tuneFixture(final JavaModuleFixtureBuilder builder) {
+    builder.setLanguageLevel(LanguageLevel.JDK_14);
+  }
+  
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -47,4 +53,7 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
   public void testRedundantComparisonNested2() { doTest(); }
   public void testRedundantComparisonNested3() { doTest(); }
   public void testRedundantComparisonDouble() { assertQuickfixNotAvailable(); }
+  public void testMethodCall() { doTest(); }
+  public void testMethodCall2() { doTest(); }
+  public void testYield() { doTest(); }
 }

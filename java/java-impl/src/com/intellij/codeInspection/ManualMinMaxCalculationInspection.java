@@ -44,7 +44,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
 
       @Override
       public void visitIfStatement(PsiIfStatement statement) {
-        ConditionalModel model = IfConditionalModel.from(statement);
+        ConditionalModel model = IfConditionalModel.from(statement, false);
         if (model == null) return;
         visitConditional(statement.getFirstChild(), model);
       }
@@ -131,7 +131,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
       }
       PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
       if (ifStatement == null) return;
-      IfConditionalModel model = IfConditionalModel.from(ifStatement);
+      IfConditionalModel model = IfConditionalModel.from(ifStatement, false);
       if (model == null) return;
       String replacement = createReplacement(model.getCondition());
       if (replacement == null) return;
