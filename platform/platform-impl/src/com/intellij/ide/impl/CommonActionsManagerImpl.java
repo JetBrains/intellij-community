@@ -37,7 +37,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   @Override
   public AnAction createExpandAllHeaderAction(TreeExpander expander, JComponent component) {
     AnAction action = createExpandAllAction(expander, component);
-    action.getTemplatePresentation().setIcon(AllIcons.General.ExpandAll);
+    action.getTemplatePresentation().setIcon(AllIcons.Actions.Expandall);
     return action;
   }
 
@@ -61,7 +61,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   @Override
   public AnAction createCollapseAllHeaderAction(TreeExpander expander, JComponent component) {
     AnAction action = createCollapseAllAction(expander, component);
-    action.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
+    action.getTemplatePresentation().setIcon(AllIcons.Actions.Collapseall);
     return action;
   }
 
