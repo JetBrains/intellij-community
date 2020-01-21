@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -86,6 +87,7 @@ public class ResolveCache implements Disposable {
 
   @NotNull
   private static <K,V> Map<K, V> createWeakMap() {
+    //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy()){
       @NotNull
       @Override
@@ -137,12 +139,21 @@ public class ResolveCache implements Disposable {
     Map<TRef, TResult> map = getMap(isPhysical, index);
     TResult result = map.get(ref);
     if (result != null) {
+      if (IdempotenceChecker.areRandomChecksEnabled()) {
+        IdempotenceChecker.applyForRandomCheck(result, ref, () -> resolver.resolve(ref, incompleteCode));
+      }
       return result;
     }
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-    result = needToPreventRecursion ? RecursionManager.doPreventingRecursion(Trinity.create(ref, incompleteCode, isPoly), true,
-                                                                    () -> resolver.resolve(ref, incompleteCode)) : resolver.resolve(ref, incompleteCode);
+    Computable<TResult> doResolve = () -> {
+      if (IdempotenceChecker.isLoggingEnabled()) {
+        IdempotenceChecker.logTrace("Resolving " + ref + " of " + ref.getClass());
+      }
+      return resolver.resolve(ref, incompleteCode);
+    };
+    result = needToPreventRecursion ? RecursionManager.doPreventingRecursion(Trinity.create(ref, incompleteCode, isPoly), true, doResolve)
+                                    : doResolve.compute();
     if (result instanceof ResolveResult) {
       ensureValidPsi((ResolveResult)result);
     }
@@ -154,11 +165,12 @@ public class ResolveCache implements Disposable {
     }
 
     if (stamp.mayCacheNow()) {
-      cache(ref, map, result);
+      cache(ref, map, result, doResolve);
     }
     return result;
   }
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull T ref,
                                                                                           @NotNull PolyVariantResolver<T> resolver,
                                                                                           boolean needToPreventRecursion,
@@ -187,18 +199,27 @@ public class ResolveCache implements Disposable {
     Map<T, ResolveResult[]> map = getMap(physical, index);
     ResolveResult[] result = map.get(ref);
     if (result != null) {
+      if (IdempotenceChecker.areRandomChecksEnabled()) {
+        IdempotenceChecker.applyForRandomCheck(result, ref, () -> resolver.resolve(ref, containingFile, incompleteCode));
+      }
       return result;
     }
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-    result = needToPreventRecursion ? RecursionManager.doPreventingRecursion(Pair.create(ref, incompleteCode), true,
-                                                                    () -> resolver.resolve(ref, containingFile, incompleteCode)) : resolver.resolve(ref, containingFile, incompleteCode);
+    Computable<ResolveResult[]> doResolve = () -> {
+      if (IdempotenceChecker.isLoggingEnabled()) {
+        IdempotenceChecker.logTrace("Resolving " + ref + " of " + ref.getClass());
+      }
+      return resolver.resolve(ref, containingFile, incompleteCode);
+    };
+    result = needToPreventRecursion ? RecursionManager.doPreventingRecursion(Pair.create(ref, incompleteCode), true, doResolve)
+                                    : doResolve.get();
     if (result != null) {
       ensureValidResults(result);
     }
 
     if (stamp.mayCacheNow()) {
-      cache(ref, map, result);
+      cache(ref, map, result, doResolve);
     }
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
@@ -222,6 +243,7 @@ public class ResolveCache implements Disposable {
     return map.get(ref);
   }
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   @Nullable
   public <TRef extends PsiReference, TResult>
          TResult resolveWithCaching(@NotNull TRef ref,
@@ -250,14 +272,19 @@ public class ResolveCache implements Disposable {
   private static final Object NULL_RESULT = ObjectUtils.sentinel("ResolveCache.NULL_RESULT");
   private static <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
                                                                  @NotNull Map<? super TRef, TResult> map,
-                                                                 TResult result) {
+                                                                 TResult result,
+                                                                 @NotNull Computable<TResult> doResolve) {
     // optimization: less contention
     TResult cached = map.get(ref);
-    if (cached != null && cached == result) {
-      return;
+    if (cached != null) {
+      if (cached == result) {
+        return;
+      }
+      IdempotenceChecker.checkEquivalence(cached, result, ref.getClass(), doResolve);
     }
     if (result == null) {
       // no use in creating SoftReference to null
+      //noinspection unchecked
       cached = (TResult)NULL_RESULT;
     }
     else {
@@ -268,12 +295,14 @@ public class ResolveCache implements Disposable {
 
   @NotNull
   private static <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
+    //noinspection unchecked
     return value == NULL_RESULT ? NULL_VALUE_REFERENCE : value == ResolveResult.EMPTY_ARRAY ? EMPTY_RESOLVE_RESULT : new StrongValueReference<>(
       value);
   }
 
   private static final StrongValueReference NULL_VALUE_REFERENCE = new StrongValueReference<>(NULL_RESULT);
   private static final StrongValueReference EMPTY_RESOLVE_RESULT = new StrongValueReference<>(ResolveResult.EMPTY_ARRAY);
+  @SuppressWarnings("deprecation")
   private static class StrongValueReference<K, V> implements ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
     private final V myValue;
 
