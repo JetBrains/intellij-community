@@ -188,6 +188,6 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   public static boolean isCustomDecorationActive() {
-    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && JdkEx.isCustomDecorationSupported();
+    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration", true) && JdkEx.isCustomDecorationSupported();
   }
 }
