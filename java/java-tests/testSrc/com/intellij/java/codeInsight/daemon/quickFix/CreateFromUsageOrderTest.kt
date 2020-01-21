@@ -2,7 +2,10 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix
+import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.psi.util.JavaElementKind
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class CreateFromUsageOrderTest : LightJavaCodeInsightFixtureTestCase() {
@@ -10,7 +13,7 @@ class CreateFromUsageOrderTest : LightJavaCodeInsightFixtureTestCase() {
   fun `test local variable first with default settings`() {
     myFixture.configureByText("_.java", "class A { void usage() { foo(<caret>lllbar); } }")
     val action = myFixture.availableIntentions.first()
-    assertEquals(message("create.local.from.usage.text", "lllbar"), action.text)
+    assertEquals(CreateLocalFromUsageFix.getMessage("lllbar"), action.text)
   }
 
   fun `test constant first when uppercase`() {
@@ -24,7 +27,7 @@ class CreateFromUsageOrderTest : LightJavaCodeInsightFixtureTestCase() {
       settings.LOCAL_VARIABLE_NAME_PREFIX = "lll"
       myFixture.configureByText("_.java", "class A { void usage() { foo(<caret>lllbar); } }")
       val action = myFixture.availableIntentions.first()
-      assertEquals(message("create.local.from.usage.text", "lllbar"), action.text)
+      assertEquals(CreateLocalFromUsageFix.getMessage("lllbar"), action.text)
     }
   }
 
@@ -33,7 +36,7 @@ class CreateFromUsageOrderTest : LightJavaCodeInsightFixtureTestCase() {
       settings.PARAMETER_NAME_PREFIX = "ppp"
       myFixture.configureByText("_.java", "class A { void usage() { foo(<caret>pppbar); } }")
       val action = myFixture.availableIntentions.first()
-      assertEquals(message("create.parameter.from.usage.text", "pppbar"), action.text)
+      assertEquals(CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.PARAMETER.accusative(), "pppbar"), action.text)
     }
   }
 

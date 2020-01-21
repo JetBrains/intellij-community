@@ -13,6 +13,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -100,7 +101,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
     @NotNull
     @Override
     public String getName() {
-      return QuickFixBundle.message("create.field.from.usage.text", myCanonicalName);
+      return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.accusative(), myCanonicalName);
     }
 
     @NotNull

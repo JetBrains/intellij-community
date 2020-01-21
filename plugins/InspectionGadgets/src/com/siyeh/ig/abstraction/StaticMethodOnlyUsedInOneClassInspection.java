@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -328,32 +329,32 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-      final PsiMember member = (PsiMember)infos[0];
+      final JavaElementKind kind = (JavaElementKind)infos[0];
       final PsiClass usageClass = (PsiClass)infos[1];
       return (usageClass instanceof PsiAnonymousClass)
              ? InspectionGadgetsBundle.message("static.method.only.used.in.one.anonymous.class.problem.descriptor",
-                                               (member instanceof PsiMethod) ? 1 : 2,
+                                               kind.nominative(),
                                                ((PsiAnonymousClass)usageClass).getBaseClassReference().getText())
              : InspectionGadgetsBundle.message("static.method.only.used.in.one.class.problem.descriptor",
-                                               (member instanceof PsiMethod) ? 1 : 2,
+                                               kind.nominative(),
                                                usageClass.getName());
     }
 
     @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
-      final PsiMember member = (PsiMember)infos[0];
+      final JavaElementKind kind = (JavaElementKind)infos[0];
       final PsiClass usageClass = (PsiClass)infos[1];
-      return new StaticMethodOnlyUsedInOneClassFix(usageClass, member instanceof PsiMethod);
+      return new StaticMethodOnlyUsedInOneClassFix(usageClass, kind);
     }
 
     private static class StaticMethodOnlyUsedInOneClassFix extends RefactoringInspectionGadgetsFix {
 
       private final SmartPsiElementPointer<PsiClass> myUsageClass;
-      private final boolean myMethod;
+      private final JavaElementKind myKind;
 
-      StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass, boolean method) {
-        myMethod = method;
+      StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass, JavaElementKind kind) {
+        myKind = kind;
         final SmartPointerManager pointerManager = SmartPointerManager.getInstance(usageClass.getProject());
         myUsageClass = pointerManager.createSmartPsiElementPointer(usageClass);
       }
@@ -361,7 +362,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       @Override
       @NotNull
       public String getFamilyName() {
-        return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix", myMethod ? 1 : 2);
+        return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix", myKind.accusative());
       }
 
       @NotNull
@@ -392,7 +393,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
         if (DeclarationSearchUtils.isTooExpensiveToSearch(field, true)) return;
         final PsiClass usageClass = getUsageClass(field);
         if (usageClass == null) return;
-        registerFieldError(field, field, usageClass);
+        registerFieldError(field, JavaElementKind.FIELD, usageClass);
       }
 
       @Override
@@ -409,7 +410,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
         if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) return;
         final PsiClass usageClass = getUsageClass(method);
         if (usageClass == null) return;
-        registerMethodError(method, method, usageClass);
+        registerMethodError(method, JavaElementKind.METHOD, usageClass);
       }
 
       private PsiClass getUsageClass(PsiMember member) {

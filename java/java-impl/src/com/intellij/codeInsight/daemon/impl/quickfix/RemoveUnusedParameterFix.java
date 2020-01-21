@@ -6,6 +6,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
   @NotNull
   @Override
   public String getText() {
-    return QuickFixBundle.message("remove.unused.parameter.text", myName);
+    return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.PARAMETER.accusative(), myName);
   }
 
   @Override

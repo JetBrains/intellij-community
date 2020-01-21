@@ -13,6 +13,7 @@ import java.util.Locale;
  * The main purpose of this enum is to be able to display localized element name in UI
  */
 public enum JavaElementKind {
+  ABSTRACT_METHOD,
   ANNOTATION,
   CLASS,
   CONSTANT,
@@ -33,13 +34,19 @@ public enum JavaElementKind {
   UNKNOWN,
   VARIABLE;
 
+  /**
+   * @return human-readable name of the item in nominative case
+   */
   @Nls
-  public String getNominativeName() {
+  public @NotNull String nominative() {
     return JavaCoreBundle.message("element." + name().toLowerCase(Locale.ROOT), 0);
   }
 
+  /**
+   * @return human-readable name of the item in accusative case
+   */
   @Nls
-  public String getAccusativeName() {
+  public @NotNull String accusative() {
     return JavaCoreBundle.message("element." + name().toLowerCase(Locale.ROOT), 1);
   }
 
@@ -63,6 +70,9 @@ public enum JavaElementKind {
     if (element instanceof PsiMethod) {
       if (((PsiMethod)element).isConstructor()) {
         return CONSTRUCTOR;
+      }
+      if (((PsiMethod)element).hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return ABSTRACT_METHOD;
       }
       return METHOD;
     }

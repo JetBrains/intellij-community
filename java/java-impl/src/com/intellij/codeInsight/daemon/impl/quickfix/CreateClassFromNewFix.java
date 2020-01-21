@@ -21,6 +21,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -245,7 +246,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   protected String getText(final String varName) {
-    return QuickFixBundle.message("create.class.from.usage.text", getKind().getDescriptionAccusative(), varName);
+    return CommonQuickFixBundle.message("fix.create.title.x", getKind().getDescriptionAccusative(), varName);
   }
 
   protected static PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {

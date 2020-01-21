@@ -43,12 +43,12 @@ public enum CreateClassKind implements ClassKind {
 
   @Override
   public String getDescription() {
-    return myKind.getNominativeName();
+    return myKind.nominative();
   }
 
   @Override
   public String getDescriptionAccusative() {
-    return myKind.getAccusativeName();
+    return myKind.accusative();
   }
 
   @NotNull

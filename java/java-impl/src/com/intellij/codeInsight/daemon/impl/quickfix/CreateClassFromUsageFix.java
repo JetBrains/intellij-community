@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -41,7 +41,7 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.class.from.usage.text", myKind.getDescriptionAccusative(), varName);
+    return CommonQuickFixBundle.message("fix.create.title.x", myKind.getDescriptionAccusative(), varName);
   }
 
 

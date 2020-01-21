@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
@@ -50,7 +52,12 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.local.from.usage.text", varName);
+    return getMessage(varName);
+  }
+
+  public @NotNull
+  static String getMessage(String varName) {
+    return CommonQuickFixBundle.message("fix.create.title.x.from.usage", JavaElementKind.LOCAL_VARIABLE.accusative(), varName);
   }
 
   @Override

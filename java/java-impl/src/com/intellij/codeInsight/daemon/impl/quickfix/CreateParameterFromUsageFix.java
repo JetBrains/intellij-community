@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -66,7 +68,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     @Override
     public String getText(String varName) {
-    return QuickFixBundle.message("create.parameter.from.usage.text", varName);
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.PARAMETER.accusative(), varName);
   }
 
   @Nullable

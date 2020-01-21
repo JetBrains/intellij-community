@@ -3,10 +3,12 @@ package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -81,7 +83,8 @@ public class CreateClassFixTest extends UsefulTestCase {
   public void runSingle() {
     EdtTestUtil.runInEdtAndWait(() -> {
       IntentionAction resultAction = null;
-      final String createAction = QuickFixBundle.message(myCreateClass ? "create.class.text" : "create.interface.text", myTestName);
+      final String createAction = CommonQuickFixBundle.message(
+        "fix.create.title.x", (myCreateClass ? JavaElementKind.CLASS : JavaElementKind.INTERFACE).accusative(), myTestName);
       final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + myTestName + ".xml");
       for (IntentionAction action : actions) {
         if (Comparing.strEqual(action.getText(), createAction)) {

@@ -19,5 +19,15 @@ package com.intellij.psi.util;
  * @author peter
  */
 public enum ClassKind {
-  CLASS, INTERFACE, ENUM, ANNOTATION
+  CLASS(JavaElementKind.CLASS), INTERFACE(JavaElementKind.INTERFACE), ENUM(JavaElementKind.ENUM), ANNOTATION(JavaElementKind.ANNOTATION);
+  
+  private final JavaElementKind myElementKind;
+
+  ClassKind(JavaElementKind kind) {
+    myElementKind = kind;
+  }
+
+  public JavaElementKind getElementKind() {
+    return myElementKind;
+  }
 }

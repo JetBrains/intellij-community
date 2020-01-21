@@ -27,6 +27,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -363,7 +364,7 @@ public class CreateFromUsageUtils {
     final PsiDirectory targetDirectory;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Project project = manager.getProject();
-      String title = QuickFixBundle.message("create.class.title", StringUtil.capitalize(classKind.getDescriptionAccusative()));
+      String title = CommonQuickFixBundle.message("fix.create.title", StringUtil.capitalize(classKind.getDescriptionAccusative()));
 
       CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifierName, classKind, false, module){
         @Override

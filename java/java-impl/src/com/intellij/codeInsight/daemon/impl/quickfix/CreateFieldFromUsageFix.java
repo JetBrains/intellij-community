@@ -19,11 +19,13 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -42,7 +44,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected String getText(String varName) {
-    return QuickFixBundle.message("create.field.from.usage.text", varName);
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.accusative(), varName);
   }
 
   protected boolean createConstantField() {
