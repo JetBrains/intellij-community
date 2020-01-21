@@ -29,7 +29,7 @@ public class ShTerminalRunner extends ShRunner {
   }
 
   @Override
-  public void run(@NotNull String command, @NotNull String workingDirectory) {
+  public void run(@NotNull String command, @NotNull String workingDirectory, @NotNull String title) {
     TerminalView terminalView = TerminalView.getInstance(myProject);
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window == null) return;
@@ -38,10 +38,11 @@ public class ShTerminalRunner extends ShRunner {
     Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
     try {
       if (pair == null) {
-        terminalView.createLocalShellWidget(workingDirectory).executeCommand(command);
+        terminalView.createLocalShellWidget(workingDirectory, title).executeCommand(command);
         return;
       }
       window.activate(null);
+      pair.first.setDisplayName(title);
       contentManager.setSelectedContent(pair.first);
       pair.second.executeCommand(command);
     } catch (IOException e) {

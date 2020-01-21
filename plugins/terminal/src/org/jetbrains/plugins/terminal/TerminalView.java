@@ -153,8 +153,9 @@ public class TerminalView {
   }
 
   @NotNull
-  public ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory) {
+  public ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable String tabName) {
     TerminalTabState tabState = new TerminalTabState();
+    tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
     JBTerminalWidget widget = createNewSession(myTerminalRunner, tabState, true);
     return (ShellTerminalWidget)Objects.requireNonNull(widget);

@@ -47,7 +47,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     if (shRunner == null || !shRunner.isAvailable(myProject) || isRunBeforeConfig) {
       return buildExecutionResult();
     }
-    shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory());
+    shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName());
     return null;
   }
 
