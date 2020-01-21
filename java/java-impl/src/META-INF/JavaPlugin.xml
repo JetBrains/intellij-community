@@ -1986,6 +1986,7 @@
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
 
     <appStarter implementation="com.intellij.internal.DumpIndexStarter"/>
+    <appStarter implementation="com.intellij.internal.DumpJdkIndexStarter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
