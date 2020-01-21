@@ -270,9 +270,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
             IdeaPluginDescriptorImpl dependencyDescriptor = null;
             if (context.isPluginDisabled(dependencyId) || context.isPluginIncomplete(dependencyId)) {
               if (!isOptional) {
-                context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is disabled)");
                 markAsIncomplete(context);
-                return false;
               }
 
               isAvailable = false;
