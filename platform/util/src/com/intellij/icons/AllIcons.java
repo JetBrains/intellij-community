@@ -476,18 +476,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Subtypes = load("/hierarchy/subtypes.svg");
     /** 16x16 */ public static final Icon Supertypes = load("/hierarchy/supertypes.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Modified */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Base = load("/actions/forward.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Hierarchy.Supertypes */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Caller = load("/hierarchy/supertypes.svg");
-
   }
 
   public final static class Icons {
