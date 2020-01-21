@@ -1616,7 +1616,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     @Override
-    protected void onReTarget(@NotNull DocumentEvent e, int reTargetShift) {
+    protected void onReTarget(@NotNull DocumentEvent e) {
       int offset = intervalStart();
       if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
         setIntervalStart(offset - 1);
@@ -1672,7 +1672,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     @Override
-    protected void onReTarget(@NotNull DocumentEvent e, int reTargetShift) {
+    protected void onReTarget(@NotNull DocumentEvent e) {
       int start = intervalStart();
       if (DocumentUtil.isInsideSurrogatePair(getDocument(), start)) {
         setIntervalStart(start - 1);

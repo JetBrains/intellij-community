@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +38,9 @@ class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R
   }
 
   @Override
-  protected void onReTarget(@NotNull DocumentEvent e, int reTargetShift) {
+  protected void onReTarget(@NotNull DocumentEvent e) {
     InlayModelImpl inlayModel = myEditor.getInlayModel();
-    inlayModel.myPutMergedIntervalsAtBeginning = intervalStart() == e.getOffset() + e.getNewLength() - reTargetShift;
+    inlayModel.myPutMergedIntervalsAtBeginning = intervalStart() == ((DocumentEventImpl)e).getMoveOffset() + e.getNewLength();
     if (DocumentUtil.isInsideSurrogatePair(getDocument(), getOffset())) {
       inlayModel.myMoveInProgress = true;
       try {

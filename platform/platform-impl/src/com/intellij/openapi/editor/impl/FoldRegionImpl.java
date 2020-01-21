@@ -134,7 +134,7 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
   }
 
   @Override
-  protected void onReTarget(@NotNull DocumentEvent e, int reTargetShift) {
+  protected void onReTarget(@NotNull DocumentEvent e) {
     alignToValidBoundaries();
   }
 

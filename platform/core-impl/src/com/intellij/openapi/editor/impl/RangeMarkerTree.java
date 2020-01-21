@@ -217,7 +217,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
         marker.documentChanged(e);
       }
       else {
-        marker.onReTarget(e, reTargetShift);
+        marker.onReTarget(e);
       }
 
       if (marker.isValid()) {
@@ -300,6 +300,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     return norm;
   }
 
+  // All intervals contained in (e.getMoveOffset(), e.getMoveOffset() + e.getNewLength())
+  // will be shifted by (e.getOffset() - e.getMoveOffset()).
+  // That's what happens when you "move" text in document, e.g. ctrl-shift-up/down the selection.
   private void reTargetMarkersOnChange(@NotNull DocumentEventImpl e) {
     checkMax(true);
 

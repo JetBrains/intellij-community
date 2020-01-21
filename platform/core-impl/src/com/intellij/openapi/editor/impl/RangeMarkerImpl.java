@@ -218,7 +218,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     setIntervalEnd(newRange.getEndOffset());
   }
 
-  protected void onReTarget(@NotNull DocumentEvent e, int reTargetShift) {}
+  // Called after the range was shifted from e.getMoveOffset() to e.getOffset()
+  protected void onReTarget(@NotNull DocumentEvent e) {}
 
   @Nullable
   static TextRange applyChange(@NotNull DocumentEvent e, int intervalStart, int intervalEnd,
