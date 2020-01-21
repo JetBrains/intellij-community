@@ -870,28 +870,6 @@ public class AllIcons {
     /** 14x14 */ public static final Icon ProgressResumeHover = load("/process/progressResumeHover.svg");
     /** 12x12 */ public static final Icon ProgressResumeSmall = load("/process/progressResumeSmall.svg");
     /** 12x12 */ public static final Icon ProgressResumeSmallHover = load("/process/progressResumeSmallHover.svg");
-
-    public final static class State {
-
-      /** @deprecated to be removed in IDEA 2020 */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon GreenOK = load("/process/state/GreenOK.png");
-
-      /** @deprecated to be removed in IDEA 2020 */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon GreyProgr = load("/process/state/GreyProgr.png");
-
-      /** @deprecated to be removed in IDEA 2020 */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon RedExcl = load("/process/state/RedExcl.png");
-
-    }
     /** 16x16 */ public static final Icon Step_1 = load("/process/step_1.svg");
     /** 16x16 */ public static final Icon Step_2 = load("/process/step_2.svg");
     /** 16x16 */ public static final Icon Step_3 = load("/process/step_3.svg");
