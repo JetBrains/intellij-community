@@ -418,8 +418,15 @@ public final class ConfigImportHelper {
     // copy everything except plugins
     // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
     FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), file -> !blockImport(file.toPath(), oldConfigDir, newConfigDir, oldPluginsDir));
+
     // copy plugins, unless new plugin directory is not empty (the plugin manager will sort out incompatible ones)
-    if (isEmptyDirectory(newPluginsDir)) {
+    if (!Files.isDirectory(oldPluginsDir)) {
+      log.info("non-existing plugins directory: " + oldPluginsDir);
+    }
+    else if (!isEmptyDirectory(newPluginsDir)) {
+      log.info("non-empty plugins directory: " + newPluginsDir);
+    }
+    else {
       FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
     }
 
