@@ -106,7 +106,9 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     myDuringDocumentUpdate = true;
     if (myDocument.isInBulkUpdate()) return;
     final int offset = event.getOffset();
-    final int moveOffset = ((DocumentEventImpl)event).getMoveOffsetBeforeChanged();
+    // Although the result of getMoveOffset() can point to invalid offset when used from within beforeDocumentChange(),
+    // the actual value is not used until doInvalidateRange() called from documentChanged().
+    final int moveOffset = ((DocumentEventImpl)event).getMoveOffset();
     final int length = event.getNewLength();
     myDocumentChangeStartOffset = Math.min(offset, moveOffset);
     myDocumentChangeEndOffset = Math.max(offset, moveOffset) + length;
