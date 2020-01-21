@@ -555,47 +555,17 @@ public class AllIcons {
     /** 7x10 */ public static final Icon Statusbar_arrows = load("/ide/statusbar_arrows.svg");
     /** 16x16 */ public static final Icon UpDown = load("/ide/upDown.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.FatalError */
+    /** @deprecated to be removed in IDEA 2021 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Error = load("/ide/fatalError.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.HectorOff */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon HectorNo = load("/ide/hectorOff.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Information */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Info_notifications = load("/general/information.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
+    @ScheduledForRemoval(inVersion = "2021")
     public static final Icon LookupAlphanumeric = load("/ide/lookupAlphanumeric.svg");
 
-    /** @deprecated to be removed in IDEA 2020 */
+    /** @deprecated to be removed in IDEA 2021 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
+    @ScheduledForRemoval(inVersion = "2021")
     public static final Icon LookupRelevance = load("/ide/lookupRelevance.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.Notification.NoEvents */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Notifications = load("/ide/notification/noEvents.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Warning */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Warning_notifications = load("/general/warning.svg");
 
   }
   /** 100x100 */ public static final Icon Idea_logo_welcome = load("/idea_logo_welcome.png");
