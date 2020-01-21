@@ -175,7 +175,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     final int start = e.getOffset();
     final int oldLength = e.getOldLength();
     final int newLength = e.getNewLength();
-    collectAffectedMarkersAndShiftSubtrees(getRoot(), e, start, start + oldLength, newLength - oldLength, affected);
+    collectAffectedMarkersAndShiftSubtrees(getRoot(), start, start + oldLength, newLength - oldLength, affected);
     checkMax(false);
 
     if (!affected.isEmpty()) {
@@ -257,7 +257,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   // returns true if all deltas involved are still 0
   boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
-                                                 @NotNull DocumentEvent e, int start, int end, int lengthDelta,
+                                                 int start, int end, int lengthDelta,
                                                  @NotNull List<? super IntervalNode<T>> affected) {
     if (root == null) return true;
     boolean norm = pushDelta(root);
@@ -283,7 +283,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
         norm &= newL == 0;
       }
       norm &= pushDelta(root);
-      norm &= collectAffectedMarkersAndShiftSubtrees(left, e, start, end, lengthDelta, affected);
+      norm &= collectAffectedMarkersAndShiftSubtrees(left, start, end, lengthDelta, affected);
       correctMax(root, 0);
     }
     else {
@@ -293,8 +293,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
         root.setValid(false);  //make invisible
       }
 
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), e, start, end, lengthDelta, affected);
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), e, start, end, lengthDelta, affected);
+      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), start, end, lengthDelta, affected);
+      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), start, end, lengthDelta, affected);
       correctMax(root, 0);
     }
     return norm;
