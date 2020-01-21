@@ -1065,18 +1065,6 @@ public class AllIcons {
 
     }
 
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon CheckSpelling = load("/vcs/checkSpelling.png");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon MergeSourcesTree = load("/actions/showAsTree.svg");
-
   }
 
   public final static class Webreferences {
