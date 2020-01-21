@@ -83,7 +83,7 @@ object DynamicPlugins {
     val anyProject = ProjectManager.getInstance().openProjects.firstOrNull() ?:
                      ProjectManager.getInstance().defaultProject
 
-    val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl
+    val loadedPluginDescriptor = if (pluginDescriptor.pluginId != null) PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl else null
     
     if (loadedPluginDescriptor != null) {
       if (!pluginDescriptor.useIdeaClassLoader) {
