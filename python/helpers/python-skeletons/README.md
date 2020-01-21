@@ -195,10 +195,10 @@ See also the notes on function annotations in
 [PEP-8](http://www.python.org/dev/peps/pep-0008/).
 
 
-PyCharm / IntelliJ
-------------------
+PyCharm / IntelliJ IDEA
+-----------------------
 
-PyCharm 3 and the Python plugin 3.x for IntelliJ can extract the following
+PyCharm 3 and the Python plugin 3.x for IntelliJ IDEA can extract the following
 information from the skeletons:
 
 * Parameters of functions and methods
@@ -209,10 +209,10 @@ information from the skeletons:
 * TODO
 
 PyCharm 3 comes with a snapshot of the Python skeletons repository (Python
-plugin 3.0.1 for IntelliJ still doesn't include this repository). You
+plugin 3.0.1 for IntelliJ IDEA still doesn't include this repository). You
 **should not** modify it, because it will be updated with the PyCharm / Python
-plugin for IntelliJ installation. If you want to change the skeletons, clone
-the skeletons GitHub repository into your PyCharm/IntelliJ config directory:
+plugin for IntelliJ IDEA installation. If you want to change the skeletons, clone
+the skeletons GitHub repository into your PyCharm/IntelliJ IDEA config directory:
 
 ```bash
 cd <config directory>
@@ -222,13 +222,13 @@ git clone https://github.com/JetBrains/python-skeletons.git
 where `<config directory>` is:
 
 * PyCharm
-    * Mac OS X: `~/Library/Preferences/PyCharmXX`
-    * Linux: `~/.PyCharmXX/config`
-    * Windows: `<User home>\.PyCharmXX\config`
-* IntelliJ
-    * Mac OS X: `~/Library/Preferences/IntelliJIdeaXX`
-    * Linux: `~/.IntelliJIdeaXX/config`
-    * Windows: `<User home>\.IntelliJIdeaXX\config`
+    * macOS: `~/Library/Application Support/JetBrains/PyCharmXX`
+    * Linux: `~/.config/JetBrains/PyCharmXX`
+    * Windows: `<User home>\AppData\Roaming\JetBrains\PyCharmXX`
+* IntelliJ IDEA
+    * macOS: `~/Library/Application Support/JetBrains/IntelliJIdeaXX`
+    * Linux: `~/.config/JetBrains/IntelliJIdeaXX`
+    * Windows: `<User home>\AppData\Roaming\JetBrains\IntelliJIdeaXX`
 
 Please send your PyCharm/IntelliJ-related bug reports and feature requests to
 [PyCharm issue tracker](https://youtrack.jetbrains.com/issues/PY).
