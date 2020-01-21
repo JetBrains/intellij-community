@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Iterators;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
@@ -65,11 +66,11 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
         final PyExpression value = ((PyKeywordArgument)arg).getValueExpression();
         final String valueText = value != null ? value.getText() : "";
         newParameters.add(Pair.create(parameters.length - 1,
-                                      new PyParameterInfo(-1, ((PyKeywordArgument)arg).getKeyword(), valueText, true)));
+                                      new PyParameterInfo(NEW_PARAMETER, ((PyKeywordArgument)arg).getKeyword(), valueText, true)));
       }
       else {
         final String paramName = generateParameterName(arg, function, usedParamNames, context);
-        newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(-1, paramName, arg.getText(), false)));
+        newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(NEW_PARAMETER, paramName, arg.getText(), false)));
         usedParamNames.add(paramName);
       }
     }
@@ -82,7 +83,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     final int complementaryParamLength = complementary.getParameterList().getParameters().length;
     final List<Pair<Integer, PyParameterInfo>> extraParams;
     if (complementaryParamLength > paramLength) {
-      extraParams = Collections.singletonList(Pair.create(paramLength - 1, new PyParameterInfo(-1, "**kwargs", "", false)));
+      extraParams = Collections.singletonList(Pair.create(paramLength - 1, new PyParameterInfo(NEW_PARAMETER, "**kwargs", "", false)));
     }
     else {
       extraParams = Collections.emptyList();

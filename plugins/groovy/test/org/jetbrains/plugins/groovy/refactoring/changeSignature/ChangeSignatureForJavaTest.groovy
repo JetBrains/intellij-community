@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature
 
 import com.intellij.codeInsight.TargetElementUtil
@@ -27,6 +13,8 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
+
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER
 
 /**
  * @author Maxim.Medvedev
@@ -48,8 +36,8 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
     doTest null, null, "T", { PsiMethod method ->
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
       return [
-        new ParameterInfoImpl(-1, "x", factory.createTypeFromText("T", method.getParameterList()), "null"),
-        new ParameterInfoImpl(-1, "y", factory.createTypeFromText("C<T>", method.getParameterList()), "null")
+        new ParameterInfoImpl(NEW_PARAMETER, "x", factory.createTypeFromText("T", method.getParameterList()), "null"),
+        new ParameterInfoImpl(NEW_PARAMETER, "y", factory.createTypeFromText("C<T>", method.getParameterList()), "null")
       ]
     }, false
   }
@@ -67,32 +55,32 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
     doTest null, null, null, { PsiMethod method ->
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
       return [
-        new ParameterInfoImpl(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
-        new ParameterInfoImpl(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
-        new ParameterInfoImpl(-1, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
+        new ParameterInfoImpl(NEW_PARAMETER, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
+        new ParameterInfoImpl(NEW_PARAMETER, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
+        new ParameterInfoImpl(NEW_PARAMETER, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
       ]
     }, false
   }
 
   void testDefaultConstructor() throws Exception {
-    doTest null, [new ParameterInfoImpl(-1, "j", PsiType.INT, "27")], false
+    doTest null, [new ParameterInfoImpl(NEW_PARAMETER, "j", PsiType.INT, "27")], false
   }
 
   void testGenerateDelegate() throws Exception {
-    doTest null, [new ParameterInfoImpl(-1, "i", PsiType.INT, "27")], true
+    doTest null, [new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")], true
   }
 
   /*public void testGenerateDelegateForAbstract() throws Exception {
     doTest(null,
            new ParameterInfoImpl[] {
-             new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
+             new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")
            }, true);
   }
 
   public void testGenerateDelegateWithReturn() throws Exception {
     doTest(null,
            new ParameterInfoImpl[] {
-             new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
+             new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")
            }, true);
   }
 
@@ -100,7 +88,7 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
     doTest(null,
            new ParameterInfoImpl[] {
              new ParameterInfoImpl(1),
-             new ParameterInfoImpl(-1, "c", PsiType.CHAR, "'a'"),
+             new ParameterInfoImpl(NEW_PARAMETER, "c", PsiType.CHAR, "'a'"),
              new ParameterInfoImpl(0, "j", PsiType.INT)
            }, true);
   }
@@ -111,7 +99,7 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
   */
 
   void testGenerateDelegateDefaultConstructor() throws Exception {
-    doTest null, [new ParameterInfoImpl(-1, "i", PsiType.INT, "27")], true
+    doTest null, [new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")], true
   }
 
   /*
@@ -125,7 +113,7 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testSuperCallFromOtherMethod() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
-      new ParameterInfoImpl(-1, "nnn", PsiType.INT, "-222"),
+      new ParameterInfoImpl(NEW_PARAMETER, "nnn", PsiType.INT, "-222"),
     }, false);
   }
   */
@@ -136,7 +124,7 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
       public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
         return new ParameterInfoImpl[] {
-          new ParameterInfoImpl(-1, "l", factory.createTypeFromText("List", method), "null", true)
+          new ParameterInfoImpl(NEW_PARAMETER, "l", factory.createTypeFromText("List", method), "null", true)
         };
       }
     }, false);
@@ -150,14 +138,14 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testEnumConstructor() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
-      new ParameterInfoImpl(-1, "i", PsiType.INT, "10")
+      new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "10")
     }, false);
   }
   */
 
   void testVarargs1() throws Exception {
     doTest null, [
-      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true"),
+      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN, "true"),
       new ParameterInfoImpl(0)
     ], false
   }

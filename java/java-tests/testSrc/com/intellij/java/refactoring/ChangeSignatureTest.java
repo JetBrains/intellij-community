@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -27,6 +13,8 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 
 import java.util.HashSet;
+
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
 /**
  * @author dsl
@@ -71,7 +59,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testDuplicatedSignatureInInheritor() {
     try {
-      doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "i", PsiType.INT)}, true);
+      doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT)}, true);
       fail("Conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
@@ -87,8 +75,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testGenericTypes() {
     doTest(null, null, "T", method -> new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "x", myFactory.createTypeFromText("T", method.getParameterList()), "null"),
-      new ParameterInfoImpl(-1, "y", myFactory.createTypeFromText("C<T>", method.getParameterList()), "null")
+      new ParameterInfoImpl(NEW_PARAMETER, "x", myFactory.createTypeFromText("T", method.getParameterList()), "null"),
+      new ParameterInfoImpl(NEW_PARAMETER, "y", myFactory.createTypeFromText("C<T>", method.getParameterList()), "null")
     }, false);
   }
 
@@ -100,16 +88,16 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testTypeParametersInMethod() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "t", myFactory.createTypeFromText("T", method.getParameterList()), "null"),
-      new ParameterInfoImpl(-1, "u", myFactory.createTypeFromText("U", method.getParameterList()), "null"),
-      new ParameterInfoImpl(-1, "cu", myFactory.createTypeFromText("C<U>", method.getParameterList()), "null")
+      new ParameterInfoImpl(NEW_PARAMETER, "t", myFactory.createTypeFromText("T", method.getParameterList()), "null"),
+      new ParameterInfoImpl(NEW_PARAMETER, "u", myFactory.createTypeFromText("U", method.getParameterList()), "null"),
+      new ParameterInfoImpl(NEW_PARAMETER, "cu", myFactory.createTypeFromText("C<U>", method.getParameterList()), "null")
     }, false);
   }
 
   public void testDefaultConstructor() {
     doTest(null,
            new ParameterInfoImpl[]{
-             new ParameterInfoImpl(-1, "j", PsiType.INT, "27")
+             new ParameterInfoImpl(NEW_PARAMETER, "j", PsiType.INT, "27")
            }, false
     );
   }
@@ -117,7 +105,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testGenerateDelegate() {
     doTest(null,
            new ParameterInfoImpl[]{
-             new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
+             new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")
            }, true
     );
   }
@@ -125,7 +113,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testGenerateDelegateForAbstract() {
     doTest(null,
            new ParameterInfoImpl[]{
-             new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
+             new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")
            }, true
     );
   }
@@ -133,7 +121,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testGenerateDelegateWithReturn() {
     doTest(null,
            new ParameterInfoImpl[]{
-             new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
+             new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")
            }, true
     );
   }
@@ -142,7 +130,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     doTest(null,
            new ParameterInfoImpl[]{
              new ParameterInfoImpl(1),
-             new ParameterInfoImpl(-1, "c", PsiType.CHAR, "'a'"),
+             new ParameterInfoImpl(NEW_PARAMETER, "c", PsiType.CHAR, "'a'"),
              new ParameterInfoImpl(0, "j", PsiType.INT)
            }, true
     );
@@ -154,7 +142,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testGenerateDelegateDefaultConstructor() {
     doTest(null, new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
+      new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")
     }, true);
   }
 
@@ -167,7 +155,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testJavadocGenericsLink() {
     doTest(null, new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "y", myFactory.createTypeFromText("java.util.List<java.lang.String>", null)),
+      new ParameterInfoImpl(NEW_PARAMETER, "y", myFactory.createTypeFromText("java.util.List<java.lang.String>", null)),
       new ParameterInfoImpl(0, "a", PsiType.BOOLEAN)
     }, false);
   }
@@ -181,14 +169,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testParamNameNoConflict() {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0),
-      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)
+      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN)
     }, false);
   }
 
   public void testVarargMethodToNonVarag() {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, "i", PsiType.INT),
-      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)
+      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN)
     }, false);
   }
 
@@ -214,7 +202,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testParamJavadoc2() {
     doTest(null, new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "z", PsiType.BOOLEAN),
+      new ParameterInfoImpl(NEW_PARAMETER, "z", PsiType.BOOLEAN),
       new ParameterInfoImpl(0, "a", PsiType.BOOLEAN),
     }, false);
   }
@@ -222,14 +210,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testParamJavadoc3() {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, "a", PsiType.BOOLEAN),
-      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN),
+      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN),
     }, false);
   }
 
   public void testParamJavadocRenamedReordered() {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, "a", PsiType.BOOLEAN),
-      new ParameterInfoImpl(-1, "c", PsiType.BOOLEAN),
+      new ParameterInfoImpl(NEW_PARAMETER, "c", PsiType.BOOLEAN),
       new ParameterInfoImpl(1, "b1", PsiType.BOOLEAN),
     }, false);
   }
@@ -242,25 +230,25 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testSuperCallFromOtherMethod() {
     doTest(null, new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "nnn", PsiType.INT, "-222"),
+      new ParameterInfoImpl(NEW_PARAMETER, "nnn", PsiType.INT, "-222"),
     }, false);
   }
 
   public void testUseAnyVariable() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "l", myFactory.createTypeFromText("List", method), "null", true)
+      new ParameterInfoImpl(NEW_PARAMETER, "l", myFactory.createTypeFromText("List", method), "null", true)
     }, false);
   }
 
   public void testUseThisAsAnyVariable() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "l", myFactory.createTypeFromText("List", method), "null", true)
+      new ParameterInfoImpl(NEW_PARAMETER, "l", myFactory.createTypeFromText("List", method), "null", true)
     }, false);
   }
 
   public void testUseAnyVariableAndDefault() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "c", myFactory.createTypeFromText("C", method), "null", true)
+      new ParameterInfoImpl(NEW_PARAMETER, "c", myFactory.createTypeFromText("C", method), "null", true)
     }, false);
   }
 
@@ -272,13 +260,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testEnumConstructor() {
     doTest(null, new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "i", PsiType.INT, "10")
+      new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "10")
     }, false);
   }
 
   public void testVarargs1() {
     doTest(null, new ParameterInfoImpl[]{
-      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true"),
+      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN, "true"),
       new ParameterInfoImpl(0)
     }, false);
   }
@@ -365,7 +353,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testIntroduceParameterWithDefaultValueInHierarchy() {
-    doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "i", PsiType.INT, "0")}, false);
+    doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "0")}, false);
   }
 
   public void testReorderMultilineMethodParameters() {
@@ -406,7 +394,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testAddParenthesisForLambdaParameterList() {
     GenParams genParams = method -> new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, "a", PsiType.INT),
-      new ParameterInfoImpl(-1, "b", PsiType.INT)
+      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.INT)
     };
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
@@ -481,7 +469,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),
                                  CanonicalTypes.createTypeWrapper(PsiType.VOID), new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, parameters[0].getName(), parameters[0].getType()),
-      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)}, null, propagateParametersMethods, null
+      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN)}, null, propagateParametersMethods, null
     ).run();
     checkResultByFile(basePath + "_after.java");
   }
@@ -503,7 +491,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),
                                  CanonicalTypes.createTypeWrapper(PsiType.VOID), new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, parameters[0].getName(), parameters[0].getType()),
-      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true")}, null, propagateParametersMethods, null
+      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN, "true")}, null, propagateParametersMethods, null
     ).run();
     checkResultByFile(basePath + "_after.java");
   }
@@ -523,7 +511,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       return new ParameterInfoImpl[]{
         new ParameterInfoImpl(2, "a", stringType),
         new ParameterInfoImpl(0, "b", stringType),
-        new ParameterInfoImpl(-1, "c", stringType)
+        new ParameterInfoImpl(NEW_PARAMETER, "c", stringType)
       };
     };
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, false);

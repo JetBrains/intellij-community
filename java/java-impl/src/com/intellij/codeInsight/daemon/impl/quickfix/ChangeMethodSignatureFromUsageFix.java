@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -45,6 +45,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
 /**
  * @author cdr
@@ -420,7 +422,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return false;
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
-        final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(-1, name, exprType, expression.getText().replace('\n', ' '));
+        final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(NEW_PARAMETER, name, exprType, expression.getText().replace('\n', ' '));
         result.add(newParameterInfo);
         newParams.add(newParameterInfo);
         buf.append("<b>").append(escapePresentableType(exprType)).append("</b>");
