@@ -11,9 +11,7 @@
     <!-- TODO: create normal change note list -->
     <change-notes><![CDATA[
         <ul>
-            <li>Provide color settings.</li>
-            <li>Highlight escape symbols like `\n` or `\u0020.</li>
-            <li>Highlight integer numbers, dates and keys properly.</li>
+            <li>Improve `Extend Selection` action to make it possible to select separate escape symbols and whole string literal without quotes.</li>
         </ul>
     ]]>
     </change-notes>
