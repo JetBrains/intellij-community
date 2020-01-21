@@ -5,6 +5,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * Entry point for obtaining {@link PsiSymbolReference}s from {@link PsiElement}.
  */
@@ -25,5 +27,5 @@ public interface PsiSymbolReferenceService {
    * @return all (own and external) references from this element, which match {@code hints}
    */
   @NotNull
-  Iterable<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints);
+  Collection<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints);
 }
