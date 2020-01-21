@@ -67,6 +67,10 @@ class SafeOpener {
       public void openLink(@NotNull String link) {
         SafeOpener.openLink(link);
       }
+      @Override
+      public boolean isSafeExtension(@Nullable String path) {
+        return SafeOpener.isSafeExtension(path);
+      }
     });
   }
 

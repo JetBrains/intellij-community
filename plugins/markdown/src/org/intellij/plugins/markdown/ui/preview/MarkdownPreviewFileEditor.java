@@ -36,6 +36,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeListener;
 
+import static org.intellij.plugins.markdown.ui.preview.IntelliJImageGeneratingProviderKt.getSchemeReplacement;
+
 public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private final static long PARSING_CALL_TIMEOUT_MS = 50L;
 
@@ -48,7 +50,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       return Sanitizers.BLOCKS
         .and(Sanitizers.FORMATTING)
         .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("file", "http", "https").allowElements("img")
+               .allowUrlProtocols(getSchemeReplacement("file"), "http", "https").allowElements("img")
                .allowAttributes("alt", "src", "title").onElements("img")
                .allowAttributes("border", "height", "width").onElements("img")
                .toFactory())

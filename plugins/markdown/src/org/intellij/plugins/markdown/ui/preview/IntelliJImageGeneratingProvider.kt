@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import org.intellij.markdown.MarkdownElementTypes
@@ -52,7 +53,7 @@ internal abstract class LinkGeneratingProvider(private val baseURI: URI?) : Gene
   }
 }
 
-internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?) : LinkGeneratingProvider(baseURI) {
+internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?) : LinkGeneratingProvider(applySchemeReplacementToUri(baseURI)) {
   companion object {
     private val REGEX = Regex("[^a-zA-Z0-9 ]")
 
@@ -124,4 +125,34 @@ internal class InlineLinkGeneratingProvider(baseURI: URI?) : LinkGeneratingProvi
       }
     )
   }
+}
+
+private val schemeRepls = mutableMapOf<String, String>()
+
+/**
+ * Registers a scheme replacement.
+ * Currently used with JCEF for a custom scheme to replace "file://".
+ */
+internal fun registerSchemeReplacement(originalScheme: String, replacingScheme: String) {
+  schemeRepls[originalScheme] = replacingScheme
+}
+
+/**
+ * Returns a replacement for the scheme, or same scheme when no replacement is registered.
+ */
+@JvmOverloads
+internal fun getSchemeReplacement(scheme: String, replacementExists: Ref<Boolean>? = null): String {
+  val newScheme = schemeRepls[scheme]
+  replacementExists?.set(newScheme != null)
+  return newScheme ?: scheme
+}
+
+/**
+ * Applies scheme replacement to URI's scheme.
+ */
+internal fun applySchemeReplacementToUri(uri: URI?): URI? {
+  if (uri == null) return null
+  val wasReplaced = Ref<Boolean>()
+  val newScheme = getSchemeReplacement(uri.scheme, wasReplaced)
+  return if (wasReplaced.get()) URI(newScheme, uri.authority, uri.path, uri.query, uri.fragment) else uri
 }

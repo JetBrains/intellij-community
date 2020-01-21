@@ -92,6 +92,8 @@
 
     <applicationService serviceImplementation="com.intellij.application.options.RegistryManager" preload="true"/>
 
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFCustomSchemeInstaller" preload="true"/>
+
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
 
