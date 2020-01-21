@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.IncorrectOperationException;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.concurrent.FutureTask;
 
 public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   private TestDialog myOldTestDialogValue;
@@ -181,23 +179,9 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     createClass("foo");
     final PsiFile file = myContainingFile;
     final Editor editor = openEditor("foo.java");
-    reformatFile(file);
+    new ReformatCodeProcessor(myProject, file, null, false).run();
     undo(editor);
     assertFileDoesNotExist("foo", myRoot);
-  }
-
-  private void reformatFile(final PsiFile file) throws IncorrectOperationException {
-    final Runnable r = new ReformatCodeProcessor(myProject, file, null, false) {
-      @Override
-      @NotNull
-      public FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly)
-        throws IncorrectOperationException {
-        return super.preprocessFile(file, false);
-      }
-    }.preprocessFile(file, false);
-
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(r), "Reformat", null,
-                                                  UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
 
   public void testUndoMoveFile() {
