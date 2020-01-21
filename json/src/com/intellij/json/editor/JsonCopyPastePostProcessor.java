@@ -3,7 +3,7 @@ package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
-import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.JsonArray;
@@ -97,7 +97,7 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
     if (file == null) return false;
     final FileType fileType = file.getFileType();
     if (fileType instanceof JsonFileType) return true;
-    if (!(fileType instanceof ScratchFileType)) return false;
+    if (!ScratchUtil.isScratch(file)) return false;
     return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) instanceof JsonFile;
   }
 
