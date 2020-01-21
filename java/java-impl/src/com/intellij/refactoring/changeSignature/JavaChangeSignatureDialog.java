@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -351,7 +351,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
               }
             }.apply(myNameEditor, item.parameter.getName());
 
-            if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
+            if (!item.isEllipsisType() && item.parameter.isNew()) {
               final JPanel additionalPanel = new JPanel(new BorderLayout());
               final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
               myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());

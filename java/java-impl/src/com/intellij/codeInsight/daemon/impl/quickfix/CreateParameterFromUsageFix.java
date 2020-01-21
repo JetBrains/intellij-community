@@ -119,7 +119,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
         dialog.setParameterInfos(parameterInfos);
         if (dialog.showAndGet()) {
           for (ParameterInfoImpl info : parameterInfos) {
-            if (info.getOldIndex() == -1) {
+            if (info.isNew()) {
               final String newParamName = info.getName();
               if (!Comparing.strEqual(varName, newParamName)) {
                 final PsiExpression newExpr =

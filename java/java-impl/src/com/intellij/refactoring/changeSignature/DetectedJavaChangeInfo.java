@@ -266,7 +266,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       PsiMethod prototype;
       if (isGenerateDelegate()) {
         for (JavaParameterInfo info : getNewParameters()) {
-          if (info.getOldIndex() == -1) {
+          if (info.isNew()) {
             ((ParameterInfoImpl)info).setDefaultValue("null"); //to be replaced with template expr
           }
         }
@@ -287,7 +287,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
             JavaParameterInfo[] parameters = getNewParameters();
             PsiExpression[] toBeDefault =
               Arrays.stream(parameters)
-                .filter(param -> param.getOldIndex() == -1)
+                .filter(ParameterInfo::isNew)
                 .map(info -> {
                   int i = ArrayUtil.find(parameters, info);
                   return expressions[i];
