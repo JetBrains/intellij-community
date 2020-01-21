@@ -24,22 +24,26 @@ columnConstraints:
       min: *id006
       preferred: *id006
     grow: 0.0
+  - gapAfter:
+      max: &id007 {horizontal: true, value: 6.0}
+      min: *id007
+      preferred: *id007
   - {}
-  count: 2
+  count: 3
 componentConstrains:
   Database [label]:
     horizontal:
       gapBefore:
-        min: &id007 {horizontal: true, value: 20.0}
-        preferred: *id007
+        min: &id008 {horizontal: true, value: 20.0}
+        preferred: *id008
   'JTextField #1':
     horizontal: {grow: 100.0}
   'JLabel #2': {spanX: INF, wrap: true}
   Master Password [label]:
     horizontal:
       gapBefore:
-        min: &id008 {horizontal: true, value: 20.0}
-        preferred: *id008
+        min: &id009 {horizontal: true, value: 20.0}
+        preferred: *id009
   'JBPasswordField #4':
     horizontal: {grow: 100.0}
     spanX: INF

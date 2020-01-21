@@ -159,7 +159,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
   internal val columnIndexIncludingSubRows: Int
-    get() = max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
+    get() = max(columnIndex, subRows?.asSequence()?.map { it.columnIndexIncludingSubRows }?.max() ?: -1)
 
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     return createChildRow(indent, label, isSeparated, noGrid, title)
