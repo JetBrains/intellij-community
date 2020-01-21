@@ -578,42 +578,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon WebService = load("/javaee/WebService.svg");
     /** 16x16 */ public static final Icon WebServiceClient = load("/javaee/WebServiceClient.svg");
 
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DataSourceImport = load("/javaee/dataSourceImport.png");
-
-    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.InheritedAttributeOverlay */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon InheritedAttributeOverlay = load("/javaee/inheritedAttributeOverlay.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.InterceptorClass */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon InterceptorClass = load("/javaee/interceptorClass.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceAttribute */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon PersistenceAttribute = load("/javaee/persistenceAttribute.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceRelationship */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon PersistenceRelationship = load("/javaee/persistenceRelationship.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.WebModule */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon WebModule = load("/javaee/webModule.svg");
-
   }
 
   public final static class Json {
