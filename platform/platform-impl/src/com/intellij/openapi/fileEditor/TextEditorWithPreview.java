@@ -43,7 +43,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   private final String myName;
   public static final Key<Layout> DEFAULT_LAYOUT_FOR_FILE = Key.create("TextEditorWithPreview.DefaultLayout");
 
-  public TextEditorWithPreview(TextEditor editor, @NotNull FileEditor preview, @NotNull String editorName, @NotNull Layout defaultLayout) {
+  public TextEditorWithPreview(@NotNull TextEditor editor,
+                               @NotNull FileEditor preview,
+                               @NotNull String editorName,
+                               @NotNull Layout defaultLayout) {
     myEditor = editor;
     myPreview = preview;
     myName = editorName;
@@ -422,7 +425,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myLayout = myActionLayout;
-        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myName, Layout.SHOW_EDITOR_AND_PREVIEW.myName);
+        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myName, myDefaultLayout.myName);
         adjustEditorsVisibility();
       }
     }
