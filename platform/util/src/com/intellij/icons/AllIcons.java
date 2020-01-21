@@ -807,12 +807,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon SortedByUsage = load("/objectBrowser/sortedByUsage.svg");
     /** 16x16 */ public static final Icon VisibilitySort = load("/objectBrowser/visibilitySort.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon ShowEditorHighlighting = load("/actions/edit.svg");
-
   }
 
   public final static class Plugins {

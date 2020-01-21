@@ -784,7 +784,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/objectBrowser/compactEmptyPackages.png",
     "/objectBrowser/flattenModules.png",
     "/objectBrowser/flattenPackages.png",
-    "/objectBrowser/showEditorHighlighting.png",
     "/objectBrowser/showLibraryContents.png",
     "/objectBrowser/showMembers.png",
     "/objectBrowser/showModules.png",
