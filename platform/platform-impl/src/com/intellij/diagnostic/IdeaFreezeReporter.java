@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
@@ -305,6 +306,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     }
 
     if (!ContainerUtil.isEmpty(commonStack)) {
+      if (commonStack.stream().anyMatch(IdeaFreezeReporter::skippedFrame)) {
+        return null;
+      }
+
       String edtNote = allInEdt ? "in EDT " : "";
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
                        (finished ? "" : myAppClosing ? "IDE is closing. " : "IDE KILLED! ") +
@@ -329,6 +334,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                                     ContainerUtil.append(attachments, report).toArray(Attachment.EMPTY_ARRAY));
     }
     return null;
+  }
+
+  private static boolean skippedFrame(StackTraceElement e) {
+    return ApplicationImpl.class.getName().equals(e.getClassName()) && "runEdtProgressWriteAction".equals(e.getMethodName());
   }
 
   private static int countClassLoading(List<ThreadInfo> causeThreads) {
