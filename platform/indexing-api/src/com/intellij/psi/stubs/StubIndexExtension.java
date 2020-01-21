@@ -10,6 +10,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Definition of the index. Implement the
+ * {@link IStubElementType#indexStub(Stub, IndexSink)}) function
+ * in your language's Stub Elements to fill the index with data.
+ *
+ * @see IStubElementType#indexStub(Stub, IndexSink)}
+ */
 public interface StubIndexExtension<Key, Psi extends PsiElement> {
   ExtensionPointName<StubIndexExtension<?, ?>> EP_NAME = ExtensionPointName.create("com.intellij.stubIndex");
 
