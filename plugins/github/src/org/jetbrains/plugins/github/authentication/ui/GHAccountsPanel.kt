@@ -12,9 +12,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.*
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN
 import com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
@@ -75,7 +78,6 @@ internal class GHAccountsPanel(private val project: Project,
   init {
     addToCenter(ToolbarDecorator.createDecorator(accountList)
                   .disableUpDownActions()
-                  .setPanelBorder(IdeBorderFactory.createBorder(SideBorder.TOP or SideBorder.BOTTOM))
                   .setAddAction { addAccount() }
                   .addExtraAction(object : ToolbarDecorator.ElementActionButton("Set default",
                                                                                 AllIcons.Actions.Checked) {
