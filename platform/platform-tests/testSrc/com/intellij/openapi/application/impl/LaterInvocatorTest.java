@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.Application;
@@ -569,7 +569,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     GCWatcher watcher = GCWatcher.tracking(s1, s2);
     //noinspection UnusedAssignment
     s1 = s2 = null;
-    watcher.tryGc();
+    watcher.ensureCollected();
     assertNotEquals(state1, state2);
   }
 

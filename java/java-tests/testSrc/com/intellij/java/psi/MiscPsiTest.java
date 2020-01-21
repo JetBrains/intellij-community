@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -270,7 +270,7 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", text);
     PsiElement leaf = file.findElementAt(5);
 
-    GCWatcher.tracking(file.getViewProvider().getDocument()).tryGc();
+    GCWatcher.tracking(file.getViewProvider().getDocument()).ensureCollected();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> VfsUtil.saveText(file.getVirtualFile(), text + "   "));
@@ -287,7 +287,7 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assertNotNull(aClass.getNode());
     assertNotNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
-    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file)).tryGc();
+    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file)).ensureCollected();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
     aClass.add(JavaPsiFacade.getElementFactory(getProject()).createMethodFromText("void foo(){}", null));
@@ -303,7 +303,7 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
     PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{public static void foo() { }}");
 
     PsiClass aClass = file.getClasses()[0];
-    GCWatcher.tracking(aClass.getNode()).tryGc();
+    GCWatcher.tracking(aClass.getNode()).ensureCollected();
 
     PsiKeyword kw = assertInstanceOf(aClass.getMethods()[0].getModifierList().getFirstChild(), PsiKeyword.class);
     kw.delete();

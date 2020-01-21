@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.ide.highlighter.JavaFileType
@@ -55,7 +55,6 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
-import com.intellij.psi.stubs.ObjectStubBase
 import com.intellij.psi.stubs.ObjectStubTree
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
@@ -508,7 +507,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     //noinspection GroovyUnusedAssignment
     psiFile = null
-    GCWatcher.tracking(((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)).tryGc()
+    GCWatcher.tracking(((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)).ensureCollected()
     assert !((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)
 
     VfsUtil.saveText(vFile, "class Foo3 {}")
@@ -642,7 +641,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
 
-    GCWatcher.fromClearedRef(clazz).tryGc()
+    GCWatcher.fromClearedRef(clazz).ensureCollected()
 
     assertNull(findClass("Foo"))
 
@@ -656,7 +655,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo2")
 
-    GCWatcher.fromClearedRef(clazz).tryGc()
+    GCWatcher.fromClearedRef(clazz).ensureCollected()
 
     assertNull(findClass("Foo2"))
   }

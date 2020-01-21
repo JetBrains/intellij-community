@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -167,7 +167,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
 
-    GCWatcher.tracking(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1)).tryGc();
+    GCWatcher.tracking(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1)).ensureCollected();
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -254,7 +254,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir1");
 
-    GCWatcher.tracking(((FileManagerImpl)fileManager).getCachedDirectory(file)).tryGc();
+    GCWatcher.tracking(((FileManagerImpl)fileManager).getCachedDirectory(file)).ensureCollected();
 
     assertNull(((FileManagerImpl)fileManager).getCachedDirectory(file));
 

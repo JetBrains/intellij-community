@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -128,7 +128,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     LeakHunter.checkLeak(documentManager, DocumentImpl.class, doc -> id == System.identityHashCode(doc));
     LeakHunter.checkLeak(documentManager, PsiFileImpl.class, psiFile -> vFile.equals(psiFile.getVirtualFile()));
 
-    GCWatcher.tracking(documentManager.getCachedDocument(findFile(vFile))).tryGc();
+    GCWatcher.tracking(documentManager.getCachedDocument(findFile(vFile))).ensureCollected();
     assertNull(documentManager.getCachedDocument(findFile(vFile)));
 
     Document newDoc = documentManager.getDocument(findFile(vFile));
@@ -954,7 +954,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertTrue(getPsiDocumentManager().isUncommited(document));
       assertSameElements(getPsiDocumentManager().getUncommittedDocuments(), document);
       return GCWatcher.tracking(document);
-    })).get().tryGc();
+    })).get().ensureCollected();
 
     assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
   }

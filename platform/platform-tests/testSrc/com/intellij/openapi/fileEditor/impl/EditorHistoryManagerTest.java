@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -48,7 +48,7 @@ public class EditorHistoryManagerTest extends HeavyPlatformTestCase {
 
     String threadDumpBefore = ThreadDumper.dumpThreadsToString();
 
-    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(virtualFile)).tryGc();
+    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(virtualFile)).ensureCollected();
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document != null) {

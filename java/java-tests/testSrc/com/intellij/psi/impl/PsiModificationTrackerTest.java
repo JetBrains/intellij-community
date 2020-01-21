@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -205,7 +205,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertNull(facade.findClass("Foo", allScope));
     long count1 = getJavaTracker().getModificationCount();
 
-    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document)).tryGc();
+    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document)).ensureCollected();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Foo {}"));
@@ -242,7 +242,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void gcPsi(VirtualFile file) {
     PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
-    GCWatcher.tracking(psiManager.getFileManager().getCachedPsiFile(file)).tryGc();
+    GCWatcher.tracking(psiManager.getFileManager().getCachedPsiFile(file)).ensureCollected();
     assertNull(psiManager.getFileManager().getCachedPsiFile(file));
   }
 
@@ -262,7 +262,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void gcPsiAndDocument(VirtualFile file) {
     PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
-    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(file), psiManager.getFileManager().getCachedPsiFile(file)).tryGc();
+    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(file), psiManager.getFileManager().getCachedPsiFile(file)).ensureCollected();
     assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
     assertNull(psiManager.getFileManager().getCachedPsiFile(file));
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -126,7 +126,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     //noinspection UnusedAssignment
     document = null;
 
-    GCWatcher.tracking(myDocumentManager.getCachedDocument(file)).tryGc();
+    GCWatcher.tracking(myDocumentManager.getCachedDocument(file)).ensureCollected();
 
     document = myDocumentManager.getDocument(file);
     assertTrue(idCode != System.identityHashCode(document));
@@ -242,7 +242,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     myDocumentManager.saveAllDocuments();
 
-    GCWatcher.tracking(myDocumentManager.getDocument(file)).tryGc();
+    GCWatcher.tracking(myDocumentManager.getDocument(file)).ensureCollected();
 
     assertNull(myDocumentManager.getCachedDocument(file));
   }
@@ -632,7 +632,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
 
     for (int iteration = 0; iteration < 10; iteration++) {
-      GCWatcher.tracking(ContainerUtil.mapNotNull(physicalFiles, f -> FileDocumentManager.getInstance().getCachedDocument(f))).tryGc();
+      GCWatcher.tracking(ContainerUtil.mapNotNull(physicalFiles, f -> FileDocumentManager.getInstance().getCachedDocument(f))).ensureCollected();
 
       checkDocumentFiles(physicalFiles);
       checkDocumentFiles(createNonPhysicalFiles());
