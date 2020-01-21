@@ -382,8 +382,6 @@
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
-    <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
-
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
@@ -722,9 +720,7 @@
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
-        <group id="ShowLogGroup" internal="true">
-          <reference ref="ShowLog"/>
-        </group>
+        <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
         <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
