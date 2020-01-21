@@ -21,10 +21,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,7 +103,9 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static boolean isInspectionsEnabled(final boolean online, @NotNull Project project) {
+  public static boolean isInspectionsEnabled(final boolean online,
+                                             @NotNull Project project,
+                                             @NotNull Runnable rerunAction) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     if (online) {
       if (modules.length == 0) {
@@ -110,12 +113,23 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());
         return false;
       }
-      while (isBadSdk(project, modules)) {
+      if (isBadSdk(project, modules)) {
         Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.jdk.error.message"),
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());
-        final Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
-        if (projectJdk == null) return false;
-        DumbService.getInstance(project).completeJustSubmittedTasks();
+
+        SdkPopupFactory
+          .newBuilder()
+          .withProject(project)
+          .withSdkType(JavaSdk.getInstance())
+          .updateProjectSdkFromSelection()
+          .onSdkSelected(sdk -> {
+            DumbService.getInstance(project).completeJustSubmittedTasks();
+            rerunAction.run();
+          })
+          .buildPopup()
+          .showInFocusCenter();
+
+        return false;
       }
     }
     else {

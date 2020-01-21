@@ -62,6 +62,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
 
   private InspectionProfileImpl myExternalProfile;
+  private Runnable myRerunAction = () -> {};
 
   protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<>();
 
@@ -156,8 +157,12 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     myCurrentScope = currentScope;
   }
 
+  public void setRerunAction(@NotNull Runnable action) {
+    myRerunAction = action;
+  }
+
   public void doInspections(@NotNull final AnalysisScope scope) {
-    if (!GlobalInspectionContextUtil.canRunInspections(myProject, true)) return;
+    if (!GlobalInspectionContextUtil.canRunInspections(myProject, true, myRerunAction)) return;
 
     cleanup();
 

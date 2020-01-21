@@ -21,9 +21,19 @@ public class GlobalInspectionContextUtil {
     return refElement;
   }
 
+  /**
+   * @deprecated use {@link #canRunInspections(Project, boolean, Runnable)}
+   */
+  @Deprecated
   public static boolean canRunInspections(@NotNull Project project, final boolean online) {
+    return canRunInspections(project, online, () -> { });
+  }
+
+  public static boolean canRunInspections(@NotNull Project project,
+                                          final boolean online,
+                                          @NotNull Runnable rerunAction) {
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-      if (!factory.isProjectConfiguredToRunInspections(project, online)) {
+      if (!factory.isProjectConfiguredToRunInspections(project, online, rerunAction)) {
         return false;
       }
     }
