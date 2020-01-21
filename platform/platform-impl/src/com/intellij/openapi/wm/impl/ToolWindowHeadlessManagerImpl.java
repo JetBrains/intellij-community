@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -81,6 +81,12 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @Override
   public String @NotNull [] getToolWindowIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getToolWindowIdSet() {
+    return Collections.emptySet();
   }
 
   @Override
@@ -198,6 +204,12 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void remove() {
+    }
+
+    @Override
+    @NotNull
+    public String getId() {
+      return "";
     }
 
     @Override
@@ -345,6 +357,7 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return new JLabel();
     }
 
+    @NotNull
     @Override
     public ContentManager getContentManager() {
       return myContentManager;

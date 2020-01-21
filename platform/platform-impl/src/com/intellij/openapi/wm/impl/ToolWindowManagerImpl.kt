@@ -76,6 +76,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
+import kotlin.collections.HashSet
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -600,6 +601,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   override val toolWindowIds: Array<String>
     get() = idToEntry.keys.toTypedArray()
+
+  override val toolWindowIdSet: Set<String>
+    get() = HashSet(idToEntry.keys)
 
   override val activeToolWindowId: String?
     get() {

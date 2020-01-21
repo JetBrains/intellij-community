@@ -24,6 +24,10 @@ import java.awt.event.InputEvent;
 public interface ToolWindow extends BusyObject {
   Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
 
+  @NonNls
+  @NotNull
+  String getId();
+
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
@@ -165,6 +169,7 @@ public interface ToolWindow extends BusyObject {
   @NotNull
   JComponent getComponent();
 
+  @NotNull
   ContentManager getContentManager();
 
   void addContentManagerListener(@NotNull ContentManagerListener listener);

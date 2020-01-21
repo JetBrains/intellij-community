@@ -47,7 +47,7 @@ import kotlin.math.abs
 private val LOG = logger<ToolWindowImpl>()
 
 class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManagerImpl,
-                                          val id: String,
+                                          private val id: String,
                                           private val canCloseContent: Boolean,
                                           private val dumbAware: Boolean,
                                           component: JComponent?,
@@ -56,6 +56,8 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
                                           private var contentFactory: ToolWindowFactory?,
                                           private var isAvailable: Boolean = true) : ToolWindowEx {
   private var stripeTitle: String? = null
+
+  override fun getId() = id
 
   var windowInfo: WindowInfo = windowInfo
     private set
