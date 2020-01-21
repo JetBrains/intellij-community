@@ -363,7 +363,7 @@ public class CreateFromUsageUtils {
     final PsiDirectory targetDirectory;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Project project = manager.getProject();
-      String title = QuickFixBundle.message("create.class.title", StringUtil.capitalize(classKind.getDescription()));
+      String title = QuickFixBundle.message("create.class.title", StringUtil.capitalize(classKind.getDescriptionAccusative()));
 
       CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifierName, classKind, false, module){
         @Override

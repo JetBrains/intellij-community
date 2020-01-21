@@ -89,10 +89,10 @@ public class CreateClassDialog extends DialogWrapper {
     init();
 
     if (!myClassNameEditable) {
-      setTitle(CodeInsightBundle.message("dialog.create.class.name", StringUtil.capitalize(kind.getDescription()), targetClassName));
+      setTitle(CodeInsightBundle.message("dialog.create.class.name", StringUtil.capitalize(kind.getDescriptionAccusative()), targetClassName));
     }
     else {
-      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.label", kind.getDescription()));
+      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.label", kind.getDescriptionAccusative()));
       setTitle(title);
     }
 

@@ -245,7 +245,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   protected String getText(final String varName) {
-    return QuickFixBundle.message("create.class.from.usage.text", getKind().getDescription(), varName);
+    return QuickFixBundle.message("create.class.from.usage.text", getKind().getDescriptionAccusative(), varName);
   }
 
   protected static PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {

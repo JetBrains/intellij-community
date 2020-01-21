@@ -17,4 +17,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 public interface ClassKind {
   String getDescription();
+  
+  default String getDescriptionAccusative() {
+    return getDescription();
+  }
 }

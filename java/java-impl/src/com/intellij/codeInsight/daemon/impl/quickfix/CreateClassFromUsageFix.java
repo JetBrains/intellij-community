@@ -41,7 +41,7 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.class.from.usage.text", myKind.getDescription(), varName);
+    return QuickFixBundle.message("create.class.from.usage.text", myKind.getDescriptionAccusative(), varName);
   }
 
 

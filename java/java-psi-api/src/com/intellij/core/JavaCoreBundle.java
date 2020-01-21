@@ -30,4 +30,8 @@ public class JavaCoreBundle extends DynamicBundle {
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
+  
+  public static boolean contains(String key) {
+    return INSTANCE.containsKey(key);
+  }
 }

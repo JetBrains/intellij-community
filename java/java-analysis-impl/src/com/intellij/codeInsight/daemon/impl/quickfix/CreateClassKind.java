@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,21 +29,26 @@ import javax.swing.*;
  * @author ven
 */
 public enum CreateClassKind implements ClassKind {
-  CLASS     (QuickFixBundle.message("create.class")),
-  INTERFACE (QuickFixBundle.message("create.interface")),
-  ENUM      (QuickFixBundle.message("create.enum")),
-  ANNOTATION(QuickFixBundle.message("create.annotation")),
-  RECORD    (QuickFixBundle.message("create.record"));
+  CLASS(JavaElementKind.CLASS),
+  INTERFACE(JavaElementKind.INTERFACE),
+  ENUM(JavaElementKind.ENUM),
+  ANNOTATION(JavaElementKind.ANNOTATION),
+  RECORD(JavaElementKind.RECORD);
+  
+  private final JavaElementKind myKind;
 
-  private final String myDescription;
-
-  CreateClassKind(final String description) {
-    myDescription = description;
+  CreateClassKind(JavaElementKind kind) {
+    myKind = kind;
   }
 
   @Override
   public String getDescription() {
-    return myDescription;
+    return myKind.getNominativeName();
+  }
+
+  @Override
+  public String getDescriptionAccusative() {
+    return myKind.getAccusativeName();
   }
 
   @NotNull
