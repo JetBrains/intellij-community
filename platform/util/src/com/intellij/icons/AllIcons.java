@@ -484,18 +484,6 @@ public class AllIcons {
       /** 12x12 */ public static final Icon NextStep = load("/icons/ide/nextStep.svg");
       /** 12x12 */ public static final Icon NextStepInverted = load("/icons/ide/nextStepInverted.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Icons.Ide.NextStep */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 12x12 */ public static final Icon NextStepGrayed = load("/icons/ide/nextStep.svg");
-
-      /** @deprecated to be removed in IDEA 2020 */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon SpeedSearchPrompt = load("/icons/ide/speedSearchPrompt.png");
-
     }
 
   }

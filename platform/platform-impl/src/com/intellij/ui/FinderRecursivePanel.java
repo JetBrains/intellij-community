@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -727,9 +727,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         childrenLabel.setBackground(bg);
 
         final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground(true));
-        childrenLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
-                                                  : AllIcons.Icons.Ide.NextStep
-                                         : AllIcons.Icons.Ide.NextStepGrayed);
+        childrenLabel.setIcon(isDark ? AllIcons.Icons.Ide.NextStepInverted
+                                     : AllIcons.Icons.Ide.NextStep);
         result.add(this, BorderLayout.CENTER);
         result.add(childrenLabel, BorderLayout.EAST);
         return result;
