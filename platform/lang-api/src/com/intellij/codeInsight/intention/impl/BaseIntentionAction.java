@@ -45,6 +45,6 @@ public abstract class BaseIntentionAction implements IntentionAction {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     PsiFile containingFile = element.getContainingFile();
     return element.getManager().isInProject(element)
-           || ScratchFileService.isInScratchRoot(virtualFile)
+           || ScratchFileService.findRootType(virtualFile) != null
            || (containingFile != null && containingFile.getViewProvider().getVirtualFile().getFileSystem() instanceof NonPhysicalFileSystem);
   }}
