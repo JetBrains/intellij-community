@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.icons.AllIcons;
@@ -315,7 +315,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class MergeAction extends AnAction {
     private MergeAction() {
-      super("Merge", "", AllIcons.Modules.Merge); // todo
+      super("Merge", "", AllIcons.Vcs.Merge); // todo
     }
 
     @Override

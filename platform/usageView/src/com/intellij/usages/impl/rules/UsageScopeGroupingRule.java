@@ -48,7 +48,7 @@ public class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implem
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
     @Override
     public Icon getIcon(boolean isOpen) {
-      return AllIcons.Modules.TestSourceFolder;
+      return AllIcons.Nodes.TestSourceFolder;
     }
 
     @Override

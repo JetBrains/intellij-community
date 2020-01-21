@@ -35,7 +35,7 @@
               icon="AllIcons.Actions.Collapseall"
               use-shortcut-of="CollapseAll"/>
       <action id="ExternalSystem.SelectProjectDataToImport" class="com.intellij.openapi.externalSystem.action.ExternalSystemSelectProjectDataToImportAction"
-              icon="AllIcons.Modules.ModulesNode"/>
+              icon="AllIcons.Nodes.ModuleGroup"/>
 
       <action id="ExternalSystem.RunTask"
               class="com.intellij.openapi.externalSystem.action.task.RunExternalSystemTaskAction"
