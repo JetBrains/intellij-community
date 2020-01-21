@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -1036,7 +1036,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     private final boolean myImport;
 
     AddModuleAction(boolean anImport) {
-      super(ProjectBundle.message("add.new.module.text.full"), null, AllIcons.Actions.Module);
+      super(ProjectBundle.message("add.new.module.text.full"), null, AllIcons.Nodes.Module);
       myImport = anImport;
     }
 
