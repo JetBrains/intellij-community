@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.Executor;
@@ -21,8 +21,14 @@ import java.util.List;
 public interface RunContentManager {
   Topic<RunContentWithExecutorListener> TOPIC = Topic.create("Run Content", RunContentWithExecutorListener.class);
 
+  @NotNull
   static RunContentManager getInstance(@NotNull Project project) {
     return project.getService(RunContentManager.class);
+  }
+
+  @Nullable
+  static RunContentManager getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(RunContentManager.class);
   }
 
   /**
