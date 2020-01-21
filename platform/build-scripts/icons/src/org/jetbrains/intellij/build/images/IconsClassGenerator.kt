@@ -363,7 +363,9 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
     }
     else {
       imageFile = sourceRootFile.resolve(deprecation.replacement.removePrefix("/").removePrefix(File.separator))
-      assert(isIcon(imageFile)) { "Overriding icon should be valid: $iconName - $imageFile" }
+      assert(isIcon(imageFile)) {
+        "Invalid deprecation replacement '${deprecation.replacement}': $imageFile is not an icon"
+      }
     }
 
     val size = if (imageFile.exists()) imageSize(imageFile) else null
