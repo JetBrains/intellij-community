@@ -47,8 +47,6 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.layout.migLayout.MigLayoutBuilderKt;
-import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -58,7 +56,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
-import net.miginfocom.layout.CC;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -514,10 +511,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       collectAllActions(group, quickStart);
 
-      MigLayout layout = new MigLayout(MigLayoutBuilderKt.createLayoutConstraints(UIUtil.DEFAULT_HGAP * 2, UIUtil.DEFAULT_VGAP * 4).flowY().fillX());
-      JPanel panel = new JPanel(layout);
+      GridBag gc = new GridBag();
+      JPanel panel = new JPanel(new GridBagLayout());
       panel.setOpaque(false);
-      panel.add(Box.createHorizontalGlue(), new CC().wrap().pushX());
 
       myTouchbarActions.removeAll();
       for (AnAction action : group.getChildren(null)) {
@@ -541,17 +537,21 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
           JActionLinkPanel button = new JActionLinkPanel(link);
+          button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
             TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
-          panel.add(button);
+
+          panel.add(Box.createHorizontalGlue(), gc.nextLine().next().fillCellHorizontally());
+          panel.add(button, gc.next().anchor(GridBagConstraints.LINE_START));
+          panel.add(Box.createHorizontalGlue(), gc.next().fillCellHorizontally());
+
           myTouchbarActions.add(action);
         }
       }
 
-      panel.add(Box.createHorizontalGlue(), new CC().newline().pushX());
       return panel;
     }
 
