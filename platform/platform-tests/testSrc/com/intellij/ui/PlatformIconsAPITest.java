@@ -516,7 +516,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/ide/macro/recording_2.png",
     "/ide/macro/recording_3.png",
     "/ide/macro/recording_4.png",
-    "/ide/macro/recording_stop.png",
     "/ide/noNotifications13.png",
     "/ide/notification/close.png",
     "/ide/notification/closeHover.png",

@@ -534,12 +534,6 @@ public class AllIcons {
       /** 16x16 */ public static final Icon Recording_3 = load("/ide/macro/recording_3.svg");
       /** 16x16 */ public static final Icon Recording_4 = load("/ide/macro/recording_4.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Suspend */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon Recording_stop = load("/actions/suspend.svg");
-
     }
     /** 5x15 */ public static final Icon NavBarSeparator = load("/ide/NavBarSeparator.svg");
 
