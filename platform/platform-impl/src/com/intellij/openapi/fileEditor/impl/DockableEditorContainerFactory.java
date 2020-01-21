@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.project.Project;
@@ -33,7 +33,7 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
   }
 
   private DockContainer createContainer(boolean loadingState) {
-    final Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
+    Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
     EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, false) {
       @Override
       protected void afterFileClosed(@NotNull VirtualFile file) {
@@ -71,9 +71,5 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
     DockableEditorTabbedContainer container = (DockableEditorTabbedContainer)createContainer(true);
     container.getSplitters().readExternal(element.getChild("state"));
     return container;
-  }
-
-  @Override
-  public void dispose() {
   }
 }

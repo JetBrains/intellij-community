@@ -228,8 +228,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     myContentFactory = new DockableEditorContainerFactory(myProject, this);
-    myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory);
-    Disposer.register(this, myContentFactory);
+    myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory, this);
   }
 
   public static boolean isDumbAware(@NotNull FileEditor editor) {

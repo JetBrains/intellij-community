@@ -42,7 +42,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.*;
 
 @State(name = "DockManager", storages = {
@@ -76,7 +75,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   @Override
-  public void register(final DockContainer container) {
+  public void register(@NotNull DockContainer container) {
     myContainers.add(container);
     Disposer.register(container, new Disposable() {
       @Override
@@ -87,14 +86,17 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   @Override
-  public void register(final String id, DockContainerFactory factory) {
+  public void register(@NotNull String id, @NotNull DockContainerFactory factory, @NotNull Disposable parentDisposable) {
     myFactories.put(id, factory);
-    Disposer.register(factory, new Disposable() {
-      @Override
-      public void dispose() {
-        myFactories.remove(id);
-      }
-    });
+
+    if (parentDisposable != myProject) {
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          myFactories.remove(id);
+        }
+      });
+    }
 
     readStateFor(id);
   }
@@ -131,7 +133,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
   @Override
   public DockContainer getContainerFor(Component c) {
-    if (c == null) return null;
+    if (c == null) {
+      return null;
+    }
 
     for (DockContainer eachContainer : myContainers) {
       if (SwingUtilities.isDescendingFrom(c, eachContainer.getContainerComponent())) {
@@ -594,30 +598,31 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     myLoadedState = state;
   }
 
-  private void readStateFor(String type) {
-    if (myLoadedState == null) return;
+  private void readStateFor(@NotNull String type) {
+    if (myLoadedState == null) {
+      return;
+    }
 
-    List windows = myLoadedState.getChildren("window");
-    for (Object window1 : windows) {
-      Element eachWindow = (Element)window1;
-      if (eachWindow == null) continue;
-
-      String eachId = eachWindow.getAttributeValue("id");
-
-      Element eachContent = eachWindow.getChild("content");
-      if (eachContent == null) continue;
+    for (Element windowElement : myLoadedState.getChildren("window")) {
+      Element eachContent = windowElement.getChild("content");
+      if (eachContent == null) {
+        continue;
+      }
 
       String eachType = eachContent.getAttributeValue("type");
-      if (eachType == null || !type.equals(eachType) || !myFactories.containsKey(eachType)) continue;
+      if (eachType == null || !type.equals(eachType) || !myFactories.containsKey(eachType)) {
+        continue;
+      }
 
       DockContainerFactory factory = myFactories.get(eachType);
-      if (!(factory instanceof DockContainerFactory.Persistent)) continue;
+      if (!(factory instanceof DockContainerFactory.Persistent)) {
+        continue;
+      }
 
-      DockContainerFactory.Persistent persistentFactory = (DockContainerFactory.Persistent)factory;
-      DockContainer container = persistentFactory.loadContainerFrom(eachContent);
+      DockContainer container = ((DockContainerFactory.Persistent)factory).loadContainerFrom(eachContent);
       register(container);
 
-      final DockWindow window = createWindowFor(eachId, container);
+      DockWindow window = createWindowFor(windowElement.getAttributeValue("id"), container);
       UIUtil.invokeLaterIfNeeded(() -> window.show());
     }
   }
