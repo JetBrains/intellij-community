@@ -1,30 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UtilityClassWithPublicConstructor")
 public final class ContentManagerWatcher {
-  private final ToolWindow myToolWindow;
-  private final ContentManager myContentManager;
-
+  /**
+   * @deprecated Use {@link #watchContentManager}
+   */
+  @Deprecated
   public ContentManagerWatcher(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
-    myToolWindow = toolWindow;
-    myContentManager = contentManager;
-    myToolWindow.setAvailable(contentManager.getContentCount() > 0, null);
+    watchContentManager(toolWindow, contentManager);
+  }
 
-    contentManager.addContentManagerListener(new ContentManagerAdapter() {
+  public static void watchContentManager(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
+    toolWindow.setAvailable(contentManager.getContentCount() > 0, null);
+
+    contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentAdded(@NotNull ContentManagerEvent e) {
-        myToolWindow.setAvailable(true, null);
+        toolWindow.setAvailable(true, null);
       }
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent e) {
-        myToolWindow.setAvailable(myContentManager.getContentCount() > 0, null);
+        toolWindow.setAvailable(contentManager.getContentCount() > 0, null);
       }
     });
   }

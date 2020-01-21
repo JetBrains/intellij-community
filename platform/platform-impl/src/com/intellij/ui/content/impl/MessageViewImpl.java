@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.icons.AllIcons;
@@ -27,7 +27,7 @@ public class MessageViewImpl implements MessageView {
     final Runnable runnable = () -> {
       myToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
       myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowMessages);
-      new ContentManagerWatcher(myToolWindow, getContentManager());
+      ContentManagerWatcher.watchContentManager(myToolWindow, getContentManager());
       for (Runnable postponedRunnable : myPostponedRunnables) {
         postponedRunnable.run();
       }

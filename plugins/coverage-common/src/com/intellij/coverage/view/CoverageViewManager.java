@@ -25,7 +25,7 @@ import java.util.Map;
 @State(name = "CoverageViewManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 })
-public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
+public final class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
   public static final String TOOLWINDOW_ID = "Coverage";
   private final Project myProject;
@@ -41,7 +41,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     toolWindow.setHelpId(CoverageView.HELP_ID);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCoverage);
     myContentManager = toolWindow.getContentManager();
-    new ContentManagerWatcher(toolWindow, myContentManager);
+    ContentManagerWatcher.watchContentManager(toolWindow, myContentManager);
   }
 
   @Override

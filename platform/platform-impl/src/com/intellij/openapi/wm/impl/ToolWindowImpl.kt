@@ -309,7 +309,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun installWatcher(contentManager: ContentManager) {
-    ContentManagerWatcher(this, contentManager)
+    ContentManagerWatcher.watchContentManager(this, contentManager)
   }
 
   override fun isAvailable() = isAvailable
