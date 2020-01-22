@@ -759,16 +759,7 @@ public class TrackingRunner extends DataFlowRunner {
   }
 
   private static String getElementTitle(PsiElement target) {
-    if (target instanceof PsiField) {
-      return "field";
-    }
-    if (target instanceof PsiParameter) {
-      return "parameter";
-    }
-    if (target instanceof PsiVariable) {
-      return "variable";
-    }
-    return "element";
+    return JavaElementKind.fromElement(target).subject();
   }
 
   private CauseItem @NotNull [] findRelationCause(RelationType relationType, MemoryStateChange leftChange, MemoryStateChange rightChange) {

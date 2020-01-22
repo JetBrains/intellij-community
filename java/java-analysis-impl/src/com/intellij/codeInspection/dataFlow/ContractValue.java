@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -179,7 +180,7 @@ public abstract class ContractValue {
     public String getPresentationText(PsiMethod method) {
       PsiParameter[] params = method.getParameterList().getParameters();
       if (myIndex == 0 && params.length == 1) {
-        return "parameter";
+        return JavaElementKind.PARAMETER.subject();
       }
       if (myIndex < params.length) {
         return params[myIndex].getName();
