@@ -11,13 +11,13 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -422,7 +422,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       return;
     }
     myApplianceManager.documentChanged(event, myAfterLineEndInlayUpdated);
-    if (((DocumentEventImpl)event).isPreMoveInsertion()) {
+    if (DocumentEventUtil.isMoveInsertion(event)) {
       int dstOffset = event.getOffset();
       int srcOffset = event.getMoveOffset();
       int textLength = event.getDocument().getTextLength();

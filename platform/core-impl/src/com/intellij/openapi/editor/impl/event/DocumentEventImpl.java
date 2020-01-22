@@ -111,27 +111,8 @@ public class DocumentEventImpl extends DocumentEvent {
     return myInitialOldLength;
   }
 
-  public boolean isPreMoveInsertion() {
-    return myOldLength == 0 && isMoveUpdate();
-  }
-
-  public boolean isPostMoveDeletion() {
-    return myNewLength == 0 && isMoveUpdate();
-  }
-
-  public boolean isMoveUpdate() {
-    return myMoveOffset != myOffset;
-  }
-
   @Override
   public int getMoveOffset() {
-    return myMoveOffset;
-  }
-
-  public int getMoveOffsetBeforeChanged() {
-    if (myMoveOffset > myOffset) {
-      return myMoveOffset + myOldLength - myNewLength;
-    }
     return myMoveOffset;
   }
 

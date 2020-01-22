@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
@@ -96,7 +96,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       }
       myInlaysAtCaret = null;
     }
-    if (((DocumentEventImpl)event).isPreMoveInsertion()) {
+    if (DocumentEventUtil.isMoveInsertion(event)) {
       for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
         notifyRemoved(inlay);
       }

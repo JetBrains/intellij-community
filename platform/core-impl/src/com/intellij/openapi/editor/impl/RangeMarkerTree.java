@@ -7,8 +7,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,7 +154,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       l.writeLock().lock();
       if (size() != 0) {
         updateMarkersOnChange(e);
-        if (((DocumentEventImpl)e).isPreMoveInsertion()) {
+        if (DocumentEventUtil.isMoveInsertion(e)) {
           reTargetMarkersOnChange(e);
         }
         IntervalNode<T> root = getRoot();

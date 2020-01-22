@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.DocumentEventUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ public class ManualRangeMarker implements Segment {
     if (range == null) return null;
 
     int delta = 0;
-    if (((DocumentEventImpl)event).isPreMoveInsertion()) {
+    if (DocumentEventUtil.isMoveInsertion(event)) {
       int srcOffset = event.getMoveOffset();
       if (srcOffset <= range.getStartOffset() && range.getEndOffset() <= srcOffset + event.getNewLength()) {
         delta = event.getOffset() - srcOffset;

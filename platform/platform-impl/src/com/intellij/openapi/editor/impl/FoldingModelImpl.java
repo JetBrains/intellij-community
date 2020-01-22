@@ -14,12 +14,12 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -513,7 +513,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   public void documentChanged(@NotNull DocumentEvent event) {
     try {
       if (event.getDocument().isInBulkUpdate()) return;
-      if (((DocumentEventImpl)event).isPreMoveInsertion()) {
+      if (DocumentEventUtil.isMoveInsertion(event)) {
         myFoldTree.rebuild();
       }
       else {
