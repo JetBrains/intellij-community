@@ -232,7 +232,9 @@ object DynamicPlugins {
                                  ?: return false
 
     try {
-      saveDocumentsAndProjectsAndApp(true)
+      if (!allowLoadUnloadSynchronously(pluginDescriptor)) {
+        saveDocumentsAndProjectsAndApp(true)
+      }
       application.runWriteAction {
         try {
           application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, isUpdate)
