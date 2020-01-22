@@ -1,8 +1,12 @@
 package circlet.vcs.clone
 
+import circlet.client.*
 import circlet.client.api.*
 import circlet.platform.api.*
 import circlet.platform.client.*
+import circlet.settings.*
+import circlet.settings.CloneType.*
+import circlet.vcs.*
 import circlet.workspaces.*
 import com.intellij.util.ui.cloneDialog.*
 import libraries.coroutines.extra.*
@@ -10,13 +14,15 @@ import runtime.*
 import runtime.reactive.*
 import runtime.utils.*
 
-class CircletCloneComponentViewModel(
+internal class CircletCloneComponentViewModel(
     override val lifetime: Lifetime,
-    private val workspace: Workspace,
-    private val projectService: Projects,
-    private val repositoryService: RepositoryService,
-    private val starService: Star
+    workspace: Workspace
 ) : Lifetimed {
+    private val projectService: Projects = workspace.client.pr
+    private val repositoryService: RepositoryService = workspace.client.repoService
+    private val starService: Star = workspace.client.star
+    private val td: TeamDirectory = workspace.client.td
+    private val ssh: SshKeys = workspace.client.ssh
 
     val isLoading: MutableProperty<Boolean> = Property.createMutable(false)
 
@@ -69,6 +75,39 @@ class CircletCloneComponentViewModel(
         projectService.projectsBatch(batch, "", "")
     }
 
+    val cloneType: MutableProperty<CloneType> = Property.createMutable(CircletSettings.getInstance().cloneType)
+
+    val selectedUrl: MutableProperty<String?> = Property.createMutable(null)
+
+    val circletHttpPasswordState: MutableProperty<CircletHttpPasswordState> = lifetime.mapInit<CloneType, CircletHttpPasswordState>(cloneType, CircletHttpPasswordState.NotChecked) { cloneType ->
+        if (cloneType == SSH) return@mapInit CircletHttpPasswordState.NotChecked
+
+        td.getVcsPassword(me.value.id).let {
+            if (it == null) CircletHttpPasswordState.NotSet else CircletHttpPasswordState.Set(it)
+        }
+    } as MutableProperty<CircletHttpPasswordState>
+
+    val circletKeysState: MutableProperty<CircletKeysState> = run {
+        val property: MutableProperty<CircletKeysState> = mutableProperty(CircletKeysState.NotChecked)
+        UiDispatch.dispatchInterval(1000, lifetime) {
+            launch(lifetime, Ui) {
+                property.value = loadSshState(cloneType.value)
+            }
+        }
+        property
+    }
+
+    private suspend fun loadSshState(cloneType: CloneType): CircletKeysState {
+        if (cloneType == HTTP) return CircletKeysState.NotChecked
+
+        return ssh.sshKeys(me.value.id).let {
+            if (it.isNullOrEmpty()) CircletKeysState.NotSet else CircletKeysState.Set(it)
+        }
+    }
+
+    val readyToClone: Property<Boolean> = lifetime.mapInit(selectedUrl, circletHttpPasswordState, circletKeysState, false) { url, http, ssh ->
+        url != null && (http is CircletHttpPasswordState.Set || ssh is CircletKeysState.Set)
+    }
 }
 
 data class CircletCloneListItem(
