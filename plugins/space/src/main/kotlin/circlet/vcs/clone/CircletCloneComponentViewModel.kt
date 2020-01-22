@@ -12,6 +12,7 @@ import com.intellij.util.ui.cloneDialog.*
 import libraries.coroutines.extra.*
 import runtime.*
 import runtime.reactive.*
+import runtime.utils.*
 
 internal class CircletCloneComponentViewModel(
     override val lifetime: Lifetime,
@@ -27,46 +28,51 @@ internal class CircletCloneComponentViewModel(
 
     val me: MutableProperty<TD_MemberProfile> = workspace.me
 
-    val repos = xTransformedPagedListOnFlux<PR_Project, CircletCloneListItem?>(
+    val repos = xTransformedPagedListOnFlux<Ref<PR_Project>, CircletCloneListItem?>(
         client = workspace.client,
         batchSize = 10,
         keyFn = { it.id },
-        result = { allProjects ->
+        result = { allProjectRefs ->
+            val allProjectsWithRepos = workspace.client.arena.resolveRefsOrFetch {
+                allProjectRefs.map { it to  it.extensionRef(ProjectReposRecord::class) }
+            }
+            val starredProjectIds = starService.starredProjects().mapToSet(Ref<PR_Project>::id)
 
-            val projectsWithRepos = repositoryService.getRepositories(allProjects.map { project -> project.key }).groupBy { it.project.key }
-
-            val starredProjectKeys = starService.starredProjects().resolveAll().map(PR_Project::key).toHashSet()
-
-            val result = mutableListOf<CircletCloneListItem?>()
-            allProjects.forEach { project ->
-                val projectRepos = projectsWithRepos[project.key]
-                if (projectRepos != null) {
-                    val isStarred = starredProjectKeys.contains(project.key)
-                    projectRepos.forEach { projectRepo ->
-                        projectRepo.repos.forEach { repo ->
+            val items = allProjectsWithRepos
+                .asSequence()
+                .map { (projectRef, reposRef) ->
+                    object {
+                        val project = projectRef.resolve()
+                        val repos = reposRef.resolve().repos
+                        val isStarred = projectRef.id in starredProjectIds
+                    }
+                }
+                .flatMap {
+                    it.repos
+                        .asSequence()
+                        .map { repo ->
                             val detailsProperty = mutableProperty<RepoDetails?>(null)
-                            val item = CircletCloneListItem(project, isStarred, repo, detailsProperty)
-                            item.visible.forEach(lifetime) {
-                                item.visible.forEach(lifetime) {
-                                    launch(lifetime, Ui) {
-                                        if (it) {
-                                            detailsProperty.value = repositoryService.repositoryDetails(project.key, repo.name)
-                                        }
+                            val item = CircletCloneListItem(it.project, it.isStarred, repo, detailsProperty)
+                            item.visible.forEach(lifetime) { visible ->
+                                launch(lifetime, Ui) {
+                                    if (visible) {
+                                        detailsProperty.value = repositoryService.repositoryDetails(it.project.key, repo.name)
                                     }
                                 }
                             }
-                            result.add(item)
+                            item
                         }
-                    }
+                }
+
+            mutableListOf<CircletCloneListItem?>().apply {
+                addAll(items)
+                if (size < allProjectRefs.size) {
+                    add(null)
                 }
             }
-            while (result.size < allProjects.size) {
-                result.add(null)
-            }
-            result
         }
     ) { batch ->
-        projectService.projectsBatch(batch, "", "").map { it.resolve() }
+        projectService.projectsBatch(batch, "", "")
     }
 
     val cloneType: MutableProperty<CloneType> = Property.createMutable(CircletSettings.getInstance().cloneType)
