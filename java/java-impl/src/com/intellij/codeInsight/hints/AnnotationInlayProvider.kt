@@ -99,17 +99,22 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
       private fun annotationPresentation(annotation: PsiAnnotation): InlayPresentation = with(factory) {
         val nameReferenceElement = annotation.nameReferenceElement
         val parameterList = annotation.parameterList
-        roundWithBackground(seq(
+
+        val presentations = mutableListOf(
           smallText("@"),
-          psiSingleReference(smallText(nameReferenceElement?.referenceName ?: "")) { nameReferenceElement?.resolve() },
-          parametersPresentation(parameterList)
-        ))
+          psiSingleReference(smallText(nameReferenceElement?.referenceName ?: "")) { nameReferenceElement?.resolve() }
+        )
+
+        parametersPresentation(parameterList)?.let {
+          presentations.add(it)
+        }
+        roundWithBackground(SequencePresentation(presentations))
       }
 
       private fun parametersPresentation(parameterList: PsiAnnotationParameterList) = with(factory) {
         val attributes = parameterList.attributes
         when {
-          attributes.isEmpty() -> smallText("()")
+          attributes.isEmpty() -> null
           else -> insideParametersPresentation(attributes, collapsed = parameterList.textLength > 60)
         }
       }
