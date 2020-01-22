@@ -28,7 +28,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -106,9 +105,8 @@ public final class ConfigImportHelper {
       if (Files.isRegularFile(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()))) {
         String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
         String message = ApplicationBundle.message("restart.import.settings");
-        String[] options = {ApplicationBundle.message("restart.import.now"), ApplicationBundle.message("restart.import.later")};
-        if (JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), message, title, JOptionPane.YES_NO_OPTION,
-                                         JOptionPane.INFORMATION_MESSAGE, Messages.getInformationIcon(), options, null) == 0) {
+        String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
+        if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
           if (Restarter.isSupported()) {
             try {
               Restarter.scheduleRestart(false);
