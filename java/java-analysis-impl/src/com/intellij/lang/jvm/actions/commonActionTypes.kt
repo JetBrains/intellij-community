@@ -7,31 +7,31 @@ import com.intellij.psi.util.JavaElementKind
 
 object CreateMethodActionGroup : JvmActionGroup {
   override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
-    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.METHOD.accusative(), data?.entityName!!)
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.METHOD.`object`(), data?.entityName!!)
   }
 }
 
 object CreateAbstractMethodActionGroup : JvmActionGroup {
   override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
-    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ABSTRACT_METHOD.accusative(), data?.entityName!!)
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ABSTRACT_METHOD.`object`(), data?.entityName!!)
   }
 }
 
 object CreateFieldActionGroup : JvmActionGroup {
   override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
-    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.accusative(), data?.entityName!!)
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.`object`(), data?.entityName!!)
   }
 }
 
 object CreateConstantActionGroup : JvmActionGroup {
   override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
-    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.CONSTANT.accusative(), data?.entityName!!)
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.CONSTANT.`object`(), data?.entityName!!)
   }
 }
 
 object CreateEnumConstantActionGroup : JvmActionGroup {
   override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
-    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ENUM_CONSTANT.accusative(), data?.entityName!!)
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ENUM_CONSTANT.`object`(), data?.entityName!!)
   }
 }
 

@@ -111,7 +111,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
   @NotNull
   public String getText() {
     return CommonQuickFixBundle.message("fix.create.title.x",
-                                        (myClassKind == null ? JavaElementKind.PACKAGE : myClassKind.getElementKind()).accusative(),
+                                        (myClassKind == null ? JavaElementKind.PACKAGE : myClassKind.getElementKind()).object(),
                                         myPresentation);
   }
 

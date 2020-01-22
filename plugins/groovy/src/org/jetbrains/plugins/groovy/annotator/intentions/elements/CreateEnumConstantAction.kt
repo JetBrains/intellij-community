@@ -27,7 +27,7 @@ internal class CreateEnumConstantAction(
 
   override fun getActionGroup(): JvmActionGroup = CreateEnumConstantActionGroup
 
-  override fun getText(): String = CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ENUM_CONSTANT.accusative(), request.fieldName)
+  override fun getText(): String = CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ENUM_CONSTANT.`object`(), request.fieldName)
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     val name = request.fieldName

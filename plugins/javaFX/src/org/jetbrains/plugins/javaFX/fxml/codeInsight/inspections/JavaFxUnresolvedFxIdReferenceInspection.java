@@ -101,7 +101,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
     @NotNull
     @Override
     public String getName() {
-      return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.accusative(), myCanonicalName);
+      return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.object(), myCanonicalName);
     }
 
     @NotNull

@@ -44,7 +44,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected String getText(String varName) {
-    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.accusative(), varName);
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.object(), varName);
   }
 
   protected boolean createConstantField() {

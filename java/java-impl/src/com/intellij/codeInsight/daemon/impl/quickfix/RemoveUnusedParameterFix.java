@@ -31,13 +31,13 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
   @NotNull
   @Override
   public String getText() {
-    return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.PARAMETER.accusative(), myName);
+    return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.PARAMETER.object(), myName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("remove.unused.element.family", JavaElementKind.PARAMETER.accusative());
+    return QuickFixBundle.message("remove.unused.element.family", JavaElementKind.PARAMETER.object());
   }
 
   @Override

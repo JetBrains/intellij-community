@@ -20,6 +20,7 @@ public enum JavaElementKind {
   CONSTRUCTOR,
   ENUM,
   ENUM_CONSTANT,
+  EXPRESSION,
   FIELD,
   INITIALIZER,
   INTERFACE,
@@ -31,22 +32,23 @@ public enum JavaElementKind {
   PATTERN_VARIABLE,
   RECORD,
   RECORD_COMPONENT,
+  STATEMENT,
   UNKNOWN,
   VARIABLE;
 
   /**
-   * @return human-readable name of the item in nominative case
+   * @return human-readable name of the item having the subject role in the sentence (nominative case)
    */
   @Nls
-  public @NotNull String nominative() {
+  public @NotNull String subject() {
     return JavaCoreBundle.message("element." + name().toLowerCase(Locale.ROOT), 0);
   }
 
   /**
-   * @return human-readable name of the item in accusative case
+   * @return human-readable name of the item having the subject role in the sentence (accusative case)
    */
   @Nls
-  public @NotNull String accusative() {
+  public @NotNull String object() {
     return JavaCoreBundle.message("element." + name().toLowerCase(Locale.ROOT), 1);
   }
 
@@ -109,6 +111,12 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiClassInitializer) {
       return INITIALIZER;
+    }
+    if (element instanceof PsiStatement) {
+      return STATEMENT;
+    }
+    if (element instanceof PsiExpression) {
+      return EXPRESSION;
     }
     return UNKNOWN;
   }

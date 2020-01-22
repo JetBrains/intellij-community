@@ -1104,10 +1104,10 @@ public class TrackingRunner extends DataFlowRunner {
             // Do not use inference inside method itself
             return null;
           }
-          message = memberKind.nominative() + " '" + name + "' was inferred to be '" + nullability.getPresentationName() + "'";
+          message = memberKind.subject() + " '" + name + "' was inferred to be '" + nullability.getPresentationName() + "'";
         }
         else if (info.isExternal()) {
-          message = memberKind.nominative() + " '" + name + "' is externally annotated as '" + nullability.getPresentationName() + "'";
+          message = memberKind.subject() + " '" + name + "' is externally annotated as '" + nullability.getPresentationName() + "'";
         }
         else if (info.isContainer()) {
           PsiAnnotationOwner annoOwner = info.getAnnotation().getOwner();
@@ -1129,10 +1129,10 @@ public class TrackingRunner extends DataFlowRunner {
             details = " from " + ((PsiNamedElement)annoOwner).getName();
           }
           message =
-            memberKind.nominative() + " '" + name + "' inherits " + details + ", thus '" + nullability.getPresentationName() + "'";
+            memberKind.subject() + " '" + name + "' inherits " + details + ", thus '" + nullability.getPresentationName() + "'";
         }
         else {
-          message = memberKind.nominative() + " '" + name + "' is annotated as '" + nullability.getPresentationName() + "'";
+          message = memberKind.subject() + " '" + name + "' is annotated as '" + nullability.getPresentationName() + "'";
         }
         if (info.getAnnotation().getContainingFile() == anchor.getContainingFile()) {
           anchor = info.getAnnotation();

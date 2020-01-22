@@ -68,7 +68,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     @Override
     public String getText(String varName) {
-    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.PARAMETER.accusative(), varName);
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.PARAMETER.object(), varName);
   }
 
   @Nullable

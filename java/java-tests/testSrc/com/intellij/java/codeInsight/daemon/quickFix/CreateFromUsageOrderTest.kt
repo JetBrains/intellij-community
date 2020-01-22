@@ -19,7 +19,7 @@ class CreateFromUsageOrderTest : LightJavaCodeInsightFixtureTestCase() {
   fun `test constant first when uppercase`() {
     myFixture.configureByText("_.java", "class A { void usage() { foo(<caret>CCCC); } }")
     val action = myFixture.availableIntentions.first()
-    assertEquals(message("create.constant.from.usage.full.text", "CCCC", "A"), action.text)
+    assertEquals(message("create.element.in.class", JavaElementKind.CONSTANT.`object`(), "CCCC", "A"), action.text)
   }
 
   fun `test local variable first by prefix`() {
@@ -36,7 +36,7 @@ class CreateFromUsageOrderTest : LightJavaCodeInsightFixtureTestCase() {
       settings.PARAMETER_NAME_PREFIX = "ppp"
       myFixture.configureByText("_.java", "class A { void usage() { foo(<caret>pppbar); } }")
       val action = myFixture.availableIntentions.first()
-      assertEquals(CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.PARAMETER.accusative(), "pppbar"), action.text)
+      assertEquals(CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.PARAMETER.`object`(), "pppbar"), action.text)
     }
   }
 
@@ -45,7 +45,7 @@ class CreateFromUsageOrderTest : LightJavaCodeInsightFixtureTestCase() {
       settings.FIELD_NAME_PREFIX = "fff"
       myFixture.configureByText("_.java", "class A { void usage() { foo(<caret>fffbar); } }")
       val action = myFixture.availableIntentions.first()
-      assertEquals(message("create.field.from.usage.full.text", "fffbar", "A"), action.text)
+      assertEquals(message("create.element.in.class", JavaElementKind.FIELD.`object`(), "fffbar", "A"), action.text)
     }
   }
 

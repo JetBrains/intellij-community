@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.codeInsight;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.project.Project;
@@ -84,7 +83,7 @@ public class CreateClassFixTest extends UsefulTestCase {
     EdtTestUtil.runInEdtAndWait(() -> {
       IntentionAction resultAction = null;
       final String createAction = CommonQuickFixBundle.message(
-        "fix.create.title.x", (myCreateClass ? JavaElementKind.CLASS : JavaElementKind.INTERFACE).accusative(), myTestName);
+        "fix.create.title.x", (myCreateClass ? JavaElementKind.CLASS : JavaElementKind.INTERFACE).object(), myTestName);
       final List<IntentionAction> actions = myFixture.getAvailableIntentions(getSourceRoot() + "/plugin" + myTestName + ".xml");
       for (IntentionAction action : actions) {
         if (Comparing.strEqual(action.getText(), createAction)) {
