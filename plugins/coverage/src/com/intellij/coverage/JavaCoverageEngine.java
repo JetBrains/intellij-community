@@ -711,7 +711,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle, stateBean);
   }
 
-  public boolean isSourceMapNeeded(RunConfigurationBase configuration) {
+  public static boolean isSourceMapNeeded(RunConfigurationBase configuration) {
     for (final JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.isSourceMapNeeded(configuration)) {
         return true;

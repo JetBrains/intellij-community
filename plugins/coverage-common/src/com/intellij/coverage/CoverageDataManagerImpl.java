@@ -4,9 +4,12 @@ package com.intellij.coverage;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.CoverageViewSuiteListener;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -23,6 +26,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -136,6 +141,53 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     if (coverageViewListener != null) {
       addSuiteListener(coverageViewListener, myProject);
     }
+
+    CoverageRunner.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageRunner>() {
+      @Override
+      public void extensionRemoved(@NotNull CoverageRunner coverageRunner, @NotNull PluginDescriptor pluginDescriptor) {
+        CoverageSuitesBundle suitesBundle = getCurrentSuitesBundle();
+        if (suitesBundle != null &&
+            Arrays.stream(suitesBundle.getSuites()).anyMatch(suite -> coverageRunner == suite.getRunner())) {
+          chooseSuitesBundle(null);
+        }
+
+        RunManager runManager = RunManager.getInstance(project);
+        List<RunConfiguration> configurations = runManager.getAllConfigurationsList();
+        for (RunConfiguration configuration : configurations) {
+          if (configuration instanceof RunConfigurationBase) {
+            CoverageEnabledConfiguration coverageEnabledConfiguration =
+              ((RunConfigurationBase)configuration).getCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY);
+            if (coverageEnabledConfiguration != null) {
+              coverageEnabledConfiguration.coverageRunnerExtensionRemoved(coverageRunner);
+            }
+          }
+        }
+
+        //cleanup created templates
+        ((RunManagerImpl)runManager).reloadSchemes();
+
+        for (CoverageSuite suite : getSuites()) {
+          if (suite instanceof BaseCoverageSuite) {
+            CoverageRunner runner = suite.getRunner();
+            if (runner == coverageRunner) {
+              ((BaseCoverageSuite)suite).setRunner(null);
+            }
+          }
+        }
+      }
+    }, myProject);
+
+    CoverageEngine.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageEngine>() {
+      @Override
+      public void extensionRemoved(@NotNull CoverageEngine coverageEngine, @NotNull PluginDescriptor pluginDescriptor) {
+        CoverageSuitesBundle suitesBundle = getCurrentSuitesBundle();
+        if (suitesBundle != null && suitesBundle.getCoverageEngine() == coverageEngine) {
+          chooseSuitesBundle(null);
+        }
+
+        myCoverageSuites.removeIf(suite -> suite.getCoverageEngine() == coverageEngine);
+      }
+    }, myProject);
   }
 
   @Nullable

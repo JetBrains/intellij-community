@@ -2,8 +2,8 @@
   <module value="com.intellij.modules.coverage"/>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner"/>
-    <extensionPoint qualifiedName="com.intellij.coverageEngine" interface="com.intellij.coverage.CoverageEngine"/>
+    <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.coverageEngine" interface="com.intellij.coverage.CoverageEngine" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.coverageOptions" interface="com.intellij.coverage.CoverageOptions" area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
 

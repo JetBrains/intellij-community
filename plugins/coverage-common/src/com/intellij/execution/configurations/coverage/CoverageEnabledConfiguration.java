@@ -86,6 +86,13 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     myCoverageFilePath = null;
   }
 
+  public void coverageRunnerExtensionRemoved(@NotNull CoverageRunner runner) {
+    if (runner.getId().equals(myRunnerId)) {
+      myCoverageRunner = null;
+      myCoverageFilePath = null;
+    }
+  }
+
   public boolean isTrackPerTestCoverage() {
     return myTrackPerTestCoverage;
   }

@@ -35,6 +35,6 @@ To configure, open <b>Settings/Preferences | Build, Execution, Deployment | Cove
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.javaCoverageEngineExtension" interface="com.intellij.coverage.JavaCoverageEngineExtension"/>
+    <extensionPoint qualifiedName="com.intellij.javaCoverageEngineExtension" interface="com.intellij.coverage.JavaCoverageEngineExtension" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

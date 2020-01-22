@@ -203,7 +203,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
     final JavaCoverageEnabledConfiguration javaCoverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(myConfig);
     LOG.assertTrue(javaCoverageEnabledConfiguration != null);
-    final JavaCoverageEngine provider = javaCoverageEnabledConfiguration.getCoverageProvider();
+    final JavaCoverageEngine provider = JavaCoverageEngine.getInstance();
     for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
       if (runner.acceptsCoverageEngine(provider)) {
         runnersModel.addElement(new CoverageRunnerItem(runner));
