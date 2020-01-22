@@ -320,12 +320,14 @@ public class ProgressIndicatorUtils {
       }
       catch (Throwable e) {
         Throwable cause = e.getCause();
-        if (cause instanceof CancellationException) {
-            throw new ProcessCanceledException(cause);
-        } else {
-          ExceptionUtil.rethrowUnchecked(e);
-          throw new RuntimeException(e);
+        if (cause instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)cause;
         }
+        if (cause instanceof CancellationException) {
+          throw new ProcessCanceledException(cause);
+        }
+        ExceptionUtil.rethrowUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }
