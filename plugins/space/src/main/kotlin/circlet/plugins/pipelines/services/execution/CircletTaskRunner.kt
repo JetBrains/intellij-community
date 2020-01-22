@@ -20,11 +20,14 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessHandler
 import kotlinx.coroutines.*
 import libraries.io.*
+import libraries.io.random.*
 import libraries.process.*
 import java.nio.file.*
 import java.util.concurrent.*
 
 class CircletTaskRunner(val project: Project) {
+
+    val ideaLocalRunnerLabel = "CircletTaskRunner_${Random.nextString(10)}"
 
     companion object : KLogging()
 
@@ -60,7 +63,7 @@ class CircletTaskRunner(val project: Project) {
 
         val processes = OSProcesses("Space")
 
-        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, LocalDockerContainerStartIdentity, volumeProvider, dockerEventsListener, processes)
+        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, ideaLocalRunnerLabel, volumeProvider, dockerEventsListener, processes)
 
         val batchSize = 1
 
