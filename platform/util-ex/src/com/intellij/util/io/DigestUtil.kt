@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
+import java.io.IOException
+import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.Provider
 
@@ -36,6 +38,22 @@ object DigestUtil {
       cloned.update(bytes)
     }
     return cloned.digest()
+  }
+
+  @JvmStatic
+  fun updateContentHash(digest: MessageDigest, path: Path) {
+    val buff = ByteArray(512 * 1024)
+    try {
+      path.inputStream().use { iz ->
+        while (true) {
+          val sz = iz.read(buff)
+          if (sz <= 0) break
+          digest.update(buff, 0, sz)
+        }
+      }
+    } catch (e: IOException) {
+      throw RuntimeException("Faield to read $path. ${e.message}", e)
+    }
   }
 
   private fun getMessageDigest(algorithm: String): MessageDigest {

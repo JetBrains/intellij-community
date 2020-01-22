@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
+import com.google.common.primitives.Longs.max
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
@@ -19,10 +21,11 @@ import com.intellij.util.indexing.hash.building.IndexesExporter
 import com.intellij.util.io.isFile
 import com.intellij.util.io.sizeOrNull
 import com.intellij.util.lang.JavaVersion
+import org.tukaani.xz.LZMA2Options
+import org.tukaani.xz.XZOutputStream
 import java.io.File
 import java.nio.file.Files
 import kotlin.system.exitProcess
-import kotlin.system.measureTimeMillis
 
 class DumpJdkIndexStarter : ApplicationStarter {
   override fun getCommandName() = "dump-jdk-index"
@@ -40,21 +43,21 @@ class DumpJdkIndexStarter : ApplicationStarter {
     println("Dump JDK indexes command:")
     val jdkHomeKey = "jdk-home"
     val tempKey = "temp"
-    val outputKey = "index-zip"
+    val outputKey = "output-dir"
 
     println("  [idea] ${commandName} [/$jdkHomeKey=<home to JDK>] /$outputKey=<target output path> /$tempKey=<temp folder>")
 
     val jdkHome = args.argFile(jdkHomeKey, System.getProperty("java.home"))
     val tempDir = args.argFile(tempKey).recreateDir()
-    val indexZip = args.argFile(outputKey).apply {
-      FileUtil.delete(this)
-      FileUtil.createParentDirs(this)
-    }
+    val outputDir = args.argFile(outputKey).recreateDir()
     val projectDir = File(tempDir, "project").recreateDir()
     val unpackedIndexDir = File(tempDir, "unpacked-index").recreateDir()
+    val zipsDir = File(tempDir, "zips").recreateDir()
+    val indexZip = File(zipsDir, "index.zip")
+    val indexZipXZ = File(zipsDir, "index.zip.xz")
 
     LOG.info("Resolved jdkHome = $jdkHome")
-    LOG.info("Resolved indexZip = $indexZip")
+    LOG.info("Resolved outputDir = $outputDir")
     LOG.info("Resolved tempDir = $tempDir")
 
     runWriteAction {
@@ -65,7 +68,7 @@ class DumpJdkIndexStarter : ApplicationStarter {
       }
     }
 
-    val javaSdkType = JavaSdk.getInstance()
+    val javaSdkType = JavaSdk.getInstance() as JavaSdkImpl
     val javaSdk = runAndCatchNotNull("create SDK for $jdkHome") {
       SdkConfigurationUtil.createAndAddSDK(jdkHome.absolutePath, javaSdkType)
     }
@@ -94,29 +97,57 @@ class DumpJdkIndexStarter : ApplicationStarter {
       ProjectRootManager.getInstance(project).projectSdk = null
     }
 
-    val time = measureTimeMillis {
-      LOG.info("Collecting SDK roots...")
-      val rootProvider = javaSdk.rootProvider
-      val roots = (rootProvider.getFiles(OrderRootType.CLASSES) + rootProvider.getFiles(OrderRootType.SOURCES)).toSet()
-      LOG.info("Collected ${roots.size} SDK roots")
-      val indexChunk = IndexChunk(roots, "jdk-$jdkVersion")
-      IndexesExporter.getInstance(project).exportIndices(
-        listOf(indexChunk),
-        unpackedIndexDir.toPath(),
-        indexZip.toPath(),
-        EmptyProgressIndicator())
+    val indexingStartTime = System.currentTimeMillis()
+
+    LOG.info("Collecting SDK roots...")
+    val rootProvider = javaSdk.rootProvider
+    val classesRoot = rootProvider.getFiles(OrderRootType.CLASSES).toSet()
+    val sourcesRoot = rootProvider.getFiles(OrderRootType.SOURCES).toSet()
+
+    //it is up to SdkType to decide on the best SDK contents fingerprint/hash
+    val hash = runAndCatchNotNull("compute JDK fingerprint") {
+      javaSdkType.computeJdkFingerprint(javaSdk)
     }
+    LOG.info("JDK contents has is: $hash")
 
-    val jdkSize = jdkHome.totalSize()
-    val indexSize = indexZip.totalSize()
+    val allRoots = (classesRoot + sourcesRoot).toSet()
+    LOG.info("Collected ${allRoots.size} SDK roots")
+    val indexChunk = IndexChunk(allRoots, "jdk-$jdkVersion")
+    IndexesExporter.getInstance(project).exportIndices(
+      listOf(indexChunk),
+      unpackedIndexDir.toPath(),
+      indexZip.toPath(),
+      EmptyProgressIndicator())
 
-    LOG.info("Indexes build completed in ${StringUtil.formatDuration(time)}")
-    LOG.info("JDK size   = ${StringUtil.formatFileSize(jdkSize)}")
-    LOG.info("Index size = ${StringUtil.formatFileSize(indexSize)}")
+    val indexingTime = max(0L, System.currentTimeMillis() - indexingStartTime)
+
+    xz(indexZip, indexZipXZ)
+
+    LOG.info("Indexes build completed in ${StringUtil.formatDuration(indexingTime)}")
+    LOG.info("JDK size          = ${StringUtil.formatFileSize(jdkHome.totalSize())}")
+    LOG.info("Index.zip size    = ${StringUtil.formatFileSize(indexZip.totalSize())}")
+    LOG.info("Index.zip.xz size = ${StringUtil.formatFileSize(indexZipXZ.totalSize())}")
+    //TODO: try XZ archive
     LOG.info("Generated index in $indexZip")
     exitProcess(0)
   }
 }
+
+private fun xz(file: File, output: File) {
+  val bufferSize = 1024 * 1024
+  FileUtil.createParentDirs(output)
+
+  try {
+    output.outputStream().buffered(bufferSize).use { outputStream ->
+      XZOutputStream(outputStream, LZMA2Options()).use { output ->
+        file.inputStream().copyTo(output, bufferSize = bufferSize)
+      }
+    }
+  } catch (e: Exception) {
+    LOG.error("Failed to generate index.zip.xz package from $file to $output. ${e.message}", e)
+  }
+}
+
 
 private object LOG {
   fun info(message: String) {

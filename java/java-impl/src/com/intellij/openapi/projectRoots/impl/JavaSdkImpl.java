@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +31,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.DigestUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +45,11 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -500,6 +508,70 @@ public final class JavaSdkImpl extends JavaSdk {
     Collections.sort(result);
     return result;
   }
+
+  @Nullable
+  public String computeJdkFingerprint(@NotNull Sdk sdk) {
+    if (!Objects.equals(sdk.getSdkType().getName(), getName())) {
+      return null;
+    }
+
+    final byte[] fingerprintVersion = {1, 0, 0, 0};
+    MessageDigest hasher = DigestUtil.sha256();
+    hasher.update(fingerprintVersion);
+
+    String path = sdk.getHomePath();
+    if (path == null) return null;
+    Path homePath = Paths.get(path);
+    if (!PathKt.isDirectory(homePath)) return null;
+
+    boolean hasRelease = hashIfExists(hasher, homePath, "release");
+    boolean hasVersion = hashIfExists(hasher, homePath, "version.txt");
+    boolean hasLib = hashIfExists(hasher, homePath, "lib");
+
+    if (!hasRelease && !hasVersion && !hasLib) {
+      return null;
+    }
+    return Base64.getEncoder().encodeToString(hasher.digest());
+  }
+
+  private static boolean hashIfExists(@NotNull MessageDigest hasher,
+                                      @NotNull Path homePath,
+                                      @NotNull String rel) {
+    Path relPath = homePath.resolve(rel);
+    if (!PathKt.exists(relPath)) return false;
+
+    if (PathKt.isFile(relPath)) {
+      hasher.update(rel.getBytes(StandardCharsets.UTF_8));
+      DigestUtil.updateContentHash(hasher, relPath);
+      return true;
+    }
+
+    if (PathKt.isDirectory(relPath)) {
+      try {
+        Files.walk(relPath)
+          .filter(file -> PathKt.isFile(file))
+          .map(file -> Pair.create(homePath.relativize(file).toString(), file))
+          .sorted(Comparator.comparing(it -> it.first))
+          .forEach(pair -> {
+            String relativeName = pair.first;
+            Path file = pair.second;
+            if (!PathKt.isFile(file)) return;
+
+            if (relativeName.endsWith("modules") || relativeName.endsWith(".jar") || relativeName.endsWith(".zip") || relativeName.endsWith(".jmod")) {
+              hasher.update(relativeName.getBytes(StandardCharsets.UTF_8));
+              DigestUtil.updateContentHash(hasher, file);
+            }
+          });
+      }
+      catch (IOException e) {
+        throw new RuntimeException("Failed to walk " + relPath + ". " + e.getMessage(), e);
+      }
+      return true;
+    }
+
+    return false;
+  }
+
 
   private static void addSources(@NotNull File jdkHome, @NotNull SdkModificator sdkModificator) {
     VirtualFile jdkSrc = findSources(jdkHome, "src");
