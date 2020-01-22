@@ -124,12 +124,11 @@ class CircletTaskRunner(val project: Project) {
             listOf(stepExecutionProvider))
 
         val automationStarterCommon = AutomationGraphManagerImpl(
-            orgInfo,
             storage,
-            CircletIdeaAutomationBootstrapper(),
             automationGraphEngineCommon,
             tracer
         )
+        val bootstraper = CircletIdeaAutomationBootstrapper()
 
         val repositoryData = RepositoryData("repoId", null)
 
@@ -141,8 +140,12 @@ class CircletTaskRunner(val project: Project) {
         // todo: better lifetime
         launch(Lifetime.Eternal, Ui) {
             try {
-                val graphId = automationStarterCommon.createGraph(0L, repositoryData, branch, commit, task, bootstrapJobRequired = false)
-                automationStarterCommon.startGraph(graphId)
+                storage("run-graph") {
+                    val graph = automationStarterCommon.createGraph(this, task) { graphExecution ->
+                        bootstraper.createBootstrapStep(graphExecution, 0L, repositoryData, orgInfo.url) //something definitely wrong with this fake project/repo/branch/commit
+                    }
+                    automationStarterCommon.startGraph(this, graph)
+                }
             } catch (th: Throwable) {
                 logger.error(th)
                 processHandler.notifyTextAvailable("Run task failed. ${th.message}$newLine", ProcessOutputTypes.STDERR)

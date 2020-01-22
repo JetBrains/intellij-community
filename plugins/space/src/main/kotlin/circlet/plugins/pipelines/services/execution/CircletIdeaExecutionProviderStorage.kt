@@ -72,9 +72,7 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
     }
 
     override fun createGraphExecution(
-        repoName: String,
-        branch: String,
-        commit: CommitHash,
+
         actionMeta: ScriptAction,
         bootstrapStepFactory: (AGraphExecutionEntity) -> ScriptStep.Process.Container?): AGraphExecutionEntity {
 
@@ -83,11 +81,6 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         val now = System.currentTimeMillis()
         val jobs = mutableListOf<AStepExecutionEntity<*>>()
 
-        val graphContext = CircletIdeaAGraphExecutionContextEntity(
-            branch,
-            commit,
-            repoName
-        )
 
         val graphExecutionEntity = CircletIdeaAGraphExecutionEntity(
             Random.nextLong(),
@@ -95,7 +88,7 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
             null,
             ExecutionStatus.PENDING,
             actionMeta,
-            graphContext,
+            null,
             jobs
         )
 
