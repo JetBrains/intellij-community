@@ -3934,8 +3934,7 @@ public enum LevelCode {
       ) {
       }
     """.trimIndent(), """
-        record A(String s,
-                 String a) {
+        record A(String s, String a) {
         }
     """.trimIndent())
   }
