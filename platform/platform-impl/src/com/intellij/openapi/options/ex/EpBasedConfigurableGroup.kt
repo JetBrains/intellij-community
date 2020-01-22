@@ -3,6 +3,7 @@ package com.intellij.openapi.options.ex
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.ExtensionsArea
@@ -80,11 +81,9 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
   private fun createListener(): ExtensionPointChangeListener {
     return ExtensionPointChangeListener {
       value.drop()
-      ApplicationManager.getApplication().invokeLater(Runnable {
-        for (listener in listeners) {
-          listener.handleUpdate()
-        }
-      }, project?.disposed ?: ApplicationManager.getApplication().disposed)
+      for (listener in listeners) {
+        listener.handleUpdate()
+      }
     }
   }
 
