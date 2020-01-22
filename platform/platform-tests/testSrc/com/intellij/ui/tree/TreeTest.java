@@ -110,20 +110,16 @@ public class TreeTest implements Disposable {
   }
 
   public static void test(Supplier<TreeNode> supplier, Consumer<TreeTest> consumer) {
-    test(2, supplier, consumer);
+    test(FAST, 1, supplier, consumer);
+    test(SLOW, 2, supplier, consumer);
   }
 
-  public static void test(int minutes, Supplier<TreeNode> supplier, Consumer<TreeTest> consumer) {
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, null));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, null));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, Invoker.forEventDispatchThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, Invoker.forEventDispatchThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, Invoker.forEventDispatchThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, Invoker.forEventDispatchThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, Invoker.forBackgroundThreadWithReadAction(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, Invoker.forBackgroundThreadWithReadAction(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, Invoker.forBackgroundThreadWithReadAction(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, Invoker.forBackgroundThreadWithReadAction(parent)));
+  public static void test(long delay, int minutes, Supplier<TreeNode> supplier, Consumer<TreeTest> consumer) {
+    new TreeTest(minutes, consumer, parent -> model(supplier, delay, false, null));
+    new TreeTest(minutes, consumer, parent -> model(supplier, delay, true, Invoker.forEventDispatchThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, delay, false, Invoker.forEventDispatchThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, delay, true, Invoker.forBackgroundThreadWithReadAction(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, delay, false, Invoker.forBackgroundThreadWithReadAction(parent)));
   }
 
   private static TreeModel model(Supplier<TreeNode> supplier, long delay, boolean showLoadingNode, Invoker invoker) {

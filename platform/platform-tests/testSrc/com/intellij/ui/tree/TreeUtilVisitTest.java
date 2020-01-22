@@ -374,7 +374,7 @@ public final class TreeUtilVisitTest {
   }
 
   private static void testCollapseAll(boolean visible, boolean showHandles, boolean strict, int keepSelectionLevel, String expected) {
-    TreeTest.test(TreeUtilVisitTest::rootDeep, test
+    TreeTest.test(TreeTest.FAST, 1, TreeUtilVisitTest::rootDeep, test
       -> configureRoot(test, visible, showHandles, ()
       -> TreeUtil.expandAll(test.getTree(), ()
       -> select(test, convertArrayToVisitor("2", "22", "222", "2222"), path
