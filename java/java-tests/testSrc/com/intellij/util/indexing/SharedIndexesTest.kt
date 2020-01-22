@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
-import com.intellij.util.indexing.hash.DumpIndexAction
+import com.intellij.util.indexing.hash.building.DumpIndexAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -13,6 +13,8 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.indexing.hash.building.IndexChunk
+import com.intellij.util.indexing.hash.building.IndexesExporter
 import junit.framework.TestCase
 import java.nio.file.Path
 
@@ -35,10 +37,10 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
 
       val indexZip = tempDirPath.resolve(tempDirPath.fileName.toString() + ".zip")
 
-      val chunks = arrayListOf<DumpIndexAction.IndexChunk>()
-      chunks += DumpIndexAction.IndexChunk(setOf(virtualFile), "source")
+      val chunks = arrayListOf<IndexChunk>()
+      chunks += IndexChunk(setOf(virtualFile), "source")
 
-      DumpIndexAction.exportIndices(project, chunks, tempDirPath, indexZip, EmptyProgressIndicator())
+      IndexesExporter.exportIndices(project, chunks, tempDirPath, indexZip, EmptyProgressIndicator())
 
       restartFileBasedIndex(indexZip)
 

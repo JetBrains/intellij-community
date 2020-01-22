@@ -22,7 +22,7 @@
     </group>
 
     <group id="Internal.SharedIndexes" popup="true" internal="true" compact="true">
-      <action id="SharedIndexes.DumpIndex" internal="true" class="com.intellij.util.indexing.hash.DumpIndexAction"/>
+      <action id="SharedIndexes.DumpIndex" internal="true" class="com.intellij.util.indexing.hash.building.DumpIndexAction"/>
 
       <add-to-group group-id="Internal"/>
     </group>
