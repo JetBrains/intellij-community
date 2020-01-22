@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.diagnostic.LoadingState;
@@ -97,7 +97,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     try {
       return commandLine.createProcess();
     }
-    catch (ExecutionException | RuntimeException | Error e) {
+    catch (RuntimeException | Error e) {
       deleteTempFiles(commandLine.getUserData(DELETE_FILES_ON_TERMINATION));
       throw e;
     }
