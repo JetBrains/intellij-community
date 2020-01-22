@@ -171,6 +171,12 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert clazz.recordComponents == components
   }
 
+  void "test record component with name record"() {
+    // it is forbidden, but it should not fail
+    def clazz = configureFile("record A(record r)").classes[0]
+    assert 1 == clazz.methods.size() // only constructor
+  }
+
   private PsiJavaFile configureFile(String text) {
     myFixture.configureByText("a.java", text) as PsiJavaFile
   }

@@ -104,7 +104,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   @Nullable
   private static PsiField createRecordField(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
-    if (name == null) return null;
+    if (isForbiddenType(component)) return null;
     String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForField);
     if (typeText == null) return null;
     return factory.createFieldFromText("private final " + typeText + " " + name + ";", component.getContainingClass());
@@ -114,9 +114,16 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   private static PsiMethod createRecordMethod(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
     if (name == null) return null;
+    if (isForbiddenType(component)) return null;
     String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForMethod);
     if (typeText == null) return null;
     return factory.createMethodFromText("public " + typeText + " " + name + "(){ return " + name + "; }", component.getContainingClass());
+  }
+
+  private static boolean isForbiddenType(@NotNull PsiRecordComponent component) {
+    PsiTypeElement typeElement = component.getTypeElement();
+    if (typeElement == null || typeElement.getText().equals(PsiKeyword.RECORD)) return true;
+    return false;
   }
 
   @Nullable
