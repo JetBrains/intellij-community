@@ -2,15 +2,11 @@
 package com.intellij.execution.services;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * {@link ServiceViewDescriptor} may implement this interface in order to enable navigation from sources to a service.
- */
+@ApiStatus.Experimental
 public interface ServiceViewLocatableDescriptor {
-  /**
-   * Invoked on background thread under read action.
-   */
   @Nullable
   default VirtualFile getVirtualFile() {
     return null;
