@@ -142,13 +142,13 @@ public final class TouchBarsManager {
                                     @NotNull ExecutionEnvironment env,
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
-        final String twid = env.getExecutor().getToolWindowId();
+        String toolWindowId = env.getExecutor().getToolWindowId();
         ourStack.pop(topContainer -> {
           if (topContainer.getType() != BarType.DEBUGGER) {
             return false;
           }
 
-          if (!ToolWindowId.DEBUG.equals(twid) && !ToolWindowId.RUN_DASHBOARD.equals(twid) && !ToolWindowId.SERVICES.equals(twid)) {
+          if (!ToolWindowId.DEBUG.equals(toolWindowId) && !ToolWindowId.RUN_DASHBOARD.equals(toolWindowId) && !ToolWindowId.SERVICES.equals(toolWindowId)) {
             return false;
           }
 
