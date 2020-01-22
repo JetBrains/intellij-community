@@ -466,10 +466,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun doInitToolWindow(bean: ToolWindowEP, factory: ToolWindowFactory) {
     val toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor)
-    doRegisterToolWindow(RegisterToolWindowTask(id = bean.id, anchor = toolWindowAnchor,
+    doRegisterToolWindow(RegisterToolWindowTask(
+      id = bean.id,
+      anchor = toolWindowAnchor,
+      sideTool = bean.side,
       canCloseContent = bean.canCloseContents,
       canWorkInDumbMode = DumbService.isDumbAware(factory),
-      shouldBeAvailable = factory.shouldBeAvailable(project)), factory, bean)
+      shouldBeAvailable = factory.shouldBeAvailable(project)
+    ), factory, bean)
   }
 
   fun projectClosed() {
@@ -1339,7 +1343,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   internal fun setSideTool(id: String, isSplit: Boolean) {
-    val entry = idToEntry.get(id)!!
+    val entry = idToEntry.get(id)
+    if (entry == null) {
+      LOG.error("Cannot set side tool: toolwindow $id is not registered")
+      return
+    }
+
     if (entry.readOnlyWindowInfo.isSplit != isSplit) {
       setSideTool(entry, getRegisteredMutableInfoOrLogError(id), isSplit)
       fireStateChanged()

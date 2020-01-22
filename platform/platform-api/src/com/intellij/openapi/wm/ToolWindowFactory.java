@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.project.Project;
@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
  * Please implement {@link com.intellij.openapi.project.DumbAware} marker interface to indicate that the tool window content should be
  * available during the indexing process.
  *
- * @author yole
- * @author Konstantin Bulenkov
  * @see ToolWindowEP
  */
 public interface ToolWindowFactory {
