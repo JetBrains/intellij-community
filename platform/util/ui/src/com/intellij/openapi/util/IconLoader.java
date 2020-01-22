@@ -1042,21 +1042,16 @@ public final class IconLoader {
   public static Icon createLazy(@NotNull Supplier<@NotNull Icon> producer) {
     return new LazyIcon() {
       @Override
-      protected @NotNull Icon compute() {
-        try {
-          return producer.get();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error("Cannot compute icon (producer=" + producer + ", error=" + e.getMessage() + ")", e);
-          return AllIcons.Actions.Stub;
-        }
+      @NotNull
+      protected Icon compute() {
+        return producer.get();
       }
     };
   }
 
+  /**
+   * Consider using {@link #createLazy)}.
+   */
   public abstract static class LazyIcon extends ScaleContextSupport implements CopyableIcon, RetrievableIcon {
     private boolean myWasComputed;
     private volatile Icon myIcon;
@@ -1087,10 +1082,21 @@ public final class IconLoader {
     final synchronized Icon getOrComputeIcon() {
       Icon icon = myIcon;
       int newTransformModCount = ourTransformModCount.get();
-      if (!myWasComputed || myTransformModCount != newTransformModCount || icon == null) {
+      if (icon == null || !myWasComputed || myTransformModCount != newTransformModCount) {
         myTransformModCount = newTransformModCount;
         myWasComputed = true;
-        myIcon = icon = compute();
+        try {
+          icon = compute();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error("Cannot compute icon", e);
+          icon = AllIcons.Actions.Stub;
+        }
+
+        myIcon = icon;
       }
 
       return icon;
