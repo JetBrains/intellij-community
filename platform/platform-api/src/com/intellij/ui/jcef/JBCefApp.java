@@ -4,12 +4,14 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.cef.handler.CefAppHandlerAdapter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import java.awt.*;
 
 /**
  * @author tav
@@ -39,6 +41,8 @@ public abstract class JBCefApp {
     CefSettings settings = new CefSettings();
     settings.windowless_rendering_enabled = false;
     settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
+    Color bg = JBColor.background();
+    settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     CefApp.startup();
     //noinspection AbstractMethodCallInConstructor
     init(settings);
