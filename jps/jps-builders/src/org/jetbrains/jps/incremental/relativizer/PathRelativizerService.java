@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.relativizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import java.util.Collections;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -55,7 +56,7 @@ public class PathRelativizerService {
                                      new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER),
                                      new MavenPathRelativizer(),
                                      new GradlePathRelativizer());
-    myUnhandledPaths = new LinkedHashSet<>();
+    myUnhandledPaths = Collections.synchronizedSet(new LinkedHashSet<>());
   }
 
   /**
@@ -98,7 +99,7 @@ public class PathRelativizerService {
     final StringBuilder logBuilder = new StringBuilder();
     myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
     LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());
-    myUnhandledPaths = new LinkedHashSet<>();
+    myUnhandledPaths = Collections.synchronizedSet(new LinkedHashSet<>());
   }
 
   @NotNull
