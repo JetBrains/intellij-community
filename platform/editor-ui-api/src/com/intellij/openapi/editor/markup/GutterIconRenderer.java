@@ -101,10 +101,8 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   }
 
   /**
-   * Returns the priority of the icon relative to other icons. Multiple icons in the same line
-   * are drawn in increasing priority order.
-   *
-   * @return the priority value.
+   * Defines positioning of the icon inside gutter's icon area. The order, in which icons with the same alignment values are displayed, is
+   * not specified (it can be influenced using {@link com.intellij.openapi.editor.GutterMarkPreprocessor}).
    */
   @NotNull
   public Alignment getAlignment() {
