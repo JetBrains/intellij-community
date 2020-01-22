@@ -222,6 +222,14 @@ public class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
+  public void updateFileStatus(@NotNull VirtualFile virtualFile) {
+    LightEditorInfo editorInfo = myEditorManager.findOpen(virtualFile);
+    if (editorInfo != null) {
+      myEditorManager.fireFileStatusChanged(editorInfo);
+    }
+  }
+
+  @Override
   public void dispose() {
     if (myFrameWrapper != null) {
       disposeFrameWrapper();

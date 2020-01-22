@@ -14,4 +14,5 @@ public interface LightEditorListener extends EventListener {
   default void beforeClose(@NotNull LightEditorInfo editorInfo) {}
   default void afterClose(@NotNull LightEditorInfo editorInfo) {}
   default void autosaveModeChanged(boolean isAutosave) {}
+  default void fileStatusChanged(@NotNull LightEditorInfo editorInfo) {}
 }

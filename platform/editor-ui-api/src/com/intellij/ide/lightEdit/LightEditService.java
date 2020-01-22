@@ -36,4 +36,6 @@ public interface LightEditService {
 
   @Nullable
   VirtualFile getSelectedFile();
+
+  void updateFileStatus(@NotNull VirtualFile virtualFile);
 }

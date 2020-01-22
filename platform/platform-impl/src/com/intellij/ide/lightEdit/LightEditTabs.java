@@ -6,8 +6,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,9 +23,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.util.concurrent.Future;
 
-final class LightEditTabs extends JBEditorTabs {
+final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
   private final LightEditorManagerImpl myEditorManager;
+
+  private Future<?> myTabUpdateFuture;
 
   LightEditTabs(@NotNull Disposable parent, LightEditorManagerImpl editorManager) {
     super(LightEditUtil.getProject(), null, parent);
@@ -32,19 +37,12 @@ final class LightEditTabs extends JBEditorTabs {
     addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-        ObjectUtils.consumeIfNotNull(oldSelection, tabInfo -> tabInfo.setTabColor(getUnselectedTabColor()));
-        ObjectUtils.consumeIfNotNull(newSelection, tabInfo -> tabInfo.setTabColor(getSelectedTabColor()));
+        ObjectUtils.consumeIfNotNull(oldSelection, tabInfo -> tabInfo.setTabColor(null));
+        asyncUpdateTab(newSelection);
         onSelectionChange(newSelection);
       }
     });
-  }
-
-  private static Color getSelectedTabColor() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-  }
-
-  private static Color getUnselectedTabColor() {
-    return null;
+    myEditorManager.addListener(this, parent);
   }
 
   void addEditorTab(@NotNull LightEditorInfo editorInfo) {
@@ -64,6 +62,7 @@ final class LightEditTabs extends JBEditorTabs {
     tabInfo.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     addTabSilently(tabInfo, index);
     select(tabInfo, true);
+    asyncUpdateTab(tabInfo);
     myEditorManager.fireEditorSelected(editorInfo);
   }
 
@@ -204,5 +203,54 @@ final class LightEditTabs extends JBEditorTabs {
       }
       return null;
     }
+  }
+
+  private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
+    Object object = tabInfo.getObject();
+    if (object instanceof LightEditorInfo) {
+      assert ApplicationManager.getApplication().isDispatchThread();
+      if (myTabUpdateFuture != null) {
+        myTabUpdateFuture.cancel(true);
+      }
+      myTabUpdateFuture = ApplicationManager.getApplication().executeOnPooledThread(
+        () -> {
+          TextAttributes attributes = calcAttributes((LightEditorInfo)object);
+          ApplicationManager.getApplication().invokeLater(() -> {
+            tabInfo.setDefaultForeground(attributes.getForegroundColor());
+            tabInfo.setTabColor(tabInfo == getSelectedInfo() ? attributes.getBackgroundColor() : null);
+            myTabUpdateFuture = null;
+          });
+        });
+    }
+  }
+
+  @NotNull
+  private static TextAttributes calcAttributes(@NotNull LightEditorInfo editorInfo) {
+    TextAttributes attributes = new TextAttributes();
+    attributes.setBackgroundColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    LightEditTabAttributesProvider.EP_NAME.getExtensionList().forEach(
+      provider -> {
+        TextAttributes provided = provider.calcAttributes(editorInfo);
+        if (provided != null) {
+          if (provided.getForegroundColor() != null) {
+            attributes.setForegroundColor(provided.getForegroundColor());
+          }
+          if (provided.getBackgroundColor() != null) {
+            attributes.setBackgroundColor(provided.getBackgroundColor());
+          }
+        }
+      }
+    );
+    return attributes;
+  }
+
+  @Override
+  public void fileStatusChanged(@NotNull LightEditorInfo editorInfo) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      TabInfo tabInfo = findInfo(editorInfo);
+      if (tabInfo != null) {
+        asyncUpdateTab(tabInfo);
+      }
+    });
   }
 }

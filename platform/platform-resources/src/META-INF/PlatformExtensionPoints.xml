@@ -357,5 +357,7 @@
 
     <extensionPoint name="pathMacroContributor" interface="com.intellij.openapi.application.PathMacroContributor" dynamic="true"/>
     <extensionPoint name="titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider" area="IDEA_PROJECT"/>
+
+    <extensionPoint name="lightEditTabAttributesProvider" interface="com.intellij.ide.lightEdit.LightEditTabAttributesProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

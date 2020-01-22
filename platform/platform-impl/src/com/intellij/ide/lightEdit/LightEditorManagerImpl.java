@@ -113,6 +113,10 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
     myEventDispatcher.getMulticaster().autosaveModeChanged(autosaveMode);
   }
 
+  void fireFileStatusChanged(@NotNull LightEditorInfo editorInfo) {
+    myEventDispatcher.getMulticaster().fileStatusChanged(editorInfo);
+  }
+
   @NotNull
   private static EditorHighlighter getHighlighter(@NotNull VirtualFile file, @NotNull Editor editor) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(file, editor.getColorsScheme(), null);
