@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -128,7 +129,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.quickfix", newClassName);
+      return CommonQuickFixBundle.message("fix.replace.with.x", newClassName+".class");
     }
 
     @NotNull

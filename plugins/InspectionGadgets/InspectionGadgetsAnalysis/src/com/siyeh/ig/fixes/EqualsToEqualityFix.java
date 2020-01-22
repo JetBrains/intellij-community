@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -40,8 +41,8 @@ public class EqualsToEqualityFix extends InspectionGadgetsFix {
   @Override
   public String getFamilyName() {
     return myNegated
-           ? InspectionGadgetsBundle.message("not.equals.to.equality.quickfix")
-           : InspectionGadgetsBundle.message("equals.to.equality.quickfix");
+           ? CommonQuickFixBundle.message("fix.replace.x.with.y", "!equals()", "!=")
+           : CommonQuickFixBundle.message("fix.replace.x.with.y", "equals()", "==");
   }
 
   @Override

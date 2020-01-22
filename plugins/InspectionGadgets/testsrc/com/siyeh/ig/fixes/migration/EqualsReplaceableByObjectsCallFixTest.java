@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.migration;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -68,6 +69,6 @@ public class EqualsReplaceableByObjectsCallFixTest extends IGQuickFixesTestCase 
     super.setUp();
     myFixture.enableInspections(new EqualsReplaceableByObjectsCallInspection());
     myRelativePath = "migration/equals_replaceable_by_objects_call";
-    myDefaultHint = InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.quickfix");
+    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "Objects.equals()");
   }
 }

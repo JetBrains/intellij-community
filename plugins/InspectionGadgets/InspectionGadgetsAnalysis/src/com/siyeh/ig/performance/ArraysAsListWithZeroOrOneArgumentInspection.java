@@ -58,12 +58,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     @NotNull
     @Override
     public String getName() {
-      if (myEmpty) {
-        return InspectionGadgetsBundle.message("arrays.as.list.with.zero.arguments.quickfix");
-      }
-      else {
-        return InspectionGadgetsBundle.message("arrays.as.list.with.one.argument.quickfix");
-      }
+      return CommonQuickFixBundle.message("fix.replace.with.x", myEmpty ? "Collections.emptyList()" : "Collections.singletonList()");
     }
 
     @NotNull
