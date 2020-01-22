@@ -2,7 +2,9 @@
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -1041,7 +1043,16 @@ public final class IconLoader {
     return new LazyIcon() {
       @Override
       protected @NotNull Icon compute() {
-        return producer.get();
+        try {
+          return producer.get();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error("Cannot compute icon (producer=" + producer + ", error=" + e.getMessage() + ")", e);
+          return AllIcons.Actions.Stub;
+        }
       }
     };
   }

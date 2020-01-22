@@ -433,7 +433,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           throw e
         }
         catch (t: Throwable) {
-          LOG.error("failed to init toolwindow ${bean.factoryClass}", t)
+          LOG.error("Cannot init toolwindow ${bean.factoryClass}", t)
         }
       }
     }
