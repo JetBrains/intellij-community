@@ -120,7 +120,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myForceShowFirstComponent;
   private boolean mySkipWindowAdjustments;
   private boolean myMinimalMode;
-  private boolean myForceUseMacEnhancements;
 
   public ActionButton getSecondaryActionsButton() {
     return mySecondaryActionsButton;
@@ -135,9 +134,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myReservePlaceAutoPopupIcon = true;
   private boolean myShowSeparatorTitles;
 
-  public ActionToolbarImpl(@NotNull String place,
-                           @NotNull final ActionGroup actionGroup,
-                           boolean horizontal) {
+  public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false, false);
   }
 
@@ -205,10 +202,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // should update action right on the showing, otherwise toolbar may not be displayed at all,
     // since by default all updates are postponed until frame gets focused.
     updateActionsImmediately();
-  }
-
-  public void setForceUseMacEnhancements(boolean useMacEnhancements) {
-    myForceUseMacEnhancements = useMacEnhancements;
   }
 
   private boolean isInsideNavBar() {
@@ -288,11 +281,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     mySecondaryButtonPopupStateModifier = popupStateModifier;
   }
 
-  private void fillToolBar(@NotNull final List<? extends AnAction> actions, boolean layoutSecondaries) {
+  private void fillToolBar(@NotNull List<? extends AnAction> actions, boolean layoutSecondaries) {
     boolean isLastElementSeparator = false;
-    final List<AnAction> rightAligned = new ArrayList<>();
+    List<AnAction> rightAligned = new ArrayList<>();
     for (int i = 0; i < actions.size(); i++) {
-      final AnAction action = actions.get(i);
+      AnAction action = actions.get(i);
       if (action instanceof RightAlignedToolbarAction) {
         rightAligned.add(action);
         continue;
