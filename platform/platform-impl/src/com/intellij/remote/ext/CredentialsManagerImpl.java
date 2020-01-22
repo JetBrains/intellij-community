@@ -27,7 +27,7 @@ public class CredentialsManagerImpl extends CredentialsManager {
 
   @Override
   public List<CredentialsType<?>> getAllTypes() {
-    return Arrays.asList(CredentialsTypeEx.EP_NAME.getExtensions());
+    return Arrays.asList(CredentialsType.EP_NAME.getExtensions());
   }
 
   @Override
