@@ -760,7 +760,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return InspectionGadgetsBundle.message("fix.replace.map.with.flat.map.name");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "map()", "flatMap()");
     }
 
     @NotNull

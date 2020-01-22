@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -93,7 +94,7 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
     @Override
     public String getName() {
       final String shortClassName = myClassName.substring(myClassName.lastIndexOf('.') + 1);
-      return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.quickfix", shortClassName, myReplacement);
+      return CommonQuickFixBundle.message("fix.replace.with.x", shortClassName + "." + myReplacement);
     }
 
     @NotNull

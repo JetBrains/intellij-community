@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -49,8 +50,7 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "multiple.exceptions.declared.on.test.method.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "throws Exception");
     }
 
     @Override

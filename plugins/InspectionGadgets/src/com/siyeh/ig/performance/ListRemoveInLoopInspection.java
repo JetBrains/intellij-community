@@ -121,7 +121,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("inspection.list.remove.in.loop.fix.family.name");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "List.subList().clear()");
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -62,14 +63,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      if (deepHashCode) {
-        return InspectionGadgetsBundle.message(
-          "arrays.deep.hash.code.quickfix");
-      }
-      else {
-        return InspectionGadgetsBundle.message(
-          "arrays.hash.code.quickfix");
-      }
+      return CommonQuickFixBundle.message("fix.replace.with.x", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
     }
 
     @NotNull

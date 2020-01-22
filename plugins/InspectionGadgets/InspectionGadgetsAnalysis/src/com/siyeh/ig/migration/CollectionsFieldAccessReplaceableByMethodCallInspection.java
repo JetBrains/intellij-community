@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +68,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection extends Bas
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("collections.field.access.replaceable.by.method.call.quickfix", replacementText);
+      return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }
 
     @NonNls
