@@ -146,7 +146,7 @@ public interface PsiReference extends PsiSymbolReference {
     }
     else {
       Symbol symbol = PsiSymbolService.getInstance().asSymbol(resolved);
-      return Collections.singletonList(() -> symbol);
+      return Collections.singletonList(SymbolResolveResult.fromSymbol(symbol));
     }
   }
 
