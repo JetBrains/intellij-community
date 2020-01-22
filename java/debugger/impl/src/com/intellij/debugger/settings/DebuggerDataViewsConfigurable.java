@@ -31,6 +31,7 @@ import static java.awt.GridBagConstraints.*;
  */
 public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbAutoscroll;
+  private JCheckBox myCbDfaAssist;
   private JCheckBox myCbShowSyntheticFields;
   private StateRestoringCheckBox myCbShowValFieldsAsLocalVariables;
   private JCheckBox myCbHideNullArrayElements;
@@ -78,6 +79,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final JPanel panel = new JPanel(new GridBagLayout());
 
     myCbAutoscroll = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
+    myCbDfaAssist = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.dfa.assist"));
     myCbShowSyntheticFields = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.synthetic.fields"));
     myCbShowValFieldsAsLocalVariables = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.val.fields.as.locals"));
     myCbHideNullArrayElements = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.hide.null.array.elements"));
@@ -137,6 +139,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     });
 
     panel.add(myCbAutoscroll, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
+    panel.add(myCbDfaAssist, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
 
 
     final JPanel showPanel = new JPanel(new GridBagLayout());
@@ -181,6 +184,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
+    generalSettings.USE_DFA_ASSIST  = myCbDfaAssist.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
     generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myCbHideNullArrayElements.isSelected();
     generalSettings.POPULATE_THROWABLE_STACKTRACE  = myCbPopulateThrowableStack.isSelected();
@@ -212,6 +216,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     myCbAutoscroll.setSelected(generalSettings.AUTOSCROLL_TO_NEW_LOCALS);
+    myCbDfaAssist.setSelected(generalSettings.USE_DFA_ASSIST);
     myCbHideNullArrayElements.setSelected(generalSettings.HIDE_NULL_ARRAY_ELEMENTS);
     myCbEnableAlternateViews.setSelected(rendererSettings.areAlternateCollectionViewsEnabled());
     myCbPopulateThrowableStack.setSelected(generalSettings.POPULATE_THROWABLE_STACKTRACE);
@@ -256,6 +261,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private boolean areGeneralSettingsModified() {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     return generalSettings.AUTOSCROLL_TO_NEW_LOCALS != myCbAutoscroll.isSelected() ||
+           generalSettings.USE_DFA_ASSIST != myCbDfaAssist.isSelected() ||
            generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected() ||
            generalSettings.POPULATE_THROWABLE_STACKTRACE != myCbPopulateThrowableStack.isSelected();
   }

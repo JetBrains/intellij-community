@@ -13,6 +13,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -184,7 +185,7 @@ public class JavaDebugProcess extends XDebugProcess {
     if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
       ((XDebugSessionImpl)session).getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
     }
-    if (Registry.is("debugger.show.values.from.dfa")) {
+    if (ViewsGeneralSettings.getInstance().USE_DFA_ASSIST) {
       DfaAssist.installDfaAssist(myJavaSession);
     }
 

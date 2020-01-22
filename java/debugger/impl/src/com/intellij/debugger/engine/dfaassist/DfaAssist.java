@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -79,6 +80,10 @@ public class DfaAssist implements DebuggerContextListener {
   
   @Override
   public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
+    if (!ViewsGeneralSettings.getInstance().USE_DFA_ASSIST) {
+      shutDown(newContext);
+      return;
+    }
     if (event == DebuggerSession.Event.DETACHED || event == DebuggerSession.Event.DISPOSE) {
       cleanUp();
     }
@@ -254,14 +259,18 @@ public class DfaAssist implements DebuggerContextListener {
     }
     @Override
     public void actionPerformed(@NotNull AnActionEvent evt) {
-      DebuggerSession session = myContext.getDebuggerSession();
-      if (session != null) {
-        session.getContextManager().removeListener(DfaAssist.this);
-        cleanUp();
-      }
+      shutDown(myContext);
     }
   }
   
+  private void shutDown(DebuggerContextImpl context) {
+    DebuggerSession session = context.getDebuggerSession();
+    if (session != null) {
+      session.getContextManager().removeListener(this);
+      cleanUp();
+    }
+  }
+
   /**
    * Install dataflow assistant to the specified debugging session 
    * @param javaSession JVM debugger session to install an assistant to
