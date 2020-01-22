@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.pipenv
 
 import com.google.gson.Gson
@@ -15,7 +15,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runInEdt
@@ -55,10 +55,6 @@ import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import javax.swing.Icon
-
-/**
- * @author vlan
- */
 
 const val PIP_FILE: String = "Pipfile"
 const val PIP_FILE_LOCK: String = "Pipfile.lock"
@@ -329,7 +325,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
         if (!isPipFileEditor(event.editor)) return
         val listener = object : DocumentListener {
           override fun documentChanged(event: DocumentEvent) {
-            val document = event?.document ?: return
+            val document = event.document
             val module = document.virtualFile?.getModule(project) ?: return
             if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
               notifyPipFileChanged(module)
@@ -355,8 +351,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
         }
         val title = "$PIP_FILE_LOCK is $what"
         val content = "Run <a href='#lock'>pipenv lock</a> or <a href='#update'>pipenv update</a>"
-        val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, null, content,
-                                                                      NotificationType.INFORMATION) { notification, event ->
+        val notification = LOCK_NOTIFICATION_GROUP.createNotification(title = title, content = content, listener = NotificationListener { notification, event ->
           notification.expire()
           module.putUserData(notificationActive, null)
           FileDocumentManager.getInstance().saveAllDocuments()
@@ -366,7 +361,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
             "#update" ->
               runPipEnvInBackground(module, listOf("update", "--dev"), "Updating Pipenv environment")
           }
-        }
+        })
         module.putUserData(notificationActive, true)
         notification.whenExpired {
           module.putUserData(notificationActive, null)

@@ -106,10 +106,9 @@ class AnalysisRunnable(val hprofPath: Path,
       }
 
       val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
-        DiagnosticBundle.message("heap.dump.analysis.notification.title"),
-        null,
-        DiagnosticBundle.message("heap.dump.analysis.notification.ready.content"),
-        NotificationType.INFORMATION)
+        title = DiagnosticBundle.message("heap.dump.analysis.notification.title"),
+        content = DiagnosticBundle.message("heap.dump.analysis.notification.ready.content"),
+        type = NotificationType.INFORMATION)
       notification.isImportant = true
       notification.addAction(ReviewReportAction(reportString, heapProperties))
 

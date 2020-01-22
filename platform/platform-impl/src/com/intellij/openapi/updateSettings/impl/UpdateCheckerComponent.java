@@ -123,7 +123,7 @@ public final class UpdateCheckerComponent implements Runnable {
     }
 
     String title = IdeBundle.message("update.whats.new.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    UpdateChecker.getNotificationGroup().createNotification(title, null, null, NotificationType.INFORMATION, null)
+    UpdateChecker.getNotificationGroup().createNotification(title, null, null, NotificationType.INFORMATION)
       .addAction(new NotificationAction(IdeBundle.message("update.whats.new.notification.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {

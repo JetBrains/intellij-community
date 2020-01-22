@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -25,17 +25,13 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author spleaner
- * @author Sergey.Malenkov
- */
-public class NotificationTestAction extends AnAction implements DumbAware {
+public final class NotificationTestAction extends AnAction implements DumbAware {
   public static final String TEST_GROUP_ID = "Test Notification";
   private static class Holder {
     private static final NotificationGroup TEST_STICKY_GROUP =
-      new NotificationGroup("Test Sticky Notification", NotificationDisplayType.STICKY_BALLOON, true);
+      new NotificationGroup("Test Sticky Notification", NotificationDisplayType.STICKY_BALLOON);
     private static final NotificationGroup TEST_TOOLWINDOW_GROUP =
-      NotificationGroup.toolWindowGroup("Test ToolWindow Notification", ToolWindowId.TODO_VIEW, true);
+      NotificationGroup.toolWindowGroup("Test ToolWindow Notification", ToolWindowId.TODO_VIEW);
   }
   private static final String MESSAGE_KEY = "NotificationTestAction_Message";
 

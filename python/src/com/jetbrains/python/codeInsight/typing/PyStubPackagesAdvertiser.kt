@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
 import com.google.common.cache.Cache
@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
@@ -30,8 +31,7 @@ import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.sdk.PythonSdkUtil
 import javax.swing.JComponent
 
-class PyStubPackagesAdvertiser : PyInspection() {
-
+private class PyStubPackagesAdvertiser : PyInspection() {
   companion object {
     // file-level suggestion will be shown for packages below
     private val FORCED = mapOf("django" to "Django", "numpy" to "numpy") // top-level package to package on PyPI
@@ -158,40 +158,39 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
         BALLOON_NOTIFICATIONS
           .createNotification(
-            "Type hints are not installed",
-            "They could make code insight better.<br/>" +
-            "<a href=\"#yes\">Install ${if (plural) "stub packages" else reqsToString}</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
-            "<a href=\"#no\">Ignore</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
-            "<a href=\"#settings\">Settings</a>",
-            NotificationType.INFORMATION
-          ) { notification, event ->
-            try {
-              val problemDescriptor = ProblemDescriptorImpl(
-                file,
-                file,
-                "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed",
-                LocalQuickFix.EMPTY_ARRAY,
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                true,
-                null,
-                true
-              )
+            title = "Type hints are not installed",
+            content = "They could make code insight better.<br/>" +
+                      "<a href=\"#yes\">Install ${if (plural) "stub packages" else reqsToString}</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
+                      "<a href=\"#no\">Ignore</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
+                      "<a href=\"#settings\">Settings</a>",
+            listener = NotificationListener { notification, event ->
+              try {
+                val problemDescriptor = ProblemDescriptorImpl(
+                  file,
+                  file,
+                  "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed",
+                  LocalQuickFix.EMPTY_ARRAY,
+                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                  true,
+                  null,
+                  true
+                )
 
-              when (event.description) {
-                "#yes" -> {
-                  createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor)
-                }
-                "#no" -> createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor)
-                "#settings" -> {
-                  val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-                  EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
+                when (event.description) {
+                  "#yes" -> {
+                    createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor)
+                  }
+                  "#no" -> createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor)
+                  "#settings" -> {
+                    val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+                    EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
+                  }
                 }
               }
-            }
-            finally {
-              notification.expire()
-            }
-          }
+              finally {
+                notification.expire()
+              }
+            })
           .whenExpired { project.putUserData(BALLOON_SHOWING, false) }
           .notify(project)
       }
