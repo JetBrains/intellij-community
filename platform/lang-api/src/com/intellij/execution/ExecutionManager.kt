@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
+import java.util.function.Function
 
 /**
  * Manages the execution of run configurations and the relationship between running processes and Run/Debug toolwindow tabs.
@@ -55,6 +57,14 @@ abstract class ExecutionManager {
   abstract fun startRunProfile(environment: ExecutionEnvironment,
                                callback: ProgramRunner.Callback?,
                                starter: () -> Promise<RunContentDescriptor?>)
+
+  @ApiStatus.Internal
+  fun startRunProfile(environment: ExecutionEnvironment,
+                      callback: ProgramRunner.Callback?,
+                      executor: Function<RunProfileState, RunContentDescriptor?>) {
+    val state = environment.state ?: return
+    startRunProfile(environment, callback, { resolvedPromise(executor.apply(state)) })
+  }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #startRunProfile(RunProfileStarter, ExecutionEnvironment)}")
