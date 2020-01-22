@@ -89,12 +89,6 @@ public class DocumentEventImpl extends DocumentEvent {
     return myNewString;
   }
 
-  @Override
-  @NotNull
-  public Document getDocument() {
-    return (Document)getSource();
-  }
-
   /**
    * @return initial start offset as requested in {@link Document#replaceString(int, int, CharSequence)} call, before common prefix and
    * suffix were removed from the changed range.

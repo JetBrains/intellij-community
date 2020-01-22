@@ -12,7 +12,9 @@ public abstract class DocumentEvent extends EventObject {
   }
 
   @NotNull
-  public abstract Document getDocument();
+  public Document getDocument() {
+    return (Document)getSource();
+  }
 
   /**
    * The start offset of a text change.
