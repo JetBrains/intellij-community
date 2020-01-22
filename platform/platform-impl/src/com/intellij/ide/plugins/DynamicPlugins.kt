@@ -253,11 +253,13 @@ object DynamicPlugins {
                                disable: Boolean = false,
                                isUpdate: Boolean = false): Boolean {
     var result = false
-    runInAutoSaveDisabledMode {
-      val saveAndSyncHandler = SaveAndSyncHandler.getInstance()
-      saveAndSyncHandler.saveSettingsUnderModalProgress(ApplicationManager.getApplication())
-      for (openProject in ProjectManager.getInstance().openProjects) {
-        saveAndSyncHandler.saveSettingsUnderModalProgress(openProject)
+    if (!allowLoadUnloadSynchronously(pluginDescriptor)) {
+      runInAutoSaveDisabledMode {
+        val saveAndSyncHandler = SaveAndSyncHandler.getInstance()
+        saveAndSyncHandler.saveSettingsUnderModalProgress(ApplicationManager.getApplication())
+        for (openProject in ProjectManager.getInstance().openProjects) {
+          saveAndSyncHandler.saveSettingsUnderModalProgress(openProject)
+        }
       }
     }
     val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", null, parentComponent, null)
