@@ -552,6 +552,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
 
+      panel.add(Box.createGlue(), gc.nextLine().next().fillCell().anchor(GridBagConstraints.PAGE_END).coverLine(3).weighty(1.0));
       return panel;
     }
 
