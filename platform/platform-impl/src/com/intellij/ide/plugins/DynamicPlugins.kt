@@ -109,7 +109,7 @@ object DynamicPlugins {
       return false
     }
     
-    if (loadedPluginDescriptor != null && loadedPluginDescriptor.isEnabled) {
+    if (loadedPluginDescriptor != null && isPluginLoaded(loadedPluginDescriptor.pluginId)) {
       if (!pluginDescriptor.useIdeaClassLoader) {
         val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
         if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
