@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunProfileStarter;
 import com.intellij.execution.configurations.RunProfileState;
@@ -10,8 +11,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
-
-import static com.intellij.execution.runners.GenericProgramRunnerKt.startRunProfile;
 
 /**
  * @deprecated Use {@link AsyncProgramRunner} instead
@@ -25,16 +24,13 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
     prepare(environment, state)
       .onSuccess(result -> {
         UIUtil.invokeLaterIfNeeded(() -> {
-          if (!environment.getProject().isDisposed()) {
-            startRunProfile(environment, callback, () -> {
-              try {
-                return result.executeAsync(environment);
-              }
-              catch (ExecutionException e) {
-                throw new RuntimeException(e);
-              }
-            });
+          if (environment.getProject().isDisposed()) {
+            return;
           }
+
+          ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, callback, () -> {
+            return result.executeAsync(environment);
+          });
         });
       });
   }

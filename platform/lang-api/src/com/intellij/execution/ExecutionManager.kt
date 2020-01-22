@@ -4,10 +4,13 @@ package com.intellij.execution
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.Promise
 
 /**
  * Manages the execution of run configurations and the relationship between running processes and Run/Debug toolwindow tabs.
@@ -47,6 +50,11 @@ abstract class ExecutionManager {
    * @param environment the execution environment describing the process to be started.
    */
   abstract fun startRunProfile(starter: RunProfileStarter, environment: ExecutionEnvironment)
+
+  @ApiStatus.Internal
+  abstract fun startRunProfile(environment: ExecutionEnvironment,
+                               callback: ProgramRunner.Callback?,
+                               starter: () -> Promise<RunContentDescriptor?>)
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #startRunProfile(RunProfileStarter, ExecutionEnvironment)}")
