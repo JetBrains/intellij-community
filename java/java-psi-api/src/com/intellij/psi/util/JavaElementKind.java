@@ -45,7 +45,7 @@ public enum JavaElementKind {
   }
 
   /**
-   * @return human-readable name of the item having the subject role in the sentence (accusative case)
+   * @return human-readable name of the item having the object role in the sentence (accusative case)
    */
   @Nls
   public @NotNull String object() {
