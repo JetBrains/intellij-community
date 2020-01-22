@@ -75,8 +75,7 @@ object JdkInstaller {
       try {
         HttpRequests.request(item.url)
           .productNameAsUserAgent()
-          .connect { processor -> processor.saveToFile(downloadFile, indicator) }
-
+          .saveToFile(downloadFile, indicator)
       }
       catch (t: IOException) {
         throw RuntimeException("Failed to download JDK from $url. ${t.message}", t)
