@@ -316,20 +316,25 @@ internal object BranchesDashboardActions {
     }
   }
 
-  object CheckoutLocalBranchOnDoubleClickHandler {
-    fun install(project: Project, treeComponent: BranchesTreeComponent) {
-      treeComponent.doubleClickHandler = { clickedNode -> doCheckout(clickedNode, project) }
+  class CheckoutSelectedBranchAction : BranchesActionBase() {
+
+    override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
+      if (branches.size > 1) {
+        e.presentation.isEnabled = false
+        return
+      }
     }
 
-    private fun doCheckout(clickedNode: BranchTreeNode, project: Project) {
-      val branchInfo = clickedNode.getNodeDescriptor().branchInfo ?: return
-      if (branchInfo.isLocal) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project!!
+      val branch = e.getData(GIT_BRANCHES)!!.firstOrNull() ?: return
+      if (branch.isLocal) {
         GitBranchPopupActions.LocalBranchActions.CheckoutAction
-          .checkoutBranch(project, branchInfo.repositories, branchInfo.branchName)
+          .checkoutBranch(project, branch.repositories, branch.branchName)
       }
       else {
         GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
-          .checkoutRemoteBranch(project, branchInfo.repositories, branchInfo.branchName)
+          .checkoutRemoteBranch(project, branch.repositories, branch.branchName)
       }
     }
   }

@@ -38,7 +38,6 @@ import com.intellij.vcs.log.ui.frame.VcsLogChangeProcessor
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import git4idea.ui.branch.dashboard.BranchesDashboardActions.CheckoutLocalBranchOnDoubleClickHandler
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.GroupByDirectoryAction
@@ -121,7 +120,6 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
   }
 
   private fun initMainUi() {
-    CheckoutLocalBranchOnDoubleClickHandler.install(project, tree.component)
     val diffAction = ShowBranchDiffAction()
     diffAction.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Diff.ShowDiff"), branchesTreeWithLogPanel)
 
