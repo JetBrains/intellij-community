@@ -57,7 +57,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   public @NotNull
   static String getMessage(String varName) {
-    return CommonQuickFixBundle.message("fix.create.title.x.from.usage", JavaElementKind.LOCAL_VARIABLE.accusative(), varName);
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.LOCAL_VARIABLE.accusative(), varName);
   }
 
   @Override

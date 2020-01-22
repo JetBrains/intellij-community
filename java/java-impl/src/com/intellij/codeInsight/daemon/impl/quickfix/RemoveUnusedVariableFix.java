@@ -57,7 +57,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("remove.unused.variable.family");
+    return QuickFixBundle.message("remove.unused.element.family", JavaElementKind.VARIABLE.accusative());
   }
 
   @Override
