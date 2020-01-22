@@ -17,6 +17,7 @@ import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
@@ -25,6 +26,8 @@ import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 public class ClsPsiTest extends LightIdeaTestCase {
   private static final String TEST_DATA_PATH = "/psi/cls/repo";
@@ -297,6 +300,20 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals(name, field.getName());
     assertTrue(field instanceof PsiEnumConstant);
     assertEquals(type, field.getType());
+  }
+
+  public void testSyntheticEnumMethodsWhereApplicable() {
+    PsiClass aClass = getJavaFacade().findClass(TimeUnit.class.getName());
+    assertTrue(aClass.isEnum());
+    assertSize(1, aClass.findMethodsByName("valueOf", false));
+    assertSize(1, aClass.findMethodsByName("values", false));
+
+    Collection<PsiClass> constants = DirectClassInheritorsSearch.search(aClass).findAll();
+    assertSize(7, constants);
+    for (PsiClass constant : constants) {
+      assertSize(0, constant.findMethodsByName("valueOf", false));
+      assertSize(0, constant.findMethodsByName("values", false));
+    }
   }
 
   public void testAnnotations() {

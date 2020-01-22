@@ -7,11 +7,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,12 +82,16 @@ public class ClassInnerStuffCache {
 
   @Nullable
   PsiMethod getValuesMethod() {
-    return myClass.isEnum() && myClass.getName() != null ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValuesMethod())) : null;
+    return myClass.isEnum() && !isAnonymousClass() ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValuesMethod())) : null;
   }
 
   @Nullable
   private PsiMethod getValueOfMethod() {
-    return myClass.isEnum() && myClass.getName() != null ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValueOfMethod())) : null;
+    return myClass.isEnum() && !isAnonymousClass() ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValueOfMethod())) : null;
+  }
+
+  private boolean isAnonymousClass() {
+    return myClass.getName() == null || myClass instanceof ClsClassImpl && ((ClsClassImpl)myClass).isAnonymousClass();
   }
 
   private static <T> T[] copy(T[] value) {
@@ -106,8 +112,8 @@ public class ClassInnerStuffCache {
     List<PsiMethod> own = myClass.getOwnMethods();
     List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class);
     if (myClass.isEnum()) {
-      ext.add(getValuesMethod());
-      ext.add(getValueOfMethod());
+      ContainerUtil.addIfNotNull(ext, getValuesMethod());
+      ContainerUtil.addIfNotNull(ext, getValueOfMethod());
     }
     return ArrayUtil.mergeCollections(own, ext, PsiMethod.ARRAY_FACTORY);
   }
