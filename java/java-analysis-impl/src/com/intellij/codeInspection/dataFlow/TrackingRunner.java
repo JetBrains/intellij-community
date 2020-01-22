@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -1007,7 +1008,8 @@ public class TrackingRunner extends DataFlowRunner {
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       PsiMethod method = call.resolveMethod();
-      CauseItem causeItem = fromMemberNullability(nullability, method, "method", call.getMethodExpression().getReferenceNameElement());
+      CauseItem causeItem = fromMemberNullability(nullability, method, JavaElementKind.METHOD, 
+                                                  call.getMethodExpression().getReferenceNameElement());
       if (causeItem == null) {
         switch (nullability) {
           case NULL:
@@ -1027,10 +1029,7 @@ public class TrackingRunner extends DataFlowRunner {
     if (expression instanceof PsiReferenceExpression) {
       PsiVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
       if (variable != null) {
-        String memberTitle = variable instanceof PsiField ? "field" :
-                             variable instanceof PsiParameter ? "parameter" :
-                             "variable";
-        CauseItem causeItem = fromMemberNullability(nullability, variable, memberTitle, expression);
+        CauseItem causeItem = fromMemberNullability(nullability, variable, JavaElementKind.fromElement(variable), expression);
         if (causeItem != null) {
           return causeItem;
         }
@@ -1057,7 +1056,7 @@ public class TrackingRunner extends DataFlowRunner {
             if (parameter != null) {
               CauseItem item =
                 new CauseItem("'" + text + "' was passed as an argument to a method accepting non-null parameter", dereferenced);
-              item.addChildren(fromMemberNullability(DfaNullability.NOT_NULL, parameter, "parameter", dereferenced));
+              item.addChildren(fromMemberNullability(DfaNullability.NOT_NULL, parameter, JavaElementKind.PARAMETER, dereferenced));
               return item;
             }
           }
@@ -1092,7 +1091,7 @@ public class TrackingRunner extends DataFlowRunner {
   }
 
   private CauseItem fromMemberNullability(DfaNullability nullability, PsiModifierListOwner owner,
-                                          String memberName, PsiElement anchor) {
+                                          JavaElementKind memberKind, PsiElement anchor) {
     if (owner != null) {
       NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(owner.getProject()).findEffectiveNullabilityInfo(owner);
       String name = ((PsiNamedElement)owner).getName();
@@ -1105,10 +1104,10 @@ public class TrackingRunner extends DataFlowRunner {
             // Do not use inference inside method itself
             return null;
           }
-          message = memberName + " '" + name + "' was inferred to be '" + nullability.getPresentationName() + "'";
+          message = memberKind.nominative() + " '" + name + "' was inferred to be '" + nullability.getPresentationName() + "'";
         }
         else if (info.isExternal()) {
-          message = memberName + " '" + name + "' is externally annotated as '" + nullability.getPresentationName() + "'";
+          message = memberKind.nominative() + " '" + name + "' is externally annotated as '" + nullability.getPresentationName() + "'";
         }
         else if (info.isContainer()) {
           PsiAnnotationOwner annoOwner = info.getAnnotation().getOwner();
@@ -1130,10 +1129,10 @@ public class TrackingRunner extends DataFlowRunner {
             details = " from " + ((PsiNamedElement)annoOwner).getName();
           }
           message =
-            memberName + " '" + name + "' inherits " + details + ", thus '" + nullability.getPresentationName() + "'";
+            memberKind.nominative() + " '" + name + "' inherits " + details + ", thus '" + nullability.getPresentationName() + "'";
         }
         else {
-          message = memberName + " '" + name + "' is annotated as '" + nullability.getPresentationName() + "'";
+          message = memberKind.nominative() + " '" + name + "' is annotated as '" + nullability.getPresentationName() + "'";
         }
         if (info.getAnnotation().getContainingFile() == anchor.getContainingFile()) {
           anchor = info.getAnnotation();
