@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing.hash;
 
-import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
@@ -24,21 +22,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.psi.impl.JavaSimplePropertyIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex;
-import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
-import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexableSetContributor;
-import com.intellij.util.indexing.hash.HashBasedIndexGenerator;
-import com.intellij.util.indexing.hash.StubHashBasedIndexGenerator;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
@@ -135,7 +123,11 @@ public class DumpIndexAction extends AnAction {
       indicator.setText("Indexing chunk " + chunk.getName());
       Path chunkRoot = indexRoot.resolve(chunk.getName());
       ReadAction.run(() -> {
-        List<HashBasedIndexGenerator<?, ?>> fileBasedGenerators = getExportableIndices(true)
+        List<HashBasedIndexGenerator<?, ?>> fileBasedGenerators = FileBasedIndexExtension
+          .EXTENSION_POINT_NAME
+          .extensions()
+          .filter(ex -> ex.dependsOnFileContent())
+          .filter(ex -> !(ex instanceof StubUpdatingIndex))
           .map(extension -> getGenerator(chunkRoot, extension))
           .collect(Collectors.toList());
 
@@ -288,60 +280,6 @@ public class DumpIndexAction extends AnAction {
       stringBuilder.append(" (empty result)");
     }
     stringBuilder.append("\n");
-  }
-
-  @NotNull
-  private static Stream<FileBasedIndexExtension<?, ?>> getExportableIndices(boolean all) {
-    if (all) {
-      return FileBasedIndexExtension
-              .EXTENSION_POINT_NAME
-              .extensions()
-              .filter(ex -> ex.dependsOnFileContent())
-              .filter(ex -> !(ex instanceof StubUpdatingIndex));
-    }
-
-    //kt
-    Stream<FileBasedIndexExtension<?, ?>> ktIndices =
-            FileBasedIndexExtension
-                    .EXTENSION_POINT_NAME
-                    .extensions()
-                    .filter(id -> id.getName().getName().contains("kotlin"));
-
-    Set<ID<Object, Object>> xmlIndexIds = ContainerUtil.set(ID.findByName("XmlTagNames"),
-            ID.findByName("XmlNamespaces"),
-            ID.findByName("SchemaTypeInheritance"),
-            ID.findByName("DomFileIndex"),
-            ID.findByName("xmlProperties"));
-    //xml
-    Stream<FileBasedIndexExtension<?, ?>> xmlIndices =
-            FileBasedIndexExtension
-                    .EXTENSION_POINT_NAME
-                    .extensions()
-                    .filter(id -> xmlIndexIds.contains(id.getName()));
-
-    //base
-    Stream<FileBasedIndexExtension<?, ?>> coreIndices =
-            FileBasedIndexExtension
-                    .EXTENSION_POINT_NAME
-                    .extensions()
-                    .filter(ex -> ex.getName().equals(TrigramIndex.INDEX_ID) ||
-                            ex.getName().equals(TodoIndex.NAME) ||
-                            ex.getName().equals(IdIndex.NAME) ||
-                            ex.getName().getName().equals("HashFragmentIndex"));
-
-    //java
-    Stream<FileBasedIndexExtension<?, ?>> javaIndices =
-            FileBasedIndexExtension
-                    .EXTENSION_POINT_NAME
-                    .extensions()
-                    .filter(ex -> ex instanceof BytecodeAnalysisIndex ||
-                            ex instanceof JavaAutoModuleNameIndex ||
-                            ex instanceof JavaFunctionalExpressionIndex ||
-                            ex instanceof JavaSimplePropertyIndex ||
-                            ex instanceof JavaNullMethodArgumentIndex ||
-                            ex instanceof JavaBinaryPlusExpressionIndex);
-
-    return Stream.concat(Stream.concat(Stream.concat(coreIndices, javaIndices), xmlIndices), ktIndices);
   }
 
   public static final class IndexChunk {

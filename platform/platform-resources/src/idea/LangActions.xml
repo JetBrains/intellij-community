@@ -21,6 +21,12 @@
       <reference ref="RunContextGroup"/>
     </group>
 
+    <group id="Internal.SharedIndexes" popup="true" internal="true" compact="true">
+      <action id="SharedIndexes.DumpIndex" internal="true" class="com.intellij.util.indexing.hash.DumpIndexAction"/>
+
+      <add-to-group group-id="Internal"/>
+    </group>
+
     <group id="LangCodeInsightActions">
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>

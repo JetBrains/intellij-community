@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.indexing.hash.DumpIndexAction
 import com.intellij.util.io.*
 import com.intellij.util.lang.JavaVersion
 import java.io.File
