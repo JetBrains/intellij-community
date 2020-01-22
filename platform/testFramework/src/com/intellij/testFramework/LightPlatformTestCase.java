@@ -719,6 +719,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     private boolean areJdksEqual(final Sdk newSdk) {
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
+      if (!mySdk.getName().equals(newSdk.getName())) return false;
 
       OrderRootType[] rootTypes = {OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
       for (OrderRootType rootType : rootTypes) {
