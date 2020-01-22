@@ -40,7 +40,9 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
       val chunks = arrayListOf<IndexChunk>()
       chunks += IndexChunk(setOf(virtualFile), "source")
 
-      IndexesExporter.exportIndices(project, chunks, tempDirPath, indexZip, EmptyProgressIndicator())
+      IndexesExporter
+        .getInstance(project)
+        .exportIndices(chunks, tempDirPath, indexZip, EmptyProgressIndicator())
 
       restartFileBasedIndex(indexZip)
 

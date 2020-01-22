@@ -123,8 +123,9 @@ class DumpIndexStarter : ApplicationStarter {
         val roots = (rootProvider.getFiles(OrderRootType.CLASSES) + rootProvider.getFiles(OrderRootType.SOURCES)).toSet()
         LOG.info("Collected ${roots.size} SDK roots")
         val indexChunk = IndexChunk(roots, jdkItem.fullPresentationText)
-        IndexesExporter.exportSingleIndexChunk(project,
-                                               indexChunk, jdkIndicesPath,
+
+        IndexesExporter.getInstance(project).exportIndices(
+                                               listOf(indexChunk), jdkIndicesPath,
                                                jdkIndicesPath.resolve(jdkIndicesPath.fileName.toString() + ".zip"),
                                                EmptyProgressIndicator()
         )

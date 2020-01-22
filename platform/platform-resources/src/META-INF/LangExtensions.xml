@@ -1029,6 +1029,8 @@
     <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.TabActionsPromoter"/>
 
+    <projectService serviceImplementation="com.intellij.util.indexing.hash.building.IndexesExporter"/>
+
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
 
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>

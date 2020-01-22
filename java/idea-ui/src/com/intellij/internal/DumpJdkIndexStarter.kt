@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -25,33 +26,6 @@ import kotlin.system.measureTimeMillis
 
 class DumpJdkIndexStarter : ApplicationStarter {
   override fun getCommandName() = "dump-jdk-index"
-
-  private fun Array<out String>.arg(arg: String, default: String? = null): String {
-    val key = "/$arg="
-    val values = filter { it.startsWith(key) }.map { it.removePrefix(key) }
-
-    if (values.isEmpty() && default != null) {
-      return default
-    }
-    require(values.size == 1) { "Commandline argument $key is missing or defined multiple times" }
-    return values.first()
-  }
-
-  private fun Array<out String>.argFile(arg: String, default: String? = null) = File(arg(arg, default)).canonicalFile
-
-  private fun <Y: Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?) : Y {
-    try {
-      return action() ?: error("<null> was returned!")
-    }
-    catch (t: Throwable) {
-      throw Error("Failed to $errorMessage. ${t.message}", t)
-    }
-  }
-
-  private fun File.recreateDir() = apply {
-    FileUtil.delete(this)
-    FileUtil.createDirectory(this)
-  }
 
   override fun main(args: Array<out String>) {
     try {
@@ -103,8 +77,16 @@ class DumpJdkIndexStarter : ApplicationStarter {
     }
 
     LOG.info("Resolved JDK. Version is $jdkVersion, home = ${javaSdk.homePath}")
-    val project = runAndCatchNotNull("create project") {
-      ProjectManager.getInstance().createProject("jdk-$jdkVersion", projectDir.absolutePath)
+    val project = run {
+      val initProject = runAndCatchNotNull("create project") {
+        ProjectManager.getInstance().createProject("jdk-$jdkVersion", projectDir.absolutePath)
+      }
+
+      //it is good to open project to make sure Project#isOpen and other similar tests pass
+      if (!ProjectManagerEx.getInstanceEx().openProject(initProject)) {
+        error("Failed to open project")
+      }
+      initProject
     }
 
     LOG.info("Project is read. isOpen=${project.isOpen}")
@@ -118,10 +100,11 @@ class DumpJdkIndexStarter : ApplicationStarter {
       val roots = (rootProvider.getFiles(OrderRootType.CLASSES) + rootProvider.getFiles(OrderRootType.SOURCES)).toSet()
       LOG.info("Collected ${roots.size} SDK roots")
       val indexChunk = IndexChunk(roots, "jdk-$jdkVersion")
-      IndexesExporter.exportSingleIndexChunk(project,
-                                             indexChunk, unpackedIndexDir.toPath(),
-                                             indexZip.toPath(),
-                                             EmptyProgressIndicator())
+      IndexesExporter.getInstance(project).exportIndices(
+        listOf(indexChunk),
+        unpackedIndexDir.toPath(),
+        indexZip.toPath(),
+        EmptyProgressIndicator())
     }
 
     val jdkSize = jdkHome.totalSize()
@@ -132,16 +115,6 @@ class DumpJdkIndexStarter : ApplicationStarter {
     LOG.info("Index size = ${StringUtil.formatFileSize(indexSize)}")
     LOG.info("Generated index in $indexZip")
     exitProcess(0)
-  }
-
-  private fun File.totalSize(): Long {
-    if (isFile) return length()
-    return Files.walk(this.toPath()).mapToLong {
-      when {
-        it.isFile() -> java.lang.Long.max(it.sizeOrNull(), 0L)
-        else -> 0L
-      }
-    }.sum()
   }
 }
 
@@ -155,5 +128,42 @@ private object LOG {
     println("ERROR - $message")
     cause?.printStackTrace()
   }
+}
+
+private fun Array<out String>.arg(arg: String, default: String? = null): String {
+  val key = "/$arg="
+  val values = filter { it.startsWith(key) }.map { it.removePrefix(key) }
+
+  if (values.isEmpty() && default != null) {
+    return default
+  }
+  require(values.size == 1) { "Commandline argument $key is missing or defined multiple times" }
+  return values.first()
+}
+
+private fun Array<out String>.argFile(arg: String, default: String? = null) = File(arg(arg, default)).canonicalFile
+
+private fun <Y: Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?) : Y {
+  try {
+    return action() ?: error("<null> was returned!")
+  }
+  catch (t: Throwable) {
+    throw Error("Failed to $errorMessage. ${t.message}", t)
+  }
+}
+
+private fun File.recreateDir() = apply {
+  FileUtil.delete(this)
+  FileUtil.createDirectory(this)
+}
+
+private fun File.totalSize(): Long {
+  if (isFile) return length()
+  return Files.walk(this.toPath()).mapToLong {
+    when {
+      it.isFile() -> java.lang.Long.max(it.sizeOrNull(), 0L)
+      else -> 0L
+    }
+  }.sum()
 }
 
