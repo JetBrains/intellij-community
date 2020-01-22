@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -316,40 +316,38 @@ public class ActionsTree {
     }
   }
 
+  public static boolean isShortcutCustomized(@NotNull String actionId, @NotNull Keymap keymap) {
+    if (!keymap.canModify()) return false; // keymap is not customized
 
-  private static boolean isActionChanged(String actionId, Keymap oldKeymap, Keymap newKeymap) {
-    if (!newKeymap.canModify()) return false;
-
-    Shortcut[] oldShortcuts = oldKeymap.getShortcuts(actionId);
-    Shortcut[] newShortcuts = newKeymap.getShortcuts(actionId);
-    return !Arrays.equals(oldShortcuts, newShortcuts);
+    Keymap parent = keymap.getParent();
+    return parent != null && !Arrays.equals(parent.getShortcuts(actionId), keymap.getShortcuts(actionId));
   }
 
-  private static boolean isGroupChanged(Group group, Keymap oldKeymap, Keymap newKeymap) {
-    if (!newKeymap.canModify()) return false;
+  private static boolean areGroupShortcutsCustomized(@NotNull Group group, @NotNull Keymap keymap) {
+    if (!keymap.canModify()) return false;
 
     ArrayList children = group.getChildren();
     for (Object child : children) {
       if (child instanceof Group) {
-        if (isGroupChanged((Group)child, oldKeymap, newKeymap)) {
+        if (areGroupShortcutsCustomized((Group)child, keymap)) {
           return true;
         }
       }
       else if (child instanceof String) {
         String actionId = (String)child;
-        if (isActionChanged(actionId, oldKeymap, newKeymap)) {
+        if (isShortcutCustomized(actionId, keymap)) {
           return true;
         }
       }
       else if (child instanceof QuickList) {
         String actionId = ((QuickList)child).getActionId();
-        if (isActionChanged(actionId, oldKeymap, newKeymap)) {
+        if (isShortcutCustomized(actionId, keymap)) {
           return true;
         }
       }
     }
 
-    return isActionChanged(group.getId(), oldKeymap, newKeymap);
+    return group.getId() != null && isShortcutCustomized(group.getId(), keymap);
   }
 
   public void selectAction(String actionId) {
@@ -515,7 +513,6 @@ public class ActionsTree {
       myHaveLink = false;
       myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       final boolean showIcons = UISettings.getInstance().getShowIconsInMenus();
-      Keymap originalKeymap = myKeymap == null ? null : myKeymap.getParent();
       Icon icon = null;
       String text;
       String actionId = null;
@@ -531,7 +528,7 @@ public class ActionsTree {
           actionId = group.getId();
           text = group.getName();
 
-          changed = originalKeymap != null && isGroupChanged(group, originalKeymap, myKeymap);
+          changed = myKeymap != null && areGroupShortcutsCustomized(group, myKeymap);
           icon = group.getIcon();
           if (icon == null){
             icon = CLOSE_ICON;
@@ -555,14 +552,14 @@ public class ActionsTree {
           else {
             text = actionId;
           }
-          changed = originalKeymap != null && isActionChanged(actionId, originalKeymap, myKeymap);
+          changed = myKeymap != null && isShortcutCustomized(actionId, myKeymap);
         }
         else if (userObject instanceof QuickList) {
           QuickList list = (QuickList)userObject;
           icon = null; // AllIcons.Actions.QuickList;
           text = list.getName();
 
-          changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);
+          changed = myKeymap != null && isShortcutCustomized(list.getActionId(), myKeymap);
         }
         else if (userObject instanceof Separator) {
           // TODO[vova,anton]: beautify

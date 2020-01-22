@@ -2,6 +2,9 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ActivateToolWindowAction
+import com.intellij.ide.actions.ActivateToolWindowAction.getActionIdForToolWindow
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.impl.ui.ActionsTree.isShortcutCustomized
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.wm.ToolWindow
@@ -31,5 +34,10 @@ internal class ActivateVersionControlToolWindowAction : ActivateToolWindowAction
   }
 
   override fun useMnemonicFromShortcuts(project: Project): Boolean =
-    ToolWindowManager.getInstance(project).getToolWindow(COMMIT_TOOLWINDOW_ID)?.isAvailable != true
+    ToolWindowManager.getInstance(project).getToolWindow(COMMIT_TOOLWINDOW_ID)?.isAvailable != true ||
+    isShortcutCustomized(toolWindowId) ||
+    isShortcutCustomized(COMMIT_TOOLWINDOW_ID)
 }
+
+private fun isShortcutCustomized(toolWindowId: String): Boolean =
+  isShortcutCustomized(getActionIdForToolWindow(toolWindowId), KeymapManager.getInstance().activeKeymap)
