@@ -115,7 +115,7 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (isPerformedRepeatedlyInLoop(expression)) {
-        registerNewExpressionError(expression, Kind.NEW_OPERATOR);
+        registerNewExpressionError(expression, expression.isArrayCreation() ? Kind.ARRAY_INITIALIZER : Kind.NEW_OPERATOR);
       }
     }
 

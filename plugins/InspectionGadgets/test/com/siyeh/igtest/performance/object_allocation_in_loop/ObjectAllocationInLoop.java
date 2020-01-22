@@ -101,9 +101,10 @@ class ObjectAllocationInLoop {
   
   void arrayInit() {
     for (int i = 0; i < 10; i++) {
-      int[] i1 = <warning descr="Object allocation via array initializer in loop">{0}</warning>;
-      int[][] i2 = <warning descr="Object allocation via array initializer in loop">{{0}}</warning>;
-      int[] i3 = <warning descr="Object allocation 'new new()' in loop">new</warning> int[] {0};
+      int[] i1 = <warning descr="Array allocation in loop">{0}</warning>;
+      int[][] i2 = <warning descr="Array allocation in loop">{{0}}</warning>;
+      int[] i3 = <warning descr="Array allocation in loop">new</warning> int[] {0};
+      int[] i4 = <warning descr="Array allocation in loop">new</warning> int[10];
     }
   }
 }
