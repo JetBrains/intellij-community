@@ -114,7 +114,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       UiInspectorNotification[] existing =
         NotificationsManager.getNotificationsManager().getNotificationsOfType(UiInspectorNotification.class, null);
-      if (existing.length == 0) {
+      if (existing.length == 0 && !Boolean.getBoolean("idea.ui.debug.mode")) {
         Notifications.Bus.notify(new UiInspectorNotification(), null);
       }
     }
