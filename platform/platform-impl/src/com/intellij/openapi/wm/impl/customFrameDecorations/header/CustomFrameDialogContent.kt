@@ -41,7 +41,7 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
         }
     }
 
-    private val panel = JPanel(MigLayout("novisualpadding, ins 0, gap 0, fill, flowy", "", "[min!][]"))
+    private val panel = JPanel(BorderLayout())
     private val header: CustomHeader = CustomHeader.create(window)
 
     init {
