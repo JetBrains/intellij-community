@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -16,10 +16,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
@@ -35,14 +36,12 @@ import java.io.File
 import java.util.*
 import kotlin.collections.LinkedHashSet
 
-open class UpdateIdeFromSourcesAction
+private val LOG = logger<UpdateIdeFromSourcesAction>()
+
+internal open class UpdateIdeFromSourcesAction
  @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
   : AnAction(if (forceShowSettings) "Update IDE from Sources Settings..." else "Update IDE from Sources...",
-             "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null) {
-
-  private val LOG: Logger = Logger.getInstance(UpdateIdeFromSourcesAction::class.java)
-
-
+             "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
@@ -74,17 +73,16 @@ open class UpdateIdeFromSourcesAction
       return error("The build scripts is out-of-date, please update to the latest 'master' sources.")
     }
 
-    val bundledPluginDirsToSkip = if (!state.buildDisabledPlugins) {
-      val pluginDirectoriesToSkip = LinkedHashSet<String>(state.pluginDirectoriesForDisabledPlugins)
-      val allPlugins = PluginManagerCore.getPlugins()
-      pluginDirectoriesToSkip.removeAll(allPlugins.filter { it.isBundled && it.isEnabled }.map { it.path }.filter { it.isDirectory }.map { it.name })
-      allPlugins.filter { it.isBundled && !it.isEnabled }.map { it.path }.filter { it.isDirectory }.mapTo(pluginDirectoriesToSkip) { it.name }
+    val bundledPluginDirsToSkip: List<String> = if (state.buildDisabledPlugins) {
+      emptyList()
+    }
+    else {
+      val pluginDirectoriesToSkip = LinkedHashSet(state.pluginDirectoriesForDisabledPlugins)
+      pluginDirectoriesToSkip.removeAll(PluginManagerCore.getLoadedPlugins().asSequence().filter { it.isBundled }.map { it.path }.filter { it.isDirectory }.map { it.name })
+      PluginManagerCore.getPlugins().filter { it.isBundled && !it.isEnabled }.map { it.path }.filter { it.isDirectory }.mapTo(pluginDirectoriesToSkip) { it.name }
       val list = pluginDirectoriesToSkip.toMutableList()
       state.pluginDirectoriesForDisabledPlugins = list
       list
-    }
-    else {
-      emptyList<String>()
     }
 
     val deployDir = "$devIdeaHome/out/deploy"
@@ -325,7 +323,8 @@ open class UpdateIdeFromSourcesAction
 }
 
 private const val includeBinAndRuntimeProperty = "intellij.build.generate.bin.and.runtime.for.unpacked.dist"
-class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
+
+internal class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
 
 private val safeToDeleteFilesInHome = setOf(
   "bin", "help", "jre", "jre64", "jbr", "lib", "license", "plugins", "redist", "MacOS", "Resources",
