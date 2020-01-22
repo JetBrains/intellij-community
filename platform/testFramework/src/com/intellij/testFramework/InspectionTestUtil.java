@@ -35,7 +35,8 @@ public class InspectionTestUtil {
     List<Element> reportedProblems = new ArrayList<>(doc.getChildren("problem"));
 
     Element[] expectedArray = expectedProblems.toArray(new Element[0]);
-    boolean failed = false;
+
+    List<String> problems = new ArrayList<>();
 
     expected:
     for (Element expectedProblem : expectedArray) {
@@ -49,17 +50,17 @@ public class InspectionTestUtil {
       }
 
       Document missing = new Document(expectedProblem.clone());
-      System.out.println("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing, "\n"));
-      failed = true;
+      problems.add("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing, "\n"));
     }
 
     for (Element reportedProblem : reportedProblems) {
       Document extra = new Document(reportedProblem.clone());
-      System.out.println("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra, "\n"));
-      failed = true;
+      problems.add("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra, "\n"));
     }
 
-    Assert.assertFalse(failed);
+    if (!problems.isEmpty()) {
+      Assert.fail(String.join("\n", problems));
+    }
   }
 
   static boolean compareProblemWithExpected(Element reportedProblem, Element expectedProblem, boolean checkRange) throws Exception {
