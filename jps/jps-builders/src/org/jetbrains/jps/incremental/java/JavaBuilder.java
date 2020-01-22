@@ -55,7 +55,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -65,6 +66,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -933,8 +935,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   @NotNull
   public static String getUsedCompilerId(CompileContext context) {
     final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
-    return config == null ? JavaCompilers.JAVAC_ID : config.getJavaCompilerId();
+    return JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getJavaCompilerId();
   }
 
   private static void addCrossCompilationOptions(int compilerSdkVersion, List<? super String> options, CompileContext context, ModuleChunk chunk) {
@@ -1119,8 +1120,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
-    private volatile int myErrorCount;
-    private volatile int myWarningCount;
+    private final AtomicInteger myErrorCount = new AtomicInteger(0);
+    private final AtomicInteger myWarningCount = new AtomicInteger(0);
     private final Set<File> myFilesWithErrors = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     @NotNull
     private final Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
@@ -1167,29 +1168,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
           //noinspection UseOfSystemOutOrSystemErr
           System.err.println(line);
         }
-        else if (line.contains("java.lang.OutOfMemoryError")) {
+        else if (line.contains("\\bjava.lang.OutOfMemoryError\\b")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
-          myErrorCount++;
+          myErrorCount.incrementAndGet();
         }
         else {
-          final BuildMessage.Kind kind = getKindByMessageText(line);
-          if (kind == BuildMessage.Kind.ERROR) {
-            myErrorCount++;
-          }
-          else if (kind == BuildMessage.Kind.WARNING) {
-            myWarningCount++;
-          }
-          myContext.processMessage(new CompilerMessage(BUILDER_NAME, kind, line));
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, line));
         }
       }
-    }
-
-    private static BuildMessage.Kind getKindByMessageText(String line) {
-      final String lowercasedLine = StringUtil.toLowerCase(line);
-      if (lowercasedLine.contains("error") || lowercasedLine.contains("requires target release")) {
-        return BuildMessage.Kind.ERROR;
-      }
-      return BuildMessage.Kind.INFO;
     }
 
     @Override
@@ -1198,12 +1184,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
       switch (diagnostic.getKind()) {
         case ERROR:
           kind = BuildMessage.Kind.ERROR;
-          myErrorCount++;
+          myErrorCount.incrementAndGet();
           break;
         case MANDATORY_WARNING:
         case WARNING:
           kind = BuildMessage.Kind.WARNING;
-          myWarningCount++;
+          myWarningCount.incrementAndGet();
           break;
         case NOTE:
           kind = BuildMessage.Kind.INFO;
@@ -1250,11 +1236,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     int getErrorCount() {
-      return myErrorCount;
+      return myErrorCount.get();
     }
 
     int getWarningCount() {
-      return myWarningCount;
+      return myWarningCount.get();
     }
 
     @NotNull
