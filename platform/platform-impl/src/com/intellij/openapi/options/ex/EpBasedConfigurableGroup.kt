@@ -81,6 +81,9 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
   private fun createListener(): ExtensionPointChangeListener {
     return ExtensionPointChangeListener {
       value.drop()
+      extendableEp.clear()
+      collect(extendableEp, value.value.configurables)
+      
       for (listener in listeners) {
         listener.handleUpdate()
       }
