@@ -4,7 +4,10 @@ package com.intellij.remote;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.remote.ext.*;
+import com.intellij.remote.ext.CredentialsCase;
+import com.intellij.remote.ext.RemoteCredentialsHandler;
+import com.intellij.remote.ext.UnknownCredentialsHolder;
+import com.intellij.remote.ext.UnknownTypeRemoteCredentialHandler;
 import org.jetbrains.annotations.Nls;
 
 public abstract class CredentialsType<T> {
