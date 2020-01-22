@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.icons.AllIcons;
@@ -34,13 +34,9 @@ import java.util.Map;
   storages = @Storage(value = "scopes", stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)
 )
 public final class DependencyValidationManagerImpl extends DependencyValidationManager {
-  private static final Icon ourSharedScopeIcon = new IconLoader.LazyIcon() {
-    @NotNull
-    @Override
-    protected Icon compute() {
-      return IconManager.getInstance().createLayered(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
-    }
-  };
+  private static final Icon ourSharedScopeIcon = IconLoader.createLazy(() -> {
+    return IconManager.getInstance().createLayered(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
+  });
 
   private static class State {
     private final List<DependencyRule> rules = new ArrayList<>();

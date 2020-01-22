@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -40,7 +40,8 @@ import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
 import static com.intellij.ui.scale.ScaleType.*;
 
 public final class IconLoader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
+  private static final Logger LOG = Logger.getInstance(IconLoader.class);
+
   private static final String ICON_CACHE_URL_KEY = "ICON_CACHE_URL_KEY";
   // the key: Pair(ICON_CACHE_URL_KEY, url) or Pair(path, classLoader)
   private static final ConcurrentMap<Pair<String, Object>, CachedImageIcon> ourIconsCache =
@@ -1033,6 +1034,16 @@ public final class IconLoader {
         return this;
       }
     }
+  }
+
+  @NotNull
+  public static Icon createLazy(@NotNull Supplier<@NotNull Icon> producer) {
+    return new LazyIcon() {
+      @Override
+      protected @NotNull Icon compute() {
+        return producer.get();
+      }
+    };
   }
 
   public abstract static class LazyIcon extends ScaleContextSupport implements CopyableIcon, RetrievableIcon {
