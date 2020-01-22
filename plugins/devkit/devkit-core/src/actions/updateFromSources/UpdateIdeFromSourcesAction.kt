@@ -7,9 +7,7 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
+import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -37,6 +35,10 @@ import java.util.*
 import kotlin.collections.LinkedHashSet
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
+
+private val notificationGroup by lazy {
+  NotificationGroup(displayId = "Update from Sources", displayType = NotificationDisplayType.STICKY_BALLOON)
+}
 
 internal open class UpdateIdeFromSourcesAction
  @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
@@ -145,8 +147,9 @@ internal open class UpdateIdeFromSourcesAction
 
             if (event.exitCode != 0) {
               val errorText = errorLines.joinToString("\n")
-              Notification("Update from Sources", "Update from Sources Failed", "Build script finished with ${event.exitCode}: $errorText",
-                           NotificationType.ERROR).notify(project)
+              notificationGroup.createNotification(title = "Update from Sources Failed",
+                                                   content = "Build script finished with ${event.exitCode}: $errorText",
+                                                   type = NotificationType.ERROR).notify(project)
               return
             }
 
@@ -160,11 +163,9 @@ internal open class UpdateIdeFromSourcesAction
               restartWithCommand(command)
             }
             else {
-              val notification = Notification("Update from Sources", "Update from Sources", "New installation is prepared from sources. <a href=\"#\">Restart</a>?",
-                                              NotificationType.INFORMATION) { _, _ ->
-                restartWithCommand(command)
-              }
-              Notifications.Bus.notify(notification, project)
+              notificationGroup.createNotification(title = "Update from Sources",
+                                                   content = "New installation is prepared from sources. <a href=\"#\">Restart</a>?",
+                                                   listener = NotificationListener { _, _ -> restartWithCommand(command) }).notify(project)
             }
           }
         })
@@ -262,7 +263,7 @@ internal open class UpdateIdeFromSourcesAction
   private fun createScriptJavaParameters(devIdeaHome: String,
                                          project: Project,
                                          deployDir: String,
-                                         distRelativePath: String,
+                                         @Suppress("SameParameterValue") distRelativePath: String,
                                          scriptFile: File,
                                          bundledPluginDirsToSkip: List<String>,
                                          buildNonBundledPlugins: Boolean): JavaParameters? {
