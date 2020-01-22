@@ -139,6 +139,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   @NotNull
+  @Override
   public Path getPluginPath() {
     return myPath;
   }
