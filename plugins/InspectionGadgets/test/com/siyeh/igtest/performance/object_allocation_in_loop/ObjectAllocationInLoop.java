@@ -103,8 +103,8 @@ class ObjectAllocationInLoop {
     for (int i = 0; i < 10; i++) {
       int[] i1 = <warning descr="Array allocation in loop">{0}</warning>;
       int[][] i2 = <warning descr="Array allocation in loop">{{0}}</warning>;
-      int[] i3 = <warning descr="Array allocation in loop">new</warning> int[] {0};
-      int[] i4 = <warning descr="Array allocation in loop">new</warning> int[10];
+      int[] i3 = new <warning descr="Array allocation in loop">int</warning>[] {0};
+      int[] i4 = new <warning descr="Array allocation in loop">int</warning>[10];
     }
   }
 }
