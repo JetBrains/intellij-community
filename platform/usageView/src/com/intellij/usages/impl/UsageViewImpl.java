@@ -1009,7 +1009,7 @@ public class UsageViewImpl implements UsageViewEx {
   private void collapseAll() {
     doExpandingCollapsing(() -> {
       TreeUtil.collapseAll(myTree, 3);
-      TreeUtil.expand(myTree, 2);
+      myTree.expandRow(0);
     });
   }
 

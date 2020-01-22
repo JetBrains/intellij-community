@@ -7,6 +7,8 @@ import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.HashSet;
@@ -383,6 +385,16 @@ public final class TreeUtilVisitTest {
   }
 
   private static void collapseAll(@NotNull TreeTest test, boolean strict, int keepSelectionLevel, @NotNull Runnable onDone) {
+    test.getTree().addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+      }
+
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        throw new UnsupportedOperationException("do not expand while collapse");
+      }
+    });
     TreeUtil.collapseAll(test.getTree(), strict, keepSelectionLevel);
     onDone.run();
   }
