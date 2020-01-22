@@ -129,25 +129,34 @@ public class HintManagerImpl extends HintManager {
       }
     };
 
-    myEditorDocumentListener = new BulkAwareDocumentListener.NonTrivial() {
+    myEditorDocumentListener = new BulkAwareDocumentListener() {
       @Override
-      public void documentChanged(@NotNull Document document) {
-        LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-        HintInfo[] infos = getHintsStackArray();
-        for (HintInfo info : infos) {
-          if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
-            if (info.hint.isVisible()) {
-              info.hint.hide();
-            }
-            myHintsStack.remove(info);
-          }
-        }
+      public void documentChangedNonBulk(@NotNull DocumentEvent event) {
+        if (event.getOldLength() != 0 || event.getNewLength() != 0) onDocumentChange();
+      }
 
-        if (myHintsStack.isEmpty()) {
-          updateLastEditor(null);
-        }
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        onDocumentChange();
       }
     };
+  }
+
+  private void onDocumentChange() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    HintInfo[] infos = getHintsStackArray();
+    for (HintInfo info : infos) {
+      if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
+        if (info.hint.isVisible()) {
+          info.hint.hide();
+        }
+        myHintsStack.remove(info);
+      }
+    }
+
+    if (myHintsStack.isEmpty()) {
+      updateLastEditor(null);
+    }
   }
 
   /**
