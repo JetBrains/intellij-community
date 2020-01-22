@@ -25,7 +25,7 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
   AndroidStudioBundledJreManager(BuildContext buildContext, String communityHome) {
     super(buildContext)
     this.buildContext = buildContext
-    this.baseDirectoryForJdk = "$communityHome/../../prebuilts/studio/jdk"
+    this.baseDirectoryForJdk = "$communityHome/../../prebuilts/studio/jdk/jdk11-runtime"
   }
 
   String extractJre(String osName) {

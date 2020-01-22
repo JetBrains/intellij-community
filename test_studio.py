@@ -34,7 +34,7 @@ class StudioTests(unittest.TestCase):
 
   def test_artifacts_are_present(self):
     name = self.artifact_prefix() + build
-    for suffix in [ ".mac.zip", ".tar.gz", ".win.zip", ".win32.zip"]:
+    for suffix in [ ".mac.zip", ".tar.gz", ".win.zip"]:
       file = os.path.join(dist_dir, name + suffix)
       self.assertTrue(os.path.exists(file), "Artifact " + file + " not found.")
 
@@ -88,7 +88,7 @@ class StudioTests(unittest.TestCase):
       return
 
     name = self.artifact_prefix() + build
-    for suffix in [ ".mac.zip", ".win.zip", ".win32.zip"]:
+    for suffix in [ ".mac.zip", ".win.zip"]:
       file_name = os.path.join(dist_dir, name + suffix)
       with zipfile.ZipFile(file_name) as file:
         for f in file.infolist():
@@ -181,7 +181,7 @@ class StudioTests(unittest.TestCase):
         is_symlink = (f.external_attr & 0x20000000) > 0
         if f.filename.endswith("Contents/jre/jdk/Contents/MacOS/libjli.dylib"):
           found = True
-          self.assertTrue(is_symlink, "Contents/jre/jdk/Contents/MacOS/libjli.dylib is not a symlink")
+          self.assertFalse(is_symlink, "Contents/jre/jdk/Contents/MacOS/libjli.dylib should not be symlink")
         elif f.filename.endswith("Contents/MacOS/studio"):
           self.assertFalse(f.external_attr == 0x1ED0000, "studio should be \"-rwxr-xr-x\"")
           self.assertFalse(is_symlink, f.filename + " should not be a symlink")

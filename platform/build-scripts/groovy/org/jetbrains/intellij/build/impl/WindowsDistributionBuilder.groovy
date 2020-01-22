@@ -73,11 +73,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (customizer.buildZipArchive) {
-      // Android Studio: we build separate artifacts for win32 and win64.
-      buildWinZip(buildContext.bundledJreManager.extractJre("win64"), ".win", winDistPath, [])
-      // Do not include layoutlib native files in the win32 distribution as it only works for 64bit.
-      List<String> layoutlibNativeFiles = ["plugins/android-layoutlib-native/**/*"]
-      buildWinZip(buildContext.bundledJreManager.extractJre("win32"), ".win32", winDistPath, layoutlibNativeFiles)
+      // Android Studio: we build a single artifact for win64.
+      buildWinZip(buildContext.bundledJreManager.extractJre("win"), ".win", winDistPath, [])
     }
 
     /* Android Studio: this is handled by ADRT?

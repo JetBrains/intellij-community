@@ -276,7 +276,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def zipRoot = getZipRoot(buildContext, customizer)
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       def targetPath = "${buildContext.paths.artifacts}/${baseName}.mac.zip"
-      def tmpTargetPath = targetPath + ".tmp.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
 /* TODO(b/118034991): generate product-info.json files (or not)
@@ -286,7 +285,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 TODO(b/118034991): generate product-info.json files (or not) */
 
       def executableFilePatterns = generateExecutableFilesPatterns(false)
-      buildContext.ant.zip(zipfile: tmpTargetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
+      buildContext.ant.zip(zipfile: targetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
             executableFilePatterns.each {
@@ -309,7 +308,7 @@ TODO(b/118034991): generate product-info.json files (or not) */
         // Android Studio: added by Change Idc07b110 / commit f20681e
         // Bundle JDK
         if (!buildContext.options.studioSdk) {
-          def binaries = ["Contents/Home/bin/*", "Contents/Home/jre/bin/*", "Contents/Home/jre/lib/jspawnhelper", "Contents/Home/jre/lib/*.dylib.*"]
+          def binaries = ["Contents/Home/bin/*", "Contents/Home/lib/jspawnhelper", "Contents/Home/lib/*.dylib.*"]
           zipfileset(dir: jdkDirectoryPath, prefix: "$zipRoot/jre/jdk") {
             binaries.each {
               exclude(name: it)
@@ -334,26 +333,6 @@ TODO(b/118034991): generate product-info.json files (or not) */
         zipfileset(dir: macDistPath + "/_codesign", prefix: "_codesign") {
         }
       }
-
-      // Fix libjli symlink
-      def entry = zipRoot + "/jre/jdk/Contents/MacOS/libjli.dylib"
-      def inFile = new File(tmpTargetPath)
-      def zip = new ZipFile(inFile)
-      def fos = new ZipArchiveOutputStream(new File(targetPath))
-      // Copy the other entries without even decompressing them
-      zip.copyRawEntries(fos, new ZipArchiveEntryPredicate() {
-        boolean test(ZipArchiveEntry ze) { return ze.getName() != entry }
-      })
-
-      // Add the link
-      def link = new ZipArchiveEntry(entry)
-      link.setUnixMode(UnixStat.DEFAULT_LINK_PERM | UnixStat.LINK_FLAG)
-      fos.putArchiveEntry(link)
-      fos << "../Home/jre/lib/jli/libjli.dylib"
-      fos.closeArchiveEntry()
-
-      fos.close()
-      inFile.delete()
 
 /* TODO(b/118034991): generate product-info.json files (or not)
       new ProductInfoValidator(buildContext).checkInArchive(targetPath, "$zipRoot/Resources")
