@@ -44,7 +44,8 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     METHOD_CALL("object.allocation.in.loop.problem.call.descriptor"),
     METHOD_REFERENCE("object.allocation.in.loop.problem.methodref.descriptor"),
     CAPTURING_LAMBDA("object.allocation.in.loop.problem.lambda.descriptor"),
-    STRING_CONCAT("object.allocation.in.loop.problem.string.concat");
+    STRING_CONCAT("object.allocation.in.loop.problem.string.concat"),
+    ARRAY_INITIALIZER("object.allocation.in.loop.problem.array.initializer.descriptor");
 
     private final String myMessage;
 
@@ -81,6 +82,15 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
         if (ContractReturnValue.returnNew().equals(value) && isPerformedRepeatedlyInLoop(call)) {
           registerMethodCallError(call, Kind.METHOD_CALL);
         }
+      }
+    }
+
+    @Override
+    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+      if (!(expression.getParent() instanceof PsiNewExpression) &&
+          !(expression.getParent() instanceof PsiArrayInitializerExpression) &&
+          isPerformedRepeatedlyInLoop(expression)) {
+        registerError(expression, Kind.ARRAY_INITIALIZER);
       }
     }
 
