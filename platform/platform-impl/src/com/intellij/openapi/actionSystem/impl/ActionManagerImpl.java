@@ -31,6 +31,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -213,10 +214,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return;
     }
 
-    Class<? extends AnAction> actionClass = anAction.getClass();
-    IdeaPluginDescriptor plugin = stub.getPlugin();
-    ClassLoader classLoader = plugin.getPluginClassLoader();
-    setIconFromClass(actionClass, classLoader, iconPath, anAction.getTemplatePresentation(), plugin.getPluginId());
+    setIconFromClass(anAction.getClass(), stub.getPlugin(), iconPath, anAction.getTemplatePresentation());
   }
 
   @Nullable
@@ -252,30 +250,28 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return "true".equalsIgnoreCase(element.getAttributeValue(SECONDARY));
   }
 
-  private static void setIcon(@Nullable final String iconPath,
+  private static void setIcon(@Nullable String iconPath,
                               @NotNull String className,
-                              @NotNull ClassLoader loader,
-                              @NotNull Presentation presentation,
-                              final PluginId pluginId) {
+                              @NotNull PluginDescriptor pluginDescriptor,
+                              @NotNull Presentation presentation) {
     if (iconPath == null) {
       return;
     }
 
     try {
-      Class<?> actionClass = Class.forName(className, true, loader);
-      setIconFromClass(actionClass, loader, iconPath, presentation, pluginId);
+      Class<?> actionClass = Class.forName(className, true, pluginDescriptor.getPluginClassLoader());
+      setIconFromClass(actionClass, pluginDescriptor, iconPath, presentation);
     }
     catch (ClassNotFoundException | NoClassDefFoundError e) {
       LOG.error(e);
-      reportActionError(pluginId, "class with name \"" + className + "\" not found");
+      reportActionError(pluginDescriptor.getPluginId(), "class with name \"" + className + "\" not found");
     }
   }
 
   private static void setIconFromClass(@NotNull Class<?> actionClass,
-                                       @NotNull final ClassLoader classLoader,
-                                       @NotNull final String iconPath,
-                                       @NotNull Presentation presentation,
-                                       final PluginId pluginId) {
+                                       @NotNull PluginDescriptor pluginDescriptor,
+                                       @NotNull String iconPath,
+                                       @NotNull Presentation presentation) {
     presentation.setIcon(new IconLoader.LazyIcon() {
       @NotNull
       @Override
@@ -283,11 +279,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         // try to find icon in idea class path
         Icon icon = IconLoader.findIcon(iconPath, actionClass, true, false);
         if (icon == null) {
-          icon = IconLoader.findIcon(iconPath, classLoader);
+          icon = IconLoader.findIcon(iconPath, pluginDescriptor.getPluginClassLoader());
         }
 
         if (icon == null) {
-          reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
+          reportActionError(pluginDescriptor.getPluginId(), "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
           return AllIcons.Nodes.Unknown;
         }
 
@@ -315,10 +311,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, StringUtil.notNullize(textValue));
   }
 
-  private static boolean checkRelativeToAction(final String relativeToActionId,
-                                               @NotNull final Anchor anchor,
-                                               @NotNull final String actionName,
-                                               @Nullable final PluginId pluginId) {
+  private static boolean checkRelativeToAction(String relativeToActionId,
+                                               @NotNull Anchor anchor,
+                                               @NotNull String actionName,
+                                               @Nullable PluginId pluginId) {
     if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
       reportActionError(pluginId, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return false;
@@ -327,9 +323,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  private static Anchor parseAnchor(final String anchorStr,
-                                    @Nullable final String actionName,
-                                    @Nullable final PluginId pluginId) {
+  private static Anchor parseAnchor(String anchorStr, @Nullable String actionName, @Nullable PluginId pluginId) {
     if (anchorStr == null) {
       return Anchor.LAST;
     }
@@ -783,7 +777,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         ((ActionGroupStub)group).setIconPath(iconPath);
       }
       else {
-        setIcon(iconPath, className, plugin.getPluginClassLoader(), presentation, plugin.getPluginId());
+        setIcon(iconPath, className, plugin, presentation);
       }
 
       // popup
