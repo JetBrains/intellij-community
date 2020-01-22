@@ -26,6 +26,10 @@ class CommitToolWindowFactory : VcsToolWindowFactory() {
 }
 
 internal class ActivateVersionControlToolWindowAction : ActivateToolWindowAction(ToolWindowId.VCS) {
+  init {
+    templatePresentation.text = toolWindowId
+  }
+
   override fun useMnemonicFromShortcuts(project: Project): Boolean =
     ToolWindowManager.getInstance(project).getToolWindow(COMMIT_TOOLWINDOW_ID)?.isAvailable != true
 }
