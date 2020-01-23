@@ -39,118 +39,35 @@ import java.awt.Window
 import java.util.*
 import javax.swing.*
 
+// @formatter:off
 private val settings get() = UISettings.instance
 private val generalSettings get() = GeneralSettings.getInstance()
 private val lafManager get() = LafManager.getInstance()
 
-private val cdAnimateWindows
-  get() = CheckboxDescriptor(
-    message("checkbox.animate.windows"),
-    settings::animateWindows,
-    groupName = windowOptionGroupName)
-private val cdShowToolWindowBars
-  get() = CheckboxDescriptor(
-    message("checkbox.show.tool.window.bars"),
-    PropertyBinding({ !settings.hideToolStripes }, { settings.hideToolStripes = !it }),
-    groupName = windowOptionGroupName)
-private val cdShowToolWindowNumbers
-  get() = CheckboxDescriptor(
-    message("checkbox.show.tool.window.numbers"),
-    settings::showToolWindowsNumbers,
-    groupName = windowOptionGroupName)
-private val cdShowMemoryIndicator
-  get() = CheckboxDescriptor(
-    message("checkbox.show.memory.indicator"),
-    settings::showMemoryIndicator,
-    groupName = windowOptionGroupName)
-private val cdDisableMenuMnemonics
-  get() = CheckboxDescriptor(
-    KeyMapBundle.message("disable.mnemonic.in.menu.check.box"),
-    settings::disableMnemonics,
-    groupName = windowOptionGroupName)
-private val cdDisableControlsMnemonics
-  get() = CheckboxDescriptor(
-    KeyMapBundle.message("disable.mnemonic.in.controls.check.box"),
-    settings::disableMnemonicsInControls,
-    groupName = windowOptionGroupName)
-private val cdAllowMergingButtons
-  get() = CheckboxDescriptor(
-    message("allow.merging.dialog.buttons"),
-    settings::allowMergeButtons,
-    groupName = windowOptionGroupName)
-private val cdSmoothScrolling
-  get() = CheckboxDescriptor(
-    message("checkbox.smooth.scrolling"),
-    settings::smoothScrolling,
-    groupName = uiOptionGroupName)
-private val cdShowMenuIcons
-  get() = CheckboxDescriptor(
-    message("checkbox.show.icons.in.menu.items"),
-    settings::showIconsInMenus,
-    groupName = windowOptionGroupName)
-private val cdWidescreenToolWindowLayout
-  get() = CheckboxDescriptor(
-    message("checkbox.widescreen.tool.window.layout"),
-    settings::wideScreenSupport,
-    groupName = windowOptionGroupName)
-private val cdLeftToolWindowLayout
-  get() = CheckboxDescriptor(
-    message("checkbox.left.toolwindow.layout"),
-    settings::leftHorizontalSplit,
-    groupName = windowOptionGroupName)
-private val cdRightToolWindowLayout
-  get() = CheckboxDescriptor(
-    message("checkbox.right.toolwindow.layout"),
-    settings::rightHorizontalSplit,
-    groupName = windowOptionGroupName)
-private val cdCyclicListScrolling
-  get() = CheckboxDescriptor(
-    message("checkboox.cyclic.scrolling.in.lists"),
-    settings::cycleScrolling,
-    groupName = uiOptionGroupName)
-private val cdShowQuickNavigationIcons
-  get() = CheckboxDescriptor(
-    message("checkbox.show.icons.in.quick.navigation"),
-    settings::showIconInQuickNavigation,
-    groupName = uiOptionGroupName)
-private val cdUseCompactTreeIndents
-  get() = CheckboxDescriptor(
-    message("checkbox.compact.tree.indents"),
-    settings::compactTreeIndents,
-    groupName = uiOptionGroupName)
-private val cdShowTreeIndents
-  get() = CheckboxDescriptor(
-    message("checkbox.show.tree.indent.guides"),
-    settings::showTreeIndentGuides,
-    groupName = uiOptionGroupName)
-private val cdMoveCursorOnButton
-  get() = CheckboxDescriptor(
-    message("checkbox.position.cursor.on.default.button"),
-    settings::moveMouseOnDefaultButton,
-    groupName = uiOptionGroupName)
-private val cdHideNavigationPopups
-  get() = CheckboxDescriptor(
-    message("hide.navigation.popups.on.focus.loss"),
-    settings::hideNavigationOnFocusLoss,
-    groupName = uiOptionGroupName)
-private val cdDnDWithAlt
-  get() = CheckboxDescriptor(
-    message("dnd.with.alt.pressed.only"),
-    settings::dndWithPressedAltOnly,
-    groupName = uiOptionGroupName)
+private val cdAnimateWindows                          get() = CheckboxDescriptor(message("checkbox.animate.windows"), settings::animateWindows, groupName = windowOptionGroupName)
+private val cdShowToolWindowBars                      get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"), PropertyBinding({ !settings.hideToolStripes }, { settings.hideToolStripes = !it }), groupName = windowOptionGroupName)
+private val cdShowToolWindowNumbers                   get() = CheckboxDescriptor(message("checkbox.show.tool.window.numbers"), settings::showToolWindowsNumbers, groupName = windowOptionGroupName)
+private val cdShowMemoryIndicator                     get() = CheckboxDescriptor(message("checkbox.show.memory.indicator"), settings::showMemoryIndicator, groupName = windowOptionGroupName)
+private val cdDisableMenuMnemonics                    get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.menu.check.box"), settings::disableMnemonics, groupName = windowOptionGroupName)
+private val cdDisableControlsMnemonics                get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.controls.check.box"), settings::disableMnemonicsInControls, groupName = windowOptionGroupName)
+private val cdAllowMergingButtons                     get() = CheckboxDescriptor(message("allow.merging.dialog.buttons"), settings::allowMergeButtons, groupName = windowOptionGroupName)
+private val cdSmoothScrolling                         get() = CheckboxDescriptor(message("checkbox.smooth.scrolling"), settings::smoothScrolling, groupName = uiOptionGroupName)
+private val cdShowMenuIcons                           get() = CheckboxDescriptor(message("checkbox.show.icons.in.menu.items"), settings::showIconsInMenus, groupName = windowOptionGroupName)
+private val cdWidescreenToolWindowLayout              get() = CheckboxDescriptor(message("checkbox.widescreen.tool.window.layout"), settings::wideScreenSupport, groupName = windowOptionGroupName)
+private val cdLeftToolWindowLayout                    get() = CheckboxDescriptor(message("checkbox.left.toolwindow.layout"), settings::leftHorizontalSplit, groupName = windowOptionGroupName)
+private val cdRightToolWindowLayout                   get() = CheckboxDescriptor(message("checkbox.right.toolwindow.layout"), settings::rightHorizontalSplit, groupName = windowOptionGroupName)
+private val cdCyclicListScrolling                     get() = CheckboxDescriptor(message("checkboox.cyclic.scrolling.in.lists"), settings::cycleScrolling, groupName = uiOptionGroupName)
+private val cdShowQuickNavigationIcons                get() = CheckboxDescriptor(message("checkbox.show.icons.in.quick.navigation"), settings::showIconInQuickNavigation, groupName = uiOptionGroupName)
+private val cdUseCompactTreeIndents                   get() = CheckboxDescriptor(message("checkbox.compact.tree.indents"), settings::compactTreeIndents, groupName = uiOptionGroupName)
+private val cdShowTreeIndents                         get() = CheckboxDescriptor(message("checkbox.show.tree.indent.guides"), settings::showTreeIndentGuides, groupName = uiOptionGroupName)
+private val cdMoveCursorOnButton                      get() = CheckboxDescriptor(message("checkbox.position.cursor.on.default.button"), settings::moveMouseOnDefaultButton, groupName = uiOptionGroupName)
+private val cdHideNavigationPopups                    get() = CheckboxDescriptor(message("hide.navigation.popups.on.focus.loss"), settings::hideNavigationOnFocusLoss, groupName = uiOptionGroupName)
+private val cdDnDWithAlt                              get() = CheckboxDescriptor(message("dnd.with.alt.pressed.only"), settings::dndWithPressedAltOnly, groupName = uiOptionGroupName)
 
-private val cdUseTransparentMode
-  get() = CheckboxDescriptor(
-    message("checkbox.use.transparent.mode.for.floating.windows"),
-    PropertyBinding({ settings.state.enableAlphaMode }, { settings.state.enableAlphaMode = it }))
-private val cdOverrideLaFFont
-  get() = CheckboxDescriptor(
-    message("checkbox.override.default.laf.fonts"),
-    settings::overrideLafFonts)
-private val cdUseContrastToolbars
-  get() = CheckboxDescriptor(
-    message("checkbox.acessibility.contrast.scrollbars"),
-    settings::useContrastScrollbars)
+private val cdUseTransparentMode                      get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), PropertyBinding({ settings.state.enableAlphaMode }, { settings.state.enableAlphaMode = it }))
+private val cdOverrideLaFFont                         get() = CheckboxDescriptor(message("checkbox.override.default.laf.fonts"), settings::overrideLafFonts)
+private val cdUseContrastToolbars                     get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
+// @formatter:on
 
 internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
   cdAnimateWindows,

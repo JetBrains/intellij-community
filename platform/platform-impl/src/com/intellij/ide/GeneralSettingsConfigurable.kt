@@ -14,23 +14,18 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
 
-val model = GeneralSettings.getInstance()
-val myChkReopenLastProject = CheckboxDescriptor(IdeBundle.message("checkbox.reopen.last.project.on.startup", IdeUICustomization.getInstance().projectConceptName),
-                                                PropertyBinding(model::isReopenLastProject, model::setReopenLastProject))
-val myConfirmExit = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"),
-                                       PropertyBinding(model::isConfirmExit, model::setConfirmExit))
-val myShowWelcomeScreen = CheckboxDescriptor(IdeBundle.message("checkbox.show.welcome.screen"),
-                                             PropertyBinding(model::isShowWelcomeScreen, model::setShowWelcomeScreen))
-val myChkSyncOnFrameActivation = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"),
-                                                    PropertyBinding(model::isSyncOnFrameActivation, model::setSyncOnFrameActivation))
-val myChkSaveOnFrameDeactivation = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"),
-                                                      PropertyBinding(model::isSaveOnFrameDeactivation, model::setSaveOnFrameDeactivation))
-val myChkAutoSaveIfInactive = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.automatically"),
-                                                 PropertyBinding(model::isAutoSaveIfInactive, model::setAutoSaveIfInactive))
-val myChkUseSafeWrite = CheckboxDescriptor("Use \"safe write\" (save changes to a temporary file first)",
-                                           PropertyBinding(model::isUseSafeWrite, model::setUseSafeWrite))
+// @formatter:off
+private val model = GeneralSettings.getInstance()
+private val myChkReopenLastProject                get() = CheckboxDescriptor(IdeBundle.message("checkbox.reopen.last.project.on.startup", IdeUICustomization.getInstance().projectConceptName), PropertyBinding(model::isReopenLastProject, model::setReopenLastProject))
+private val myConfirmExit                         get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), PropertyBinding(model::isConfirmExit, model::setConfirmExit))
+private val myShowWelcomeScreen                   get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.welcome.screen"), PropertyBinding(model::isShowWelcomeScreen, model::setShowWelcomeScreen))
+private val myChkSyncOnFrameActivation            get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), PropertyBinding(model::isSyncOnFrameActivation, model::setSyncOnFrameActivation))
+private val myChkSaveOnFrameDeactivation          get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"), PropertyBinding(model::isSaveOnFrameDeactivation, model::setSaveOnFrameDeactivation))
+private val myChkAutoSaveIfInactive               get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.automatically"), PropertyBinding(model::isAutoSaveIfInactive, model::setAutoSaveIfInactive))
+private val myChkUseSafeWrite                     get() = CheckboxDescriptor("Use \"safe write\" (save changes to a temporary file first)", PropertyBinding(model::isUseSafeWrite, model::setUseSafeWrite))
+// @formatter:on
 
-val allOptionDescriptors = listOf(
+internal val allOptionDescriptors = listOf(
   myChkReopenLastProject,
   myConfirmExit,
   myChkSyncOnFrameActivation,
