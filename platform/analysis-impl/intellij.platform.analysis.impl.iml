@@ -16,10 +16,9 @@
     <orderEntry type="module" module-name="intellij.java.resources.en" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>
