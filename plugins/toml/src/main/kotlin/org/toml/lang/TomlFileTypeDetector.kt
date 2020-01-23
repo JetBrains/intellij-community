@@ -11,9 +11,13 @@ import com.intellij.openapi.util.io.ByteSequence
 import com.intellij.openapi.vfs.VirtualFile
 import org.toml.lang.psi.TomlFileType
 
-abstract class TomlFileTypeDetectorBase : FileTypeRegistry.FileTypeDetector {
+class TomlFileTypeDetector : FileTypeRegistry.FileTypeDetector {
     override fun getVersion(): Int = 1
 
     override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? =
         if (file.name == "config" && file.parent?.name == ".cargo") TomlFileType else null
+
+    override fun getDetectedFileTypes(): Collection<FileType> = listOf(TomlFileType)
+
+    override fun getDesiredContentPrefixLength(): Int = 0
 }
