@@ -349,13 +349,13 @@ public class TerminalView {
     if (window == null || !window.isAvailable()) {
       return;
     }
+    window.activate(null);
 
     TerminalTabState state = new TerminalTabState();
     if (fileToOpen != null) {
       state.myWorkingDirectory = fileToOpen.getPath();
     }
     createNewSession(myTerminalRunner, state);
-    window.activate(null);
   }
 
   @Nullable
