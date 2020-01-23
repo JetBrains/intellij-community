@@ -853,7 +853,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   /**
    * @param element description of link
    */
-  private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId, boolean secondary) {
+  private void processAddToGroupNode(AnAction action, Element element, PluginId pluginId, boolean secondary) {
     // Real subclasses of AnAction should not be here
     if (!(action instanceof Separator)) {
       assertActionIsGroupOrStub(action);
