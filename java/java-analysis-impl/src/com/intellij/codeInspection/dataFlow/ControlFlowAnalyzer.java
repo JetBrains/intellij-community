@@ -1521,24 +1521,26 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiPattern pattern = expression.getPattern();
     if (pattern instanceof PsiTypeTestPattern) {
       PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
-      operand.accept(this);
       PsiType type = checkType.getType();
+      CFGBuilder builder = new CFGBuilder(this);
       PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
       if (variable != null) {
-        addInstruction(new DupInstruction());
-      }
-      addInstruction(new PushValueInstruction(DfTypes.typedObject(type, Nullability.NOT_NULL)));
-      addInstruction(new InstanceofInstruction(expression, operand, type));
-      if (variable != null) {
-        new CFGBuilder(this)
-          .ifConditionIs(true)
-            .assignTo(variable)
-            .pop()
-            .push(DfTypes.TRUE)
-          .elseBranch()
-            .pop()
-            .push(DfTypes.FALSE)
+        DfaVariableValue dfaVar = getFactory().getVarFactory().createVariableValue(variable);
+        builder
+          .pushForWrite(dfaVar)
+          .pushExpression(operand)
+          .assign()
+          .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
+          .isInstance(expression, operand, type)
+          .dup()
+          .ifConditionIs(false)
+          .flush(dfaVar)
           .end();
+      } else {
+        builder
+          .pushExpression(operand)
+          .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
+          .isInstance(expression, operand, type);
       }
     }
     else {

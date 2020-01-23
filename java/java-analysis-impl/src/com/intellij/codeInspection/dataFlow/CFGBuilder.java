@@ -300,6 +300,22 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to perform an instanceof operation
+   * <p>
+   * Stack before: ... object cast_type
+   * <p>
+   * Stack after: ... result
+   *
+   * @param anchor element to bind this instruction to
+   * @param operand operand expression (pushed before)
+   * @param castType cast type (pushed before)
+   * @return this builder
+   */
+  public CFGBuilder isInstance(PsiExpression anchor, @Nullable PsiExpression operand, @NotNull PsiType castType) {
+    return add(new InstanceofInstruction(anchor, operand, castType));
+  }
+
+  /**
    * Generate instructions to compare two values on top of stack with given relation operation (e.g. {@link JavaTokenType#GT}).
    * <p>
    * Stack before: ... val1 val2
