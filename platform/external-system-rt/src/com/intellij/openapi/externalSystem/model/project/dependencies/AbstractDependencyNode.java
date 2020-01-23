@@ -18,7 +18,8 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
   private final List<DependencyNode> dependencies;
   private String resolutionState;
 
-  protected AbstractDependencyNode(long id) {this.id = id;
+  protected AbstractDependencyNode(long id) {
+    this.id = id;
     dependencies = new ArrayList<DependencyNode>(0);
   }
 

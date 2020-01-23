@@ -2,13 +2,14 @@
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements ProjectDependencyNode {
 
   private final String projectName;
 
-  @PropertyMapping({"id", "projectName"})
+  @PropertyMapping({"id", "projectName"}) //NON-NLS
   public ProjectDependencyNodeImpl(long id, @NotNull String projectName) {
     super(id);
     this.projectName = projectName;
@@ -20,6 +21,7 @@ public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements
     return projectName;
   }
 
+  @NonNls
   @NotNull
   @Override
   public String getDisplayName() {

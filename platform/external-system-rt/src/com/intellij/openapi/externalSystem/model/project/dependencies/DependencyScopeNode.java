@@ -10,7 +10,7 @@ public class DependencyScopeNode extends AbstractDependencyNode {
   private final String displayName;
   private final String description;
 
-  @PropertyMapping({"id", "scope", "displayName", "description"})
+  @PropertyMapping({"id", "scope", "displayName", "description"}) //NON-NLS
   public DependencyScopeNode(long id, @NotNull String scope, @NotNull String displayName, @Nullable String description) {
     super(id);
     this.displayName = displayName;

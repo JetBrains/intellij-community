@@ -9,7 +9,7 @@ public class FileCollectionDependencyNodeImpl extends AbstractDependencyNode imp
   private final String displayName;
   private final String path;
 
-  @PropertyMapping({"id", "displayName", "path"})
+  @PropertyMapping({"id", "displayName", "path"}) //NON-NLS
   public FileCollectionDependencyNodeImpl(long id, @NotNull String displayName, @NotNull String path) {
     super(id);
     this.displayName = displayName;

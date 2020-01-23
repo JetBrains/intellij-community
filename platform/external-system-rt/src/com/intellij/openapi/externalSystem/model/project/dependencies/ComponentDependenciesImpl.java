@@ -12,7 +12,7 @@ public class ComponentDependenciesImpl implements ComponentDependencies, Seriali
   private final DependencyScopeNode compileDependencies;
   private final DependencyScopeNode runtimeDependencies;
 
-  @PropertyMapping({"componentName", "compileDependencies", "runtimeDependencies"})
+  @PropertyMapping({"componentName", "compileDependencies", "runtimeDependencies"}) //NON-NLS
   public ComponentDependenciesImpl(@NotNull String componentName,
                                    @NotNull DependencyScopeNode compileDependencies,
                                    @NotNull DependencyScopeNode runtimeDependencies) {
