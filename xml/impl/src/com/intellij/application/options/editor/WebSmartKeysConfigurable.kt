@@ -17,11 +17,11 @@ private val myAutomaticallyInsertClosingTagCheckBox = CheckboxDescriptor("Insert
                                                                  PropertyBinding(model::isAutomaticallyInsertClosingTag,
                                                                                  model::setAutomaticallyInsertClosingTag))
 private val myAutomaticallyInsertRequiredAttributesCheckBox = CheckboxDescriptor("Insert required attributes on tag completion",
-                                                                         PropertyBinding(model::isAutomaticallyInsertClosingTag,
-                                                                                         model::setAutomaticallyInsertClosingTag))
+                                                                         PropertyBinding(model::isAutomaticallyInsertRequiredAttributes,
+                                                                                         model::setAutomaticallyInsertRequiredAttributes))
 private val myAutomaticallyInsertRequiredSubTagsCheckBox = CheckboxDescriptor("Insert required subtags on tag completion",
-                                                                      PropertyBinding(model::isAutomaticallyInsertClosingTag,
-                                                                                      model::setAutomaticallyInsertClosingTag))
+                                                                      PropertyBinding(model::isAutomaticallyInsertRequiredSubTags,
+                                                                                      model::setAutomaticallyInsertRequiredSubTags))
 private val myAutomaticallyStartAttributeAfterCheckBox = CheckboxDescriptor("Start attribute on tag completion",
                                                                     PropertyBinding(model::isAutomaticallyStartAttribute,
                                                                                     model::setAutomaticallyStartAttribute))
