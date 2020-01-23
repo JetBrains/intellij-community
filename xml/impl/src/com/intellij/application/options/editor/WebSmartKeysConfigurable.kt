@@ -17,11 +17,11 @@ private val myAutomaticallyInsertClosingTagCheckBox = CheckboxDescriptor(XmlBund
                                                                  PropertyBinding(model::isAutomaticallyInsertClosingTag,
                                                                                  model::setAutomaticallyInsertClosingTag))
 private val myAutomaticallyInsertRequiredAttributesCheckBox = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.attributes.on.tag.completion"),
-                                                                         PropertyBinding(model::isAutomaticallyInsertClosingTag,
-                                                                                         model::setAutomaticallyInsertClosingTag))
+                                                                         PropertyBinding(model::isAutomaticallyInsertRequiredAttributes,
+                                                                                         model::setAutomaticallyInsertRequiredAttributes))
 private val myAutomaticallyInsertRequiredSubTagsCheckBox = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.subtags.on.tag.completion"),
-                                                                      PropertyBinding(model::isAutomaticallyInsertClosingTag,
-                                                                                      model::setAutomaticallyInsertClosingTag))
+                                                                      PropertyBinding(model::isAutomaticallyInsertRequiredSubTags,
+                                                                                      model::setAutomaticallyInsertRequiredSubTags))
 private val myAutomaticallyStartAttributeAfterCheckBox = CheckboxDescriptor(XmlBundle.message("smart.keys.start.attribute.on.tag.completion"),
                                                                     PropertyBinding(model::isAutomaticallyStartAttribute,
                                                                                     model::setAutomaticallyStartAttribute))
