@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,8 +27,8 @@ public class PathRelativizerService {
   private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
 
-  private List<PathRelativizer> myRelativizers;
-  private Set<String> myUnhandledPaths;
+  private final List<PathRelativizer> myRelativizers = new SmartList<>();
+  private final Set<String> myUnhandledPaths = Collections.synchronizedSet(new LinkedHashSet<>());
 
   public PathRelativizerService(@Nullable String projectPath, @Nullable String buildDirPath) {
     initialize(projectPath, buildDirPath, null);
@@ -50,10 +51,10 @@ public class PathRelativizerService {
   private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
     String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
-    myRelativizers =
-      new SmartList<>(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER), new JavaSdkPathRelativizer(javaSdks),
-        new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER), new MavenPathRelativizer());
-    myUnhandledPaths = new LinkedHashSet<>();
+    myRelativizers.add(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER));
+    myRelativizers.add(new JavaSdkPathRelativizer(javaSdks));
+    myRelativizers.add(new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER));
+    myRelativizers.add(new MavenPathRelativizer());
   }
 
   /**
@@ -92,11 +93,12 @@ public class PathRelativizerService {
   }
 
   public void reportUnhandledPaths() {
-    if (!LOG.isDebugEnabled()) return;
-    final StringBuilder logBuilder = new StringBuilder();
-    myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
-    LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());
-    myUnhandledPaths = new LinkedHashSet<>();
+    if (LOG.isDebugEnabled()) {
+      final StringBuilder logBuilder = new StringBuilder();
+      myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
+      LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());
+      myUnhandledPaths.clear();
+    }
   }
 
   @NotNull
