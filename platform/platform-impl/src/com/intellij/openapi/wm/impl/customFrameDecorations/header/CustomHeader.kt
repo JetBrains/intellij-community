@@ -339,8 +339,15 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             repaint(0, height - borderInsets.bottom, width, borderInsets.bottom)
         }
 
+        private val shouldDrawTopBorder: Boolean
+            get() {
+                val drawTopBorderActive = myActive && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF()) // omit in Darcula with colorization disabled
+                val drawTopBorderInactive = !myActive && UIUtil.isUnderIntelliJLaF()
+                return drawTopBorderActive || drawTopBorderInactive
+            }
+
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            if (isTopNeeded() && myActive || (!myActive && UIUtil.isUnderIntelliJLaF())) {
+            if (isTopNeeded() && shouldDrawTopBorder) {
                 g.color = if (myActive) activeColor else inactiveColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
             }
@@ -354,7 +361,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         override fun getBorderInsets(c: Component): Insets {
             val scale = JBUI.scale(thickness)
-            return Insets(if (isTopNeeded()) thickness else 0, 0, if (isBottomNeeded()) scale else 0, 0)
+            val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) thickness else 0
+            return Insets(top, 0, if (isBottomNeeded()) scale else 0, 0)
         }
 
         override fun isBorderOpaque(): Boolean {
