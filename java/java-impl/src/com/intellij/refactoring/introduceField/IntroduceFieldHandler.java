@@ -48,14 +48,13 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   @Override
   protected boolean validClass(PsiClass parentClass, Editor editor) {
-    if (parentClass.isInterface()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.field.in.interface"));
+    if (parentClass.isInterface() || parentClass.isRecord()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message(parentClass.isRecord() ? "cannot.introduce.field.in.record" : "cannot.introduce.field.in.interface"));
       CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
       return false;
     }
-    else {
-      return true;
-    }
+    return true;
   }
 
   @Override
