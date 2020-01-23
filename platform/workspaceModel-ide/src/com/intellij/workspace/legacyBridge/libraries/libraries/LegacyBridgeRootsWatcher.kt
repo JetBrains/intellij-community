@@ -81,18 +81,21 @@ class LegacyBridgeRootsWatcher(
       LOG.debug { "Removed root $removed" }
 
       Disposer.dispose(currentRoots.getValue(removed))
+      currentRoots.remove(removed)
     }
 
     for (removedJarDirectory in currentJarDirectories.keys - newJarDirectories) {
       LOG.debug { "Removed jar directory root $removedJarDirectory" }
 
       Disposer.dispose(currentJarDirectories.getValue(removedJarDirectory))
+      currentJarDirectories.remove(removedJarDirectory)
     }
 
     for (removedRecursiveJarDirectory in currentRecursiveJarDirectories.keys - newRecursiveJarDirectories) {
       LOG.debug { "Removed recursive jar directory root $removedRecursiveJarDirectory" }
 
       Disposer.dispose(currentRecursiveJarDirectories.getValue(removedRecursiveJarDirectory))
+      currentRecursiveJarDirectories.remove(removedRecursiveJarDirectory)
     }
 
     for (added in newRoots - currentRoots.keys) {
