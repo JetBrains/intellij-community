@@ -200,20 +200,20 @@
                   <component id="dc4a0" class="javax.swing.JLabel" binding="myWarningLabel">
                     <constraints/>
                     <properties>
-                      <text value="Invalid path."/>
+                      <text resource-bundle="messages/ShBundle" key="sh.invalid.path"/>
                     </properties>
                   </component>
                   <component id="84c43" class="com.intellij.ui.components.labels.ActionLink" binding="myShfmtDownloadLink" custom-create="true">
                     <constraints/>
                     <properties>
                       <horizontalTextPosition value="0"/>
-                      <text value="Download"/>
+                      <text resource-bundle="messages/ShBundle" key="sh.download"/>
                     </properties>
                   </component>
                   <component id="cea33" class="javax.swing.JLabel">
                     <constraints/>
                     <properties>
-                      <text value="missing formatter"/>
+                      <text resource-bundle="messages/ShBundle" key="sh.fmt.missing.formatter"/>
                     </properties>
                   </component>
                 </children>
@@ -223,7 +223,7 @@
                   <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Can't download sh shfmt formatter. Please install it manually"/>
+                  <text resource-bundle="messages/ShBundle" key="sh.fmt.cannot.download"/>
                   <visible value="false"/>
                 </properties>
               </component>
