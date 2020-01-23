@@ -112,8 +112,10 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   data class DescriptorToLoad(
-    val fullyLoadedDescriptor: IdeaPluginDescriptorImpl,
-    val descriptor: IdeaPluginDescriptorImpl = fullyLoadedDescriptor
+    // plugin descriptor can have some definitions that are not applied until some specified plugin is not enabled,
+    // if both descriptor and rootDescriptor are specified, descriptor it is such partial part
+    val descriptor: IdeaPluginDescriptorImpl,
+    val baseDescriptor: IdeaPluginDescriptorImpl = descriptor
   )
 
   @Internal
@@ -133,8 +135,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
     for (plugin in plugins) {
-      val containerDescriptor = getContainerDescriptor(plugin.fullyLoadedDescriptor)
-      registerServices(containerDescriptor.services, plugin.descriptor)
+      val containerDescriptor = getContainerDescriptor(plugin.descriptor)
+      registerServices(containerDescriptor.services, plugin.baseDescriptor)
 
       for (descriptor in containerDescriptor.components) {
         if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {
@@ -142,11 +144,11 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         }
 
         try {
-          registerComponent(descriptor, plugin.fullyLoadedDescriptor)
+          registerComponent(descriptor, plugin.descriptor)
           newComponentConfigCount++
         }
         catch (e: Throwable) {
-          handleInitComponentError(e, null, plugin.fullyLoadedDescriptor.pluginId)
+          handleInitComponentError(e, null, plugin.descriptor.pluginId)
         }
       }
 

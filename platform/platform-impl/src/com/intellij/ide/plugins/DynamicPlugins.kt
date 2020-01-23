@@ -461,13 +461,15 @@ object DynamicPlugins {
     }
   }
 
-  private fun loadPluginDescriptor(descriptor: IdeaPluginDescriptorImpl, fullyLoadedDescriptor: IdeaPluginDescriptorImpl) {
+  private fun loadPluginDescriptor(baseDescriptor: IdeaPluginDescriptorImpl, fullyLoadedBaseDescriptor: IdeaPluginDescriptorImpl) {
     val application = ApplicationManager.getApplication() as ApplicationImpl
     val listenerCallbacks = arrayListOf<Runnable>()
-    val pluginsToLoad = mutableListOf(DescriptorToLoad(fullyLoadedDescriptor, descriptor))
-    fullyLoadedDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
+    val pluginsToLoad = mutableListOf(DescriptorToLoad(fullyLoadedBaseDescriptor, baseDescriptor))
+    fullyLoadedBaseDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
       if (isPluginLoaded(pluginId)) {
-        optionalDescriptors.mapTo(pluginsToLoad) { DescriptorToLoad(it, descriptor) }
+        optionalDescriptors.mapTo(pluginsToLoad) {
+          DescriptorToLoad(it, baseDescriptor)
+        }
       }
     }
     application.registerComponents(pluginsToLoad, listenerCallbacks)
@@ -479,7 +481,7 @@ object DynamicPlugins {
     }
     listenerCallbacks.forEach(Runnable::run)
     for (descriptorToLoad in pluginsToLoad) {
-      (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(descriptor, descriptorToLoad.fullyLoadedDescriptor.actionDescriptionElements, false)
+      (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(baseDescriptor, descriptorToLoad.descriptor.actionDescriptionElements, false)
     }
   }
 
