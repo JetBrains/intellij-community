@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentPa
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +108,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     final int offset = event.getOffset();
     // Although the result of getMoveOffset() can point to invalid offset when used from within beforeDocumentChange(),
     // the actual value is not used until doInvalidateRange() called from documentChanged().
-    final int moveOffset = event.getMoveOffset();
+    final int moveOffset = DocumentEventUtil.isMoveInsertion(event) ? event.getMoveOffset() : offset;
     final int length = event.getNewLength();
     myDocumentChangeStartOffset = Math.min(offset, moveOffset);
     myDocumentChangeEndOffset = Math.max(offset, moveOffset) + length;
