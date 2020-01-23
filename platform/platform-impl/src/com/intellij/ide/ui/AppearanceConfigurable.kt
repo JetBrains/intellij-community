@@ -186,7 +186,7 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
                    { lafManager.currentLookAndFeelReference },
                    { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) })
             .shouldUpdateLaF()
-        }
+        }.largeGapAfter()
         fullRow {
           val overrideLaF = checkBox(cdOverrideLaFFont)
             .shouldUpdateLaF()
@@ -255,11 +255,6 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
         }
       }
       titledRow(message("group.ui.options")) {
-        fullRow {
-          buttonFromAction(message("background.image.button"), ActionPlaces.UNKNOWN,
-                           ActionManager.getInstance().getAction("Images.SetBackgroundImage"))
-            .applyToComponent { isEnabled = ProjectManager.getInstance().openProjects.isNotEmpty() }
-        }
         fullRow { checkBox(cdCyclicListScrolling) }
         fullRow { checkBox(cdShowQuickNavigationIcons) }
         fullRow { checkBox(cdUseCompactTreeIndents) }
@@ -267,6 +262,11 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
         fullRow { checkBox(cdMoveCursorOnButton) }
         fullRow { checkBox(cdHideNavigationPopups) }
         fullRow { checkBox(cdDnDWithAlt) }
+        fullRow {
+          buttonFromAction(message("background.image.button"), ActionPlaces.UNKNOWN,
+                           ActionManager.getInstance().getAction("Images.SetBackgroundImage"))
+            .applyToComponent { isEnabled = ProjectManager.getInstance().openProjects.isNotEmpty() }
+        }
       }
       if (Registry.`is`("ide.transparency.mode.for.windows") &&
           WindowManagerEx.getInstanceEx().isAlphaModeSupported) {
