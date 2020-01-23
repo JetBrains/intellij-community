@@ -267,18 +267,6 @@ class AppearanceConfigurable : BoundConfigurable(message("title.appearance"), "p
         fullRow { checkBox(cdMoveCursorOnButton) }
         fullRow { checkBox(cdHideNavigationPopups) }
         fullRow { checkBox(cdDnDWithAlt) }
-        fullRow {
-          label(message("tooltip.initial.delay.label"))
-          slider(0, 1200, 100, 1200)
-            .labelTable {
-              put(0, JLabel("0"))
-              put(1200, JLabel("1200"))
-            }
-            .withBinding({ it.value.coerceAtMost(5000) },
-                         { it, value -> it.value = value },
-                         PropertyBinding({ Registry.intValue("ide.tooltip.initialDelay") },
-                                         { Registry.get("ide.tooltip.initialDelay").setValue(it) }))
-        }
       }
       if (Registry.`is`("ide.transparency.mode.for.windows") &&
           WindowManagerEx.getInstanceEx().isAlphaModeSupported) {
