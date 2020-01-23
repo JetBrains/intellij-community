@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -73,18 +74,36 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   @Override
   public PsiElement getDeclarationScope() {
     PsiElement parent = getPattern().getParent();
-    while (parent instanceof PsiInstanceOfExpression || parent instanceof PsiParenthesizedExpression ||
-           parent instanceof PsiConditionalExpression ||
-           parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType().equals(EXCL) ||
-           parent instanceof PsiPolyadicExpression &&
-           (((PsiPolyadicExpression)parent).getOperationTokenType().equals(ANDAND) ||
-            ((PsiPolyadicExpression)parent).getOperationTokenType().equals(OROR))) {
-      parent = parent.getParent();
+    if (!(parent instanceof PsiInstanceOfExpression)) return parent;
+    boolean negated = false;
+    for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
+      if (nextParent instanceof PsiParenthesizedExpression) continue;
+      if (nextParent instanceof PsiConditionalExpression && parent == ((PsiConditionalExpression)nextParent).getCondition()) {
+        return nextParent;
+      }
+      if (nextParent instanceof PsiPrefixExpression && ((PsiPrefixExpression)nextParent).getOperationTokenType().equals(EXCL)) {
+        negated = !negated;
+        continue;
+      }
+      if (nextParent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)nextParent).getOperationTokenType();
+        if (tokenType.equals(ANDAND) && !negated || tokenType.equals(OROR) && negated) continue;
+      }
+      if (nextParent instanceof PsiIfStatement) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiConditionalLoopStatement) {
+        if (!negated) return nextParent;
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      return parent;
     }
-    if (parent instanceof PsiIfStatement || parent instanceof PsiConditionalLoopStatement) {
-      return parent.getParent();
-    }
-    return parent;
   }
 
   @Override
