@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -272,26 +272,27 @@ public class Utils {
     return new BufferedInputStream(zipFile.getInputStream(entry));
   }
 
-  public static LinkedHashSet<String> collectRelativePaths(File dir) {
+  // always collect files and folders - to avoid cases such as IDEA-152249
+  public static LinkedHashSet<String> collectRelativePaths(Path root) throws IOException {
     LinkedHashSet<String> result = new LinkedHashSet<>();
-    collectRelativePaths(dir, result, null);
+
+    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+        if (dir != root) {
+          result.add(root.relativize(dir).toString() + '/');
+        }
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+        result.add(root.relativize(file).toString());
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
     return result;
-  }
-
-  private static void collectRelativePaths(File dir, LinkedHashSet<? super String> result, String parentPath) {
-    File[] children = dir.listFiles();
-    if (children == null) return;
-
-    for (File each : children) {
-      String relativePath = (parentPath == null ? "" : parentPath + '/') + each.getName();
-      if (each.isDirectory()) {
-        result.add(relativePath + '/');  // the trailing slash is used by .zip to determine whether it is a directory
-        collectRelativePaths(each, result, relativePath);
-      }
-      else {
-        result.add(relativePath);
-      }
-    }
   }
 
   public static InputStream newFileInputStream(File file, boolean normalize) throws IOException {
