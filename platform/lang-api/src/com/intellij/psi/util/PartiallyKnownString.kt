@@ -21,6 +21,7 @@ sealed class StringEntry {
     override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
   }
 
+  val host: PsiLanguageInjectionHost? get() = sourcePsi as? PsiLanguageInjectionHost ?: sourcePsi?.parent as? PsiLanguageInjectionHost
 
   val rangeAlignedToHost: Pair<PsiLanguageInjectionHost, TextRange>?
     get() {
@@ -160,6 +161,23 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   }
 
+  /**
+   * @return the range in the [valueIfKnown] that corresponds to given [host]
+   */
+  fun getRangeOfTheHostContent(host: PsiLanguageInjectionHost): TextRange? {
+    var accumulated = 0
+    for (segment in segments) {
+      if (segment !is StringEntry.Known) continue
+      if (segment.host == host)
+        return TextRange.from(accumulated, segment.value.length)
+      accumulated += segment.value.length
+    }
+    return null
+  }
+
+  /**
+   * @return the cumulative range in the [originalHost] used by this [PartiallyKnownString]
+   */
   fun getRangeInHost(originalHost: PsiElement): TextRange? {
     val ranges = segments.asSequence().mapNotNull { it.rangeAlignedToHost?.takeIf { it.first == originalHost } }.map { it.second }.toList()
     if (ranges.isEmpty()) return null
