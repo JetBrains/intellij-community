@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -6,17 +6,19 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DigestUtil;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.Map;
 
