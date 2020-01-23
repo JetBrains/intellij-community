@@ -236,7 +236,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin))) {
       boolean needRestart = false;
       for (IdeaPluginDescriptor descriptor : pluginDescriptorsToDisable) {
-        if (!DynamicPlugins.unloadPluginWithProgress(parentComponent, (IdeaPluginDescriptorImpl)descriptor, true)) {
+        if (!DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)descriptor, true)) {
           needRestart = true;
           break;
         }
