@@ -172,7 +172,7 @@ public class SideEffectChecker {
       super.visitMethodCallExpression(expression);
     }
 
-    protected boolean isPure(PsiMethod method) {
+    protected static boolean isPure(PsiMethod method) {
       if (method == null) return false;
       PsiField field = PropertyUtil.getFieldOfGetter(method);
       if (field != null) return !field.hasModifierProperty(PsiModifier.VOLATILE);
