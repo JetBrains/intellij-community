@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,10 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     doTest();
   }
   public void testReassignPatternVariable() {
+    doTest();
+  }
+  public void testUnusedPatternVariable() {
+    myFixture.enableInspections(new UnusedDeclarationInspection());
     doTest();
   }
 

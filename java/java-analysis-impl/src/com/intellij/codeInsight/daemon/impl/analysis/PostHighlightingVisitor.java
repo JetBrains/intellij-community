@@ -394,6 +394,13 @@ class PostHighlightingVisitor {
         return highlightInfo;
       }
     }
+    else if (parameter instanceof PsiPatternVariable) {
+      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier);
+      if (highlightInfo != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(parameter));
+        return highlightInfo;
+      }
+    }
 
     return null;
   }
@@ -401,7 +408,8 @@ class PostHighlightingVisitor {
   private HighlightInfo checkUnusedParameter(@NotNull PsiParameter parameter,
                                              @NotNull PsiIdentifier identifier) {
     if (!myRefCountHolder.isReferenced(parameter) && !UnusedSymbolUtil.isImplicitUsage(myProject, parameter)) {
-      String message = JavaErrorBundle.message("parameter.is.not.used", identifier.getText());
+      String message = JavaErrorBundle.message(parameter instanceof PsiPatternVariable ? 
+                                               "pattern.variable.is.not.used" : "parameter.is.not.used", identifier.getText());
       return UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     }
     return null;
