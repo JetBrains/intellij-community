@@ -50,12 +50,12 @@ public class JBColor extends Color {
   }
 
   @NotNull
-  public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB) {
+  public static JBColor namedColor(@NonNls @NotNull String propertyName, int defaultValueRGB) {
     return namedColor(propertyName, new Color(defaultValueRGB));
   }
 
   @NotNull
-  public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB, int darkValueRGB) {
+  public static JBColor namedColor(@NonNls @NotNull String propertyName, int defaultValueRGB, int darkValueRGB) {
     return namedColor(propertyName, new JBColor(defaultValueRGB, darkValueRGB));
   }
 

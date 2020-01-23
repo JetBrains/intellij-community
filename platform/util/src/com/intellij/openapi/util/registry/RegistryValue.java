@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class RegistryValue {
   private Boolean myBooleanCachedValue;
   private static final Logger LOG = Logger.getInstance(RegistryValue.class);
 
-  RegistryValue(@NotNull Registry registry, @NotNull String key, @Nullable RegistryKeyDescriptor keyDescriptor) {
+  RegistryValue(@NotNull Registry registry, @NonNls @NotNull String key, @Nullable RegistryKeyDescriptor keyDescriptor) {
     myRegistry = registry;
     myKey = key;
     myKeyDescriptor = keyDescriptor;
@@ -152,7 +153,7 @@ public class RegistryValue {
     return !newValue.equals(registry.getBundleValue(myKey, false));
   }
 
-  protected String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
+  protected String get(@NonNls @NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
     if (isValue) {
       if (myStringCachedValue == null) {
         myStringCachedValue = _get(key, defaultValue, true);
@@ -163,7 +164,7 @@ public class RegistryValue {
   }
 
   @Nullable
-  private String _get(@NotNull String key, @Nullable String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
+  private String _get(@NonNls @NotNull String key, @Nullable String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
     String userValue = myRegistry.getUserProperties().get(key);
     if (userValue != null) {
       return userValue;
