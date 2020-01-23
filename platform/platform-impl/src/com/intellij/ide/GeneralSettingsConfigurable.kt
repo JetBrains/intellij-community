@@ -121,9 +121,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
       }
 
       for (configurable in configurables) {
-        row {
-          configurable.createComponent()?.invoke()
-        }
+        appendDslConfigurableRow(configurable)
       }
     }
   }

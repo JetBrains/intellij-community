@@ -12,8 +12,16 @@ import javax.swing.JComponent
 /**
  * @author yole
  */
-abstract class BoundConfigurable(@Nls private val displayName: String, @NonNls private val helpTopic: String? = null) : Configurable {
-  var disposable: Disposable? = null
+abstract class BoundConfigurable(
+  @Nls private val displayName: String,
+  @NonNls private val helpTopic: String? = null
+) : DslConfigurableBase(), Configurable {
+  override fun getDisplayName(): String = displayName
+  override fun getHelpTopic(): String? = helpTopic
+}
+
+abstract class DslConfigurableBase : UnnamedConfigurable {
+  protected var disposable: Disposable? = null
     private set
 
   private val panel = object : ClearableLazyValue<DialogPanel>() {
@@ -33,8 +41,6 @@ abstract class BoundConfigurable(@Nls private val displayName: String, @NonNls p
 
   override fun isModified() = panel.value.isModified()
 
-  override fun getDisplayName(): String = displayName
-
   override fun reset() {
     panel.value.reset()
   }
@@ -51,57 +57,9 @@ abstract class BoundConfigurable(@Nls private val displayName: String, @NonNls p
 
     panel.drop()
   }
-
-  override fun getHelpTopic(): String? = helpTopic
 }
 
 abstract class BoundSearchableConfigurable(displayName: String, helpTopic: String, private val _id: String = helpTopic)
   : BoundConfigurable(displayName, helpTopic), SearchableConfigurable {
-  override fun getId(): String = _id
-}
-
-abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
-  displayName: String,
-  helpTopic: String? = null
-) : BoundConfigurable(displayName, helpTopic) {
-  private var configurablesCreated = false
-
-  abstract fun createConfigurables(): List<T>
-
-  protected val configurables by lazy {
-    configurablesCreated = true
-    createConfigurables()
-  }
-
-  override fun isModified(): Boolean {
-    return super.isModified() || configurables.any { it.isModified }
-  }
-
-  override fun reset() {
-    super.reset()
-    for (configurable in configurables) {
-      configurable.reset()
-    }
-  }
-
-  override fun apply() {
-    super.apply()
-    for (configurable in configurables) {
-      configurable.apply()
-    }
-  }
-
-  override fun disposeUIResources() {
-    super.disposeUIResources()
-    if (configurablesCreated) {
-      for (configurable in configurables) {
-        configurable.disposeUIResources()
-      }
-    }
-  }
-}
-
-abstract class BoundCompositeSearchableConfigurable<T : UnnamedConfigurable>(displayName: String, helpTopic: String, private val _id: String = helpTopic)
-  : BoundCompositeConfigurable<T>(displayName, helpTopic), SearchableConfigurable {
   override fun getId(): String = _id
 }

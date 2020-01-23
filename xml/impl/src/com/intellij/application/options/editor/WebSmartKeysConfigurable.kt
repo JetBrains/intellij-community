@@ -67,9 +67,7 @@ internal class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundComp
         }
       }
       for (configurable in configurables) {
-        row {
-          configurable.createComponent()?.invoke(growX)
-        }
+        appendDslConfigurableRow(configurable)
       }
     }
   }
