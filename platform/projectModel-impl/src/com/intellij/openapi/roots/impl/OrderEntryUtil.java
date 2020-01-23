@@ -232,6 +232,6 @@ public class OrderEntryUtil {
   }
 
   public static boolean isModuleLibraryOrderEntry(@Nullable OrderEntry orderEntry) {
-    return orderEntry instanceof ModuleLibraryOrderEntryImpl;
+    return orderEntry instanceof LibraryOrderEntry && ((LibraryOrderEntry)orderEntry).isModuleLevel();
   }
 }
