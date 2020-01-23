@@ -516,7 +516,7 @@ public final class JavaSdkImpl extends JavaSdk {
     }
 
     final byte[] fingerprintVersion = {1, 0, 0, 0};
-    MessageDigest hasher = DigestUtil.sha256();
+    MessageDigest hasher = DigestUtil.sha1();
     hasher.update(fingerprintVersion);
 
     String path = sdk.getHomePath();
