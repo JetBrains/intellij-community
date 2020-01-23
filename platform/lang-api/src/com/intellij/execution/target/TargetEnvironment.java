@@ -12,10 +12,29 @@ import org.jetbrains.annotations.NotNull;
  * that is able to run processes on it.
  */
 @ApiStatus.Experimental
-public interface TargetEnvironment {
-  @NotNull
-  Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator) throws ExecutionException;
+public abstract class TargetEnvironment {
+  private final TargetEnvironmentRequest myRequest;
+
+  public TargetEnvironment(TargetEnvironmentRequest request) {
+    myRequest = request;
+  }
 
   @NotNull
-  TargetPlatform getRemotePlatform();
+  public abstract Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator)
+    throws ExecutionException;
+
+  @NotNull
+  public abstract TargetPlatform getRemotePlatform();
+
+  //FIXME: document
+  public abstract void shutdown();
+
+  @NotNull
+  public final Iterable<TargetEnvironmentVolume> getVolumes() {
+    return myRequest.getVolumes();
+  }
+
+  protected final TargetEnvironmentRequest getRequest() {
+    return myRequest;
+  }
 }

@@ -163,7 +163,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request, configuration);
     File inputFile = InputRedirectAware.getInputFile(getConfiguration());
     if (inputFile != null) {
-      commandLineBuilder.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
+      commandLineBuilder.setInputFile(request.getDefaultTempVolume().createUpload(inputFile.getAbsolutePath()));
     }
     Map<String, String> content = commandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {

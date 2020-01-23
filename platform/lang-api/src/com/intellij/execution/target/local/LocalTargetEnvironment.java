@@ -13,12 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class LocalTargetEnvironment implements TargetEnvironment {
-  @NotNull
-  private final TargetEnvironmentRequest myRequest;
+public class LocalTargetEnvironment extends TargetEnvironment {
 
   public LocalTargetEnvironment(@NotNull TargetEnvironmentRequest request) {
-    myRequest = request;
+    super(request);
   }
 
   @NotNull
@@ -36,9 +34,9 @@ public class LocalTargetEnvironment implements TargetEnvironment {
   @NotNull
   public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
-      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously());
-      if (myRequest instanceof LocalTargetEnvironmentRequest) {
-        generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)myRequest).getParentEnvironmentType());
+      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously(this));
+      if (getRequest() instanceof LocalTargetEnvironmentRequest) {
+        generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)getRequest()).getParentEnvironmentType());
       }
       String inputFilePath = commandLine.getInputFilePath();
       if (inputFilePath != null) {
@@ -55,6 +53,11 @@ public class LocalTargetEnvironment implements TargetEnvironment {
     catch (ExecutionException e) {
       throw new CantRunException(e.getMessage(), e);
     }
+  }
+
+  @Override
+  public void shutdown() {
+    //
   }
 }
 
