@@ -424,7 +424,7 @@
 
     <extensionPoint name="facetType" interface="com.intellij.facet.FacetType" dynamic="true"/>
 
-    <extensionPoint name="facet.toolWindow" beanClass="com.intellij.facet.ui.FacetDependentToolWindow">
+    <extensionPoint name="facet.toolWindow" beanClass="com.intellij.facet.ui.FacetDependentToolWindow" dynamic="true">
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
       <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
     </extensionPoint>
