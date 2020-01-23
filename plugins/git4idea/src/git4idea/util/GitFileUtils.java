@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -30,8 +31,11 @@ import git4idea.commands.Git;
 import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
+import git4idea.config.GitExecutableManager;
+import git4idea.config.GitVersion;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -235,11 +239,16 @@ public class GitFileUtils {
   }
 
   public static void addTextConvParameters(@NotNull Project project, @NotNull GitBinaryHandler h, boolean addp) {
-    if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) &&
+    addTextConvParameters(GitExecutableManager.getInstance().tryGetVersion(project), h, addp);
+  }
+
+  public static void addTextConvParameters(@Nullable GitVersion version, @NotNull GitBinaryHandler h, boolean addp) {
+    version = ObjectUtils.chooseNotNull(version, GitVersion.NULL);
+    if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(version) &&
         Registry.is("git.read.content.with.textconv")) {
       h.addParameters("--textconv");
     }
-    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project) &&
+    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(version) &&
              Registry.is("git.read.content.with.filters")) {
       h.addParameters("--filters");
     }

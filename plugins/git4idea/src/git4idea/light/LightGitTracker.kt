@@ -23,14 +23,16 @@ import git4idea.index.GitFileStatus
 import git4idea.index.getFileStatus
 import java.util.*
 
-internal class LightGitTracker : Disposable {
+class LightGitTracker : Disposable {
   private val lightEditService = LightEditService.getInstance()
   private val lightEditorManager = lightEditService.editorManager
   private val eventDispatcher = EventDispatcher.create(LightGitTrackerListener::class.java)
   private val singleTaskController = MySingleTaskController()
   private val listener = MyLightEditorListener()
 
-  private val gitExecutable: String
+  private val highlighterManager: LightGitEditorHighlighterManager
+
+  val gitExecutable: String
     get() = GitExecutableManager.getInstance().pathToGit
 
   @Volatile
@@ -49,6 +51,8 @@ internal class LightGitTracker : Disposable {
                                                                            MyFrameStateListener())
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES,
                                                                            MyBulkFileListener())
+
+    highlighterManager = LightGitEditorHighlighterManager(this)
 
     singleTaskController.request(Request.CheckGit)
   }

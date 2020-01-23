@@ -138,6 +138,19 @@ sealed class GitFileStatus {
   }
 }
 
+fun GitFileStatus.isTracked(): Boolean {
+  return when (this) {
+    GitFileStatus.Blank -> false
+    is GitFileStatus.StatusRecord -> !setOf('?', '!').contains(index)
+  }
+}
+
+val GitFileStatus.repositoryPath: String?
+  get() = when (this) {
+    GitFileStatus.Blank -> null
+    is GitFileStatus.StatusRecord -> if (!isTracked() || index == 'A' || workTree == 'A') null else origPath ?: path
+  }
+
 val GitFileStatus.color: Color?
   get() = getFileStatus().color
 
