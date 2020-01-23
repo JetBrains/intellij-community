@@ -34,6 +34,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import com.intellij.serviceContainer.PlatformComponentManagerImpl.DescriptorToLoad
 import com.intellij.util.ArrayUtil
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
@@ -47,8 +48,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JComponent
 
-
-class CannotUnloadPluginException(value: String) : ProcessCanceledException(RuntimeException(value))
+internal class CannotUnloadPluginException(value: String) : ProcessCanceledException(RuntimeException(value))
 
 interface DynamicPluginListener {
   @JvmDefault
@@ -70,13 +70,12 @@ interface DynamicPluginListener {
   fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
   }
 
-
   /**
-   * Checks if the plugin can be dynamically unloaded at this moment. 
+   * Checks if the plugin can be dynamically unloaded at this moment.
    * Method should throw {@link CannotUnloadPluginException} if it isn't possible by some reason
    */
   @Throws(CannotUnloadPluginException::class)
-  @JvmDefault 
+  @JvmDefault
   fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
   }
 
@@ -95,36 +94,37 @@ object DynamicPlugins {
 
   @JvmStatic
   @JvmOverloads
-  fun allowLoadUnloadWithoutRestart(pluginDescriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
-    val anyProject = ProjectManager.getInstance().openProjects.firstOrNull() ?:
-                     ProjectManager.getInstance().defaultProject
+  fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
+    val projectManager = ProjectManager.getInstance()
+    val anyProject = projectManager.openProjects.firstOrNull() ?: projectManager.defaultProject
 
-    val loadedPluginDescriptor = if (pluginDescriptor.pluginId != null) PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl else null
+    val loadedPluginDescriptor = if (descriptor.pluginId != null) PluginManagerCore.getPlugin(descriptor.pluginId) as? IdeaPluginDescriptorImpl else null
 
     try {
-      ApplicationManager.getApplication().messageBus.syncPublisher(DynamicPluginListener.TOPIC).checkUnloadPlugin(pluginDescriptor)
-    } catch (e: CannotUnloadPluginException) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(DynamicPluginListener.TOPIC).checkUnloadPlugin(descriptor)
+    }
+    catch (e: CannotUnloadPluginException) {
       val localizedMessage = e.cause?.localizedMessage
       LOG.info(localizedMessage)
       return false
     }
-    
+
     if (loadedPluginDescriptor != null && isPluginLoaded(loadedPluginDescriptor.pluginId)) {
-      if (!pluginDescriptor.useIdeaClassLoader) {
+      if (!descriptor.useIdeaClassLoader) {
         val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
         if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
-          val loader = baseDescriptor ?: pluginDescriptor
+          val loader = baseDescriptor ?: descriptor
           LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of UrlClassLoader as the default class loader. " +
                    "For example, the IDE is started from the sources with the plugin.")
           return false
         }
       }
     }
-    
-    val extensions = pluginDescriptor.extensions
+
+    val extensions = descriptor.extensions
     if (extensions != null) {
       for (epName in extensions.keys) {
-        val pluginExtensionPoint = findPluginExtensionPoint(pluginDescriptor, epName)
+        val pluginExtensionPoint = findPluginExtensionPoint(descriptor, epName)
         if (pluginExtensionPoint != null) {
           if (baseDescriptor != null && !pluginExtensionPoint.isDynamic) {
             LOG.info("Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
@@ -141,7 +141,7 @@ object DynamicPlugins {
               LOG.info("Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
             }
             else {
-              LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName")
+              LOG.info("Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName")
             }
             return false
           }
@@ -159,53 +159,60 @@ object DynamicPlugins {
           }
         }
 
-        LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because of unresolved extension $epName")
+        LOG.info("Plugin ${descriptor.pluginId} is not unload-safe because of unresolved extension $epName")
         return false
       }
     }
 
-    if (!hasNoComponents(pluginDescriptor)) return false
-    if (!((ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(pluginDescriptor))) return false
+    if (!hasNoComponents(descriptor)) return false
+    if (!((ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(descriptor))) return false
 
-    pluginDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
-      if (isPluginLoaded(pluginId) && optionalDescriptors.any { !allowLoadUnloadWithoutRestart(it, pluginDescriptor) }) return false
+    descriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
+      if (isPluginLoaded(pluginId) && optionalDescriptors.any { !allowLoadUnloadWithoutRestart(it, descriptor) }) return false
     }
 
     var canUnload = true
-    processOptionalDependenciesOnPlugin(pluginDescriptor) { _, dependencyDescriptor ->
-      if (!allowLoadUnloadWithoutRestart(dependencyDescriptor, pluginDescriptor)) canUnload = false
+    processOptionalDependenciesOnPlugin(descriptor) { _, fullyLoadedDescriptor ->
+      if (!allowLoadUnloadWithoutRestart(fullyLoadedDescriptor, descriptor)) {
+        canUnload = false
+      }
       canUnload
     }
 
     return canUnload
   }
 
-  private fun processOptionalDependenciesOnPlugin(
-    pluginDescriptor: IdeaPluginDescriptorImpl,
-    callback: (descriptorWithDependency: IdeaPluginDescriptorImpl, dependencyDescriptor: IdeaPluginDescriptorImpl) -> Boolean
-  ) {
+  private fun processOptionalDependenciesOnPlugin(rootDescriptor: IdeaPluginDescriptorImpl,
+                                                  callback: (descriptor: IdeaPluginDescriptorImpl, fullyLoadedDescriptor: IdeaPluginDescriptorImpl) -> Boolean) {
     val pluginXmlFactory = PluginXmlFactory()
-    for (pluginWithDependency in PluginManager.getPlugins().filter { pluginDescriptor.pluginId in it.optionalDependentPluginIds }.filterIsInstance<IdeaPluginDescriptorImpl>()) {
-      val dependencyConfigFile = pluginWithDependency.findOptionalDependencyConfigFile(pluginDescriptor.pluginId)
-      if (dependencyConfigFile == null) continue
+    val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
+    for (descriptor in PluginManager.getPlugins()) {
+      if (!descriptor.optionalDependentPluginIds.contains(rootDescriptor.pluginId)) {
+        continue
+      }
+
+      descriptor as IdeaPluginDescriptorImpl
+
+      val dependencyConfigFile = descriptor.findOptionalDependencyConfigFile(rootDescriptor.pluginId) ?: continue
 
       val pathResolver = PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER
       val element = try {
-        pathResolver.resolvePath(pluginWithDependency.basePath, dependencyConfigFile, pluginXmlFactory)
+        pathResolver.resolvePath(descriptor.basePath, dependencyConfigFile, pluginXmlFactory)
       }
       catch (e: Exception) {
         LOG.info("Can't resolve optional dependency on plugin being loaded/unloaded: config file $dependencyConfigFile, error ${e.message}")
         continue
       }
 
-      val dependencyDescriptor = IdeaPluginDescriptorImpl(pluginWithDependency.pluginPath, false)
-      val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
+      val fullyLoadedDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, false)
       val context = DescriptorLoadingContext(listContext, false, false, pathResolver)
-      if (!dependencyDescriptor.readExternal(element, pluginWithDependency.basePath, pathResolver, context, pluginWithDependency)) {
+      if (!fullyLoadedDescriptor.readExternal(element, descriptor.basePath, pathResolver, context, descriptor)) {
         LOG.info("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
         continue
       }
-      if (!callback(pluginWithDependency, dependencyDescriptor)) break
+      if (!callback(descriptor, fullyLoadedDescriptor)) {
+        break
+      }
     }
   }
 
@@ -293,7 +300,7 @@ object DynamicPlugins {
           }
 
           if (!pluginDescriptor.useIdeaClassLoader) {
-            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader || 
+            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader ||
                 ApplicationManager.getApplication().isUnitTestMode) {
               IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
             }
@@ -429,8 +436,8 @@ object DynamicPlugins {
       try {
         loadPluginDescriptor(pluginDescriptor, pluginDescriptor)
 
-        processOptionalDependenciesOnPlugin(pluginDescriptor) { descriptorWithDependency, dependencyDescriptor ->
-          loadPluginDescriptor(descriptorWithDependency, dependencyDescriptor)
+        processOptionalDependenciesOnPlugin(pluginDescriptor) { descriptor, fullyLoadedDescriptor ->
+          loadPluginDescriptor(descriptor, fullyLoadedDescriptor)
           true
         }
 
@@ -454,13 +461,13 @@ object DynamicPlugins {
     }
   }
 
-  private fun loadPluginDescriptor(baseDescriptor: IdeaPluginDescriptorImpl, pluginDescriptor: IdeaPluginDescriptorImpl) {
+  private fun loadPluginDescriptor(descriptor: IdeaPluginDescriptorImpl, fullyLoadedDescriptor: IdeaPluginDescriptorImpl) {
     val application = ApplicationManager.getApplication() as ApplicationImpl
     val listenerCallbacks = arrayListOf<Runnable>()
-    val pluginsToLoad = mutableListOf(PlatformComponentManagerImpl.DescriptorToLoad(pluginDescriptor, baseDescriptor))
-    pluginDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
+    val pluginsToLoad = mutableListOf(DescriptorToLoad(fullyLoadedDescriptor, descriptor))
+    fullyLoadedDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
       if (isPluginLoaded(pluginId)) {
-        pluginsToLoad.addAll(optionalDescriptors.map { optionalDescriptor -> PlatformComponentManagerImpl.DescriptorToLoad(optionalDescriptor, baseDescriptor) })
+        optionalDescriptors.mapTo(pluginsToLoad) { DescriptorToLoad(it, descriptor) }
       }
     }
     application.registerComponents(pluginsToLoad, listenerCallbacks)
@@ -472,7 +479,7 @@ object DynamicPlugins {
     }
     listenerCallbacks.forEach(Runnable::run)
     for (descriptorToLoad in pluginsToLoad) {
-      (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(baseDescriptor, descriptorToLoad.descriptor.actionDescriptionElements, false)
+      (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(descriptor, descriptorToLoad.fullyLoadedDescriptor.actionDescriptionElements, false)
     }
   }
 

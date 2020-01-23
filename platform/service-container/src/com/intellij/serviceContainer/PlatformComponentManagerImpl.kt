@@ -75,6 +75,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     else -> null
   }
 
+  @Suppress("DEPRECATION")
   private val baseComponents: MutableList<BaseComponent> = SmartList()
 
   protected open val componentStore: IComponentStore
@@ -111,8 +112,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   data class DescriptorToLoad(
-    val descriptor: IdeaPluginDescriptorImpl,
-    val rootDescriptor: IdeaPluginDescriptorImpl = descriptor
+    val fullyLoadedDescriptor: IdeaPluginDescriptorImpl,
+    val descriptor: IdeaPluginDescriptorImpl = fullyLoadedDescriptor
   )
 
   @Internal
@@ -128,13 +129,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     val clonePoint = parent != null
 
-    var activity = if (activityNamePrefix == null) null
-    else StartUpMeasurer.startMainActivity("${activityNamePrefix}service and ep registration")
+    var activity = activityNamePrefix?.let { StartUpMeasurer.startMainActivity("${it}service and ep registration") }
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
-    for ((plugin, rootDescriptor) in plugins) {
-      val containerDescriptor = getContainerDescriptor(plugin)
-      registerServices(containerDescriptor.services, rootDescriptor)
+    for (plugin in plugins) {
+      val containerDescriptor = getContainerDescriptor(plugin.fullyLoadedDescriptor)
+      registerServices(containerDescriptor.services, plugin.descriptor)
 
       for (descriptor in containerDescriptor.components) {
         if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {
@@ -142,11 +142,11 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         }
 
         try {
-          registerComponent(descriptor, plugin)
+          registerComponent(descriptor, plugin.fullyLoadedDescriptor)
           newComponentConfigCount++
         }
         catch (e: Throwable) {
-          handleInitComponentError(e, null, plugin.pluginId)
+          handleInitComponentError(e, null, plugin.fullyLoadedDescriptor.pluginId)
         }
       }
 
@@ -781,6 +781,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     isServicePreloadingCancelled = true
   }
 
+  @Suppress("DEPRECATION")
   override fun getComponent(name: String): BaseComponent? {
     for (componentAdapter in picoContainer.componentAdapters) {
       if (componentAdapter is MyComponentAdapter) {

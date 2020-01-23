@@ -1032,7 +1032,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   @Nullable
   public String findOptionalDependencyConfigFile(@NotNull PluginId pluginId) {
-    if (myDependencies == null) return null;
+    if (myDependencies == null) {
+      return null;
+    }
     for (PluginDependency dependency : myPluginDependencies) {
       if (dependency.pluginId.equals(pluginId)) {
         return dependency.configFile;

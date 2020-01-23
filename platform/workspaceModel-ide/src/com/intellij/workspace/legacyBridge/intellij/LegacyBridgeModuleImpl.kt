@@ -31,8 +31,7 @@ internal class LegacyBridgeModuleImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<DescriptorToLoad>,
-                                  listenerCallbacks: List<Runnable>?) {
+  override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
     super.registerComponents(plugins, null)
 
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
