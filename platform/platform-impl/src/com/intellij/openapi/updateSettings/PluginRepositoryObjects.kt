@@ -7,14 +7,16 @@ import com.intellij.ide.plugins.PluginNode
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
- * @param externalUpdateId        - update ID from Plugin Repository database.
- * @param externalPluginId  - plugin ID from Plugin Repository database.
+ * [externalUpdateId] update ID from Plugin Repository database.
+ * [externalPluginId] plugin ID from Plugin Repository database.
  */
 data class IdeCompatibleUpdate(
-  @JsonProperty("id")
+  @get:JsonProperty("id")
   val externalUpdateId: String = "",
-  @JsonProperty("pluginId")
+  @get:JsonProperty("pluginId")
   val externalPluginId: String = "",
+  @get:JsonProperty("pluginXmlId")
+  val pluginId: String = "",
   val version: String = ""
 )
 
@@ -23,7 +25,7 @@ data class IdeCompatibleUpdate(
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijUpdateMetadata(
-  @JsonProperty("xmlId")
+  @get:JsonProperty("xmlId")
   val id: String = "",
   val name: String = "",
   val description: String = "",

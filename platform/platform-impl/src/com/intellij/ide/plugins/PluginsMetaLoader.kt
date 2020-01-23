@@ -107,6 +107,21 @@ object PluginsMetaLoader {
       }
   }
 
+  fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber?): List<IdeCompatibleUpdate> {
+    val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
+    val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
+    return HttpRequests
+      .post(url, HttpRequests.JSON_CONTENT_TYPE)
+      .connect {
+        it.write(data)
+        objectMapper
+          .readValue(
+            it.inputStream,
+            object : TypeReference<List<IdeCompatibleUpdate>>() {}
+          )
+      }
+  }
+
   fun getLastCompatiblePluginUpdate(pluginId: PluginId, buildNumber: BuildNumber?): IdeCompatibleUpdate? {
     val url = Urls
       .newFromEncoded(COMPATIBLE_UPDATE_URL)
@@ -175,5 +190,7 @@ object PluginsMetaLoader {
       LOG.warn("Can't save ETag to '" + eTagFile.absolutePath + "'", e)
     }
   }
+
+  private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)
 
 }
