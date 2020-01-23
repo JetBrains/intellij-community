@@ -99,7 +99,7 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group>
-      <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template..."/>
+      <action id="SaveProjectAsTemplate" class="com.intellij.platform.templates.SaveProjectAsTemplateAction"/>
       <action id="ManageProjectTemplates" class="com.intellij.platform.templates.ManageProjectTemplatesAction"/>
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </group>
