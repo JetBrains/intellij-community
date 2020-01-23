@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PluginUtil {
@@ -12,5 +13,7 @@ public interface PluginUtil {
   }
 
   @Nullable PluginId getCallerPlugin(int stackFrameCount);
+
+  @Nullable PluginId findPluginId(@NotNull Throwable t);
 
 }

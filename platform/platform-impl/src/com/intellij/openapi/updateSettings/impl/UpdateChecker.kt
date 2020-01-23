@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.diagnostic.IdeErrorsDialog
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
@@ -537,7 +536,8 @@ object UpdateChecker {
     if (!ourHasFailedPlugins) {
       val app = ApplicationManager.getApplication()
       if (app != null && !app.isDisposed && UpdateSettings.getInstance().isCheckNeeded) {
-        val pluginDescriptor = PluginManagerCore.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
+        val pluginDescriptor = PluginManagerCore.getPlugin(
+          PluginUtil.getInstance().findPluginId(event.throwable))
         if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
           ourHasFailedPlugins = true
           updateAndShowResult()

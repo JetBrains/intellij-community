@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -47,7 +48,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
       Throwable t = event.getThrowable();
-      PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+      PluginId pluginId = PluginUtil.getInstance().findPluginId(t);
 
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);

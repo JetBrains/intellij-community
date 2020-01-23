@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -207,7 +208,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static void report(IdeaLoggingEvent event) {
     if (event != null) {
       Throwable t = event.getThrowable();
-      if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
+      if (IdeErrorsDialog.getSubmitter(t, PluginUtil.getInstance().findPluginId(t)) instanceof ITNReporter) { // only report to JB
         MessagePool.getInstance().addIdeFatalMessage(event);
       }
     }

@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.diagnostic.IdeErrorsDialog
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
+import com.intellij.ide.plugins.PluginUtilImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.Application
@@ -101,7 +102,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
     val messagePostfix = "Please restart ${ApplicationNamesInfo.getInstance().fullProductName}</p>" +
                          (if (ApplicationManager.getApplication().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else "")
 
-    val pluginId = IdeErrorsDialog.findPluginId(e)
+    val pluginId = PluginUtil.getInstance().findPluginId(e)
     val notification = if (pluginId == null) {
       Notification("Settings Error", "Unable to save settings", "<p>Failed to save settings. $messagePostfix",
                    NotificationType.ERROR)
