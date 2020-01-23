@@ -940,6 +940,10 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   public void testParametrizedDuplicateExpression() throws Exception {
     doDuplicatesTest();
   }
+  
+  public void testPatternVariable() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+  }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
