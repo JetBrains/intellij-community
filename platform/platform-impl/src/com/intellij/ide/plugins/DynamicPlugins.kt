@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
@@ -42,7 +43,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusImpl
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.BeanBinding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -342,7 +342,7 @@ object DynamicPlugins {
     } catch (e: Exception) {
       Logger.getInstance(DynamicPlugins.javaClass).error(e)
     } finally {
-      UIUtil.dispatchAllInvocationEvents()
+      IdeEventQueue.getInstance().flushQueue()
 
       val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
       if (!classLoaderUnloaded) {

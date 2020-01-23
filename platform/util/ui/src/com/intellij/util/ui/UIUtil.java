@@ -1797,6 +1797,7 @@ public final class UIUtil {
   }
 
   /**
+   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
    * @see #pump()
    */
