@@ -65,11 +65,14 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
   private val branchesSearchFieldPanel = simplePanel()
   private val branchesSearchField = Wrapper(tree.installSearchField(false, JBUI.Borders.emptyLeft(5)))
 
-  lateinit var logUi: MainVcsLogUi
+  private lateinit var logUi: MainVcsLogUi
+  private var logUiDisposed = false
 
   private val vcsLogListener = object : VcsProjectLog.ProjectLogListener {
     override fun logCreated(manager: VcsLogManager) {
-      initLogUi(manager) //re-init log UI e.g. on mappings change
+      if (logUiDisposed) {
+        initLogUi(manager) //re-init log UI if it was disposed (e.g. on mappings change)
+      }
     }
 
     override fun logDisposed(manager: VcsLogManager) {
@@ -100,6 +103,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     val diffPreview = ui.createDiffPreview()
     mainPanel.add(DiffPreviewSplitter(diffPreview, ui.properties, branchesTreeWithLogPanel).mainComponent)
     logUi = ui
+    logUiDisposed = false
     branchesSearchField.setVerticalSizeReferent(ui.toolbar)
     tree.component.addTreeSelectionListener(treeSelectionListener)
   }
@@ -112,6 +116,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
       tree.component.removeTreeSelectionListener(treeSelectionListener)
       val ui = logUi
       Disposer.dispose(ui)
+      logUiDisposed = true
     }
   }
 
