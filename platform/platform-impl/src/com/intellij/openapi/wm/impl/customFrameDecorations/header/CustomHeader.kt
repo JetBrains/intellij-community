@@ -167,12 +167,14 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         added = true
         installListeners()
         updateCustomDecorationHitTestSpots()
+        customFrameTopBorder!!.addNotify()
     }
 
     override fun removeNotify() {
         added = false
         super.removeNotify()
         uninstallListeners()
+        customFrameTopBorder!!.removeNotify()
     }
 
     protected open fun installListeners() {
@@ -259,14 +261,15 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
         val thickness = 1
-        private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
-        private var colorizationAffectsBorders: Boolean
-        private var activeColor: Color
 
         // In reality, Windows uses alpha-blending with alpha=0.34 by default, but we have no (easy) way of doing the same, so let's just
         // use the value without alpha. Unfortunately, DWM doesn't offer an API to determine this value.
         private val defaultActiveBorder = Color(0x262626)
         private val inactiveColor = Color(0xaaaaaa)
+
+        private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
+        private var colorizationAffectsBorders: Boolean = false
+        private var activeColor: Color = defaultActiveBorder
 
         private fun calculateAffectsBorders(): Boolean {
             val windowsVersion = WINDOWS_VERSION?.toIntOrNull() ?: 0
@@ -311,15 +314,17 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
+        private val listeners = mutableListOf<Pair<String, PropertyChangeListener>>()
         private inline fun listenForPropertyChanges(vararg propertyNames: String, crossinline action: () -> Unit) {
             val toolkit = Toolkit.getDefaultToolkit()
             val listener = PropertyChangeListener { action() }
             for (property in propertyNames) {
                 toolkit.addPropertyChangeListener(property, listener)
+                listeners.add(property to listener)
             }
         }
 
-        init {
+        fun addNotify() {
             colorizationAffectsBorders = calculateAffectsBorders()
             listenForPropertyChanges("win.dwm.colorizationColor.affects.borders") {
                 colorizationAffectsBorders = calculateAffectsBorders()
@@ -330,6 +335,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             listenForPropertyChanges("win.dwm.colorizationColor", "win.dwm.colorizationColorBalance", "win.frame.activeBorderColor") {
                 activeColor = calculateActiveBorderColor()
             }
+        }
+
+        fun removeNotify() {
+            val toolkit = Toolkit.getDefaultToolkit()
+            for ((propertyName, listener) in listeners)
+                toolkit.removePropertyChangeListener(propertyName, listener)
+            listeners.clear()
         }
 
         fun repaintBorder() {
