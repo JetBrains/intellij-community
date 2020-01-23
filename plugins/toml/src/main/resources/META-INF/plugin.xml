@@ -19,7 +19,12 @@
     <depends>com.intellij.modules.lang</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
+        <fileType name="TOML"
+                  language="TOML"
+                  implementationClass="org.toml.lang.psi.TomlFileType"
+                  fieldName="INSTANCE"
+                  extensions="toml"
+                  fileNames="Cargo.lock;Gopkg.lock;Pipfile"/>
         <fileTypeDetector implementation="org.toml.lang.TomlFileTypeDetector"/>
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
         <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
