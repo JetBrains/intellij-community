@@ -92,6 +92,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   }
 
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Arrays.asList("groovy", "java");

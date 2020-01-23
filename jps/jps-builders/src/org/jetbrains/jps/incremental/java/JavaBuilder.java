@@ -205,6 +205,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return COMPILABLE_EXTENSIONS;

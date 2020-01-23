@@ -55,13 +55,15 @@ public class BuilderRegistry {
       myTargetBuilders.addAll(service.createBuilders());
       final List<? extends ModuleLevelBuilder> moduleLevelBuilders = service.createModuleLevelBuilders();
       for (ModuleLevelBuilder builder : moduleLevelBuilders) {
-        List<String> extensions = builder.getCompilableFileExtensions();
-        if (extensions == null) {
-          LOG.info(builder.getClass().getName() + " builder returns 'null' from 'getCompilableFileExtensions' method so files for module-level builders won't be filtered");
-          compilableFileExtensions = null;
+        try {
+          List<String> extensions = builder.getCompilableFileExtensions();
+          if (compilableFileExtensions != null) {
+            compilableFileExtensions.addAll(extensions);
+          }
         }
-        else if (compilableFileExtensions != null) {
-          compilableFileExtensions.addAll(extensions);
+        catch (AbstractMethodError e) {
+          LOG.info(builder.getClass().getName() + " builder doesn't implement 'getCompilableFileExtensions' method so ModuleBuildTarget will process all files under source roots.");
+          compilableFileExtensions = null;
         }
         myModuleLevelBuilders.get(builder.getCategory()).add(builder);
       }

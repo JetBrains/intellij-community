@@ -71,6 +71,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     return doneSomething ? ExitCode.OK : ExitCode.NOTHING_DONE;
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.emptyList();

@@ -74,6 +74,7 @@ public class FormsBindingManager extends FormsBuilder {
     return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "forms_rebuild_required");
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.singletonList(FORM_EXTENSION);

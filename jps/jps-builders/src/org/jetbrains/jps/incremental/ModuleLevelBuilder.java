@@ -103,13 +103,9 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   /**
-   * <strong>DO NOT RETURN {@code null}</strong> from implementation of this method. If some of builders returns {@code null} no filtering
-   * will be performed for compatibility reasons.
-   * @return list of extensions (without dot) of files which can be compiled by the builder
+   * Returns list of extensions (without dot) of files which can be compiled by the builder.
    */
-  public List<String> getCompilableFileExtensions() {
-    return null;
-  }
+  public abstract @NotNull List<String> getCompilableFileExtensions();
 
   public final BuilderCategory getCategory() {
     return myCategory;
