@@ -45,7 +45,7 @@ if (kotlinVersionLen == -1) {
 }
 
 ext.kotlin_version = kotlinPluginBuild.substring(0, kotlinVersionLen)
-ext.android_m2_version = "26.6.0.0"
+ext.android_m2_version = "26.6.0.1"
 ext.android_sdk_version = "${osFamily}.3.3.5"
 
 dependencies {
