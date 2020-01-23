@@ -527,11 +527,12 @@ public final class JavaSdkImpl extends JavaSdk {
     boolean hasRelease = hashIfExists(hasher, homePath, "release");
     boolean hasVersion = hashIfExists(hasher, homePath, "version.txt");
     boolean hasLib = hashIfExists(hasher, homePath, "lib");
+    hashIfExists(hasher, homePath, "jmod");
 
     if (!hasRelease && !hasVersion && !hasLib) {
       return null;
     }
-    return Base64.getEncoder().encodeToString(hasher.digest());
+    return StringUtil.toHexString(hasher.digest());
   }
 
   private static boolean hashIfExists(@NotNull MessageDigest hasher,

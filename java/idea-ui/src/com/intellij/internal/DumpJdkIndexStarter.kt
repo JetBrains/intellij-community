@@ -5,7 +5,6 @@ import com.google.common.primitives.Longs.max
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -18,6 +17,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
+import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.DigestUtil.updateContentHash
 import com.intellij.util.io.isFile
 import com.intellij.util.io.sizeOrNull
 import com.intellij.util.lang.JavaVersion
@@ -25,6 +26,7 @@ import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
 import java.io.File
 import java.nio.file.Files
+import java.util.zip.ZipFile
 import kotlin.system.exitProcess
 
 class DumpJdkIndexStarter : ApplicationStarter {
@@ -100,24 +102,27 @@ class DumpJdkIndexStarter : ApplicationStarter {
     val indexingStartTime = System.currentTimeMillis()
 
     LOG.info("Collecting SDK roots...")
-    val rootProvider = javaSdk.rootProvider
-    val classesRoot = rootProvider.getFiles(OrderRootType.CLASSES).toSet()
-    val sourcesRoot = rootProvider.getFiles(OrderRootType.SOURCES).toSet()
+    val osName = IndexesExporter.getOsNameForIndexVersions()
 
     //it is up to SdkType to decide on the best SDK contents fingerprint/hash
     val hash = runAndCatchNotNull("compute JDK fingerprint") {
       javaSdkType.computeJdkFingerprint(javaSdk)
     }
+    //we need OS in the index hash, let's pretend it's not here
     LOG.info("JDK contents has is: $hash")
 
+    val rootProvider = javaSdk.rootProvider
+    val classesRoot = rootProvider.getFiles(OrderRootType.CLASSES).toSet()
+    val sourcesRoot = rootProvider.getFiles(OrderRootType.SOURCES).toSet()
     val allRoots = (classesRoot + sourcesRoot).toSet()
     LOG.info("Collected ${allRoots.size} SDK roots")
-    val indexChunk = IndexChunk(allRoots, "jdk-$jdkVersion")
-    IndexesExporter.getInstance(project).exportIndices(
-      listOf(indexChunk),
+    val indexChunk = IndexChunk(allRoots, "jdk-$jdkVersion-$osName")
+    indexChunk.contentsHash = hash
+
+    IndexesExporter.getInstance(project).exportIndexesChunk(
+      indexChunk,
       unpackedIndexDir.toPath(),
-      indexZip.toPath(),
-      EmptyProgressIndicator())
+      indexZip.toPath())
 
     val indexingTime = max(0L, System.currentTimeMillis() - indexingStartTime)
 
@@ -125,12 +130,32 @@ class DumpJdkIndexStarter : ApplicationStarter {
 
     LOG.info("Indexes build completed in ${StringUtil.formatDuration(indexingTime)}")
     LOG.info("JDK size          = ${StringUtil.formatFileSize(jdkHome.totalSize())}")
+    LOG.info("JDK hash          = ${hash}")
     LOG.info("Index.zip size    = ${StringUtil.formatFileSize(indexZip.totalSize())}")
     LOG.info("Index.zip.xz size = ${StringUtil.formatFileSize(indexZipXZ.totalSize())}")
-    //TODO: try XZ archive
     LOG.info("Generated index in $indexZip")
+
+    val indexMetadata = runAndCatchNotNull("extract JSON metadata from $indexZip"){
+      ZipFile(indexZip).use { zipFile ->
+        val entry = zipFile.getEntry("metadata.json") ?: error("metadata.json is not found")
+        val data = zipFile.getInputStream(entry) ?: error("metadata.json is not found")
+        data.readBytes()
+      }
+    }
+
+    val outputNamePrefix = "${indexChunk.name}-$hash-"
+    FileUtil.copy(indexZipXZ, File(outputDir, outputNamePrefix + "index.zip.xz"))
+    FileUtil.writeToFile(File(outputDir, outputNamePrefix + "metadata.json"), indexMetadata)
+    FileUtil.writeToFile(File(outputDir, outputNamePrefix + "index.zip.xz.sha256"), indexZipXZ.sha256())
+
     exitProcess(0)
   }
+}
+
+private fun File.sha256(): String {
+  val digest = DigestUtil.sha256()
+  updateContentHash(digest, this.toPath())
+  return StringUtil.toHexString(digest.digest());
 }
 
 private fun xz(file: File, output: File) {
