@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.layout.migLayout.MigLayoutBuilderKt;
 import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.tabs.impl.MorePopupAware;
@@ -63,7 +64,10 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
 
     myToolWindow = toolWindow;
 
-    myWestPanel = contentUi.getTabComponent();
+    myWestPanel = new NonOpaquePanel(new MigLayout(MigLayoutBuilderKt.createLayoutConstraints(0, 0)
+                                                     .noVisualPadding().fillY()));
+    myWestPanel.add(contentUi.getTabComponent(), new CC().growY());
+
     add(myWestPanel, new CC().grow());
     ToolWindowContentUi.initMouseListeners(myWestPanel, contentUi, true);
 
