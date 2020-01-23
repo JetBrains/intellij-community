@@ -63,8 +63,8 @@ if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
   JDK="$__product_uc___JDK"
 fi
 
-if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/__system_selector__/__vm_options__.jdk" ]; then
-  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/__system_selector__/__vm_options__.jdk")
+if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
+  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__.jdk")
   if [ ! -d "$USER_JRE" ]; then
     USER_JRE="$IDE_HOME/$USER_JRE"
   fi
