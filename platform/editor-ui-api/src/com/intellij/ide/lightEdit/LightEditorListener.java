@@ -5,6 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.EventListener;
 
 @ApiStatus.Experimental
@@ -14,5 +15,5 @@ public interface LightEditorListener extends EventListener {
   default void beforeClose(@NotNull LightEditorInfo editorInfo) {}
   default void afterClose(@NotNull LightEditorInfo editorInfo) {}
   default void autosaveModeChanged(boolean isAutosave) {}
-  default void fileStatusChanged(@NotNull LightEditorInfo editorInfo) {}
+  default void fileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {}
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.management.ManagementFactory;
+import java.util.Collection;
+import java.util.List;
 
 @SuppressWarnings("SameParameterValue")
 @State(name = "LightEdit", storages =  @Storage("lightEdit.xml"))
@@ -228,10 +231,10 @@ public class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public void updateFileStatus(@NotNull VirtualFile virtualFile) {
-    LightEditorInfo editorInfo = myEditorManager.findOpen(virtualFile);
-    if (editorInfo != null) {
-      myEditorManager.fireFileStatusChanged(editorInfo);
+  public void updateFileStatus(@NotNull Collection<VirtualFile> files) {
+    List<LightEditorInfo> editors = ContainerUtil.mapNotNull(files, myEditorManager::findOpen);
+    if (!editors.isEmpty()) {
+      myEditorManager.fireFileStatusChanged(editors);
     }
   }
 

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class LightEditorManagerImpl implements LightEditorManager, Disposable {
@@ -122,8 +123,8 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
     myEventDispatcher.getMulticaster().autosaveModeChanged(autosaveMode);
   }
 
-  void fireFileStatusChanged(@NotNull LightEditorInfo editorInfo) {
-    myEventDispatcher.getMulticaster().fileStatusChanged(editorInfo);
+  void fireFileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {
+    myEventDispatcher.getMulticaster().fileStatusChanged(editorInfos);
   }
 
   @NotNull

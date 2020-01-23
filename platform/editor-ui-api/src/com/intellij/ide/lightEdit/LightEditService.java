@@ -10,6 +10,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 @ApiStatus.Experimental
 public interface LightEditService {
 
@@ -41,5 +43,5 @@ public interface LightEditService {
   @Nullable
   FileType getExplicitFileType(@NotNull VirtualFile virtualFile);
 
-  void updateFileStatus(@NotNull VirtualFile virtualFile);
+  void updateFileStatus(@NotNull Collection<VirtualFile> files);
 }

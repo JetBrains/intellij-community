@@ -12,17 +12,22 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Future;
 
 final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
@@ -170,7 +175,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     if (oldTabInfo != null) {
       int oldIndex = getIndexOf(oldTabInfo);
       if (oldIndex >= 0) {
-        removeTab(oldTabInfo).doWhenDone(()->myEditorManager.closeEditor(oldInfo));
+        removeTab(oldTabInfo).doWhenDone(() -> myEditorManager.closeEditor(oldInfo));
         addEditorTab(newInfo, oldIndex);
       }
     }
@@ -206,22 +211,32 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
   }
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
+    assert ApplicationManager.getApplication().isDispatchThread();
     Object object = tabInfo.getObject();
-    if (object instanceof LightEditorInfo) {
-      assert ApplicationManager.getApplication().isDispatchThread();
-      if (myTabUpdateFuture != null) {
-        myTabUpdateFuture.cancel(true);
-      }
-      myTabUpdateFuture = ApplicationManager.getApplication().executeOnPooledThread(
-        () -> {
-          TextAttributes attributes = calcAttributes((LightEditorInfo)object);
-          ApplicationManager.getApplication().invokeLater(() -> {
-            tabInfo.setDefaultForeground(attributes.getForegroundColor());
-            tabInfo.setTabColor(tabInfo == getSelectedInfo() ? attributes.getBackgroundColor() : null);
-            myTabUpdateFuture = null;
-          });
-        });
+    if (!(object instanceof LightEditorInfo)) return;
+    asyncUpdateTabs(Collections.singletonList(Pair.createNonNull(tabInfo, (LightEditorInfo)object)));
+  }
+
+  private void asyncUpdateTabs(@NotNull List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs) {
+    if (myTabUpdateFuture != null) {
+      myTabUpdateFuture.cancel(true);
     }
+    myTabUpdateFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<Pair.NonNull<TabInfo, TextAttributes>> tabAttributesPairs = ContainerUtil.map(tabEditorPairs, pair -> {
+        return Pair.createNonNull(pair.first, calcAttributes(pair.second));
+      });
+      ApplicationManager.getApplication().invokeLater(() -> {
+        for (Pair.NonNull<TabInfo, TextAttributes> attributesPair : tabAttributesPairs) {
+          updateTabPresentation(attributesPair.first, attributesPair.second);
+        }
+        myTabUpdateFuture = null;
+      });
+    });
+  }
+
+  private void updateTabPresentation(@NotNull TabInfo tabInfo, @NotNull TextAttributes attributes) {
+    tabInfo.setDefaultForeground(attributes.getForegroundColor());
+    tabInfo.setTabColor(tabInfo == getSelectedInfo() ? attributes.getBackgroundColor() : null);
   }
 
   @NotNull
@@ -245,11 +260,15 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
   }
 
   @Override
-  public void fileStatusChanged(@NotNull LightEditorInfo editorInfo) {
+  public void fileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      TabInfo tabInfo = findInfo(editorInfo);
-      if (tabInfo != null) {
-        asyncUpdateTab(tabInfo);
+      List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs = ContainerUtil.mapNotNull(editorInfos, editorInfo -> {
+        TabInfo info = findInfo(editorInfo);
+        if (info == null) return null;
+        return Pair.createNonNull(info, editorInfo);
+      });
+      if (!tabEditorPairs.isEmpty()) {
+        asyncUpdateTabs(tabEditorPairs);
       }
     });
   }
