@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.notification.NotificationDisplayType
@@ -275,7 +276,7 @@ object DynamicPlugins {
         }
       }
     } finally {
-      UIUtil.dispatchAllInvocationEvents()
+      IdeEventQueue.getInstance().flushQueue()
 
       val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
       if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable()) {
