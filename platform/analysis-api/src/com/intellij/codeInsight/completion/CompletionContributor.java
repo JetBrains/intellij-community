@@ -114,7 +114,10 @@ import java.util.List;
  * and wait for their results in completion thread. You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.<p>
  *
  * Q: How can I trigger showing completion popup programmatically?<br>
- * A: See {@link com.intellij.codeInsight.AutoPopupController}.
+ * A: See {@link com.intellij.codeInsight.AutoPopupController}.<p>
+ *
+ * Q: The suggestion popup hides when I type some exotic character but I want completion keep going matching against typed character.<br>
+ * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  *
  * @author peter
  */
