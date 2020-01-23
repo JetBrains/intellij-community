@@ -241,7 +241,7 @@ abstract class Cell : BaseBuilder {
   inline fun checkBox(text: String,
                       isSelected: Boolean = false,
                       comment: String? = null,
-                      crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): CellBuilder<JCheckBox> {
+                      crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): CellBuilder<JBCheckBox> {
     return checkBox(text, isSelected, comment)
       .applyToComponent {
         addActionListener(ActionListener { actionListener(it, this) })
@@ -251,7 +251,7 @@ abstract class Cell : BaseBuilder {
   @JvmOverloads
   fun checkBox(text: String,
                isSelected: Boolean = false,
-               comment: String? = null): CellBuilder<JCheckBox> {
+               comment: String? = null): CellBuilder<JBCheckBox> {
     val result = JBCheckBox(text, isSelected)
     return result(comment = comment)
   }
@@ -322,28 +322,28 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
-  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> = textField(prop.toBinding(), columns)
+  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JBTextField> = textField(prop.toBinding(), columns)
 
   fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null) = textField(PropertyBinding(getter, setter), columns)
 
-  fun textField(binding: PropertyBinding<String>, columns: Int? = null): CellBuilder<JTextField> {
-    return component(JTextField(binding.get(), columns ?: 0))
+  fun textField(binding: PropertyBinding<String>, columns: Int? = null): CellBuilder<JBTextField> {
+    return component(JBTextField(binding.get(), columns ?: 0))
       .withTextBinding(binding)
   }
 
-  fun textField(property: GraphProperty<String>, columns: Int? = null): CellBuilder<JTextField> {
+  fun textField(property: GraphProperty<String>, columns: Int? = null): CellBuilder<JBTextField> {
     return textField(property::get, property::set, columns)
       .withGraphProperty(property)
       .applyToComponent { bind(property) }
   }
 
-  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> =
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> =
     intTextField(prop.toBinding(), columns, range)
 
-  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> =
+  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> =
     intTextField(PropertyBinding(getter, setter), columns, range)
 
-  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> {
+  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
     return textField(
       { binding.get().toString() },
       { value -> value.toIntOrNull()?.let { intValue -> binding.set(range?.let { intValue.coerceIn(it.first, it.last) } ?: intValue) } },

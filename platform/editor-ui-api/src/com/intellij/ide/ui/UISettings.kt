@@ -309,11 +309,17 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.editorTabLimit = value
     }
 
-  val recentFilesLimit: Int
+  var recentFilesLimit: Int
     get() = state.recentFilesLimit
+    set(value) {
+      state.recentFilesLimit = value
+    }
 
-  val recentLocationsLimit: Int
+  var recentLocationsLimit: Int
     get() = state.recentLocationsLimit
+    set(value) {
+      state.recentLocationsLimit = value
+    }
 
   var maxLookupWidth: Int
     get() = state.maxLookupWidth
