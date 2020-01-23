@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
+import com.intellij.find.findUsages.FindUsagesHelper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -8,7 +9,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
@@ -28,7 +28,7 @@ public final class TextOccurrencesUtilBase {
                                         @NotNull GlobalSearchScope searchScope,
                                         @NotNull Collection<? super UsageInfo> results,
                                         @NotNull UsageInfoFactory factory) {
-    PsiSearchHelperImpl.processTextOccurrences(element, stringToSearch, searchScope, factory, t -> {
+    FindUsagesHelper.processTextOccurrences(element, stringToSearch, searchScope, factory, t -> {
       results.add(t);
       return true;
     });

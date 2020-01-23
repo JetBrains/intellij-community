@@ -1078,26 +1078,4 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (words.isEmpty()) return Collections.emptyList();
     return ContainerUtil.map2List(words, word -> new IdIndexEntry(word, caseSensitively));
   }
-
-  public static boolean processTextOccurrences(@NotNull final PsiElement element,
-                                               @NotNull String stringToSearch,
-                                               @NotNull GlobalSearchScope searchScope,
-                                               @NotNull final UsageInfoFactory factory,
-                                               @NotNull final Processor<? super UsageInfo> processor) {
-    PsiSearchHelper helper = ReadAction.compute(() -> PsiSearchHelper.getInstance(element.getProject()));
-
-    return helper.processUsagesInNonJavaFiles(element, stringToSearch, (psiFile, startOffset, endOffset) -> {
-      try {
-        UsageInfo usageInfo = ReadAction.compute(() -> factory.createUsageInfo(psiFile, startOffset, endOffset));
-        return usageInfo == null || processor.process(usageInfo);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        return true;
-      }
-    }, searchScope);
-  }
 }
