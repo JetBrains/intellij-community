@@ -28,11 +28,11 @@ public enum UpdateMethod {
   /**
    * Merge fetched commits with local branch
    */
-  MERGE("Merge", "Merge the incoming changes into the current branch"),
+  MERGE("Merge", "Merge incoming changes into the current branch"),
   /**
    * Rebase local commits upon the fetched branch
    */
-  REBASE("Rebase", "Rebase the current branch on top of the incoming changes");
+  REBASE("Rebase", "Rebase the current branch on top of incoming changes");
 
   @NotNull private final String myName;
   @NotNull private final String myPresentation;
