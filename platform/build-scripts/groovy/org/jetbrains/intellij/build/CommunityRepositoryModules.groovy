@@ -283,8 +283,8 @@ class CommunityRepositoryModules {
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.wizard.model", "android.jar")
-      withModuleLibrary("precompiled-intellij.android.wizardTemplate.plugin", "intellij.android.wizardTemplate.plugin", "")
-      withModuleLibrary("precompiled-intellij.android.wizardTemplate.impl", "intellij.android.wizardTemplate.impl", "")
+      withModuleLibrary("precompiled-intellij.android.wizardTemplate.plugin", "android.sdktools.wizardTemplate.plugin", "")
+      withModuleLibrary("precompiled-intellij.android.wizardTemplate.impl", "android.sdktools.wizardTemplate.impl", "")
       withModule("intellij.android.profilersAndroid", "android.jar")
       withModule("intellij.android.gameToolsStarter", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
@@ -299,7 +299,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.apkanalyzer", "android.jar")
       withModule("intellij.android.projectSystem", "android.jar")
       withModule("intellij.android.projectSystem.gradle", "android.jar")
-      withModule("intellij.android.gradle-tooling.api", "android.jar")
+      withModule("intellij.android.gradle-tooling", "android.jar")
       withModule("intellij.android.gradle-tooling.impl", "android.jar")
       withModule("intellij.android.resources-base", "android.jar")
       withModule("intellij.android.android-layout-inspector", "android.jar")
@@ -320,7 +320,7 @@ class CommunityRepositoryModules {
 
       // from AOSP's plugin("intellij.android.layoutlib"). Force layoutlib-standard. //
       withModuleLibrary("precompiled-layoutlib-api", "android.sdktools.layoutlib-api", "")
-      withModuleLibrary("layoutlib-jre11", "intellij.android.layoutlib", "")
+      withModuleLibrary("layoutlib-jre11-26.6.0.1.jar", "intellij.android.layoutlib", "")
       //////////////////////////////////////////////////////
 
       withModuleLibrary("precompiled-manifest-merger", "android.sdktools.manifest-merger", "")
