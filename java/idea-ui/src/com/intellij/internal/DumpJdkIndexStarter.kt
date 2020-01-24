@@ -1,12 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.primitives.Longs.max
-import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -19,38 +15,22 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
-import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.DigestUtil.updateContentHash
-import com.intellij.util.io.isFile
-import com.intellij.util.io.sizeOrNull
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
 import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
 import java.io.File
-import java.nio.file.Files
 import java.util.zip.ZipFile
 import kotlin.system.exitProcess
 
-class DumpJdkIndexStarter : ApplicationStarter {
-  override fun getCommandName() = "dump-jdk-index"
-
-  override fun main(args: Array<out String>) {
-    try {
-      mainImpl(args)
-    } catch (t: Throwable) {
-      LOG.error("JDK Indexing failed unexpectedly. ${t.message}", t)
-      exitProcess(1)
-    }
-  }
-
-  private fun mainImpl(args: Array<out String>) {
+class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
+  override fun mainImpl(args: Array<out String>) {
     println("Dump JDK indexes command:")
     val nameHintKey = "name-infix"
     val jdkHomeKey = "jdk-home"
     val tempKey = "temp"
     val outputKey = "output-dir"
-    val baseUrlKey = "url"
+    val baseUrlKey = "base-url"
 
     println("")
     println("  [idea] ${commandName} ... (see keys below)")
@@ -183,121 +163,23 @@ class DumpJdkIndexStarter : ApplicationStarter {
     FileUtil.copy(indexZipXZ, indexFile(".ijx"))
     FileUtil.writeToFile(indexFile(".json"), indexMetadata)
     FileUtil.writeToFile(indexFile(".sha256"), indexZipXZ.sha256())
-    rebuildIndex(indexDir, baseUrl)
-
+    UpdateIndexesLayoutStarter.rebuildIndexForHashDir(indexDir, baseUrl)
     exitProcess(0)
   }
-}
 
-private fun rebuildIndex(dir: File, targetURLBase: String) {
-  val hashCode = dir.name
+  private fun xz(file: File, output: File) {
+    val bufferSize = 1024 * 1024
+    FileUtil.createParentDirs(output)
 
-  data class IndexFile(
-    val indexFile: File, 
-    val metadataFile: File,
-    val sha256File: File
-  ) {
-    val metadata by lazy { metadataFile.readBytes() }
-    val sha256 by lazy { sha256File.readText().trim() }
-
-    val indexFileName get() = indexFile.name
-  }
-
-  val indexes: List<IndexFile> = (dir.listFiles()?.toList() ?: listOf())
-    .groupBy{ it.nameWithoutExtension }
-    .mapNotNull { (_, group) ->
-      val indexFile = group.firstOrNull { it.path.endsWith(".ijx") }  ?: return@mapNotNull null
-      val metadataFile = group.firstOrNull { it.path.endsWith(".json") }  ?: return@mapNotNull null
-      val shaFile = group.firstOrNull { it.path.endsWith(".sha256") }  ?: return@mapNotNull null
-      IndexFile(indexFile, metadataFile, shaFile)
-    }.sortedBy { it.indexFileName }
-
-  val om = ObjectMapper()
-  val root = om.createObjectNode()
-
-  root.put("list_version", "1")
-  val entries = root.putArray("entries")
-
-  for (idx in indexes) {
-    val entry = entries.addObject()
-
-    entry.put("url", "$targetURLBase/$hashCode/${idx.indexFileName}")
-    entry.put("sha256", idx.sha256)
-    entry.set<ObjectNode>("metadata", om.readTree(idx.metadata))
-  }
-
-  val listData = om.writerWithDefaultPrettyPrinter().writeValueAsBytes(root)
-  FileUtil.writeToFile(File(dir, "index.json"), listData)
-}
-
-private fun File.sha256(): String {
-  val digest = DigestUtil.sha256()
-  updateContentHash(digest, this.toPath())
-  return StringUtil.toHexString(digest.digest());
-}
-
-private fun xz(file: File, output: File) {
-  val bufferSize = 1024 * 1024
-  FileUtil.createParentDirs(output)
-
-  try {
-    output.outputStream().buffered(bufferSize).use { outputStream ->
-      XZOutputStream(outputStream, LZMA2Options()).use { output ->
-        file.inputStream().copyTo(output, bufferSize = bufferSize)
+    try {
+      output.outputStream().buffered(bufferSize).use { outputStream ->
+        XZOutputStream(outputStream, LZMA2Options()).use { output ->
+          file.inputStream().copyTo(output, bufferSize = bufferSize)
+        }
       }
+    } catch (e: Exception) {
+      LOG.error("Failed to generate index.zip.xz package from $file to $output. ${e.message}", e)
     }
-  } catch (e: Exception) {
-    LOG.error("Failed to generate index.zip.xz package from $file to $output. ${e.message}", e)
   }
-}
-
-
-private object LOG {
-  fun info(message: String) {
-    println(message)
-  }
-
-  fun error(message: String, cause: Throwable? = null) {
-    Logger.getInstance(DumpJdkIndexStarter::class.java).error(message, cause)
-    println("ERROR - $message")
-    cause?.printStackTrace()
-  }
-}
-
-private fun Array<out String>.arg(arg: String, default: String? = null): String {
-  val key = "/$arg="
-  val values = filter { it.startsWith(key) }.map { it.removePrefix(key) }
-
-  if (values.isEmpty() && default != null) {
-    return default
-  }
-  require(values.size == 1) { "Commandline argument $key is missing or defined multiple times" }
-  return values.first()
-}
-
-private fun Array<out String>.argFile(arg: String, default: String? = null) = File(arg(arg, default)).canonicalFile
-
-private fun <Y: Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?) : Y {
-  try {
-    return action() ?: error("<null> was returned!")
-  }
-  catch (t: Throwable) {
-    throw Error("Failed to $errorMessage. ${t.message}", t)
-  }
-}
-
-private fun File.recreateDir() = apply {
-  FileUtil.delete(this)
-  FileUtil.createDirectory(this)
-}
-
-private fun File.totalSize(): Long {
-  if (isFile) return length()
-  return Files.walk(this.toPath()).mapToLong {
-    when {
-      it.isFile() -> java.lang.Long.max(it.sizeOrNull(), 0L)
-      else -> 0L
-    }
-  }.sum()
 }
 

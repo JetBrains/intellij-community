@@ -1987,6 +1987,7 @@
 
     <appStarter implementation="com.intellij.internal.DumpIndexStarter"/>
     <appStarter implementation="com.intellij.internal.DumpJdkIndexStarter"/>
+    <appStarter implementation="com.intellij.internal.UpdateIndexesLayoutStarter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
