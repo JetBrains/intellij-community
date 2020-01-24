@@ -3,6 +3,7 @@ package com.intellij.dvcs.branch
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 
 class DvcsBranchSettings : BaseState() {
   @get:Tag("favorite-branches")
@@ -10,6 +11,7 @@ class DvcsBranchSettings : BaseState() {
   @get:Tag("excluded-from-favorite")
   var excludedFavorites by property(BranchStorage())
   @get:Tag("branch-grouping")
+  @get:XCollection(style = XCollection.Style.v2)
   var groupingKeyIds by stringSet(defaultGroupingKey.id)
 }
 
