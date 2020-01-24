@@ -36,7 +36,7 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="jb-jdi" type="repository">
-`        <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:1.5" />
+        <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:1.5" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/1.5/jb-jdi-1.5.jar!/" />
         </CLASSES>
