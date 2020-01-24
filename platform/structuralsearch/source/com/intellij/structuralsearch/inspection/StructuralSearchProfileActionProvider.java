@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -68,7 +67,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Add);
-    presentation.setText(() -> IdeBundle.message("action.presentation.StructuralSearchProfileActionProvider.text"));
+    presentation.setText(() -> SSRBundle.message("add.inspection.button"));
     return Arrays.asList(actionGroup, new RemoveTemplateAction(panel));
   }
 
@@ -77,7 +76,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     private final SingleInspectionProfilePanel myPanel;
 
     private RemoveTemplateAction(SingleInspectionProfilePanel panel) {
-      super("Remove Structural Search && Replace Inspection", null, AllIcons.General.Remove);
+      super(SSRBundle.message("remove.inspection.button"), null, AllIcons.General.Remove);
       myPanel = panel;
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myPanel);
     }
@@ -199,6 +198,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       myDescriptionTextArea.setPreferredSize(new Dimension(375, 125));
       myDescriptionTextArea.setMinimumSize(new Dimension(200, 50));
       mySuppressIdTextField = new JTextField(configuration.getNewSuppressId());
+      setTitle(SSRBundle.message("meta.data.dialog.title"));
       init();
     }
 
@@ -208,12 +208,12 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final List<Configuration> configurations = myInspection.getConfigurations();
       final String name = getName();
       if (StringUtil.isEmpty(name)) {
-        result.add(new ValidationInfo("Name must not be empty", myNameTextField));
+        result.add(new ValidationInfo(SSRBundle.message("name.must.not.be.empty.warning"), myNameTextField));
       }
       else {
         for (Configuration configuration : configurations) {
           if (configuration.getOrder() == 0 && !configuration.equals(myConfiguration) && configuration.getName().equals(name)) {
-            result.add(new ValidationInfo("Inspection with name '" + name + "' already exists", myNameTextField));
+            result.add(new ValidationInfo(SSRBundle.message("inspection.with.name.exists.warning", name), myNameTextField));
             break;
           }
         }
@@ -221,18 +221,18 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final String suppressId = getSuppressId();
       if (!StringUtil.isEmpty(suppressId)) {
         if (!mySuppressIdPattern.matcher(suppressId).matches()) {
-          result.add(new ValidationInfo("Suppress ID must match regex [a-zA-Z_0-9.-]+", mySuppressIdTextField));
+          result.add(new ValidationInfo(SSRBundle.message("suppress.id.must.match.regex.warning"), mySuppressIdTextField));
         }
         else {
           final HighlightDisplayKey key = HighlightDisplayKey.findById(suppressId);
           if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuid().toString())) {
-            result.add(new ValidationInfo("Suppress ID '" + suppressId + "' is already in use by another inspection",
+            result.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId),
                                           mySuppressIdTextField));
           }
           else {
             for (Configuration configuration : configurations) {
               if (suppressId.equals(configuration.getNewSuppressId())) {
-                result.add(new ValidationInfo("Suppress ID '" + suppressId + "' is already in use by another inspection",
+                result.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId),
                                               mySuppressIdTextField));
                 break;
               }
@@ -246,12 +246,12 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      final FormBuilder builder = new FormBuilder()
-        .addLabeledComponent("Inspection name:", myNameTextField, true)
-        .addLabeledComponent("Problem tool tip (use macro #ref to insert highlighted code):", myProblemDescriptorTextField, true)
-        .addLabeledComponentFillVertically("Description:", myDescriptionTextArea)
-        .addLabeledComponent("Suppress ID:", mySuppressIdTextField);
-      return builder.getPanel();
+      return new FormBuilder()
+        .addLabeledComponent(SSRBundle.message("inspection.name.label"), myNameTextField, true)
+        .addLabeledComponent(SSRBundle.message("problem.descriptor.label"), myProblemDescriptorTextField, true)
+        .addLabeledComponentFillVertically(SSRBundle.message("description.label"), myDescriptionTextArea)
+        .addLabeledComponent(SSRBundle.message("suppress.id.label"), mySuppressIdTextField)
+        .getPanel();
     }
 
     public String getName() {

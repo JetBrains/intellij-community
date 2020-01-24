@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ public abstract class FilterAction extends AnAction implements Filter {
 
   private boolean myApplicable = true;
 
-  protected FilterAction(@Nullable String text, FilterTable table) {
+  protected FilterAction(@Nls @Nullable String text, FilterTable table) {
     super(text);
     myTable = table;
     myPosition = myFilterCount.incrementAndGet();

@@ -88,7 +88,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return "Structural Search";
+    return SSRBundle.message("structural.search.group.name");
   }
 
   @Nullable
@@ -96,7 +96,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   public String getStaticDescription() {
     final String description = myConfiguration.getDescription();
     if (StringUtil.isEmpty(description)) {
-      return "No description provided";
+      return SSRBundle.message("no.description.message");
     }
     return description;
   }
@@ -107,7 +107,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
-    final JButton button = new JButton("Edit Metadata...");
+    final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
     button.addActionListener(e -> {
       Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
       if (project == null) project = ProjectManager.getInstance().getDefaultProject();
@@ -120,7 +120,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     list.setCellRenderer(new ConfigurationCellRenderer());
     final JPanel listPanel = ToolbarDecorator.createDecorator(list)
       .setAddAction(b -> performAdd(list, b))
-      .setAddActionName("Add Pattern")
+      .setAddActionName(SSRBundle.message("add.pattern.action"))
       .setRemoveAction(b -> performRemove(list))
       .setRemoveActionUpdater(e -> list.getSelectedValuesList().size() < list.getModel().getSize())
       .setEditAction(b -> performEdit(list))
@@ -138,7 +138,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
     final JPanel panel = new FormBuilder()
       .addComponent(button)
-      .addLabeledComponentFillVertically("Templates:", listPanel)
+      .addLabeledComponentFillVertically(SSRBundle.message("templates.title"), listPanel)
       .getPanel();
     panel.setBorder(JBUI.Borders.emptyTop(10));
     return panel;

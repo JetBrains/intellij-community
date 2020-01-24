@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -181,7 +182,7 @@ public class FilterPanel implements FilterTable {
     if (myConstraint instanceof MatchVariableConstraint) {
       final DefaultActionGroup group = new DefaultActionGroup(myFilters);
       final DataContext context = DataManager.getInstance().getDataContext(component);
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Add Filter", group, context,
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.label"), group, context,
                                                                                   JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
                                                                                   null);
       popup.show(point);
@@ -234,16 +235,18 @@ public class FilterPanel implements FilterTable {
     final String message;
     if (constraint instanceof MatchVariableConstraint) {
       message = Configuration.CONTEXT_VAR_NAME.equals(varName)
-                ? "No filters added for the whole template."
-                : "No filters added for $" + varName + "$.";
+                ? SSRBundle.message("no.filters.whole.template.label")
+                : SSRBundle.message("no.filters.for.label", varName);
     }
     else {
-      message = "No script added for $" + varName + "$.";
+      message = SSRBundle.message("no.script.for.label", varName);
     }
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
     statusText.setText(message);
     if (myValid) {
-      statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint ? "Add filter" : "Add script",
+      statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint
+                                     ? SSRBundle.message("add.filter.label")
+                                     : SSRBundle.message("add.script.label"),
                                      SimpleTextAttributes.LINK_ATTRIBUTES,
                                      e -> {
                                        final JBTable table = myFilterTable.getTable();
@@ -277,8 +280,8 @@ public class FilterPanel implements FilterTable {
       myLabel.clear();
       final String varName = myConstraint.getName();
       myLabel.append(Configuration.CONTEXT_VAR_NAME.equals(varName)
-                     ? "Filters for the whole template:"
-                     : "Filters for $" + varName + "$:",
+                     ? SSRBundle.message("filters.whole.template.title")
+                     : SSRBundle.message("no.filters.for.label", varName),
                      SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return myLabel;
     }

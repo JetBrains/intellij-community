@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -23,7 +24,7 @@ public class TextFilter extends FilterAction {
   boolean myShowHierarchy;
 
   public TextFilter(FilterTable filterTable) {
-    super("Text", filterTable);
+    super(SSRBundle.message("text.filter.name"), filterTable);
   }
 
   @Override
@@ -73,13 +74,11 @@ public class TextFilter extends FilterAction {
     return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
-      private final JCheckBox myWordsCheckBox = new JCheckBox("Words", false);
-      private final JCheckBox myHierarchyCheckBox = new JCheckBox("Within type hierarchy", false);
-      private final JLabel myTextLabel = new JLabel("text=");
+      private final JCheckBox myWordsCheckBox = new JCheckBox(SSRBundle.message("whole.words.check.box"), false);
+      private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
+      private final JLabel myTextLabel = new JLabel(SSRBundle.message("text.label"));
       private final ContextHelpLabel myHelpLabel =
-        ContextHelpLabel.create("<p>Text of the match is checked against the provided pattern." +
-                                "<p>Use \"!\" to invert the pattern." +
-                                "<p>Regular expressions are supported.");
+        ContextHelpLabel.create(SSRBundle.message("text.filter.help.text"));
 
       @Override
       protected void layoutComponents() {

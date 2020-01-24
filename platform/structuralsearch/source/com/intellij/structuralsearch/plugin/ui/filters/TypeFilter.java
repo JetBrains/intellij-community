@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -25,7 +26,7 @@ public class TypeFilter extends FilterAction {
   boolean showRegex;
 
   public TypeFilter(FilterTable filterTable) {
-    super("Type", filterTable);
+    super(SSRBundle.message("type.filter.name"), filterTable);
   }
 
   @Override
@@ -74,17 +75,15 @@ public class TypeFilter extends FilterAction {
     return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
-      private final JLabel myTypeLabel = new JLabel("type=");
-      private final JCheckBox myHierarchyCheckBox = new JCheckBox("Within type hierarchy", false);
-      private final JCheckBox myRegexCheckBox = new JCheckBox("Regex", false);
+      private final JLabel myTypeLabel = new JLabel(SSRBundle.message("type.label"));
+      private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
+      private final JCheckBox myRegexCheckBox = new JCheckBox(SSRBundle.message("regex.check.box"), false);
       {
         myRegexCheckBox.addActionListener(e -> myTextField.setFileType(myRegexCheckBox.isSelected()
                                                                        ? RegExpFileType.INSTANCE
                                                                        : PlainTextFileType.INSTANCE));
       }
-      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(
-        "<p>The type of the matched expression is checked against the provided \"|\"-separated patterns. " +
-        "<p>Use \"!\" to invert the pattern.");
+      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("type.filter.help.text"));
 
       @Override
       protected void layoutComponents() {
