@@ -547,8 +547,6 @@
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.search.FileNameIndexService"
-                        serviceImplementation="com.intellij.psi.search.FileNameIndexServiceImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
 

@@ -50,7 +50,7 @@ public class FileTypeIndex {
 
   @NotNull
   public static Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
-    return FilenameIndex.getService().getFilesWithFileType(fileType, scope);
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, fileType, scope);
   }
 
   public static boolean containsFileOfType(@NotNull FileType type, @NotNull GlobalSearchScope scope) {
@@ -58,6 +58,6 @@ public class FileTypeIndex {
   }
 
   public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope) {
-    return FilenameIndex.getService().processFilesWithFileType(fileType, processor, scope);
+    return FileBasedIndex.getInstance().processValues(NAME, fileType, null, (file, value) -> processor.process(file), scope);
   }
 }

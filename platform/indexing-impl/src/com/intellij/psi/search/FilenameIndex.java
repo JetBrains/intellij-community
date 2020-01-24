@@ -2,7 +2,6 @@
 
 package com.intellij.psi.search;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -13,6 +12,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
@@ -34,7 +34,7 @@ public class FilenameIndex {
 
   public static String @NotNull [] getAllFilenames(@Nullable Project project) {
     Set<String> names = new THashSet<>();
-    getService().processAllFileNames((String s) -> {
+    processAllFileNames((String s) -> {
       names.add(s);
       return true;
     }, project == null ? new EverythingGlobalScope() : GlobalSearchScope.allScope(project), null);
@@ -42,12 +42,12 @@ public class FilenameIndex {
   }
 
   public static void processAllFileNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
-    getService().processAllFileNames(processor, scope, filter);
+    FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
   }
 
   @NotNull
   public static Collection<VirtualFile> getVirtualFilesByName(final Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
-    return getService().getVirtualFilesByName(project, name, scope, null);
+    return getVirtualFilesByName(name, scope, null);
   }
 
   @NotNull
@@ -56,7 +56,7 @@ public class FilenameIndex {
                                                               boolean caseSensitively,
                                                               @NotNull GlobalSearchScope scope) {
     if (caseSensitively) return getVirtualFilesByName(project, name, scope);
-    return getVirtualFilesByNameIgnoringCase(name, scope, project, null);
+    return getVirtualFilesByNameIgnoringCase(name, scope, null);
   }
 
   public static PsiFile @NotNull [] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
@@ -82,10 +82,10 @@ public class FilenameIndex {
     final Collection<VirtualFile> files;
 
     if (caseSensitively) {
-      files = getService().getVirtualFilesByName(project, name, scope, idFilter);
+      files = getVirtualFilesByName(name, scope, idFilter);
     }
     else {
-      files = getVirtualFilesByNameIgnoringCase(name, scope, project, idFilter);
+      files = getVirtualFilesByNameIgnoringCase(name, scope, idFilter);
     }
 
     if (files.isEmpty()) return false;
@@ -114,11 +114,9 @@ public class FilenameIndex {
   @NotNull
   private static Set<VirtualFile> getVirtualFilesByNameIgnoringCase(@NotNull final String name,
                                                                     @NotNull final GlobalSearchScope scope,
-                                                                    @NotNull Project project,
                                                                     @Nullable final IdFilter idFilter) {
     final Set<String> keys = new THashSet<>();
-    FileNameIndexService fileNameIndexService = getService();
-    fileNameIndexService.processAllFileNames(value -> {
+    processAllFileNames(value -> {
       if (name.equalsIgnoreCase(value)) {
         keys.add(value);
       }
@@ -128,7 +126,7 @@ public class FilenameIndex {
     // values accessed outside of processAllKeys
     final Set<VirtualFile> files = new THashSet<>();
     for (String each : keys) {
-      files.addAll(fileNameIndexService.getVirtualFilesByName(project, each, scope, idFilter));
+      files.addAll(getVirtualFilesByName(each, scope, idFilter));
     }
     return files;
   }
@@ -180,7 +178,15 @@ public class FilenameIndex {
     return files;
   }
 
-  static FileNameIndexService getService() {
-    return ServiceManager.getService(FileNameIndexService.class);
+  @NotNull
+  private static Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
+                                                              @NotNull GlobalSearchScope scope,
+                                                              IdFilter filter) {
+    Set<VirtualFile> files = new THashSet<>();
+    FileBasedIndex.getInstance().processValues(NAME, name, null, (file, value) -> {
+      files.add(file);
+      return true;
+    }, scope, filter);
+    return files;
   }
 }
