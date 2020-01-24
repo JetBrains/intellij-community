@@ -2,8 +2,13 @@
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
   <description><![CDATA[
-  Adds support for Groovy language, including <a href="http://docs.groovy-lang.org/latest/html/documentation/grape.html">Grape</a> and
-  <a href="https://gant.github.io/">Gant</a>.
+  Adds support for the <a href="https://groovy-lang.org/">Groovy</b> language.
+   <ul>
+     <li>Coding assistance: code completion, inspections, refactorings, quick documentation, and much more</li>
+     <li>Interactive Groovy console to evaluate code expressions without compilation: <b>Tools | Groovy Console</b></li>
+     <li>Support for the <a href="https://docs.groovy-lang.org/latest/html/documentation/grape.html">Grape</a> dependency manager and
+     <a href="https://gant.github.io/">Gant</a> for scripting Ant tasks using Groovy</li>
+   </ul>
   ]]></description>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.properties</depends>
