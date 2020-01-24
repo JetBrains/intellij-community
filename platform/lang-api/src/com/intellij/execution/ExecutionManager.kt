@@ -77,8 +77,8 @@ abstract class ExecutionManager {
                                  target: ExecutionTarget,
                                  configuration: RunnerAndConfigurationSettings?,
                                  processHandler: ProcessHandler?)
-
   abstract fun restartRunProfile(environment: ExecutionEnvironment)
+
   fun isStarting(environment: ExecutionEnvironment): Boolean {
     return isStarting(environment.executor.id, environment.runner.runnerId)
   }

@@ -2,7 +2,10 @@
 package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.Sets;
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
@@ -13,6 +16,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -89,7 +93,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
       Assert.assertSame(settings, runManager.getSelectedConfiguration());
     });
 
-    final PyDebugRunner runner = (PyDebugRunner)ProgramRunnerUtil.getRunner(getExecutorId(), settings);
+    PyDebugRunner runner = (PyDebugRunner)ProgramRunner.getRunner(getExecutorId(), settings.getConfiguration());
     Assert.assertTrue(runner.canRun(getExecutorId(), myRunConfiguration));
 
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
