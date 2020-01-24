@@ -10,7 +10,6 @@ import com.intellij.psi.util.StringEntry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
-
 class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: UExpression) {
 
   val uastOperands: Sequence<UExpression> = run {
@@ -80,7 +79,7 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
   }
 
   @ApiStatus.Experimental
-  fun asPartiallyKnownString() = PartiallyKnownString(segments.map { segment ->
+  fun asPartiallyKnownString() : PartiallyKnownString = PartiallyKnownString(segments.map { segment ->
     segment.value?.let { value ->
       StringEntry.Known(value, segment.uExpression.sourcePsi, getSegmentInnerTextRange(segment))
     } ?: StringEntry.Unknown(segment.uExpression.sourcePsi, getSegmentInnerTextRange(segment))
@@ -105,6 +104,4 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
       return UStringConcatenationsFacade(uElement)
     }
   }
-
 }
-
