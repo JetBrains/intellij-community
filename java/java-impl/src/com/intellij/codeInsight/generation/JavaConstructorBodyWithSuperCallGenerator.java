@@ -20,11 +20,13 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Objects;
 
 public class JavaConstructorBodyWithSuperCallGenerator implements ConstructorBodyGenerator {
   @Override
@@ -50,8 +52,11 @@ public class JavaConstructorBodyWithSuperCallGenerator implements ConstructorBod
     if (components.length > fields.length) {
       buffer.append(StreamEx.of(components)
                       .map(JavaPsiRecordUtil::getFieldForComponent)
-                      .mapToInt(f -> ArrayUtil.indexOf(fields, f))
-                      .mapToObj(idx -> idx >= 0 ? parameters[idx].getName() : "")
+                      .peek(Objects::requireNonNull)
+                      .map(f -> {
+                        int index = ArrayUtil.indexOf(fields, f);
+                        return index >= 0 ? parameters[index].getName() : PsiTypesUtil.getDefaultValueOfType(f.getType(), true);
+                      })
                       .joining(",", "this(", ")"));
       appendSemicolon(buffer);
       return true;

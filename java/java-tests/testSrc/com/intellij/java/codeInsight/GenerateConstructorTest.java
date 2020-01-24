@@ -125,6 +125,10 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   public void testRecordCustomConstructor2() {
     doTestRecordConstructor((aClass, m) -> Arrays.copyOf(m, 2));
   }
+  
+  public void testRecordCustomConstructor3() {
+    doTestRecordConstructor((aClass, m) -> Arrays.copyOf(m, 2));
+  }
 
   private void doTest() {
     doTest(false);
