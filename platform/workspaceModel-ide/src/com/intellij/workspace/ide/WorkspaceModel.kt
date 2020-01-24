@@ -23,6 +23,9 @@ interface WorkspaceModel {
 
   fun <R> updateProjectModel(updater: (TypedEntityStorageBuilder) -> R): R
 
+  /** Update project model without the notification to message bus */
+  fun <R> updateProjectModelSilent(updater: (TypedEntityStorageBuilder) -> R): R
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModel = ServiceManager.getService(project, WorkspaceModel::class.java)

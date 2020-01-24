@@ -7,6 +7,13 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
@@ -29,6 +36,8 @@ class LegacyBridgeRootsWatcher(
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
 
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
+
+  private val rootFilePointers = LegacyModelRootsFilePointers(project)
 
   init {
     val messageBusConnection = project.messageBus.connect()
@@ -61,11 +70,58 @@ class LegacyBridgeRootsWatcher(
         s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutput?.let { roots.add(it) } }
         s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutputForTests?.let { roots.add(it) } }
 
+        rootFilePointers.onModelChange(s)
         syncNewRootsToContainer(
           newRoots = roots,
           newJarDirectories = jarDirectories,
           newRecursiveJarDirectories = recursiveJarDirectories
         )
+      }
+    })
+    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun before(events: MutableList<out VFileEvent>): Unit = events.forEach { event ->
+        val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
+
+        rootFilePointers.onVfsChange(oldUrl, newUrl)
+      }
+
+      override fun after(events: MutableList<out VFileEvent>) = events.forEach { event ->
+        val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
+
+        updateRoots(currentRoots, oldUrl, newUrl)
+        updateRoots(currentJarDirectories, oldUrl, newUrl)
+        updateRoots(currentRecursiveJarDirectories, oldUrl, newUrl)
+      }
+
+      private fun updateRoots(map: MutableMap<VirtualFileUrl, Disposable>, oldUrl: String, newUrl: String?) {
+        map.filter { it.key.url == oldUrl }.forEach { (url, disposable) ->
+          map.remove(url)
+          if (newUrl != null) {
+            map[VirtualFileUrlManager.fromUrl(newUrl)] = disposable
+          }
+        }
+      }
+
+      /** Update stored urls after folder movement */
+      private fun getUrls(event: VFileEvent): Pair<String, String?>? {
+        val oldUrl: String
+        val newUrl: String?
+        when (event) {
+          is VFileDeleteEvent -> {
+            oldUrl = VfsUtilCore.pathToUrl(event.path)
+            newUrl = null
+          }
+          is VFilePropertyChangeEvent -> {
+            oldUrl = VfsUtilCore.pathToUrl(event.oldPath)
+            newUrl = VfsUtilCore.pathToUrl(event.newPath)
+          }
+          is VFileMoveEvent -> {
+            oldUrl = VfsUtilCore.pathToUrl(event.oldPath)
+            newUrl = VfsUtilCore.pathToUrl(event.newPath)
+          }
+          else -> return null
+        }
+        return oldUrl to newUrl
       }
     })
   }
@@ -133,6 +189,8 @@ class LegacyBridgeRootsWatcher(
     currentRoots.clear()
     currentJarDirectories.clear()
     currentRecursiveJarDirectories.clear()
+
+    rootFilePointers.clear()
   }
 
   override fun dispose() {

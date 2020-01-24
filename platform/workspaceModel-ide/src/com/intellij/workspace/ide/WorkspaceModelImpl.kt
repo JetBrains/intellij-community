@@ -33,8 +33,12 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
     entityStore = ProjectModelEntityStore(project, projectEntities.toStorage())
   }
 
+  override fun <R> updateProjectModel(updater: (TypedEntityStorageBuilder) -> R): R = doUpdateProject(updater, true)
+
+  override fun <R> updateProjectModelSilent(updater: (TypedEntityStorageBuilder) -> R): R = doUpdateProject(updater, false)
+
   // TODO We need transaction semantics here, failed updates should not poison everything
-  override fun <R> updateProjectModel(updater: (TypedEntityStorageBuilder) -> R): R {
+  private fun <R> doUpdateProject(updater: (TypedEntityStorageBuilder) -> R, notify: Boolean): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     val before = projectEntities.toStorage()
@@ -44,24 +48,40 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
     val changes = projectEntities.collectChanges(before)
     projectEntities.resetChanges()
 
-    entityStore.replace(projectEntities.toStorage(), changes)
+    if (notify) {
+      entityStore.replace(projectEntities.toStorage(), changes)
+    }
+    else {
+      (entityStore as ProjectModelEntityStore).replaceSilent(projectEntities.toStorage(), changes)
+    }
 
     return result
   }
 
   override fun dispose() = Unit
 
-  private class ProjectModelEntityStore(private val project: Project, initialStorage: TypedEntityStorage)
-    : EntityStoreImpl(initialStorage) {
+  private class ProjectModelEntityStore(private val project: Project, initialStorage: TypedEntityStorage) : EntityStoreImpl(initialStorage) {
+
+    private var notificationsEnabled = true
+
+    fun replaceSilent(newStorage: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
+      notificationsEnabled = false
+      try {
+        replace(newStorage, changes)
+      } finally {
+        notificationsEnabled = true
+      }
+    }
+
     override fun onBeforeChanged(before: TypedEntityStorage, after: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
-      if (project.isDisposed || Disposer.isDisposing(project)) return
+      if (project.isDisposed || Disposer.isDisposing(project) || !notificationsEnabled) return
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).beforeChanged(
         EntityStoreChangedImpl(entityStore = this, storageBefore = before, storageAfter = after, changes = changes)
       )
     }
 
     override fun onChanged(before: TypedEntityStorage, after: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
-      if (project.isDisposed || Disposer.isDisposing(project)) return
+      if (project.isDisposed || Disposer.isDisposing(project) || !notificationsEnabled) return
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(
         EntityStoreChangedImpl(entityStore = this, storageBefore = before, storageAfter = after, changes = changes)
       )
