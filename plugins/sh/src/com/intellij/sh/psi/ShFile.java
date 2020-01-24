@@ -4,14 +4,21 @@ package com.intellij.sh.psi;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.ShTypes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +36,22 @@ public class ShFile extends PsiFileBase {
     return ShFileType.INSTANCE;
   }
 
-  public Map<PsiElement, ShFunctionName> findFunctions() {
-    return CachedValuesManager.getCachedValue(this, () ->
-      CachedValueProvider.Result.create(new ShFunctionInnerResolver().findFunctionsInner(this), this));
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    SyntaxTraverser.psiTraverser(this)
+      .filter(Conditions.instanceOf(ShFunctionDefinition.class))
+      .traverse()
+      .forEach(psiElement -> processor.execute(psiElement, state));
+    return true;
   }
+
+  //public MultiMap<String, ShFunctionDefinition> getFunctions() {
+  //  return CachedValuesManager.getCachedValue(this, () ->
+  //    CachedValueProvider.Result.create(new ShFunctionInnerResolver().findFunctionsInner(this), this));
+  //}
 
   @Nullable
   public String findShebang() {

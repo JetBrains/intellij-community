@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
+  private static final ShFunctionResolver RESOLVER = new ShFunctionResolver();
+
   public ShFunctionReference(@NotNull PsiElement element) {
     super(element, TextRange.create(0, element.getTextLength()));
   }
@@ -17,7 +19,7 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
   @Nullable
   @Override
   public PsiElement resolve() {
-    return ResolveCache.getInstance(myElement.getProject()).resolveWithCaching(this, new ShFunctionResolver(), false, false);
+    return ResolveCache.getInstance(myElement.getProject()).resolveWithCaching(this, RESOLVER, false, false);
   }
 
   @Override
