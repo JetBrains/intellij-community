@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
@@ -124,10 +124,7 @@ public class XmlTagUtil extends XmlTagUtilBase {
       }
 
       prev = current;
-      current = current.getTreePrev();
-      while (current instanceof OuterLanguageElement) {
-        current = current.getTreePrev();
-      }
+      current = TemplateLanguageUtil.getSameLanguageTreePrev(current);
     }
     return null;
   }
