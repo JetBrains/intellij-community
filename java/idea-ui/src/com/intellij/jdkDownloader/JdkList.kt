@@ -61,7 +61,11 @@ data class JdkProduct(
   }
 
   val vendorPathText: String
-    get() = listOfNotNull(vendor, product, flavour).joinToString("-")
+    get() = listOfNotNull(vendor, product, flavour)
+      .flatMap { it.split(Regex("\\s+")) }
+      .map { it.trim().toLowerCase() }
+      .filter { it.isBlank() }
+      .joinToString("-")
 
   val packagePresentationText: String
     get() = buildString {
@@ -302,7 +306,7 @@ object JdkListDownloader {
    * contains few more entries than the result of the [downloadForUI] call.
    * Entries are sorter from the best suggested to the worst suggested items.
    */
-  fun downloadModelForJdkInstaller(progress: ProgressIndicator): List<JdkItem> {
+  fun downloadModelForJdkInstaller(progress: ProgressIndicator?): List<JdkItem> {
     return downloadForUI(progress)
   }
 
