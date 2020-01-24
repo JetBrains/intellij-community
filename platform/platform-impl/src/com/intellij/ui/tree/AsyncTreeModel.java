@@ -36,9 +36,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class AsyncTreeModel extends AbstractTreeModel implements Identifiable, Searchable, Navigatable, TreeVisitor.Acceptor {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final Command.Processor processor;

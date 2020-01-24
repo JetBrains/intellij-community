@@ -57,9 +57,6 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Sergey.Malenkov
- */
 public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
   private static final String NODE_ICON = "settings.tree.view.icon";

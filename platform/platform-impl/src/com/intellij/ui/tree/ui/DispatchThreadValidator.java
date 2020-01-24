@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,8 +8,6 @@ import static java.awt.EventQueue.isDispatchThread;
 /**
  * The Swing library is not thread-safe and all methods must be invoked from the event dispatch thread
  * (<a href="http://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>).
- *
- * @author Sergey Malenkov
  */
 final class DispatchThreadValidator {
   private static final Logger LOG = Logger.getInstance(DispatchThreadValidator.class);

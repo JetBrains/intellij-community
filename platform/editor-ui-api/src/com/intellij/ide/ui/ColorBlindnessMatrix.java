@@ -1,11 +1,9 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.util.Matrix;
 import com.intellij.util.Vector;
 
-/**
- * @author Sergey.Malenkov
- */
 final class ColorBlindnessMatrix {
   private static final Matrix CORRECTION = Matrix.createIdentity(3);
 

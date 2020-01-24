@@ -10,9 +10,6 @@ import javax.swing.*;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class TableActions extends SwingActionDelegate {
   private TableActions(String actionId) {
     super(actionId);

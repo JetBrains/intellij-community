@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.*;
 
-/**
- * @author Sergey.Malenkov
- */
 public class ConfigurableExtensionPointUtil {
 
   private final static Logger LOG = Logger.getInstance(ConfigurableExtensionPointUtil.class);

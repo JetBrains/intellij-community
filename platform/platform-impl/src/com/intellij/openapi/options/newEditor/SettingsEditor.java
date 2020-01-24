@@ -39,9 +39,6 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Sergey.Malenkov
- */
 final class SettingsEditor extends AbstractEditor implements DataProvider {
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";

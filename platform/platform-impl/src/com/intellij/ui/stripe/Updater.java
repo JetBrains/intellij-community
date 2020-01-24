@@ -19,9 +19,6 @@ import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class Updater<Painter extends ErrorStripePainter> implements Disposable {
   private final Painter myPainter;
   private final JScrollBar myScrollBar;

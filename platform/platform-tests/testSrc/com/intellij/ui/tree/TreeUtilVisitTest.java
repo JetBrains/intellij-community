@@ -25,9 +25,6 @@ import static com.intellij.ui.tree.TreePathUtil.convertArrayToTreePath;
 import static com.intellij.ui.tree.TreeTestUtil.node;
 import static com.intellij.util.containers.ContainerUtil.set;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class TreeUtilVisitTest {
   @Test
   public void testAcceptDepth1() {

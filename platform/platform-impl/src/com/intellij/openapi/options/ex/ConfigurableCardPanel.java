@@ -26,9 +26,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Sergey.Malenkov
- */
 public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configurable, JComponent> {
   private static final Logger LOG = Logger.getInstance(ConfigurableCardPanel.class);
 
