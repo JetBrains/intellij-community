@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     this("");
   }
 
-  public HyperlinkLabel(String text) {
+  public HyperlinkLabel(@Nls String text) {
     this(text, UIUtil.getLabelBackground());
   }
 
