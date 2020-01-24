@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.ui.CollectionListModel
+import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 
 class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   : CollectionListModel<GHPRReviewCommentModel>(thread.comments.map(GHPRReviewCommentModel.Companion::convert)),
@@ -13,6 +15,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
   override val firstCommentDatabaseId = thread.firstCommentDatabaseId
+
+  private val deletionEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   override fun update(thread: GHPullRequestReviewThread) {
     var removed = 0
@@ -43,6 +47,22 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override fun addComment(comment: GHPRReviewCommentModel) {
     add(comment)
   }
+
+  override fun removeComment(comment: GHPRReviewCommentModel) {
+    val index = items.indexOf(comment)
+    if (index < 0) error("Comment not found in thread")
+    if (index == 0) {
+      deletionEventDispatcher.multicaster.eventOccurred()
+    }
+    else remove(index)
+  }
+
+  override fun addDeletionListener(listener: () -> Unit) =
+    deletionEventDispatcher.addListener(object : SimpleEventListener {
+      override fun eventOccurred() {
+        listener()
+      }
+    })
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

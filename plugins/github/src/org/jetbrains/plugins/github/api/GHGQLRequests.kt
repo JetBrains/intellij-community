@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
@@ -112,6 +112,13 @@ object GHGQLRequests {
 
       private class TimelineConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPRTimelineItem>)
         : GHConnection<GHPRTimelineItem>(pageInfo, nodes)
+    }
+
+    object Review {
+
+      fun deleteComment(server: GithubServerPath, commentId: String): GQLQuery<Any> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteReviewComment,
+                                 mapOf("id" to commentId), Any::class.java)
     }
   }
 }

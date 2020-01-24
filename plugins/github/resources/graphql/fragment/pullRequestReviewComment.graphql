@@ -18,4 +18,5 @@ fragment pullRequestReviewComment on PullRequestReviewComment {
     pullRequestReview {
         ...nodeInfo
     }
+    viewerCanDelete
 }

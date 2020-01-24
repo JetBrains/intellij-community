@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.messages.MessageBus
+import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -18,6 +19,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                             private val securityService: GHPRSecurityService,
                             private val requestExecutor: GithubApiRequestExecutor,
                             private val repository: GHRepositoryCoordinates) : GHPRReviewService {
+
   override fun canComment() = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
 
   override fun addComment(progressIndicator: ProgressIndicator,
@@ -45,4 +47,10 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
       comment
     }
   }
+
+  override fun deleteComment(progressIndicator: ProgressIndicator, pullRequest: Long, commentId: String) =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(GHGQLRequests.PullRequest.Review.deleteComment(repository.serverPath, commentId))
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+    }
 }

@@ -41,12 +41,13 @@ object GHPRReviewThreadComponent {
       panel.add(diffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
     }
 
-    panel.add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(avatarIconsProvider)))
+    panel.add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(thread, reviewService, avatarIconsProvider)))
 
     if (reviewService.canComment()) {
       panel.add(createThreadActionsPanel(avatarIconsProvider, currentUser) { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
-          thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
+          thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl,
+                                                   true))
         }
       })
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.Disposable
@@ -29,6 +29,10 @@ interface GHPRReviewServiceAdapter {
   fun addComment(progressIndicator: ProgressIndicator, body: String, commitSha: String, fileName: String, diffLine: Int)
     : CompletableFuture<GithubPullRequestCommentWithHtml>
 
+  @CalledInAny
+  fun deleteComment(progressIndicator: ProgressIndicator, commentId: String)
+    : CompletableFuture<Unit>
+
   @CalledInAwt
   fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit)
 
@@ -57,6 +61,10 @@ interface GHPRReviewServiceAdapter {
                                 body: String,
                                 replyToCommentId: Long): CompletableFuture<GithubPullRequestCommentWithHtml> {
           return reviewService.addComment(progressIndicator, dataProvider.number, body, replyToCommentId)
+        }
+
+        override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<Unit> {
+          return reviewService.deleteComment(progressIndicator, dataProvider.number, commentId)
         }
 
         override fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit) {

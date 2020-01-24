@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.util.EventDispatcher
@@ -35,7 +35,12 @@ class GHPREditorReviewThreadsModel {
       for ((id, thread) in threadsById) {
         val current = modelsById[id]
         if (current == null) {
-          val model = GHPRReviewThreadModelImpl(thread)
+          val model = GHPRReviewThreadModelImpl(thread).also {
+            it.addDeletionListener {
+              modelsByLine[line]?.remove(it)
+              changeEventDispatcher.multicaster.threadsRemoved(line, listOf(it))
+            }
+          }
           models.add(model)
           addedModels.add(model)
         }
