@@ -39,6 +39,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -96,7 +97,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
       assert wrapper != null;
       final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
-      inspection.removeConfiguration(shortName);
+      inspection.removeConfigurationWithUuid(UUID.fromString(shortName));
       profile.removeTool(shortName);
       profile.getProfileManager().fireProfileChanged(profile);
     }
@@ -128,7 +129,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
       final Configuration configuration = dialog.getConfiguration();
 
-      configuration.resetUuid();
+      configuration.setUuid(UUID.randomUUID());
       if (!saveInspection(project, inspection, configuration)) {
         return;
       }
@@ -157,13 +158,15 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
   }
 
-  public static boolean saveInspection(Project project,
-                                       SSBasedInspection inspection,
-                                       Configuration configuration) {
+  public static boolean saveInspection(Project project, SSBasedInspection inspection, Configuration configuration) {
     final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
     final boolean result = dialog.showAndGet();
     if (result) {
-      configuration.setName(dialog.getName());
+      final String name = dialog.getName();
+      for (Configuration c : inspection.getConfigurationsWithUuid(configuration.getUuid())) {
+        c.setName(name);
+      }
+      inspection.removeConfiguration(configuration);
       configuration.setDescription(dialog.getDescription());
       configuration.setSuppressId(dialog.getSuppressId());
       configuration.setProblemDescriptor(dialog.getProblemDescriptor());
@@ -202,19 +205,21 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     @Override
     protected @NotNull List<ValidationInfo> doValidateAll() {
       final List<ValidationInfo> result = new SmartList<>();
+      final List<Configuration> configurations = myInspection.getConfigurations();
       final String name = getName();
-      if (name.isEmpty()) {
+      if (StringUtil.isEmpty(name)) {
         result.add(new ValidationInfo("Name must not be empty", myNameTextField));
       }
-      final List<Configuration> configurations = myInspection.getConfigurations();
-      for (Configuration configuration : configurations) {
-        if (!configuration.equals(myConfiguration) && configuration.getName().equals(name)) {
-          result.add(new ValidationInfo("Inspection with name '" + name + "' already exists", myNameTextField));
-          break;
+      else {
+        for (Configuration configuration : configurations) {
+          if (configuration.getOrder() == 0 && !configuration.equals(myConfiguration) && configuration.getName().equals(name)) {
+            result.add(new ValidationInfo("Inspection with name '" + name + "' already exists", myNameTextField));
+            break;
+          }
         }
       }
       final String suppressId = getSuppressId();
-      if (!suppressId.isEmpty()) {
+      if (!StringUtil.isEmpty(suppressId)) {
         if (!mySuppressIdPattern.matcher(suppressId).matches()) {
           result.add(new ValidationInfo("Suppress ID must match regex [a-zA-Z_0-9.-]+", mySuppressIdTextField));
         }
@@ -241,7 +246,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      final FormBuilder builder = FormBuilder.createFormBuilder()
+      final FormBuilder builder = new FormBuilder()
         .addLabeledComponent("Inspection name:", myNameTextField, true)
         .addLabeledComponent("Problem tool tip (use macro #ref to insert highlighted code):", myProblemDescriptorTextField, true)
         .addLabeledComponentFillVertically("Description:", myDescriptionTextArea)
