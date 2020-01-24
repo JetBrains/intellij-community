@@ -30,6 +30,7 @@ repositories {
 }
 
 configurations {
+  androidToolsBaseTemplates
   androidOfflineRepo
   androidSdk
   kotlinDeps
@@ -49,6 +50,7 @@ ext.android_m2_version = "26.6.0.1"
 ext.android_sdk_version = "${osFamily}.3.3.5"
 
 dependencies {
+  androidToolsBaseTemplates "org.jetbrains.intellij.deps.android.tools.base:templates:${android_m2_version}"
   androidOfflineRepo "org.jetbrains.intellij.deps.android.tools.base:android-sdk-offline-repo:${android_m2_version}@zip"
   androidSdk "android-sdk:android-sdk:${android_sdk_version}:@tar.gz"
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
@@ -77,6 +79,12 @@ task syncOfflineRepo(dependsOn: configurations.androidOfflineRepo, type: Version
   into "${project.buildDir}/android-sdk"
 }
 
+task syncToolsBaseTemplates(dependsOn: [configurations.androidToolsBaseTemplates, syncOfflineRepo], type: VersionedLazyCopyTask) {
+  versionStr android_m2_version
+  from { zipTree(configurations.androidToolsBaseTemplates.singleFile) }
+  into "${project.buildDir}/android-sdk/tools-base/templates"
+}
+
 task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncOfflineRepo], type: Sync) {
   from "$buildDir/kotlin"
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
@@ -100,7 +108,7 @@ task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncOfflineRepo], t
   }
 }
 
-task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, syncAndroidSdk, updateKotlinLibs]) {
+task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, syncAndroidSdk, updateKotlinLibs, syncToolsBaseTemplates]) {
   // This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
 }
 
