@@ -15,8 +15,14 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
 
 public interface ErrorStripeRenderer {
   void paint(Component c, Graphics g, Rectangle r);
+
+  default void refreshActions() {}
+  default @Nullable ActionGroup getActions() { return null; }
 }

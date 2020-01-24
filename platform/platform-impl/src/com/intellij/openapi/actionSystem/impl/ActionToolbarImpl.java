@@ -367,7 +367,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return customComponent;
   }
 
-  private void tweakActionComponentUI(@NotNull Component actionComponent) {
+  protected void tweakActionComponentUI(@NotNull Component actionComponent) {
     if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
       // tweak font & color for editor toolbar to match editor tabs style
       actionComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
@@ -412,6 +412,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     };
     actionButton.setLook(look);
+    tweakActionComponentUI(actionButton);
     return actionButton;
   }
 
@@ -949,6 +950,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
+  @NotNull
+  protected Color getSeparatorColor() {
+    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
+  }
+
   private final class MySeparator extends JComponent {
     private final String myText;
 
@@ -996,7 +1002,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         offset = ActionToolbarImpl.this.getWidth() - getMaxButtonWidth() - 1;
       }
 
-      g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      g.setColor(getSeparatorColor());
       if (myOrientation == SwingConstants.HORIZONTAL) {
         int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
         LinePainter2D.paint((Graphics2D)g, center, gap, center, y2);

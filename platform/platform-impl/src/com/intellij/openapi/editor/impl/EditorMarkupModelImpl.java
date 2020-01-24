@@ -10,12 +10,21 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -25,6 +34,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,6 +43,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,16 +72,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
+  private static final JBValue SCROLLBAR_WIDTH = new JBValue.UIInteger("Editor.scrollBarWidth", 14);
+
+  private static final ColorKey HOVER_BACKGROUND = ColorKey.createColorKey("ActionButton.hoverBackground",
+                                                                       JBUI.CurrentTheme.ActionButton.hoverBackground());
+
+  private static final ColorKey PRESSED_BACKGROUND = ColorKey.createColorKey("ActionButton.pressedBackground",
+                                                                       JBUI.CurrentTheme.ActionButton.pressedBackground());
   private int getMinMarkHeight() {
     return JBUIScale.scale(myMinMarkHeight);
-  }
-
-  private static int getErrorIconWidth() {
-    return JBUIScale.scale(14);
-  }
-
-  private static int getErrorIconHeight() {
-    return JBUIScale.scale(14);
   }
 
   private static int getThinGap() {
@@ -112,6 +122,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private int myCurrentHintAnchorY;
   private boolean myKeepHint;
 
+  private ActionToolbar statusToolbar;
+
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
     myEditor = editor;
@@ -148,16 +160,19 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   public void setTrafficLightIconVisible(boolean value) {
     MyErrorPanel errorPanel = getErrorPanel();
-    if (errorPanel != null && errorPanel.myErrorStripeButton.isVisible() != value) {
-      errorPanel.myErrorStripeButton.setVisible(value);
+    if (errorPanel != null && statusToolbar.getComponent().isVisible() != value) {
+      statusToolbar.getComponent().setVisible(value);
       repaint();
     }
   }
 
   public void repaintTrafficLightIcon() {
+    if (myErrorStripeRenderer != null) {
+      myErrorStripeRenderer.refreshActions();
+    }
+
     MyErrorPanel errorPanel = getErrorPanel();
     if (errorPanel != null) {
-      errorPanel.myErrorStripeButton.repaint();
       errorPanel.repaintTrafficTooltip();
     }
   }
@@ -431,9 +446,35 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
 
-    myEditor.getVerticalScrollBar()
-      .updateUI(); // re-create increase/decrease buttons, in case of not-null renderer it will show traffic light icon
-    repaintVerticalScrollBar();
+    ActionGroup group;
+    if (myErrorStripeRenderer != null && (group = myErrorStripeRenderer.getActions()) != null) {
+      ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
+
+      statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_POPUP, group, true) {
+        @Override
+        @NotNull
+        protected Color getSeparatorColor() {
+          Color separatorColor = myEditor.getColorsScheme().getColor(EditorColors.SEPARATOR_BELOW_COLOR);
+          return separatorColor != null ? separatorColor : super.getSeparatorColor();
+        }
+
+        @Override
+        protected void tweakActionComponentUI(@NotNull Component actionComponent) {
+          if (actionComponent instanceof ActionButton) {
+            ((ActionButton)actionComponent).setLook(editorButtonLook);
+          }
+        }
+      };
+
+      statusToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+
+      JComponent statusToolbarComponent = statusToolbar.getComponent();
+      statusToolbarComponent.setOpaque(false);
+      ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusToolbarComponent);
+    }
+    else {
+      ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(null);
+    }
   }
 
   @Nullable
@@ -449,6 +490,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (myErrorStripeRenderer instanceof Disposable) {
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }
+
+    ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(null);
+
     myErrorStripeRenderer = null;
     myTooltipRendererProvider = new BasicTooltipRendererProvider();
     myEditorPreviewHint = null;
@@ -456,8 +500,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private void disposeErrorPanel() {
-    final MyErrorPanel panel = getErrorPanel();
-
+    MyErrorPanel panel = getErrorPanel();
     if (panel != null) {
       panel.uninstallListeners();
     }
@@ -483,39 +526,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.isMirrored();
   }
 
-  @DirtyUI
-  private class ErrorStripeButton extends JButton {
-    private ErrorStripeButton() {
-      setFocusable(false);
-      setOpaque(false);
-    }
-
-    @Override
-    public void paint(@NotNull Graphics g) {
-      if (!transparent()) {
-        g.setColor(myEditor.getBackgroundColor());
-        Rectangle bounds = getBounds();
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      }
-
-      if (myErrorStripeRenderer != null) {
-        int x = isMirrored() ? 0 : getThinGap() + getMinMarkHeight();
-        final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
-        myErrorStripeRenderer.paint(this, g, b);
-      }
-    }
-
-    @NotNull
-    @Override
-    public Dimension getPreferredSize() {
-      return !isPreferredSizeSet()
-             ? isVisible()
-               ? new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() + getThinGap())
-               : JBUI.emptySize()
-             : super.getPreferredSize();
-    }
-  }
-
   private boolean transparent() {
     return !myEditor.shouldScrollBarBeOpaque();
   }
@@ -523,20 +533,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   @DirtyUI
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
     private PopupHandler myHandler;
-    private JButton myErrorStripeButton;
     @Nullable private BufferedImage myCachedTrack;
     private int myCachedHeight = -1;
 
     public void dropCache() {
       myCachedTrack = null;
       myCachedHeight = -1;
-    }
-
-    @NotNull
-    @Override
-    protected JButton createDecreaseButton(int orientation) {
-      myErrorStripeButton = myErrorStripeRenderer == null ? super.createDecreaseButton(orientation) : new ErrorStripeButton();
-      return myErrorStripeButton;
     }
 
     @Override
@@ -563,16 +565,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       scrollbar.addMouseMotionListener(this);
       scrollbar.addMouseListener(this);
       scrollbar.addMouseWheelListener(this);
-      myErrorStripeButton.addMouseMotionListener(this);
-      myErrorStripeButton.addMouseListener(this);
     }
 
     @Override
     protected void uninstallListeners() {
       scrollbar.removeMouseMotionListener(this);
       scrollbar.removeMouseListener(this);
-      myErrorStripeButton.removeMouseMotionListener(this);
-      myErrorStripeButton.removeMouseListener(this);
       super.uninstallListeners();
     }
 
@@ -634,14 +632,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Rectangle bounds = super.getMacScrollBarBounds(baseBounds, thumb);
       bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
       int b2 =  bounds.width / 2;
-      bounds.x = getThinGap() + getMinMarkHeight() + getErrorIconWidth() / 2 - b2;
+      bounds.x = getThinGap() + getMinMarkHeight() + SCROLLBAR_WIDTH.get() / 2 - b2;
 
       return bounds;
     }
 
     @Override
     protected int getThickness() {
-      return getErrorIconWidth() + getThinGap() + getMinMarkHeight();
+      return SCROLLBAR_WIDTH.get() + getThinGap() + getMinMarkHeight();
     }
 
     @Override
@@ -838,7 +836,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       else {
         x = isMirrored() ? 0 : getMinMarkHeight() + getThinGap();
-        paintWidth = getErrorIconWidth();
+        paintWidth = SCROLLBAR_WIDTH.get();
       }
       g.setColor(color);
       g.fillRect(x, yStart, paintWidth, yEnd - yStart);
@@ -985,12 +983,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private void setPopupHandler(@NotNull PopupHandler handler) {
       if (myHandler != null) {
         scrollbar.removeMouseListener(myHandler);
-        myErrorStripeButton.removeMouseListener(myHandler);
       }
 
       myHandler = handler;
       scrollbar.addMouseListener(handler);
-      myErrorStripeButton.addMouseListener(myHandler);
     }
   }
 
@@ -1368,8 +1364,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               if (StartupUiUtil.isUnderDarcula()) {
                 //Add glass effect
                 Shape s = new Rectangle(0, 0, size.width, size.height);
-                double cx = size.width / 2;
-                double rx = size.width / 10;
+                double cx = size.width / 2.0;
+                double rx = size.width / 10.0;
                 int ry = myEditor.getLineHeight() * 3 / 2;
                 g2.setPaint(new GradientPaint(0, 0, Gray._255.withAlpha(75), 0, ry, Gray._255.withAlpha(10)));
                 double pseudoMajorAxis = size.width - rx * 9 / 5;
@@ -1436,6 +1432,37 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_MOUSEOVER |
                   HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_SCROLLING;
       hintManager.showEditorHint(myEditorPreviewHint, myEditor, point, flags, 0, false, hintInfo);
+    }
+  }
+
+  private class EditorToolbarButtonLook extends ActionButtonLook {
+    @Override
+    public void paintBorder(Graphics g, JComponent component, int state) {}
+
+    @Override
+    public void paintLookBorder(@NotNull Graphics g, @NotNull Rectangle rect, @NotNull Color color) {}
+
+    @Override
+    public void paintBorder(Graphics g, JComponent component, Color color) {}
+
+    @Override
+    public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
+      if (state == ActionButtonComponent.NORMAL) return;
+      Rectangle rect = new Rectangle(component.getSize());
+      JBInsets.removeFrom(rect, component.getInsets());
+
+      EditorColorsScheme scheme = myEditor.getColorsScheme();
+      Color color = state == ActionButtonComponent.PUSHED ? scheme.getColor(PRESSED_BACKGROUND) : scheme.getColor(HOVER_BACKGROUND);
+
+      if (color != null) {
+        ActionButtonLook.SYSTEM_LOOK.paintLookBackground(g, rect, color);
+      }
+    }
+
+    @Override
+    public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
+      boolean isDark = ColorUtil.isDark(myEditor.getColorsScheme().getDefaultBackground());
+      super.paintIcon(g, actionButton, IconLoader.getDarkIcon(icon, isDark), x, y);
     }
   }
 }
