@@ -25,9 +25,9 @@ import org.intellij.lang.annotations.Language
  * @author Pavel.Dolgov
  */
 class Java9ModuleExportsPackageToItselfTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  private val message = InspectionsBundle.message("inspection.module.exports.package.to.itself")!!
-  private val fix1 = InspectionsBundle.message("exports.to.itself.delete.statement.fix")!!
-  private val fix2 = InspectionsBundle.message("exports.to.itself.delete.module.ref.fix", "M")!!
+  private val message = InspectionsBundle.message("inspection.module.exports.package.to.itself")
+  private val fix1 = InspectionsBundle.message("exports.to.itself.delete.statement.fix")
+  private val fix2 = InspectionsBundle.message("exports.to.itself.delete.module.ref.fix", "M")
 
   override fun setUp() {
     super.setUp()

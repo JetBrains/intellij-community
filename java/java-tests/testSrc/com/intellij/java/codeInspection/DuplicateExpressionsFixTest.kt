@@ -52,11 +52,11 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun introduce(expr: String) =
-    InspectionsBundle.message("inspection.duplicate.expressions.introduce.variable.fix.name", expr)!!
+    InspectionsBundle.message("inspection.duplicate.expressions.introduce.variable.fix.name", expr)
 
   private fun reuse(name: String, expr: String) =
-    InspectionsBundle.message("inspection.duplicate.expressions.reuse.variable.fix.name", name, expr)!!
+    InspectionsBundle.message("inspection.duplicate.expressions.reuse.variable.fix.name", name, expr)
 
   private fun replace(name: String, expr: String) =
-    InspectionsBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.name", name, expr)!!
+    InspectionsBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.name", name, expr)
 }
