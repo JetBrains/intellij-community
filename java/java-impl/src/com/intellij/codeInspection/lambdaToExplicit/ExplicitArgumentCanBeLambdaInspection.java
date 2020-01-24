@@ -27,7 +27,7 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
         for(LambdaAndExplicitMethodPair info : LambdaAndExplicitMethodPair.INFOS) {
           PsiExpression arg = info.getLambdaCandidateFromExplicitCall(call);
           if(arg != null && !(arg instanceof PsiEmptyExpressionImpl) && !ExpressionUtils.isSafelyRecomputableExpression(arg)) {
-            holder.registerProblem(arg, "Explicit argument can be converted to lambda",
+            holder.registerProblem(arg, InspectionsBundle.message("inspection.explicit.argument.can.be.lambda.message"),
                                    new ConvertExplicitCallToLambdaFix(info, info.getLambdaMethodName(call)));
             return;
           }

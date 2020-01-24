@@ -63,7 +63,8 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
         PsiParameter entry = lambdaParameters[0];
         if (!allUsagesAllowed(entry)) return;
         PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
-        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.map.foreach.message"), new ReplaceWithMapForEachFix());
+        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.can.be.replaced.with.message", "Map.forEach()"),
+                               new ReplaceWithMapForEachFix());
       }
 
       private boolean allUsagesAllowed(@NotNull PsiParameter entry) {
@@ -98,7 +99,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
             toHighlight = firstChild;
             range = new TextRange(0, firstChild.getTextLength());
           }
-          holder.registerProblem(toHighlight, InspectionsBundle.message("inspection.map.foreach.message"),
+          holder.registerProblem(toHighlight, InspectionsBundle.message("inspection.can.be.replaced.with.message", "Map.forEach()"),
                                  type, range, new ReplaceWithMapForEachFix());
         }
       }
@@ -110,7 +111,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.map.foreach.fix.name");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()");
     }
 
     @Override

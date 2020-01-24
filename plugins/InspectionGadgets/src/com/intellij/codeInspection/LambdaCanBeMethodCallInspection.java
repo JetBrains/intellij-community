@@ -119,7 +119,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
       }
 
       private void registerProblem(PsiLambdaExpression lambda, String displayReplacement, String replacement) {
-        holder.registerProblem(lambda, InspectionsBundle.message("inspection.lambda.to.method.call.message", displayReplacement),
+        holder.registerProblem(lambda, InspectionsBundle.message("inspection.can.be.replaced.with.message", displayReplacement),
                                new ReplaceWithFunctionCallFix(replacement, displayReplacement));
       }
     };

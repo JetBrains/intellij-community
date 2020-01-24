@@ -52,7 +52,7 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
               return;
             }
           }
-          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.objects.equals.can.be.simplified.message", "equals()"),
+          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.can.be.replaced.with.message", "equals()"),
                                  new ReplaceWithEqualsFix(false));
         }
       }
@@ -61,7 +61,7 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
         PsiType type1 = arg1.getType();
         PsiType type2 = arg2.getType();
         if (type1 instanceof PsiPrimitiveType && type1.equals(type2) && !TypeConversionUtil.isFloatOrDoubleType(type1)) {
-          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.objects.equals.can.be.simplified.message", "=="),
+          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.can.be.replaced.with.message", "=="),
                                  new ReplaceWithEqualsFix(true));
           return true;
         }

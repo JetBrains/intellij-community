@@ -61,7 +61,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       private void register(CompareInfo info, PsiElement nameElement) {
-        holder.registerProblem(nameElement, "Can be replaced with '" + info.myClass.getClassName() + ".compare'",
+        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
                                new ReplaceWithPrimitiveCompareFix(info.getReplacementText()));
       }
     };
@@ -338,7 +338,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with single comparison method";
+      return InspectionsBundle.message("inspection.use.compare.method.fix.family.name");
     }
 
     @Override

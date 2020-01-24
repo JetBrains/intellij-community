@@ -26,7 +26,8 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Report comparison of Optional with null", this, "WARN_ON_COMPARISON");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.null.value.for.optional.option.comparisons"), 
+                                          this, "WARN_ON_COMPARISON");
   }
 
   @NotNull
@@ -87,10 +88,11 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
         if (value != null &&
             TypeUtils.isOptional(value.getType()) &&
             !hasSubsequentIsPresentCall(value, binOp, JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()))) {
-          holder.registerProblem(binOp, "Optional value is compared with null",
+          holder.registerProblem(binOp, InspectionsBundle.message("inspection.null.value.for.optional.assigned.message"),
                                  new ReplaceWithIsPresentFix(),
                                  new SetInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
-                                                            "Do not warn when comparing Optional with null", false));
+                                                            InspectionsBundle
+                                                              .message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false));
         }
       }
 
@@ -152,7 +154,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.null.value.for.optional.fix.name",
+      return CommonQuickFixBundle.message("fix.replace.with.x",
                                        StringUtil.getShortName(myTypeName) + "." + myMethodName + "()");
     }
 
@@ -178,7 +180,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'isPresent()' call";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "isPresent()");
     }
 
     @Override
