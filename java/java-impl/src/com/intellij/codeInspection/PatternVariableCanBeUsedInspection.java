@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -33,8 +35,9 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()),
                                                          PsiTypeCastExpression.class);
         if (cast == null || cast.getOperand() == null || cast.getCastType() == null) return;
-        PsiType castType = cast.getType();
+        PsiType castType = cast.getCastType().getType();
         if (castType instanceof PsiPrimitiveType) return;
+        if (!variable.getType().equals(castType)) return;
         PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
         if (scope == null) return;
         PsiDeclarationStatement declaration = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
@@ -171,15 +174,28 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
             PsiTypeTestPattern typeTestPattern = (PsiTypeTestPattern)pattern;
             PsiPatternVariable variable = typeTestPattern.getPatternVariable();
             if (variable == null) {
-              PsiTypeElement type = typeTestPattern.getCheckType();
-              if (PsiEquivalenceUtil.areElementsEquivalent(type, Objects.requireNonNull(cast.getCastType())) &&
-                  PsiEquivalenceUtil.areElementsEquivalent(instanceOf.getOperand(), Objects.requireNonNull(cast.getOperand()))) {
+              PsiType type = typeTestPattern.getCheckType().getType();
+              PsiType castType = Objects.requireNonNull(cast.getCastType()).getType();
+              PsiExpression castOperand = Objects.requireNonNull(cast.getOperand());
+              if (typeCompatible(type, castType, castOperand) &&
+                  PsiEquivalenceUtil.areElementsEquivalent(instanceOf.getOperand(), castOperand)) {
                 return instanceOf;
               }
             }
           }
         }
         return null;
+      }
+
+      private boolean typeCompatible(@NotNull PsiType instanceOfType, @NotNull PsiType castType, @NotNull PsiExpression castOperand) {
+        if (instanceOfType.equals(castType)) return true;
+        if (castType instanceof PsiClassType) {
+          PsiClassType rawType = ((PsiClassType)castType).rawType();
+          if (instanceOfType.equals(rawType)) {
+            return !JavaGenericsUtil.isUncheckedCast(castType, castOperand.getType());
+          }
+        }
+        return false;
       }
     };
   }
@@ -211,10 +227,15 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiLocalVariable variable = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiLocalVariable.class);
       if (variable == null) return;
+      PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()),
+                                                       PsiTypeCastExpression.class);
+      if (cast == null) return;
+      PsiTypeElement typeElement = cast.getCastType();
+      if (typeElement == null) return;
       PsiInstanceOfExpression instanceOf = myInstanceOfPointer.getElement();
       if (instanceOf == null) return;
       CommentTracker ct = new CommentTracker();
-      ct.replace(instanceOf, ct.text(instanceOf) + " " + variable.getName());
+      ct.replace(instanceOf, ct.text(instanceOf.getOperand()) + " instanceof " + typeElement.getText() + " " + variable.getName());
       ct.deleteAndRestoreComments(variable);
     }
   }
