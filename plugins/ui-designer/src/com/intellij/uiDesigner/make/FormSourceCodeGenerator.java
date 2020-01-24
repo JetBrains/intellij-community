@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.SupportCode;
@@ -810,8 +811,13 @@ public final class FormSourceCodeGenerator {
 
     final boolean borderNone = borderType.equals(BorderType.NONE);
     if (!borderNone || borderTitle != null) {
-      startMethodCall(variable, "setBorder");
 
+      if (Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) {
+        generateIdeaTitledBorder(variable, borderTitle);
+        return;
+      }
+
+      startMethodCall(variable, "setBorder");
 
       startStaticMethodCall(BorderFactory.class, "createTitledBorder");
 
@@ -860,6 +866,15 @@ public final class FormSourceCodeGenerator {
       endMethod(); // setBorder
     }
   }
+
+  private void generateIdeaTitledBorder(String variable, StringDescriptor borderTitle) {
+    startMethodCall(variable, "setBorder");
+    startStaticMethodCall(IdeBorderFactory.class, "createTitledBorder");
+    push(borderTitle);
+    endMethod();
+    endMethod();
+  }
+
 
   private static boolean isCustomBorder(final LwContainer container) {
     return container.getBorderTitleJustification() != 0 || container.getBorderTitlePosition() != 0 ||
