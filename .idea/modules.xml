@@ -150,8 +150,6 @@
     <module old-name="java-impl" new-name="intellij.java.impl" />
     <module old-name="java-indexing-api" new-name="intellij.java.indexing" />
     <module old-name="java-indexing-impl" new-name="intellij.java.indexing.impl" />
-    <module old-name="java-lib-model" new-name="android.sdktools.java-lib-model" />
-    <module old-name="java-lib-model-builder" new-name="android.sdktools.java-lib-model-builder" />
     <module old-name="java-psi-api" new-name="intellij.java.psi" />
     <module old-name="java-psi-impl" new-name="intellij.java.psi.impl" />
     <module old-name="java-runtime" new-name="intellij.java.rt" />
@@ -375,8 +373,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.dvlib.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.dvlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.fakeadbserver.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.fakeadbserver.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.flags.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.flags.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.java-lib-model.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.java-lib-model.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.java-lib-model-builder.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.java-lib-model-builder.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.layoutinspector.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.layoutinspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.layoutlib-api.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.layoutlib-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.lint-api.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.lint-api.iml" />
