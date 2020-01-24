@@ -29,25 +29,25 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val nameHintKey = "name-infix"
     val jdkHomeKey = "jdk-home"
     val tempKey = "temp"
-    val outputKey = "output-dir"
+    val outputKey = "output"
     val baseUrlKey = "base-url"
 
     println("")
     println("  [idea] ${commandName} ... (see keys below)")
-    println("       [/$jdkHomeKey=<home to JDK>]  --- path to JDK to index")
-    println("       [/$nameHintKey=<infix>]       --- name suffix to for the generated files")
+    println("       [--$jdkHomeKey=<home to JDK>]  --- path to JDK to index")
+    println("       [--$nameHintKey=<infix>]       --- name suffix to for the generated files")
     println("                                         a hint to the later indexes management")
-    println("       /$tempKey=<temp folder>       --- path where temp files can be created,")
+    println("       --$tempKey=<temp folder>       --- path where temp files can be created,")
     println("                                         (!) it will be cleared by the tool")
-    println("       /$outputKey=<output path>     --- location of the indexes CDN image,")
+    println("       --$outputKey=<output path>     --- location of the indexes CDN image,")
     println("                                         it will be updated with new data")
-    println("       /$baseUrlKey=<URL>            --- CDN base URL for index.json files")
+    println("       [--$baseUrlKey=<URL>]          --- CDN base URL for index.json files")
     println("")
     println("")
     println("")
 
     val nameHint = args.arg(nameHintKey, "").nullize(true)
-    val baseUrl = args.arg(baseUrlKey).trim().trimEnd('/')
+    val baseUrl = args.arg(baseUrlKey, "").nullize(true)?.trim()?.trimEnd('/')
     val jdkHome = args.argFile(jdkHomeKey, System.getProperty("java.home"))
     val tempDir = args.argFile(tempKey).recreateDir()
     val outputDir = args.argFile(outputKey).apply { mkdirs() }
@@ -163,7 +163,10 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     FileUtil.copy(indexZipXZ, indexFile(".ijx"))
     FileUtil.writeToFile(indexFile(".json"), indexMetadata)
     FileUtil.writeToFile(indexFile(".sha256"), indexZipXZ.sha256())
-    UpdateIndexesLayoutStarter.rebuildIndexForHashDir(indexDir, baseUrl)
+    if (baseUrl != null) {
+      UpdateIndexesLayoutStarter.rebuildIndexForHashDir(indexDir, baseUrl)
+    }
+
     exitProcess(0)
   }
 

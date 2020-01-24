@@ -11,10 +11,10 @@ class UpdateIndexesLayoutStarter : IndexesStarterBase("update-index-layout") {
   override fun mainImpl(args: Array<out String>) {
     println("Update indexes layout and generates all necessary index files")
     println("usage:")
-    println("  [idea] $commandName /output-dir=<output directory> /base-url=<base url>")
+    println("  [idea] $commandName --output=<output directory> --base-url=<base url>")
     println()
 
-    val outputDir =  args.argFile("output-dir")
+    val outputDir =  args.argFile("output")
     val baseUrl = args.arg("base-url")
 
     if (!outputDir.isDirectory) {

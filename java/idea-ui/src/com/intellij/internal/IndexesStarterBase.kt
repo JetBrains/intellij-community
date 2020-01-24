@@ -42,7 +42,7 @@ abstract class IndexesStarterBase(
   }
 
   protected fun Array<out String>.arg(arg: String, default: String? = null): String {
-    val key = "/$arg="
+    val key = "--$arg="
     val values = filter { it.startsWith(key) }.map { it.removePrefix(key) }
 
     if (values.isEmpty() && default != null) {

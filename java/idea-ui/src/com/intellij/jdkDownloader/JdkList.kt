@@ -60,6 +60,9 @@ data class JdkProduct(
     return cases.any { it.equals(match, ignoreCase = true) }
   }
 
+  val vendorPathText: String
+    get() = listOfNotNull(vendor, product, flavour).joinToString("-")
+
   val packagePresentationText: String
     get() = buildString {
       append(vendor)
