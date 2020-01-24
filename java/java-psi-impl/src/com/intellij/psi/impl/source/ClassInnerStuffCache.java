@@ -203,7 +203,8 @@ public class ClassInnerStuffCache {
 
       @Override
       public boolean equals(Object another) {
-        return another.getClass() == getClass() &&
+        return another != null &&
+               another.getClass() == getClass() &&
                myClass.equals(((LightMethod)another).getContainingClass()) &&
                text.equals(((LightMethod)another).getText());
       }
