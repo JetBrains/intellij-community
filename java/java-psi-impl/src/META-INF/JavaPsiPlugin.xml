@@ -64,8 +64,8 @@
                         serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
-                        serviceImplementation="com.intellij.psi.impl.EmptySubstitutorImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.PsiSubstitutorFactory"
+                        serviceImplementation="com.intellij.psi.impl.PsiSubstitutorFactoryImpl"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
     <projectService serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
 import java.util.Map;
@@ -26,6 +27,7 @@ import java.util.Map;
 /**
  *  @author dsl
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public final class EmptySubstitutorImpl extends EmptySubstitutor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.EmptySubstitutorImpl");
   @Override
