@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
@@ -114,7 +115,14 @@ public class CacheUpdateRunner {
     };
     final Application application = ApplicationManager.getApplication();
     Disposable listenerDisposable = Disposer.newDisposable();
-    application.invokeAndWait(() -> application.addApplicationListener(canceller, listenerDisposable), ModalityState.any());
+    Ref<Boolean> shouldSetUpListener = new Ref<>(true);
+    application.invokeLater(() -> {
+      synchronized (shouldSetUpListener) {
+        if (shouldSetUpListener.get()) {
+          application.addApplicationListener(canceller, listenerDisposable);
+        }
+      }
+    }, ModalityState.any());
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     try {
@@ -136,7 +144,10 @@ public class CacheUpdateRunner {
       }
     }
     finally {
-      Disposer.dispose(listenerDisposable);
+      synchronized (shouldSetUpListener) {
+        shouldSetUpListener.set(false);
+        Disposer.dispose(listenerDisposable);
+      }
     }
 
     return isFinished.get();
