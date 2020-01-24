@@ -16,6 +16,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,10 +28,9 @@ import java.util.*;
  */
 public class FilenameIndex {
 
-  /**
-   * @deprecated Not to be used.
-   */
-  @NonNls @Deprecated public static final ID<String, Void> NAME = ID.create("FilenameIndex");
+  @ApiStatus.Internal
+  @NonNls
+  public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
   public static String @NotNull [] getAllFilenames(@Nullable Project project) {
     Set<String> names = new THashSet<>();

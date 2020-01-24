@@ -23,6 +23,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +35,11 @@ import java.util.Map;
  */
 public class FileTypeIndex {
   /**
-   * @deprecated Use {@link #getFiles(FileType, GlobalSearchScope)},
+   * Use {@link #getFiles(FileType, GlobalSearchScope)},
    * {@link #containsFileOfType(FileType, GlobalSearchScope)} or
    * {@link #processFiles(FileType, Processor, GlobalSearchScope)} instead
    */
-  @Deprecated
+  @ApiStatus.Internal
   public static final ID<FileType, Void> NAME = ID.create("filetypes");
 
   @Nullable
