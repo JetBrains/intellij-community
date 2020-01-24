@@ -884,6 +884,7 @@
     <applicationService serviceInterface="com.intellij.ide.lightEdit.LightEditService"
                         serviceImplementation="com.intellij.ide.lightEdit.LightEditServiceImpl"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.ide.lightEdit.LightEditDocumentSaveVetoer"/>
+    <fileTypeOverrider implementation="com.intellij.ide.lightEdit.LightEditFileTypeOverrider"/>
 
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
     <statistics.counterUsagesCollector groupId="intellij.cds" version="2"/>

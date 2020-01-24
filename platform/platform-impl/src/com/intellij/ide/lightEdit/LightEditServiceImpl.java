@@ -13,10 +13,15 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -28,6 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.management.ManagementFactory;
 
+@SuppressWarnings("SameParameterValue")
 @State(name = "LightEdit", storages =  @Storage("lightEdit.xml"))
 public class LightEditServiceImpl implements LightEditService,
                                              Disposable,
@@ -52,7 +58,7 @@ public class LightEditServiceImpl implements LightEditService,
   }
 
   public LightEditServiceImpl() {
-    myEditorManager = new LightEditorManagerImpl();
+    myEditorManager = new LightEditorManagerImpl(this);
     myEditorManager.addListener(this);
     Disposer.register(this, myEditorManager);
   }
@@ -289,5 +295,27 @@ public class LightEditServiceImpl implements LightEditService,
   public void disposeCurrentSession() {
     myEditorManager.releaseEditors();
     myLightEditProjectManager.close();
+  }
+
+  @Override
+  @Nullable
+  public FileType getExplicitFileType(@NotNull VirtualFile virtualFile) {
+    final String url = virtualFile.getPresentableUrl();
+    if (myConfiguration.pathToExtensionMap.containsKey(url)) {
+      String name = virtualFile.getNameWithoutExtension();
+      return FileTypeManager.getInstance().getFileTypeByFileName(name + "." + myConfiguration.pathToExtensionMap.get(url));
+    }
+    return null;
+  }
+
+  void overrideUnknownFileType(@NotNull VirtualFile virtualFile) {
+    if (virtualFile.getFileType() instanceof UnknownFileType) {
+      registerFileType(virtualFile, PlainTextFileType.INSTANCE);
+      CachedFileType.clearCache();
+    }
+  }
+
+  void registerFileType(@NotNull VirtualFile virtualFile, @NotNull FileType fileType) {
+    myConfiguration.pathToExtensionMap.put(virtualFile.getPresentableUrl(), fileType.getDefaultExtension());
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -30,9 +31,15 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
   private final EventDispatcher<LightEditorListener> myEventDispatcher =
     EventDispatcher.create(LightEditorListener.class);
 
+  private final LightEditServiceImpl myLightEditService;
+
   final static Key<Boolean> NO_IMPLICIT_SAVE = Key.create("light.edit.no.implicit.save");
 
   private final static String DEFAULT_FILE_NAME = "Untitled";
+
+  public LightEditorManagerImpl(LightEditServiceImpl service) {
+    myLightEditService = service;
+  }
 
   @NotNull
   private LightEditorInfo createEditor(@NotNull Document document, @NotNull VirtualFile file) {
@@ -54,12 +61,14 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
   LightEditorInfo createEditor() {
     Document document = new DocumentImpl("");
     LightVirtualFile file = new LightVirtualFile(getUniqueName());
+    file.setFileType(PlainTextFileType.INSTANCE);
     return createEditor(document, file);
   }
 
   @Override
   @Nullable
   public LightEditorInfo createEditor(@NotNull VirtualFile file) {
+    myLightEditService.overrideUnknownFileType(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       document.putUserData(NO_IMPLICIT_SAVE, true);
