@@ -28,19 +28,17 @@ abstract class VcsShowToolWindowTabAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val toolWindow = getToolWindow(project)!!
-    val changesViewContentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
+    val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
 
-    if (toolWindow.isActive && changesViewContentManager.isContentSelected(tabName)) {
-      toolWindow.hide(null)
-    }
-    else {
-      toolWindow.activate(
-        {
-          if (!changesViewContentManager.isContentSelected(tabName)) {
-            changesViewContentManager.selectContent(tabName, true)
-          }
-        }, true, true
-      )
+    val isToolWindowActive = toolWindow.isActive
+    val isContentSelected = contentManager.isContentSelected(tabName)
+    val tabSelector = Runnable { contentManager.selectContent(tabName, true) }
+
+    when {
+      isToolWindowActive && isContentSelected -> toolWindow.hide(null)
+      isToolWindowActive && !isContentSelected -> tabSelector.run()
+      !isToolWindowActive && isContentSelected -> toolWindow.activate(null, true)
+      !isToolWindowActive && !isContentSelected -> toolWindow.activate(tabSelector, false)
     }
   }
 
