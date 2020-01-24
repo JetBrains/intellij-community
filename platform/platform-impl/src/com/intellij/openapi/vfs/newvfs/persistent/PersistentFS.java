@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -93,13 +93,7 @@ public abstract class PersistentFS extends ManagingFS {
   // true if FS persisted at least one child or it has never been queried for children
   public abstract boolean mayHaveChildren(int id);
 
-  @NotNull
-  public static FileAttributes toFileAttributes(int attributes) {
-    final boolean isDirectory = isSet(attributes, IS_DIRECTORY_FLAG);
-    final boolean isSpecial = isSet(attributes, IS_SPECIAL);
-    final boolean isSymlink = isSet(attributes, IS_SYMLINK);
-    final boolean isHidden = isSet(attributes, IS_HIDDEN);
-    final boolean isWritable = !isSet(attributes, IS_READ_ONLY);
-    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, -1, -1, isWritable);
+  public static @NotNull FileAttributes toFileAttributes(@Attributes int attr) {
+    return new FileAttributes(isDirectory(attr), isSpecialFile(attr), isSymLink(attr), isHidden(attr), -1, -1, isWritable(attr));
   }
 }
