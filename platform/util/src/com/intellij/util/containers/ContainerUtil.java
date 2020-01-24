@@ -2109,7 +2109,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> mapNotNull(T @NotNull [] array, @NotNull Function<? super T, ? extends V> mapping) {
+  public static <T, V> List<@NotNull V> mapNotNull(T @NotNull [] array, @NotNull Function<? super T, ? extends V> mapping) {
     if (array.length == 0) {
       return emptyList();
     }
@@ -2131,7 +2131,7 @@ public class ContainerUtil extends ContainerUtilRt {
    * @return array consisting of the elements from the input array converted by mapping with nulls filtered out
    */
   @Contract(pure=true)
-  public static <T, V> V @NotNull [] mapNotNull(T @NotNull [] array, @NotNull Function<? super T, ? extends V> mapping, V @NotNull [] emptyArray) {
+  public static <T, V> @NotNull V @NotNull [] mapNotNull(T @NotNull [] array, @NotNull Function<? super T, ? extends V> mapping, V @NotNull [] emptyArray) {
     List<V> result = new ArrayList<>(array.length);
     for (T t : array) {
       V v = mapping.fun(t);
@@ -2153,7 +2153,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> mapNotNull(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
+  public static <T, V> List<@NotNull V> mapNotNull(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
     List<V> result = new ArrayList<>();
     for (T t : iterable) {
       final V o = mapping.fun(t);
@@ -2171,7 +2171,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
+  public static <T, V> List<@NotNull V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
     if (collection.isEmpty()) {
       return emptyList();
     }
