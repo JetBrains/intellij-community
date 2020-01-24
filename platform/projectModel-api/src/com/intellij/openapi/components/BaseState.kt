@@ -55,7 +55,13 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
    * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
    */
-  protected fun stringSet(): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet())
+  protected fun stringSet(): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet(null))
+
+  /**
+   * Collection considered as default if contains only the specified default value. It is *your* responsibility to call `incrementModificationCount` on collection modification.
+   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   */
+  protected fun stringSet(defaultValue: String): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet(defaultValue))
 
   /**
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
@@ -220,7 +226,8 @@ interface StatePropertyFactory {
 
   fun int(defaultValue: Int): StoredPropertyBase<Int>
 
-  fun stringSet(): StoredPropertyBase<MutableSet<String>>
+  // nullable default value is not a default value
+  fun stringSet(defaultValue: String?): StoredPropertyBase<MutableSet<String>>
 
   fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState
 
