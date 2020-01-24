@@ -47,7 +47,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
         onSelectionChange(newSelection);
       }
     });
-    myEditorManager.addListener(this, parent);
+    myEditorManager.addListener(this, this);
   }
 
   void addEditorTab(@NotNull LightEditorInfo editorInfo) {
