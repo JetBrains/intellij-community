@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.util.ui.JBUI;
@@ -131,6 +132,8 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
           if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
             JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
             scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
+            scroll.getVerticalScrollBar().setBackground(JBColor.PanelBackground);
+            scroll.getHorizontalScrollBar().setBackground(JBColor.PanelBackground);
             component = scroll;
           }
         }

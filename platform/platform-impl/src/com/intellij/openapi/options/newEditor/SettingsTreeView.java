@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
@@ -17,7 +17,6 @@ import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.scale.JBUIScale;
@@ -139,11 +138,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         return myHeader;
       }
     });
-    if (!Registry.is("ide.scroll.background.auto")) {
-      myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-      myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-      myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    }
+    myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
