@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -339,8 +340,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     boolean allowUninstallWithoutRestart = true;
     if (updateDescriptor != null) {
       IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
-      if (installedPluginDescriptor == null || !installedPluginDescriptor.isEnabled() || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
+      if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowUninstallWithoutRestart = false;
+      }
+      else if (!installedPluginDescriptor.isEnabled()) {
+        FileUtil.delete(installedPluginDescriptor.getPath());
       }
       else if (DynamicPlugins.allowLoadUnloadSynchronously(installedPluginDescriptor)) {
         if (!PluginInstaller.uninstallDynamicPlugin(parentComponent, installedPluginDescriptor, true)) {
