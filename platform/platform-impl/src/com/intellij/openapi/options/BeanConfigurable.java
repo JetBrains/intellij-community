@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * @author yole
+ * See {@link ConfigurableBuilder} for {@link UiDslConfigurable} alternative.
  */
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private final T myInstance;
@@ -293,7 +293,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   @Override
   public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
                                                       @NotNull Function<? super String, String> nameConverter) {
-    List<BeanConfigurable.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
+    List<CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     Object instance = getInstance();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
       @Override
