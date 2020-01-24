@@ -1201,7 +1201,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean mayShowToolbar() {
-    return !isEmbeddedIntoDialogWrapper() && !isOneLineMode() && !DiffUtil.isDiffEditor(this) && isFileEditor();
+    return !isEmbeddedIntoDialogWrapper() &&
+           !isOneLineMode() &&
+           !DiffUtil.isDiffEditor(this) &&
+           isFileEditor() &&
+           myKind != EditorKind.PREVIEW;
   }
 
   private boolean isFileEditor() {
