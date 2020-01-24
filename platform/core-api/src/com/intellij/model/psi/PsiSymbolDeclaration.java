@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi;
 
 import com.intellij.model.SymbolDeclaration;
@@ -27,4 +27,14 @@ public interface PsiSymbolDeclaration extends SymbolDeclaration {
    */
   @NotNull
   TextRange getDeclarationRange();
+
+  /**
+   * @return range in the {@link PsiElement#getContainingFile containing file} of the {@link #getDeclaringElement() element}
+   * which is considered a declaration
+   * @see #getDeclarationRange()
+   */
+  @NotNull
+  default TextRange getAbsoluteRange() {
+    return getDeclarationRange().shiftRight(getDeclaringElement().getTextRange().getStartOffset());
+  }
 }
