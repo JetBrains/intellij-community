@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.GeneralSettings;
@@ -43,6 +43,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.util.*;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -425,7 +426,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBadFileNameUnderUnix() throws IOException {
-    assumeTrue("Unix expected", SystemInfo.isUnix);
+    assumeUnix();
 
     File file = tempDir.newFile("test\\file.txt");
     VirtualFile vDir = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());

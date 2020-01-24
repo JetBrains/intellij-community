@@ -89,10 +89,15 @@ public class IoTestUtil {
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    Assume.assumeTrue("Expected can create symlinks, but it seems '"+SystemInfo.getOsNameAndVersion()+"' is unwilling", isSymLinkCreationSupported);
+    Assume.assumeTrue("Can't create symlinks on " + SystemInfo.getOsNameAndVersion(), isSymLinkCreationSupported);
   }
+
   public static void assumeWindows() throws AssumptionViolatedException {
-    Assume.assumeTrue("Expected windows but got: '" + SystemInfo.getOsNameAndVersion()+"'", SystemInfo.isWindows);
+    Assume.assumeTrue("Need Windows, can't run on " + SystemInfo.OS_NAME, SystemInfo.isWindows);
+  }
+
+  public static void assumeUnix() throws AssumptionViolatedException {
+    Assume.assumeTrue("Need Unix, can't run on " + SystemInfo.OS_NAME, SystemInfo.isUnix);
   }
 
   @NotNull

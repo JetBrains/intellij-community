@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.Job;
@@ -11,7 +11,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
@@ -34,7 +33,10 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +50,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
@@ -876,21 +880,22 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testCleanupPathWithWindowsUNC() {
-    Assume.assumeTrue(SystemInfo.isWindows);
+    assumeWindows();
     final VirtualFilePointer path = createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null);
     assertEquals("\\\\wsl$\\Ubuntu\\", path.getPresentableUrl());
   }
 
   @Test
   public void testSpacesOnlyFileNamesUnderUnixMustBeAllowed() {
-    Assume.assumeTrue("Expected unix but got: '" + SystemInfo.getOsNameAndVersion()+"'", SystemInfo.isUnix);
+    assumeUnix();
     VirtualFile vDir = getVirtualTempRoot();
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + "/xxx/ /c.txt", disposable, null);
     assertFalse(pointer.isValid());
   }
+
   @Test
   public void testCrazyExclamationMarkInFileNameMustBeAllowed() {
-    IoTestUtil.assumeWindows();
+    assumeWindows();
     VirtualFile vDir = getVirtualTempRoot();
     String rel = "/xxx/!/c.txt";
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + rel, disposable, null);

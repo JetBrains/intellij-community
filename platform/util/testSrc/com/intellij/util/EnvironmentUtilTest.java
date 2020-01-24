@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -10,8 +10,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * @author mike
@@ -48,7 +48,7 @@ public class EnvironmentUtilTest {
 
   @Test(timeout = 30000)
   public void load() {
-    assumeTrue("unix only", SystemInfo.isUnix);
+    assumeUnix();
     Map<String, String> env = EnvironmentUtil.testLoader();
     assertTrue(env.size() >= System.getenv().size() / 2);
   }
