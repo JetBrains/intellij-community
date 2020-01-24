@@ -181,6 +181,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     htmlBody += " shortcuts conflict with macOS system shortcuts.<br>Modify shortcuts or change macOS system settings.</p></html>";
 
     JBLabel jbLabel = new JBLabel(createWarningHtmlText(htmlBody)) {
+      @NotNull
       @Override
       protected HyperlinkListener createHyperlinkListener() {
         return new HyperlinkListener() {
