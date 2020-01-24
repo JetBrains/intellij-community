@@ -18,6 +18,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,17 +29,17 @@ import java.awt.event.InputEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorService;
 
 final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
   private final LightEditorManagerImpl myEditorManager;
-
-  private Future<?> myTabUpdateFuture;
+  private final ExecutorService myTabUpdateExecutor;
 
   LightEditTabs(@NotNull Disposable parent, LightEditorManagerImpl editorManager) {
     super(LightEditUtil.getProject(), null, parent);
 
     myEditorManager = editorManager;
+    myTabUpdateExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Light Edit Tabs Update", 1);
     addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
@@ -218,10 +219,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
   }
 
   private void asyncUpdateTabs(@NotNull List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs) {
-    if (myTabUpdateFuture != null) {
-      myTabUpdateFuture.cancel(true);
-    }
-    myTabUpdateFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    myTabUpdateExecutor.execute(() -> {
       List<Pair.NonNull<TabInfo, TextAttributes>> tabAttributesPairs = ContainerUtil.map(tabEditorPairs, pair -> {
         return Pair.createNonNull(pair.first, calcAttributes(pair.second));
       });
@@ -229,7 +227,6 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
         for (Pair.NonNull<TabInfo, TextAttributes> attributesPair : tabAttributesPairs) {
           updateTabPresentation(attributesPair.first, attributesPair.second);
         }
-        myTabUpdateFuture = null;
       });
     });
   }
@@ -275,10 +272,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
 
   @Override
   public void dispose() {
-    if (myTabUpdateFuture != null) {
-      myTabUpdateFuture.cancel(true);
-      myTabUpdateFuture = null;
-    }
+    myTabUpdateExecutor.shutdown();
 
     super.dispose();
   }
