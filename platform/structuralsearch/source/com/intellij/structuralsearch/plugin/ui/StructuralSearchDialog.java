@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
@@ -890,14 +891,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           }
           highlightManager.addRangeHighlight(editor, start, end, textAttributes, false, myRangeHighlighters);
         }
-        final FindManager findmanager = FindManager.getInstance(project);
-        FindModel findmodel = findmanager.getFindNextModel();
-        if (findmodel == null) {
-          findmodel = findmanager.getFindInFileModel();
-        }
-        findmodel.setSearchHighlighters(true);
-        findmanager.setFindWasPerformed();
-        findmanager.setFindNextModel(findmodel);
+        HighlightHandlerBase.setupFindModel(project);
       }
       WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
     });
