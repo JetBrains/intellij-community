@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.VMOptions;
@@ -198,7 +198,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     };
     jbLabel.setCopyable(true);
     jbLabel.setAllowAutoWrapping(true);
-    jbLabel.setIconWithAligment(AllIcons.General.Warning, JLabel.LEFT, JLabel.TOP);
+    jbLabel.setIconWithAlignment(AllIcons.General.Warning, JLabel.LEFT, JLabel.TOP);
     mySystemShortcutConflictsPanel.add(jbLabel);
 
     validate();

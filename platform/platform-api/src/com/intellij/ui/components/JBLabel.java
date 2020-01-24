@@ -166,12 +166,12 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     }
   }
 
-  public void setIconWithAligment(Icon icon, int horizontalAligment, int verticalAligment) {
+  public void setIconWithAlignment(Icon icon, int horizontalAlignment, int verticalAlignment) {
     super.setIcon(icon);
     if (myIconLabel != null) {
       myIconLabel.setIcon(icon);
-      myIconLabel.setHorizontalAlignment(horizontalAligment);
-      myIconLabel.setVerticalAlignment(verticalAligment);
+      myIconLabel.setHorizontalAlignment(horizontalAlignment);
+      myIconLabel.setVerticalAlignment(verticalAlignment);
       updateLayout();
       updateTextAlignment();
     }
