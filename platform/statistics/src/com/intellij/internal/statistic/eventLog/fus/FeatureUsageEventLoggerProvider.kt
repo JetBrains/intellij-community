@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 33, sendFrequencyMs = TimeUnit.MINUTES.toMillis(15)) {
   override fun isRecordEnabled(): Boolean {
-    return !ApplicationManager.getApplication().isUnitTestMode &&
+    return !ApplicationManager.getApplication().isHeadlessEnvironment &&
            Registry.`is`("feature.usage.event.log.collect.and.upload") &&
            StatisticsUploadAssistant.isCollectAllowed()
   }
