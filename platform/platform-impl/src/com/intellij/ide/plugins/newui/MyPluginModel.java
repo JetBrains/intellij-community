@@ -339,7 +339,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     boolean allowUninstallWithoutRestart = true;
     if (updateDescriptor != null) {
       IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
-      if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
+      if (installedPluginDescriptor == null || !installedPluginDescriptor.isEnabled() || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowUninstallWithoutRestart = false;
       }
       else if (DynamicPlugins.allowLoadUnloadSynchronously(installedPluginDescriptor)) {
