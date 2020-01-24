@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.primitives.Longs.max
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.runWriteAction
@@ -22,6 +24,7 @@ import com.intellij.util.io.DigestUtil.updateContentHash
 import com.intellij.util.io.isFile
 import com.intellij.util.io.sizeOrNull
 import com.intellij.util.lang.JavaVersion
+import com.intellij.util.text.nullize
 import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
 import java.io.File
@@ -43,15 +46,31 @@ class DumpJdkIndexStarter : ApplicationStarter {
 
   private fun mainImpl(args: Array<out String>) {
     println("Dump JDK indexes command:")
+    val nameHintKey = "name-infix"
     val jdkHomeKey = "jdk-home"
     val tempKey = "temp"
     val outputKey = "output-dir"
+    val baseUrlKey = "url"
 
-    println("  [idea] ${commandName} [/$jdkHomeKey=<home to JDK>] /$outputKey=<target output path> /$tempKey=<temp folder>")
+    println("")
+    println("  [idea] ${commandName} ... (see keys below)")
+    println("       [/$jdkHomeKey=<home to JDK>]  --- path to JDK to index")
+    println("       [/$nameHintKey=<infix>]       --- name suffix to for the generated files")
+    println("                                         a hint to the later indexes management")
+    println("       /$tempKey=<temp folder>       --- path where temp files can be created, ")
+    println("                                         (!) it will be cleared by the tool")
+    println("       /$outputKey=<output path>     --- location of the indexes CDN image,")
+    println("                                         it will be updated with new data")
+    println("       /$baseUrlKey=<URL>               --- CDN base URL for index.json files")
+    println("")
+    println("")
+    println("")
 
+    val nameHint = args.arg(nameHintKey, "").nullize(true)
+    val baseUrl = args.arg(baseUrlKey).trim().trimEnd('/')
     val jdkHome = args.argFile(jdkHomeKey, System.getProperty("java.home"))
     val tempDir = args.argFile(tempKey).recreateDir()
-    val outputDir = args.argFile(outputKey).recreateDir()
+    val outputDir = args.argFile(outputKey).apply { mkdirs() }
     val projectDir = File(tempDir, "project").recreateDir()
     val unpackedIndexDir = File(tempDir, "unpacked-index").recreateDir()
     val zipsDir = File(tempDir, "zips").recreateDir()
@@ -115,19 +134,22 @@ class DumpJdkIndexStarter : ApplicationStarter {
     val classesRoot = rootProvider.getFiles(OrderRootType.CLASSES).toSet()
     val sourcesRoot = rootProvider.getFiles(OrderRootType.SOURCES).toSet()
     val allRoots = (classesRoot + sourcesRoot).toSet()
-    LOG.info("Collected ${allRoots.size} SDK roots")
-    val indexChunk = IndexChunk(allRoots, "jdk-$jdkVersion-$osName")
-    indexChunk.contentsHash = hash
 
+    LOG.info("Collected ${allRoots.size} SDK roots...")
+    val indexChunk = IndexChunk(allRoots, "jdk-$jdkVersion-$osName${nameHint?.let {"-$it"} ?: ""}")
+    indexChunk.contentsHash = hash
+    indexChunk.kind = "jdk"
+
+    LOG.info("Indexing...")
     IndexesExporter.getInstance(project).exportIndexesChunk(
       indexChunk,
       unpackedIndexDir.toPath(),
       indexZip.toPath())
 
-    val indexingTime = max(0L, System.currentTimeMillis() - indexingStartTime)
-
+    LOG.info("Packing the indexes to XZ...")
     xz(indexZip, indexZipXZ)
 
+    val indexingTime = max(0L, System.currentTimeMillis() - indexingStartTime)
     LOG.info("Indexes build completed in ${StringUtil.formatDuration(indexingTime)}")
     LOG.info("JDK size          = ${StringUtil.formatFileSize(jdkHome.totalSize())}")
     LOG.info("JDK hash          = ${hash}")
@@ -143,13 +165,69 @@ class DumpJdkIndexStarter : ApplicationStarter {
       }
     }
 
-    val outputNamePrefix = "${indexChunk.name}-$hash-"
-    FileUtil.copy(indexZipXZ, File(outputDir, outputNamePrefix + "index.zip.xz"))
-    FileUtil.writeToFile(File(outputDir, outputNamePrefix + "metadata.json"), indexMetadata)
-    FileUtil.writeToFile(File(outputDir, outputNamePrefix + "index.zip.xz.sha256"), indexZipXZ.sha256())
+    //we generate production layout here:
+    // <kind>
+    //   |
+    //   | <hash>
+    //       |
+    //       | index.json  // (contains the listing of all entries for a given hash)
+    //       |
+    //       | <entry>.ijx    // an entry that is listed
+    //       | <entry>.json   // that entry metadata (same as in the metadata.json)
+    //       | <entry>.sha256 // hashcode of the entry
+    //
+
+    val indexDir = File(File(outputDir, indexChunk.kind!!), indexChunk.contentsHash!!).apply { mkdirs() }
+    fun indexFile(nameSuffix: String) = File(indexDir, indexChunk.name + nameSuffix)
+
+    FileUtil.copy(indexZipXZ, indexFile(".ijx"))
+    FileUtil.writeToFile(indexFile(".json"), indexMetadata)
+    FileUtil.writeToFile(indexFile(".sha256"), indexZipXZ.sha256())
+    rebuildIndex(indexDir, baseUrl)
 
     exitProcess(0)
   }
+}
+
+private fun rebuildIndex(dir: File, targetURLBase: String) {
+  val hashCode = dir.name
+
+  data class IndexFile(
+    val indexFile: File, 
+    val metadataFile: File,
+    val sha256File: File
+  ) {
+    val metadata by lazy { metadataFile.readBytes() }
+    val sha256 by lazy { sha256File.readText().trim() }
+
+    val indexFileName get() = indexFile.name
+  }
+
+  val indexes: List<IndexFile> = (dir.listFiles()?.toList() ?: listOf())
+    .groupBy{ it.nameWithoutExtension }
+    .mapNotNull { (_, group) ->
+      val indexFile = group.firstOrNull { it.path.endsWith(".ijx") }  ?: return@mapNotNull null
+      val metadataFile = group.firstOrNull { it.path.endsWith(".json") }  ?: return@mapNotNull null
+      val shaFile = group.firstOrNull { it.path.endsWith(".sha256") }  ?: return@mapNotNull null
+      IndexFile(indexFile, metadataFile, shaFile)
+    }.sortedBy { it.indexFileName }
+
+  val om = ObjectMapper()
+  val root = om.createObjectNode()
+
+  root.put("list_version", "1")
+  val entries = root.putArray("entries")
+
+  for (idx in indexes) {
+    val entry = entries.addObject()
+
+    entry.put("url", "$targetURLBase/$hashCode/${idx.indexFileName}")
+    entry.put("sha256", idx.sha256)
+    entry.set<ObjectNode>("metadata", om.readTree(idx.metadata))
+  }
+
+  val listData = om.writerWithDefaultPrettyPrinter().writeValueAsBytes(root)
+  FileUtil.writeToFile(File(dir, "index.json"), listData)
 }
 
 private fun File.sha256(): String {
