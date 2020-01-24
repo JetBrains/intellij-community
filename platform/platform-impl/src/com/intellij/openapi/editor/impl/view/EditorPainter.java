@@ -235,16 +235,37 @@ public class EditorPainter implements TextDrawingCallback {
       else {
         int displayedLinesCount = myMarginPositions.x.length - 1;
         for (int i = 0; i <= displayedLinesCount; i++) {
-          int y = myMarginPositions.y[i];
-          int yStart = i == 0 ? 0 : y;
-          int yEnd = i == displayedLinesCount ? myClip.y + myClip.height : y + myLineHeight;
           float width = myMarginPositions.x[i];
           int x = width == 0 ? baseMarginX : (int)width;
-          myGraphics.fillRect(x, yStart, 1, yEnd - yStart);
+          int y = myMarginPositions.y[i];
+          if (i == 0 && y > myYShift) {
+            myGraphics.fillRect(baseMarginX, myYShift, 1, y - myYShift);
+            if (x != baseMarginX) {
+              myGraphics.fillRect(Math.min(x, baseMarginX), y - 1, Math.abs(x - baseMarginX) + 1, 1);
+            }
+          }
           if (i < displayedLinesCount) {
+            myGraphics.fillRect(x, y, 1, myLineHeight);
             float nextWidth = myMarginPositions.x[i + 1];
             int nextX = nextWidth == 0 ? baseMarginX : (int)nextWidth;
-            if (nextX != x) myGraphics.fillRect(Math.min(x, nextX), y + myLineHeight - 1, Math.abs(x - nextX) + 1, 1);
+            int nextY = myMarginPositions.y[i + 1];
+            if (nextY > y + myLineHeight) {
+              if (x != baseMarginX) {
+                myGraphics.fillRect(Math.min(x, baseMarginX), y + myLineHeight - 1, Math.abs(x - baseMarginX) + 1, 1);
+              }
+              myGraphics.fillRect(baseMarginX, y + myLineHeight, 1, nextY - y - myLineHeight);
+              if (baseMarginX != nextX) {
+                myGraphics.fillRect(Math.min(nextX, baseMarginX), nextY - 1, Math.abs(nextX - baseMarginX) + 1, 1);
+              }
+            }
+            else {
+              if (x != nextX) {
+                myGraphics.fillRect(Math.min(x, nextX), y + myLineHeight - 1, Math.abs(x - nextX) + 1, 1);
+              }
+            }
+          }
+          else {
+            myGraphics.fillRect(x, y, 1, myClip.y + myClip.height + myYShift - y);
           }
         }
       }
