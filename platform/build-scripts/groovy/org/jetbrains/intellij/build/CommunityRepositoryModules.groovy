@@ -58,6 +58,7 @@ class CommunityRepositoryModules {
     "intellij.platform.diff.impl",
     "intellij.platform.editor.ex",
     "intellij.platform.indexing.impl",
+    "intellij.platform.execution.impl",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.core",
     "intellij.platform.workspaceModel.ide",

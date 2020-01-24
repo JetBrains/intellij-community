@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
@@ -175,7 +174,7 @@ public final class RunContentBuilder extends RunTab {
     return descriptor;
   }
 
-  public static final class ConsoleToFrontListener implements ConsoleViewImpl.ChangeListener {
+  public static final class ConsoleToFrontListener implements ObservableConsoleView.ChangeListener {
     @NotNull private final RunConfigurationBase myRunConfigurationBase;
     @NotNull private final Project myProject;
     @NotNull private final Executor myExecutor;
