@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.filters.Filter;
@@ -26,7 +26,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected TestConsoleProperties myProperties;
   private TestResultsPanel myTestResultsPanel;
 
-  public BaseTestsOutputConsoleView(final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
+  public BaseTestsOutputConsoleView(TestConsoleProperties properties, AbstractTestProxy unboundOutputRoot) {
     myProperties = properties;
 
     myConsole = myProperties.createConsole();
