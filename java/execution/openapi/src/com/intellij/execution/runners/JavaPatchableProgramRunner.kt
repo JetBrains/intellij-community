@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.JavaParameters
@@ -22,15 +21,11 @@ abstract class JavaPatchableProgramRunner<Settings : RunnerSettings> : GenericPr
     }
   }
 
-  @Throws(ExecutionException::class)
   abstract fun patch(javaParameters: JavaParameters?, settings: RunnerSettings?, runProfile: RunProfile?, beforeExecution: Boolean)
 
-  @Throws(ExecutionException::class)
   final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
-    ExecutionManager.getInstance(environment.project).startRunProfile(environment, callback,
-                                                                      { resolvedPromise(doExecute(state, environment)) })
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment, callback, { resolvedPromise(doExecute(state, environment)) })
   }
 
-  @Throws(ExecutionException::class)
   abstract override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor?
 }
