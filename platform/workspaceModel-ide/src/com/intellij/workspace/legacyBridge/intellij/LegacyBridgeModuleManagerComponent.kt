@@ -366,6 +366,14 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     return module
   }
 
+  override fun newNonPersistentModule(moduleName: String, id: String): Module {
+    incModificationCount()
+    val modifiableModel = modifiableModel
+    val module = modifiableModel.newNonPersistentModule(moduleName, id)
+    modifiableModel.commit()
+    return module
+  }
+
   override fun getModuleDependentModules(module: Module): List<Module> = modules.filter { isModuleDependent(it, module) }
 
   override fun getUnloadedModuleDescriptions(): Collection<UnloadedModuleDescription> = unloadedModules.values

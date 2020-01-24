@@ -20,11 +20,11 @@ internal class LegacyBridgeModuleImpl(
   override var moduleEntityId: ModuleId,
   name: String,
   project: Project,
-  filePath: String,
+  filePath: String?,
   override var entityStore: TypedEntityStore,
   override var diff: TypedEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath), LegacyBridgeModule {
-  private val directoryPath: String = File(filePath).parent
+  private val directoryPath: String? = filePath?.let { File(it).parent }
 
   override fun rename(newName: String, notifyStorage: Boolean) {
     moduleEntityId = moduleEntityId.copy(name = newName)
@@ -44,7 +44,10 @@ internal class LegacyBridgeModuleImpl(
     registerService(IComponentStore::class.java, LegacyBridgeModuleStoreImpl::class.java, pluginDescriptor, true)
   }
 
-  override fun getModuleFile(): VirtualFile? = LocalFileSystem.getInstance().findFileByIoFile(File(moduleFilePath))
+  override fun getModuleFile(): VirtualFile? {
+    if (directoryPath == null) return null
+    return LocalFileSystem.getInstance().findFileByIoFile(File(moduleFilePath))
+  }
 
-  override fun getModuleFilePath(): String = "$directoryPath/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}"
+  override fun getModuleFilePath(): String =  directoryPath?.let { "$it/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}" } ?: ""
 }

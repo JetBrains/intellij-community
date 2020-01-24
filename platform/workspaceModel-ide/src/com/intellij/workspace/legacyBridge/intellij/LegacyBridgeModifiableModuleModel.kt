@@ -42,6 +42,21 @@ internal class LegacyBridgeModifiableModuleModel(
   override fun newModule(filePath: String, moduleTypeId: String): Module =
     newModule(filePath, moduleTypeId, null)
 
+  override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
+    val moduleEntity = diff.addModuleEntity(
+      name = moduleName,
+      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+      source = object : EntitySource {}
+    )
+
+    val module = LegacyBridgeModuleImpl(moduleEntity.persistentId(), moduleName, project, null, entityStoreOnDiff, diff)
+    myModulesToAdd[moduleName] = module
+
+    module.init {}
+    module.setModuleType(moduleTypeId)
+    return module
+  }
+
   override fun newModule(filePath: String, moduleTypeId: String, options: MutableMap<String, String>?): Module {
     // TODO Handle filePath, add correct iml source with a path
 
