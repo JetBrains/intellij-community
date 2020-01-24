@@ -58,7 +58,7 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
    * @return The newly created editor info.
    */
   @NotNull
-  LightEditorInfo createEditor() {
+  public LightEditorInfo createEditor() {
     Document document = new DocumentImpl("");
     LightVirtualFile file = new LightVirtualFile(getUniqueName());
     file.setFileType(PlainTextFileType.INSTANCE);

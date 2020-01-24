@@ -15,6 +15,8 @@ public interface LightEditorManager {
 
   LightEditorInfo saveAs(@NotNull LightEditorInfo info, @NotNull VirtualFile targetFile);
 
+  LightEditorInfo createEditor();
+
   LightEditorInfo createEditor(@NotNull VirtualFile file);
 
   void closeEditor(@NotNull LightEditorInfo editorInfo);
