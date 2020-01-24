@@ -1,191 +1,124 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.update;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.update
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.update.UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh
+import com.intellij.openapi.vfs.VirtualFile
+import java.io.File
 
-import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-
-public class RefreshVFsSynchronously {
-  private static final Logger LOG = Logger.getInstance(RefreshVFsSynchronously.class);
-
-  private RefreshVFsSynchronously() {
+object RefreshVFsSynchronously {
+  @JvmStatic
+  fun updateAllChanged(updatedFiles: UpdatedFiles) {
+    val callback = FilesToRefreshCollector()
+    iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, callback)
+    refreshDeletedOrReplaced(callback.toRefreshDeletedOrReplaced)
+    refreshFiles(callback.toRefresh)
   }
 
-  public static void updateAllChanged(@NotNull final UpdatedFiles updatedFiles) {
-    FilesToRefreshCollector callback = new FilesToRefreshCollector();
-    UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, callback);
-
-    refreshDeletedOrReplaced(callback.getToRefreshDeletedOrReplaced());
-    refreshFiles(callback.getToRefresh());
-  }
-
-  public static void refreshFiles(@NotNull Collection<? extends File> files) {
-    Collection<VirtualFile> filesToRefresh = new HashSet<>();
-    for (File file : files) {
-      VirtualFile vf = findFirstValidVirtualParent(file);
+  @JvmStatic
+  fun refreshFiles(files: Collection<File>) {
+    val filesToRefresh = mutableSetOf<VirtualFile>()
+    for (file in files) {
+      val vf = findFirstValidVirtualParent(file)
       if (vf != null) {
-        filesToRefresh.add(vf);
+        filesToRefresh.add(vf)
       }
     }
-    VfsUtil.markDirtyAndRefresh(false, false, false, filesToRefresh.toArray(VirtualFile.EMPTY_ARRAY));
+    markDirtyAndRefresh(false, false, false, *filesToRefresh.toTypedArray())
   }
 
-  private static void refreshDeletedOrReplaced(@NotNull Collection<? extends File> deletedOrReplaced) {
-    Collection<VirtualFile> filesToRefresh = new HashSet<>();
-    for (File file : deletedOrReplaced) {
-      File parent = file.getParentFile();
-      VirtualFile vf = findFirstValidVirtualParent(parent);
+  private fun refreshDeletedOrReplaced(deletedOrReplaced: Collection<File>) {
+    val filesToRefresh = mutableSetOf<VirtualFile>()
+    for (file in deletedOrReplaced) {
+      val parent = file.parentFile
+      val vf = findFirstValidVirtualParent(parent)
       if (vf != null) {
-        filesToRefresh.add(vf);
+        filesToRefresh.add(vf)
       }
     }
-    VfsUtil.markDirtyAndRefresh(false, true, false, filesToRefresh.toArray(VirtualFile.EMPTY_ARRAY));
+    markDirtyAndRefresh(false, true, false, *filesToRefresh.toTypedArray())
   }
 
-  @Nullable
-  private static VirtualFile findFirstValidVirtualParent(@Nullable File file) {
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile vf = null;
-    while (file != null && (vf == null || !vf.isValid())) {
-      vf = lfs.findFileByIoFile(file);
-      file = file.getParentFile();
+  private fun findFirstValidVirtualParent(file: File?): VirtualFile? {
+    val lfs = LocalFileSystem.getInstance()
+    var vf: VirtualFile? = null
+    var current = file
+    while (current != null && (vf == null || !vf.isValid)) {
+      vf = lfs.findFileByIoFile(current)
+      current = current.parentFile
     }
-    return vf == null || !vf.isValid() ? null : vf;
+    return if (vf == null || !vf.isValid) null else vf
   }
 
-  public static void updateChangesForRollback(final List<? extends Change> changes) {
-    updateChangesImpl(changes, RollbackChangeWrapper.ourInstance);
-  }
+  @JvmStatic
+  fun updateChangesForRollback(changes: List<Change>) = updateChangesImpl(changes, RollbackChangeWrapper)
 
-  public static void updateChanges(final Collection<? extends Change> changes) {
-    updateChangesImpl(changes, DirectChangeWrapper.ourInstance);
-  }
+  @JvmStatic
+  fun updateChanges(changes: Collection<Change>) = updateChangesImpl(changes, DirectChangeWrapper)
 
-  private static void updateChangesImpl(final Collection<? extends Change> changes, final ChangeWrapper wrapper) {
-    Collection<File> deletedOrReplaced = new HashSet<>();
-    Collection<File> toRefresh = new HashSet<>();
-    for (Change change : changes) {
-      if ((! wrapper.beforeNull(change)) && (wrapper.movedOrRenamedOrReplaced(change) || (wrapper.afterNull(change)))) {
-        deletedOrReplaced.add(wrapper.getBeforeFile(change));
-      } else if (!wrapper.beforeNull(change)) {
-        toRefresh.add(wrapper.getBeforeFile(change));
+  private fun updateChangesImpl(changes: Collection<Change>, wrapper: ChangeWrapper) {
+    val deletedOrReplaced = mutableSetOf<File>()
+    val toRefresh = mutableSetOf<File>()
+    for (change in changes) {
+      if (!wrapper.beforeNull(change) && (wrapper.movedOrRenamedOrReplaced(change) || wrapper.afterNull(change))) {
+        deletedOrReplaced.add(wrapper.getBeforeFile(change)!!)
       }
-      if ((! wrapper.afterNull(change)) &&
-          (wrapper.beforeNull(change) || (! Comparing.equal(change.getAfterRevision().getFile(), change.getBeforeRevision().getFile())))
-         ) {
-        toRefresh.add(wrapper.getAfterFile(change));
+      else if (!wrapper.beforeNull(change)) {
+        toRefresh.add(wrapper.getBeforeFile(change)!!)
       }
-    }
-
-    refreshFiles(toRefresh);
-    refreshDeletedOrReplaced(deletedOrReplaced);
-  }
-
-  private static class RollbackChangeWrapper implements ChangeWrapper {
-    private static final RollbackChangeWrapper ourInstance = new RollbackChangeWrapper();
-
-    @Override
-    public boolean beforeNull(Change change) {
-      return change.getAfterRevision() == null;
-    }
-
-    @Override
-    public boolean afterNull(Change change) {
-      return change.getBeforeRevision() == null;
-    }
-
-    @Override
-    public File getBeforeFile(Change change) {
-      return beforeNull(change) ? null : change.getAfterRevision().getFile().getIOFile();
-    }
-
-    @Override
-    public File getAfterFile(Change change) {
-      return afterNull(change) ? null : change.getBeforeRevision().getFile().getIOFile();
-    }
-
-    @Override
-    public boolean movedOrRenamedOrReplaced(Change change) {
-      return change.isMoved() || change.isRenamed() || change.isIsReplaced();
-    }
-  }
-
-  private static class DirectChangeWrapper implements ChangeWrapper {
-    private static final DirectChangeWrapper ourInstance = new DirectChangeWrapper();
-
-    @Override
-    public boolean beforeNull(Change change) {
-      return change.getBeforeRevision() == null;
-    }
-
-    @Override
-    public boolean afterNull(Change change) {
-      return change.getAfterRevision() == null;
-    }
-
-    @Override
-    @Nullable
-    public File getBeforeFile(Change change) {
-      return beforeNull(change) ? null : change.getBeforeRevision().getFile().getIOFile();
-    }
-
-    @Override
-    @Nullable
-    public File getAfterFile(Change change) {
-      return afterNull(change) ? null : change.getAfterRevision().getFile().getIOFile();
-    }
-
-    @Override
-    public boolean movedOrRenamedOrReplaced(Change change) {
-      return change.isMoved() || change.isRenamed() || change.isIsReplaced();
-    }
-  }
-
-  private interface ChangeWrapper {
-    boolean beforeNull(final Change change);
-    boolean afterNull(final Change change);
-    @Nullable
-    File getBeforeFile(final Change change);
-    @Nullable
-    File getAfterFile(final Change change);
-    boolean movedOrRenamedOrReplaced(final Change change);
-  }
-
-  private static class FilesToRefreshCollector implements UpdateFilesHelper.Callback {
-    private final Collection<File> myToRefresh = new THashSet<>();
-    private final Collection<File> myToRefreshDeletedOrReplaced = new THashSet<>();
-
-    @Override
-    public void onFile(String filePath, String groupId) {
-      final File file = new File(filePath);
-      if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(groupId) || FileGroup.MERGED_WITH_TREE_CONFLICT.endsWith(groupId)) {
-        myToRefreshDeletedOrReplaced.add(file);
-      }
-      else {
-        myToRefresh.add(file);
+      if (!wrapper.afterNull(change) &&
+          (wrapper.beforeNull(change) || !Comparing.equal(change.afterRevision!!.file, change.beforeRevision!!.file))
+      ) {
+        toRefresh.add(wrapper.getAfterFile(change)!!)
       }
     }
+    refreshFiles(toRefresh)
+    refreshDeletedOrReplaced(deletedOrReplaced)
+  }
+}
 
-    @NotNull
-    public Collection<File> getToRefresh() {
-      return myToRefresh;
+private object RollbackChangeWrapper : ChangeWrapper {
+  override fun beforeNull(change: Change): Boolean = change.afterRevision == null
+  override fun afterNull(change: Change): Boolean = change.beforeRevision == null
+
+  override fun getBeforeFile(change: Change): File? = if (beforeNull(change)) null else change.afterRevision!!.file.ioFile
+  override fun getAfterFile(change: Change): File? = if (afterNull(change)) null else change.beforeRevision!!.file.ioFile
+
+  override fun movedOrRenamedOrReplaced(change: Change): Boolean = change.isMoved || change.isRenamed || change.isIsReplaced
+}
+
+private object DirectChangeWrapper : ChangeWrapper {
+  override fun beforeNull(change: Change): Boolean = change.beforeRevision == null
+  override fun afterNull(change: Change): Boolean = change.afterRevision == null
+
+  override fun getBeforeFile(change: Change): File? = if (beforeNull(change)) null else change.beforeRevision!!.file.ioFile
+  override fun getAfterFile(change: Change): File? = if (afterNull(change)) null else change.afterRevision!!.file.ioFile
+
+  override fun movedOrRenamedOrReplaced(change: Change): Boolean = change.isMoved || change.isRenamed || change.isIsReplaced
+}
+
+private interface ChangeWrapper {
+  fun beforeNull(change: Change): Boolean
+  fun afterNull(change: Change): Boolean
+  fun getBeforeFile(change: Change): File?
+  fun getAfterFile(change: Change): File?
+  fun movedOrRenamedOrReplaced(change: Change): Boolean
+}
+
+private class FilesToRefreshCollector : UpdateFilesHelper.Callback {
+  val toRefresh = mutableSetOf<File>()
+  val toRefreshDeletedOrReplaced = mutableSetOf<File>()
+
+  override fun onFile(filePath: String, groupId: String) {
+    val file = File(filePath)
+    if (FileGroup.REMOVED_FROM_REPOSITORY_ID == groupId || FileGroup.MERGED_WITH_TREE_CONFLICT.endsWith(groupId)) {
+      toRefreshDeletedOrReplaced.add(file)
     }
-
-    @NotNull
-    public Collection<File> getToRefreshDeletedOrReplaced() {
-      return myToRefreshDeletedOrReplaced;
+    else {
+      toRefresh.add(file)
     }
   }
-
 }
