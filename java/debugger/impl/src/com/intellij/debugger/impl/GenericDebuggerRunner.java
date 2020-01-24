@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -8,16 +8,14 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.JavaPatchableProgramRunner;
+import com.intellij.execution.runners.JavaProgramPatcher;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -29,8 +27,9 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promises;
 
-public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDebuggerRunnerSettings> {
+public class GenericDebuggerRunner implements ProgramRunner<GenericDebuggerRunnerSettings> {
   @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile
@@ -44,6 +43,18 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   }
 
   @Override
+  public final void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
+    RunProfileState state = environment.getState();
+    if (state == null) {
+      return;
+    }
+
+    ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, callback, () -> {
+      return Promises.resolvedPromise(doExecute(state, environment));
+    });
+  }
+
+  // used externally
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return createContentDescriptor(state, env);
@@ -52,8 +63,8 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   @Nullable
   protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
-      final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      runCustomPatchers(parameters, environment.getExecutor(), environment.getRunProfile());
+      JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
+      JavaProgramPatcher.runCustomPatchers(parameters, environment.getExecutor(), environment.getRunProfile());
       boolean isPollConnection = true;
       RemoteConnection connection = null;
       if (state instanceof RemoteConnectionCreator) {
@@ -146,10 +157,10 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     return new GenericDebuggerRunnerSettings();
   }
 
-  @Override
+  // used externally
   public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
     doPatch(javaParameters, settings, beforeExecution);
-    runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
+    JavaProgramPatcher.runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
   }
 
   private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings, boolean beforeExecution)
