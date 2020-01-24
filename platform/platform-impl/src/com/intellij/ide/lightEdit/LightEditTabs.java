@@ -272,4 +272,14 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
       }
     });
   }
+
+  @Override
+  public void dispose() {
+    if (myTabUpdateFuture != null) {
+      myTabUpdateFuture.cancel(true);
+      myTabUpdateFuture = null;
+    }
+
+    super.dispose();
+  }
 }
