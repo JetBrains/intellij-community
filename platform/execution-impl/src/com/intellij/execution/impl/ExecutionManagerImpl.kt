@@ -135,10 +135,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
    * Internal usage only. Maybe removed or changed in any moment. No backward compatibility.
    */
   @ApiStatus.Internal
-  override fun startRunProfile(environment: ExecutionEnvironment,
-                               callback: ProgramRunner.Callback?,
-                               starter: () -> Promise<RunContentDescriptor?>) {
-    startRunProfile(environment) {
+  override fun startRunProfile(environment: ExecutionEnvironment, starter: () -> Promise<RunContentDescriptor?>) {
+    doStartRunProfile(environment) {
       // errors are handled by startRunProfile
       starter()
         .then { descriptor ->
@@ -155,19 +153,19 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
               descriptor.isActivateToolWindowWhenAdded = settings.isActivateToolWindowBeforeRun
             }
           }
-          callback?.processStarted(descriptor)
+          environment.callback?.processStarted(descriptor)
           descriptor
         }
     }
   }
 
   override fun startRunProfile(starter: RunProfileStarter, environment: ExecutionEnvironment) {
-    startRunProfile(environment) {
+    doStartRunProfile(environment) {
       starter.executeAsync(environment)
     }
   }
 
-  private fun startRunProfile(environment: ExecutionEnvironment, task: () -> Promise<RunContentDescriptor>) {
+  private fun doStartRunProfile(environment: ExecutionEnvironment, task: () -> Promise<RunContentDescriptor>) {
     val activity = triggerUsage(environment)
 
     RunManager.getInstance(environment.project).refreshUsagesList(environment.runProfile)
@@ -236,8 +234,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                 if (terminating || terminated) {
                   listener.processWillTerminate(ProcessEvent(processHandler), false /* doesn't matter */)
                   if (terminated) {
-                    listener.processTerminated(
-                      ProcessEvent(processHandler, if (processHandler.isStartNotified) processHandler.exitCode ?: -1 else -1))
+                    val exitCode = if (processHandler.isStartNotified) processHandler.exitCode ?: -1 else -1
+                    listener.processTerminated(ProcessEvent(processHandler, exitCode))
                   }
                 }
               }
@@ -506,10 +504,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   }
 
   @ApiStatus.Internal
-  fun executeConfiguration(environment: ExecutionEnvironment,
-                           showSettings: Boolean,
-                           assignNewId: Boolean = true,
-                           callback: ProgramRunner.Callback? = null) {
+  fun executeConfiguration(environment: ExecutionEnvironment, showSettings: Boolean, assignNewId: Boolean = true) {
     val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
     val project = environment.project
     var runner = environment.runner
@@ -550,7 +545,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       if (assignNewId) {
         effectiveEnvironment.assignNewExecutionId()
       }
-      runner.execute(effectiveEnvironment, callback)
+      runner.execute(effectiveEnvironment)
     }
     catch (e: ExecutionException) {
       ProgramRunnerUtil.handleExecutionError(project, environment, e, runnerAndConfigurationSettings?.configuration)

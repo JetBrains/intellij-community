@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -119,7 +119,6 @@ class ForkedDebuggerThread extends Thread {
 
   private void handleForkedProcessSignal(Socket accept) throws IOException {
     // the stream can not be closed in the current thread
-    //noinspection IOResourceOpenedButNotSafelyClosed
     DataInputStream stream = new DataInputStream(accept.getInputStream());
 
     String debuggerId = stream.readUTF();
@@ -127,7 +126,7 @@ class ForkedDebuggerThread extends Thread {
     String processParameters = stream.readUTF();
 
     if (processParameters.startsWith(ForkedDebuggerHelper.FINISH_PARAMS)) {
-      removeTerminatedForks(processName, processParameters, accept, stream);
+      removeTerminatedForks(processName, accept, stream);
       return;
     }
 
@@ -153,7 +152,7 @@ class ForkedDebuggerThread extends Thread {
     }
   }
 
-  private void unblockRemote(Socket socket, DataInputStream inputStream) {
+  private static void unblockRemote(Socket socket, DataInputStream inputStream) {
     try {
       socket.getOutputStream().write(0);
       inputStream.close();
@@ -187,7 +186,6 @@ class ForkedDebuggerThread extends Thread {
   }
 
   private void removeTerminatedForks(@NotNull String processName,
-                                     @NotNull String processParams,
                                      Socket socket,
                                      DataInputStream inputStream) {
     ApplicationManager.getApplication().invokeLater(() -> {

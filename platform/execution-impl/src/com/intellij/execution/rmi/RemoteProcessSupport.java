@@ -187,8 +187,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
 
       @Override
-      public void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
-        ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, callback, state -> {
+      public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+        ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, state -> {
           return DefaultProgramRunnerKt.executeState(state, environment, this);
         });
       }

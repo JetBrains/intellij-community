@@ -13,22 +13,22 @@ private class DefaultRunProgramRunner : ProgramRunner<RunnerSettings> {
   override fun getRunnerId() = "defaultRunRunner"
 
   @Throws(ExecutionException::class)
-  override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
+  override fun execute(environment: ExecutionEnvironment) {
     val state = environment.state ?: return
-    ExecutionManager.getInstance(environment.project).startRunProfile(environment, callback, {
-        FileDocumentManager.getInstance().saveAllDocuments()
-        if (state is DebuggableRunProfileState) {
-          state.execute(-1)
-            .then {
-              it?.let {
-                RunContentBuilder(it, environment).showRunContent(environment.contentToReuse)
-              }
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      if (state is DebuggableRunProfileState) {
+        state.execute(-1)
+          .then {
+            it?.let {
+              RunContentBuilder(it, environment).showRunContent(environment.contentToReuse)
             }
-        }
-        else {
-          resolvedPromise(showRunContent(state.execute(environment.executor, this@DefaultRunProgramRunner), environment))
-        }
-      })
+          }
+      }
+      else {
+        resolvedPromise(showRunContent(state.execute(environment.executor, this@DefaultRunProgramRunner), environment))
+      }
+    }
   }
 
   override fun canRun(executorId: String, profile: RunProfile): Boolean {

@@ -47,7 +47,6 @@ import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -84,8 +83,8 @@ public class DefaultJavaProgramRunner implements ProgramRunner<RunnerSettings> {
   }
 
   @Override
-  public void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
-    ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, callback, state -> {
+  public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+    ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, state -> {
       return doExecute(state, environment);
     });
   }

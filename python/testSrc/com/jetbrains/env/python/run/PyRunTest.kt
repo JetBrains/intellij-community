@@ -60,21 +60,21 @@ class PyRunTest : PyEnvTestCase() {
         })
 
         runInEdt {
-          runner.execute(env) {
-            val processHandler = it.processHandler ?: error("Failed to create process")
-            processHandler.addProcessListener(object : ProcessAdapter() {
-              override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                if (outputType == ProcessOutputTypes.STDOUT) {
-                  output.add(event.text)
-                }
-              }
+          runner.execute(env.withCallback({
+                                            val processHandler = it.processHandler ?: error("Failed to create process")
+                                            processHandler.addProcessListener(object : ProcessAdapter() {
+                                              override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                                                if (outputType == ProcessOutputTypes.STDOUT) {
+                                                  output.add(event.text)
+                                                }
+                                              }
 
-              override fun processTerminated(event: ProcessEvent) {
-                processHandler.removeProcessListener(this)
-                latch.countDown()
-              }
-            })
-          }
+                                              override fun processTerminated(event: ProcessEvent) {
+                                                processHandler.removeProcessListener(this)
+                                                latch.countDown()
+                                              }
+                                            })
+                                          }))
         }
         latch.await(myTimeout.toLong(), TimeUnit.MILLISECONDS)
         connection.disconnect()

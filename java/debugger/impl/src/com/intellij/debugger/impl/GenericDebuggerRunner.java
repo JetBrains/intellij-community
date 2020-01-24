@@ -43,13 +43,13 @@ public class GenericDebuggerRunner implements ProgramRunner<GenericDebuggerRunne
   }
 
   @Override
-  public final void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
+  public final void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
     RunProfileState state = environment.getState();
     if (state == null) {
       return;
     }
 
-    ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, callback, () -> {
+    ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, () -> {
       return Promises.resolvedPromise(doExecute(state, environment));
     });
   }

@@ -51,10 +51,13 @@ public final class ProgramRunnerUtil {
   public static void executeConfigurationAsync(@NotNull ExecutionEnvironment environment,
                                                boolean showSettings,
                                                boolean assignNewId,
-                                               ProgramRunner.Callback callback) {
+                                               @Nullable ProgramRunner.Callback callback) {
     ExecutionManagerImpl manager = (ExecutionManagerImpl)ExecutionManager.getInstance(environment.getProject());
     if (!manager.isStarting(environment)) {
-      manager.executeConfiguration(environment, showSettings, assignNewId, callback);
+      if (callback != null) {
+        environment = environment.withCallback(callback);
+      }
+      manager.executeConfiguration(environment, showSettings, assignNewId);
     }
   }
 

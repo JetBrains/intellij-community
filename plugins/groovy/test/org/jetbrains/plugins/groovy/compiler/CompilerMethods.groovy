@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.execution.ExecutionException
@@ -36,7 +36,7 @@ trait CompilerMethods {
     semaphore.down()
 
     final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>()
-    environment.runner.execute(environment) { RunContentDescriptor descriptor ->
+    environment.runner.execute(environment.withCallback({ RunContentDescriptor descriptor ->
       if (descriptor == null) {
         throw new AssertionError((Object)"Null descriptor!")
       }
@@ -46,7 +46,7 @@ trait CompilerMethods {
       handler.addProcessListener(listener)
       processHandler.set(handler)
       semaphore.up()
-    }
+    }))
     if (!semaphore.waitFor(20000)) {
       throw new AssertionError((Object)"Process took too long")
     }

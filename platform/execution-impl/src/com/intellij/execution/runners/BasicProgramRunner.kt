@@ -13,11 +13,11 @@ import org.jetbrains.concurrency.resolvedPromise
 @Deprecated(message = "Do not use and do not extend. Use DefaultProgramRunner instead.", level = DeprecationLevel.ERROR)
 abstract class BasicProgramRunner : ProgramRunner<RunnerSettings> {
   @Throws(ExecutionException::class)
-  override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
+  override fun execute(environment: ExecutionEnvironment) {
     val state = environment.state ?: return
-    ExecutionManager.getInstance(environment.project).startRunProfile(environment, callback, {
-        resolvedPromise(doExecute(state, environment))
-      })
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
+      resolvedPromise(doExecute(state, environment))
+    }
   }
 
   @Throws(ExecutionException::class)

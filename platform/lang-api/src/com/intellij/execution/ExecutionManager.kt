@@ -4,7 +4,6 @@ package com.intellij.execution
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.project.Project
@@ -46,24 +45,17 @@ abstract class ExecutionManager {
   abstract fun getRunningProcesses(): Array<ProcessHandler>
 
   /**
-   * Prepares the run or debug tab for running the specified process and calls a callback to start it.
-   *
-   * @param starter     the callback to start the process execution.
-   * @param environment the execution environment describing the process to be started.
+   * Prepares the run or debug tab for running the specified process.
    */
   abstract fun startRunProfile(starter: RunProfileStarter, environment: ExecutionEnvironment)
 
   @ApiStatus.Internal
-  abstract fun startRunProfile(environment: ExecutionEnvironment,
-                               callback: ProgramRunner.Callback?,
-                               starter: () -> Promise<RunContentDescriptor?>)
+  abstract fun startRunProfile(environment: ExecutionEnvironment, starter: () -> Promise<RunContentDescriptor?>)
 
   @ApiStatus.Internal
-  fun startRunProfile(environment: ExecutionEnvironment,
-                      callback: ProgramRunner.Callback?,
-                      executor: Function<RunProfileState, RunContentDescriptor?>) {
+  fun startRunProfile(environment: ExecutionEnvironment, executor: Function<RunProfileState, RunContentDescriptor?>) {
     val state = environment.state ?: return
-    startRunProfile(environment, callback, { resolvedPromise(executor.apply(state)) })
+    startRunProfile(environment) { resolvedPromise(executor.apply(state)) }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

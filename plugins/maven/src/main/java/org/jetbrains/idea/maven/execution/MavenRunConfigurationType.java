@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -12,7 +12,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -172,7 +171,10 @@ public final class MavenRunConfigurationType implements ConfigurationType {
     ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configSettings, project);
     environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
     try {
-      runner.execute(environment, callback);
+      if (callback != null) {
+        environment = environment.withCallback(callback);
+      }
+      runner.execute(environment);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, "Failed to execute Maven goal", e);

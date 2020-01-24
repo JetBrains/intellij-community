@@ -13,15 +13,16 @@ import org.jetbrains.concurrency.resolvedPromise
 @Deprecated(message = "Not required and not used anymore")
 abstract class JavaPatchableProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
   @Throws(ExecutionException::class)
-  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
-    execute(environment, callback, environment.state ?: return)
+  final override fun execute(environment: ExecutionEnvironment) {
+    execute(environment, environment.callback, environment.state ?: return)
   }
 
   abstract fun patch(javaParameters: JavaParameters?, settings: RunnerSettings?, runProfile: RunProfile?, beforeExecution: Boolean)
 
   fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
-    ExecutionManager.getInstance(environment.project).startRunProfile(environment, callback,
-                                                                      { resolvedPromise(doExecute(state, environment)) })
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
+      resolvedPromise(doExecute(state, environment))
+    }
   }
 
   abstract fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor?

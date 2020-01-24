@@ -13,10 +13,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +38,9 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   private long myExecutionId = 0;
   @Nullable private DataContext myDataContext;
 
+  @Nullable
+  private ProgramRunner.Callback callback;
+
   @TestOnly
   public ExecutionEnvironment() {
     myProject = null;
@@ -62,7 +62,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
          settings.getConfigurationSettings(runner),
          null,
          settings,
-         runner);
+         runner, null);
   }
 
   ExecutionEnvironment(@NotNull RunProfile runProfile,
@@ -73,7 +73,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
                        @Nullable ConfigurationPerRunnerSettings configurationSettings,
                        @Nullable RunContentDescriptor contentToReuse,
                        @Nullable RunnerAndConfigurationSettings settings,
-                       @NotNull ProgramRunner<?> runner) {
+                       @NotNull ProgramRunner<?> runner,
+                       @Nullable ProgramRunner.Callback callback) {
     myExecutor = executor;
     myTarget = target;
     myRunProfile = runProfile;
@@ -84,6 +85,20 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     myRunnerAndConfigurationSettings = settings;
 
     myRunner = runner;
+
+    this.callback = callback;
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public ExecutionEnvironment withCallback(@NotNull ProgramRunner.Callback callback) {
+    return new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings,
+                                    myContentToReuse, myRunnerAndConfigurationSettings, myRunner, callback);
+  }
+
+  @Nullable
+  public ProgramRunner.Callback getCallback() {
+    return callback;
   }
 
   @Override
