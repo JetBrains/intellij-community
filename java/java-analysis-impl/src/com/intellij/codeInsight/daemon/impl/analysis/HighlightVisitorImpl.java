@@ -819,7 +819,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     super.visitInstanceOfExpression(expression);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInstanceOfApplicable(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInstanceOfGenericType(expression));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
   }
 
   @Override

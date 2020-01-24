@@ -820,7 +820,7 @@ public class GenericsHighlightUtil {
       if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) return null;
     }
 
-    if (PsiUtil.isCompileTimeConstant((PsiVariable)field)) return null;
+    if (PsiUtil.isCompileTimeConstant(field)) return null;
 
     String description = JavaErrorBundle.message(
       "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
@@ -925,10 +925,23 @@ public class GenericsHighlightUtil {
     return result;
   }
 
-  static HighlightInfo checkInstanceOfGenericType(@NotNull PsiInstanceOfExpression expression) {
+  static HighlightInfo checkInstanceOfGenericType(@NotNull LanguageLevel languageLevel, @NotNull PsiInstanceOfExpression expression) {
     final PsiTypeElement checkTypeElement = expression.getCheckType();
     if (checkTypeElement == null) return null;
-    return isIllegalForInstanceOf(checkTypeElement.getType(), checkTypeElement);
+    PsiType checkType = checkTypeElement.getType();
+    if (HighlightUtil.Feature.PATTERNS.isSufficient(languageLevel)) {
+      return isUnsafeCastInInstanceOf(checkTypeElement, checkType, expression.getOperand().getType());
+    }
+    return isIllegalForInstanceOf(checkType, checkTypeElement);
+  }
+
+  private static HighlightInfo isUnsafeCastInInstanceOf(PsiTypeElement checkTypeElement, PsiType checkType, PsiType expressionType) {
+    if (expressionType != null && JavaGenericsUtil.isUncheckedCast(checkType, expressionType)) {
+      String description = JavaErrorBundle.message("unsafe.cast.in.instanceof",
+                                                   expressionType.getPresentableText(), checkType.getPresentableText());
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(checkTypeElement).descriptionAndTooltip(description).create();
+    }
+    return null;
   }
 
   /**

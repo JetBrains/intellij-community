@@ -38,6 +38,9 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     myFixture.enableInspections(new UnusedDeclarationInspection());
     doTest();
   }
+  public void testInstanceOfNonReified() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
