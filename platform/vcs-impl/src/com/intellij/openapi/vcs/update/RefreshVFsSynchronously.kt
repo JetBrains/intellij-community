@@ -13,54 +13,35 @@ import java.io.File
 object RefreshVFsSynchronously {
   @JvmStatic
   fun updateAllChanged(updatedFiles: UpdatedFiles) {
-    val callback = FilesToRefreshCollector()
-    iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, callback)
-    refreshDeletedOrReplaced(callback.toRefreshDeletedOrReplaced)
-    refreshFiles(callback.toRefresh)
+    val collector = FilesCollector()
+    iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, collector)
+    refreshDeletedFiles(collector.deletedFiles)
+    refreshFiles(collector.files)
   }
 
   @JvmStatic
   fun refreshFiles(files: Collection<File>) {
-    val filesToRefresh = mutableSetOf<VirtualFile>()
-    for (file in files) {
-      val vf = findFirstValidVirtualParent(file)
-      if (vf != null) {
-        filesToRefresh.add(vf)
-      }
-    }
-    markDirtyAndRefresh(false, false, false, *filesToRefresh.toTypedArray())
+    val toRefresh = files.mapNotNullTo(mutableSetOf()) { findValidParent(it) }
+    markDirtyAndRefresh(false, false, false, *toRefresh.toTypedArray())
   }
 
-  private fun refreshDeletedOrReplaced(deletedOrReplaced: Collection<File>) {
-    val filesToRefresh = mutableSetOf<VirtualFile>()
-    for (file in deletedOrReplaced) {
-      val parent = file.parentFile
-      val vf = findFirstValidVirtualParent(parent)
-      if (vf != null) {
-        filesToRefresh.add(vf)
-      }
-    }
-    markDirtyAndRefresh(false, true, false, *filesToRefresh.toTypedArray())
+  private fun refreshDeletedFiles(files: Collection<File>) {
+    val toRefresh = files.mapNotNullTo(mutableSetOf()) { findValidParent(it.parentFile) }
+    markDirtyAndRefresh(false, true, false, *toRefresh.toTypedArray())
   }
 
-  private fun findFirstValidVirtualParent(file: File?): VirtualFile? {
-    val lfs = LocalFileSystem.getInstance()
-    var vf: VirtualFile? = null
-    var current = file
-    while (current != null && (vf == null || !vf.isValid)) {
-      vf = lfs.findFileByIoFile(current)
-      current = current.parentFile
-    }
-    return if (vf == null || !vf.isValid) null else vf
-  }
+  private fun findValidParent(file: File?): VirtualFile? =
+    generateSequence(file) { it.parentFile }
+      .mapNotNull { LocalFileSystem.getInstance().findFileByIoFile(it) }
+      .firstOrNull { it.isValid }
 
   @JvmStatic
-  fun updateChangesForRollback(changes: List<Change>) = updateChangesImpl(changes, REVERSED_CHANGE_WRAPPER)
+  fun updateChangesForRollback(changes: List<Change>) = refresh(changes, REVERSED_CHANGE_WRAPPER)
 
   @JvmStatic
-  fun updateChanges(changes: Collection<Change>) = updateChangesImpl(changes, CHANGE_WRAPPER)
+  fun updateChanges(changes: Collection<Change>) = refresh(changes, CHANGE_WRAPPER)
 
-  private fun <T> updateChangesImpl(changes: Collection<T>, wrapper: Wrapper<T>) {
+  private fun <T> refresh(changes: Collection<T>, wrapper: Wrapper<T>) {
     val files = mutableSetOf<File>()
     val deletedFiles = mutableSetOf<File>()
     changes.forEach { change ->
@@ -75,7 +56,7 @@ object RefreshVFsSynchronously {
       }
     }
     refreshFiles(files)
-    refreshDeletedOrReplaced(deletedFiles)
+    refreshDeletedFiles(deletedFiles)
   }
 }
 
@@ -99,17 +80,17 @@ private interface Wrapper<T> {
   fun isBeforePathDeleted(change: T): Boolean
 }
 
-private class FilesToRefreshCollector : UpdateFilesHelper.Callback {
-  val toRefresh = mutableSetOf<File>()
-  val toRefreshDeletedOrReplaced = mutableSetOf<File>()
+private class FilesCollector : UpdateFilesHelper.Callback {
+  val files = mutableSetOf<File>()
+  val deletedFiles = mutableSetOf<File>()
 
   override fun onFile(filePath: String, groupId: String) {
     val file = File(filePath)
     if (FileGroup.REMOVED_FROM_REPOSITORY_ID == groupId || FileGroup.MERGED_WITH_TREE_CONFLICT.endsWith(groupId)) {
-      toRefreshDeletedOrReplaced.add(file)
+      deletedFiles.add(file)
     }
     else {
-      toRefresh.add(file)
+      files.add(file)
     }
   }
 }
