@@ -2,6 +2,7 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.icons.AllIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ public class NamedScope {
   private final Icon myIcon;
   private final PackageSet myValue;
 
-  public NamedScope(@NotNull String name, @Nullable PackageSet value) {
+  public NamedScope(@NotNull @Nls String name, @Nullable PackageSet value) {
     this(name, AllIcons.Ide.LocalScope, value);
   }
 
