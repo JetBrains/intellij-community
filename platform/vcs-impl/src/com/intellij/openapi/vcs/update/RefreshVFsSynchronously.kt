@@ -3,12 +3,18 @@ package com.intellij.openapi.vcs.update
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.update.UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
+
+interface FilePathChange {
+  val beforePath: FilePath?
+  val afterPath: FilePath?
+}
 
 object RefreshVFsSynchronously {
   @JvmStatic
@@ -41,6 +47,8 @@ object RefreshVFsSynchronously {
   @JvmStatic
   fun updateChanges(changes: Collection<Change>) = refresh(changes, CHANGE_WRAPPER)
 
+  fun refresh(changes: Collection<FilePathChange>) = refresh(changes, FilePathChangeWrapper)
+
   private fun <T> refresh(changes: Collection<T>, wrapper: Wrapper<T>) {
     val files = mutableSetOf<File>()
     val deletedFiles = mutableSetOf<File>()
@@ -72,6 +80,14 @@ private class ChangeWrapper(private val isReversed: Boolean) : Wrapper<Change> {
 
   override fun isBeforePathDeleted(change: Change): Boolean =
     change.run { getAfterRevision(this) == null || isMoved || isRenamed || isIsReplaced }
+}
+
+object FilePathChangeWrapper : Wrapper<FilePathChange> {
+  override fun getBeforePath(change: FilePathChange): FilePath? = change.beforePath
+  override fun getAfterPath(change: FilePathChange): FilePath? = change.afterPath
+
+  override fun isBeforePathDeleted(change: FilePathChange): Boolean =
+    change.run { afterPath == null || !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath) }
 }
 
 private interface Wrapper<T> {
