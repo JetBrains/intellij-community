@@ -1,8 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update
 
-import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.update.UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh
@@ -54,58 +55,48 @@ object RefreshVFsSynchronously {
   }
 
   @JvmStatic
-  fun updateChangesForRollback(changes: List<Change>) = updateChangesImpl(changes, RollbackChangeWrapper)
+  fun updateChangesForRollback(changes: List<Change>) = updateChangesImpl(changes, REVERSED_CHANGE_WRAPPER)
 
   @JvmStatic
-  fun updateChanges(changes: Collection<Change>) = updateChangesImpl(changes, DirectChangeWrapper)
+  fun updateChanges(changes: Collection<Change>) = updateChangesImpl(changes, CHANGE_WRAPPER)
 
-  private fun updateChangesImpl(changes: Collection<Change>, wrapper: ChangeWrapper) {
-    val deletedOrReplaced = mutableSetOf<File>()
-    val toRefresh = mutableSetOf<File>()
-    for (change in changes) {
-      if (!wrapper.beforeNull(change) && (wrapper.movedOrRenamedOrReplaced(change) || wrapper.afterNull(change))) {
-        deletedOrReplaced.add(wrapper.getBeforeFile(change)!!)
+  private fun <T> updateChangesImpl(changes: Collection<T>, wrapper: Wrapper<T>) {
+    val files = mutableSetOf<File>()
+    val deletedFiles = mutableSetOf<File>()
+    changes.forEach { change ->
+      val beforePath = wrapper.getBeforePath(change)
+      val afterPath = wrapper.getAfterPath(change)
+
+      beforePath?.let {
+        (if (wrapper.isBeforePathDeleted(change)) deletedFiles else files) += it.ioFile
       }
-      else if (!wrapper.beforeNull(change)) {
-        toRefresh.add(wrapper.getBeforeFile(change)!!)
-      }
-      if (!wrapper.afterNull(change) &&
-          (wrapper.beforeNull(change) || !Comparing.equal(change.afterRevision!!.file, change.beforeRevision!!.file))
-      ) {
-        toRefresh.add(wrapper.getAfterFile(change)!!)
+      afterPath?.let {
+        if (it != beforePath) files += it.ioFile
       }
     }
-    refreshFiles(toRefresh)
-    refreshDeletedOrReplaced(deletedOrReplaced)
+    refreshFiles(files)
+    refreshDeletedOrReplaced(deletedFiles)
   }
 }
 
-private object RollbackChangeWrapper : ChangeWrapper {
-  override fun beforeNull(change: Change): Boolean = change.afterRevision == null
-  override fun afterNull(change: Change): Boolean = change.beforeRevision == null
+private val CHANGE_WRAPPER = ChangeWrapper(false)
+private val REVERSED_CHANGE_WRAPPER = ChangeWrapper(true)
 
-  override fun getBeforeFile(change: Change): File? = if (beforeNull(change)) null else change.afterRevision!!.file.ioFile
-  override fun getAfterFile(change: Change): File? = if (afterNull(change)) null else change.beforeRevision!!.file.ioFile
+private class ChangeWrapper(private val isReversed: Boolean) : Wrapper<Change> {
+  private fun getBeforeRevision(change: Change): ContentRevision? = change.run { if (isReversed) afterRevision else beforeRevision }
+  private fun getAfterRevision(change: Change): ContentRevision? = change.run { if (isReversed) beforeRevision else afterRevision }
 
-  override fun movedOrRenamedOrReplaced(change: Change): Boolean = change.isMoved || change.isRenamed || change.isIsReplaced
+  override fun getBeforePath(change: Change): FilePath? = getBeforeRevision(change)?.file
+  override fun getAfterPath(change: Change): FilePath? = getAfterRevision(change)?.file
+
+  override fun isBeforePathDeleted(change: Change): Boolean =
+    change.run { getAfterRevision(this) == null || isMoved || isRenamed || isIsReplaced }
 }
 
-private object DirectChangeWrapper : ChangeWrapper {
-  override fun beforeNull(change: Change): Boolean = change.beforeRevision == null
-  override fun afterNull(change: Change): Boolean = change.afterRevision == null
-
-  override fun getBeforeFile(change: Change): File? = if (beforeNull(change)) null else change.beforeRevision!!.file.ioFile
-  override fun getAfterFile(change: Change): File? = if (afterNull(change)) null else change.afterRevision!!.file.ioFile
-
-  override fun movedOrRenamedOrReplaced(change: Change): Boolean = change.isMoved || change.isRenamed || change.isIsReplaced
-}
-
-private interface ChangeWrapper {
-  fun beforeNull(change: Change): Boolean
-  fun afterNull(change: Change): Boolean
-  fun getBeforeFile(change: Change): File?
-  fun getAfterFile(change: Change): File?
-  fun movedOrRenamedOrReplaced(change: Change): Boolean
+private interface Wrapper<T> {
+  fun getBeforePath(change: T): FilePath?
+  fun getAfterPath(change: T): FilePath?
+  fun isBeforePathDeleted(change: T): Boolean
 }
 
 private class FilesToRefreshCollector : UpdateFilesHelper.Callback {
