@@ -5,6 +5,7 @@ import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
@@ -348,23 +349,37 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitField(PsiField field) {
+    final PsiField other = getElement(PsiField.class);
+    if (other == null) return;
     final PsiDocComment comment = field.getDocComment();
-    final PsiField other = (PsiField)myMatchingVisitor.getElement();
     if (comment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other))) return;
     if (!myMatchingVisitor.setResult(checkHierarchy(other, field))) return;
     super.visitField(field);
   }
 
   @Override
+  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    final PsiEnumConstant other = getElement(PsiEnumConstant.class);
+    if (other == null) return;
+    final PsiExpressionList argumentList = enumConstant.getArgumentList();
+    if (argumentList != null && !myMatchingVisitor.setResult(myMatchingVisitor.matchSons(argumentList, other.getArgumentList()))) return;
+    final PsiEnumConstantInitializer enumConstantInitializer = enumConstant.getInitializingClass();
+    if (enumConstantInitializer != null &&
+        !myMatchingVisitor.setResult(myMatchingVisitor.match(enumConstantInitializer, other.getInitializingClass()))) return;
+    super.visitEnumConstant(enumConstant);
+  }
+
+  @Override
   public void visitAnonymousClass(PsiAnonymousClass clazz) {
-    final PsiAnonymousClass other = (PsiAnonymousClass)myMatchingVisitor.getElement();
+    final PsiAnonymousClass other = getElement(PsiAnonymousClass.class);
+    if (other == null) return;
     final PsiElement classReference = clazz.getBaseClassReference();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(classReference);
 
     if (myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.match(clazz.getBaseClassReference(), other.getBaseClassReference())) &&
                                     myMatchingVisitor.matchSons(clazz.getArgumentList(), other.getArgumentList()) &&
                                     matchClasses(clazz, other)) && isTypedVar) {
-      myMatchingVisitor.setResult(matchType(classReference, other.getBaseClassReference()));
+      myMatchingVisitor.setResult(classReference instanceof LightElement || matchType(classReference, other.getBaseClassReference()));
     }
   }
 
@@ -1781,6 +1796,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (!(patternExpression.getParent() instanceof PsiExpressionStatement)) {
       other = PsiUtil.skipParenthesizedExprDown((PsiExpression)other);
     }
+    return myMatchingVisitor.setResult(aClass.isInstance(other)) ? aClass.cast(other) : null;
+  }
+
+  private <T extends PsiElement> T getElement(Class<T> aClass) {
+    final PsiElement other = myMatchingVisitor.getElement();
     return myMatchingVisitor.setResult(aClass.isInstance(other)) ? aClass.cast(other) : null;
   }
 }
