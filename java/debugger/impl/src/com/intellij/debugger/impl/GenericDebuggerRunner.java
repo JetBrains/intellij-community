@@ -43,7 +43,7 @@ public class GenericDebuggerRunner implements ProgramRunner<GenericDebuggerRunne
   }
 
   @Override
-  public final void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+  public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
     RunProfileState state = environment.getState();
     if (state == null) {
       return;
