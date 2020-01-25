@@ -13,7 +13,8 @@ import org.jetbrains.concurrency.resolvedPromise
 @Deprecated(message = "Do not use")
 abstract class DefaultProgramRunner : ProgramRunner<RunnerSettings> {
   @Throws(ExecutionException::class)
-  final override fun execute(environment: ExecutionEnvironment) {
+  // cannot be final - https://plugins.jetbrains.com/plugin/9786-atlasbuildtool overrides
+  override fun execute(environment: ExecutionEnvironment) {
     val state = environment.state ?: return
     ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
       resolvedPromise(doExecute(state, environment))
