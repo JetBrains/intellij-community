@@ -63,6 +63,10 @@ public final class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[
     return super.valueOf(addrToIndex(indexToAddr(idx) * SIGNATURE_LENGTH));
   }
 
+  public static int getVersion() {
+    return PersistentBTreeEnumerator.VERSION;
+  }
+
   private static class ContentHashesDescriptor implements KeyDescriptor<byte[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
 
     @Override
