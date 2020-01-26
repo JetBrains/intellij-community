@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AddDomElementAction extends AnAction {
-  public AddDomElementAction() {
-    super(ApplicationBundle.message("action.add"), null, IconUtil.getAddIcon());
+ public AddDomElementAction() {
+    super(() -> ApplicationBundle.message("action.add"), IconUtil.getAddIcon());
   }
 
   @Override

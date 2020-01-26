@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class NewModuleAction extends AnAction implements DumbAware, NewProjectOrModuleAction {
   public NewModuleAction() {
-    super(ProjectBundle.message("module.new.action", 0, 1), ProjectBundle.message("module.new.action.description"), null);
+    super(() -> ProjectBundle.message("module.new.action", 0, 1), () -> ProjectBundle.message("module.new.action.description"), null);
   }
 
   @Override

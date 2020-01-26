@@ -898,7 +898,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private class MyCopyAction extends AnAction implements DumbAware {
     private MyCopyAction() {
-      super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
+      super(() -> CommonBundle.message("button.copy"), () -> CommonBundle.message("button.copy"), COPY_ICON);
     }
 
     @Override

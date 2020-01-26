@@ -86,7 +86,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
 
   private class GoForwardAction extends AnAction {
     GoForwardAction() {
-      super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
+      super(() -> CodeInsightBundle.message("quick.definition.forward"), AllIcons.Actions.Forward);
     }
 
     @Override
@@ -105,7 +105,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
 
   private class GoBackwardAction extends AnAction {
     GoBackwardAction() {
-      super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
+      super(() -> CodeInsightBundle.message("quick.definition.back"), AllIcons.Actions.Back);
     }
 
     @Override

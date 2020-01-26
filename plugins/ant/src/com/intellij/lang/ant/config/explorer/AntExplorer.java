@@ -593,7 +593,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class AddAction extends AnAction {
     AddAction() {
-      super(AntBundle.message("add.ant.file.action.name"), AntBundle.message("add.ant.file.action.description"), IconUtil.getAddIcon());
+      super(() -> AntBundle.message("add.ant.file.action.name"), () -> AntBundle.message("add.ant.file.action.description"),
+            IconUtil.getAddIcon());
     }
 
     @Override
@@ -604,7 +605,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class RemoveAction extends AnAction {
     RemoveAction() {
-      super(AntBundle.message("remove.ant.file.action.name"), AntBundle.message("remove.ant.file.action.description"),
+      super(() -> AntBundle.message("remove.ant.file.action.name"), () -> AntBundle.message("remove.ant.file.action.description"),
             IconUtil.getRemoveIcon());
     }
 
@@ -621,8 +622,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class RunAction extends AnAction {
     RunAction() {
-      super(AntBundle.message("run.ant.file.or.target.action.name"), AntBundle.message("run.ant.file.or.target.action.description"),
-            AllIcons.Actions.Execute);
+      super(() -> AntBundle.message("run.ant.file.or.target.action.name"),
+            () -> AntBundle.message("run.ant.file.or.target.action.description"), AllIcons.Actions.Execute);
     }
 
     @Override
@@ -658,7 +659,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
   private final class MakeAntRunConfigurationAction extends AnAction {
     MakeAntRunConfigurationAction() {
-      super(AntBundle.message("make.ant.runconfiguration.name"), null, AntIcons.Build);
+      super(() -> AntBundle.message("make.ant.runconfiguration.name"), AntIcons.Build);
     }
 
     @Override
@@ -793,8 +794,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private final class CreateMetaTargetAction extends AnAction {
 
     CreateMetaTargetAction() {
-      super(AntBundle.message("ant.create.meta.target.action.name"), AntBundle.message("ant.create.meta.target.action.description"), null
-/*IconLoader.getIcon("/actions/execute.png")*/);
+      super(() -> AntBundle.message("ant.create.meta.target.action.name"),
+            () -> AntBundle.message("ant.create.meta.target.action.description"), null);
     }
 
     @Override

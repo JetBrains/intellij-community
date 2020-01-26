@@ -393,8 +393,8 @@ public class PackageChooserDialog extends PackageChooser {
 
   private class NewPackageAction extends AnAction {
     NewPackageAction() {
-      super(IdeBundle.message("action.new.package"),
-            IdeBundle.message("action.description.create.new.package"), AllIcons.Actions.NewFolder);
+      super(() -> IdeBundle.message("action.new.package"), () -> IdeBundle.message("action.description.create.new.package"),
+            AllIcons.Actions.NewFolder);
     }
 
     @Override

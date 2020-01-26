@@ -170,7 +170,7 @@ public class CvsTabbedWindow implements Disposable {
 
   private static class GlobalCvsSettingsAction extends AnAction {
     GlobalCvsSettingsAction() {
-      super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, AllIcons.Nodes.Cvs_global);
+      super(() -> CvsBundle.message("configure.global.cvs.settings.action.name"), AllIcons.Nodes.Cvs_global);
     }
 
     @Override
@@ -181,7 +181,7 @@ public class CvsTabbedWindow implements Disposable {
 
   private class ReconfigureCvsRootAction extends AnAction {
     ReconfigureCvsRootAction() {
-      super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, AllIcons.Nodes.Cvs_roots);
+      super(() -> CvsBundle.message("action.name.reconfigure.cvs.root"), AllIcons.Nodes.Cvs_roots);
     }
 
     @Override
