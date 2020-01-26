@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
@@ -98,7 +99,9 @@ public class TerminalView {
     }
 
     myToolWindow = toolWindow;
-    ((ToolWindowImpl)myToolWindow).setTabActions(new DumbAwareAction("New Session", "Create new session", AllIcons.General.Add) {
+    ((ToolWindowImpl)myToolWindow).setTabActions(
+      new DumbAwareAction(() -> IdeBundle.message("action.DumbAware.TerminalView.text.new.session"),
+                          () -> IdeBundle.message("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         newTab(null);

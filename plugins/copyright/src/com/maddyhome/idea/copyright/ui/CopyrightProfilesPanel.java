@@ -180,7 +180,9 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
+    result.add(new DumbAwareAction(() -> IdeBundle.message("action.DumbAware.CopyrightProfilesPanel.text.add"),
+                                   () -> IdeBundle.message("action.DumbAware.CopyrightProfilesPanel.description.add"),
+                                   IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
       }
@@ -191,7 +193,10 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
       }
     });
     result.add(new MyDeleteAction());
-    result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
+    result.add(new DumbAwareAction(
+      () -> IdeBundle.message("action.DumbAware.CopyrightProfilesPanel.text.copy"),
+      () -> IdeBundle.message("action.DumbAware.CopyrightProfilesPanel.description.copy"),
+      PlatformIcons.COPY_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
       }
@@ -215,7 +220,9 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
-    result.add(new DumbAwareAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
+    result.add(new DumbAwareAction(() -> IdeBundle.message("action.DumbAware.CopyrightProfilesPanel.text.import"),
+                                   () -> IdeBundle.message("action.DumbAware.CopyrightProfilesPanel.description.import"),
+                                   PlatformIcons.IMPORT_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()

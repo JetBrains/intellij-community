@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * @author Sergey Simonchik
@@ -35,6 +36,10 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
   private ProcessHandler myProcessHandler;
 
   public StopProcessAction(@NotNull String text, @Nullable String description, @Nullable ProcessHandler processHandler) {
+    this(() -> text, () -> description, processHandler);
+  }
+
+  public StopProcessAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, @Nullable ProcessHandler processHandler) {
     super(text, description, AllIcons.Actions.Suspend);
     myProcessHandler = processHandler;
   }

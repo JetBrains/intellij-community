@@ -61,6 +61,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.ui.JBUI.size;
@@ -198,8 +199,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(new ImportAction());
     group.add(new ExportAction());
     group.addSeparator();
-    group.add(new CopyOrMoveAction("Branch or Tag...", "copy.dialog.title", false));
-    group.add(new CopyOrMoveAction("_Move or Rename...", "move.dialog.title", true));
+    group.add(
+      new CopyOrMoveAction(() -> SvnBundle.message("action.DumbAware.RepositoryBrowserDialog.text.branch.or.tag"), "copy.dialog.title",
+                           false));
+    group.add(
+      new CopyOrMoveAction(() -> SvnBundle.message("action.DumbAware.RepositoryBrowserDialog.text.move.or.rename"), "move.dialog.title",
+                           true));
     group.add(myDeleteAction);
     group.add(copyUrlAction);
     group.addSeparator();
@@ -610,11 +615,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   protected class CopyOrMoveAction extends DumbAwareAction {
-    private final String myActionName;
+    private final Supplier<String> myActionName;
     private final String myDialogTitleKey;
     private final boolean myMove;
 
-    public CopyOrMoveAction(final String actionName, final String dialogTitleKey, final boolean move) {
+    public CopyOrMoveAction(final Supplier<String> actionName, final String dialogTitleKey, final boolean move) {
       myActionName = actionName;
       myDialogTitleKey = dialogTitleKey;
       myMove = move;

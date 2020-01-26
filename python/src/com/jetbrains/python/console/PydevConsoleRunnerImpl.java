@@ -71,6 +71,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -657,7 +658,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private AnAction createStopAction() {
-    return new DumbAwareAction("Stop Console", "Stop Python Console", AllIcons.Actions.Suspend) {
+    return new DumbAwareAction(() -> PyBundle.message("action.DumbAware.PydevConsoleRunnerImpl.text.stop.console"),
+                               () -> PyBundle.message("action.DumbAware.PydevConsoleRunnerImpl.description.stop.python.console"),
+                               AllIcons.Actions.Suspend) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!isConsoleProcessTerminated());
