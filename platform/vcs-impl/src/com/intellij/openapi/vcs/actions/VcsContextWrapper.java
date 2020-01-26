@@ -154,7 +154,6 @@ public class VcsContextWrapper implements VcsContext {
 
     return concat(
       StreamEx.ofNullable(path),
-      stream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
       pathStream != null ? pathStream : getSelectedFilesStream().map(VcsUtil::getFilePath),
       stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
     ).distinct();
