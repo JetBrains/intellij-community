@@ -28,19 +28,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -292,18 +293,18 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     }
 
     private RangeMarker findSupport(RangeMarker leader, PsiFile file, Document document) {
+      final TextRange leaderRange = new TextRange(leader.getStartOffset(), leader.getEndOffset());
       final int offset = leader.getStartOffset();
       PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, offset);
-      PsiElement support = findSupportElement(element);
-      if (support == null && file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
+      TextRange support = findSupportRange(element);
+      if (!isSupportRangeValid(document, leaderRange, support) && file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
         element = file.getViewProvider().findElementAt(offset, myLanguage);
-        support = findSupportElement(element);
+        support = findSupportRange(element);
       }
 
-      if (support == null) return findSupportForTagList(leader, element, document);
+      if (!isSupportRangeValid(document, leaderRange, support)) return findSupportForTagList(leader, element, document);
 
-      final TextRange range = support.getTextRange();
-      TextRange realRange = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element.getContainingFile(), range);
+      TextRange realRange = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element.getContainingFile(), support);
       return document.createRangeMarker(realRange.getStartOffset(), realRange.getEndOffset(), true);
     }
 
@@ -340,11 +341,38 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       return null;
     }
 
-    private static PsiElement findSupportElement(PsiElement element) {
-      if (element == null || TreeUtil.findSibling(element.getNode(), XmlTokenType.XML_TAG_END) == null) return null;
-      PsiElement support = RenameTagBeginOrEndIntentionAction.findOtherSide(element, false);
-      support = support == null || element == support ? RenameTagBeginOrEndIntentionAction.findOtherSide(element, true) : support;
-      return support != null && StringUtil.equals(element.getText(), support.getText()) ? support : null;
+    private static boolean isSupportRangeValid(@NotNull Document document, @NotNull TextRange leader, @Nullable TextRange support) {
+      if (support == null) return false;
+      return document.getText(leader).equals(document.getText(support));
+    }
+
+    @Nullable
+    private static TextRange findSupportRange(@Nullable PsiElement leader) {
+      if (leader == null || TreeUtil.findSibling(leader.getNode(), XmlTokenType.XML_TAG_END) == null) return null;
+      PsiElement support = RenameTagBeginOrEndIntentionAction.findOtherSide(leader, false);
+      if (support == null || leader == support) support = RenameTagBeginOrEndIntentionAction.findOtherSide(leader, true);
+      if (support == null) return null;
+      final int start = findSupportRangeStart(support);
+      final int end = findSupportRangeEnd(support);
+      return TextRange.create(start, end);
+    }
+
+    private static int findSupportRangeStart(@NotNull PsiElement support) {
+      PsiElement current = support;
+      while (current.getPrevSibling() instanceof OuterLanguageElement) {
+        current = current.getPrevSibling();
+      }
+
+      return current.getTextRange().getStartOffset();
+    }
+
+    private static int findSupportRangeEnd(@NotNull PsiElement support) {
+      PsiElement current = support;
+      while (current.getNextSibling() instanceof OuterLanguageElement) {
+        current = current.getNextSibling();
+      }
+
+      return current.getTextRange().getEndOffset();
     }
   }
 }
