@@ -52,7 +52,6 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val tempDir = args.argFile(tempKey).recreateDir()
     val outputDir = args.argFile(outputKey).apply { mkdirs() }
     val projectDir = File(tempDir, "project").recreateDir()
-    val unpackedIndexDir = File(tempDir, "unpacked-index").recreateDir()
     val zipsDir = File(tempDir, "zips").recreateDir()
     val indexZip = File(zipsDir, "index.zip")
     val indexZipXZ = File(zipsDir, "index.zip.xz")
@@ -121,10 +120,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     indexChunk.kind = "jdk"
 
     LOG.info("Indexing...")
-    IndexesExporter.getInstance(project).exportIndexesChunk(
-      indexChunk,
-      unpackedIndexDir.toPath(),
-      indexZip.toPath())
+    IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath())
 
     LOG.info("Packing the indexes to XZ...")
     xz(indexZip, indexZipXZ)
