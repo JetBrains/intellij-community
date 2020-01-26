@@ -344,7 +344,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    myShowOnlyConflictsButton = new ToggleActionButton("Show conflicts with system shortcuts", AllIcons.General.ShowWarning) {
+    myShowOnlyConflictsButton =
+      new ToggleActionButton(() -> KeyMapBundle.message("action.AnActionButton.text.show.conflicts.with.system.shortcuts"),
+                             AllIcons.General.ShowWarning) {
       @Override
       public boolean isSelected(AnActionEvent e) {
         return myShowOnlyConflicts;

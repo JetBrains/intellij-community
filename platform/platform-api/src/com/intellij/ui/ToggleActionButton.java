@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * @author yole
@@ -29,7 +30,11 @@ import javax.swing.*;
 public abstract class ToggleActionButton extends AnActionButton implements Toggleable {
   public ToggleActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
                             Icon icon) {
-    super(text, null, icon);
+    super(() -> text, Presentation.NULL_STRING, icon);
+  }
+
+  public ToggleActionButton(@NotNull Supplier<String> text, Icon icon) {
+    super(text, Presentation.NULL_STRING, icon);
   }
 
   /**

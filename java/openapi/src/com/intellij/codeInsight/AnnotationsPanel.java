@@ -114,7 +114,8 @@ public class AnnotationsPanel {
     }
 
     final AnActionButton selectButton =
-      new AnActionButton("Select annotation used for code generation", AllIcons.Actions.Checked) {
+      new AnActionButton(() -> CodeInsightBundle.message("action.AnActionButton.text.select.annotation.used.for.code.generation"),
+                         AllIcons.Actions.Checked) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           String selectedValue = getSelectedAnnotation();
