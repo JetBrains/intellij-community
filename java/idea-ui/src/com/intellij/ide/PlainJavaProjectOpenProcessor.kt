@@ -13,6 +13,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -20,17 +21,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
-import com.intellij.util.Processor
 import java.io.File
 import javax.swing.event.HyperlinkEvent
 
 private val NOTIFICATION_GROUP = NotificationGroup("Build Script Found", NotificationDisplayType.STICKY_BALLOON, true)
+
+private const val SCAN_DEPTH_LIMIT = 5
 
 class PlainJavaProjectOpenProcessor : StartupActivity {
 
@@ -64,24 +63,29 @@ class PlainJavaProjectOpenProcessor : StartupActivity {
   }
 
   private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<ProjectOpenProcessor, VirtualFile> {
-    // todo inject into the detectRoots() procedure to avoid scanning twice
     val providersAndFiles = ArrayListMultimap.create<ProjectOpenProcessor, VirtualFile>()
-    VfsUtil.processFileRecursivelyWithoutIgnored(projectDirectory, Processor { file ->
-      val providers = ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.filter { provider ->
-        provider.canOpenProject(file) &&
-        provider !is PlatformProjectOpenProcessor
-      }
+    VfsUtil.visitChildrenRecursively(projectDirectory, object : VirtualFileVisitor<Void>(NO_FOLLOW_SYMLINKS, limit(SCAN_DEPTH_LIMIT)) {
+      override fun visitFileEx(file: VirtualFile): Result {
+        if (file.isDirectory && FileTypeRegistry.getInstance().isFileIgnored(file)) {
+          return SKIP_CHILDREN
+        }
 
-      for (provider in providers) {
-        val files = providersAndFiles.get(provider)
-        if (files.isEmpty()) {
-          files.add(file)
+        val providers = ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.filter { provider ->
+          provider.canOpenProject(file) &&
+          provider !is PlatformProjectOpenProcessor
         }
-        else if (!VfsUtilCore.isAncestor(files.last(), file, true)) { // add only top-level file/folders for each of providers
-          files.add(file)
+
+        for (provider in providers) {
+          val files = providersAndFiles.get(provider)
+          if (files.isEmpty()) {
+            files.add(file)
+          }
+          else if (!VfsUtilCore.isAncestor(files.last(), file, true)) { // add only top-level file/folders for each of providers
+            files.add(file)
+          }
         }
+        return CONTINUE
       }
-      true
     })
     return providersAndFiles
   }
