@@ -151,7 +151,8 @@ public class DirectoryComboBoxWithButtons extends JPanel {
 
   private class RecursiveAction extends ToggleAction {
     RecursiveAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
+      super(() -> FindBundle.message("find.scope.directory.recursive.checkbox"),
+            () -> FindBundle.message("find.scope.directory.recursive.checkbox.recursively"), AllIcons.Actions.ShowAsTree);
     }
 
     @Override

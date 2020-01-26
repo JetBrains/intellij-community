@@ -720,9 +720,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
     private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
       ToggleShowIgnoredAction() {
-        super(VcsBundle.message("changes.action.show.ignored.text"),
-              VcsBundle.message("changes.action.show.ignored.description"),
-              AllIcons.Actions.ShowHiddens);
+        super(() -> VcsBundle.message("changes.action.show.ignored.text"),
+              () -> VcsBundle.message("changes.action.show.ignored.description"), AllIcons.Actions.ShowHiddens);
       }
 
       @Override

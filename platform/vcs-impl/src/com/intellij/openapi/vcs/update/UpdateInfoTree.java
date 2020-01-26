@@ -397,7 +397,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   private class MyGroupByPackagesAction extends ToggleAction implements DumbAware {
     MyGroupByPackagesAction() {
-      super(VcsBundle.message("action.name.group.by.packages"), null, PlatformIcons.GROUP_BY_PACKAGES);
+      super(() -> VcsBundle.message("action.name.group.by.packages"), PlatformIcons.GROUP_BY_PACKAGES);
     }
 
     @Override
@@ -420,7 +420,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   private class GroupByChangeListAction extends ToggleAction implements DumbAware {
     GroupByChangeListAction() {
-      super(VcsBundle.message("update.info.group.by.changelist"), null, AllIcons.Actions.ShowAsTree);
+      super(() -> VcsBundle.message("update.info.group.by.changelist"), AllIcons.Actions.ShowAsTree);
     }
 
     @Override

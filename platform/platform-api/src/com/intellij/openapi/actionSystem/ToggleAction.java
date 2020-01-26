@@ -37,6 +37,10 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text, description, icon);
   }
 
+  public ToggleAction(@NotNull Supplier<String> text, @Nullable final Icon icon) {
+    super(text, Presentation.NULL_STRING, icon);
+  }
+
   @Override
   public final void actionPerformed(@NotNull final AnActionEvent e) {
     final boolean state = !isSelected(e);

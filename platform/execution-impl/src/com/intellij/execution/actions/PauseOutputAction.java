@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PauseOutputAction extends ToggleAction implements DumbAware {
     public PauseOutputAction() {
-      super(ExecutionBundle.message("run.configuration.pause.output.action.name"), null, AllIcons.Actions.Pause);
+      super(() -> ExecutionBundle.message("run.configuration.pause.output.action.name"), AllIcons.Actions.Pause);
     }
 
     @Nullable
