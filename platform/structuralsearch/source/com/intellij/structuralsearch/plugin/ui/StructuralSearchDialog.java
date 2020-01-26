@@ -493,7 +493,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   @Override
   protected JComponent createNorthPanel() {
     final DefaultActionGroup historyActionGroup =
-      new DefaultActionGroup(new DumbAwareAction("History", null, AllIcons.Actions.SearchWithHistory) {
+      new DefaultActionGroup(new DumbAwareAction(() -> SSRBundle.message("action.AnActionButton.text.history"), Presentation.NULL_STRING,
+                                                 AllIcons.Actions.SearchWithHistory) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           final Object source = e.getInputEvent().getSource();
