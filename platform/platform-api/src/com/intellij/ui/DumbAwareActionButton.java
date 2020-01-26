@@ -15,11 +15,14 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * @author gregsh
@@ -36,9 +39,19 @@ public abstract class DumbAwareActionButton extends AnActionButton implements Du
     super(text, description, icon);
   }
 
+  public DumbAwareActionButton(@NotNull Supplier<String> dynamicText,
+                               @NotNull Supplier<String> dynamicDescription,
+                               @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
   public DumbAwareActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
                                Icon icon) {
     super(text, icon);
+  }
+
+  public DumbAwareActionButton(@NotNull Supplier<String> dynamicText, Icon icon) {
+    this(dynamicText, Presentation.NULL_STRING, icon);
   }
 
   public DumbAwareActionButton() {
