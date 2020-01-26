@@ -3,13 +3,16 @@ package git4idea.config
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.io.HttpRequests
 import git4idea.GitVcs
 import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import java.io.File
 
 fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandler {
   return when {
@@ -90,6 +93,20 @@ internal fun getErrorTitle(text: String, description: String?) =
   if (description == null) GitBundle.getString("git.executable.validation.error.start.title") else text
 
 internal fun getErrorMessage(text: String, description: String?) = description ?: text
+
+internal fun downloadGit(project: Project, url: String, fileToSave: File, errorNotifier: ErrorNotifier): Boolean {
+  // todo get the JSON with the URL from our server, then get the URL from the JSON
+  try {
+    HttpRequests.request(url).saveToFile(fileToSave, ProgressManager.getInstance().progressIndicator)
+    return true
+  }
+  catch (e: Exception) {
+    WindowsExecutableProblemHandler.LOG.warn("Couldn't download Git installer from $url")
+    // todo special text for the network unavailable error
+    errorNotifier.showError("Couldn't download Git, please do it manually", getLinkToConfigure(project))
+    return false
+  }
+}
 
 private class DefaultExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {

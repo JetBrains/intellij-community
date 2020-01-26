@@ -5,10 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.HttpRequests
 import java.io.File
 
 internal class WindowsExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
@@ -22,29 +20,14 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
 
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError("Git is not installed", ErrorNotifier.FixOption.Standard("Download and install") {
-      errorNotifier.executeTask("Downloading...", false) {
-        // todo display determinate inline progress for downloading
-        if (downloadGit(errorNotifier)) {
+      errorNotifier.executeTask("Downloading...", true) {
+        val url = "https://github.com/git-for-windows/git/releases/download/v2.24.1.windows.2/$gitexe"
+        if (downloadGit(project, url, gitFile, errorNotifier)) {
           errorNotifier.changeProgressTitle("Installing...")
           installGit(errorNotifier, onErrorResolved)
         }
       }
     })
-  }
-
-  private fun downloadGit(errorNotifier: ErrorNotifier): Boolean {
-    // todo get the JSON with the URL from our server, then get the URL from the JSON
-    val url = "https://github.com/git-for-windows/git/releases/download/v2.24.1.windows.2/$gitexe"
-    try {
-      HttpRequests.request(url).saveToFile(gitFile, ProgressManager.getInstance().progressIndicator)
-      return true
-    }
-    catch (e: Exception) {
-      LOG.warn("Couldn't download $gitexe from $url")
-      // todo special text for the network unavailable error
-      errorNotifier.showError("Couldn't download Git, please do it manually", getLinkToConfigure(project))
-      return false
-    }
   }
 
   private fun installGit(errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
