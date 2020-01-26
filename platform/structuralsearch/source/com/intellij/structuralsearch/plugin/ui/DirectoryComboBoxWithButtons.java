@@ -157,7 +157,6 @@ public class DirectoryComboBoxWithButtons extends JPanel {
       super(() -> FindBundle.message("find.scope.directory.recursive.checkbox"),
             () -> FindBundle.message("find.recursively.hint"),
             AllIcons.Actions.ShowAsTree);
-      FindBundle.message("find.scope.directory.recursive.checkbox.recursively");
     }
 
     @Override

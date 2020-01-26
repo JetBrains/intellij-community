@@ -494,7 +494,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   @Override
   protected JComponent createNorthPanel() {
     final DefaultActionGroup historyActionGroup =
-      new DefaultActionGroup(new DumbAwareAction(() -> SSRBundle.message("history.button"), Presentation.NULL_STRING,
+      new DefaultActionGroup(new DumbAwareAction(() -> SSRBundle.message("history.button"),
+                                                 () -> SSRBundle.message("history.button.description"),
                                                  AllIcons.Actions.SearchWithHistory) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -592,9 +593,14 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       new SwitchAction()
     );
     templateActionGroup.setPopup(true);
-    templateActionGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
+    final Presentation presentation = templateActionGroup.getTemplatePresentation();
+    presentation.setIcon(AllIcons.General.Settings);
+    presentation.setText(SSRBundle.message("tools.button"));
 
-    final AnAction filterAction = new DumbAwareToggleAction(null, "View variable filters", AllIcons.General.Filter) {
+
+    final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
+                                                            SSRBundle.message("filter.button.description"),
+                                                            AllIcons.General.Filter) {
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
