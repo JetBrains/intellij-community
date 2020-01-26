@@ -124,9 +124,11 @@ public class VcsRootProblemNotifier {
       title = makeTitle(importantUnregisteredRoots, invalidRoots, false);
       description = makeDescription(importantUnregisteredRoots, invalidRoots);
 
-      NotificationAction enableIntegration = NotificationAction.create("Enable Integration",
-                                                                       (event, notification) -> addMappings(importantUnregisteredRoots));
-      NotificationAction ignoreAction = NotificationAction.create("Ignore", (event, notification) -> {
+      NotificationAction enableIntegration = NotificationAction
+        .create(() -> VcsBundle.message("action.NotificationAction.VcsRootProblemNotifier.text.enable.integration"),
+                (event, notification) -> addMappings(importantUnregisteredRoots));
+      NotificationAction ignoreAction = NotificationAction
+        .create(() -> VcsBundle.message("action.NotificationAction.VcsRootProblemNotifier.text.ignore"), (event, notification) -> {
         mySettings.addIgnoredUnregisteredRoots(map(importantUnregisteredRoots, VcsRootError::getMapping));
         notification.expire();
       });
@@ -145,7 +147,7 @@ public class VcsRootProblemNotifier {
 
   @NotNull
   private NotificationAction getConfigureNotificationAction() {
-    return NotificationAction.create("Configure...", (event, notification) -> {
+    return NotificationAction.create(() -> VcsBundle.message("action.NotificationAction.VcsRootProblemNotifier.text.configure"), (event, notification) -> {
       if (!myProject.isDisposed()) {
         ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
 

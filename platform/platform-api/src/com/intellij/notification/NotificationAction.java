@@ -35,6 +35,12 @@ public abstract class NotificationAction extends DumbAwareAction {
   @NotNull
   public static NotificationAction create(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
                                           @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
+    return create(() -> text, performAction);
+  }
+
+  @NotNull
+  public static NotificationAction create(@NotNull Supplier<String> text,
+                                          @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
     return new NotificationAction(text) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
