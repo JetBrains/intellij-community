@@ -26,7 +26,7 @@ public class ToggleOptionAction extends ToggleAction {
   }
 
   public ToggleOptionAction(@NotNull Function<AnActionEvent, Option> optionSupplier, @Nullable Icon icon) {
-    super(null, null, icon);
+    super(() -> null, () -> null, icon);
     this.optionSupplier = optionSupplier;
   }
 
