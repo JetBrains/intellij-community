@@ -113,7 +113,21 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     }
     fail("Should not be able to perform refactoring");
   }
-  
+
+  public void testPatternVariableUsedAfterwards() {
+    try {
+      doTest("temp", true, false, false, "");
+    }
+    catch (RuntimeException e) {
+      assertEquals("Error message:Cannot perform refactoring.\nSelected expression introduces pattern variable 's'", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+  public void testPatternVariableNotUsedAfterwards() {
+    doTest("temp", true, false, false, "boolean");
+  }
+
   public void testTernaryBothBranches() { doTest("temp", true, false, false, "int"); }
   public void testIfConditionAndChain() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
   public void testReturnAndChain() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }

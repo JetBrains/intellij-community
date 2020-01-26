@@ -61,6 +61,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -608,6 +609,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, editor, message);
       return false;
+    }
+
+    for (PsiPatternVariable variable : JavaPsiPatternUtil.getExposedPatternVariables(expr)) {
+      if (VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope()).stream()
+        .anyMatch(ref -> !PsiTreeUtil.isAncestor(expr, ref, true))) {
+        String message = RefactoringBundle.getCannotRefactorMessage(
+          RefactoringBundle.message("selected.expression.introduces.pattern.variable", variable.getName()));
+        showErrorMessage(project, editor, message);
+        return false;
+      }
     }
 
 
