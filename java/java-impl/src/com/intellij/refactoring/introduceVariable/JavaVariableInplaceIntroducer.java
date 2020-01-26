@@ -396,17 +396,16 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
                                              final PsiType type,
                                              final boolean hasTypeSuggestion) {
     final VariablesProcessor processor = ReassignVariableUtil.findVariablesOfType(declaration, type);
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     if (processor.size() > 0) {
-      final Shortcut[] shortcuts = keymap.getShortcuts("IntroduceVariable");
-      if (shortcuts.length > 0) {
-        return "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to reassign existing variable";
+      final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("IntroduceVariable");
+      if (shortcut != null) {
+        return "Press " + KeymapUtil.getShortcutText(shortcut) + " to reassign existing variable";
       }
     }
     if (hasTypeSuggestion) {
-      final Shortcut[] shortcuts = keymap.getShortcuts("PreviousTemplateVariable");
-      if  (shortcuts.length > 0) {
-        return "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to change type";
+      final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("PreviousTemplateVariable");
+      if (shortcut != null) {
+        return "Press " + KeymapUtil.getShortcutText(shortcut) + " to change type";
       }
     }
     return null;

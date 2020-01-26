@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -476,14 +477,13 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                             final boolean toImplement,
                                                             @NotNull MemberChooser<PsiMethodMember> chooser) {
     final JComponent preferredFocusedComponent = chooser.getPreferredFocusedComponent();
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
 
     @NonNls final String s = toImplement ? "OverrideMethods" : "ImplementMethods";
-    final Shortcut[] shortcuts = keymap.getShortcuts(s);
+    final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(s);
 
-    if (shortcuts.length > 0 && shortcuts[0] instanceof KeyboardShortcut) {
+    if (shortcut instanceof KeyboardShortcut) {
       preferredFocusedComponent.getInputMap().put(
-        ((KeyboardShortcut)shortcuts[0]).getFirstKeyStroke(), s
+        ((KeyboardShortcut)shortcut).getFirstKeyStroke(), s
       );
 
       preferredFocusedComponent.getActionMap().put(

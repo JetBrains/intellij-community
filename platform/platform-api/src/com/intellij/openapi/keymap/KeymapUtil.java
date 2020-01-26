@@ -203,6 +203,17 @@ public class KeymapUtil {
     return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
   }
 
+  /**
+   * @param actionId action to find the shortcut for
+   * @return first keyboard shortcut that activates given action in active keymap; null if not found 
+   */
+  @Nullable
+  public static Shortcut getPrimaryShortcut(@Nullable String actionId) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null || actionId == null) return null;
+    return ArrayUtil.getFirstElement(keymapManager.getActiveKeymap().getShortcuts(actionId));
+  }
+
   @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
     for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
