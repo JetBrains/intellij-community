@@ -158,6 +158,16 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   }
 
   @Override
+  public void delete() throws IncorrectOperationException {
+    PsiPattern pattern = getPattern();
+    if (pattern instanceof PsiTypeTestPattern) {
+      replace(getTypeElement());
+      return;
+    }
+    super.delete();
+  }
+
+  @Override
   public String toString() {
     return "PsiPatternVariable:" + getName();
   }

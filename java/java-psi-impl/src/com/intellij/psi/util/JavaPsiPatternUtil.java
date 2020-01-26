@@ -19,7 +19,7 @@ public class JavaPsiPatternUtil {
    * @return list of pattern variables declared within an expression that could be visible outside of given expression.
    */
   @Contract(pure = true)
-  public static @NotNull List<PsiPatternVariable> getPatternVariablesVisibleOutsideOf(@NotNull PsiExpression expression) {
+  public static @NotNull List<PsiPatternVariable> getExposedPatternVariables(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     boolean parentMayAccept =
       parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType().equals(JavaTokenType.EXCL) ||
@@ -30,7 +30,19 @@ public class JavaPsiPatternUtil {
       return Collections.emptyList();
     }
     List<PsiPatternVariable> list = new ArrayList<>();
-    collectPatternVariableCandidates(expression, expression, list);
+    collectPatternVariableCandidates(expression, expression, list, false);
+    return list;
+  }
+
+  /**
+   * @param expression expression to search pattern variables in
+   * @return list of pattern variables declared within an expression that could be visible outside of given expression
+   * under some other parent (e.g. under PsiIfStatement).
+   */
+  @Contract(pure = true)
+  public static @NotNull List<PsiPatternVariable> getExposedPatternVariablesIgnoreParent(@NotNull PsiExpression expression) {
+    List<PsiPatternVariable> list = new ArrayList<>();
+    collectPatternVariableCandidates(expression, expression, list, true);
     return list;
   }
 
@@ -50,7 +62,7 @@ public class JavaPsiPatternUtil {
   }
 
   private static void collectPatternVariableCandidates(@NotNull PsiExpression scope, @NotNull PsiExpression expression,
-                                                       Collection<PsiPatternVariable> candidates) {
+                                                       Collection<PsiPatternVariable> candidates, boolean strict) {
     while (true) {
       if (expression instanceof PsiParenthesizedExpression) {
         expression = ((PsiParenthesizedExpression)expression).getExpression();
@@ -67,7 +79,7 @@ public class JavaPsiPatternUtil {
       PsiPattern pattern = ((PsiInstanceOfExpression)expression).getPattern();
       if (pattern instanceof PsiTypeTestPattern) {
         PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
-        if (variable != null && !PsiTreeUtil.isAncestor(scope, variable.getDeclarationScope(), false)) {
+        if (variable != null && !PsiTreeUtil.isAncestor(scope, variable.getDeclarationScope(), strict)) {
           candidates.add(variable);
         }
       }
@@ -77,7 +89,7 @@ public class JavaPsiPatternUtil {
       IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
         for (PsiExpression operand : polyadicExpression.getOperands()) {
-          collectPatternVariableCandidates(scope, operand, candidates);
+          collectPatternVariableCandidates(scope, operand, candidates, strict);
         }
       }
     }
