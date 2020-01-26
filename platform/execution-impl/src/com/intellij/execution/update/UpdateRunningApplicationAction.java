@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.update;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -21,8 +22,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class UpdateRunningApplicationAction extends AnAction {
-  public UpdateRunningApplicationAction() {
-    super("Update Running Application", null, AllIcons.Javaee.UpdateRunningApplication);
+  UpdateRunningApplicationAction() {
+    super(() -> ExecutionBundle.message("action.AnAction.text.update.running.application"),
+          () -> ExecutionBundle.message("action.AnAction.description.update.running.application"), AllIcons.Javaee.UpdateRunningApplication);
   }
 
   @Override

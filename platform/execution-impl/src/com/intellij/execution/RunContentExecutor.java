@@ -195,10 +195,10 @@ public class RunContentExecutor implements Disposable {
   }
 
   private class StopAction extends AnAction implements DumbAware {
-    StopAction() {
-      super("Stop", "Stop",
-            AllIcons.Actions.Suspend);
-    }
+  StopAction() {
+    super(() -> ExecutionBundle.message("action.AnAction.text.stop"),
+          () -> ExecutionBundle.message("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
