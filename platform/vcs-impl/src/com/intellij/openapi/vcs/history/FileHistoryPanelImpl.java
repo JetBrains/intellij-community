@@ -967,7 +967,8 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
   private class MyShowDetailsAction extends ToggleAction implements DumbAware {
 
     MyShowDetailsAction() {
-      super("Show Details", "Display details panel", AllIcons.Actions.PreviewDetailsVertically);
+      super(() -> VcsBundle.message("action.ToggleAction.text.show.details"),
+            () -> VcsBundle.message("action.ToggleAction.description.show.details"), AllIcons.Actions.PreviewDetailsVertically);
     }
 
     @Override
