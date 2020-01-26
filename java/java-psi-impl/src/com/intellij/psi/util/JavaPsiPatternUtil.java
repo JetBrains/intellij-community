@@ -3,9 +3,10 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,6 +32,21 @@ public class JavaPsiPatternUtil {
     List<PsiPatternVariable> list = new ArrayList<>();
     collectPatternVariableCandidates(expression, expression, list);
     return list;
+  }
+
+  /**
+   * @param variable pattern variable
+   * @return effective initializer expression for the variable; null if cannot be determined
+   */
+  public static @Nullable String getEffectiveInitializerText(@NotNull PsiPatternVariable variable) {
+    PsiPattern pattern = variable.getPattern();
+    if (pattern == null) return null;
+    PsiInstanceOfExpression instanceOf = ObjectUtils.tryCast(pattern.getParent(), PsiInstanceOfExpression.class);
+    if (instanceOf == null) return null;
+    if (pattern instanceof PsiTypeTestPattern) {
+      return "(" + ((PsiTypeTestPattern)pattern).getCheckType().getText() + ")" + instanceOf.getOperand().getText();
+    }
+    return null;
   }
 
   private static void collectPatternVariableCandidates(@NotNull PsiExpression scope, @NotNull PsiExpression expression,
