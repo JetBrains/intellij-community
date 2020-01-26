@@ -90,6 +90,10 @@ public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
     setInternal(false);
   }
 
+  public void testTitleFromBundle() throws IOException {
+    doTest();
+  }
+
   private void doTest() throws IOException {
     final VirtualFile form = myTestProjectRoot.findChild("Test.form");
     assertNotNull(form);
