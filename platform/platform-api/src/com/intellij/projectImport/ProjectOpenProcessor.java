@@ -46,6 +46,23 @@ public abstract class ProjectOpenProcessor {
     return true;
   }
 
+  /**
+   * Returns true if this processor is able to import the project after it has been opened in IDEA.
+   *
+   * @see #importProjectAfterwards(Project, VirtualFile)
+   */
+  public boolean canImportProjectAfterwards() {
+    return false;
+  }
+
+  /**
+   * Import the project after it has already been opened in IDEA.
+   *
+   * @see #canImportProjectAfterwards()
+   */
+  public void importProjectAfterwards(@NotNull Project project, @NotNull VirtualFile file) {
+  }
+
   @Nullable
   public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file) {
     return getImportProvider(file, false);

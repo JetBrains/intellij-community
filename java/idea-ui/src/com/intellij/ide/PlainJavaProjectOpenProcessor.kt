@@ -120,8 +120,16 @@ class PlainJavaProjectOpenProcessor : StartupActivity {
 
     val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION, showFileInProjectViewListener)
 
-    // todo import right away if possible for certain providers
-    //notification.addAction(NotificationAction.createSimpleExpiring("Import All", {}))
+    if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
+      val actionName = if (providersAndFiles.keySet().size > 1) "Import All" else "Import"
+      notification.addAction(NotificationAction.createSimpleExpiring(actionName) {
+        for ((provider, files) in providersAndFiles.asMap()) {
+          for (file in files) {
+            provider.importProjectAfterwards(project, file)
+          }
+        }
+      })
+    }
 
     notification.notify(project)
   }
