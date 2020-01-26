@@ -12,7 +12,9 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.UpdateSession
 import com.intellij.util.containers.MultiMap
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import java.util.function.Supplier
 
 /**
  * Ranges are null if update didn't start yet, in which case there are no new commits to display,
@@ -61,7 +63,8 @@ class GitUpdateSession(private val project: Project,
     if (notificationData != null) {
       val notification = prepareNotification(notificationData.updatedFilesCount, notificationData.receivedCommitsCount,
                                              notificationData.filteredCommitsCount)
-      notification.addAction(NotificationAction.createSimple("View Commits", notificationData.viewCommitAction))
+      notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
+                                                             notificationData.viewCommitAction))
       VcsNotifier.getInstance(project).notify(notification)
     }
   }

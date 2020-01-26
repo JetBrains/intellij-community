@@ -26,6 +26,7 @@ import git4idea.config.GitConfigUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.findProtectedRemoteBranchContainingCommit
 import git4idea.history.GitLogUtil
+import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry.Action.PICK
 import git4idea.rebase.GitRebaseEntry.Action.REWORD
 import git4idea.repo.GitRepository
@@ -33,6 +34,7 @@ import git4idea.repo.GitRepositoryChangeListener
 import git4idea.reset.GitResetMode
 import java.io.File
 import java.io.IOException
+import java.util.function.Supplier
 
 class GitRewordOperation(private val repository: GitRepository,
                          private val commit: VcsCommitMetadata,
@@ -188,10 +190,12 @@ class GitRewordOperation(private val repository: GitRepository,
 
   private fun notifySuccess() {
     val notification = STANDARD_NOTIFICATION.createNotification("Commit Message Changed", "", NotificationType.INFORMATION, null)
-    notification.addAction(NotificationAction.createSimple("Undo") {
-      notification.expire()
-      undoInBackground()
-    })
+    notification.addAction(NotificationAction.createSimple(
+      Supplier { GitBundle.message("action.NotificationAction.GitRewordOperation.text.undo") },
+      Runnable {
+        notification.expire()
+        undoInBackground()
+      }))
 
     val connection = project.messageBus.connect()
     notification.whenExpired { connection.disconnect() }

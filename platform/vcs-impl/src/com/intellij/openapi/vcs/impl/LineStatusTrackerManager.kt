@@ -63,6 +63,7 @@ import org.jetbrains.annotations.*
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.Future
+import java.util.function.Supplier
 
 class LineStatusTrackerManager(private val project: Project) : LineStatusTrackerManagerI, Disposable {
   private val LOCK = Any()
@@ -1031,14 +1032,16 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
                    NotificationType.INFORMATION,
                    null) {
     init {
-      addAction(NotificationAction.createSimple("View Changes...") {
-        val defaultList = ChangeListManager.getInstance(project).defaultChangeList
-        val changes = defaultList.changes.filter { virtualFiles.contains(it.virtualFile) }
+      addAction(NotificationAction.createSimple(
+        Supplier { VcsBundle.message("action.NotificationAction.InactiveRangesDamagedNotification.text.view.changes") },
+        Runnable {
+          val defaultList = ChangeListManager.getInstance(project).defaultChangeList
+          val changes = defaultList.changes.filter { virtualFiles.contains(it.virtualFile) }
 
-        val window = getToolWindowFor(project, LOCAL_CHANGES)
-        window?.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
-        expire()
-      })
+          val window = getToolWindowFor(project, LOCAL_CHANGES)
+          window?.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
+          expire()
+        }))
     }
   }
 

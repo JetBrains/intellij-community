@@ -23,6 +23,7 @@ import git4idea.commands.*;
 import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +46,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitDeleteBranchOperation.class);
 
-  static final String RESTORE = "Restore";
-  static final String VIEW_COMMITS = "View Commits";
-  static final String DELETE_TRACKED_BRANCH = "Delete Tracked Branch";
+  static final String RESTORE = getRestore();
+  static final String VIEW_COMMITS = getViewCommits();
+  static final String DELETE_TRACKED_BRANCH = getDeleteTrackedBranch();
 
   @NotNull private final String myBranchName;
   @NotNull private final VcsNotifier myNotifier;
@@ -128,14 +129,14 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     String message = "<b>Deleted Branch:</b> " + myBranchName;
     if (unmergedCommits) message += "<br/>Unmerged commits were discarded";
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
-    notification.addAction(NotificationAction.createSimple(RESTORE, () -> restoreInBackground(notification)));
+    notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> restoreInBackground(notification)));
     if (unmergedCommits) {
-      notification.addAction(NotificationAction.createSimple(VIEW_COMMITS, () -> viewUnmergedCommitsInBackground(notification)));
+      notification.addAction(NotificationAction.createSimple(() -> getViewCommits(), () -> viewUnmergedCommitsInBackground(notification)));
     }
     if (!myTrackedBranches.isEmpty() &&
         hasNoOtherTrackingBranch(myTrackedBranches, myBranchName) &&
         trackedBranchIsNotProtected()) {
-      notification.addAction(NotificationAction.createSimple(DELETE_TRACKED_BRANCH, () -> {
+      notification.addAction(NotificationAction.createSimple(() -> getDeleteTrackedBranch(), () -> {
         notification.hideBalloon();
         deleteTrackedBranchInBackground();
       }));
@@ -367,5 +368,20 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         }
       }
     }.queue();
+  }
+
+  @NotNull
+  static String getRestore() {
+    return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.restore");
+  }
+
+  @NotNull
+  static String getViewCommits() {
+    return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.view.commits");
+  }
+
+  @NotNull
+  static String getDeleteTrackedBranch() {
+    return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.delete.tracked.branch");
   }
 }

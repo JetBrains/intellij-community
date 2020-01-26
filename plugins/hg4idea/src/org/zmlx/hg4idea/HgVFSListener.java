@@ -329,7 +329,8 @@ public class HgVFSListener extends VcsVFSListener {
       }
 
       private void handleRenameError() {
-        NotificationAction viewFilesAction = NotificationAction.createSimple("View Files...", () -> {
+        NotificationAction viewFilesAction =
+          NotificationAction.createSimple(() -> HgBundle.message("action.NotificationAction.HgVFSListener.text.view.files"), () -> {
           DialogWrapper dialog =
             new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
           dialog.setTitle("Failed to Rename");

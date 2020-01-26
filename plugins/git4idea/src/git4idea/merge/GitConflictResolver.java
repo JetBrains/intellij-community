@@ -11,10 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.CalledInBackground;
@@ -185,7 +183,8 @@ public class GitConflictResolver {
 
   protected void notifyWarning(@NotNull String title, @NotNull String content) {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
-    notification.addAction(NotificationAction.createSimple("Resolve...", () -> {
+    notification.addAction(
+      NotificationAction.createSimple(() -> GitBundle.message("action.NotificationAction.GitConflictResolver.text.resolve"), () -> {
       notification.expire();
       BackgroundTaskUtil.executeOnPooledThread(myProject, () -> mergeNoProceed());
     }));

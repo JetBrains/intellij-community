@@ -19,6 +19,7 @@ import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +84,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
   protected void notifySuccess() {
     String message = "<b>Deleted Tag:</b> " + myTagName;
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
-    notification.addAction(NotificationAction.createSimple("Restore", () -> restoreInBackground(notification)));
+    notification.addAction(NotificationAction.createSimple(() -> GitBundle.message(
+      "action.NotificationAction.GitDeleteTagOperation.text.restore"), () -> restoreInBackground(notification)));
 
     int remotes = 0;
     for (GitRepository repository: getRepositories()) {

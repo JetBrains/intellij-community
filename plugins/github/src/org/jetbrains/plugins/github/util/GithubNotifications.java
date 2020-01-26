@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsNotifier;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
@@ -173,6 +174,8 @@ public class GithubNotifications {
 
   @NotNull
   public static AnAction getConfigureAction(@NotNull Project project) {
-    return NotificationAction.createSimple("Configure...", () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME));
+    return NotificationAction.createSimple(() -> GitBundle.message("action.NotificationAction.GithubNotifications.text.configure"),
+                                           () -> ShowSettingsUtil.getInstance()
+                                             .showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME));
   }
 }

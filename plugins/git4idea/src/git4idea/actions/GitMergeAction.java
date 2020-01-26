@@ -34,6 +34,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.merge.MergeChangeCollector;
@@ -204,7 +205,9 @@ abstract class GitMergeAction extends GitRepositoryAction {
           String content = getBodyForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount(),
                                                         notificationData.getFilteredCommitsCount());
           notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
-          notification.addAction(NotificationAction.createSimple("View Commits", notificationData.getViewCommitAction()));
+          notification.addAction(NotificationAction.createSimple(() -> GitBundle.message(
+            "action.NotificationAction.GitMergeAction.text.view.commits"),
+                                                                 notificationData.getViewCommitAction()));
         }
         else {
           notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"),
