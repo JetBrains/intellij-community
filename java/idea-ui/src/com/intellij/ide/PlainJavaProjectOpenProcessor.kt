@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
@@ -30,6 +31,7 @@ import javax.swing.event.HyperlinkEvent
 private val NOTIFICATION_GROUP = NotificationGroup("Build Script Found", NotificationDisplayType.STICKY_BALLOON, true)
 
 private const val SCAN_DEPTH_LIMIT = 5
+private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
 
 class PlainJavaProjectOpenProcessor : StartupActivity {
 
@@ -152,5 +154,18 @@ class PlainJavaProjectOpenProcessor : StartupActivity {
       val compileOutput = if (projectPath.endsWith('/')) "${projectPath}out" else "$projectPath/out"
       setCompilerOutputPath(project, compileOutput)
     }
+
+    if (roots.size > MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE) {
+      notifyAboutAutomaticProjectStructure(project)
+    }
+  }
+
+  private fun notifyAboutAutomaticProjectStructure(project: Project) {
+    val message = "<b>Project structure has been automatically detected</b>"
+    val notification = NOTIFICATION_GROUP.createNotification("", message, NotificationType.INFORMATION, null)
+    notification.addAction(NotificationAction.createSimpleExpiring("Configure...") {
+      ProjectSettingsService.getInstance(project).openProjectSettings()
+    })
+    notification.notify(project)
   }
 }
