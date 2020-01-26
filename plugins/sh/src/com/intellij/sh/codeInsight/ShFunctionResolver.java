@@ -2,22 +2,24 @@
 package com.intellij.sh.codeInsight;
 
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.sh.psi.*;
+import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.psi.ShFunctionDeclarationProcessor;
+import com.intellij.sh.psi.ShFunctionName;
 import com.intellij.sh.psi.impl.ShLazyBlockImpl;
 import com.intellij.sh.psi.impl.ShLazyDoBlockImpl;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
-
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 class ShFunctionResolver implements ResolveCache.Resolver {
   @Override
@@ -30,25 +32,49 @@ class ShFunctionResolver implements ResolveCache.Resolver {
     ShFunctionDeclarationProcessor processor = new ShFunctionDeclarationProcessor();
     file.processDeclarations(processor, ResolveState.initial(), null, refElement);
     Map<PsiElement, MultiMap<String, ShFunctionName>> functionsDeclarationsWithScope = processor.getFunctionsDeclarationsWithScope();
-    PsiElement parent = getScopeParent(refElement);
+    PsiElement parent = getParentScope(refElement);
+    TextRange elementTextRange = refElement.getTextRange();
     PsiElement result = null;
     do {
       assert parent != null;
 
       MultiMap<String, ShFunctionName> functionNameMultiMap = functionsDeclarationsWithScope.get(parent);
       if (functionNameMultiMap == null) {
-        parent = getScopeParent(parent);
+        parent = getParentScope(parent);
         continue;
       }
 
-      result = getFirstItem(functionNameMultiMap.get(refElement.getText()));
-      parent = getScopeParent(parent);
+      result = getNearestFunction(elementTextRange, functionNameMultiMap.get(refElement.getText()));
+      parent = getParentScope(parent);
     } while (parent != null && result == null);
 
     return result;
   }
 
-  private static PsiElement getScopeParent(@NotNull PsiElement element) {
+  @Nullable
+  private static ShFunctionName getNearestFunction(@NotNull TextRange elementTextRange, @NotNull Collection<ShFunctionName> functions) {
+    if (functions.isEmpty()) return null;
+    ShFunctionName result = null;
+    for (ShFunctionName function : functions) {
+      if (isNearestFunction(elementTextRange, function, result) || isInsideFunction(elementTextRange, function)) {
+        result = function;
+      }
+    }
+    return result;
+  }
+
+  private static boolean isNearestFunction(@NotNull TextRange elementTextRange, @NotNull ShFunctionName function,
+                                           @Nullable ShFunctionName previousResult) {
+    TextRange functionTextRange = function.getTextRange();
+    return functionTextRange.getEndOffset() < elementTextRange.getStartOffset()
+    && (previousResult == null || previousResult.getTextRange().getEndOffset() < functionTextRange.getEndOffset());
+  }
+
+  private static boolean isInsideFunction(@NotNull TextRange elementTextRange, @NotNull ShFunctionName function) {
+    return function.getTextRange().contains(elementTextRange);
+  }
+
+  private static PsiElement getParentScope(@NotNull PsiElement element) {
     return PsiTreeUtil.findFirstParent(element, true, Conditions.instanceOf(ShLazyDoBlockImpl.class, ShLazyBlockImpl.class, ShFile.class));
   }
 }

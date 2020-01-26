@@ -44,11 +44,11 @@ public class ShFunctionResolverTest extends BasePlatformTestCase {
   }
 
   public void testFunctionCaseOne() {
-    doTest(getLastFunction);
+    doNullTest();
   }
 
   public void testFunctionCaseTwo() {
-    doTest(getLastFunction);
+    doNullTest();
   }
 
   public void testFunctionCaseThree() {
@@ -60,7 +60,7 @@ public class ShFunctionResolverTest extends BasePlatformTestCase {
   }
 
   public void testOuterFunctionCaseTwo() {
-    doTest(getLastFunction);
+    doNullTest();
   }
 
   public void testFunctionUnavailable() {
@@ -92,7 +92,7 @@ public class ShFunctionResolverTest extends BasePlatformTestCase {
   }
 
   public void testCaseOne() {
-    doTest(getLastFunction);
+    doNullTest();
   }
 
   public void testCaseTwo() {
@@ -100,11 +100,11 @@ public class ShFunctionResolverTest extends BasePlatformTestCase {
   }
 
   public void testCaseThree() {
-    doTest(getLastFunction);
+    doNullTest();
   }
 
   public void testCaseFour() {
-    doTest(getLastFunction);
+    doNullTest();
   }
 
   public void testCaseFive() {
@@ -112,14 +112,11 @@ public class ShFunctionResolverTest extends BasePlatformTestCase {
   }
 
   public void testCaseSix() {
-    doTest(() -> {
-      Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
-      return new ArrayList<>(functionNames).get(1);
-    });
+    doNullTest();
   }
 
   public void testCaseSeven() {
-    doTest(getLastFunction);
+    doNullTest();
   }
 
   private void configFile() {
