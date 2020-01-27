@@ -1272,21 +1272,6 @@ public class PluginManagerConfigurable
     return getFormatLength(size);
   }
 
-  public static int getParentWidth(@NotNull Container parent) {
-    int width = parent.getWidth();
-
-    if (width > 0) {
-      Container container = parent.getParent();
-      int parentWidth = container.getWidth();
-
-      if (container instanceof JViewport && parentWidth < width) {
-        width = parentWidth;
-      }
-    }
-
-    return width;
-  }
-
   @Messages.YesNoResult
   public static int showRestartDialog() {
     return showRestartDialog(IdeBundle.message("update.notifications.title"));
