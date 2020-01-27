@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
@@ -34,21 +34,19 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
 
-public class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent {
+public final class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
   private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path";
   private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard";
 
   private final Project myProject;
-  private final ChangeListManager myChangeListManager;
 
-  public static CreatePatchCommitExecutor getInstance(Project project) {
+  public static CreatePatchCommitExecutor getInstance(@NotNull Project project) {
     return project.getComponent(CreatePatchCommitExecutor.class);
   }
 
-  public CreatePatchCommitExecutor(final Project project, final ChangeListManager changeListManager) {
+  public CreatePatchCommitExecutor(@NotNull Project project) {
     myProject = project;
-    myChangeListManager = changeListManager;
   }
 
   @NotNull
@@ -76,7 +74,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
 
   @Override
   public void projectOpened() {
-    myChangeListManager.registerCommitExecutor(this);
+    ChangeListManager.getInstance(myProject).registerCommitExecutor(this);
   }
 
   private class CreatePatchCommitSession implements CommitSession {

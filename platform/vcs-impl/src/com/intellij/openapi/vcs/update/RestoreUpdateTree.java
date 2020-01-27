@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -13,17 +13,16 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @State(name = "RestoreUpdateTree", storages = {
   @Storage(StoragePathMacros.CACHE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
 })
-public class RestoreUpdateTree implements PersistentStateComponent<Element> {
+public final class RestoreUpdateTree implements PersistentStateComponent<Element> {
   private UpdateInfo myUpdateInfo;
 
-  public RestoreUpdateTree(@NotNull Project project, @NotNull StartupManager startupManager) {
-    startupManager.registerPostStartupDumbAwareActivity(() -> {
+  public RestoreUpdateTree(@NotNull Project project) {
+    StartupManager.getInstance(project).registerPostStartupDumbAwareActivity(() -> {
       if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(project).isAfterAutomaticReload()) {
         ActionInfo actionInfo = myUpdateInfo.getActionInfo();
         if (actionInfo != null) {
@@ -41,7 +40,7 @@ public class RestoreUpdateTree implements PersistentStateComponent<Element> {
     return project.getComponent(RestoreUpdateTree.class);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("state");

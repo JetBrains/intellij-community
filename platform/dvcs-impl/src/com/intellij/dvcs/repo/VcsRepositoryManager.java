@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
@@ -55,9 +55,9 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
     return ObjectUtils.assertNotNull(project.getComponent(VcsRepositoryManager.class));
   }
 
-  public VcsRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
+  public VcsRepositoryManager(@NotNull Project project) {
     myProject = project;
-    myVcsManager = vcsManager;
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myRepositoryCreators = Arrays.asList(VcsRepositoryCreator.EXTENSION_POINT_NAME.getExtensions(project));
     project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
   }

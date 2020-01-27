@@ -148,7 +148,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     Application app = ApplicationManager.getApplication();
     if (!app.isUnitTestMode()) {
       LoadingState.COMPONENTS_LOADED.checkOccurred();
-      LOG.assertTrue(!app.isDispatchThread());
+      // todo check TraverseUi
+      if (!app.isHeadlessEnvironment()) {
+        LOG.assertTrue(!app.isDispatchThread());
+      }
     }
 
     for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {

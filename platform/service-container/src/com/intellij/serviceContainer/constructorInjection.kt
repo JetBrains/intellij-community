@@ -52,9 +52,9 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
       @Suppress("UNCHECKED_CAST")
       return constructor.newInstance(*Array(parameterTypes.size) {
         val parameterType = parameterTypes.get(it)
-        if (!isErrorLogged && parameterType != ComponentManager::class.java && parameterType != MessageBus::class.java) {
+        if (!isErrorLogged && !ComponentManager::class.java.isAssignableFrom(parameterType) && parameterType != MessageBus::class.java) {
           isErrorLogged = true
-          LOG.error("Do not use constructor injection (requestorClass=$aClass)")
+          LOG.warn("Do not use constructor injection (requestorClass=${aClass.name})")
         }
         parameterResolver.resolveInstance(componentManager, requestorKey, aClass, constructor, parameterType, pluginId)
       }) as T

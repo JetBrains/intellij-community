@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.repo.Repository;
@@ -51,7 +51,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     ExtensionPoint<VcsRepositoryCreator> point = getExtensionPoint();
     point.registerExtension(mockCreator, getTestRootDisposable());
 
-    myGlobalRepositoryManager = new VcsRepositoryManager(myProject, myProjectLevelVcsManager);
+    myGlobalRepositoryManager = new VcsRepositoryManager(myProject);
   }
 
   @NotNull
