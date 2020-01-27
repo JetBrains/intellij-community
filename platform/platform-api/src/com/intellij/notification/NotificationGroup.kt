@@ -4,6 +4,7 @@ package com.intellij.notification
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.MessageType
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -55,15 +56,15 @@ class NotificationGroup @JvmOverloads constructor(@param:NonNls val displayId: S
       get() = registeredGroups.values
   }
 
-  fun createNotification(@NonNls content: String, type: MessageType): Notification {
+  fun createNotification(@Nls content: String, type: MessageType): Notification {
     return createNotification(content, type.toNotificationType())
   }
 
-  fun createNotification(@NonNls content: String, type: NotificationType): Notification {
+  fun createNotification(@Nls content: String, type: NotificationType): Notification {
     return createNotification("", content, type)
   }
 
-  fun createNotification(@NonNls title: String, @NonNls content: String, type: NotificationType = NotificationType.INFORMATION, listener: NotificationListener? = null): Notification {
+  fun createNotification(@Nls title: String, @Nls content: String, type: NotificationType = NotificationType.INFORMATION, listener: NotificationListener? = null): Notification {
     return Notification(displayId, title, content, type, listener)
   }
 
@@ -73,9 +74,9 @@ class NotificationGroup @JvmOverloads constructor(@param:NonNls val displayId: S
   }
 
   @JvmOverloads
-  fun createNotification(@NonNls title: String?,
-                         @NonNls subtitle: String?,
-                         @NonNls content: String?,
+  fun createNotification(@Nls title: String?,
+                         @Nls subtitle: String?,
+                         @Nls content: String?,
                          type: NotificationType = NotificationType.INFORMATION,
                          listener: NotificationListener? = null): Notification {
     return Notification(displayId, icon, title, subtitle, content, type, listener)
