@@ -1,5 +1,6 @@
 package ru.adelf.idea.dotenv.models;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -18,11 +19,15 @@ public class KeyValuePsiElement {
     }
 
     public String getKey() {
-        return key;
+        return key.trim();
     }
 
-    public String getValue() {
-        return value;
+    public String getShortValue() {
+        if (value.indexOf('\n') != -1) {
+            return StringUtil.trimLeading(value.substring(0, value.indexOf('\n')), '"').trim() + "...";
+        }
+
+        return StringUtil.trimEnd(StringUtil.trimLeading(value, '"'), '"').trim();
     }
 
     public PsiElement getElement() {

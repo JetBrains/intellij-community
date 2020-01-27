@@ -44,6 +44,10 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
         assertIndexNotContains(DotEnvKeysIndex.KEY,"Comment", "#Comment", "#Another comment");
     }
 
+    public void testMultiLine() {
+        assertIndexContains(DotEnvKeysIndex.KEY,"MULTI_LINE=MULTI...");
+    }
+
     public void testEnvExportKeys() {
         assertIndexContains(DotEnvKeysIndex.KEY,"EXPORTED");
     }
