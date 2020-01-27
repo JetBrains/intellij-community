@@ -368,7 +368,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ClearAction extends DumbAwareAction {
     private ClearAction() {
-      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+      super(() -> ExecutionBundle.message("clear.all.from.console.action.name"),
+            () -> ExecutionBundle.message("clear.all.from.console.action.text"), AllIcons.Actions.GC);
     }
 
     @Override
