@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,22 +42,26 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     }
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     final Set<PsiFile> allFiles = new HashSet<>();
-    for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
-      final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
-        TodoIndex.NAME,
-        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
-      PsiManager psiManager = PsiManager.getInstance(myProject);
-      ApplicationManager.getApplication().runReadAction(() -> {
-        for (VirtualFile file : files) {
-          if (TodoIndexers.belongsToProject(myProject, file)) {
-            final PsiFile psiFile = psiManager.findFile(file);
-            if (psiFile != null) {
-              allFiles.add(psiFile);
+
+    fileBasedIndex.ignoreDumbMode(() -> {
+      for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
+        final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
+          TodoIndex.NAME,
+          new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
+        PsiManager psiManager = PsiManager.getInstance(myProject);
+        ApplicationManager.getApplication().runReadAction(() -> {
+          for (VirtualFile file : files) {
+            if (TodoIndexers.belongsToProject(myProject, file)) {
+              final PsiFile psiFile = psiManager.findFile(file);
+              if (psiFile != null) {
+                allFiles.add(psiFile);
+              }
             }
           }
-        }
-      });
-    }
+        });
+      }
+    }, myProject, DumbModeAccessType.RELIABLE_DATA_ONLY);
+
     return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilCore.toPsiFileArray(allFiles);
   }
 
@@ -66,8 +71,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
       return 0;
     }
     if (file instanceof VirtualFileWindow) return -1;
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    return Arrays.stream(patternProvider.getIndexPatterns()).mapToInt(indexPattern -> fetchCount(fileBasedIndex, file, indexPattern)).sum();
+    return Arrays.stream(patternProvider.getIndexPatterns()).mapToInt(indexPattern -> fetchCount(file, indexPattern)).sum();
   }
 
   @Override
@@ -76,17 +80,19 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
       return 0;
     }
     if (file instanceof VirtualFileWindow) return -1;
-    return fetchCount(FileBasedIndex.getInstance(), file, pattern);
+    return fetchCount(file, pattern);
   }
 
-  private int fetchCount(@NotNull FileBasedIndex fileBasedIndex, @NotNull VirtualFile file, @NotNull IndexPattern indexPattern) {
+  private int fetchCount(@NotNull VirtualFile file, @NotNull IndexPattern indexPattern) {
     final int[] count = {0};
-    fileBasedIndex.processValues(
-      TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
-      (file1, value) -> {
-        count[0] += value.intValue();
-        return true;
-      }, GlobalSearchScope.fileScope(myProject, file));
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      FileBasedIndex.getInstance().processValues(
+        TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
+        (file1, value) -> {
+          count[0] += value.intValue();
+          return true;
+        }, GlobalSearchScope.fileScope(myProject, file));
+    }, myProject, DumbModeAccessType.RELIABLE_DATA_ONLY);
     return count[0];
   }
 }
