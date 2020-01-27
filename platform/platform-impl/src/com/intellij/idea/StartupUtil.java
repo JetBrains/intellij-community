@@ -574,7 +574,9 @@ public final class StartupUtil {
       }
     }
 
-    log.info("charsets: JNU=" + System.getProperty("sun.jnu.encoding") + " file=" + System.getProperty("file.encoding"));
+    log.info("Locale=" + Locale.getDefault() +
+             " JNU=" + System.getProperty("sun.jnu.encoding") +
+             " file.encoding=" + System.getProperty("file.encoding"));
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
