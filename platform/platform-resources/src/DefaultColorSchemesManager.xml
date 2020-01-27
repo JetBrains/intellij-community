@@ -2334,7 +2334,12 @@
       </option>
       <option name="XPATH.XPATH_NAME">
         <value>
-          <option name="FOREGROUND" value="da4939" />
+          <option name="FOREGROUND" value="CC7832" />
+        </value>
+      </option>
+      <option name="XPATH.FUNCTION">
+        <value>
+          <option name="FOREGROUND" value="E8BF6A" />
         </value>
       </option>
       <option name="XPATH.XPATH_VARIABLE">

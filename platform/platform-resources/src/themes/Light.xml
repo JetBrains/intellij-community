@@ -350,5 +350,15 @@
         <option name="FOREGROUND" value="e6" />
       </value>
     </option>
+    <option name="XPATH.FUNCTION">
+      <value>
+        <option name="FOREGROUND" value="174ad4" />
+      </value>
+    </option>
+    <option name="XPATH.XPATH_NAME">
+      <value>
+        <option name="FOREGROUND" value="2fa6" />
+      </value>
+    </option>
   </attributes>
 </scheme>
