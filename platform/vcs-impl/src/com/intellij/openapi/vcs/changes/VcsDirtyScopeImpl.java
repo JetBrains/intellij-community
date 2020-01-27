@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -353,12 +352,9 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public boolean belongsTo(final FilePath path, final Consumer<? super AbstractVcs> vcsConsumer) {
+  public boolean belongsTo(final FilePath path) {
     if (myProject.isDisposed()) return false;
     final VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
-    if (vcsConsumer != null && rootObject != null) {
-      vcsConsumer.consume(rootObject.getVcs());
-    }
     if (rootObject == null || rootObject.getVcs() != myVcs) {
       return false;
     }
@@ -398,11 +394,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
     final THashSet<FilePath> files = myDirtyFiles.get(vcsRoot);
     return files != null && files.contains(path);
-  }
-
-  @Override
-  public boolean belongsTo(final FilePath path) {
-    return belongsTo(path, null);
   }
 
   @Override @NonNls

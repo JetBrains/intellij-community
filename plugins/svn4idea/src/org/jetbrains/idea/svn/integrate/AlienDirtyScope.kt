@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsDirtyScope
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Consumer
 import com.intellij.util.Processor
 import org.jetbrains.idea.svn.SvnVcs
 
@@ -27,7 +26,6 @@ class AlienDirtyScope(private val vcs: SvnVcs) : VcsDirtyScope() {
 
   override fun isEmpty(): Boolean = files.isEmpty() && dirs.isEmpty()
   override fun belongsTo(path: FilePath): Boolean = false
-  override fun belongsTo(path: FilePath, vcsConsumer: Consumer<in AbstractVcs>): Boolean = false
 
   fun addFile(path: FilePath) {
     files += path
