@@ -385,8 +385,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ScrollToTheEndAction extends DumbAwareAction {
     private ScrollToTheEndAction() {
-      super(ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
-            ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+      super(() -> ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+            () -> ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
             AllIcons.RunConfigurations.Scroll_down);
     }
 
