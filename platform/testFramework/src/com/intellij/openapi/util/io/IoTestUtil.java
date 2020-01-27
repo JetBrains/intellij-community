@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +18,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -333,26 +334,24 @@ public class IoTestUtil {
   }
 
   private static boolean canCreateSymlinks() {
-    File target = null;
-    File link = null;
     try {
-      target = File.createTempFile("IOTestUtil_link_target.", ".txt");
-      link = new File(target.getParent(), target.getName().replace("IOTestUtil_link_target", "IOTestUtil_link"));
-      Files.createSymbolicLink(link.toPath(), target.toPath());
-      return true;
+      Path target = Files.createTempFile("IOTestUtil_link_target.", ".txt");
+      try {
+        Path link = target.getParent().resolve("IOTestUtil_link");
+        try {
+          Files.createSymbolicLink(link, target.getFileName());
+          return true;
+        }
+        finally {
+          Files.deleteIfExists(link);
+        }
+      }
+      finally {
+        Files.delete(target);
+      }
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
       return false;
-    }
-    finally {
-      if (link != null) {
-        //noinspection ResultOfMethodCallIgnored
-        link.delete();
-      }
-      if (target != null) {
-        //noinspection ResultOfMethodCallIgnored
-        target.delete();
-      }
     }
   }
 }
