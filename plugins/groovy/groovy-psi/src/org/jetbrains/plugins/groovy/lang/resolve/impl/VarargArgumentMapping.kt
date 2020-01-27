@@ -16,7 +16,7 @@ class VarargArgumentMapping(
   private val context: PsiElement
 ) : ArgumentMapping {
 
-  private val varargParameter: PsiParameter = method.parameterList.parameters.last()
+  override val varargParameter: PsiParameter = method.parameterList.parameters.last()
 
   private val varargType: PsiType = (varargParameter.type as PsiArrayType).componentType
 
@@ -52,8 +52,6 @@ class VarargArgumentMapping(
       return positional[argument]?.type
     }
   }
-
-  override fun isVararg(parameter: PsiParameter): Boolean = varargParameter === parameter
 
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() {

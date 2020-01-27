@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
@@ -66,11 +66,12 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
         }
         .groupBy({ it.first }, { it.second })
 
+      val varargParameter = mapping.varargParameter
       val inlays = ArrayList<InlayInfo>(map.size)
       for ((parameter, expressions) in map) {
         val name = parameter.name
         if (expressions.none(::shouldShowHint)) continue
-        val inlayText = if (mapping.isVararg(parameter)) "...$name" else name
+        val inlayText = if (parameter === varargParameter) "...$name" else name
         inlays += InlayInfo(inlayText, expressions.first().textRange.startOffset)
       }
       return inlays

@@ -17,6 +17,8 @@ class GdkArgumentMapping(
 
   override val arguments: Arguments = listOf(receiverArgument) + original.arguments
 
+  override val varargParameter: PsiParameter? get() = original.varargParameter
+
   override fun targetParameter(argument: Argument): PsiParameter? {
     return if (argument == receiverArgument) {
       receiverParameter
@@ -27,8 +29,6 @@ class GdkArgumentMapping(
   }
 
   override fun expectedType(argument: Argument): PsiType? = original.expectedType(argument)
-
-  override fun isVararg(parameter: PsiParameter): Boolean = original.isVararg(parameter)
 
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() {

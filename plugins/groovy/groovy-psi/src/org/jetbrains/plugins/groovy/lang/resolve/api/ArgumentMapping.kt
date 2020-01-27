@@ -9,11 +9,11 @@ interface ArgumentMapping {
 
   val arguments: Arguments
 
+  val varargParameter: PsiParameter? get() = null
+
   fun targetParameter(argument: Argument): PsiParameter?
 
   fun expectedType(argument: Argument): PsiType?
-
-  fun isVararg(parameter: PsiParameter): Boolean = false
 
   val expectedTypes: Iterable<Pair<PsiType, Argument>>
 
