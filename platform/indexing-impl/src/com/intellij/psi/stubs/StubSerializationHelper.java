@@ -93,6 +93,9 @@ class StubSerializationHelper {
   private ObjectStubSerializer<Stub, Stub> writeSerializerId(Stub stub, @NotNull DataOutput stream, IntEnumerator serializerLocalEnumerator)
     throws IOException {
     ObjectStubSerializer<Stub, Stub> serializer = StubSerializationUtil.getSerializer(stub);
+    if (serializer == null) {
+      throw new Error("No serializer was returned for " + stub);
+    }
     DataInputOutputUtil.writeINT(stream, serializerLocalEnumerator.enumerate(getClassId(serializer)));
     return serializer;
   }
@@ -147,7 +150,7 @@ class StubSerializationHelper {
     resultStream.write(out.getInternalBuffer(), 0, out.size());
   }
 
-  private int getClassId(final ObjectStubSerializer serializer) {
+  private int getClassId(@NotNull final ObjectStubSerializer<Stub, Stub> serializer) {
     Integer idValue = mySerializerToId.get(serializer);
     if (idValue == null) {
       String name = serializer.getExternalId();
