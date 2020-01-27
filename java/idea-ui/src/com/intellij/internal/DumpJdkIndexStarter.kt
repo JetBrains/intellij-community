@@ -121,7 +121,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     indexChunk.kind = "jdk"
 
     LOG.info("Indexing...")
-    IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath())
+    val indexerInfra = IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath())
 
     LOG.info("Packing the indexes to XZ...")
     xz(indexZip, indexZipXZ)
@@ -155,7 +155,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     //
 
     val indexDir = File(File(outputDir, indexChunk.kind!!), indexChunk.contentsHash!!).apply { mkdirs() }
-    fun indexFile(nameSuffix: String) = File(indexDir, indexChunk.name + nameSuffix)
+    fun indexFile(nameSuffix: String) = File(indexDir, indexChunk.name + "-${indexerInfra.weakVersionHash}" + nameSuffix)
 
     FileUtil.copy(indexZipXZ, indexFile(".ijx"))
     FileUtil.writeToFile(indexFile(".json"), indexMetadata)
