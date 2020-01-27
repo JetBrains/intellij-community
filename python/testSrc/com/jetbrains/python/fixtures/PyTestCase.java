@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
@@ -214,6 +215,13 @@ public abstract class PyTestCase extends UsefulTestCase {
     final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
     runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (__) -> runnable.run());
+  }
+
+  protected void runWithAdditionalClassEntryInSdkRoots(@NotNull String relativeTestDataPath, @NotNull Runnable runnable) {
+    final String absPath = getTestDataPath() + "/" + relativeTestDataPath;
+    final VirtualFile testDataDir = StandardFileSystems.local().findFileByPath(absPath);
+    assertNotNull("Additional class entry directory '" + absPath + "' not found", testDataDir);
+    runWithAdditionalClassEntryInSdkRoots(testDataDir, runnable);
   }
 
   private static void createAdditionalRootAndRunWithIt(@NotNull Sdk sdk,
