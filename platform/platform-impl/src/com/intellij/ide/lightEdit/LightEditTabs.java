@@ -211,7 +211,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
         return getSelectedFile();
       }
       else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return new VirtualFile[] {getSelectedFile()};
+        final VirtualFile selectedFile = getSelectedFile();
+        return selectedFile != null ? new VirtualFile[] {selectedFile} : VirtualFile.EMPTY_ARRAY;
       }
       return null;
     }
