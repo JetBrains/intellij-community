@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightMethod;
@@ -14,13 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-public class RecordAugmentProvider extends PsiAugmentProvider {
+public class RecordAugmentProvider extends PsiAugmentProvider implements DumbAware {
   @NotNull
   @Override
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
@@ -105,7 +102,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   private static PsiField createRecordField(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
     if (hasForbiddenType(component)) return null;
-    String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForField);
+    String typeText = getTypeText(component);
     if (typeText == null) return null;
     return factory.createFieldFromText("private final " + typeText + " " + name + ";", component.getContainingClass());
   }
@@ -115,7 +112,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     String name = component.getName();
     if (name == null) return null;
     if (hasForbiddenType(component)) return null;
-    String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForMethod);
+    String typeText = getTypeText(component);
     if (typeText == null) return null;
     return factory.createMethodFromText("public " + typeText + " " + name + "(){ return " + name + "; }", component.getContainingClass());
   }
@@ -126,23 +123,11 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   }
 
   @Nullable
-  private static String getTypeText(@NotNull PsiRecordComponent component, Predicate<PsiAnnotation> annotationPredicate) {
+  private static String getTypeText(@NotNull PsiRecordComponent component) {
     PsiType type = component.getType();
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     PsiTypeElement typeElement = component.getTypeElement();
     if (typeElement == null) return null;
-    String annotations = Arrays.stream(component.getAnnotations())
-        .filter(annotationPredicate)
-        .map(annotation -> annotation.getText())
-        .collect(Collectors.joining(" "));
-    return annotations + " " + type.getCanonicalText();
-  }
-
-  private static boolean hasTargetApplicableForField(PsiAnnotation annotation) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.FIELD) != null;
-  }
-
-  private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.METHOD) != null;
+    return type.getCanonicalText();
   }
 }
