@@ -564,7 +564,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       myInstallsRequiringRestart |= restartRequired;
     }
     if (!success && showErrors) {
-      Messages.showErrorDialog("Plugin \"" + descriptor.getName() + "\" download or installing failed",
+      Messages.showErrorDialog(IdeBundle.message("plugin.0.download.or.installing.failed", descriptor.getName()),
                                IdeBundle.message("action.download.and.install.plugin"));
     }
   }
@@ -763,7 +763,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   @NotNull
   String getEnabledTitle(@NotNull IdeaPluginDescriptor plugin) {
-    return isEnabled(plugin) ? "Disable" : "Enable";
+    return isEnabled(plugin) ? IdeBundle.message("plugins.configurable.disable.button") : IdeBundle.message("plugins.configurable.enable.button");
   }
 
   void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {

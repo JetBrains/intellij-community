@@ -22,6 +22,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -628,7 +629,7 @@ public class ListPluginComponent extends JPanel {
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
+    group.add(new MyAnAction(result.first ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"), null, KeyEvent.VK_SPACE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPluginModel.changeEnableDisable(result.second, result.first);
@@ -645,7 +646,7 @@ public class ListPluginComponent extends JPanel {
       group.addSeparator();
     }
 
-    group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
+    group.add(new MyAnAction(IdeBundle.message("plugins.configurable.uninstall.button"), IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (!MyPluginModel.showUninstallDialog(ListPluginComponent.this, selection)) {
@@ -813,7 +814,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public abstract static class MyAnAction extends DumbAwareAction {
-    MyAnAction(@Nullable String text, @Nullable String actionId, int keyCode) {
+    MyAnAction(@Nls @Nullable String text, @Nullable String actionId, int keyCode) {
       super(text);
       ShortcutSet shortcutSet = null;
       if (actionId != null) {
