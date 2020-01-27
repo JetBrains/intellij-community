@@ -72,8 +72,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
         VirtualFile parent = root.getParent();
         if (parent != null) {
-          DirectoryInfo parentInfo = getInfoForFileOrDirectory(parent);
-          if (isFileInContent(parent, parentInfo)) {
+          if (isInContent(parent)) {
             iterator.remove();
           }
         }
