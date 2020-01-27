@@ -475,9 +475,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
       final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
+      final RefactoringElementListener[] listeners =
+        Arrays.stream(myElementsToMove)
+          .map(psiElement -> getTransaction().getElementListener(psiElement))
+          .toArray(RefactoringElementListener[]::new);
+
       for (int idx = 0; idx < myElementsToMove.length; idx++) {
         PsiElement element = myElementsToMove[idx];
-        final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
         if (element instanceof PsiPackage) {
           final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
           final PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
@@ -529,7 +533,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         else {
           LOG.error("Unexpected element to move: " + element);
         }
-        elementListener.elementMoved(element);
+        listeners[idx].elementMoved(element);
         myElementsToMove[idx] = element;
       }
 
