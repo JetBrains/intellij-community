@@ -16,6 +16,7 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.CommonBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.WriteAction;
@@ -218,7 +219,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class RenameAction extends DumbAwareAction {
     RenameAction() {
-      super("Rename...");
+      super(() -> ActionsBundle.message("action.RenameAction.text"));
     }
 
     @Override
