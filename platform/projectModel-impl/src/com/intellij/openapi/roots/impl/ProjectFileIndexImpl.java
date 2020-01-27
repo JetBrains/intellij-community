@@ -59,7 +59,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return ReadAction.compute(() -> {
       if (module.isDisposed()) return Collections.emptySet();
 
-      ModuleFileIndexImpl moduleFileIndex = (ModuleFileIndexImpl)ModuleRootManager.getInstance(module).getFileIndex();
+      ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
       Set<VirtualFile> result = moduleFileIndex.getModuleRootsToIterate();
 
       for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext(); ) {

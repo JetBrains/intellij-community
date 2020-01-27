@@ -115,9 +115,6 @@
     <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
                     serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="await"/>
 
-    <projectService serviceInterface="com.intellij.util.indexing.FileBasedIndexScanRunnableCollector"
-                    serviceImplementation="com.intellij.util.indexing.FileBasedIndexScanRunnableCollectorImpl"/>
-
     <projectService serviceInterface="com.intellij.pom.references.PomService"
                     serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
