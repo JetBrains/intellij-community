@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.messages.MessageBus
 import gnu.trove.THashSet
 import java.io.File
 import java.lang.Deprecated
@@ -14,6 +16,7 @@ import kotlin.Array
 import kotlin.Boolean
 import kotlin.Comparator
 import kotlin.Pair
+import kotlin.RuntimeException
 import kotlin.Suppress
 import kotlin.let
 
@@ -40,10 +43,22 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
 
   try {
     constructor.isAccessible = true
-    @Suppress("UNCHECKED_CAST")
-    return constructor.newInstance(*Array(parameterTypes.size) {
-      parameterResolver.resolveInstance(componentManager, requestorKey, aClass, constructor, parameterTypes.get(it), pluginId)
-    }) as T
+    if (parameterTypes.isEmpty()) {
+      @Suppress("UNCHECKED_CAST")
+      return constructor.newInstance() as T
+    }
+    else {
+      var isErrorLogged = false
+      @Suppress("UNCHECKED_CAST")
+      return constructor.newInstance(*Array(parameterTypes.size) {
+        val parameterType = parameterTypes.get(it)
+        if (!isErrorLogged && parameterType != ComponentManager::class.java && parameterType != MessageBus::class.java) {
+          isErrorLogged = true
+          LOG.error("Do not use constructor injection (requestorClass=$aClass)")
+        }
+        parameterResolver.resolveInstance(componentManager, requestorKey, aClass, constructor, parameterType, pluginId)
+      }) as T
+    }
   }
   catch (e: InvocationTargetException) {
     throw e.cause ?: e
