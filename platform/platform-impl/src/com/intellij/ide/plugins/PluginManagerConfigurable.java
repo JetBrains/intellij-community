@@ -1701,7 +1701,7 @@ public class PluginManagerConfigurable
   }
 
   private class InstallFromDiskAction extends DumbAwareAction {
-    private InstallFromDiskAction() {super(IdeBundle.message("plugins.configurable.install.plugin.from.disk"));}
+    private InstallFromDiskAction() {super(IdeBundle.message("action.InstallFromDiskAction.text"));}
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
