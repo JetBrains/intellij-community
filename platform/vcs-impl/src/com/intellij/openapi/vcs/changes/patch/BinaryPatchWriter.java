@@ -26,10 +26,10 @@ public class BinaryPatchWriter {
   private final static Logger LOG = Logger.getInstance(BinaryFilePatch.class);
 
   private final static String GIT_DIFF_HEADER = "diff --git %s %s";
-  private final static String FILE_MODE_HEADER = "%s file mode %d";
+  private final static String FILE_MODE_HEADER = "%s file mode %s";
   private final static String INDEX_SHA1_HEADER = "index %s..%s";
   private final static String GIT_BINARY_HEADER = "GIT binary patch";
-  private final static String LITERAL_HEADER = "literal %d";
+  private final static String LITERAL_HEADER = "literal %s";
 
   public static void writeBinaries(@Nullable String basePath,
                                    @NotNull List<? extends BinaryFilePatch> patches,
