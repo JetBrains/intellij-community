@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
 import com.intellij.util.containers.ComparatorUtil.min
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.ArgumentApplicability
 import org.jetbrains.plugins.groovy.util.init
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
@@ -88,16 +89,16 @@ class VarargArgumentMapping(
     return Applicability.applicable
   }
 
-  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
-    val (positional, varargs) = mapping ?: return emptyMap()
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): ApplicabilityResult {
+    val (positional, varargs) = mapping ?: return ApplicabilityResult.Inapplicable
 
-    val positionalApplicabilities = highlightApplicabilities(positional, substitutor,  context)
+    val positionalApplicabilities = highlightApplicabilities(positional, substitutor, context)
     val parameterType = parameterType(varargType, substitutor, false)
-    val varargApplicabilities = varargs.associate {
-      it to ApplicabilityData(parameterType, argumentApplicability(parameterType, it.type, context))
+    val varargApplicabilities = varargs.associateWith {
+      ArgumentApplicability(parameterType, argumentApplicability(parameterType, it.type, context))
     }
 
-    return positionalApplicabilities + varargApplicabilities
+    return ApplicabilityResultImpl(positionalApplicabilities + varargApplicabilities)
   }
 
   fun compare(right: VarargArgumentMapping): Int {

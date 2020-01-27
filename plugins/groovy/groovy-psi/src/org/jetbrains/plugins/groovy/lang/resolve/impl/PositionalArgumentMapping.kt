@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
@@ -44,9 +44,9 @@ class PositionalArgumentMapping(
       return positionalParametersDistance(map, context)
     }
 
-  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
-    val map = argumentToParameter ?: return emptyMap()
-    return highlightApplicabilities(map, substitutor, context)
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): ApplicabilityResult {
+    val map = argumentToParameter ?: return ApplicabilityResult.Inapplicable
+    return ApplicabilityResultImpl(highlightApplicabilities(map, substitutor, context))
   }
 }
 
