@@ -17,6 +17,8 @@ public final class GithubIcons {
   /** 16x16 */ public static final Icon Branch = load("/org/jetbrains/plugins/github/branch.svg");
   /** 16x16 */ public static final Icon Close = load("/org/jetbrains/plugins/github/close.svg");
   /** 16x16 */ public static final Icon DefaultAvatar = load("/org/jetbrains/plugins/github/defaultAvatar.svg");
+  /** 16x16 */ public static final Icon Delete = load("/org/jetbrains/plugins/github/delete.svg");
+  /** 16x16 */ public static final Icon DeleteHovered = load("/org/jetbrains/plugins/github/deleteHovered.svg");
   /** 16x16 */ public static final Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg");
   /** 16x16 */ public static final Icon PullRequestMerged = load("/org/jetbrains/plugins/github/pullRequestMerged.svg");
   /** 16x16 */ public static final Icon PullRequestOpen = load("/org/jetbrains/plugins/github/pullRequestOpen.svg");
@@ -24,5 +26,7 @@ public final class GithubIcons {
   /** 16x16 */ public static final Icon Review = load("/org/jetbrains/plugins/github/review.svg");
   /** 16x16 */ public static final Icon ReviewAccepted = load("/org/jetbrains/plugins/github/reviewAccepted.svg");
   /** 16x16 */ public static final Icon ReviewRejected = load("/org/jetbrains/plugins/github/reviewRejected.svg");
+  /** 16x16 */ public static final Icon Send = load("/org/jetbrains/plugins/github/send.svg");
+  /** 16x16 */ public static final Icon SendHovered = load("/org/jetbrains/plugins/github/sendHovered.svg");
   /** 16x16 */ public static final Icon Timeline = load("/org/jetbrains/plugins/github/timeline.svg");
 }
