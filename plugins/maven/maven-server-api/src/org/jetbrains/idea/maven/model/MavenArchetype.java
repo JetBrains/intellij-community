@@ -16,12 +16,13 @@
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
-public class MavenArchetype implements Serializable {
+public class MavenArchetype implements Serializable, Comparable<MavenArchetype> {
   public final String groupId;
   public final String artifactId;
   public final String version;
@@ -60,5 +61,24 @@ public class MavenArchetype implements Serializable {
     result = 31 * result + (artifactId != null ? artifactId.hashCode() : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s:%s:%s", groupId, artifactId, version);
+  }
+
+  @Override
+  public int compareTo(@NotNull MavenArchetype o2) {
+    String key1 = this.groupId + ":" + this.artifactId;
+    String key2 = o2.groupId + ":" + o2.artifactId;
+
+    int result = key1.compareToIgnoreCase(key2);
+    if (result != 0) return result;
+
+    ComparableVersion v2 = new ComparableVersion(o2.version);
+    ComparableVersion v1 = new ComparableVersion(this.version);
+
+    return v2.compareTo(v1);
   }
 }
