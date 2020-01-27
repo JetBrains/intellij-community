@@ -1210,10 +1210,6 @@ public class PluginManagerConfigurable
     return JBUIScale.scale(5);
   }
 
-  public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {
-    return plugin.isBundled() || PluginManager.isDevelopedByJetBrains(plugin);
-  }
-
   @Nullable
   public static synchronized String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
     String downloads = null;
