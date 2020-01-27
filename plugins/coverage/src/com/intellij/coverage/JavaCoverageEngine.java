@@ -281,7 +281,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
 
-      if (javaSuite.isPackageFiltered(ReadAction.compute(() ->((PsiClassOwner)psiFile).getPackageName()))) {
+      if (psiFile instanceof PsiClassOwner && javaSuite.isPackageFiltered(ReadAction.compute(() -> ((PsiClassOwner)psiFile).getPackageName()))) {
         return true;
       } else {
         final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(project);
