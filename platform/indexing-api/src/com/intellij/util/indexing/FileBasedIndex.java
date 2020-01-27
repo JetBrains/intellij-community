@@ -157,39 +157,38 @@ public abstract class FileBasedIndex {
   @NotNull
   public abstract <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project);
 
-  public static void iterateRecursively(@Nullable final VirtualFile root,
+  public static void iterateRecursively(@NotNull final VirtualFile root,
                                         @NotNull final ContentIterator processor,
                                         @Nullable final ProgressIndicator indicator,
                                         @Nullable final Set<? super VirtualFile> visitedRoots,
                                         @Nullable final ProjectFileIndex projectFileIndex) {
-    if (root == null) {
-      return;
-    }
+    VirtualFileFilter acceptFilter = (file) -> {
+      if (indicator != null) {
+        indicator.checkCanceled();
+      }
+      if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
+        return false;
+      }
+      return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
+    };
 
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!acceptsFile(file)) return false;
+    VirtualFileFilter symlinkFilter = (file) -> {
+      if (acceptFilter.accept(file)) {
         if (file.is(VFileProperty.SYMLINK)) {
-          if(!Registry.is("indexer.follows.symlinks")) return false;
+          if (!Registry.is("indexer.follows.symlinks")) {
+            return false;
+          }
           VirtualFile canonicalFile = file.getCanonicalFile();
-
           if (canonicalFile != null) {
-            if(!acceptsFile(canonicalFile)) return false;
+            return acceptFilter.accept(canonicalFile);
           }
         }
-
-        processor.processFile(file);
         return true;
       }
+      return false;
+    };
 
-      private boolean acceptsFile(@NotNull VirtualFile file) {
-        if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
-          return false;
-        }
-        return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
-      }
-    });
+    VfsUtilCore.iterateChildrenRecursively(root, symlinkFilter, processor);
   }
 
   public void invalidateCaches() {
