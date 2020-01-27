@@ -19,6 +19,7 @@ java_test(
         "//tools/idea:android-studio.mac.zip",
         "//tools/idea:android-studio.tar.gz",
         "//tools/idea:android-studio.win.zip",
+        "//tools/idea:android-studio.win32.zip",
     ],
     jvm_flags = ["-Dtest.suite.jar=AndroidStudioBundleTest.jar"],
     tags = [

@@ -34,6 +34,7 @@ class BazelAntLauncher {
   public static void main(String[] args) throws Exception {
 
     String win = null;
+    String win32 = null;
     String mac = null;
     String linux = null;
     String binDir = null;
@@ -49,6 +50,8 @@ class BazelAntLauncher {
         String arg = it.next();
         if (arg.equals("--win")) {
             win = it.next();
+        } else if (arg.equals("--win32") && it.hasNext()) {
+            win32 = it.next();
         } else if (arg.equals("--mac") && it.hasNext()) {
             mac = it.next();
         } else if (arg.equals("--linux") && it.hasNext()) {
@@ -127,6 +130,9 @@ class BazelAntLauncher {
         String filePrefix = "android-studio-" + buildNumber;
         if (win != null) {
             Files.move(Paths.get(tmp, "artifacts", filePrefix + ".win.zip"), Paths.get(win));
+        }
+        if (win32 != null) {
+            Files.move(Paths.get(tmp, "artifacts", filePrefix + ".win32.zip"), Paths.get(win32));
         }
         if (mac != null) {
             Files.move(Paths.get(tmp, "artifacts", filePrefix + ".mac.zip"), Paths.get(mac));
