@@ -33,10 +33,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
@@ -112,7 +109,12 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public VcsLogUiFactory<? extends MainVcsLogUi> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
-    return new MainVcsLogUiFactory(logId, filters);
+    Optional<CustomVcsLogUiFactoryProvider> customVcsLogUiFactoryProviderOptional =
+      CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.extensions(myProject)
+        .filter(p -> p.isActive(this)).findFirst();
+    return customVcsLogUiFactoryProviderOptional.isPresent() ?
+           customVcsLogUiFactoryProviderOptional.get().createLogUiFactory(logId, this, filters) :
+           new MainVcsLogUiFactory(logId, filters);
   }
 
   @NotNull
