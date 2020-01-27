@@ -203,7 +203,7 @@ public class JavaI18nUtil extends I18nUtil {
     if (annFqn.equals(AnnotationUtil.NON_NLS) || annFqn.equals(AnnotationUtil.NLS)) {
       String oppositeFQN = annFqn.equals(AnnotationUtil.NON_NLS) ? AnnotationUtil.NLS
                                                                  : AnnotationUtil.NON_NLS;
-      if (param.hasAnnotation(oppositeFQN)) {
+      if (AnnotationUtil.findAnnotation(param, oppositeFQN) != null) {
         return false;
       }
 
