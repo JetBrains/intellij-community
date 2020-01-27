@@ -138,7 +138,9 @@
 
     <projectService serviceImplementation="com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager"/>
 
+    <!-- Android Studio: disabled by Change I9217935c
     <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
+    -->
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
