@@ -854,7 +854,8 @@ public class PluginManagerConfigurable
             PluginsGroup group = new PluginsGroup(entry.getKey()) {
               @Override
               public void titleWithCount(int enabled) {
-                rightAction.setText(enabled == 0 ? "Enable All" : "Disable All");
+                rightAction.setText(enabled == 0 ? IdeBundle.message("plugins.configurable.enable.all")
+                                                 : IdeBundle.message("plugins.configurable.disable.all"));
               }
             };
             group.descriptors.addAll(entry.getValue());
@@ -1385,7 +1386,7 @@ public class PluginManagerConfigurable
     private boolean myState;
 
     private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
-      super(option == InstalledSearchOption.NeedUpdate ? "Update available" : option.name());
+      super(option == InstalledSearchOption.NeedUpdate ? IdeBundle.message("plugins.configurable.update.available") : option.name());
       myOption = option;
     }
 
@@ -1441,7 +1442,8 @@ public class PluginManagerConfigurable
     private final boolean myEnable;
 
     private ChangePluginStateAction(boolean enable) {
-      super(enable ? "Enable All Downloaded Plugins" : "Disable All Downloaded Plugins");
+      super(enable ? IdeBundle.message("plugins.configurable.enable.all.downloaded")
+                   : IdeBundle.message("plugins.configurable.disable.all.downloaded"));
       myEnable = enable;
     }
 
@@ -1695,7 +1697,7 @@ public class PluginManagerConfigurable
   }
 
   private class InstallFromDiskAction extends DumbAwareAction {
-    private InstallFromDiskAction() {super("Install Plugin from Disk...");}
+    private InstallFromDiskAction() {super(IdeBundle.message("plugins.configurable.install.plugin.from.disk"));}
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
