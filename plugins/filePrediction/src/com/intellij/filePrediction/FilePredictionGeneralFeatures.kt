@@ -3,6 +3,7 @@ package com.intellij.filePrediction
 
 import com.intellij.filePrediction.FilePredictionFeature.Companion.binary
 import com.intellij.filePrediction.FilePredictionFeature.Companion.numerical
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.FileIndexFacade
@@ -19,11 +20,20 @@ class FilePredictionGeneralFeatures: FilePredictionFeatureProvider {
 
   override fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
-    val fileIndex = FileIndexFacade.getInstance(project)
-    result["in_project"] = binary(fileIndex.isInProjectScope(newFile))
-    result["in_source"] = binary(fileIndex.isInSource(newFile))
-    result["in_library"] = binary(fileIndex.isInLibraryClasses(newFile) || fileIndex.isInLibrarySource(newFile))
-    result["excluded"] = binary(fileIndex.isExcludedFile(newFile))
+    ApplicationManager.getApplication().runReadAction {
+      if (newFile.isValid) {
+        val fileIndex = FileIndexFacade.getInstance(project)
+        result["in_project"] = binary(fileIndex.isInProjectScope(newFile))
+        result["in_source"] = binary(fileIndex.isInSource(newFile))
+        result["in_library"] = binary(fileIndex.isInLibraryClasses(newFile) || fileIndex.isInLibrarySource(newFile))
+        result["excluded"] = binary(fileIndex.isExcludedFile(newFile))
+
+        if (prevFile != null && prevFile.isValid) {
+          val newModule = fileIndex.getModuleForFile(newFile)
+          result["same_module"] = binary(newModule != null && newModule == fileIndex.getModuleForFile(prevFile))
+        }
+      }
+    }
 
     if (prevFile != null) {
       val newFileName = unify(newFile.name)
@@ -42,11 +52,7 @@ class FilePredictionGeneralFeatures: FilePredictionFeatureProvider {
           result["relative_path_prefix"] = numerical(StringUtil.commonPrefixLength(newRelativePath, prevRelativePath))
         }
       }
-
-      val newModule = fileIndex.getModuleForFile(newFile)
-      val prevModule = fileIndex.getModuleForFile(prevFile)
       result["same_dir"] = binary(PathUtil.getParentPath(newFilePath) == PathUtil.getParentPath(prevFilePath))
-      result["same_module"] = binary(newModule != null && newModule == prevModule)
     }
     return result
   }
