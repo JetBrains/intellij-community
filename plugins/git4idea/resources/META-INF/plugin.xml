@@ -221,7 +221,6 @@
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
-    <projectService serviceImplementation="git4idea.GitUserRegistry" />
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
     <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
