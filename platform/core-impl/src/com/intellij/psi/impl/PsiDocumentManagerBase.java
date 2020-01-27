@@ -8,7 +8,9 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -169,11 +171,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     document = FileDocumentManager.getInstance().getDocument(viewProvider.getVirtualFile());
     if (document != null) {
       if (document.getTextLength() != file.getTextLength()) {
-        String message = "Document/PSI mismatch: " + file + " (" + file.getClass() + "); physical=" + viewProvider.isPhysical();
-        if (document.getTextLength() + file.getTextLength() < 8096) {
-          message += "\n=== document ===\n" + document.getText() + "\n=== PSI ===\n" + file.getText();
-        }
-        throw new AssertionError(message);
+        String message = "Document/PSI mismatch: " + file + " of " + file.getClass() +
+                         "; viewProvider=" + viewProvider +
+                         "; uncommitted=" + Arrays.toString(getUncommittedDocuments());
+        throw new RuntimeExceptionWithAttachments(message,
+                                                  new Attachment("document.txt", document.getText()),
+                                                  new Attachment("psi.txt", file.getText()));
       }
 
       if (!viewProvider.isPhysical()) {
