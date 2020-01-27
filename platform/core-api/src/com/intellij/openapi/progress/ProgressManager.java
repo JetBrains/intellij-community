@@ -58,7 +58,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   @Override
   public abstract ProgressIndicator getProgressIndicator();
 
-  public static void progress(@NotNull String text) throws ProcessCanceledException {
+  public static void progress(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text) throws ProcessCanceledException {
     progress(text, "");
   }
 
