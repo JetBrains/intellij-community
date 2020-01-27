@@ -49,6 +49,7 @@ import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -250,7 +251,7 @@ public class PluginManagerConfigurable
     return actions;
   }
 
-  private static void showRightBottomPopup(@NotNull Component component, @NotNull String title, @NotNull ActionGroup group) {
+  private static void showRightBottomPopup(@NotNull Component component, @NotNull @Nls String title, @NotNull ActionGroup group) {
     DefaultActionGroup actions = new GroupByActionGroup();
     actions.addSeparator("  " + title);
     actions.addAll(group);
@@ -367,10 +368,10 @@ public class PluginManagerConfigurable
             Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
             try {
-              addGroup(groups, allRepositoriesMap, "Featured", "is_featured_search=true", "/sortBy:featured");
-              addGroup(groups, allRepositoriesMap, "New and Updated", "orderBy=update+date", "/sortBy:updated");
-              addGroup(groups, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "/sortBy:downloads");
-              addGroup(groups, allRepositoriesMap, "Top Rated", "orderBy=rating", "/sortBy:rating");
+              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true", "/sortBy:featured");
+              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.new.and.updated"), "orderBy=update+date", "/sortBy:updated");
+              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.top.downloads"), "orderBy=downloads", "/sortBy:downloads");
+              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.top.rated"), "orderBy=rating", "/sortBy:rating");
             }
             catch (IOException e) {
               PluginManagerMain.LOG
@@ -380,7 +381,7 @@ public class PluginManagerConfigurable
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
               List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
-                addGroup(groups, "Repository: " + host, "/repository:\"" + host + "\"", descriptors -> {
+                addGroup(groups, IdeBundle.message("plugins.configurable.repository.0", host), "/repository:\"" + host + "\"", descriptors -> {
                   int allSize = allDescriptors.size();
                   descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
                   PluginsGroup.sortByName(descriptors);
@@ -414,7 +415,7 @@ public class PluginManagerConfigurable
           ApplicationManager.getApplication().executeOnPooledThread(runnable);
         };
 
-        myMarketplacePanel.getEmptyText().setText("Marketplace plugins are not loaded.")
+        myMarketplacePanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.marketplace.plugins.not.loaded"))
           .appendSecondaryText("Check the internet connection and ", StatusText.DEFAULT_ATTRIBUTES, null)
           .appendSecondaryText("refresh", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myMarketplaceRunnable.run());
 
@@ -539,7 +540,7 @@ public class PluginManagerConfigurable
 
         //noinspection unchecked
         myMarketplaceSortByAction.setListener(
-          (component, __) -> showRightBottomPopup(component.getParent().getParent(), "Sort By", myMarketplaceSortByGroup), null);
+          (component, __) -> showRightBottomPopup(component.getParent().getParent(), IdeBundle.message("plugins.configurable.sort.by"), myMarketplaceSortByGroup), null);
 
         myMarketplaceSortByCallback = updateAction -> {
           MarketplaceSortByAction removeAction = null;
@@ -716,8 +717,9 @@ public class PluginManagerConfigurable
               catch (IOException e) {
                 PluginManagerMain.LOG.info(e);
 
-                ApplicationManager.getApplication().invokeLater(() -> myPanel.getEmptyText().setText("Search result are not loaded.")
-                  .appendSecondaryText("Check the internet connection.", StatusText.DEFAULT_ATTRIBUTES, null), ModalityState.any());
+                ApplicationManager.getApplication().invokeLater(() -> myPanel.getEmptyText().setText(
+                  IdeBundle.message("plugins.configurable.search.result.not.loaded"))
+                  .appendSecondaryText(IdeBundle.message("plugins.configurable.check.internet"), StatusText.DEFAULT_ATTRIBUTES, null), ModalityState.any());
               }
             }
           };
@@ -735,14 +737,15 @@ public class PluginManagerConfigurable
     }
 
     myInstalledTab = new PluginsTab() {
+      @SuppressWarnings("HardCodedStringLiteral")
       @Override
       protected void createSearchTextField(int flyDelay) {
         super.createSearchTextField(flyDelay);
 
         JBTextField textField = mySearchTextField.getTextEditor();
         textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
-          .create(AllIcons.Actions.More, AllIcons.Actions.More, "Search Options", // TODO: icon
-                  () -> showRightBottomPopup(textField, "Show", myInstalledSearchGroup)));
+          .create(AllIcons.Actions.More, AllIcons.Actions.More, IdeBundle.message("plugins.configurable.search.options"), // TODO: icon
+                  () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)));
         textField.putClientProperty("JTextField.variant", null);
         textField.putClientProperty("JTextField.variant", "search");
 
@@ -773,7 +776,7 @@ public class PluginManagerConfigurable
 
         PluginLogo.startBatchMode();
 
-        PluginsGroup installing = new PluginsGroup("Installing");
+        PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"));
         installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
         if (!installing.descriptors.isEmpty()) {
           installing.sortByName();
@@ -781,12 +784,12 @@ public class PluginManagerConfigurable
           myInstalledPanel.addGroup(installing);
         }
 
-        PluginsGroup downloaded = new PluginsGroup("Downloaded");
+        PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"));
         downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
         boolean groupBundled = Registry.is("plugins.group.bundled.category", false);
         Map<String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
-        PluginsGroup bundled = new PluginsGroup("Bundled");
+        PluginsGroup bundled = new PluginsGroup(IdeBundle.message("plugins.configurable.bundled"));
 
         ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
         int bundledEnabled = 0;
@@ -794,6 +797,7 @@ public class PluginManagerConfigurable
 
         boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
 
+        String otherCategoryTitle = IdeBundle.message("plugins.configurable.other.bundled");
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           if (!appInfo.isEssentialPlugin(descriptor.getPluginId())) {
             if (descriptor.isBundled()) {
@@ -802,7 +806,7 @@ public class PluginManagerConfigurable
               }
               bundled.descriptors.add(descriptor);
               if (groupBundled) {
-                String category = StringUtil.defaultIfEmpty(descriptor.getCategory(), "Other Bundled");
+                String category = StringUtil.defaultIfEmpty(descriptor.getCategory(), otherCategoryTitle);
                 List<IdeaPluginDescriptor> groupDescriptors = bundledGroups.get(category);
                 if (groupDescriptors == null) {
                   bundledGroups.put(category, groupDescriptors = new ArrayList<>());
@@ -868,7 +872,7 @@ public class PluginManagerConfigurable
           }
 
           ContainerUtil.sort(groups, (o1, o2) -> StringUtil.compare(o1.title, o2.title, true));
-          PluginsGroup otherGroup = ContainerUtil.find(groups, group -> group.title.equals("Other Bundled"));
+          PluginsGroup otherGroup = ContainerUtil.find(groups, group -> group.title.equals(otherCategoryTitle));
           if (otherGroup != null) {
             groups.remove(otherGroup);
             groups.add(otherGroup);
@@ -1006,8 +1010,8 @@ public class PluginManagerConfigurable
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
           protected void setEmptyText() {
-            myPanel.getEmptyText().setText("Nothing found.");
-            myPanel.getEmptyText().appendSecondaryText("Search in Marketplace", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+            myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
+            myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                                        e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
           }
 
@@ -1561,7 +1565,7 @@ public class PluginManagerConfigurable
   }
 
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
-                        @NotNull String name,
+                        @NotNull @Nls String name,
                         @NotNull String showAllQuery,
                         @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function)
     throws IOException {
@@ -1569,7 +1573,7 @@ public class PluginManagerConfigurable
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
       //noinspection unchecked
-      group.rightAction = new LinkLabel("Show All", null, myMarketplaceTab.mySearchListener, showAllQuery);
+      group.rightAction = new LinkLabel(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
@@ -1580,7 +1584,7 @@ public class PluginManagerConfigurable
 
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap,
-                        @NotNull String name,
+                        @NotNull @Nls String name,
                         @NotNull String query,
                         @NotNull String showAllQuery) throws IOException {
     addGroup(groups, name, showAllQuery, descriptors -> PluginRepositoryRequests.loadPlugins(descriptors, allRepositoriesMap, query));

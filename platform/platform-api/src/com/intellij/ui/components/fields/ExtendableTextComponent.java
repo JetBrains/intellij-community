@@ -2,6 +2,7 @@
 package com.intellij.ui.components.fields;
 
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public interface ExtendableTextComponent {
       return create(icon, icon, tooltip, action);
     }
 
-    static Extension create(@NotNull Icon defaultIcon, @NotNull Icon hoveredIcon, String tooltip, Runnable action) {
+    static Extension create(@NotNull Icon defaultIcon, @NotNull Icon hoveredIcon, @Nls String tooltip, Runnable action) {
       return new Extension() {
         @Override
         public Icon getIcon(boolean hovered) {

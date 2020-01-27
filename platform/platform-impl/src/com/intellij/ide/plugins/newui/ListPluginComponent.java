@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -152,7 +153,8 @@ public class ListPluginComponent extends JPanel {
 
         myInstallButton
           .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
-        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null, "Installed");
+        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null,
+                                   IdeBundle.message("plugin.status.installed"));
         ColorButton.setWidth72(myInstallButton);
       }
     }
@@ -234,7 +236,8 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else {
-      String version = !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : "bundled";
+      String version = !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : IdeBundle.message("plugin.status.bundled");
+      
       if (!StringUtil.isEmptyOrSpaces(version)) {
         myVersion = createRatingLabel(panel, version, null);
       }
@@ -480,11 +483,11 @@ public class ListPluginComponent extends JPanel {
         enableRestart();
       }
       else if (myInstallButton != null) {
-        myInstallButton.setEnabled(false, "Installed");
+        myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
       }
       else if (myUpdateButton != null) {
         myUpdateButton.setEnabled(false);
-        myUpdateButton.setText("Installed");
+        myUpdateButton.setText(IdeBundle.message("plugin.status.installed"));
       }
     }
 
