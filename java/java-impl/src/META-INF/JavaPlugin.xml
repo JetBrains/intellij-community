@@ -1413,6 +1413,10 @@
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantStreamOptionalCallInspection"
                      displayName="Redundant step in Stream or Optional call chain"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantRecordConstructor" enabledByDefault="true" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" 
+                     bundle="messages.InspectionsBundle" key="inspection.redundant.record.constructor.description"
+                     implementationClass="com.intellij.codeInspection.RedundantRecordConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EndlessStream"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
