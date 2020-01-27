@@ -37,6 +37,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
@@ -622,7 +623,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ShowDiffWithLocalAction extends DumbAwareAction {
     ShowDiffWithLocalAction() {
-      super("Compare with local content", null, AllIcons.Actions.Diff);
+      super(() -> VcsBundle.message("action.DumbAwareAction.text.compare.with.local.content"), AllIcons.Actions.Diff);
     }
 
     @Override

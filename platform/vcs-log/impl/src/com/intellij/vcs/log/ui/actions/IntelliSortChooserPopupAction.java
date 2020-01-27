@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -21,7 +22,8 @@ import java.awt.*;
 
 public class IntelliSortChooserPopupAction extends DumbAwareAction {
   public IntelliSortChooserPopupAction() {
-    super("IntelliSort", "Change IntelliSort Type", VcsLogIcons.IntelliSort);
+    super(() -> VcsBundle.message("action.IntelliSortChooserPopupAction.text"),
+          () -> VcsBundle.message("action.IntelliSortChooserPopupAction.description"), VcsLogIcons.IntelliSort);
   }
 
   @Override

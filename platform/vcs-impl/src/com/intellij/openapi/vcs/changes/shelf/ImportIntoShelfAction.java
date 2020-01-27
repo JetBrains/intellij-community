@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,8 @@ import java.util.List;
 
 public class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {
-    super("Import Patches...", "Copies a patch file to the shelf", null);
+    super(() -> VcsBundle.message("action.ImportIntoShelfAction.text"),
+          () -> VcsBundle.message("action.ImportIntoShelfAction.description"), null);
   }
 
   @Override
