@@ -5,12 +5,12 @@ import com.intellij.ide.plugins.loadExtensionWithText
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.LanguageSubstitutor
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.assertj.core.api.Assertions.assertThat
 
 class LanguageSubstitutorLoadUnloadTest : LightJavaCodeInsightFixtureTestCase() {
   fun testBefore() {
@@ -19,24 +19,21 @@ class LanguageSubstitutorLoadUnloadTest : LightJavaCodeInsightFixtureTestCase() 
 
   fun testLoadUnload() {
     val beforeLoading = myFixture.configureByText("dummy.txt", "package hello;")
-    UsefulTestCase.assertInstanceOf(beforeLoading.language, PlainTextLanguage::class.java)
+    assertThat(beforeLoading.language).isInstanceOf(PlainTextLanguage::class.java)
 
     val virtualFile = beforeLoading.virtualFile
     val text = "<lang.substitutor language=\"TEXT\" implementationClass=\"${TextToJavaSubstitutor::class.java.name}\"/>"
-    val disposable = loadExtensionWithText(text, javaClass.classLoader)
-    val psiManager = PsiManager.getInstance(myFixture.project)
-    val afterLoading = psiManager.findFile(virtualFile)
-    UsefulTestCase.assertInstanceOf(afterLoading!!.language, JavaLanguage::class.java)
-
-    Disposer.dispose(disposable)
-    val afterUnloading = psiManager.findFile(virtualFile)
-    UsefulTestCase.assertInstanceOf(afterUnloading!!.language, PlainTextLanguage::class.java)
-  }
-
-  private class TextToJavaSubstitutor : LanguageSubstitutor() {
-    override fun getLanguage(file: VirtualFile,
-                             project: Project): Language? {
-      return if (file.name.startsWith("dummy")) JavaLanguage.INSTANCE else null
+    loadExtensionWithText(text, javaClass.classLoader).use {
+      val afterLoading = PsiManager.getInstance(myFixture.project).findFile(virtualFile)
+      assertThat(afterLoading!!.language).isInstanceOf(JavaLanguage::class.java)
     }
+    val afterUnloading = psiManager.findFile(virtualFile)
+    assertThat(afterUnloading!!.language).isInstanceOf(PlainTextLanguage::class.java)
+  }
+}
+
+private class TextToJavaSubstitutor : LanguageSubstitutor() {
+  override fun getLanguage(file: VirtualFile, project: Project): Language? {
+    return if (file.name.startsWith("dummy")) JavaLanguage.INSTANCE else null
   }
 }
