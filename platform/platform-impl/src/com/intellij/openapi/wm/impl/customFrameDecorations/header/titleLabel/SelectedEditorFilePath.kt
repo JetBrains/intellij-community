@@ -309,8 +309,9 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     } ?: pathPatterns.firstOrNull { it.preferredWidth < width }?.let { it.createTitle() } ?: ""
 
     label.text = titleString
+    HelpTooltip.dispose(label)
+
     if (isClipped) {
-      HelpTooltip.dispose(label)
       HelpTooltip().setTitle(components.joinToString(separator = "", transform = { it.toolTipPart })).installOn(label)
     }
 
