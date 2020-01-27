@@ -194,7 +194,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     return null;
   }
 
-  private static class EditorContainer extends JPanel implements DataProvider {
+  private class EditorContainer extends JPanel implements DataProvider {
 
     private EditorContainer(Editor editor) {
       super(new BorderLayout());
@@ -206,6 +206,12 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return LightEditUtil.getProject();
+      }
+      else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return getSelectedFile();
+      }
+      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        return new VirtualFile[] {getSelectedFile()};
       }
       return null;
     }
