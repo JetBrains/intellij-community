@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 /**
  * Allows to apply IDE-specific customizations to the terms used in platform UI features.
@@ -18,8 +20,14 @@ public class IdeUICustomization {
   /**
    * Returns the name to be displayed in the UI for the "project" concept (Rider changes this to "solution").
    */
+  @NotNull
   public String getProjectConceptName() {
     return "project";
+  }
+
+  @NotNull
+  public String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectBundle.BUNDLE) String key) {
+    return ProjectBundle.message(key);
   }
 
   /**
