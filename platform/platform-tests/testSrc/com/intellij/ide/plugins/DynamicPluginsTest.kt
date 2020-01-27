@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
@@ -31,6 +32,7 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.io.write
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import junit.framework.Assert.*
 import org.junit.ClassRule
@@ -153,7 +155,7 @@ class DynamicPluginsTest {
                 <depends optional="true" config-file="bar.xml">bar</depends>
             </idea-plugin>
           """,
-          """
+      """
                     <idea-plugin>
                         <actions>
                             <group id="FooBarGroup">
@@ -312,10 +314,12 @@ class DynamicPluginsTest {
       Disposer.dispose(disposable)
     }
   }
+
   @Test
   fun unloadEPWithDefaultAttributes() {
-    val disposable = loadExtensionWithText("<globalInspection implementationClass=\"${MyInspectionTool::class.java.name}\" cleanupTool=\"false\"/>",
-                                           DynamicPlugins::class.java.classLoader)
+    val disposable = loadExtensionWithText(
+      "<globalInspection implementationClass=\"${MyInspectionTool::class.java.name}\" cleanupTool=\"false\"/>",
+      DynamicPlugins::class.java.classLoader)
     try {
       assertTrue(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name })
     }
@@ -339,19 +343,30 @@ class DynamicPluginsTest {
     assertFalse(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name })
   }
 
+  @Test
+  fun loadExistingFileTypeModification() {
+    val textToLoad = "<fileType name=\"PLAIN_TEXT\" language=\"PLAIN_TEXT\" fileNames=\".texttest\"/>"
+    var disposable = loadExtensionWithText(textToLoad, DynamicPlugins::class.java.classLoader)
+    Disposer.dispose(disposable)
+
+    UIUtil.dispatchAllInvocationEvents()
+    disposable = loadExtensionWithText(textToLoad, DynamicPlugins::class.java.classLoader)
+    Disposer.dispose(disposable)
+  }
+
   private fun loadPluginWithOptionalDependency(pluginXmlText: String, optionalDependencyDescriptorText: String): Disposable {
     val directory = FileUtil.createTempDirectory("test", "test", true)
     val plugin = File(directory, "/plugin/META-INF/plugin.xml")
     FileUtil.createParentDirs(plugin)
     FileUtil.writeToFile(plugin, pluginXmlText.trimIndent())
     FileUtil.writeToFile(File(directory, "/plugin/META-INF/bar.xml"), optionalDependencyDescriptorText.trimIndent())
-    
+
     val descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
     descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
     Assertions.assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
-    
+
     DynamicPlugins.loadPlugin(descriptor, false)
-    
+
     return Disposable {
       val unloadDescriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
       val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
