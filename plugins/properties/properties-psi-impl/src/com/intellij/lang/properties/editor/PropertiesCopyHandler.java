@@ -1,18 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -96,9 +92,9 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   public void doClone(PsiElement element) {
   }
 
-  private static void copyPropertyToAnotherBundle(@NotNull Collection<? extends IProperty> properties,
-                                                  @NotNull final String newName,
-                                                  @NotNull ResourceBundle targetResourceBundle) {
+  private void copyPropertyToAnotherBundle(@NotNull Collection<? extends IProperty> properties,
+                                           @NotNull final String newName,
+                                           @NotNull ResourceBundle targetResourceBundle) {
     final Map<IProperty, PropertiesFile> propertiesFileMapping = new HashMap<>();
     for (IProperty property : properties) {
       final PropertiesFile containingFile = property.getPropertiesFile();
@@ -130,25 +126,14 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       final IProperty representativeFromSourceBundle = ContainerUtil.getFirstItem(properties);
       LOG.assertTrue(representativeFromSourceBundle != null);
       final ResourceBundle sourceResourceBundle = representativeFromSourceBundle.getPropertiesFile().getResourceBundle();
-      if (sourceResourceBundle.equals(targetResourceBundle)) {
-        DataManager.getInstance()
-                   .getDataContextFromFocusAsync()
-                   .onSuccess(context -> {
-                     final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
-                     if (fileEditor instanceof ResourceBundleEditor) {
-                       final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)fileEditor;
-                       resourceBundleEditor.updateTreeRoot();
-                       resourceBundleEditor.selectProperty(newName);
-                     }
-                   });
-      } else {
-        for (FileEditor editor : FileEditorManager.getInstance(project).openFile(new ResourceBundleAsVirtualFile(targetResourceBundle), true)) {
-          ((ResourceBundleEditor) editor).updateTreeRoot();
-          ((ResourceBundleEditor) editor).selectProperty(newName);
-        }
-      }
+      updateBundleEditors(newName, targetResourceBundle, sourceResourceBundle, project);
     }
   }
+
+  protected void updateBundleEditors(@NotNull String newName,
+                                     @NotNull ResourceBundle targetResourceBundle,
+                                     @NotNull ResourceBundle sourceResourceBundle,
+                                     @NotNull Project project) { }
 
   @Nullable
   private static PropertiesFile findWithMatchedSuffix(@NotNull PropertiesFile searchFile, @NotNull ResourceBundle resourceBundle) {

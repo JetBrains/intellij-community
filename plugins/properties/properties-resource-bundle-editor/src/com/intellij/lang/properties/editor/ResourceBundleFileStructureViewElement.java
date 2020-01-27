@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement {
+public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   @NotNull
   private final ResourceBundle myResourceBundle;
   @NotNull
@@ -127,6 +127,21 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
       }
     });
     return propertyNames;
+  }
+
+  @Nullable
+  @Override
+  public IProperty[] getProperties() {
+    return IProperty.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  @Override
+  public PsiFile[] getFiles() {
+    ResourceBundle rb = getValue();
+    if (rb == null) return null;
+    final List<PropertiesFile> files = rb.getPropertiesFiles();
+    return ContainerUtil.map2Array(files, new PsiFile[files.size()], propertiesFile -> propertiesFile.getContainingFile());
   }
 
   @Override

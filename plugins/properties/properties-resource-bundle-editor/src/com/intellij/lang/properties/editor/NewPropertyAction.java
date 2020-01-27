@@ -2,7 +2,6 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
@@ -22,11 +21,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
 
 /**

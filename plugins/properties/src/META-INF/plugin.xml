@@ -116,7 +116,7 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesLanguageCodeStyleSettingsProvider"/>
 
     <internalFileTemplate name="XML Properties File.xml"/>
-    <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandler"/>
+    <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandlerEx"/>
     <lang.formatter language="Properties" implementationClass="com.intellij.lang.properties.formatting.PropertiesFormattingModelBuilder"/>
 
     <definitionsScopedSearch implementation="com.intellij.lang.properties.editor.PropertiesInheritorsSearcher"/>
