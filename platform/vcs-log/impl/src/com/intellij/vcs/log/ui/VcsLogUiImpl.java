@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -73,7 +73,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NotNull
   protected MainFrame createMainFrame(@NotNull VcsLogData logData,
                                       @NotNull MainVcsLogUiProperties uiProperties, @NotNull VcsLogFilterUiEx filterUi) {
-    boolean isDiffPreviewAsEditor = Registry.is("show.diff.preview.as.editor.tab");
+    boolean isDiffPreviewAsEditor = Registry.is("vcs.log.show.diff.preview.as.editor.tab");
     MainFrame mainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor);
     if (isDiffPreviewAsEditor) {
       new VcsLogEditorDiffPreview(myProject, myUiProperties, mainFrame);
