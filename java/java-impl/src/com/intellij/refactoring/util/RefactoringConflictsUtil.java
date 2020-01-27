@@ -5,12 +5,14 @@ package com.intellij.refactoring.util;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -321,6 +323,8 @@ public class RefactoringConflictsUtil {
           }
         };
       }
+      ProgressManager.progress(
+        RefactoringBundle.message("processing.progress.text", SymbolPresentationUtil.getSymbolPresentableText(scope)));
       scope.accept(visitor);
     }
 
