@@ -277,12 +277,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         final FileType fileType = findFileTypeByName(extension.name);
         if (fileType == null) return;
         unregisterFileType(fileType);
-        if (fileType instanceof LanguageFileType) {
-          final LanguageFileType languageFileType = (LanguageFileType)fileType;
-          if (!languageFileType.isSecondary()) {
-            Language.unregisterLanguage(languageFileType.getLanguage());
-          }
-        }
       }
     }, this);
   }

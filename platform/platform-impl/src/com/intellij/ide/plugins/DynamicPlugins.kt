@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.lang.Language
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -109,17 +110,17 @@ object DynamicPlugins {
       return false
     }
 
-    if (loadedPluginDescriptor != null && isPluginLoaded(loadedPluginDescriptor.pluginId)) {
-      if (!descriptor.useIdeaClassLoader) {
-        val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
-        if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
-          val loader = baseDescriptor ?: descriptor
-          LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of UrlClassLoader as the default class loader. " +
-                   "For example, the IDE is started from the sources with the plugin.")
-          return false
-        }
-      }
-    }
+    //if (loadedPluginDescriptor != null && isPluginLoaded(loadedPluginDescriptor.pluginId)) {
+    //  if (!descriptor.useIdeaClassLoader) {
+    //    val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
+    //    if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
+    //      val loader = baseDescriptor ?: descriptor
+    //      LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of UrlClassLoader as the default class loader. " +
+    //               "For example, the IDE is started from the sources with the plugin.")
+    //      return false
+    //    }
+    //  }
+    //}
 
     val extensions = descriptor.extensions
     if (extensions != null) {
@@ -303,6 +304,7 @@ object DynamicPlugins {
             if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader ||
                 ApplicationManager.getApplication().isUnitTestMode) {
               IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
+              Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
             }
           }
 
