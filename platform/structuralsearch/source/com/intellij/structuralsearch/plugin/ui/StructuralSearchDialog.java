@@ -5,8 +5,12 @@ import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.find.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindInProjectSettings;
+import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -51,6 +55,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -63,6 +68,7 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
@@ -70,7 +76,10 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -93,7 +102,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
 
 /**
  * This dialog is used in two ways:
@@ -566,14 +576,31 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     });
     final JLabel fileTypeLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     fileTypeLabel.setLabelFor(myFileTypesComboBox);
-    final DefaultActionGroup templateActionGroup = new DefaultActionGroup(
+    final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
+    templateActionGroup.add(
       new DumbAwareAction(SSRBundle.message("save.template.text.button")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
         }
-      },
+      });
+    if (Registry.is("ssr.separate.inspections")) {
+      templateActionGroup.add(
+        new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFileTypesComboBox));
+            if (project == null) {
+              return;
+            }
+            final InspectionProfileImpl inspectionProfile = InspectionProfileManager.getInstance(project).getCurrentProfile();
+            StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), inspectionProfile, project);
+          }
+        });
+    }
+    templateActionGroup.addSeparator();
+    templateActionGroup.addAll(
       new CopyConfigurationAction(),
       new PasteConfigurationAction(),
       new DumbAwareAction(SSRBundle.message("copy.existing.template.button")) {
@@ -592,6 +619,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       Separator.getInstance(),
       new SwitchAction()
     );
+
+
     templateActionGroup.setPopup(true);
     final Presentation presentation = templateActionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Settings);

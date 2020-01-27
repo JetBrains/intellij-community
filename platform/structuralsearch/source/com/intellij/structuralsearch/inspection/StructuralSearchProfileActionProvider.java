@@ -119,53 +119,62 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     public void actionPerformed(@NotNull AnActionEvent e) {
       final SearchContext context = new SearchContext(e.getDataContext());
       final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
-      if (!dialog.showAndGet()) return;
+      if (!dialog.showAndGet()) {
+        return;
+      }
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final Project project = e.getData(CommonDataKeys.PROJECT);
       assert project != null;
-      final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
-      assert wrapper != null;
-      final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
       final Configuration configuration = dialog.getConfiguration();
-
-      configuration.setUuid(UUID.randomUUID());
-      if (!saveInspection(project, inspection, configuration)) {
+      if (!createNewInspection(configuration, profile, project)) {
         return;
       }
-      addConfigurationToProfile(project, profile, configuration);
-      profile.getProfileManager().fireProfileChanged(profile);
       myPanel.selectInspectionTool(configuration.getUuid().toString());
     }
 
-    private static void addConfigurationToProfile(@NotNull Project project,
-                                                  InspectionProfileImpl profile,
-                                                  Configuration configuration) {
-      final String shortName = configuration.getUuid().toString();
-      final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
-      if (toolWrapper != null) {
-        // already added
-        return;
-      }
-      final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
-      wrapped.setProfile(profile);
-      profile.addTool(project, wrapped, null);
+  }
 
-      // enable inspection even when profile is locked, because either:
-      // - user just added this inspection explicitly
-      // - or inspection was just imported from enabled old SSR inspection
-      profile.setToolEnabled(shortName, true);
+  public static boolean createNewInspection(Configuration configuration, InspectionProfileImpl profile, Project project) {
+    final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
+    assert wrapper != null;
+    final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
+
+    configuration.setUuid(UUID.randomUUID());
+    if (!saveInspection(project, inspection, configuration)) {
+      return false;
     }
+    addConfigurationToProfile(project, profile, configuration);
+    profile.getProfileManager().fireProfileChanged(profile);
+    return true;
+  }
+
+  private static void addConfigurationToProfile(@NotNull Project project, InspectionProfileImpl profile, Configuration configuration) {
+    final String shortName = configuration.getUuid().toString();
+    final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
+    if (toolWrapper != null) {
+      // already added
+      return;
+    }
+    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
+    wrapped.setProfile(profile);
+    profile.addTool(project, wrapped, null);
+
+    // enable inspection even when profile is locked, because either:
+    // - user just added this inspection explicitly
+    // - or inspection was just imported from enabled old SSR inspection
+    profile.setToolEnabled(shortName, true);
   }
 
   public static boolean saveInspection(Project project, SSBasedInspection inspection, Configuration configuration) {
     final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
     final boolean result = dialog.showAndGet();
     if (result) {
+      inspection.removeConfiguration(configuration);
       final String name = dialog.getName();
       for (Configuration c : inspection.getConfigurationsWithUuid(configuration.getUuid())) {
         c.setName(name);
       }
-      inspection.removeConfiguration(configuration);
+      configuration.setName(name);
       configuration.setDescription(dialog.getDescription());
       configuration.setSuppressId(dialog.getSuppressId());
       configuration.setProblemDescriptor(dialog.getProblemDescriptor());
