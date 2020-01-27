@@ -581,6 +581,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
       extraExecutables.add("bin/clang/mac/clangd")
       extraExecutables.add("bin/clang/mac/clang-tidy")
+
+      context.ant.copy(file: "$root/tools/idea/platform/build-scripts/tools/mac/scripts/entitlements.xml", tofile: "$targetDirectory/_codesign/entitlements.xml")
     }
   }
 

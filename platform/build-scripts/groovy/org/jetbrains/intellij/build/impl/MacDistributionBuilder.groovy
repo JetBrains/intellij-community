@@ -292,6 +292,7 @@ TODO(b/118034991): generate product-info.json files (or not) */
               exclude(name: it)
             }
             exclude(name: "*.txt")
+            exclude(name: "_codesign/*") // Android Studio: don't include _codesign in the bundle
           }
         }
 
@@ -321,6 +322,10 @@ TODO(b/118034991): generate product-info.json files (or not) */
         // build.txt etc.
         zipfileset(dir: buildContext.paths.distAll, prefix: "$zipRoot/Resources") {
           include(name: "*.txt")
+        }
+
+        // Android Studio: put instructions for signing the app at the root of the zip
+        zipfileset(dir: macDistPath + "/_codesign", prefix: "_codesign") {
         }
       }
 
