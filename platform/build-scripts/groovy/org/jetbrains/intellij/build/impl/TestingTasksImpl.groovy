@@ -375,7 +375,7 @@ class TestingTasksImpl extends TestingTasks {
     else {
       String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"}"
       if (options.debugPort != -1) {
-        debuggerParameter += ",address=$options.debugPort"
+        debuggerParameter += ",address=*:$options.debugPort"
       }
       jvmArgs.add(debuggerParameter)
     }
