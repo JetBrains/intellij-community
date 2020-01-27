@@ -107,21 +107,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     return result;
   }
 
-  @Override
-  public boolean isRecursivelyDirty(final VirtualFile vf) {
-    for(THashSet<FilePath> dirsByRoot: myDirtyDirectoriesRecursively.values()) {
-      for (FilePath dir : dirsByRoot) {
-        final VirtualFile dirVf = dir.getVirtualFile();
-        if (dirVf != null) {
-          if (VfsUtilCore.isAncestor(dirVf, vf, false)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
   public void addDirtyData(@NotNull Collection<? extends FilePath> dirs, @NotNull Collection<? extends FilePath> files) {
     Map<VirtualFile, THashSet<FilePath>> perRootDirs = new HashMap<>(); // recursive
     Map<VirtualFile, THashSet<FilePath>> perRootFiles = new HashMap<>(); // non-recursive

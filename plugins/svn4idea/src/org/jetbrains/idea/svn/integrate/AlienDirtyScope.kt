@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsDirtyScope
-import com.intellij.openapi.vfs.VfsUtilCore.isAncestor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
@@ -22,9 +21,6 @@ class AlienDirtyScope(private val vcs: SvnVcs) : VcsDirtyScope() {
   override fun getDirtyFiles(): Set<FilePath> = files
   override fun getDirtyFilesNoExpand(): Set<FilePath> = files
   override fun getRecursivelyDirtyDirectories(): Set<FilePath> = dirs
-
-  override fun isRecursivelyDirty(vf: VirtualFile): Boolean =
-    dirs.any { dir -> dir.virtualFile?.let { isAncestor(it, vf, false) } == true }
 
   override fun iterate(iterator: Processor<in FilePath>) = Unit
   override fun iterateExistingInsideScope(vf: Processor<in VirtualFile>) = Unit

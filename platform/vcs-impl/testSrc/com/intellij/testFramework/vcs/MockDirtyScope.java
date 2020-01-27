@@ -103,11 +103,6 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public boolean isRecursivelyDirty(VirtualFile vf) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void iterate(Processor<? super FilePath> iterator) {
     throw new UnsupportedOperationException();
   }
