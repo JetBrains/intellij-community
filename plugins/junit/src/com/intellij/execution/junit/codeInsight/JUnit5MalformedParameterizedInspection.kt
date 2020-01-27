@@ -196,8 +196,8 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         if (holder.isOnTheFly) {
           val staticModifier = if (!TestUtils.testInstancePerClass(containingClass)) " static" else ""
           createFix = CreateMethodQuickFix.createFix(containingClass,
-                                                     "private$staticModifier Object[][] $sourceProviderName()",
-                                                     "return new Object[][] {};")
+                                                     "private$staticModifier java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> $sourceProviderName()",
+                                                     "return null;")
         }
         holder.registerProblem(attributeValue,
                                "Cannot resolve target method source: \'$sourceProviderName\'",
