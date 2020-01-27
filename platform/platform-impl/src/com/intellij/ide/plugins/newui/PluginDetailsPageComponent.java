@@ -445,8 +445,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myHomePage.hide();
     }
     else {
-      myHomePage.show("Plugin homepage", () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
-                                                                  URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
+      myHomePage.show(IdeBundle.message("plugins.configurable.plugin.homepage.link"), () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
+                                                                                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
 
     String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
