@@ -45,7 +45,6 @@ class PyRunTest : PyEnvTestCase() {
         val runner = ProgramRunner.getRunner(executor.id, settings.configuration) as PythonRunner
         val env = ExecutionEnvironment(executor, runner, settings, project)
 
-
         var processNotStarted = false
         val connection = project.messageBus.connect()
         val latch = CountDownLatch(1)
@@ -59,22 +58,23 @@ class PyRunTest : PyEnvTestCase() {
           }
         })
 
-        runInEdt {
-          runner.execute(env.withCallback({
-                                            val processHandler = it.processHandler ?: error("Failed to create process")
-                                            processHandler.addProcessListener(object : ProcessAdapter() {
-                                              override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                                                if (outputType == ProcessOutputTypes.STDOUT) {
-                                                  output.add(event.text)
-                                                }
-                                              }
+        env.setCallback {
+          val processHandler = it.processHandler ?: error("Failed to create process")
+          processHandler.addProcessListener(object : ProcessAdapter() {
+            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+              if (outputType == ProcessOutputTypes.STDOUT) {
+                output.add(event.text)
+              }
+            }
 
-                                              override fun processTerminated(event: ProcessEvent) {
-                                                processHandler.removeProcessListener(this)
-                                                latch.countDown()
-                                              }
-                                            })
-                                          }))
+            override fun processTerminated(event: ProcessEvent) {
+              processHandler.removeProcessListener(this)
+              latch.countDown()
+            }
+          })
+        }
+        runInEdt {
+          runner.execute(env)
         }
         latch.await(myTimeout.toLong(), TimeUnit.MILLISECONDS)
         connection.disconnect()

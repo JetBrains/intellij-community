@@ -55,7 +55,7 @@ public final class ProgramRunnerUtil {
     ExecutionManagerImpl manager = (ExecutionManagerImpl)ExecutionManager.getInstance(environment.getProject());
     if (!manager.isStarting(environment)) {
       if (callback != null) {
-        environment = environment.withCallback(callback);
+        environment.setCallback(callback);
       }
       manager.executeConfiguration(environment, showSettings, assignNewId);
     }

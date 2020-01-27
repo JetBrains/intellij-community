@@ -148,12 +148,14 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
               descriptor.contentToolWindowId = toolWindowId
             }
 
-            val settings = environment.runnerAndConfigurationSettings
-            if (settings != null) {
-              descriptor.isActivateToolWindowWhenAdded = settings.isActivateToolWindowBeforeRun
+            environment.runnerAndConfigurationSettings?.let {
+              descriptor.isActivateToolWindowWhenAdded = it.isActivateToolWindowBeforeRun
             }
           }
-          environment.callback?.processStarted(descriptor)
+          environment.callback?.let {
+            it.processStarted(descriptor)
+            environment.callback = null
+          }
           descriptor
         }
     }

@@ -1,206 +1,178 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.runners;
+package com.intellij.execution.runners
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.*
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.UserDataHolderBase
 
-public final class ExecutionEnvironmentBuilder {
-  private RunProfile myRunProfile;
-  @NotNull private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;
-
-  @NotNull private final Project myProject;
-
-  @Nullable private RunnerSettings myRunnerSettings;
-  @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
-  @Nullable private RunContentDescriptor myContentToReuse;
-  @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
-  private ProgramRunner<?> myRunner;
-  private boolean myAssignNewId;
-  @Nullable private Long myExecutionId = null;
-  @NotNull private Executor myExecutor;
-  @Nullable private DataContext myDataContext;
-  private final UserDataHolderBase myUserData = new UserDataHolderBase();
-
-  public ExecutionEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor) {
-    myProject = project;
-    myExecutor = executor;
-  }
-
-  @NotNull
-  public static ExecutionEnvironmentBuilder create(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfile runProfile) throws ExecutionException {
-    ExecutionEnvironmentBuilder builder = createOrNull(project, executor, runProfile);
-    if (builder == null) {
-      throw new ExecutionException("Cannot find runner for " + runProfile.getName());
-    }
-    return builder;
-  }
-
-  @Nullable
-  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfile runProfile) {
-    ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), runProfile);
-    if (runner == null) {
-      return null;
-    }
-    return new ExecutionEnvironmentBuilder(project, executor).runner(runner).runProfile(runProfile);
-  }
-
-  @Nullable
-  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
-    ExecutionEnvironmentBuilder builder = createOrNull(executor, settings.getConfiguration());
-    return builder == null ? null : builder.runnerAndSettings(builder.myRunner, settings);
-  }
-
-  @Nullable
-  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
-    ExecutionEnvironmentBuilder builder = createOrNull(configuration.getProject(), executor, configuration);
-    if (builder != null) {
-      builder.runProfile(configuration);
-    }
-    return builder;
-  }
-
-  @NotNull
-  public static ExecutionEnvironmentBuilder create(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) throws ExecutionException {
-    RunConfiguration configuration = settings.getConfiguration();
-    ExecutionEnvironmentBuilder builder = create(configuration.getProject(), executor, configuration);
-    return builder.runnerAndSettings(builder.myRunner, settings);
-  }
-
-  @NotNull
-  public static ExecutionEnvironmentBuilder create(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
-    return new ExecutionEnvironmentBuilder(configuration.getProject(), executor).runProfile(configuration);
-  }
-
-  @NotNull
-  Executor getExecutor() {
-    return myExecutor;
-  }
+class ExecutionEnvironmentBuilder(private val project: Project, private var executor: Executor) {
+  private var runProfile: RunProfile? = null
+  private var target = DefaultExecutionTarget.INSTANCE
+  private var runnerSettings: RunnerSettings? = null
+  private var configurationSettings: ConfigurationPerRunnerSettings? = null
+  private var contentToReuse: RunContentDescriptor? = null
+  private var runnerAndConfigurationSettings: RunnerAndConfigurationSettings? = null
+  private var runner: ProgramRunner<*>? = null
+  private var assignNewId = false
+  private var executionId: Long? = null
+  private var dataContext: DataContext? = null
+  private val userData = UserDataHolderBase()
 
   /**
    * Creates an execution environment builder initialized with a copy of the specified environment.
    *
-   * @param copySource the environment to copy from.
+   * @param env the environment to copy from.
    */
-  public ExecutionEnvironmentBuilder(@NotNull ExecutionEnvironment copySource) {
-    myTarget = copySource.getExecutionTarget();
-    myProject = copySource.getProject();
-    myRunnerAndConfigurationSettings = copySource.getRunnerAndConfigurationSettings();
-    myRunProfile = copySource.getRunProfile();
-    myRunnerSettings = copySource.getRunnerSettings();
-    myConfigurationSettings = copySource.getConfigurationSettings();
-    myRunner = copySource.getRunner();
-    myContentToReuse = copySource.getContentToReuse();
-    myExecutor = copySource.getExecutor();
-    copySource.copyUserDataTo(myUserData);
+  constructor(env: ExecutionEnvironment) : this(env.project, env.executor) {
+    target = env.executionTarget
+    runnerAndConfigurationSettings = env.runnerAndConfigurationSettings
+    runProfile = env.runProfile
+    runnerSettings = env.runnerSettings
+    configurationSettings = env.configurationSettings
+    runner = env.runner
+    contentToReuse = env.contentToReuse
+    env.copyUserDataTo(userData)
   }
 
-  public ExecutionEnvironmentBuilder target(@Nullable ExecutionTarget target) {
-    if (target != null) {
-      myTarget = target;
+  companion object {
+    @JvmStatic
+    @Throws(ExecutionException::class)
+    fun create(project: Project, executor: Executor, runProfile: RunProfile): ExecutionEnvironmentBuilder {
+      return createOrNull(project, executor, runProfile)
+             ?: throw ExecutionException("Cannot find runner for ${runProfile.name}")
     }
-    return this;
+
+    @JvmStatic
+    fun createOrNull(project: Project, executor: Executor, runProfile: RunProfile): ExecutionEnvironmentBuilder? {
+      val runner = ProgramRunner.getRunner(executor.id, runProfile) ?: return null
+      return ExecutionEnvironmentBuilder(project, executor).runner(runner).runProfile(runProfile)
+    }
+
+    @JvmStatic
+    fun createOrNull(executor: Executor, settings: RunnerAndConfigurationSettings): ExecutionEnvironmentBuilder? {
+      val builder = createOrNull(executor, settings.configuration)
+      return builder?.runnerAndSettings(builder.runner!!, settings)
+    }
+
+    @JvmStatic
+    fun createOrNull(executor: Executor, configuration: RunConfiguration): ExecutionEnvironmentBuilder? {
+      val builder = createOrNull(configuration.project, executor, configuration)
+      builder?.runProfile(configuration)
+      return builder
+    }
+
+    @JvmStatic
+    @Throws(ExecutionException::class)
+    fun create(executor: Executor, settings: RunnerAndConfigurationSettings): ExecutionEnvironmentBuilder {
+      val configuration = settings.configuration
+      val builder = create(configuration.project, executor, configuration)
+      return builder.runnerAndSettings(builder.runner!!, settings)
+    }
+
+    @JvmStatic
+    fun create(executor: Executor, configuration: RunConfiguration): ExecutionEnvironmentBuilder {
+      return ExecutionEnvironmentBuilder(configuration.project, executor).runProfile(configuration)
+    }
   }
 
-  public ExecutionEnvironmentBuilder activeTarget() {
-    myTarget = ExecutionTargetManager.getActiveTarget(myProject);
-    return this;
+  fun target(target: ExecutionTarget?): ExecutionEnvironmentBuilder {
+    if (target != null) {
+      this.target = target
+    }
+    return this
   }
 
-  @NotNull
-  public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner runner,
-                                                       @NotNull RunnerAndConfigurationSettings settings) {
-    myRunnerAndConfigurationSettings = settings;
-    myRunProfile = settings.getConfiguration();
-    myRunnerSettings = settings.getRunnerSettings(runner);
-    myConfigurationSettings = settings.getConfigurationSettings(runner);
-    myRunner = runner;
-    return this;
+  fun activeTarget(): ExecutionEnvironmentBuilder {
+    target = ExecutionTargetManager.getActiveTarget(project)
+    return this
   }
 
-  public ExecutionEnvironmentBuilder runnerSettings(@Nullable RunnerSettings runnerSettings) {
-    myRunnerSettings = runnerSettings;
-    return this;
+  fun runnerAndSettings(runner: ProgramRunner<*>, settings: RunnerAndConfigurationSettings): ExecutionEnvironmentBuilder {
+    runnerAndConfigurationSettings = settings
+    runProfile = settings.configuration
+    runnerSettings = settings.getRunnerSettings(runner)
+    configurationSettings = settings.getConfigurationSettings(runner)
+    this.runner = runner
+    return this
   }
 
-  public ExecutionEnvironmentBuilder contentToReuse(@Nullable RunContentDescriptor contentToReuse) {
-    myContentToReuse = contentToReuse;
-    return this;
+  fun runnerSettings(runnerSettings: RunnerSettings?): ExecutionEnvironmentBuilder {
+    this.runnerSettings = runnerSettings
+    return this
   }
 
-  public ExecutionEnvironmentBuilder runProfile(@NotNull RunProfile runProfile) {
-    myRunProfile = runProfile;
-    return this;
+  fun contentToReuse(contentToReuse: RunContentDescriptor?): ExecutionEnvironmentBuilder {
+    this.contentToReuse = contentToReuse
+    return this
   }
 
-  @NotNull
-  public ExecutionEnvironmentBuilder runner(@NotNull ProgramRunner<?> runner) {
-    myRunner = runner;
-    return this;
+  fun runProfile(runProfile: RunProfile): ExecutionEnvironmentBuilder {
+    this.runProfile = runProfile
+    return this
   }
 
-  public ExecutionEnvironmentBuilder dataContext(@Nullable DataContext dataContext) {
-    myDataContext = dataContext;
-    return this;
+  fun runner(runner: ProgramRunner<*>): ExecutionEnvironmentBuilder {
+    this.runner = runner
+    return this
   }
 
-  public ExecutionEnvironmentBuilder executor(@NotNull Executor executor) {
-    myExecutor = executor;
-    return this;
+  fun dataContext(dataContext: DataContext?): ExecutionEnvironmentBuilder {
+    this.dataContext = dataContext
+    return this
   }
 
-  public ExecutionEnvironmentBuilder executionId(long executionId) {
-    myExecutionId = executionId;
-    myAssignNewId = false;
-    return this;
+  fun executor(executor: Executor): ExecutionEnvironmentBuilder {
+    this.executor = executor
+    return this
   }
 
-  @NotNull
-  public ExecutionEnvironment build() {
-    ExecutionEnvironment environment = null;
-    ExecutionEnvironmentProvider environmentProvider = ServiceManager.getService(myProject, ExecutionEnvironmentProvider.class);
+  fun executionId(executionId: Long): ExecutionEnvironmentBuilder {
+    this.executionId = executionId
+    assignNewId = false
+    return this
+  }
+
+  @JvmOverloads
+  fun build(callback: ProgramRunner.Callback? = null): ExecutionEnvironment {
+    var environment: ExecutionEnvironment? = null
+    val environmentProvider = project.getService(ExecutionEnvironmentProvider::class.java)
     if (environmentProvider != null) {
       environment = environmentProvider.createExecutionEnvironment(
-        myProject, myRunProfile, myExecutor, myTarget, myRunnerSettings, myConfigurationSettings, myRunnerAndConfigurationSettings);
+        project, runProfile!!, executor, target, runnerSettings, configurationSettings, runnerAndConfigurationSettings)
     }
-
-    if (environment == null && myRunner == null) {
-      myRunner = ProgramRunner.getRunner(myExecutor.getId(), myRunProfile);
+    if (environment == null && runner == null) {
+      runner = ProgramRunner.getRunner(executor.id, runProfile!!)
     }
-
-    if (environment == null && myRunner == null) {
-      throw new IllegalStateException("Runner must be specified");
+    if (environment == null && runner == null) {
+      throw IllegalStateException("Runner must be specified")
     }
-
     if (environment == null) {
-      environment = new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings,
-                                             myConfigurationSettings, myContentToReuse, myRunnerAndConfigurationSettings, myRunner, null);
+      environment = ExecutionEnvironment(runProfile!!, executor, target, project, runnerSettings,
+                                         configurationSettings, contentToReuse,
+                                         runnerAndConfigurationSettings, runner!!, callback)
     }
-
-    if (myAssignNewId) {
-      environment.assignNewExecutionId();
+    if (assignNewId) {
+      environment.assignNewExecutionId()
     }
-    if (myExecutionId != null) {
-      environment.setExecutionId(myExecutionId);
+    if (executionId != null) {
+      environment.executionId = executionId!!
     }
-    if (myDataContext != null) {
-      environment.setDataContext(myDataContext);
+    if (dataContext != null) {
+      environment.setDataContext(dataContext!!)
     }
-    myUserData.copyUserDataTo(environment);
-    return environment;
+    userData.copyUserDataTo(environment)
+    return environment
   }
 
-  public void buildAndExecute() throws ExecutionException {
-    ExecutionEnvironment environment = build();
-    myRunner.execute(environment);
+  @Throws(ExecutionException::class)
+  fun buildAndExecute() {
+    val environment = build()
+    runner!!.execute(environment)
   }
 }

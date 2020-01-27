@@ -92,15 +92,13 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
   void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
 
   /**
-   * @deprecated Use {@link #execute(ExecutionEnvironment)} and {@link ExecutionEnvironment#withCallback(Callback)}
+   * @deprecated Use {@link #execute(ExecutionEnvironment)} and {@link ExecutionEnvironment#setCallback(Callback)}
    */
   @Deprecated
   default void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
-    if (callback == null) {
-      execute(environment);
+    if (callback != null) {
+      environment.setCallback(callback);
     }
-    else {
-      execute(environment.withCallback(callback));
-    }
+    execute(environment);
   }
 }

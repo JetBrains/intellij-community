@@ -90,10 +90,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public ExecutionEnvironment withCallback(@NotNull ProgramRunner.Callback callback) {
-    return new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings,
-                                    myContentToReuse, myRunnerAndConfigurationSettings, myRunner, callback);
+  public void setCallback(@Nullable ProgramRunner.Callback callback) {
+    this.callback = callback;
   }
 
   @Nullable

@@ -29,24 +29,27 @@ trait CompilerMethods {
                                   ProgramRunner runner = null) throws ExecutionException {
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass)
     def builder = new ExecutionEnvironmentBuilder(getProject(), executor).runProfile(configuration)
-    if (runner) builder.runner(runner)
+    if (runner) {
+      builder.runner(runner)
+    }
 
-    final ExecutionEnvironment environment = builder.build()
-    final Semaphore semaphore = new Semaphore()
+    Semaphore semaphore = new Semaphore()
     semaphore.down()
+    AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>()
 
-    final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>()
-    environment.runner.execute(environment.withCallback({ RunContentDescriptor descriptor ->
-      if (descriptor == null) {
-        throw new AssertionError((Object)"Null descriptor!")
-      }
-      disposeOnTearDown(descriptor)
-      final ProcessHandler handler = descriptor.getProcessHandler()
-      assert handler != null
-      handler.addProcessListener(listener)
-      processHandler.set(handler)
-      semaphore.up()
-    }))
+    ExecutionEnvironment environment = builder.build({ RunContentDescriptor descriptor ->
+          if (descriptor == null) {
+            throw new AssertionError((Object)"Null descriptor!")
+          }
+          disposeOnTearDown(descriptor)
+          final ProcessHandler handler = descriptor.getProcessHandler()
+          assert handler != null
+          handler.addProcessListener(listener)
+          processHandler.set(handler)
+          semaphore.up()
+        })
+
+    environment.runner.execute(environment)
     if (!semaphore.waitFor(20000)) {
       throw new AssertionError((Object)"Process took too long")
     }

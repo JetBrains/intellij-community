@@ -213,12 +213,13 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     Assert.assertFalse("No runners to rerun", run.isEmpty());
     final ProgramRunner<?> runner = run.get(0);
 
-    final ExecutionEnvironment restartAction = RerunFailedActionsTestTools.findRestartAction(myLastProcessDescriptor);
+    ExecutionEnvironment restartAction = RerunFailedActionsTestTools.findRestartAction(myLastProcessDescriptor);
     Assert.assertNotNull("No restart action", restartAction);
 
     final Ref<ProcessHandler> handlerRef = new Ref<>();
     try {
-      runner.execute(restartAction.withCallback(descriptor -> handlerRef.set(descriptor.getProcessHandler())));
+      restartAction.setCallback(descriptor -> handlerRef.set(descriptor.getProcessHandler()));
+      runner.execute(restartAction);
     }
     catch (final ExecutionException e) {
       throw new AssertionError("ExecutionException can't be thrown in tests. Probably, API changed. Got: " + e);

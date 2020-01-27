@@ -172,7 +172,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
     environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
     try {
       if (callback != null) {
-        environment = environment.withCallback(callback);
+        environment.setCallback(callback);
       }
       runner.execute(environment);
     }

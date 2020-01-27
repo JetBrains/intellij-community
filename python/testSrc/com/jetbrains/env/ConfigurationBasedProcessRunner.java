@@ -89,7 +89,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         (sdkPath, project, tempWorkingPath));
 
     // Engine to be run after process end to post process console
-    final ProcessListener consolePostprocessor = new ProcessAdapter() {
+    ProcessListener consolePostprocessor = new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         super.processTerminated(event);
@@ -97,18 +97,17 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
       }
     };
 
-
     /// Find all available runners to report them to the test
     myAvailableRunnersForLastRun.clear();
-    for (final ProgramRunner<?> runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
-      for (final Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
+    for (ProgramRunner<?> runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
+      for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
         if (runner.canRun(executor.getId(), executionEnvironment.getRunProfile())) {
           myAvailableRunnersForLastRun.add(runner);
         }
       }
     }
 
-    executionEnvironment.getRunner().execute(executionEnvironment.withCallback(new ProgramRunner.Callback() {
+    executionEnvironment.setCallback(new ProgramRunner.Callback() {
       @Override
       public void processStarted(final RunContentDescriptor descriptor) {
         final ProcessHandler handler = descriptor.getProcessHandler();
@@ -122,7 +121,8 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         assert component != null;
         myLastProcessDescriptor = descriptor;
       }
-    }));
+    });
+    executionEnvironment.getRunner().execute(executionEnvironment);
   }
 
   /**
