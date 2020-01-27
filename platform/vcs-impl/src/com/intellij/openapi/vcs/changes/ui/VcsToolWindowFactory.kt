@@ -87,10 +87,8 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
   }
 
-  private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
-    val toolWindowId = toolWindow.id ?: return emptyList()
-    return ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(it) == toolWindowId }
-  }
+  private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> =
+    ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(it) == toolWindow.id }
 
   private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content =
     ContentFactory.SERVICE.getInstance().createContent(JPanel(null), extension.getTabName(), false).apply {
