@@ -6,11 +6,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
+import com.intellij.openapi.externalSystem.project.PackagingModifiableModel;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -24,18 +25,21 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.impl.artifacts.ArtifactManagerImpl;
+import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.Stack;
 import com.intellij.workspace.api.TypedEntity;
 import com.intellij.workspace.api.TypedEntityStorage;
 import com.intellij.workspace.api.TypedEntityStorageBuilder;
 import com.intellij.workspace.ide.WorkspaceModel;
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
+import org.jetbrains.idea.maven.importing.worktree.LegacyBridgeMavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.worktree.LegacyBrigdeIdeModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.worktree.MavenExternalSource;
 import org.jetbrains.idea.maven.importing.worktree.WorkspaceModuleImporter;
@@ -130,6 +134,7 @@ public class MavenProjectImporter {
 
     for (MavenProject each : myAllProjects) {
       new WorkspaceModuleImporter(myProject, each, myProjectsTree, diff).importModule();
+      myMavenProjectToModuleName.put(each, each.getDisplayName());
     }
 
     Iterator<TypedEntity> entities = diff.entities(TypedEntity.class).iterator();
@@ -139,29 +144,59 @@ public class MavenProjectImporter {
       diff.changeSource(next, MavenExternalSource.getINSTANCE());
     }
 
-
-    // legacy importerss
-    mapMavenProjectsToModulesAndNames();
-    List<Module> modulesToMavenize = new ArrayList<>();
-    List<MavenModuleImporter> importers = new ArrayList<>();
-    for (MavenProject project : myAllProjects) {
-      Module module = myMavenProjectToModule.get(project);
-      if (module == null) continue;
-      importers.add(createModuleImporter(module, project, null));
-    }
-
-    configFacets(postTasks, importers);
-    setMavenizedModules(modulesToMavenize, true);
-
     WriteAction.runAndWait(() -> {
       WorkspaceModel.getInstance(myProject).<Void>updateProjectModel(builder -> {
         builder.replaceBySource(it -> it.equals(MavenExternalSource.getINSTANCE()), diff.toStorage());
         return null;
       });
     });
+
+
+    TypedEntityStorageBuilder facetDiff =
+      TypedEntityStorageBuilder.Companion.from(WorkspaceModel.getInstance(myProject).getEntityStore().getCurrent());
+    LegacyBrigdeIdeModifiableModelsProvider providerForFacets = new LegacyBrigdeIdeModifiableModelsProvider(myProject, facetDiff);
+
+    List<Module> modulesToMavenize = new ArrayList<>();
+    List<MavenModuleImporter> importers = new ArrayList<>();
+    for (MavenProject mavenProject : myAllProjects) {
+      Module module = ModuleManager.getInstance(myProject).findModuleByName(mavenProject.getDisplayName());
+      if (module == null) continue;
+      MavenModuleImporter importer = new MavenModuleImporter(module,
+                                                             myProjectsTree,
+                                                             mavenProject,
+                                                             ALL,
+                                                             myMavenProjectToModuleName,
+                                                             myImportingSettings,
+                                                             providerForFacets);
+      importers.add(importer);
+
+      //need for facets importing
+      importer.setRootModelAdapter(new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(mavenProject, module, providerForFacets)));
+    }
+
+    configFacets(postTasks, importers);
+    setMavenizedModules(modulesToMavenize, true);
+    saveArtifacts(providerForFacets);
+
+    WriteAction.runAndWait(() -> {
+      WorkspaceModel.getInstance(myProject).<Void>updateProjectModel(builder -> {
+        builder.replaceBySource(it -> it.equals(MavenExternalSource.getINSTANCE()), facetDiff.toStorage());
+        return null;
+      });
+    });
+
+    // legacy importerss
+
     return postTasks;
   }
 
+  private void saveArtifacts(LegacyBrigdeIdeModifiableModelsProvider provider) {
+    ModifiableArtifactModel artifactModel = provider.getModifiableModel(PackagingModifiableModel.class).getModifiableArtifactModel();
+    ArtifactManagerImpl manager = (ArtifactManagerImpl)ArtifactManager.getInstance(myProject);
+    WriteAction.runAndWait(() -> {
+      manager.commit((ArtifactModelImpl)artifactModel);
+    });
+  }
 
   @Nullable
   private List<MavenProjectsProcessorTask> importProjectOldWay() {

@@ -45,6 +45,10 @@ class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {
   override fun getModule(): Module = module
   override fun createModifiableModel(): ModifiableFacetModel {
     val diff = TypedEntityStorageDiffBuilder.create(module.entityStore.current)
+    return createModifiableModel(diff)
+  }
+
+  fun createModifiableModel(diff: TypedEntityStorageDiffBuilder): ModifiableFacetModel {
     return ModifiableFacetModelViaWorkspaceModel(module.entityStore.current, diff, module, this)
   }
 

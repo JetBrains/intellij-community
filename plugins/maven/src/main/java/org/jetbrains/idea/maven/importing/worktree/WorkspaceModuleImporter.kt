@@ -32,8 +32,9 @@ class WorkspaceModuleImporter(private val project: Project,
     importLanguageLevel();
   }
 
+
   private fun importLanguageLevel() {
-    //MavenModuleImporter.getLanguageLevel(mavenProject)
+
   }
 
   private fun collectDependencies(): List<ModuleDependencyItem> {
@@ -170,5 +171,4 @@ class WorkspaceModuleImporter(private val project: Project,
     if (MavenConstants.SCOPE_TEST == mavenScope) return ModuleDependencyItem.DependencyScope.TEST
     return if (MavenConstants.SCOPE_PROVIDED == mavenScope) ModuleDependencyItem.DependencyScope.PROVIDED else ModuleDependencyItem.DependencyScope.COMPILE
   }
-
 }
