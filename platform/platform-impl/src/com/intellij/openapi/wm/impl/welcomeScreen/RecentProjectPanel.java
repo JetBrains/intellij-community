@@ -62,41 +62,11 @@ public class RecentProjectPanel extends JPanel {
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
   protected AnAction removeRecentProjectAction;
   private int myHoverIndex = -1;
-  private final int closeButtonInset = JBUIScale.scale(7);
   private Icon currentIcon = toSize(AllIcons.Welcome.Project.Remove);
   private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
   Set<ReopenProjectAction> projectsWithLongPathes = new HashSet<>();
 
-  private final JPanel myCloseButtonForEditor = new JPanel() {
-    {
-      setPreferredSize(new Dimension(currentIcon.getIconWidth(), currentIcon.getIconHeight()));
-      setOpaque(true);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      currentIcon.paintIcon(this, g, 0, 0);
-    }
-  };
-
   protected FilePathChecker myChecker;
-
-
-  private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
-
-    int realCloseButtonInset = (StartupUiUtil.isJreHiDPI(this)) ?
-                               (int)(closeButtonInset * JBUIScale.sysScale(this)) : closeButtonInset;
-
-    Rectangle closeButtonRect = new Rectangle(myCloseButtonForEditor.getX() - realCloseButtonInset,
-                                              myCloseButtonForEditor.getY() - realCloseButtonInset,
-                                              myCloseButtonForEditor.getWidth() + realCloseButtonInset * 2,
-                                              myCloseButtonForEditor.getHeight() + realCloseButtonInset * 2);
-
-    Rectangle rectInListCoordinates = new Rectangle(new Point(closeButtonRect.x + listCellBounds.x,
-                                                              closeButtonRect.y + listCellBounds.y),
-                                                    closeButtonRect.getSize());
-    return rectInListCoordinates.contains(p);
-  }
 
   public RecentProjectPanel(@NotNull Disposable parentDisposable) {
     super(new BorderLayout());
@@ -137,10 +107,7 @@ public class RecentProjectPanel extends JPanel {
           Rectangle cellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
           if (cellBounds.contains(event.getPoint())) {
             Object selection = myList.getSelectedValue();
-            if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
-              removeRecentProject();
-            }
-            else if (selection != null) {
+            if (selection != null) {
               AnAction selectedAction = performSelectedAction(event, (AnAction)selection);
               // remove action from list if needed
               if (selectedAction instanceof ReopenProjectAction) {
@@ -296,12 +263,6 @@ public class RecentProjectPanel extends JPanel {
         Rectangle cellBounds = myList.getCellBounds(index, index);
         if (cellBounds != null && cellBounds.contains(point)) {
           UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-          if (rectInListCoordinatesContains(cellBounds, point)) {
-            currentIcon = toSize(AllIcons.Welcome.Project.Remove_hover);
-          }
-          else {
-            currentIcon = toSize(AllIcons.Welcome.Project.Remove);
-          }
           myHoverIndex = index;
           myList.repaint(cellBounds);
         }
