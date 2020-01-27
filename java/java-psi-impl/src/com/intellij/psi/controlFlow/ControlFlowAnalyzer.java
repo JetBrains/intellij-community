@@ -1599,6 +1599,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiExpression operand = expression.getOperand();
     operand.accept(this);
 
+    PsiPattern pattern = expression.getPattern();
+    if (pattern instanceof PsiTypeTestPattern) {
+      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+
+      if (variable != null) {
+        myCurrentFlow.addInstruction(new WriteVariableInstruction(variable));
+      }
+    }
+
     finishElement(expression);
   }
 
