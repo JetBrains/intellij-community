@@ -54,10 +54,12 @@ public abstract class BundleBase {
     return result;
   }
 
+  private static final String[] SUFFIXES = {"</body></html>", "</html>"};
+
   @NotNull
   protected static String appendLocalizationMarker(@NotNull String result) {
-    if (result.endsWith("</html>")) {
-      return result.substring(0, result.length() - 7) + L10N_MARKER + "</html>";
+    for (String suffix : SUFFIXES) {
+      if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
     }
     return result + L10N_MARKER;
   }
