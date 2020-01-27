@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -20,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
@@ -34,6 +36,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import javax.swing.event.AncestorEvent
 import kotlin.math.min
 
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
@@ -149,6 +152,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     project?.let { it ->
       val disp = Disposable {
         disposable = null
+        HelpTooltip.dispose(label)
       }
 
       Disposer.register(it, disp)
@@ -199,6 +203,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     updatePath()
 
     getView().addComponentListener(resizedListener)
+    label.addAncestorListener(ancestorListener)
   }
 
   protected fun updatePathLater() {
@@ -219,6 +224,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     pane.invalidate()
 
     getView().removeComponentListener(resizedListener)
+    label.removeAncestorListener(ancestorListener)
   }
 
   private val resizedListener = object : ComponentAdapter() {
@@ -227,6 +233,12 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       updater.addRequest({
                            update()
                          }, UPDATER_TIMEOUT)
+    }
+  }
+
+  private val ancestorListener = object: AncestorListenerAdapter() {
+    override fun ancestorMoved(event: AncestorEvent?) {
+      HelpTooltip.hide(label)
     }
   }
 
@@ -297,7 +309,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     } ?: pathPatterns.firstOrNull { it.preferredWidth < width }?.let { it.createTitle() } ?: ""
 
     label.text = titleString
-    label.toolTipText = if (!isClipped) null else components.joinToString(separator = "", transform = { it.toolTipPart })
+    if (isClipped) {
+      HelpTooltip.dispose(label)
+      HelpTooltip().setTitle(components.joinToString(separator = "", transform = { it.toolTipPart })).installOn(label)
+    }
 
     label.revalidate()
     label.repaint()
