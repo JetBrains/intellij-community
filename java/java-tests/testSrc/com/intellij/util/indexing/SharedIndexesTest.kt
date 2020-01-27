@@ -22,7 +22,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
 
   private val tempDirPath: Path by lazy { FileUtil.createTempDirectory("shared-indexes-test", "").toPath() }
 
-  fun testSharedIndexesForProject() {
+  fun _testSharedIndexesForProject() {
     try {
       val javaPsiFile = myFixture.configureByText("A.java", """
       public class A { 
