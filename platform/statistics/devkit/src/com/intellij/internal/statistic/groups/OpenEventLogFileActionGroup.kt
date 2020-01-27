@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class OpenEventLogFileActionGroup : ActionGroup() {
+internal class OpenEventLogFileActionGroup : ActionGroup() {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return getEventLogProviders()
       .map { logger ->

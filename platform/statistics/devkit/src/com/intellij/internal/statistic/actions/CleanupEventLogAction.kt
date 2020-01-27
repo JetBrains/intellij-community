@@ -8,8 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 
-class CleanupEventLogAction(val recorderId: String, val actionText: String) : AnAction(actionText) {
-
+internal class CleanupEventLogAction(val recorderId: String, val actionText: String) : AnAction(actionText) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
