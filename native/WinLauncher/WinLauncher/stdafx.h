@@ -9,8 +9,10 @@
 
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files:
-#include <windows.h>
+#include <Windows.h>
 #include <ShellAPI.h>
+#include <Shlobj.h>
+#include <Knownfolders.h>
 
 // C RunTime Header Files
 #include <stdio.h>
@@ -24,5 +26,3 @@
 #include <vector>
 #include <string>
 #include <sstream>
-
-// TODO: reference additional headers your program requires here
