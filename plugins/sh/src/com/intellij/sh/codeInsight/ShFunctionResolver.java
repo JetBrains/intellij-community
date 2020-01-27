@@ -6,11 +6,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.psi.ShFile;
-import com.intellij.sh.psi.ShFunctionDeclarationProcessor;
 import com.intellij.sh.psi.ShFunctionName;
 import com.intellij.sh.psi.impl.ShLazyBlockImpl;
 import com.intellij.sh.psi.impl.ShLazyDoBlockImpl;
@@ -28,17 +26,20 @@ class ShFunctionResolver implements ResolveCache.Resolver {
     PsiElement refElement = ref.getElement();
     PsiFile file = refElement.getContainingFile();
     if (!(file instanceof ShFile)) return null;
+    return findFunctionDeclarationInScope((ShFile) file, refElement);
+  }
 
-    ShFunctionDeclarationProcessor processor = new ShFunctionDeclarationProcessor();
-    file.processDeclarations(processor, ResolveState.initial(), null, refElement);
-    Map<PsiElement, MultiMap<String, ShFunctionName>> functionsDeclarationsWithScope = processor.getFunctionsDeclarationsWithScope();
+  @Nullable
+  private static PsiElement findFunctionDeclarationInScope(@NotNull ShFile shFile, @NotNull PsiElement refElement) {
+    Map<PsiElement, MultiMap<String, ShFunctionName>> functionsDeclarationWithScope = shFile.getFunctionsDeclarationWithScope();
     PsiElement parent = getParentScope(refElement);
     TextRange elementTextRange = refElement.getTextRange();
     PsiElement result = null;
+    // Search for suitable function declaration in parent scopes
     do {
       assert parent != null;
 
-      MultiMap<String, ShFunctionName> functionNameMultiMap = functionsDeclarationsWithScope.get(parent);
+      MultiMap<String, ShFunctionName> functionNameMultiMap = functionsDeclarationWithScope.get(parent);
       if (functionNameMultiMap == null) {
         parent = getParentScope(parent);
         continue;
@@ -47,7 +48,6 @@ class ShFunctionResolver implements ResolveCache.Resolver {
       result = getNearestFunction(elementTextRange, functionNameMultiMap.get(refElement.getText()));
       parent = getParentScope(parent);
     } while (parent != null && result == null);
-
     return result;
   }
 
