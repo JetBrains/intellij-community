@@ -897,7 +897,6 @@
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineStaticImportHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineConstantFieldHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineLocalHandler"/>
-    <inlineActionHandler implementation="com.intellij.refactoring.inline.InlinePatternVariableHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineMethodHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineToAnonymousClassHandler"/>

@@ -4,10 +4,9 @@ package com.intellij.java.refactoring.inline;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.refactoring.inline.InlinePatternVariableHandler;
+import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -36,11 +35,12 @@ public class InlinePatternVariableTest extends LightJavaCodeInsightTestCase {
     PsiElement element = TargetElementUtil
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     if (element instanceof PsiPatternVariable) {
-      InlinePatternVariableHandler.invoke(getProject(), getEditor(), (PsiPatternVariable)element, null);
+      InlineLocalHandler.inlineVariable(getProject(), getEditor(), (PsiPatternVariable)element, null);
     } else {
       assertTrue(element instanceof PsiReferenceExpression);
       PsiPatternVariable patternVariable = (PsiPatternVariable)((PsiReferenceExpression)element).resolve();
-      InlinePatternVariableHandler.invoke(getProject(), getEditor(), patternVariable, (PsiReferenceExpression)element);
+      assertNotNull(patternVariable);
+      InlineLocalHandler.inlineVariable(getProject(), getEditor(), patternVariable, (PsiReferenceExpression)element);
     }
     checkResultByFile(fileName + ".after");
   }

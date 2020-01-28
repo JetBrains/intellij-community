@@ -392,7 +392,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
 
   public static void performInline(Project project, Editor editor) {
     PsiLocalVariable element = getTarget(editor);
-    InlineLocalHandler.invoke(project, editor, element, null);
+    InlineLocalHandler.inlineVariable(project, editor, element, null);
   }
 
   public static void performDefInline(Project project, Editor editor) {
@@ -401,6 +401,6 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     final PsiElement local = reference.resolve();
     assertTrue(local instanceof PsiLocalVariable);
 
-    InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)local, (PsiReferenceExpression)reference);
+    InlineLocalHandler.inlineVariable(project, editor, (PsiLocalVariable)local, (PsiReferenceExpression)reference);
   }
 }
