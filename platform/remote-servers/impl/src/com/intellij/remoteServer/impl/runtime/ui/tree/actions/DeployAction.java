@@ -22,7 +22,7 @@ public class DeployAction extends DumbAwareAction {
     presentation.setEnabled(visible && node.isDeployActionEnabled());
     if (node != null && node.isDeployed()) {
       presentation.setText(() -> CloudBundle.message("action.presentation.DeployAction.text"));
-      presentation.setDescription("Redeploy the selected item");
+      presentation.setDescription(() -> CloudBundle.message("action.presentation.DeployAction.description"));
     }
     else {
       presentation.setText(getTemplatePresentation().getText());

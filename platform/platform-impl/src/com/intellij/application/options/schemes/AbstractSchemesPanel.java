@@ -295,7 +295,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText(() -> IdeBundle.message("action.presentation.AbstractSchemesPanel.text"));
-      getTemplatePresentation().setDescription("Show Scheme Actions");
+      getTemplatePresentation().setDescription(() -> IdeBundle.message("action.presentation.AbstractSchemesPanel.description"));
       addAll(actions);
     }
 
