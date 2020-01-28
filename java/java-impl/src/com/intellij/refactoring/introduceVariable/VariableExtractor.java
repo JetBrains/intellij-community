@@ -5,6 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -108,7 +109,9 @@ class VariableExtractor {
 
     highlight(var);
 
-    PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
+    if (!(var instanceof PsiPatternVariable)) {
+      PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
+    }
     if (mySettings.isDeclareVarType()) {
       PsiTypeElement typeElement = var.getTypeElement();
       LOG.assertTrue(typeElement != null);
@@ -121,6 +124,9 @@ class VariableExtractor {
   private void ensureCodeBlock() {
     if (myAnchor instanceof PsiStatement && RefactoringUtil.isLoopOrIf(myAnchor.getParent())) {
       myAnchor = BlockUtils.expandSingleStatementToBlockStatement((PsiStatement)myAnchor);
+    }
+    if (myAnchor instanceof PsiInstanceOfExpression && PsiUtil.skipParenthesizedExprDown(myExpression) instanceof PsiTypeCastExpression) {
+      return;
     }
     if (myAnchor instanceof PsiExpression) {
       PsiExpression place = RefactoringUtil.ensureCodeBlock(((PsiExpression)myAnchor));
@@ -185,6 +191,11 @@ class VariableExtractor {
   @NotNull
   private PsiElement createDeclaration(@NotNull PsiType type, @NotNull String name, PsiExpression initializer) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+    if (myAnchor instanceof PsiInstanceOfExpression && initializer instanceof PsiTypeCastExpression) {
+      PsiTypeElement castType = Objects.requireNonNull(((PsiTypeCastExpression)initializer).getCastType());
+      return elementFactory.createExpressionFromText(
+        ((PsiInstanceOfExpression)myAnchor).getOperand().getText() + " instanceof " + castType.getText() + " " + name, myContainer);
+    }
     if (myContainer instanceof PsiClass) {
       PsiField declaration = elementFactory.createField(name, type);
       declaration.setInitializer(initializer);
@@ -215,6 +226,10 @@ class VariableExtractor {
           return anchor.getParent().addAfter(declaration, parDeclarationStatement);
         }
       }
+    }
+    if (anchor instanceof PsiInstanceOfExpression && declaration instanceof PsiInstanceOfExpression) {
+      PsiInstanceOfExpression newInstanceOf = (PsiInstanceOfExpression)anchor.replace(declaration);
+      return ((PsiTypeTestPattern)Objects.requireNonNull(newInstanceOf.getPattern())).getPatternVariable();
     }
     if (anchor instanceof PsiResourceListElement) {
       PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)declaration;
@@ -285,6 +300,18 @@ class VariableExtractor {
     }
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
+    if (HighlightUtil.Feature.PATTERNS.isAvailable(anchor)) {
+      PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class);
+      if (cast != null && !(cast.getType() instanceof PsiPrimitiveType) &&
+          !(PsiUtil.skipParenthesizedExprUp(firstOccurrence.getParent()) instanceof PsiExpressionStatement)) {
+        PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast);
+        if (candidate != null && allOccurrences.stream()
+          .map(occ -> ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class))
+          .allMatch(occ -> occ != null && (occ == firstOccurrence || InstanceOfUtils.findPatternCandidate(occ) == candidate))) {
+          return candidate;
+        }
+      }
+    }
     if (anchor instanceof PsiWhileStatement) {
       PsiWhileStatement whileStatement = (PsiWhileStatement)anchor;
       PsiExpression condition = whileStatement.getCondition();

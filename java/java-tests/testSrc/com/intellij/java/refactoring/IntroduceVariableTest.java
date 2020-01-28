@@ -127,6 +127,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testPatternVariableNotUsedAfterwards() {
     doTest("temp", true, false, false, "boolean");
   }
+  public void testPatternVariableDeclarationJava14Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationAfterIfJava14Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING);}
+  public void testNonPatternDeclarationJava14Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING);}
 
   public void testTernaryBothBranches() { doTest("temp", true, false, false, "int"); }
   public void testIfConditionAndChain() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }

@@ -128,6 +128,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       PsiElement[] declaredElements = ((PsiDeclarationStatement)declarationStatement).getDeclaredElements();
       return declaredElements.length == 0 ? null : (PsiVariable)declaredElements[0];
     }
+    else if (declarationStatement instanceof PsiInstanceOfExpression) {
+      PsiPattern pattern = ((PsiInstanceOfExpression)declarationStatement).getPattern();
+      if (pattern instanceof PsiTypeTestPattern) {
+        return ((PsiTypeTestPattern)pattern).getPatternVariable();
+      }
+    }
     return declarationStatement instanceof PsiVariable ? (PsiVariable)declarationStatement : null;
   }
 
@@ -243,6 +249,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   @Override
   @Nullable
   protected JComponent getComponent() {
+    if (getVariable() instanceof PsiPatternVariable) return null;
     if (myCantChangeFinalModifier && !(myCanBeVarType && getVariable() instanceof PsiLocalVariable)) return null;
     if (!myCantChangeFinalModifier) {
       myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
@@ -469,6 +476,11 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     if (variable instanceof PsiField || variable instanceof PsiResourceVariable) {
       myPointer = smartPointerManager.createSmartPsiElementPointer(variable);
+    }
+    else if (variable instanceof PsiPatternVariable) {
+      PsiElement parent = ((PsiPatternVariable)variable).getPattern().getParent();
+      LOG.assertTrue(parent instanceof PsiInstanceOfExpression);
+      myPointer = smartPointerManager.createSmartPsiElementPointer(parent);
     }
     else {
       final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
