@@ -112,6 +112,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         }
         actions.add(defaultAction);
 
+        String originalText = text;
         for (final AttachSourcesProvider.AttachSourcesAction action : actions) {
           panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
             List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
@@ -122,7 +123,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
             panel.setText(action.getBusyText());
 
-            action.perform(entries);
+            action.perform(entries).doWhenProcessed(() -> panel.setText(originalText));
           });
         }
       }

@@ -21,7 +21,7 @@ distrs=(
 )
 for FILE in ${distrs[*]}
 do
-    wget -nv http://repo.labs.intellij.net/download/oracle/$FILE -O $FILE
+    wget -nv https://repo.labs.intellij.net/download/oracle/$FILE -O $FILE
 done
 
 # A=([1]=2 =2*${var}) // fixme

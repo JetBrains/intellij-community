@@ -35,8 +35,8 @@ public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
     ExternalDependenciesManager.getInstance(project);
   }
 
-  public static void runCheck(@NotNull final Project project) {
-    List<DependencyOnPlugin> dependencies = ExternalDependenciesManager.getInstance(project).getDependencies(DependencyOnPlugin.class);
+  public static void runCheck(@NotNull Project project, @NotNull ExternalDependenciesManager manager) {
+    List<DependencyOnPlugin> dependencies = manager.getDependencies(DependencyOnPlugin.class);
     if (dependencies.isEmpty()) return;
 
     final List<String> errorMessages = new ArrayList<>();

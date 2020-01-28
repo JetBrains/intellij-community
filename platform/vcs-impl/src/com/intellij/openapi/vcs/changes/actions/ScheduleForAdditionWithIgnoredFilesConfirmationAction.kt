@@ -123,8 +123,10 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     return allFiles
       .filter { file ->
         val actionExtension = getExtensionFor(project, vcsManager.getVcsFor(file))
-        actionExtension != null && (file.isDirectory || actionExtension.isStatusForAddition(
-          changeListManager.getStatus(file)))
+        actionExtension != null &&
+        changeListManager.getStatus(file).let { status->
+          if (file.isDirectory) actionExtension.isStatusForDirectoryAddition(status) else actionExtension.isStatusForAddition(status)
+        }
       }
       .map(VcsUtil::getFilePath)
   }

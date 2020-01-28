@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
-
 public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/expressions";
 
@@ -296,6 +295,15 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   public void testOverloadResolutionInsideLambdaInsideNestedCall() {
     doTestAllMethodCallExpressions();
+  }
+
+  public void testLambdaWithLongChainInReturn() {
+    configure();
+    PsiExpression innerCall =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+
+    assertNotNull(innerCall);
+    assertNotNull(innerCall.getType());
   }
 
   private void doTestAllMethodCallExpressions() {

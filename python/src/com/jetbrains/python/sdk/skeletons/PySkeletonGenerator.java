@@ -260,9 +260,14 @@ public class PySkeletonGenerator {
       return myTimeout > 0 ? myTimeout : defaultTimeout;
     }
 
+    /**
+     * @param ensureSuccess throw {@link InvalidSdkException} containing additional diagnostic on process non-zero exit code.
+     *                      You might want to disable it for commands where non-zero exit code is possible for situations other
+     *                      than misconfigured interpreter or execution error in order to inspect the output manually.
+     */
     @NotNull
-    public ProcessOutput runProcess() throws InvalidSdkException, ExecutionException {
-      return PySkeletonGenerator.this.runProcess(this);
+    public ProcessOutput runProcess(boolean ensureSuccess) throws InvalidSdkException, ExecutionException {
+      return PySkeletonGenerator.this.runProcess(this, ensureSuccess);
     }
 
     @NotNull
@@ -333,21 +338,29 @@ public class PySkeletonGenerator {
       }
     };
 
-    runProcessWithLineOutputListener(builder.getWorkingDir(),
-                                     builder.getCommandLine(),
-                                     builder.getEnvironment(),
-                                     builder.myStdin,
-                                     builder.getTimeout(Time.MINUTE * 20), listener);
+    final ProcessOutput output = runProcessWithLineOutputListener(builder.getWorkingDir(),
+                                                                  builder.getCommandLine(),
+                                                                  builder.getEnvironment(),
+                                                                  builder.myStdin,
+                                                                  builder.getTimeout(Time.MINUTE * 20),
+                                                                  listener);
+    if (output.getExitCode() != 0) {
+      throw new InvalidSdkException(formatGeneratorFailureMessage(output));
+    }
     return results;
   }
 
   @NotNull
-  protected ProcessOutput runProcess(@NotNull Builder builder) throws InvalidSdkException, ExecutionException {
-    return getProcessOutput(builder.getWorkingDir(),
-                            ArrayUtil.toStringArray(builder.getCommandLine()),
-                            builder.getStdin(),
-                            builder.getEnvironment(),
-                            builder.getTimeout(Time.MINUTE * 10));
+  protected ProcessOutput runProcess(@NotNull Builder builder, boolean ensureSuccess) throws InvalidSdkException, ExecutionException {
+    final ProcessOutput output = getProcessOutput(builder.getWorkingDir(),
+                                                  ArrayUtil.toStringArray(builder.getCommandLine()),
+                                                  builder.getStdin(),
+                                                  builder.getEnvironment(),
+                                                  builder.getTimeout(Time.MINUTE * 10));
+    if (ensureSuccess && output.getExitCode() != 0) {
+      throw new InvalidSdkException(formatGeneratorFailureMessage(output));
+    }
+    return output;
   }
 
   public void finishSkeletonsGeneration() {
@@ -357,12 +370,13 @@ public class PySkeletonGenerator {
     return new File(name).exists();
   }
 
-  protected void runProcessWithLineOutputListener(@NotNull String homePath,
-                                                  @NotNull List<String> cmd,
-                                                  @NotNull Map<String, String> env,
-                                                  @Nullable String stdin,
-                                                  int timeout,
-                                                  @NotNull LineWiseProcessOutputListener listener)
+  @NotNull
+  protected ProcessOutput runProcessWithLineOutputListener(@NotNull String homePath,
+                                                           @NotNull List<String> cmd,
+                                                           @NotNull Map<String, String> env,
+                                                           @Nullable String stdin,
+                                                           int timeout,
+                                                           @NotNull LineWiseProcessOutputListener listener)
     throws ExecutionException, InvalidSdkException {
     final GeneralCommandLine commandLine = new GeneralCommandLine(cmd)
       .withWorkDirectory(homePath)
@@ -372,7 +386,7 @@ public class PySkeletonGenerator {
       sendLineToProcessInput(handler, stdin);
     }
     handler.addProcessListener(new LineWiseProcessOutputListener.Adapter(listener));
-    handler.runProcess(timeout);
+    return handler.runProcess(timeout);
   }
 
   public String getSkeletonsPath() {
@@ -389,6 +403,24 @@ public class PySkeletonGenerator {
                                            int timeout) throws InvalidSdkException {
     final byte[] bytes = stdin != null ? stdin.getBytes(StandardCharsets.UTF_8) : null;
     return PySdkUtil.getProcessOutput(homePath, commandLine, extraEnv, timeout, bytes, true);
+  }
+
+  @NotNull
+  private String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
+    final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(mySdk.getHomePath());
+    if (process.isTimeout()) {
+      sb.append(": timed out.");
+    }
+    else {
+      sb.append(", exit code ")
+        .append(process.getExitCode())
+        .append(", stderr: \n-----\n");
+      for (String line : process.getStderrLines()) {
+        sb.append(line).append("\n");
+      }
+      sb.append("-----");
+    }
+    return sb.toString();
   }
 
   public boolean deleteOrLog(@NotNull File item) {

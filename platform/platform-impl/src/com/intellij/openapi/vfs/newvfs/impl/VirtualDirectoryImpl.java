@@ -36,6 +36,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -216,7 +217,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private static boolean isFileSeparator(char c) {
-    return c == '/' || c=='\\';
+    return c == '/' || c == File.separatorChar;
   }
 
   @NotNull

@@ -50,7 +50,7 @@
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
 
-    <applicationService serviceImplementation="com.intellij.tools.ToolManager"/>
+    <applicationService serviceImplementation="com.intellij.tools.ToolManager" preload="notHeadless"/>
 
     <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
                     serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
@@ -856,9 +856,6 @@
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
     <toolWindow id="Favorites" anchor="left" icon="AllIcons.Toolwindows.ToolWindowFavorites" secondary="true"
                 factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory"/>
-    <toolWindow id="Services" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowServices" canCloseContents="true"
-                factoryClass="com.intellij.execution.services.ServiceViewToolWindowFactory"
-                conditionClass="com.intellij.execution.services.ServiceViewToolWindowFactory"/>
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
@@ -972,7 +969,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>
 
-    <statistics.counterUsagesCollector groupId="searchEverywhere" version="2"/>
+    <statistics.counterUsagesCollector groupId="searchEverywhere" version="3"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
     <statistics.counterUsagesCollector groupId="surround.with" version="2"/>
     <statistics.counterUsagesCollector groupId="find" version="2"/>
@@ -1074,6 +1071,7 @@
 
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager" serviceImplementation="com.intellij.execution.dashboard.RunDashboardManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager" serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.execution.services.ServiceViewStartupActivity"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"
                               id="type" order="first"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"

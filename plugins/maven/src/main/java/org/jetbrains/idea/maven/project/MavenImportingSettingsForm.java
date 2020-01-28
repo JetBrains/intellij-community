@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -54,10 +55,11 @@ public class MavenImportingSettingsForm {
   private JCheckBox myAutoDetectCompilerCheckBox;
   private JBCheckBox myJBCheckBox1;
 
-  public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
-    mySearchRecursivelyCheckBox.setVisible(isImportStep);
-    myProjectFormatLabel.setVisible(isImportStep && isCreatingNewProject);
-    myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
+  public MavenImportingSettingsForm(boolean isDefaultProject) {
+    mySearchRecursivelyCheckBox.setVisible(isDefaultProject);
+    //TODO: remove this
+    myProjectFormatLabel.setVisible(false);
+    myProjectFormatComboBox.setVisible(false);
 
     ActionListener listener = new ActionListener() {
       @Override
@@ -102,6 +104,7 @@ public class MavenImportingSettingsForm {
 
   public void getData(@NotNull MavenImportingSettings data) {
     data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
+    LookForNestedToggleAction.setSelected(mySearchRecursivelyCheckBox.isSelected());
     data.setDedicatedModuleDir(mySeparateModulesDirCheckBox.isSelected() ? mySeparateModulesDirChooser.getText() : "");
 
     data.setImportAutomatically(myImportAutomaticallyBox.isSelected());
@@ -127,7 +130,7 @@ public class MavenImportingSettingsForm {
   }
 
   public void setData(MavenImportingSettings data, @Nullable Project project) {
-    mySearchRecursivelyCheckBox.setSelected(data.isLookForNested());
+    mySearchRecursivelyCheckBox.setSelected(LookForNestedToggleAction.isSelected());
 
     mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     mySeparateModulesDirChooser.setText(data.getDedicatedModuleDir());

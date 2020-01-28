@@ -14,6 +14,10 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.jetbrains.python.PythonIdeLanguageCustomization"
+                        overrides="true"/>
+
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
                          displayName="Project Structure"

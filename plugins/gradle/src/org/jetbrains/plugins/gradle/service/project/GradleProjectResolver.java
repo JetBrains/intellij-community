@@ -512,7 +512,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final DefaultExternalProject wrappedExternalRootProject =
       useCustomSerialization ? (DefaultExternalProject)externalRootProject : new DefaultExternalProject(externalRootProject);
     models.addModel(wrappedExternalRootProject, ExternalProject.class);
-    final Map<String, DefaultExternalProject> externalProjectsMap = createExternalProjectsMap(null, wrappedExternalRootProject);
+    final Map<String, DefaultExternalProject> externalProjectsMap = createExternalProjectsMap(resolverCtx.getBuildSrcGroup(),
+                                                                                              resolverCtx.getBuildSrcGroup() != null,
+                                                                                              wrappedExternalRootProject);
 
     DomainObjectSet<? extends IdeaModule> gradleModules = models.getIdeaProject().getModules();
     if (gradleModules != null && !gradleModules.isEmpty()) {
@@ -541,7 +543,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       wrappedExternalRootProject.getChildProjects().put(wrappedExternalIncludedRootProject.getName(), wrappedExternalIncludedRootProject);
       String compositePrefix = ideaProject.getName();
       final Map<String, DefaultExternalProject> externalIncludedProjectsMap =
-        createExternalProjectsMap(compositePrefix, wrappedExternalIncludedRootProject);
+        createExternalProjectsMap(compositePrefix, false, wrappedExternalIncludedRootProject);
       for (IdeaModule ideaModule : ideaModules) {
         final ExternalProject externalProject = externalIncludedProjectsMap.get(getModuleId(resolverCtx, ideaModule));
         if (externalProject != null) {
@@ -553,11 +555,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   @NotNull
   private static Map<String, DefaultExternalProject> createExternalProjectsMap(@Nullable String compositePrefix,
-                                                                               @Nullable DefaultExternalProject rootExternalProject) {
+                                                                               boolean isBuildSrcProject,
+                                                                               @NotNull DefaultExternalProject rootExternalProject) {
     final Map<String, DefaultExternalProject> externalProjectMap = new THashMap<>();
-
-    if (rootExternalProject == null) return externalProjectMap;
-
     ArrayDeque<DefaultExternalProject> queue = new ArrayDeque<>();
     queue.add(rootExternalProject);
 
@@ -566,9 +566,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       queue.addAll(externalProject.getChildProjects().values());
       final String moduleName = externalProject.getName();
       final String qName = externalProject.getQName();
-      String moduleId = StringUtil.isEmpty(qName) || ":".equals(qName) ? moduleName : qName;
-      if (compositePrefix != null && externalProject != rootExternalProject) {
-        moduleId = compositePrefix + moduleId;
+      String moduleId = externalProject == rootExternalProject ? isBuildSrcProject ? "" : moduleName : qName;
+      if (compositePrefix != null && (isBuildSrcProject || externalProject != rootExternalProject)) {
+        moduleId = compositePrefix + (isBuildSrcProject ? ":buildSrc" : "") + moduleId;
       }
       externalProjectMap.put(moduleId, externalProject);
     }

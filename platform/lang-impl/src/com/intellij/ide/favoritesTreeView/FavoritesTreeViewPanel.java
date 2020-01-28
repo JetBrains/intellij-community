@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -10,7 +10,6 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -115,7 +114,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     new TreeSpeedSearch(myTree);
     ToolTipManager.sharedInstance().registerComponent(myTree);
     final FavoritesComparator favoritesComparator =
-      new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID);
+      new FavoritesComparator(FavoritesProjectViewPane.ID);
     myBuilder.setNodeDescriptorComparator((o1, o2) -> {
       if (o1 instanceof FavoritesTreeNodeDescriptor && o2 instanceof FavoritesTreeNodeDescriptor) {
         final FavoritesListNode listNode1 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o1);

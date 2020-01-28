@@ -4,15 +4,15 @@ package com.intellij.openapi.vcs.changes.ignore.actions
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.project.isDirectoryBased
-import com.intellij.project.stateStore
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.vcsUtil.VcsImplUtil
@@ -26,7 +26,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
     ignoreFileType.icon
   ), DumbAware {
 
-  var actions: Collection<AnAction> = emptyList()
+  private var actions: Collection<AnAction> = emptyList()
 
   override fun update(e: AnActionEvent) {
     val selectedFiles = getSelectedFiles(e)
@@ -93,42 +93,54 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       }
   }
 
-  private fun Collection<VirtualFile>.toActions(project: Project, additionalActionsSize: Int) =
-    map { file ->
+  private fun Collection<VirtualFile>.toActions(project: Project, additionalActionsSize: Int): Collection<AnAction> {
+    val projectDir = project.guessProjectDir()
+    return map { file ->
       IgnoreFileAction(file).apply {
         templatePresentation.apply {
           icon = ignoreFileType.icon
-          text = file.toTextRepresentation(project, this@toActions.size + additionalActionsSize)
+          text = file.toTextRepresentation(project, projectDir, this@toActions.size + additionalActionsSize)
         }
       }
     }
+  }
 
   private fun createNewIgnoreFileAction(project: Project, selectedFiles: List<VirtualFile>): AnAction? {
     val filename = ignoreFileType.ignoreLanguage.filename
-    val projectRoot = project.getProjectRoot()
-    if (projectRoot == null || projectRoot.findChild(filename) != null) return null
-    if (selectedFiles.any { !VfsUtil.isAncestor(projectRoot, it, true) }) return null //trying to ignore some parent file of the root ignore file
-    val rootVcs = VcsUtil.getVcsFor(project, projectRoot) ?: return null
+    val (rootVcs, commonIgnoreFileRoot) = selectedFiles.getCommonIgnoreFileRoot(project) ?: return null
+    if (rootVcs == null) return null
+    if (commonIgnoreFileRoot.findChild(filename) != null) return null
     val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(rootVcs) ?: return null
     if (ignoredFileContentProvider.fileName != filename) return null
 
-    return CreateNewIgnoreFileAction(filename, projectRoot).apply {
+    return CreateNewIgnoreFileAction(filename, commonIgnoreFileRoot).apply {
       templatePresentation.apply {
         icon = ignoreFileType.icon
-
         text = message("vcs.add.to.ignore.file.action.group.text", filename)
       }
     }
   }
 
-  private fun VirtualFile.toTextRepresentation(project: Project, size: Int): String {
+  private fun VirtualFile.toTextRepresentation(project: Project, projectDir: VirtualFile?, size: Int): String {
     if (size == 1) return message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename)
-    val projectRoot = project.getProjectRoot() ?: return name
+    val projectRootOrVcsRoot = projectDir ?: VcsUtil.getVcsRootFor(project, this) ?: return name
 
-    return VfsUtil.getRelativePath(this, projectRoot) ?: name
+    return VfsUtil.getRelativePath(this, projectRootOrVcsRoot) ?: name
   }
 
-  private fun Project.getProjectRoot() =
-    if (isDirectoryBased) stateStore.projectConfigDir?.let(LocalFileSystem.getInstance()::findFileByPath)?.parent
-    else projectFile?.parent
+  private fun Collection<VirtualFile>.getCommonIgnoreFileRoot(project: Project): VcsRoot? {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val first = firstOrNull() ?: return null
+    val commonVcsRoot = vcsManager.getVcsRootObjectFor(first) ?: return null
+    if (first == commonVcsRoot.path) return null //trying to ignore vcs root itself
+
+    val haveCommonRoot = asSequence().drop(1).all {
+      it != commonVcsRoot && vcsManager.getVcsRootObjectFor(it) == commonVcsRoot
+    }
+
+    return if (haveCommonRoot) commonVcsRoot else null
+  }
+
+  private operator fun VcsRoot.component1() = vcs
+  private operator fun VcsRoot.component2() = path
 }

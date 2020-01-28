@@ -694,7 +694,7 @@ public class EditorPainter implements TextDrawingCallback {
             // making center point lie at the center of device pixel
             float dotX = roundToPixelCenter((startX + endX) / 2., myGraphics) - scale / 2;
             float dotY = roundToPixelCenter(yToUse + 1 - myAscent + myLineHeight / 2., myGraphics) - scale / 2;
-            myTextDrawingTasks.add((g) -> {
+            myTextDrawingTasks.add(g -> {
               CachingPainter.paint(g, dotX, dotY, scale, scale,
                                    _g -> {
                                      _g.setColor(color);
@@ -704,24 +704,41 @@ public class EditorPainter implements TextDrawingCallback {
             });
           }
           else if (c == '\t') {
-            int tabLineHeight = calcFeatureSize(4, scale);
-            int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
-            int xToUse = Math.min(endX - tabLineWidth, startX + tabLineWidth);
-            myTextDrawingTasks.add((g) -> {
-              g.setColor(color);
-              g.setStroke(stroke);
-              Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-              g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-              g.drawLine(xToUse, yToUse, xToUse + tabLineWidth, yToUse - tabLineHeight);
-              g.drawLine(xToUse, yToUse - tabLineHeight * 2, xToUse + tabLineWidth, yToUse - tabLineHeight);
-              g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
-            });
-            restoreStroke = true;
+            if (Registry.is("editor.old.tab.painting")) {
+              int tabEndX = endX - (int)(myView.getPlainSpaceWidth() / 4);
+              int height = myView.getCharHeight();
+              Color tabColor = color == null ? null : ColorUtil.mix(myBackgroundColor, color, 0.7);
+              myTextDrawingTasks.add(g -> {
+                int halfHeight = height / 2;
+                int yMid = yToUse - halfHeight;
+                int yTop = yToUse - height;
+                double strokeWidth = Math.max(scale, PaintUtil.devPixel(g));
+                g.setColor(tabColor);
+                LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
+                LinePainter2D.paint(g, tabEndX, yToUse, tabEndX, yTop, LinePainter2D.StrokeType.INSIDE, strokeWidth);
+                g.fillPolygon(new int[]{tabEndX - halfHeight, tabEndX - halfHeight, tabEndX}, new int[]{yToUse, yTop, yMid}, 3);
+              });
+            }
+            else {
+              int tabLineHeight = calcFeatureSize(4, scale);
+              int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
+              int xToUse = Math.min(endX - tabLineWidth, startX + tabLineWidth);
+              myTextDrawingTasks.add(g -> {
+                g.setColor(color);
+                g.setStroke(stroke);
+                Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.drawLine(xToUse, yToUse, xToUse + tabLineWidth, yToUse - tabLineHeight);
+                g.drawLine(xToUse, yToUse - tabLineHeight * 2, xToUse + tabLineWidth, yToUse - tabLineHeight);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
+              });
+              restoreStroke = true;
+            }
           }
           else if (c == '\u3000') { // ideographic space
             int charHeight = myView.getCharHeight();
             int strokeWidth = Math.round(stroke.getLineWidth());
-            myTextDrawingTasks.add((g) -> {
+            myTextDrawingTasks.add(g -> {
               g.setColor(color);
               g.setStroke(stroke);
               g.drawRect(startX + JBUIScale.scale(2) + strokeWidth / 2, yToUse - charHeight + strokeWidth / 2,

@@ -257,6 +257,9 @@
     <registryKey key="packagesearch.timeout.max" defaultValue="86400000"
                  description="maximum backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
 
+    <intentionAction>
+      <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
+    </intentionAction>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -541,6 +544,11 @@
             class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction" text="Toggle Offline Mode"
             description="Toggle offline mode for Maven builds"
             icon="MavenIcons.OfflineMode">
+    </action>
+
+    <action id="Maven.ToggleLookNested"
+            class="org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction" text="Toggle Search For Maven Project Recursively"
+            description="Toggle Search for project recursively when importing Maven projects">
     </action>
 
     <action id="Maven.ToggleSkipTests"

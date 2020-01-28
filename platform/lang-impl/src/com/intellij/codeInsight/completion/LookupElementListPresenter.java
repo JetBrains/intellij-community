@@ -31,7 +31,7 @@ public interface LookupElementListPresenter {
    * @deprecated Use {@link #getLookupFocusDegree()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   LookupImpl.FocusDegree getFocusDegree();
 
   @NotNull

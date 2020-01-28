@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,21 @@ public class ToolWindowMoveAction extends DumbAwareAction {
       }
       return super.toString();
     }
+
+    public static Anchor fromWindowInfo(@NotNull WindowInfo info) {
+      if (info.isSplit()) {
+        if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftBottom;
+        if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomRight;
+        if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightBottom;
+        if (info.getAnchor() == ToolWindowAnchor.TOP) return TopRight;
+      }
+
+      if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftTop;
+      if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomLeft;
+      if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightTop;
+      /*if (info.getAnchor() == ToolWindowAnchor.TOP) */ return TopLeft;
+    }
+
     @NotNull
     private ToolWindowAnchor getAnchor() {
       switch (this) {

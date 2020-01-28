@@ -83,3 +83,7 @@ class AccessProtectedSuperConstructor : PackagePrivateEmptyConstructor {
 
   constructor(i: Int, i2: Int): this(i + i2)
 }
+
+class AccessProtectedSuperConstructorWithArgument(i: Int) : PackagePrivateEmptyConstructor(i) {
+  constructor(i: Int, i2: Int): this(i + i2)
+}

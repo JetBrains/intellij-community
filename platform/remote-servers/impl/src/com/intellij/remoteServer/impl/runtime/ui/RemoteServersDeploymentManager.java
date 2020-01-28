@@ -219,7 +219,7 @@ public class RemoteServersDeploymentManager {
 
       AbstractTreeNode<?> deploymentNode = findDeployment(contributor, connection, deploymentName);
       if (deploymentNode != null) {
-        ServiceViewManager.getInstance(myProject).select(deploymentNode, contributor.getClass(), false, false);
+        ServiceViewManager.getInstance(myProject).select(deploymentNode, contributor.getClass(), true, false);
       }
     }
 

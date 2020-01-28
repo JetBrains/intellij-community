@@ -75,7 +75,7 @@ public final class SocketLock {
   private static final String OK_RESPONSE = "ok";
   private static final String PATHS_EOT_RESPONSE = "---";
 
-  private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef = new AtomicReference<>();
+  private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef;
   private final String myConfigPath;
   private final String mySystemPath;
   private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
@@ -87,6 +87,7 @@ public final class SocketLock {
     if (FileUtil.pathsEqual(myConfigPath, mySystemPath)) {
       throw new IllegalArgumentException("'config' and 'system' paths should point to different directories");
     }
+    myCommandProcessorRef = new AtomicReference<>(args -> CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")));
   }
 
   private static String canonicalPath(String path) {
@@ -414,13 +415,8 @@ public final class SocketLock {
                 result = new CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"));
               }
               else {
-                Function<List<String>, Future<CliResult>> listener = myCommandProcessorRef.get();
-                if (listener != null) {
-                  result = CliResult.unmap(listener.apply(args.subList(1, args.size())), Main.ACTIVATE_RESPONSE_TIMEOUT);
-                }
-                else {
-                  result = new CliResult(Main.ACTIVATE_LISTENER_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"));
-                }
+                Future<CliResult> future = myCommandProcessorRef.get().apply(args.subList(1, args.size()));
+                result = CliResult.unmap(future, Main.ACTIVATE_ERROR);
               }
 
               List<String> response = new ArrayList<>();

@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -46,7 +45,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
           tree,
           treeModel,
           treeStructure,
-          new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID));
+          new FavoritesComparator(FavoritesProjectViewPane.ID));
     final MessageBusConnection bus = myProject.getMessageBus().connect(this);
     ProjectViewPsiTreeChangeListener psiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
       @Override

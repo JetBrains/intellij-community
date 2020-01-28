@@ -26,8 +26,8 @@ class Foo {
   @Contract("_-><warning descr="Contract return value 'param2': not applicable for method which has 1 parameter">param2</warning>")
   public native String absentParameter2(String x);
 
-  @Contract("_-><warning descr="Contract return value 'param1': return type 'String' must be assignable from parameter type 'CharSequence'">param1</warning>")
-  public native String wrongParameterType(CharSequence x);
+  @Contract("_-><warning descr="Contract return value 'param1': return type 'String' must be convertible from parameter type 'Integer'">param1</warning>")
+  public native String wrongParameterType(Integer x);
 
   @Contract("_->param1")
   public native Object okParameterType(Integer x);

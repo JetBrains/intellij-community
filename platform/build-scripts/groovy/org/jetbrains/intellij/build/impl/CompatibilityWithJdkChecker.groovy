@@ -31,7 +31,7 @@ class CompatibilityWithJdkChecker {
     this.context = context
     this.patchedDependencies = patchedDependencies
     tempDir = "$context.paths.temp/compatibility-with-jdk-check"
-    mavenCentralUrl = System.getProperty("intellij.build.maven.central.url", "http://repo1.maven.org/maven2")
+    mavenCentralUrl = System.getProperty("intellij.build.maven.central.url", "https://repo1.maven.org/maven2")
     FileUtil.createDirectory(new File(tempDir))
   }
 

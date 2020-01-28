@@ -5,12 +5,10 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -31,6 +29,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
+import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +54,6 @@ import java.util.stream.Collectors;
  */
 public class GradleProjectResolverUtil {
   private static final Logger LOG = Logger.getInstance(GradleProjectResolverUtil.class);
-  @NotNull
-  private static final Key<Object> CONTAINER_KEY = Key.create(Object.class, ExternalSystemConstants.UNORDERED);
   public static final String BUILD_SRC_NAME = "buildSrc";
 
   @NotNull
@@ -188,10 +185,13 @@ public class GradleProjectResolverUtil {
     GradleProject gradleProject = gradleModule.getGradleProject();
     String gradlePath = gradleProject.getPath();
     String compositePrefix = "";
-    if (gradleModule.getProject() != resolverCtx.getModels().getIdeaProject()) {
-      if (!StringUtil.isEmpty(gradlePath) && !":".equals(gradlePath)) {
-        compositePrefix = gradleModule.getProject().getName();
-      }
+    IdeaProject ideaProject = gradleModule.getProject();
+    boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
+    if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
+      compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
+    }
+    else if (!isRootPath && ideaProject != resolverCtx.getModels().getModel(IdeaProject.class)) {
+      compositePrefix = ideaProject.getName();
     }
     return compositePrefix + getModuleId(gradlePath, gradleModule.getName());
   }

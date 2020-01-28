@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -48,6 +48,7 @@ import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Collection;
@@ -111,18 +112,6 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes(ConvertContext context) {
-    MavenId id = MavenArtifactCoordinatesHelper.getId(context);
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
-    if (manager.hasOfflineIndexes()) {
-      return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
-    }
-    else {
-      return super.getQuickFixes(context);
-    }
-  }
-
-  @Override
   public boolean isSoft(@NotNull DomElement element) {
     DomElement dependencyOrPluginElement = element.getParent();
     if (dependencyOrPluginElement instanceof MavenDomDependency) {
@@ -183,7 +172,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return new ConverterStrategy();
   }
 
-  private static class MyUpdateIndicesFix implements LocalQuickFix {
+  public static class MyUpdateIndicesIntention implements IntentionAction {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -192,7 +181,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     @NotNull
-    public String getName() {
+    public String getText() {
       return MavenDomBundle.message("fix.update.indices");
     }
 
@@ -201,9 +190,17 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return false;
     }
 
+
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       MavenProjectIndicesManager.getInstance(project).scheduleUpdateAll();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return MavenUtil.isPomFile(project, file.getVirtualFile()) &&
+             MavenProjectIndicesManager.getInstance(project).hasRemotesExceptCentral();
+
     }
   }
 

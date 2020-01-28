@@ -75,7 +75,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final int start = tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
       final int end = tokenType == JavaTokenType.END_OF_LINE_COMMENT || length < 4 ? length : length - 2;
       final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
-      myMatchingVisitor.setResult(substitutionHandler.handle(other, start, end, myMatchingVisitor.getMatchContext()));
+      final RegExpPredicate predicate = substitutionHandler.findRegExpPredicate();
+      if (predicate != null) {
+        predicate.setNodeTextGenerator(e -> JavaMatchUtil.getCommentText((PsiComment)e).trim());
+        myMatchingVisitor.setResult(substitutionHandler.handle(other, myMatchingVisitor.getMatchContext()));
+      }
+      else {
+        myMatchingVisitor.setResult(substitutionHandler.handle(other, start, end, myMatchingVisitor.getMatchContext()));
+      }
     }
     else if (handler != null) {
       myMatchingVisitor.setResult(handler.match(comment, other, myMatchingVisitor.getMatchContext()));
@@ -163,9 +170,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitDocTag(PsiDocTag tag) {
     final PsiDocTag other = (PsiDocTag)myMatchingVisitor.getElement();
-    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(tag.getNameElement());
+    final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
+    final boolean isTypedVar = pattern.isTypedVar(tag.getNameElement());
 
-    if (!myMatchingVisitor.setResult(isTypedVar || tag.getName().equals(other.getName()))) return;
+    if (!isTypedVar && !myMatchingVisitor.setResult(tag.getName().equals(other.getName()))) return;
 
     PsiElement psiDocTagValue = tag.getValueElement();
     boolean isTypedValue = false;
@@ -175,7 +183,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (children.length == 1) {
         psiDocTagValue = children[0];
       }
-      isTypedValue = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(psiDocTagValue);
+      isTypedValue = pattern.isTypedVar(psiDocTagValue);
 
       if (isTypedValue) {
         if (other.getValueElement() != null) {
@@ -200,10 +208,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitDocComment(PsiDocComment comment) {
     final PsiDocComment other;
-
     if (myMatchingVisitor.getElement() instanceof PsiDocCommentOwner) {
       other = ((PsiDocCommentOwner)myMatchingVisitor.getElement()).getDocComment();
-
       if (!myMatchingVisitor.setResult(other != null)) {
         // doc comment are not collapsed for inner classes!
         return;
@@ -211,18 +217,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
     else {
       other = (PsiDocComment)myMatchingVisitor.getElement();
-
       if (!myMatchingVisitor.setResult(!(myMatchingVisitor.getElement().getParent() instanceof PsiDocCommentOwner))) {
         return; // we should matched the doc before
       }
     }
 
-    if (comment.getTags().length > 0) {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(comment.getTags(), other.getTags()));
-    }
-    else {
-      visitComment(comment);
-    }
+    final PsiDocTag[] tags = comment.getTags();
+    if (tags.length > 0 && !myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(tags, other.getTags()))) return;
+    visitComment(comment);
   }
 
   @Override

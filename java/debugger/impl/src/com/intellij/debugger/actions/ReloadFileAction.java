@@ -16,11 +16,13 @@ public class ReloadFileAction extends CompileAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    VirtualFile[] files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-    if (files.length > 0) {
-      DebuggerSession session = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
-      if (session != null) {
-        HotSwapUI.getInstance(project).compileAndReload(session, files);
+    if (project != null) {
+      VirtualFile[] files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+      if (files.length > 0) {
+        DebuggerSession session = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
+        if (session != null) {
+          HotSwapUI.getInstance(project).compileAndReload(session, files);
+        }
       }
     }
   }
@@ -29,6 +31,7 @@ public class ReloadFileAction extends CompileAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabledAndVisible(
+      project != null &&
       DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession() != null &&
       getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).length > 0 &&
       !CompilerManager.getInstance(project).isCompilationActive());

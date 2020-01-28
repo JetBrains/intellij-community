@@ -305,6 +305,9 @@ public class ShelvedChangesViewManager implements Disposable {
       return;
     }
 
+    if (!VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN)
+      return;
+
     ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).openEditorPreview(false);

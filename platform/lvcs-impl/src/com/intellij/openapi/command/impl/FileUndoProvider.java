@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.FileContentUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -89,10 +90,10 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
       if (e instanceof VFileCreateEvent ||
           e instanceof VFileMoveEvent ||
           e instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)e).isRename()) {
-        VirtualFile file = e.getFile();
-        if (file != null) {
-          processEvent(e, file);
-        }
+        processEvent(e, e.getFile());
+      }
+      else if (e instanceof VFileCopyEvent) {
+        processEvent(e, ((VFileCopyEvent)e).findCreatedFile());
       }
       else if (e instanceof VFileDeleteEvent) {
         fileDeleted((VFileDeleteEvent)e);
@@ -100,8 +101,8 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     }
   }
 
-  private void processEvent(@NotNull VFileEvent e, @NotNull VirtualFile file) {
-    if (!shouldProcess(e, file)) return;
+  private void processEvent(@NotNull VFileEvent e, @Nullable VirtualFile file) {
+    if (file == null || !shouldProcess(e, file)) return;
     if (isUndoable(e, file)) {
       registerUndoableAction(file);
     }

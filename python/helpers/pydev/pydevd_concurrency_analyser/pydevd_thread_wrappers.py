@@ -92,19 +92,16 @@ def wrap_threads():
 class AsyncioTaskWrapper(ObjectWrapper):
     _asyncio_future_blocking = True
 
+    def __init__(self, *args, **kwargs):
+        import asyncio
+        real_task = asyncio.tasks._OrigTask(*args, **kwargs)
+        super().__init__(real_task)
+
     def __await__(self, *args, **kwargs):
         return self.wrapped_object.__await__(*args, **kwargs)
-
-
-def asyncio_factory_wrapper(fun):
-    def inner(*args, **kwargs):
-        obj = fun(*args, **kwargs)
-        wrapper = AsyncioTaskWrapper(obj)
-        return wrapper
-    return inner
 
 
 def wrap_asyncio():
     import asyncio
     asyncio.tasks._OrigTask = asyncio.tasks.Task
-    asyncio.tasks.Task = asyncio_factory_wrapper(asyncio.tasks.Task)
+    asyncio.tasks.Task = AsyncioTaskWrapper

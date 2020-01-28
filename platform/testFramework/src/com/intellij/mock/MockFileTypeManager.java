@@ -161,11 +161,6 @@ public class MockFileTypeManager extends FileTypeManagerEx {
     }
   }
 
-  @Override
-  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-   return false;
-  }
-
   @Nullable
   @Override
   public FileType findFileTypeByName(@NotNull String fileTypeName) {

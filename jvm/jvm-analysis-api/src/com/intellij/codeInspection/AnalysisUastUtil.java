@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public final class AnalysisUastUtil {
   @Nullable
   public static UCallExpression getUCallExpression(@NotNull PsiElement element) {

@@ -46,13 +46,13 @@ public abstract class FileTypeRegistry {
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
   /**
-   * Checks if the given file has the given file type. This is faster than getting the file type
-   * and comparing it, because for file types that are identified by virtual file, it will only
-   * check if the given file type matches, and will not run other detectors. However, this can
-   * lead to inconsistent results if two file types report the same file as matching (which should
-   * generally be avoided).
+   * Checks if the given file has the given file type.
    */
-  public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
+    FileType actualType = file.getFileType();
+    //todo remove scratch check after IDEA-228078 is fixed
+    return actualType == type || "Scratch".equals(actualType.getName()) && type == getFileTypeByFileName(file.getNameSequence());
+  }
 
   @Nullable
   public LanguageFileType findFileTypeByLanguage(@NotNull Language language) {

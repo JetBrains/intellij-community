@@ -20,6 +20,7 @@ import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
  */
 public class PathMacroUtil {
   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+  @NonNls public static final String PROJECT_NAME_MACRO_NAME = "PROJECT_NAME";
 
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
   public static final String DEPRECATED_MODULE_DIR = "$" + MODULE_DIR_MACRO_NAME + "$";

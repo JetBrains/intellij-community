@@ -23,10 +23,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -192,6 +189,18 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   @NotNull
   public final Self unique(@NotNull final Function<? super T, Object> identity) {
     return interceptTraversal(traversal -> traversal.unique(identity));
+  }
+
+  /**
+   * Configures the traverser to cache its structure.
+   * <p/>
+   * This property is not reset by {@code reset()} call.
+   * @see TreeTraversal#cached()
+   */
+  @NotNull
+  public final Self cached() {
+    IdentityHashMap<Object, Object> cache = new IdentityHashMap<>();
+    return interceptTraversal(traversal -> traversal.cached(cache));
   }
 
   /**

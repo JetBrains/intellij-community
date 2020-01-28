@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -40,7 +40,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayDeque;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,7 +53,7 @@ public class ProjectViewTree extends DnDAwareTree {
 
   public ProjectViewTree(TreeModel model) {
     super((TreeModel)null);
-    setLargeModel(true);
+    setLargeModel(Registry.is("ide.project.view.large.model"));
     setModel(model);
     setCellRenderer(createCellRenderer());
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
@@ -221,23 +220,5 @@ public class ProjectViewTree extends DnDAwareTree {
       }
     }
     return color;
-  }
-
-  @Override
-  public void collapsePath(TreePath path) {
-    int row = Registry.is("async.project.view.collapse.tree.path.recursively") ? getRowForPath(path) : -1;
-    if (row < 0) {
-      super.collapsePath(path);
-    }
-    else {
-      ArrayDeque<TreePath> deque = new ArrayDeque<>();
-      deque.addFirst(path);
-      while (++row < getRowCount()) {
-        TreePath next = getPathForRow(row);
-        if (!path.isDescendant(next)) break;
-        if (isExpanded(next)) deque.addFirst(next);
-      }
-      deque.forEach(super::collapsePath);
-    }
   }
 }

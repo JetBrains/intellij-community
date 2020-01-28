@@ -656,7 +656,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
                                       @NotNull List<? super FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
-    ToolWindowCollector.getInstance().recordActivation(id);
+    ToolWindowCollector.recordActivation(id, myLayout.getInfo(id, true));
     autoFocusContents &= forced;
 
     if (LOG.isDebugEnabled()) {

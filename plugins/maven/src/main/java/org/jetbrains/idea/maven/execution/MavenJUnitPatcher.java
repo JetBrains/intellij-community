@@ -94,14 +94,18 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     String jaCoCoConfigProperty = getJaCoCoArgLineProperty(mavenProject);
     ParametersList vmParameters = javaParameters.getVMParametersList();
     return name -> {
-      if (name.equals(jaCoCoConfigProperty)) {
-        return "";
-      }
       String vmPropertyValue = vmParameters.getPropertyValue(name);
       if (vmPropertyValue != null) {
         return vmPropertyValue;
       }
-      return staticProperties.getProperty(name);
+      String staticPropertyValue = staticProperties.getProperty(name);
+      if (staticPropertyValue != null) {
+        return staticPropertyValue;
+      }
+      if (name.equals(jaCoCoConfigProperty)) {
+        return "";
+      }
+      return null;
     };
   }
 

@@ -30,6 +30,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
 import java.awt.event.*;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -609,6 +610,24 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
 
     return treeNode != null ? new TreePath(treeNode.getPath()) : new TreePath(node);
+  }
+
+  @Override
+  public void collapsePath(TreePath path) {
+    int row = Registry.is("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
+    if (row < 0) {
+      super.collapsePath(path);
+    }
+    else {
+      ArrayDeque<TreePath> deque = new ArrayDeque<>();
+      deque.addFirst(path);
+      while (++row < getRowCount()) {
+        TreePath next = getPathForRow(row);
+        if (!path.isDescendant(next)) break;
+        if (isExpanded(next)) deque.addFirst(next);
+      }
+      deque.forEach(super::collapsePath);
+    }
   }
 
   private static class MySelectionModel extends DefaultTreeSelectionModel {

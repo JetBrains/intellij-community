@@ -38,8 +38,9 @@ public final class Main {
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
   public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
-  public static final int ACTIVATE_LISTENER_NOT_INITIALIZED = 14;
-  public static final int ACTIVATE_RESPONSE_TIMEOUT = 15;
+  public static final int ACTIVATE_NOT_INITIALIZED = 14;
+  public static final int ACTIVATE_ERROR = 15;
+  public static final int ACTIVATE_DISPOSING = 16;
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
 

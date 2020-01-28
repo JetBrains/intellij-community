@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyCharmLanguageCustomization extends IdeLanguageCustomization {
+public class PythonIdeLanguageCustomization extends IdeLanguageCustomization {
   @NotNull
   @Override
   public List<Language> getPrimaryIdeLanguages() {

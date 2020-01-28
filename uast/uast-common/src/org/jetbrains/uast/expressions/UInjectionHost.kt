@@ -12,7 +12,6 @@ import org.jetbrains.uast.UExpression
  *
  * @see com.intellij.psi.UastReferenceProvider
  */
-@ApiStatus.Experimental
 interface UInjectionHost : UExpression {
 
   val isString: Boolean

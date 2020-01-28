@@ -24,6 +24,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,11 +72,11 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
     }
 
     if (LanguageUtil.isInjectableLanguage(language)) {
+      List<PsiElement> elements = ContainerUtil.filter(host.getChildren(), (child) -> !(child instanceof OuterLanguageElement));
+      if (elements.isEmpty()) return;
       registrar.startInjecting(language);
-      for (PsiElement child : host.getChildren()) {
-        if (!(child instanceof OuterLanguageElement)) {
-          registrar.addPlace(null, null, (PsiLanguageInjectionHost)host, child.getTextRangeInParent());
-        }
+      for (PsiElement child : elements) {
+        registrar.addPlace(null, null, (PsiLanguageInjectionHost)host, child.getTextRangeInParent());
       }
       registrar.doneInjecting();
     }

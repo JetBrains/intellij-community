@@ -267,7 +267,7 @@ public class DomImplUtil {
       usedNames.add(description.getXmlName());
     }
     return ContainerUtil.findAll(subTags, tag -> {
-      if (StringUtil.isEmpty(tag.getName())) return false;
+      if (StringUtil.isEmpty(tag.getLocalName())) return false;
 
       for (final XmlName name : usedNames) {
         if (isNameSuitable(name, tag, handler, file)) {

@@ -19,6 +19,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
+ * @see DomExtender
  */
 public class DomExtenderEP extends AbstractExtensionPointBean {
 
@@ -35,8 +37,11 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.reflect.DomExtenderEP");
 
+  @RequiredElement
   @Attribute("domClass")
   public String domClassName;
+
+  @RequiredElement
   @Attribute("extenderClass")
   public String extenderClassName;
 

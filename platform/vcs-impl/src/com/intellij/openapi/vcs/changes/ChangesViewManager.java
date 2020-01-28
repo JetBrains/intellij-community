@@ -269,6 +269,10 @@ public class ChangesViewManager implements ChangesViewEx,
       return;
     }
 
+    if (!VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
+      return;
+    }
+
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).openEditorPreview(false);

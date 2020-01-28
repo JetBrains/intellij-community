@@ -16,13 +16,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * Please, DO NOT use this interface in plugins until <code>@Experimental</code> is removed.
- * Probably this interface will be extended in future, which will break its implementations.
- *
- * @see com.siyeh.ig.callMatcher.CallMatcher
- */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public interface UastCallMatcher {
 
   @Contract("null -> false")

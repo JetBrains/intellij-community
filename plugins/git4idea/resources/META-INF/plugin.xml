@@ -185,6 +185,11 @@
 
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction"
             text="Test Git Login Dialog" internal="true"/>
+
+    <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider"
+            text="Path From Repository Root">
+      <add-to-group group-id="CopyFileReference"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

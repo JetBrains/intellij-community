@@ -177,10 +177,10 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitDocTag(PsiDocTag psiDocTag) {
     super.visitDocTag(psiDocTag);
 
-    NodeIterator sons = new DocValuesIterator(psiDocTag.getFirstChild());
-    while (sons.hasNext()) {
-      myCompilingVisitor.setHandler(sons.current(), new DocDataHandler());
-      sons.advance();
+    final NodeIterator nodes = new DocValuesIterator(psiDocTag.getFirstChild());
+    while (nodes.hasNext()) {
+      myCompilingVisitor.setHandler(nodes.current(), new DocDataHandler());
+      nodes.advance();
     }
   }
 
@@ -203,9 +203,14 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         myCompilingVisitor.processTokenizedName(predicate.getRegExp(), true, COMMENT);
       }
     }
-    else {
-      final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(comment.getText(), COMMENT);
-      if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
+    else if (!commentText.isEmpty()) {
+      if (myCompilingVisitor.hasFragments(commentText)) {
+        final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(comment.getText(), COMMENT);
+        if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
+      }
+      else {
+        myCompilingVisitor.processTokenizedName(commentText, false, COMMENT);
+      }
     }
   }
 

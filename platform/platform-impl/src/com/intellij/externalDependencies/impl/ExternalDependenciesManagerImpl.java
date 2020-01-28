@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -39,7 +39,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
     return ((Comparable)o1).compareTo(o2);
   };
   private final List<ProjectExternalDependency> myDependencies = new ArrayList<>();
-  
+
   @NotNull
   @Override
   public <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
@@ -77,8 +77,9 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
       myDependencies.add(new DependencyOnPlugin(dependency.myId, dependency.myMinVersion, dependency.myMaxVersion));
     }
     if (!oldDependencies.equals(myDependencies) && !myDependencies.isEmpty()) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        (DumbAwareRunnable)() -> CheckRequiredPluginsActivity.runCheck(myProject));
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+        CheckRequiredPluginsActivity.runCheck(myProject, this);
+      });
     }
   }
 

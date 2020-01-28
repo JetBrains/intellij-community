@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.BuildNumber
 
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.BuildNumber
 class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
 
   override fun getLocations(
+    project: Project,
     library: Library,
     artifactId: String?,
     groupId: String?,
@@ -20,23 +22,12 @@ class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
     if (groupId == null || artifactId == null || version == null) {
       return emptyList()
     }
-    if (isIdeaArtifactDependency(groupId, artifactId)
-      || isGradleIntelliJPluginImportedIdea(groupId, artifactId)
-      || isKotlinIntelliJDependency(groupId, artifactId)
-    ) {
+    val libraries = LibrariesWithIntellijClassesSetting.getInstance(project).state.intellijApiContainingLibraries
+    if (libraries.any { it.groupId == groupId && it.artifactId == artifactId }) {
       return getAnnotationsLocations(version)
     }
     return emptyList()
   }
-
-  private fun isIdeaArtifactDependency(groupId: String, artifactId: String): Boolean =
-    groupId == "com.jetbrains.intellij.idea" && (artifactId == "ideaIC" || artifactId == "ideaIU")
-
-  private fun isGradleIntelliJPluginImportedIdea(groupId: String, artifactId: String): Boolean =
-    groupId == "com.jetbrains" && (artifactId == "ideaIC" || artifactId == "ideaIU")
-
-  private fun isKotlinIntelliJDependency(groupId: String, artifactId: String): Boolean =
-    (groupId == "kotlin.build.custom.deps" || groupId == "kotlin.build") && (artifactId == "intellij" || artifactId == "intellij-core")
 
   private fun getAnnotationsLocations(ideVersion: String): List<AnnotationsLocation> {
     val annotationsVersion = if (ideVersion.endsWith("-SNAPSHOT")) {

@@ -226,7 +226,9 @@ public class SideEffectChecker {
 
     @Override
     public void visitReturnStatement(PsiReturnStatement statement) {
-      if (addSideEffect(statement)) return;
+      if (!(myStartElement.getParent() instanceof PsiParameterListOwner)) {
+        if (addSideEffect(statement)) return;
+      }
       super.visitReturnStatement(statement);
     }
 
