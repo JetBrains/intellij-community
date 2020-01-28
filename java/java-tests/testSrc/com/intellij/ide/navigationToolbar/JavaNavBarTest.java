@@ -27,6 +27,11 @@ public class JavaNavBarTest extends LightJavaCodeInsightFixtureTestCase {
     assertNavBarModel("src", "EnumMember", "BAR", "foo");
   }
 
+  public void testLambdaExpression() {
+    myFixture.configureByFile("lambdaExpression.java");
+    assertNavBarModel("src", "LambdaExpression", "foo", "Lambda");
+  }
+
   public void assertNavBarModel(String... expectedItems) {
     NavBarModel model = new NavBarModel(myFixture.getProject());
     model.updateModel(((EditorEx)myFixture.getEditor()).getDataContext());
@@ -34,6 +39,6 @@ public class JavaNavBarTest extends LightJavaCodeInsightFixtureTestCase {
     for (int i = 0; i < model.size(); i++) {
       items.add(NavBarPresentation.calcPresentableText(model.get(i), false));
     }
-    assertSameElements(items, expectedItems);
+    assertOrderedEquals(items, expectedItems);
   }
 }

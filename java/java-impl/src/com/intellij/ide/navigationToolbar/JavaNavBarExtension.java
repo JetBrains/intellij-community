@@ -1,8 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
+import com.intellij.ide.structureView.impl.java.JavaLambdaNodeProvider;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -17,12 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import java.util.List;
+
 import static com.intellij.psi.util.PsiFormatUtilBase.*;
 
 /**
  * @author anna
  */
 public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
+  private final List<NodeProvider<?>> myNodeProviders = ImmutableList.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
+
   @Nullable
   @Override
   public String getPresentableText(Object object) {
@@ -46,6 +54,9 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
     }
     else if (object instanceof PsiDirectory && JrtFileSystem.isRoot(((PsiDirectory)object).getVirtualFile())) {
       return LangBundle.message("jrt.node.short");
+    }
+    else if (object instanceof PsiLambdaExpression) {
+      return "Lambda";
     }
     return null;
   }
@@ -94,5 +105,11 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
   @Override
   protected Language getLanguage() {
     return JavaLanguage.INSTANCE;
+  }
+
+  @NotNull
+  @Override
+  protected List<NodeProvider<?>> getApplicableNodeProviders() {
+    return myNodeProviders;
   }
 }
