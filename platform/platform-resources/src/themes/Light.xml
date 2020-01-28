@@ -360,5 +360,10 @@
         <option name="FOREGROUND" value="2fa6" />
       </value>
     </option>
+    <option name="XPATH.KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="174ad4" />
+      </value>
+    </option>
   </attributes>
 </scheme>
