@@ -75,7 +75,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   public void inlineElement(Project project, Editor editor, PsiElement element) {
     final PsiReference psiReference = TargetElementUtil.findReference(editor);
     final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? (PsiReferenceExpression)psiReference : null;
-    inlineVariable(project, editor, (PsiVariable)element, refExpr);
+    doInline(project, editor, (PsiVariable)element, refExpr);
   }
 
   /**
@@ -85,7 +85,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
                             @NotNull final Editor editor,
                             @NotNull PsiLocalVariable local,
                             PsiReferenceExpression refExpr) {
-    inlineVariable(project, editor, local, refExpr);
+    doInline(project, editor, local, refExpr);
   }
 
   @TestOnly
@@ -93,6 +93,13 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
                                     @NotNull final Editor editor,
                                     @NotNull PsiVariable var,
                                     PsiReferenceExpression refExpr) {
+    doInline(project, editor, var, refExpr);
+  }
+
+  private static void doInline(@NotNull final Project project,
+                               @NotNull final Editor editor,
+                               @NotNull PsiVariable var,
+                               PsiReferenceExpression refExpr) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, var)) return;
     Collection<PsiElement> allRefs = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReferencesSearch.search(var).mapping(PsiReference::getElement).findAll(),
