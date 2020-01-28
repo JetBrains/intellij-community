@@ -585,6 +585,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       extraExecutables.add("bin/clang/mac/clang-tidy")
 
       context.ant.copy(file: "$root/tools/idea/platform/build-scripts/tools/mac/scripts/entitlements.xml", tofile: "$targetDirectory/_codesign/entitlements.xml")
+
+      def bundleName = getRootDirectoryName(context.applicationInfo, context.buildNumber)
+      context.ant.copy(file: "$root/tools/idea/macos_codesign_filelist.txt", tofile: "$targetDirectory/_codesign/filelist")
+      context.ant.replace(file: "$targetDirectory/_codesign/filelist") {
+        replaceFilter(token: "@@bundle@@", value: bundleName)
+      }
     }
   }
 
