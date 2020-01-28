@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,6 +24,9 @@ import java.util.*;
 public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!HighlightUtil.Feature.RECORDS.isAvailable(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
