@@ -2898,7 +2898,7 @@ public class HighlightUtil extends HighlightUtilBase {
   static String redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
     if (type == null) return "";
     String color = ColorUtil.toHtmlColor(matches ? UIUtil.getToolTipForeground() : DialogWrapper.ERROR_FOREGROUND_COLOR);
-    return "<font color='" + color + "'>" + XmlStringUtil.escapeString(shortType ? type.getPresentableText() : type.getCanonicalText()) + "</font>";
+    return "<font color='" + color + "'>" + XmlStringUtil.escapeString(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText()) + "</font>";
   }
 
 
