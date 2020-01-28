@@ -7,5 +7,6 @@ class CircletIdeaAGraphExecutionContextEntity(
     override val commit: String,
     override val repoId: String,
     override val projectKey: String,
-    override val projectId: String
+    override val projectId: String,
+    override val executionNumber: Long
 ): AGraphExecutionContext
