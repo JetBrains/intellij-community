@@ -28,12 +28,10 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 
 public class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
+  @NonNls private static final String TAG_PREFIX = "INDEPENDENT_";
   @NonNls private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";
-  @NonNls private static final String INDEPENDENT_SCRIPT_PATH = "INDEPENDENT_SCRIPT_PATH";
   @NonNls private static final String SCRIPT_OPTIONS_TAG = "SCRIPT_OPTIONS";
-  @NonNls private static final String INDEPENDENT_WORKING_DIRECTORY_PATH = "INDEPENDENT_WORKING_DIRECTORY_PATH";
   @NonNls private static final String SCRIPT_WORKING_DIRECTORY_TAG = "SCRIPT_WORKING_DIRECTORY";
-  @NonNls private static final String INDEPENDENT_INTERPRETER_PATH = "INDEPENDENT_INTERPRETER_PATH";
   @NonNls private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
   @NonNls private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
 
@@ -77,10 +75,10 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
 
-    writePathWithMetadata(element, myScriptPath, SCRIPT_PATH_TAG, INDEPENDENT_SCRIPT_PATH);
+    writePathWithMetadata(element, myScriptPath, SCRIPT_PATH_TAG);
     JDOMExternalizerUtil.writeField(element, SCRIPT_OPTIONS_TAG, myScriptOptions);
-    writePathWithMetadata(element, myScriptWorkingDirectory, SCRIPT_WORKING_DIRECTORY_TAG, INDEPENDENT_WORKING_DIRECTORY_PATH);
-    writePathWithMetadata(element, myInterpreterPath, INTERPRETER_PATH_TAG, INDEPENDENT_INTERPRETER_PATH);
+    writePathWithMetadata(element, myScriptWorkingDirectory, SCRIPT_WORKING_DIRECTORY_TAG);
+    writePathWithMetadata(element, myInterpreterPath, INTERPRETER_PATH_TAG);
     JDOMExternalizerUtil.writeField(element, INTERPRETER_OPTIONS_TAG, myInterpreterOptions);
   }
 
@@ -88,10 +86,10 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
 
-    myScriptPath = readPathWithMetadata(element, SCRIPT_PATH_TAG, INDEPENDENT_SCRIPT_PATH);
+    myScriptPath = readPathWithMetadata(element, SCRIPT_PATH_TAG);
     myScriptOptions = readStringTagValue(element, SCRIPT_OPTIONS_TAG);
-    myScriptWorkingDirectory = readPathWithMetadata(element, SCRIPT_WORKING_DIRECTORY_TAG, INDEPENDENT_WORKING_DIRECTORY_PATH);
-    myInterpreterPath = readPathWithMetadata(element, INTERPRETER_PATH_TAG, INDEPENDENT_INTERPRETER_PATH);
+    myScriptWorkingDirectory = readPathWithMetadata(element, SCRIPT_WORKING_DIRECTORY_TAG);
+    myInterpreterPath = readPathWithMetadata(element, INTERPRETER_PATH_TAG);
     myInterpreterOptions = readStringTagValue(element, INTERPRETER_OPTIONS_TAG);
   }
 
@@ -122,15 +120,14 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     return vfile.getPath();
   }
 
-  private static void writePathWithMetadata(@NotNull Element element, @NotNull String path, @NotNull String pathTag, @NotNull String metadataTag) {
+  private static void writePathWithMetadata(@NotNull Element element, @NotNull String path, @NotNull String pathTag) {
     String systemIndependentPath = FileUtil.toSystemIndependentName(path);
-    boolean isSystemIndependent = systemIndependentPath.equals(path);
-    JDOMExternalizerUtil.writeField(element, metadataTag, isSystemIndependent ? "true" : "false");
-    JDOMExternalizerUtil.writeField(element, pathTag, isSystemIndependent ? path : systemIndependentPath);
+    JDOMExternalizerUtil.writeField(element, TAG_PREFIX + pathTag, Boolean.toString(systemIndependentPath.equals(path)));
+    JDOMExternalizerUtil.writeField(element, pathTag, systemIndependentPath);
   }
 
-  private static String readPathWithMetadata(@NotNull Element element, @NotNull String pathTag, @NotNull String metadataTag) {
-    return Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, metadataTag, "false"))
+  private static String readPathWithMetadata(@NotNull Element element, @NotNull String pathTag) {
+    return Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, TAG_PREFIX + pathTag))
            ? readStringTagValue(element, pathTag)
            : toSystemDependentName(readStringTagValue(element, pathTag));
   }
