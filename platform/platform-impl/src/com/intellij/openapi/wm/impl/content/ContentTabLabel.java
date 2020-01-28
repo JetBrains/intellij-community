@@ -70,7 +70,7 @@ class ContentTabLabel extends BaseLabel {
     @Override
     public Runnable getAction() {
       return () -> {
-        ContentManager contentManager = myUi.myWindow.getContentManagerIfCreated();
+        ContentManager contentManager = myUi.window.getContentManagerIfCreated();
         if (contentManager != null) {
           contentManager.removeContent(getContent(), true);
         }
@@ -234,7 +234,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public final boolean canBeClosed() {
-    return myContent.isCloseable() && myUi.myWindow.canCloseContents();
+    return myContent.isCloseable() && myUi.window.canCloseContents();
   }
 
   protected void selectContent() {
@@ -296,12 +296,12 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected boolean allowEngravement() {
-    return isSelected() || myUi != null && myUi.myWindow.isActive();
+    return isSelected() || myUi != null && myUi.window.isActive();
   }
 
   @Override
   protected Color getActiveFg(boolean selected) {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfCreated();
+    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
     if (contentManager != null && contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
@@ -311,7 +311,7 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Color getPassiveFg(boolean selected) {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfCreated();
+    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
     if (contentManager != null && contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
@@ -334,7 +334,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public boolean isSelected() {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfCreated();
+    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
     return contentManager != null && contentManager.isSelected(myContent);
   }
 
@@ -345,7 +345,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Graphics _getGraphics(Graphics2D g) {
     if (isSelected() && getContentManager().getContentCount() > 1) {
-      return new EngravedTextGraphics(g, 1, 1, Gray._0.withAlpha(myUi.myWindow.isActive() ? 120 : 130));
+      return new EngravedTextGraphics(g, 1, 1, Gray._0.withAlpha(myUi.window.isActive() ? 120 : 130));
     }
     return super._getGraphics(g);
   }

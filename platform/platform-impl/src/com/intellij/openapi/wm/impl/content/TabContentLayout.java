@@ -55,17 +55,16 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   @Override
-  public void init() {
+  public void init(@NotNull ContentManager contentManager) {
     reset();
 
     myIdLabel = new BaseLabel(myUi, false) {
       @Override
       protected boolean allowEngravement() {
-        return myUi.myWindow.isActive();
+        return myUi.window.isActive();
       }
     };
 
-    ContentManager contentManager = myUi.getContentManager();
     for (int i = 0; i < contentManager.getContentCount(); i++) {
       contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));
     }
@@ -283,10 +282,10 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       if (each.isSelected()) {
-        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
+        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.window.isActive(), each.isHovered());
       }
       else {
-        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
+        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.window.isActive(), each.isHovered());
       }
     }
     g2d.dispose();
