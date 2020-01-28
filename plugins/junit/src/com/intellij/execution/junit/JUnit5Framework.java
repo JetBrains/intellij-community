@@ -3,6 +3,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.icons.AllIcons;
@@ -108,9 +109,9 @@ public class JUnit5Framework extends JavaTestFramework {
       if (AnnotationUtil.isAnnotated(existingMethod, JUnitUtil.BEFORE_ALL_ANNOTATION_NAME, 0)) return existingMethod;
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
-                       Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @BeforeEach. Annotate?",
-                                                   "Create SetUp",
-                                                   Messages.getWarningIcon());
+                 Messages.showOkCancelDialog(ExecutionBundle.message("create.setup.dialog.message", "@BeforeEach"),
+                                             ExecutionBundle.message("create.setup.dialog.title"),
+                                             Messages.getWarningIcon());
       if (exit == Messages.OK) {
         new AddAnnotationFix(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
         return existingMethod;
