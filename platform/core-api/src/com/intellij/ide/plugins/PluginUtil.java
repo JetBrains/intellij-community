@@ -11,8 +11,9 @@ public interface PluginUtil {
     return ServiceManager.getService(PluginUtil.class);
   }
 
-  @Nullable PluginId getCallerPlugin(int stackFrameCount);
+  @Nullable
+  PluginId getCallerPlugin(int stackFrameCount);
 
-  @Nullable PluginId findPluginId(@NotNull Throwable t);
-
+  @Nullable
+  PluginId findPluginId(@NotNull Throwable t);
 }

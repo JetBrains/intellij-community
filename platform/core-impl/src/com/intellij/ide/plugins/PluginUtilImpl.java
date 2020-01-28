@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-public class PluginUtilImpl implements PluginUtil {
+public final class PluginUtilImpl implements PluginUtil {
   private static final Logger LOG = Logger.getInstance(PluginUtilImpl.class);
 
   @Nullable
@@ -31,6 +31,11 @@ public class PluginUtilImpl implements PluginUtil {
   @Override
   @Nullable
   public PluginId findPluginId(@NotNull Throwable t) {
+    return doFindPluginId(t);
+  }
+
+  @Nullable
+  public static PluginId doFindPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
     }
@@ -115,7 +120,7 @@ public class PluginUtilImpl implements PluginUtil {
     }
 
     Throwable cause = t.getCause();
-    return cause == null ? null : findPluginId(cause);
+    return cause == null ? null : doFindPluginId(cause);
   }
 
   private static void logPluginDetection(String className, PluginId id) {
