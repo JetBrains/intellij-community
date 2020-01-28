@@ -20,11 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryModifiableModelImpl
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
+import com.intellij.workspace.legacyBridge.libraries.libraries.*
 import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEntryImpl
+import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
@@ -293,9 +291,9 @@ class LegacyBridgeModifiableRootModel(
     }
   }
 
-  override fun commit() {
+  fun collectChanges(): TypedEntityStorageBuilder? {
     assertModelIsLive()
-    if (!isChanged) return
+    if (!isChanged) return null
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) {
       val element = Element("component")
@@ -342,6 +340,12 @@ class LegacyBridgeModifiableRootModel(
     // Do not clear `librariesToAdd`. Otherwise `getLibraries()` will return an empty list after the commit
 
     disposeSkippingLibraries()
+
+    return diff
+  }
+
+  override fun commit() {
+    val diff = collectChanges() ?: return
 
     val moduleDiff = module.diff
 
