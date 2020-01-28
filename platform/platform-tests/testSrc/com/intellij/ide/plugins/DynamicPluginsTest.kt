@@ -37,9 +37,8 @@ import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.*
-import org.junit.Assume.assumeTrue
+import org.junit.Assume.assumeFalse
 import java.io.File
-import kotlin.test.assertFalse
 
 @RunsInEdt
 class DynamicPluginsTest {
@@ -57,7 +56,7 @@ class DynamicPluginsTest {
     @JvmStatic
     @BeforeClass
     fun check() {
-      assertFalse(SystemProperties.getBooleanProperty("skip.DynamicPluginsTest", true))
+      assumeFalse(SystemProperties.getBooleanProperty("skip.DynamicPluginsTest", true))
     }
   }
 
