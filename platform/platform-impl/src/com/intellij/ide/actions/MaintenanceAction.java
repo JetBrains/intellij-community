@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -24,9 +25,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.NotNull;
 
 public class MaintenanceAction extends AnAction implements DumbAware {
-
   public MaintenanceAction() {
-    super("Maintenance");
+    super(() -> ActionsBundle.message("action.MaintenanceAction.text"));
   }
 
   @Override
