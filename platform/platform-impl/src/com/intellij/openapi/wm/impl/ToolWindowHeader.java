@@ -306,7 +306,7 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
     HideAction() {
       ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID);
       getTemplatePresentation().setIcon(AllIcons.General.HideToolWindow);
-      getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
+      getTemplatePresentation().setText(() -> UIBundle.message("tool.window.hide.action.name"));
     }
 
     @Override

@@ -39,7 +39,7 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
       return;
     }
 
-    presentation.setText(SvnBundle.message("action.Subversion.integrate.changes.actionname"));
+    presentation.setText(() -> SvnBundle.message("action.Subversion.integrate.changes.actionname"));
     presentation.setDescription(SvnBundle.message("action.Subversion.integrate.changes.description"));
 
     final T checker = createChecker();

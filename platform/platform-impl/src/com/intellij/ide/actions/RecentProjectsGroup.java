@@ -21,7 +21,7 @@ import java.util.List;
 public class RecentProjectsGroup extends ActionGroup implements DumbAware {
   public RecentProjectsGroup() {
     Presentation presentation = getTemplatePresentation();
-    presentation.setText(ActionsBundle.message(SystemInfo.isMac ? "group.reopen.mac.text" : "group.reopen.win.text"));
+    presentation.setText(() -> ActionsBundle.message(SystemInfo.isMac ? "group.reopen.mac.text" : "group.reopen.win.text"));
   }
 
   @Override

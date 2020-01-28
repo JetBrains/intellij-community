@@ -38,7 +38,7 @@ public class AddGradleDslDependencyAction extends CodeInsightAction {
 
   public AddGradleDslDependencyAction() {
     getTemplatePresentation().setDescription(GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.description"));
-    getTemplatePresentation().setText(GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.text"));
+    getTemplatePresentation().setText(() -> GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.text"));
     getTemplatePresentation().setIcon(AllIcons.Nodes.PpLib);
   }
 

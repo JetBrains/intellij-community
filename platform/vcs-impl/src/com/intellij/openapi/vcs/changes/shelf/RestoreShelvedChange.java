@@ -32,7 +32,7 @@ public class RestoreShelvedChange extends DumbAwareAction {
       return;
     }
     Collection<ShelvedChangeList> deletedLists = notNullize(e.getData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY));
-    presentation.setText(VcsBundle.message("vcs.shelf.action.restore.text"));
+    presentation.setText(() -> VcsBundle.message("vcs.shelf.action.restore.text"));
     presentation
       .setDescription(VcsBundle.message("vcs.shelf.action.restore.description", StringUtil.pluralize("changelist", deletedLists.size())));
     presentation.setEnabled(!isEmpty(deletedLists));

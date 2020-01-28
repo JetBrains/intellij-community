@@ -254,7 +254,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
       }
       else {
-        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
+        presentation.setText(() -> ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
       }

@@ -1237,7 +1237,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     }
 
     private void init() {
-      getTemplatePresentation().setText(SSRBundle.message(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
+      getTemplatePresentation().setText(() -> SSRBundle.message(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
       final ShortcutSet replaceShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet();

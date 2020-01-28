@@ -636,20 +636,20 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final Presentation presentation = event.getPresentation();
       final String place = event.getPlace();
       if (ActionPlaces.ANT_EXPLORER_TOOLBAR.equals(place)) {
-        presentation.setText(AntBundle.message("run.ant.file.or.target.action.name"));
+        presentation.setText(() -> AntBundle.message("run.ant.file.or.target.action.name"));
       }
       else {
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null && paths.length == 1 &&
             ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject() instanceof AntBuildFileNodeDescriptor) {
-          presentation.setText(AntBundle.message("run.ant.build.action.name"));
+          presentation.setText(() -> AntBundle.message("run.ant.build.action.name"));
         }
         else {
           if (paths == null || paths.length == 1) {
-            presentation.setText(AntBundle.message("run.ant.target.action.name"));
+            presentation.setText(() -> AntBundle.message("run.ant.target.action.name"));
           }
           else {
-            presentation.setText(AntBundle.message("run.ant.targets.action.name"));
+            presentation.setText(() -> AntBundle.message("run.ant.targets.action.name"));
           }
         }
       }
@@ -911,7 +911,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         presentation.setEnabled(enabled);
       }
       else {
-        presentation.setText(AntBundle.message("remove.selected.meta.targets.action.name"));
+        presentation.setText(() -> AntBundle.message("remove.selected.meta.targets.action.name"));
         final AntBuildTarget[] targets = getTargetObjectsFromPaths(paths);
         boolean enabled = targets.length > 0;
         for (final AntBuildTarget buildTarget : targets) {
