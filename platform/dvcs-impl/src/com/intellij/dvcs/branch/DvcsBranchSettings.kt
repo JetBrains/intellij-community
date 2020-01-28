@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.branch
 
 import com.intellij.openapi.components.BaseState
@@ -12,7 +12,7 @@ class DvcsBranchSettings : BaseState() {
   var excludedFavorites by property(BranchStorage())
   @get:Tag("branch-grouping")
   @get:XCollection(style = XCollection.Style.v2)
-  var groupingKeyIds by stringSet(defaultGroupingKey.id)
+  val groupingKeyIds by stringSet(defaultGroupingKey.id)
 }
 
 private val defaultGroupingKey = GroupingKey.GROUPING_BY_DIRECTORY
