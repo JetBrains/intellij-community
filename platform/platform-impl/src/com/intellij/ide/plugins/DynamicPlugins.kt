@@ -301,8 +301,7 @@ object DynamicPlugins {
           }
 
           if (!pluginDescriptor.useIdeaClassLoader) {
-            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader ||
-                ApplicationManager.getApplication().isUnitTestMode) {
+            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
               IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
               Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
             }
