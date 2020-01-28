@@ -50,7 +50,12 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final String recorderId = dialog.getRecorderId();
-        final WhitelistTestGroupStorage testWhitelist = WhitelistTestGroupStorage.getInstance(recorderId);
+        final WhitelistTestGroupStorage testWhitelist = WhitelistTestGroupStorage.getTestStorage(recorderId);
+        if (testWhitelist == null) {
+          showNotification(project, NotificationType.ERROR, "Cannot find test whitelist storage.");
+          return;
+        }
+
         try {
           if (dialog.isCustomRules()) {
             testWhitelist.addGroupWithCustomRules(dialog.getGroupId(), dialog.getCustomRules());

@@ -2,10 +2,10 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
 import com.intellij.internal.statistic.eventLog.validator.persistence.WhitelistPathSettings
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -48,7 +48,7 @@ class ConfigureWhitelistAction(private var myRecorderId: String = "FUS") : DumbA
           whitelistSettingsPersistence.setPathSettings(recorder, WhitelistPathSettings(oldSettings.customPath, false))
         }
       }
-      WhitelistStorageProvider.getInstance(recorder).update()
+      SensitiveDataValidator.getInstance(recorder).update()
     }
   }
 

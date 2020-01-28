@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist
 
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
 import com.intellij.openapi.util.io.FileUtil
@@ -14,6 +15,15 @@ internal abstract class WhitelistBaseStorageTest : BasePlatformTestCase() {
   protected val secondRecorderId = "SECOND_TEST"
 
   private val recordersToCleanUp = listOf(recorderId, secondRecorderId)
+
+  override fun setUp() {
+    super.setUp()
+
+    // initialize whitelist storage
+    for (recorder in recordersToCleanUp) {
+      SensitiveDataValidator.getInstance(recorder)
+    }
+  }
 
   override fun tearDown() {
     super.tearDown()

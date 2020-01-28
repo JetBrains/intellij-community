@@ -108,7 +108,7 @@ public class SensitiveDataValidator {
     return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
-        final WhitelistGroupRulesStorage whitelistStorage = WhitelistStorageProvider.getInstance(recorderId);
+        final WhitelistGroupRulesStorage whitelistStorage = WhitelistStorageProvider.newStorage(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
                ? new BlindSensitiveDataValidator(whitelistStorage)
                : new SensitiveDataValidator(whitelistStorage);
@@ -116,8 +116,17 @@ public class SensitiveDataValidator {
     );
   }
 
+  @Nullable
+  public static SensitiveDataValidator getIfInitialized(@NotNull String recorderId) {
+    return ourInstances.get(recorderId);
+  }
+
   protected SensitiveDataValidator(@NotNull WhitelistGroupRulesStorage storage) {
     myWhiteListStorage = storage;
+  }
+
+  public WhitelistGroupRulesStorage getWhiteListStorage() {
+    return myWhiteListStorage;
   }
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
@@ -179,6 +188,9 @@ public class SensitiveDataValidator {
     return whiteListRule.validateEventData(key, entryValue, context);
   }
 
+  public void update() {
+    myWhiteListStorage.update();
+  }
 
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
     protected BlindSensitiveDataValidator(@NotNull WhitelistGroupRulesStorage whiteListStorage) {
