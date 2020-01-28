@@ -17,13 +17,14 @@ package com.intellij.application.options;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.options.BeanConfigurable;
+import com.intellij.openapi.options.ConfigurableBuilder;
 
-public class JavadocOptionsProvider extends BeanConfigurable<CodeInsightSettings> {
+public class JavadocOptionsProvider extends ConfigurableBuilder {
   public JavadocOptionsProvider() {
-    super(CodeInsightSettings.getInstance(), CodeInsightBundle.message("javadoc.option.javadoc.title"));
+    super(CodeInsightBundle.message("javadoc.option.javadoc.title"));
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
     checkBox(CodeInsightBundle.message("javadoc.option.automatically.insert.closing.tag.javadoc"),
-             () -> getInstance().JAVADOC_GENERATE_CLOSING_TAG,
-             (value) -> getInstance().JAVADOC_GENERATE_CLOSING_TAG = value);
+             () -> settings.JAVADOC_GENERATE_CLOSING_TAG,
+             (value) -> settings.JAVADOC_GENERATE_CLOSING_TAG = value);
   }
 }

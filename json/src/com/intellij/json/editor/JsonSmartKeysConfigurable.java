@@ -2,15 +2,14 @@
 package com.intellij.json.editor;
 
 import com.intellij.json.JsonBundle;
-import com.intellij.openapi.options.BeanConfigurable;
+import com.intellij.openapi.options.ConfigurableBuilder;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOptions> implements SearchableConfigurable {
+public class JsonSmartKeysConfigurable extends ConfigurableBuilder implements SearchableConfigurable {
   public JsonSmartKeysConfigurable() {
-    super(JsonEditorOptions.getInstance());
-    JsonEditorOptions settings = getInstance();
+    JsonEditorOptions settings = JsonEditorOptions.getInstance();
     if (settings == null) return;
     checkBox(JsonBundle.message("settings.smart.keys.insert.missing.comma.on.enter"),
              () -> settings.COMMA_ON_ENTER,
