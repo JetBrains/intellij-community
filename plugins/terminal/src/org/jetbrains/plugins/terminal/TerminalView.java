@@ -163,10 +163,10 @@ public class TerminalView {
 
   @Nullable
   private JBTerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState, boolean requestFocus) {
-    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-    if (window != null && window.isAvailable()) {
-      Content content = createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
-      window.activate(null);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    if (toolWindow != null && toolWindow.isAvailable()) {
+      Content content = createNewTab(null, terminalRunner, toolWindow, tabState, requestFocus);
+      toolWindow.activate(null);
       return Objects.requireNonNull(getWidgetByContent(content));
     }
     return null;
@@ -207,7 +207,7 @@ public class TerminalView {
     String tabName = ObjectUtils.notNull(tabState != null ? tabState.myTabName : null,
                                          TerminalOptionsProvider.getInstance().getTabName());
 
-    Content[] contents = myToolWindow.getContentManager().getContents();
+    Content[] contents = toolWindow.getContentManager().getContents();
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, tabName, false);
     if (terminalWidget == null) {
@@ -348,12 +348,6 @@ public class TerminalView {
   }
 
   public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
-    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-    if (window == null || !window.isAvailable()) {
-      return;
-    }
-    window.activate(null);
-
     TerminalTabState state = new TerminalTabState();
     if (fileToOpen != null) {
       state.myWorkingDirectory = fileToOpen.getPath();
