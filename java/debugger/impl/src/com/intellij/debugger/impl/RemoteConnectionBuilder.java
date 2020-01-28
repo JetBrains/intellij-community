@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -162,7 +163,7 @@ public class RemoteConnectionBuilder {
     return new RemoteConnection(useSockets, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, address, myServer);
   }
 
-  private static void checkTargetJPDAInstalled(JavaParameters parameters) throws ExecutionException {
+  private static void checkTargetJPDAInstalled(@NotNull JavaParameters parameters) throws ExecutionException {
     final Sdk jdk = parameters.getJdk();
     if (jdk == null) {
       throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));

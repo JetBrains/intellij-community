@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DefaultJavaProgramRunner implements ProgramRunner<RunnerSettings> {
+public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<RunnerSettings> {
   private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
   private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
 
@@ -90,7 +90,8 @@ public class DefaultJavaProgramRunner implements ProgramRunner<RunnerSettings> {
   }
 
   // cannot be final - overridden in YourKit plugin
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) {
+  @Override
+  public void patch(@NotNull JavaParameters javaParameters, @NotNull RunnerSettings settings, @NotNull RunProfile runProfile, boolean beforeExecution) {
     JavaProgramPatcher.runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
   }
 

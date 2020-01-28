@@ -19,11 +19,15 @@ abstract class JavaPatchableProgramRunner<Settings : RunnerSettings> : ProgramRu
 
   abstract fun patch(javaParameters: JavaParameters?, settings: RunnerSettings?, runProfile: RunProfile?, beforeExecution: Boolean)
 
-  fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+  fun execute(environment: ExecutionEnvironment, @Suppress("UNUSED_PARAMETER") callback: ProgramRunner.Callback?, state: RunProfileState) {
     ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
       resolvedPromise(doExecute(state, environment))
     }
   }
 
   abstract fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor?
+}
+
+interface JvmPatchableProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
+  fun patch(javaParameters: JavaParameters, settings: RunnerSettings, runProfile: RunProfile, beforeExecution: Boolean)
 }
