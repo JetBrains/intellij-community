@@ -23,9 +23,9 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,36 +113,35 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   @NotNull
-  private MultiMap<AbstractVcs, FilePath> groupByVcs(@Nullable Collection<? extends FilePath> from) {
-    if (from == null) {
-      return MultiMap.empty();
-    }
+  private Map<AbstractVcs, Set<FilePath>> groupByVcs(@Nullable Collection<? extends FilePath> from) {
+    if (from == null) return Collections.emptyMap();
 
-    MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
+    VcsDirtyScopeMap map = new VcsDirtyScopeMap();
     for (FilePath path : from) {
       AbstractVcs vcs = getVcsManager(myProject).getVcsFor(path);
       if (vcs != null) {
-        map.putValue(vcs, path);
+        map.add(vcs, path);
       }
     }
-    return map;
+    return map.asMap();
   }
 
   @NotNull
-  private MultiMap<AbstractVcs, FilePath> groupFilesByVcs(@Nullable final Collection<? extends VirtualFile> from) {
-    if (from == null) return MultiMap.empty();
-    MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
+  private Map<AbstractVcs, Set<FilePath>> groupFilesByVcs(@Nullable final Collection<? extends VirtualFile> from) {
+    if (from == null) return Collections.emptyMap();
+
+    VcsDirtyScopeMap map = new VcsDirtyScopeMap();
     for (VirtualFile file : from) {
       AbstractVcs vcs = getVcsManager(myProject).getVcsFor(file);
       if (vcs != null) {
-        map.putValue(vcs, VcsUtil.getFilePath(file));
+        map.add(vcs, VcsUtil.getFilePath(file));
       }
     }
-    return map;
+    return map.asMap();
   }
 
-  private void fileVcsPathsDirty(@NotNull MultiMap<AbstractVcs, FilePath> filesConverted,
-                                 @NotNull MultiMap<AbstractVcs, FilePath> dirsConverted) {
+  private void fileVcsPathsDirty(@NotNull Map<AbstractVcs, Set<FilePath>> filesConverted,
+                                 @NotNull Map<AbstractVcs, Set<FilePath>> dirsConverted) {
     if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
     if (LOG.isDebugEnabled()) {
@@ -164,7 +163,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   private static void markDirty(@NotNull DirtBuilder dirtBuilder,
-                                @NotNull MultiMap<AbstractVcs, FilePath> filesOrDirs,
+                                @NotNull Map<AbstractVcs, Set<FilePath>> filesOrDirs,
                                 boolean recursively) {
     for (AbstractVcs vcs : filesOrDirs.keySet()) {
       for (FilePath path : filesOrDirs.get(vcs)) {
@@ -231,37 +230,38 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
   @NotNull
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
-    MultiMap<AbstractVcs, FilePath> files = dirt.getFilesForVcs();
-    MultiMap<AbstractVcs, FilePath> dirs = dirt.getDirsForVcs();
+    VcsDirtyScopeMap filesScope = dirt.getFilesForVcs();
+    VcsDirtyScopeMap dirsScope = dirt.getDirsForVcs();
     boolean isEverythingDirty = dirt.isEverythingDirty();
     if (isEverythingDirty) {
-      dirs.putAllValues(getEverythingDirtyRoots());
+      putEverythingDirtyRoots(dirsScope);
     }
+
+    Map<AbstractVcs, Set<FilePath>> files = filesScope.asMap();
+    Map<AbstractVcs, Set<FilePath>> dirs = dirsScope.asMap();
+
     Set<AbstractVcs> keys = ContainerUtil.union(files.keySet(), dirs.keySet());
 
     Map<AbstractVcs, VcsDirtyScopeImpl> scopes = new HashMap<>();
     for (AbstractVcs key : keys) {
       VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, isEverythingDirty);
       scopes.put(key, scope);
-      scope.addDirtyData(dirs.get(key), files.get(key));
+      scope.addDirtyData(ContainerUtil.notNullize(dirs.get(key)),
+                         ContainerUtil.notNullize(files.get(key)));
     }
 
     return new VcsInvalidated(new ArrayList<>(scopes.values()), isEverythingDirty);
   }
 
-  @NotNull
-  private MultiMap<AbstractVcs, FilePath> getEverythingDirtyRoots() {
-    MultiMap<AbstractVcs, FilePath> dirtyRoots = MultiMap.createSet();
-
+  private void putEverythingDirtyRoots(@NotNull VcsDirtyScopeMap dirs) {
     VcsRoot[] roots = getVcsManager(myProject).getAllVcsRoots();
     for (VcsRoot root : roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();
       if (vcs != null) {
-        dirtyRoots.putValue(vcs, VcsUtil.getFilePath(path));
+        dirs.add(vcs, VcsUtil.getFilePath(path));
       }
     }
-    return dirtyRoots;
   }
 
   @Override
@@ -294,8 +294,9 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   @NotNull
-  private static String toString(@NotNull MultiMap<AbstractVcs, FilePath> filesByVcs) {
-    return StringUtil.join(filesByVcs.keySet(), vcs -> vcs.getName() + ": " + StringUtil.join(filesByVcs.get(vcs), path -> path.getPath(), "\n"), "\n");
+  private static String toString(@NotNull Map<AbstractVcs, Set<FilePath>> filesByVcs) {
+    return StringUtil.join(filesByVcs.keySet(), vcs
+      -> vcs.getName() + ": " + StringUtil.join(filesByVcs.get(vcs), path -> path.getPath(), "\n"), "\n");
   }
 
   @Nullable
@@ -305,5 +306,11 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       if (clazz == null || !clazz.getName().contains(VcsDirtyScopeManagerImpl.class.getName())) return clazz;
     }
     return null;
+  }
+
+  @NotNull
+  public static TObjectHashingStrategy<FilePath> getDirtyScopeHashingStrategy(@NotNull AbstractVcs vcs) {
+    return vcs.needsCaseSensitiveDirtyScope() ? ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+                                              : ContainerUtil.canonicalStrategy();
   }
 }

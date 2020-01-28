@@ -4,22 +4,21 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.util.containers.MultiMap
 
 internal class DirtBuilder() {
   private val fileTypeManager = FileTypeManager.getInstance()
 
-  val filesForVcs: MultiMap<AbstractVcs, FilePath> = MultiMap.createSet()
-  val dirsForVcs: MultiMap<AbstractVcs, FilePath> = MultiMap.createSet()
+  val filesForVcs = VcsDirtyScopeMap()
+  val dirsForVcs = VcsDirtyScopeMap()
   var isEverythingDirty: Boolean = false
 
   constructor(builder: DirtBuilder) : this() {
-    filesForVcs.putAllValues(builder.filesForVcs)
-    dirsForVcs.putAllValues(builder.dirsForVcs)
+    filesForVcs.addAll(builder.filesForVcs)
+    dirsForVcs.addAll(builder.dirsForVcs)
     isEverythingDirty = builder.isEverythingDirty
   }
 
-  fun isEmpty(): Boolean = filesForVcs.isEmpty && dirsForVcs.isEmpty
+  fun isEmpty(): Boolean = filesForVcs.isEmpty() && dirsForVcs.isEmpty()
 
   fun reset() {
     filesForVcs.clear()
@@ -29,11 +28,11 @@ internal class DirtBuilder() {
 
   fun addDirtyFile(vcs: AbstractVcs, file: FilePath) {
     if (fileTypeManager.isFileIgnored(file.name)) return
-    filesForVcs.putValue(vcs, file)
+    filesForVcs.add(vcs, file)
   }
 
   fun addDirtyDirRecursively(vcs: AbstractVcs, dir: FilePath) {
     if (fileTypeManager.isFileIgnored(dir.name)) return
-    dirsForVcs.putValue(vcs, dir)
+    dirsForVcs.add(vcs, dir)
   }
 }

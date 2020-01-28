@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl.getDirtyScopeHashingStrategy;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 /**
@@ -30,22 +31,6 @@ import static com.intellij.util.containers.ContainerUtil.notNullize;
  * @author yole
  */
 public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
-  private static final TObjectHashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY =
-    new TObjectHashingStrategy<FilePath>() {
-      @Override
-      public int computeHashCode(@Nullable FilePath path) {
-        if (path == null) return 0;
-        return Objects.hash(path.getPath(), path.isDirectory(), path.isNonLocal());
-      }
-
-      @Override
-      public boolean equals(@Nullable FilePath path1, @Nullable FilePath path2) {
-        if (path1 == null || path2 == null) return path1 == path2;
-        return path1.isDirectory() == path2.isDirectory() &&
-               path1.isNonLocal() == path2.isNonLocal() &&
-               path1.getPath().equals(path2.getPath());
-      }
-    };
   private final Map<VirtualFile, THashSet<FilePath>> myDirtyFiles = new HashMap<>();
   private final Map<VirtualFile, THashSet<FilePath>> myDirtyDirectoriesRecursively = new HashMap<>();
   private final Set<VirtualFile> myAffectedContentRoots = new THashSet<>();
@@ -65,8 +50,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     myProject = vcs.getProject();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myWasEverythingDirty = wasEverythingDirty;
-    myHashingStrategy = myVcs.needsCaseSensitiveDirtyScope() ? CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
-                                                             : ContainerUtil.canonicalStrategy();
+    myHashingStrategy = getDirtyScopeHashingStrategy(myVcs);
   }
 
   @Override
