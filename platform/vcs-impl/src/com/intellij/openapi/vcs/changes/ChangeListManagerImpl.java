@@ -1429,9 +1429,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       updateImmediately();
       return true;
     }
-    VcsDirtyScopeVfsListener.getInstance(myProject).waitForAsyncTaskCompletion();
-    myUpdater.waitUntilRefreshed();
-    waitUpdateAlarm();
+    waitUntilRefreshed();
     return true;
   }
 
