@@ -12,7 +12,7 @@
         </ul>
       ]]>
   </description>
-  <category>VCS Integration</category>
+  <category>Version Controls</category>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.vcs</depends>
 

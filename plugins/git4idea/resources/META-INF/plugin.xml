@@ -12,7 +12,7 @@
          <p>To configure, open <b>Settings / Preferences</b> and go to <b>Version Control | Git</b>.</p>
       ]]>
    </description>
-  <category>VCS Integration</category>
+  <category>Version Controls</category>
   <vendor>JetBrains</vendor>
 
   <resource-bundle>messages.GitBundle</resource-bundle>

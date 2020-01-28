@@ -2,6 +2,7 @@
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>
+  <category>Version Controls</category>
   <description>
     <![CDATA[
       Provides integration with <a href="http://github.com/">GitHub</a>.

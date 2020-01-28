@@ -1,7 +1,7 @@
 <idea-plugin>
   <name>Subversion</name>
   <id>Subversion</id>
-  <category>VCS Integration</category>
+  <category>Version Controls</category>
   <description>
     <![CDATA[
       Provides integration with Subversion VCS.<br/>

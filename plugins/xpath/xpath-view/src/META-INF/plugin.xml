@@ -5,6 +5,7 @@
   <!-- Plugin name -->
   <id>XPathView</id>
   <name>XPathView + XSLT</name>
+  <category>Other Tools</category>
 
   <!-- Description -->
   <description><![CDATA[

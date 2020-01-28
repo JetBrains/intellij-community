@@ -1,6 +1,7 @@
 <idea-plugin>
   <id>com.intellij.properties</id>
   <name>Properties</name>
+  <category>Other Tools</category>
   <depends>com.intellij.modules.xml</depends>
   <description>
     Enables smart editing of .properties files.

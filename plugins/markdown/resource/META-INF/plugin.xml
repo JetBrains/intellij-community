@@ -2,7 +2,7 @@
   <id>org.intellij.plugins.markdown</id>
   <name>Markdown</name>
   <vendor>JetBrains</vendor>
-  
+  <category>Languages</category>
   <resource-bundle>messages.MarkdownBundle</resource-bundle>
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="plugin-intelliLang.xml">org.intellij.intelliLang</depends>

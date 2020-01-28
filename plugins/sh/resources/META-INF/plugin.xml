@@ -4,6 +4,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
   <name>Shell Script</name>
+  <category>Languages</category>
   <resource-bundle>messages.ShBundle</resource-bundle>
   <description><![CDATA[
 Adds support for working with shell script files

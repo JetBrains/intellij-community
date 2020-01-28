@@ -2,7 +2,7 @@
   <id>org.jetbrains.debugger.streams</id>
   <name>Java Stream Debugger</name>
   <vendor>JetBrains</vendor>
-
+  <category>Other Tools</category>
   <depends>com.intellij.java</depends>
 
   <description><![CDATA[

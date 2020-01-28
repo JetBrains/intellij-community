@@ -1,6 +1,7 @@
 <idea-plugin url="https://confluence.jetbrains.com/display/CONTEST/XSLT-Debugger">
   <name>XSLT Debugger</name>
   <id>XSLT-Debugger</id>
+  <category>Other Tools</category>
 
   <description><![CDATA[
     Allows interactive debugging of XSLT stylesheets.

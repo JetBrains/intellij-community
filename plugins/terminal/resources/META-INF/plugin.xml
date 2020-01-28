@@ -1,5 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Terminal</name>
+  <category>Other Tools</category>
   <id>org.jetbrains.plugins.terminal</id>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
