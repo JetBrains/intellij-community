@@ -2,15 +2,13 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
@@ -120,20 +118,26 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 
-    PluginManagerCore.processAllDependencies(rootDescriptor, false, descriptor -> {
-      if (descriptor.getPluginId() == PluginManagerCore.CORE_ID) {
-        return FileVisitResult.SKIP_SUBTREE;
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    PluginId rootId = rootDescriptor.getPluginId();
+
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+      PluginId pluginId = plugin.getPluginId();
+      if (pluginId == rootId || appInfo.isEssentialPlugin(pluginId) || !plugin.isEnabled() || plugin.isImplementationDetail()) {
+        continue;
+      }
+      if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
+        continue;
       }
 
-      if (descriptor.isEnabled()) {
-        // if descriptor was already added, no need to process it's dependencies again
-        return result.add(descriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
-      }
-      else {
-        // if descriptor is already disabled, no need to process it's dependencies
-        return FileVisitResult.SKIP_SUBTREE;
-      }
-    });
+      PluginManagerCore.processAllDependencies(plugin, false, descriptor -> {
+        if (descriptor.getPluginId() == rootId) {
+          result.add(plugin);
+          return FileVisitResult.TERMINATE;
+        }
+        return FileVisitResult.CONTINUE;
+      });
+    }
     return result;
   }
 
