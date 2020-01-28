@@ -993,4 +993,40 @@ public final class JDOMUtil {
       .setAttribute(width, Integer.toString(bounds.width))
       .setAttribute(height, Integer.toString(bounds.height));
   }
+
+  /**
+   * Copies attributes and elements from {@code source} node to {@code target}
+   * node if they are not present in the latter one.
+   * <p>
+   * Preserves {@code target} element's name.
+   *
+   * @param source the source element to copy from
+   * @param target the target element to copy to
+   */
+  public static void copyMissingContent(@NotNull Element source, @NotNull Element target) {
+    Element targetClone = target.clone();
+    for (Attribute attribute : source.getAttributes()) {
+      if (!hasAttribute(targetClone, attribute.getName())) {
+        target.setAttribute(attribute.clone());
+      }
+    }
+    for (Content content : source.getContent()) {
+      if (!hasContent(targetClone, content)) {
+        target.addContent(content.clone());
+      }
+    }
+  }
+
+  private static boolean hasAttribute(@NotNull Element element, @NotNull String name) {
+    return element.getAttribute(name) != null;
+  }
+
+  private static boolean hasContent(@NotNull Element element, @NotNull Content content) {
+    if (content instanceof Element) {
+      return !element.getChildren(((Element)content).getName()).isEmpty();
+    }
+    else {
+      return false;
+    }
+  }
 }
