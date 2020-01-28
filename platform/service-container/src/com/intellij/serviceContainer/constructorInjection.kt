@@ -54,7 +54,9 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
         val parameterType = parameterTypes.get(it)
         if (!isErrorLogged && !ComponentManager::class.java.isAssignableFrom(parameterType) && parameterType != MessageBus::class.java) {
           isErrorLogged = true
-          LOG.warn("Do not use constructor injection (requestorClass=${aClass.name})")
+          if (pluginId.idString != "org.jetbrains.kotlin") {
+            LOG.warn("Do not use constructor injection (requestorClass=${aClass.name})")
+          }
         }
         parameterResolver.resolveInstance(componentManager, requestorKey, aClass, constructor, parameterType, pluginId)
       }) as T
