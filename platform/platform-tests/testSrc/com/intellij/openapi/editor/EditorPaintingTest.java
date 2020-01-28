@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.codeInsight.daemon.impl.IndentsPass;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -23,6 +24,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -174,5 +176,19 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     executeAction(IdeActions.ACTION_SELECT_ALL);
     getEditor().getSettings().setRightMargin(1);
     checkResult();
+  }
+
+  public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
+    initText("  a\n    b c");
+    configureSoftWraps(5);
+    runIndentsPass();
+    addBlockInlay(0);
+    checkResult();
+  }
+
+  private void runIndentsPass() {
+    IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
+    indentsPass.doCollectInformation(new EmptyProgressIndicator());
+    indentsPass.doApplyInformationToEditor();
   }
 }
