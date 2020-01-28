@@ -54,6 +54,8 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   @NotNull private final AbstractVcs myVcs;
   private final boolean myWasEverythingDirty;
 
+  @NotNull private final TObjectHashingStrategy<FilePath> myHashingStrategy;
+
   public VcsDirtyScopeImpl(@NotNull AbstractVcs vcs) {
     this(vcs, false);
   }
@@ -63,6 +65,8 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     myProject = vcs.getProject();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myWasEverythingDirty = wasEverythingDirty;
+    myHashingStrategy = myVcs.needsCaseSensitiveDirtyScope() ? CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+                                                             : ContainerUtil.canonicalStrategy();
   }
 
   @Override
@@ -176,7 +180,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @NotNull
-  private static THashSet<FilePath> removeAncestorsRecursive(@NotNull Collection<? extends FilePath> dirs) {
+  private THashSet<FilePath> removeAncestorsRecursive(@NotNull Collection<? extends FilePath> dirs) {
     List<FilePath> paths = ContainerUtil.sorted(dirs, Comparator.comparingInt(it -> it.getPath().length()));
 
     THashSet<FilePath> result = newFilePathsSet();
@@ -188,7 +192,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @NotNull
-  private static THashSet<FilePath> removeAncestorsNonRecursive(@NotNull Set<? extends FilePath> dirs, @NotNull Set<? extends FilePath> files) {
+  private THashSet<FilePath> removeAncestorsNonRecursive(@NotNull Set<? extends FilePath> dirs, @NotNull Set<? extends FilePath> files) {
     THashSet<FilePath> result = newFilePathsSet();
     for (FilePath file : files) {
       if (hasAncestor(dirs, file)) continue;
@@ -207,8 +211,8 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @NotNull
-  private static THashSet<FilePath> newFilePathsSet() {
-    return new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+  private THashSet<FilePath> newFilePathsSet() {
+    return new THashSet<>(myHashingStrategy);
   }
 
   /**
@@ -286,7 +290,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       if (newcomer.isDirectory()) {
         for (Iterator<FilePath> iterator = dirtyFiles.iterator(); iterator.hasNext(); ) {
           final FilePath oldBoy = iterator.next();
-          if (!oldBoy.isDirectory() && CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(oldBoy.getParentPath(), newcomer)) {
+          if (!oldBoy.isDirectory() && myHashingStrategy.equals(oldBoy.getParentPath(), newcomer)) {
             iterator.remove();
           }
         }

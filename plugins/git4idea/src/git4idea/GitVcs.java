@@ -378,4 +378,9 @@ public final class GitVcs extends AbstractVcs {
   public GitVFSListener getVFSListener() {
     return myVFSListener;
   }
+
+  @Override
+  public boolean needsCaseSensitiveDirtyScope() {
+    return true;
+  }
 }

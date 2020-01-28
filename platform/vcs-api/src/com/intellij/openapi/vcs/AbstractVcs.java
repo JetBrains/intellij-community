@@ -588,5 +588,9 @@ public abstract class AbstractVcs extends StartedActivated {
   public String toString() {
     return getName();
   }
+
+  public boolean needsCaseSensitiveDirtyScope() {
+    return false;
+  }
 }
 
