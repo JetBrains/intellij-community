@@ -29,5 +29,5 @@ abstract class JavaPatchableProgramRunner<Settings : RunnerSettings> : ProgramRu
 }
 
 interface JvmPatchableProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
-  fun patch(javaParameters: JavaParameters, settings: RunnerSettings, runProfile: RunProfile, beforeExecution: Boolean)
+  fun patch(javaParameters: JavaParameters, settings: RunnerSettings?, runProfile: RunProfile, beforeExecution: Boolean)
 }

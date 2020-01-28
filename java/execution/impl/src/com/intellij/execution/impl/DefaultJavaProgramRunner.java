@@ -47,6 +47,7 @@ import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -91,7 +92,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
   // cannot be final - overridden in YourKit plugin
   @Override
-  public void patch(@NotNull JavaParameters javaParameters, @NotNull RunnerSettings settings, @NotNull RunProfile runProfile, boolean beforeExecution) {
+  public void patch(@NotNull JavaParameters javaParameters, @Nullable RunnerSettings settings, @NotNull RunProfile runProfile, boolean beforeExecution) {
     JavaProgramPatcher.runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
   }
 

@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promises;
 
+import java.util.Objects;
+
 public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericDebuggerRunnerSettings> {
   @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
@@ -159,8 +161,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
 
   // used externally
   @Override
-  public void patch(@NotNull JavaParameters javaParameters, @NotNull RunnerSettings settings, @NotNull RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
-    doPatch(javaParameters, settings, beforeExecution);
+  public void patch(@NotNull JavaParameters javaParameters, @Nullable RunnerSettings settings, @NotNull RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
+    doPatch(javaParameters, Objects.requireNonNull(settings), beforeExecution);
     JavaProgramPatcher.runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
   }
 
