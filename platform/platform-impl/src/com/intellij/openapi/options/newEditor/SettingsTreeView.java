@@ -138,6 +138,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
