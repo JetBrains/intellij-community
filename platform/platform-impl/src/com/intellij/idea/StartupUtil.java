@@ -75,7 +75,7 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 public final class StartupUtil {
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
+  private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   private static SocketLock ourSocketLock;
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
