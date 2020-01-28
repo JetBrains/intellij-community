@@ -73,9 +73,7 @@ internal fun commitAndPush(context: Context) {
 }
 
 private fun verifyDevIcons(context: Context, repos: Collection<File>) {
-  callSafely {
-    context.verifyDevIcons(repos)
-  }
+  context.verifyDevIcons(repos)
   repos.forEach { repo ->
     with(gitStatus(repo)) {
       stageFiles(modified + added, repo)
