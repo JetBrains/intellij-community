@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Nls;
@@ -68,7 +68,22 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
 
       private void checkCompact(PsiMethod ctor) {
         PsiCodeBlock body = ctor.getBody();
-        if (ControlFlowUtils.isEmptyCodeBlock(body) && ctor.getModifierList().getAnnotations().length == 0 &&
+        if (body == null) return;
+        PsiStatement[] statements = body.getStatements();
+        if (statements.length > 0) {
+          PsiParameter[] parameters = ctor.getParameterList().getParameters();
+          PsiRecordComponent[] components = Objects.requireNonNull(ctor.getContainingClass()).getRecordComponents();
+          int count = getAssignedComponentsCount(components, parameters, statements);
+          if (count < statements.length) {
+            for (int i = statements.length - count; i < statements.length; i++) {
+              holder.registerProblem(statements[i],
+                                     InspectionsBundle.message("inspection.redundant.record.constructor.statement.message"),
+                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(statements[i]));
+            }
+            return;
+          }
+        }
+        if (ctor.getModifierList().getAnnotations().length == 0 &&
             ctor.getDocComment() == null) {
           holder.registerProblem(Objects.requireNonNull(ctor.getNameIdentifier()),
                                  InspectionsBundle.message("inspection.redundant.record.constructor.compact.message"),
@@ -81,6 +96,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
   private static int getAssignedComponentsCount(PsiRecordComponent @NotNull [] components,
                                                 PsiParameter @NotNull [] parameters,
                                                 PsiStatement @NotNull [] statements) {
+    assert parameters.length == components.length;
     Set<PsiRecordComponent> unprocessed = new HashSet<>(Arrays.asList(components));
     int i = statements.length - 1;
     while (i >= 0 && !unprocessed.isEmpty()) {
@@ -132,18 +148,20 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         resultText.append(child.getText());
       }
       boolean skipStatements = false;
+      CommentTracker ct = new CommentTracker();
       for (PsiElement child : body.getChildren()) {
         if (child == firstStatementToDelete) {
           skipStatements = true;
         }
-        if (skipStatements &&
-            (child instanceof PsiStatement || child instanceof PsiWhiteSpace && !(child.getPrevSibling() instanceof PsiComment))) {
+        if (skipStatements && child.getNextSibling() != null) {
+          ct.grabComments(child);
           continue;
         }
         resultText.append(child.getText());
       }
       PsiMethod compactCtor = JavaPsiFacade.getElementFactory(project).createMethodFromText(resultText.toString(), ctor);
-      ctor.replace(compactCtor);
+      PsiMethod result = (PsiMethod)ctor.replace(compactCtor);
+      ct.insertCommentsBefore(Objects.requireNonNull(Objects.requireNonNull(result.getBody()).getRBrace()));
     }
   }
 }

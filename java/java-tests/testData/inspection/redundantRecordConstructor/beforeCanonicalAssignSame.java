@@ -2,6 +2,8 @@
 record Rec(int x, int y) {
   public Rec(int x<caret>, int y) {
     this.x = y;
-    this.y = y;
+    // 1
+    this.y /*2*/= y; //3
+    //4
   }
 }
