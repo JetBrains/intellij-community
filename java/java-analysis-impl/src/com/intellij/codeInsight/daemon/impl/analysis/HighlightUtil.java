@@ -1158,59 +1158,71 @@ public class HighlightUtil extends HighlightUtilBase {
         }
       }
     }
-    else if (type == JavaTokenType.STRING_LITERAL) {
-      if (value == null) {
-        for (PsiElement element = expression.getFirstChild(); element != null; element = element.getNextSibling()) {
-          if (element instanceof OuterLanguageElement) {
-            return null;
+    else if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      if (type == JavaTokenType.STRING_LITERAL) {
+        if (value == null) {
+          for (PsiElement element = expression.getFirstChild(); element != null; element = element.getNextSibling()) {
+            if (element instanceof OuterLanguageElement) {
+              return null;
+            }
           }
-        }
 
-        if (!StringUtil.startsWithChar(text, '\"')) return null;
-        if (StringUtil.endsWithChar(text, '\"')) {
-          if (text.length() == 1) {
+          if (!StringUtil.startsWithChar(text, '\"')) return null;
+          if (StringUtil.endsWithChar(text, '\"')) {
+            if (text.length() == 1) {
+              String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+            }
+            text = text.substring(1, text.length() - 1);
+          }
+          else {
             String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           }
-          text = text.substring(1, text.length() - 1);
-        }
-        else {
-          String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
 
-        StringBuilder chars = new StringBuilder();
-        boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
-        if (!success) {
-          String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
-      }
-    }
-    else if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      if (value == null) {
-        if (!text.endsWith("\"\"\"")) {
-          String message = JavaErrorBundle.message("text.block.unclosed");
-          int p = expression.getTextRange().getEndOffset();
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
-        }
-        else {
           StringBuilder chars = new StringBuilder();
-          int[] offsets = new int[text.length() + 1];
-          boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, offsets);
+          boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
           if (!success) {
             String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
-            TextRange textRange = chars.length() < text.length() - 1 ? new TextRange(offsets[chars.length()], offsets[chars.length() + 1])
-                                                                     : expression.getTextRange();
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(expression, textRange)
-              .descriptionAndTooltip(message).create();
-          }
-          else {
-            String message = JavaErrorBundle.message("text.block.new.line");
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           }
         }
+      }
+      else {
+        if (value == null) {
+          if (!text.endsWith("\"\"\"")) {
+            String message = JavaErrorBundle.message("text.block.unclosed");
+            int p = expression.getTextRange().getEndOffset();
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
+          }
+          else {
+            StringBuilder chars = new StringBuilder();
+            int[] offsets = new int[text.length() + 1];
+            boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, offsets);
+            if (!success) {
+              String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
+              TextRange textRange = chars.length() < text.length() - 1 ? new TextRange(offsets[chars.length()], offsets[chars.length() + 1])
+                                                                       : expression.getTextRange();
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(expression, textRange)
+                .descriptionAndTooltip(message).create();
+            }
+            else {
+              String message = JavaErrorBundle.message("text.block.new.line");
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+            }
+          }
+        }
+        else {
+          if (file != null && containsUnescaped(text, "\\\n")) {
+            final HighlightInfo info = checkFeature(expression, Feature.TEXT_BLOCK_ESCAPES, level, file);
+            if (info != null) return info;
+          }
+        }
+      }
+      if (file != null && containsUnescaped(text, "\\s")) {
+        final HighlightInfo info = checkFeature(expression, Feature.TEXT_BLOCK_ESCAPES, level, file);
+        if (info != null) return info;
       }
     }
 
@@ -1238,6 +1250,20 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return null;
+  }
+
+  private static boolean containsUnescaped(@NotNull String text, @NotNull String subText) {
+    int start = 0;
+    while ((start = StringUtil.indexOf(text, subText, start)) != -1) {
+      int nSlashes = 0;
+      for (int pos = start - 1; pos >= 0; pos--) {
+        if (text.charAt(pos) != '\\') break;
+        nSlashes++;
+      }
+      if (nSlashes % 2 == 0) return true;
+      start += subText.length();
+    }
+    return false;
   }
 
   private static final Pattern FP_LITERAL_PARTS =
@@ -3211,7 +3237,8 @@ public class HighlightUtil extends HighlightUtilBase {
     },
     TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
     RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records"),
-    PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof");
+    PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof"),
+    TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences");
 
     private final LanguageLevel level;
     private final String key;
