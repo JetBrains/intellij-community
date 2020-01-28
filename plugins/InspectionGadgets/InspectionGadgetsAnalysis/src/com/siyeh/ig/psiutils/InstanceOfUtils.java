@@ -240,7 +240,8 @@ public class InstanceOfUtils {
     return null;
   }
 
-  private static boolean isConflictingNameDeclaredInside(PsiIdentifier identifier, PsiElement statement) {
+  private static boolean isConflictingNameDeclaredInside(@Nullable PsiIdentifier identifier, @NotNull PsiElement statement) {
+    if (identifier == null) return false;
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       boolean hasConflict = false;
 
