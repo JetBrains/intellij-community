@@ -7,8 +7,6 @@ package org.toml.ide
 
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory
-import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
@@ -39,8 +37,4 @@ class TomlHighlighter : SyntaxHighlighterBase() {
             put(INVALID_UNICODE_ESCAPE_TOKEN, TomlColor.INVALID_STRING_ESCAPE)
             put(VALID_STRING_ESCAPE_TOKEN, TomlColor.VALID_STRING_ESCAPE)
         }
-}
-
-class TomlHighlighterFactory : SingleLazyInstanceSyntaxHighlighterFactory() {
-    override fun createHighlighter(): SyntaxHighlighter = TomlHighlighter()
 }
