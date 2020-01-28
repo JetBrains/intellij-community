@@ -35,6 +35,7 @@ public class BuiltinWebServerAccess {
   private static final String TOKEN_FILE = "user.token";
   private static String ourUserAuthenticationToken = null;
   private static final Object LOCK = new Object();
+  private static boolean ourTokenInitialized = false;
 
   @NotNull
   public static String getUserAuthenticationToken() throws IOException {
@@ -42,13 +43,14 @@ public class BuiltinWebServerAccess {
       if (ourUserAuthenticationToken != null) {
         return ourUserAuthenticationToken;
       }
+      else if (ourTokenInitialized) {
+        throw new IOException("User Authentication Token not found");
+      }
+      ourTokenInitialized = true;
 
       File tokenFile = getTokenFile();
-      if (tokenFile.exists()) {
-        ourUserAuthenticationToken = FileUtil.loadFile(tokenFile);
-        return ourUserAuthenticationToken;
-      }
-      throw new IOException("User Authentication Token not found");
+      ourUserAuthenticationToken = tokenFile.exists() ? FileUtil.loadFile(tokenFile) : createUserAuthenticationToken();
+      return ourUserAuthenticationToken;
     }
   }
 
@@ -57,16 +59,16 @@ public class BuiltinWebServerAccess {
     return new File(configPath + File.separator + TOKEN_FILE);
   }
 
-  public static void ensureUserAuthenticationToken() throws NoSuchAlgorithmException, IOException {
-    File tokenFile = getTokenFile();
-    if (!tokenFile.exists()) {
+  private static String createUserAuthenticationToken() throws IOException {
+    try {
       PathManager.ensureConfigFolderExists();
       byte[] seed = SecureRandom.getInstance("SHA1PRNG").generateSeed(24);
-      BigInteger intSeed = new BigInteger(seed);
-      synchronized(LOCK) {
-        ourUserAuthenticationToken = intSeed.toString(36);
-        FileUtil.writeToFile(tokenFile, ourUserAuthenticationToken);
-      }
+      String token = new BigInteger(seed).toString(36);
+      FileUtil.writeToFile(getTokenFile(), token);
+      return token;
+    }
+    catch (NoSuchAlgorithmException ex) {
+      throw new IOException("Unable to create User Authentication Token", ex);
     }
   }
 }
