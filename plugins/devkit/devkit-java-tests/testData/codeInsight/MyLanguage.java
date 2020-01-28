@@ -21,7 +21,7 @@ public class MyLanguage extends com.intellij.lang.Language {
   }
 
 
-  public static class AbstractLanguage extends Language {
+  public abstract static class AbstractLanguage extends com.intellij.lang.Language {
     protected AbstractLanguage() {
       super("AbstractLanguageIDMustNotBeVisible");
     }
