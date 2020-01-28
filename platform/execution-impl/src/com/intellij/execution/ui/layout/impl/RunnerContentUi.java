@@ -2,6 +2,7 @@
 
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
@@ -364,7 +365,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
     if (myViewActions.getChildrenCount() > 0) {
       DefaultActionGroup layoutGroup = new DefaultActionGroup(myViewActions.getChildren(null));
-      layoutGroup.getTemplatePresentation().setText("Layout");
+      layoutGroup.getTemplatePresentation().setText(() -> ExecutionBundle.message("action.presentation.RunnerContentUi.text"));
       layoutGroup.setPopup(true);
       group.addSeparator();
       group.addAction(layoutGroup);
@@ -1979,7 +1980,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myContentUi != null && myContentUi.getPopupContents().size() > 1);
-      e.getPresentation().setText("Show List of Tabs");
+      e.getPresentation().setText(() -> ExecutionBundle.message("action.presentation.RunnerContentUi.text.show.list.of.tabs"));
     }
 
     @Override

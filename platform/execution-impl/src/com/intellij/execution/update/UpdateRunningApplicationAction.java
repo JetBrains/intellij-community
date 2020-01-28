@@ -54,7 +54,7 @@ public class UpdateRunningApplicationAction extends AnAction {
       presentation.setText(updaters.get(0).getDescription());
     }
     else {
-      presentation.setText("Update Running Application...");
+      presentation.setText(() -> ExecutionBundle.message("action.presentation.UpdateRunningApplicationAction.text"));
     }
   }
 

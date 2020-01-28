@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -66,7 +67,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Add);
-    presentation.setText("Add Structural Search && Replace Inspection");
+    presentation.setText(() -> IdeBundle.message("action.presentation.StructuralSearchProfileActionProvider.text"));
     return Arrays.asList(actionGroup, new RemoveTemplateAction(panel));
   }
 

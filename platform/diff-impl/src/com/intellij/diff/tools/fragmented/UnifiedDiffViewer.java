@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -719,7 +720,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other());
 
       copyShortcutFrom(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")));
-      getTemplatePresentation().setText("Append");
+      getTemplatePresentation().setText(() -> DiffBundle.message("action.presentation.UnifiedDiffViewer.text"));
       getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
     }
 

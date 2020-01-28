@@ -91,7 +91,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
     else {
       presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
-      presentation.setText("Add Configuration...");
+      presentation.setText(() -> ExecutionBundle.message("action.presentation.RunConfigurationsComboBoxAction.text"));
       presentation.setDescription(ActionsBundle.actionDescription(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
       if (ActionPlaces.TOUCHBAR_GENERAL.equals(actionPlace))
         presentation.setIcon(AllIcons.General.Add);

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
+import com.intellij.remoteServer.util.CloudBundle;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.remoteServer.util.ApplicationActionUtils.getDeploymentTarget;
@@ -20,7 +21,7 @@ public class DeployAction extends DumbAwareAction {
     presentation.setVisible(visible);
     presentation.setEnabled(visible && node.isDeployActionEnabled());
     if (node != null && node.isDeployed()) {
-      presentation.setText("Redeploy");
+      presentation.setText(() -> CloudBundle.message("action.presentation.DeployAction.text"));
       presentation.setDescription("Redeploy the selected item");
     }
     else {

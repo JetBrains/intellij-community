@@ -454,7 +454,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
     private ApplySelectedChangesAction() {
-      getTemplatePresentation().setText("Accept");
+      getTemplatePresentation().setText(() -> VcsBundle.message("action.presentation.ApplySelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Actions.Checked);
       copyShortcutFrom(ActionManager.getInstance().getAction("Diff.ApplyRightSide"));
     }
@@ -474,7 +474,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
     private IgnoreSelectedChangesAction() {
-      getTemplatePresentation().setText("Ignore");
+      getTemplatePresentation().setText(() -> VcsBundle.message("action.presentation.IgnoreSelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
       setShortcutSet(new CompositeShortcutSet(ActionManager.getInstance().getAction("Diff.IgnoreRightSide").getShortcutSet(),
                                               ActionManager.getInstance().getAction("Diff.ApplyLeftSide").getShortcutSet()));
