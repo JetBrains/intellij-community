@@ -84,9 +84,8 @@ public final class StartupUtil {
 
   /* called by the app after startup */
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
-    if (ourSocketLock != null) {
-      ourSocketLock.setCommandProcessor(processor);
-    }
+    if (ourSocketLock == null) throw new AssertionError("Not initialized yet");
+    ourSocketLock.setCommandProcessor(processor);
   }
 
   // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
@@ -456,7 +455,7 @@ public final class StartupUtil {
   }
 
   private static synchronized void lockSystemDirs(String[] args) throws Exception {
-    if (ourSocketLock != null) throw new AssertionError();
+    if (ourSocketLock != null) throw new AssertionError("Already initialized");
     ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
     Pair<SocketLock.ActivationStatus, CliResult> status = ourSocketLock.lockAndTryActivate(args);
