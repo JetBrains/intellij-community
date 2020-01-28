@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class CloudBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "resources.cloud";
+  @NonNls private static final String BUNDLE = "messages.CloudBundle";
   private static final CloudBundle INSTANCE = new CloudBundle();
 
   private CloudBundle() { super(BUNDLE); }
