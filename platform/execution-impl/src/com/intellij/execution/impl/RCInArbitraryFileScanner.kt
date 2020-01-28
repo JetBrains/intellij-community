@@ -15,9 +15,13 @@ class RCInArbitraryFileScanner : FilePropertyPusher<Nothing> {
 
   override fun acceptsFile(file: VirtualFile, project: Project): Boolean {
     if (file.name.endsWith(".run.xml") && !file.path.contains("/.idea/")) {
-      RunManagerImpl.getInstanceImpl(project).loadConfigurationsFromArbitraryFile(file)
+      RunManagerImpl.getInstanceImpl(project).loadRunConfigsFromArbitraryFile(file)
     }
     return false
+  }
+
+  override fun afterRootsChanged(project: Project) {
+    RunManagerImpl.getInstanceImpl(project).deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
   }
 
   override fun acceptsFile(file: VirtualFile): Boolean = false
@@ -29,5 +33,4 @@ class RCInArbitraryFileScanner : FilePropertyPusher<Nothing> {
   override fun getImmediateValue(project: Project, file: VirtualFile?): Nothing? = null
   override fun getImmediateValue(module: Module): Nothing? = null
   override fun persistAttribute(project: Project, fileOrDir: VirtualFile, value: Nothing) {}
-  override fun afterRootsChanged(project: Project) {}
 }

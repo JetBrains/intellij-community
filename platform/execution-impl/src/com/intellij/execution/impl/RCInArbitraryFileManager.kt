@@ -4,6 +4,8 @@ package com.intellij.execution.impl
 import com.intellij.configurationStore.digest
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -19,7 +21,7 @@ import java.io.ByteArrayInputStream
 /**
  * Manages run configurations that are stored in arbitrary files in project (not in .idea/runConfigurations).
  */
-internal class RCInArbitraryFileManager {
+internal class RCInArbitraryFileManager(val project: Project) {
   private val LOG = logger<RCInArbitraryFileManager>()
 
   private class RunConfigInfo(val runConfig: RunnerAndConfigurationSettingsImpl, var digest: ByteArray)
@@ -151,5 +153,32 @@ internal class RCInArbitraryFileManager {
 
       file.getOutputStream(this).use { byteOut.writeTo(it) }
     }
+  }
+
+  internal fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent(): List<RunnerAndConfigurationSettingsImpl> {
+    if (filePathToConfigurations.isEmpty()) return emptyList()
+
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    val deletedConfigs = mutableListOf<RunnerAndConfigurationSettingsImpl>()
+    val iterator = filePathToConfigurations.iterator()
+
+    for (entry in iterator) {
+      val filePath = entry.key
+      val rcInfos = entry.value
+      val file = LocalFileSystem.getInstance().findFileByPath(filePath)
+      if (file == null) {
+        iterator.remove()
+        rcInfos.forEach { deletedConfigs.add(it.runConfig) }
+        LOG.warn("It's unexpected that the file doesn't exist at this point ($filePath)")
+      }
+      else {
+        if (!fileIndex.isInContent(file)) {
+          iterator.remove()
+          rcInfos.forEach { deletedConfigs.add(it.runConfig) }
+        }
+      }
+    }
+
+    return deletedConfigs
   }
 }

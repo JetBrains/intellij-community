@@ -176,7 +176,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
                                                                                       streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
 
-  private val rcInArbitraryFileManager = RCInArbitraryFileManager()
+  private val rcInArbitraryFileManager = RCInArbitraryFileManager(project)
 
   private val isFirstLoadState = AtomicBoolean(true)
 
@@ -320,12 +320,19 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return template
   }
 
-  internal fun loadConfigurationsFromArbitraryFile(file: VirtualFile) {
+  internal fun loadRunConfigsFromArbitraryFile(file: VirtualFile) {
     lock.write {
       val runConfigs = rcInArbitraryFileManager.loadRunConfigsFromFile(this, file)
       for (runConfig in runConfigs) {
         addConfiguration(runConfig)
       }
+    }
+  }
+
+  internal fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
+    lock.write {
+      val deletedConfigs = rcInArbitraryFileManager.deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+      removeConfigurations(deletedConfigs)
     }
   }
 
@@ -1098,7 +1105,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           }
 
           iterator.remove()
-          settings.schemeManager?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
+          if (!(settings as RunnerAndConfigurationSettingsImpl).isStoreInArbitraryFileInProject()) {
+            settings.schemeManager?.removeScheme(settings)
+          }
           recentlyUsedTemporaries.remove(settings)
           removed.add(settings)
           iconCache.remove(settings.uniqueID)
