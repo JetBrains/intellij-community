@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeVal
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesStorage;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,6 +103,15 @@ public class SensitiveDataValidator {
   private static final ConcurrentMap<String, SensitiveDataValidator> ourInstances = ContainerUtil.newConcurrentMap();
   @NotNull
   protected final WhitelistGroupRulesStorage myWhiteListStorage;
+
+  static {
+    CustomWhiteListRule.EP_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
+      @Override
+      public void extensionListChanged() {
+        ourInstances.clear();
+      }
+    }, ApplicationManager.getApplication());
+  }
 
   @NotNull
   public static SensitiveDataValidator getInstance(@NotNull String recorderId) {
