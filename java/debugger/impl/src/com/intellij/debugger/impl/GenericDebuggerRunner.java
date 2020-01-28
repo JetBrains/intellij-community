@@ -15,7 +15,7 @@ import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
-import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.JvmPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promises;
 
-public class GenericDebuggerRunner implements ProgramRunner<GenericDebuggerRunnerSettings> {
+public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericDebuggerRunnerSettings> {
   @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile
@@ -158,14 +158,14 @@ public class GenericDebuggerRunner implements ProgramRunner<GenericDebuggerRunne
   }
 
   // used externally
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
+  @Override
+  public void patch(@NotNull JavaParameters javaParameters, @NotNull RunnerSettings settings, @NotNull RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
     doPatch(javaParameters, settings, beforeExecution);
     JavaProgramPatcher.runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
   }
 
-  private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings, boolean beforeExecution)
-    throws ExecutionException {
-    final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings);
+  private static RemoteConnection doPatch(@NotNull JavaParameters javaParameters, @NotNull RunnerSettings settings, boolean beforeExecution) {
+    GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings);
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
       debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
     }
