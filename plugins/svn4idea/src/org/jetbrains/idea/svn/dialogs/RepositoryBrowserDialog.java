@@ -335,7 +335,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText(() -> SvnBundle.message("repository.browser.history.action"));
-      e.getPresentation().setDescription(SvnBundle.message("repository.browser.history.action"));
+      e.getPresentation().setDescription(() -> SvnBundle.message("repository.browser.history.action"));
       final RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setEnabled(node != null && node.getURL() != null && !myProject.isDefault());
     }
@@ -367,7 +367,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText(() -> SvnBundle.message("action.name.refresh"));
-      e.getPresentation().setDescription(SvnBundle.message("repository.browser.refresh.action"));
+      e.getPresentation().setDescription(() -> SvnBundle.message("repository.browser.refresh.action"));
       e.getPresentation().setIcon(AllIcons.Actions.Refresh);
       e.getPresentation().setEnabled(myBrowserComponent.getSelectedNode() != null);
     }
@@ -393,7 +393,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
-        e.getPresentation().setDescription(SvnBundle.message("repository.browser.add.location.action.description"));
+        e.getPresentation().setDescription(() -> SvnBundle.message("repository.browser.add.location.action.description"));
         e.getPresentation().setText(() -> SvnBundle.message("repository.browser.add.location.action.text"));
         e.getPresentation().setIcon(IconUtil.getAddIcon());
       }
@@ -433,7 +433,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(@NotNull AnActionEvent e) {
       RepositoryTreeNode node = myBrowserComponent.getSelectedNode();
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
-        e.getPresentation().setDescription(SvnBundle.message("repository.browser.edit.location.menu.item"));
+        e.getPresentation().setDescription(() -> SvnBundle.message("repository.browser.edit.location.menu.item"));
         e.getPresentation().setText(() -> SvnBundle.message("repository.browser.edit.location.menu.item"));
         e.getPresentation().setIcon(AllIcons.Actions.EditSource);
       }
@@ -959,7 +959,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setDescription(SvnBundle.message("repository.browser.details.action"));
+      e.getPresentation().setDescription(() -> SvnBundle.message("repository.browser.details.action"));
       e.getPresentation().setText(() -> SvnBundle.message("repository.browser.details.action"));
       e.getPresentation().setIcon(AllIcons.Actions.Annotate);
       super.update(e);

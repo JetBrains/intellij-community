@@ -25,7 +25,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
 
   public AttachExternalProjectAction() {
     getTemplatePresentation().setText(() -> ExternalSystemBundle.message("action.attach.external.project.text", "External"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.attach.external.project.description", "external"));
+    getTemplatePresentation().setDescription(() -> ExternalSystemBundle.message("action.attach.external.project.description", "external"));
   }
 
   @Override
@@ -35,7 +35,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
     if (externalSystemId != null) {
       String name = externalSystemId.getReadableName();
       presentation.setText(() -> ExternalSystemBundle.message("action.attach.external.project.text", name));
-      presentation.setDescription(ExternalSystemBundle.message("action.attach.external.project.description", name));
+      presentation.setDescription(() -> ExternalSystemBundle.message("action.attach.external.project.description", name));
     }
 
     presentation.setIcon(AllIcons.General.Add);

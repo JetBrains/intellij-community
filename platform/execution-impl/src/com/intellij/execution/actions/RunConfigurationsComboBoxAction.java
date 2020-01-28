@@ -48,7 +48,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
+      presentation.setDescription(() -> ExecutionBundle.message("choose.run.configuration.action.description"));
     }
     try {
       if (project == null || project.isDisposed() || !project.isOpen()) {

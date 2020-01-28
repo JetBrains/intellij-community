@@ -17,7 +17,7 @@ public class TemplateProjectPropertiesAction extends AnAction implements DumbAwa
   public TemplateProjectPropertiesAction() {
     String projectConceptName = StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName());
     getTemplatePresentation().setText(() -> ActionsBundle.message("action.TemplateProjectProperties.text.template", CommonBundle.settingsTitle(), projectConceptName));
-    getTemplatePresentation().setDescription(ActionsBundle.message("action.TemplateProjectProperties.description.template", projectConceptName));
+    getTemplatePresentation().setDescription(() -> ActionsBundle.message("action.TemplateProjectProperties.description.template", projectConceptName));
   }
 
   @Override

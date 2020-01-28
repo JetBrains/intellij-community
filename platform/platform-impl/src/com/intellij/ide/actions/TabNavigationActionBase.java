@@ -148,10 +148,10 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
       super(navigationType);
       if (navigationType == NavigationType.LAST) {
         getTemplatePresentation().setText(() -> ActionsBundle.message("action.GoToLastTab.text"));
-        getTemplatePresentation().setDescription(ActionsBundle.message("action.GoToLastTab.description"));
+        getTemplatePresentation().setDescription(() -> ActionsBundle.message("action.GoToLastTab.description"));
       } else {
         getTemplatePresentation().setText(() -> ActionsBundle.message("action.GoToTab.text", navigationType.ordinal() + 1));
-        getTemplatePresentation().setDescription(ActionsBundle.message("action.GoToTab.description", navigationType.ordinal() + 1));
+        getTemplatePresentation().setDescription(() -> ActionsBundle.message("action.GoToTab.description", navigationType.ordinal() + 1));
       }
     }
 

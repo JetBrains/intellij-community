@@ -62,7 +62,8 @@ public class RemoveBomAction extends AnAction implements DumbAware {
 
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
-    e.getPresentation().setDescription(IdeBundle.message("remove.byte.order.mark.from", fromWhere));
+    String finalFromWhere = fromWhere;
+    e.getPresentation().setDescription(() -> IdeBundle.message("remove.byte.order.mark.from", finalFromWhere));
   }
 
   @Override

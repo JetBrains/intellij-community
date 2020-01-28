@@ -212,10 +212,10 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     group.add(new RunAction());
     group.add(new ShowAllTargetsAction());
     AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
-    action.getTemplatePresentation().setDescription(AntBundle.message("ant.explorer.expand.all.nodes.action.description"));
+    action.getTemplatePresentation().setDescription(() -> AntBundle.message("ant.explorer.expand.all.nodes.action.description"));
     group.add(action);
     action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
-    action.getTemplatePresentation().setDescription(AntBundle.message("ant.explorer.collapse.all.nodes.action.description"));
+    action.getTemplatePresentation().setDescription(() -> AntBundle.message("ant.explorer.collapse.all.nodes.action.description"));
     group.add(action);
     group.add(myAntBuildFilePropertiesAction);
 
