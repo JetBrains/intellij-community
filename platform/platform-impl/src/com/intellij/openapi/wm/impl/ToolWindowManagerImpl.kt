@@ -1414,7 +1414,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this)
   }
 
-  protected open fun fireToolWindowShown(id: String, toolWindow: ToolWindow) {
+  private fun fireToolWindowShown(id: String, toolWindow: ToolWindow) {
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowShown(id, toolWindow)
   }
 

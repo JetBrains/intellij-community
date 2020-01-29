@@ -50,6 +50,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,13 +66,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-public class TerminalView {
+public final class TerminalView {
   private final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
 
   private ToolWindow myToolWindow;
@@ -115,7 +114,7 @@ public class TerminalView {
       @Override
       public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
         if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(id) &&
-            myToolWindow.isVisible() && myToolWindow.getContentManager().getContentCount() == 0) {
+            toolWindow.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
           // open a new session if all tabs were closed manually
           createNewSession(myTerminalRunner, null);
         }
@@ -145,11 +144,11 @@ public class TerminalView {
     }
   }
 
-  public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner) {
+  public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner) {
     createNewSession(terminalRunner, null);
   }
 
-  public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState) {
+  public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState) {
     createNewSession(terminalRunner, tabState, true);
   }
 
@@ -237,7 +236,7 @@ public class TerminalView {
           String name = finalTerminalWidget.getSettingsProvider().tabName(finalTerminalWidget.getTtyConnector(),
                                                                           finalTerminalWidget.getSessionName());
 
-          content.setDisplayName(generateUniqueName(name, Arrays.stream(contents).map(c -> c.getDisplayName()).collect(Collectors.toList())));
+          content.setDisplayName(generateUniqueName(name, ContainerUtil.map(contents, c -> c.getDisplayName())));
         }
       }
 
