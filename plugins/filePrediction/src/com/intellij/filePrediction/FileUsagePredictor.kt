@@ -13,23 +13,30 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.NonUrgentExecutor
 
 internal object FileUsagePredictor {
+  private const val CALCULATE_OPEN_FILE_PROBABILITY: Double = 0.5
+
   private const val CALCULATE_CANDIDATE_PROBABILITY: Double = 0.1
   private const val MAX_CANDIDATE: Int = 10
 
   fun onFileOpened(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
     NonUrgentExecutor.getInstance().execute {
-      val start = System.currentTimeMillis()
-      val result = calculateExternalReferences(project, prevFile)
-      val refsComputation = System.currentTimeMillis() - start
-
-      FileNavigationLogger.logEvent(project, newFile, prevFile, "file.opened", refsComputation, result.contains(newFile))
-      if (Math.random() < CALCULATE_CANDIDATE_PROBABILITY) {
-        prevFile?.let {
-          calculateCandidates(project, it, newFile, refsComputation, result)
-        }
+      if (Math.random() < CALCULATE_OPEN_FILE_PROBABILITY) {
+        logFileFeatures(project, newFile, prevFile)
       }
-
       FilePredictionHistory.getInstance(project).onFileOpened(newFile.url)
+    }
+  }
+
+  private fun logFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
+    val start = System.currentTimeMillis()
+    val result = calculateExternalReferences(project, prevFile)
+    val refsComputation = System.currentTimeMillis() - start
+
+    FileNavigationLogger.logEvent(project, newFile, prevFile, "file.opened", refsComputation, result.contains(newFile))
+    if (Math.random() < CALCULATE_CANDIDATE_PROBABILITY) {
+      prevFile?.let {
+        calculateCandidates(project, it, newFile, refsComputation, result)
+      }
     }
   }
 
