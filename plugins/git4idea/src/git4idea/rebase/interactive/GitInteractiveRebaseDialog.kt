@@ -37,6 +37,8 @@ import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.CommitsTable.Companion.DEFAULT_CELL_HEIGHT
+import git4idea.rebase.interactive.CommitsTable.Companion.GRAPH_COLOR
+import git4idea.rebase.interactive.CommitsTable.Companion.GRAPH_LINE_WIDTH
 import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.*
@@ -259,6 +261,8 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
 private open class CommitsTable(val project: Project, val model: CommitsTableModel, private val disposable: Disposable) : JBTable(model) {
   companion object {
     const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
+    const val GRAPH_LINE_WIDTH = 1.5f
+    val GRAPH_COLOR = DefaultColorGenerator().getColor(1)
   }
 
   init {
@@ -330,42 +334,7 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
 
   private fun prepareSubjectColumn() {
     val subjectColumn = columnModel.getColumn(SUBJECT_COLUMN)
-    subjectColumn.cellRenderer = object : ColoredTableCellRenderer() {
-      override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-        if (value != null) {
-          border = null
-          isOpaque = false
-          val entryWithEditedMessage = this@CommitsTable.model.getEntry(row)
-          var attributes: SimpleTextAttributes? = null
-          when (entryWithEditedMessage.entry.action) {
-            GitRebaseEntry.Action.EDIT -> {
-              icon = AllIcons.Actions.Pause
-            }
-            GitRebaseEntry.Action.DROP -> {
-              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null)
-            }
-            GitRebaseEntry.Action.REWORD -> {
-              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLUE)
-            }
-            GitRebaseEntry.Action.FIXUP -> {
-              icon = AllIcons.Vcs.Merge
-            }
-            else -> {
-            }
-          }
-
-          if (attributes != null) {
-            append(getSubject(entryWithEditedMessage.newMessage), attributes)
-          }
-          else {
-            append(getSubject(entryWithEditedMessage.newMessage))
-          }
-
-          SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
-        }
-      }
-    }
-
+    subjectColumn.cellRenderer = SubjectRenderer()
     subjectColumn.cellEditor = CommitMessageCellEditor(project, this, disposable)
   }
 
@@ -391,6 +360,32 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
       }
     }
     return false
+  }
+
+  fun isFirstFixup(rowToCheck: Int): Boolean {
+    if (model.getEntry(rowToCheck).entry.action != GitRebaseEntry.Action.FIXUP) {
+      return false
+    }
+    for (row in rowToCheck - 1 downTo 0) {
+      val rowAction = model.getEntry(row).entry.action
+      if (rowAction != GitRebaseEntry.Action.DROP) {
+        return rowAction != GitRebaseEntry.Action.FIXUP
+      }
+    }
+    return true
+  }
+
+  fun isLastFixup(rowToCheck: Int): Boolean {
+    if (model.getEntry(rowToCheck).entry.action != GitRebaseEntry.Action.FIXUP) {
+      return false
+    }
+    for (row in rowToCheck + 1 until model.rowCount) {
+      val rowAction = model.getEntry(row).entry.action
+      if (rowAction != GitRebaseEntry.Action.DROP) {
+        return rowAction != GitRebaseEntry.Action.FIXUP
+      }
+    }
+    return true
   }
 
   private class CommitMessageCellEditor(
@@ -443,11 +438,108 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
   }
 }
 
+private class SubjectRenderer : ColoredTableCellRenderer() {
+  companion object {
+    private const val GRAPH_WIDTH = 20
+    private const val CONNECTION_CENTER_X = GRAPH_WIDTH / 4
+    private const val CONNECTION_CENTER_Y = DEFAULT_CELL_HEIGHT / 2
+  }
+
+  var graphType: GraphType = GraphType.NoGraph
+
+  override fun paint(g: Graphics?) {
+    super.paint(g)
+    (g as Graphics2D).paintFixupGraph()
+  }
+
+  private fun Graphics2D.paintFixupGraph() {
+    when (val type = graphType) {
+      is GraphType.NoGraph -> {
+      }
+      is GraphType.FixupGraph -> {
+        setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        color = GRAPH_COLOR
+        stroke = BasicStroke(GRAPH_LINE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
+        drawCenterLine()
+        drawUpLine(type.isFirst)
+        if (!type.isLast) {
+          drawDownLine()
+        }
+      }
+    }
+  }
+
+  private fun Graphics2D.drawCenterLine() {
+    val gap = GRAPH_WIDTH / 5
+    val xRight = GRAPH_WIDTH - gap
+    drawLine(CONNECTION_CENTER_X, CONNECTION_CENTER_Y, xRight, CONNECTION_CENTER_Y)
+  }
+
+  private fun Graphics2D.drawDownLine() {
+    drawLine(CONNECTION_CENTER_X, CONNECTION_CENTER_Y, CONNECTION_CENTER_X, DEFAULT_CELL_HEIGHT)
+  }
+
+  private fun Graphics2D.drawUpLine(withArrow: Boolean) {
+    val triangleSide = JBUI.scale(8)
+    val triangleBottomY = triangleSide / 2
+    val triangleBottomXDiff = triangleSide / 2
+    val upLineY = if (withArrow) triangleBottomY else 0
+    drawLine(CONNECTION_CENTER_X, CONNECTION_CENTER_Y, CONNECTION_CENTER_X, upLineY)
+
+    if (withArrow) {
+      val xPoints = intArrayOf(CONNECTION_CENTER_X, CONNECTION_CENTER_X - triangleBottomXDiff, CONNECTION_CENTER_X + triangleBottomXDiff)
+      val yPoints = intArrayOf(0, triangleBottomY, triangleBottomY)
+      fillPolygon(xPoints, yPoints, xPoints.size)
+    }
+  }
+
+  private fun getRowGraphType(table: CommitsTable, row: Int) = if (table.model.getEntry(row).entry.action == GitRebaseEntry.Action.FIXUP) {
+    GraphType.FixupGraph(table.isFirstFixup(row), table.isLastFixup(row))
+  }
+  else {
+    GraphType.NoGraph
+  }
+
+  override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+    if (value != null) {
+      border = null
+      isOpaque = false
+      val commitsTable = table as CommitsTable
+      graphType = getRowGraphType(commitsTable, row)
+      val entryWithEditedMessage = commitsTable.model.getEntry(row)
+      var attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES
+      when (entryWithEditedMessage.entry.action) {
+        GitRebaseEntry.Action.EDIT -> {
+          icon = AllIcons.Actions.Pause
+        }
+        GitRebaseEntry.Action.DROP -> {
+          attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null)
+        }
+        GitRebaseEntry.Action.REWORD -> {
+          attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLUE)
+        }
+        GitRebaseEntry.Action.FIXUP -> {
+          append("")
+          appendTextPadding(GRAPH_WIDTH)
+        }
+        else -> {
+        }
+      }
+      append(getSubject(entryWithEditedMessage.newMessage), attributes, true)
+      SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
+    }
+  }
+
+  private sealed class GraphType {
+    object NoGraph : GraphType()
+    class FixupGraph(val isFirst: Boolean, val isLast: Boolean) : GraphType()
+  }
+}
+
+
 private class CommitIconRenderer : SimpleColoredRenderer() {
   companion object {
-    private val GRAPH_COLOR = DefaultColorGenerator().getColor(1)
     private const val NODE_WIDTH = 8
-    private const val LINE_WIDTH = 1.5f
     private const val NODE_CENTER_X = NODE_WIDTH
     private const val NODE_CENTER_Y = DEFAULT_CELL_HEIGHT / 2
   }
@@ -538,7 +630,7 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
     val y2 = if (isDownEdge) tableRowHeight else 0
     val x = NODE_CENTER_X
     color = GRAPH_COLOR
-    stroke = BasicStroke(LINE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
+    stroke = BasicStroke(GRAPH_LINE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
     drawLine(x, y1, x, y2)
   }
 
