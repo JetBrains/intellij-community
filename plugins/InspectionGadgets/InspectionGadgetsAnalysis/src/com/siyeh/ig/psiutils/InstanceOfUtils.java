@@ -179,7 +179,7 @@ public class InstanceOfUtils {
           }
         }
         if ((context instanceof PsiExpression && !(context instanceof PsiLambdaExpression)) ||
-            context instanceof PsiExpressionList) {
+            context instanceof PsiExpressionList || context instanceof PsiLocalVariable) {
           context = context.getParent();
           continue;
         }
