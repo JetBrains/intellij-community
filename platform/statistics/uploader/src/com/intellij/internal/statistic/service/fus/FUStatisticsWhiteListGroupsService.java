@@ -2,15 +2,13 @@
 package com.intellij.internal.statistic.service.fus;
 
 import com.google.gson.GsonBuilder;
-import com.intellij.internal.statistic.EventLogHttpClientUtils;
+import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -73,14 +71,14 @@ public class FUStatisticsWhiteListGroupsService {
 
   @Nullable
   private static String getFUSWhiteListContent(@Nullable String serviceUrl) {
-    if (StringUtil.isEmptyOrSpaces(serviceUrl)) return null;
+    if (StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) return null;
 
     String content = null;
     try {
-      HttpResponse response = EventLogHttpClientUtils.create().execute(new HttpGet(serviceUrl));
+      HttpResponse response = StatisticsEventLogUtil.create().execute(new HttpGet(serviceUrl));
       HttpEntity entity = response.getEntity();
       if (entity != null) {
-        content = EntityUtils.toString(entity, CharsetToolkit.UTF8);
+        content = EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8);
       }
     }
     catch (IOException e) {
@@ -91,8 +89,8 @@ public class FUStatisticsWhiteListGroupsService {
 
   private static long lastModifiedWhitelist(@Nullable String serviceUrl) {
     try {
-      if (!StringUtil.isEmptyOrSpaces(serviceUrl)) {
-        final HttpResponse response = EventLogHttpClientUtils.create().execute(new HttpHead(serviceUrl));
+      if (!StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) {
+        final HttpResponse response = StatisticsEventLogUtil.create().execute(new HttpHead(serviceUrl));
         return Stream.of(response.getHeaders(HttpHeaders.LAST_MODIFIED)).
           flatMap(header -> Stream.of(header.getElements())).
           filter(Objects::nonNull).
@@ -109,7 +107,7 @@ public class FUStatisticsWhiteListGroupsService {
 
   @Nullable
   public static WLGroups parseWhiteListContent(@Nullable String content) {
-    if (StringUtil.isEmptyOrSpaces(content)) return null;
+    if (StatisticsEventLogUtil.isEmptyOrSpaces(content)) return null;
     WLGroups groups = null;
     try {
       groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
@@ -172,7 +170,7 @@ public class FUStatisticsWhiteListGroupsService {
     private boolean isValid() {
       final boolean hasBuilds = builds != null && !builds.isEmpty();
       final boolean hasVersions = versions != null && !versions.isEmpty();
-      return StringUtil.isNotEmpty(id) && (hasBuilds || hasVersions);
+      return StatisticsEventLogUtil.isNotEmpty(id) && (hasBuilds || hasVersions);
     }
   }
 
@@ -198,8 +196,9 @@ public class FUStatisticsWhiteListGroupsService {
     public String to;
 
     public boolean contains(EventLogBuildNumber build) {
-      return (StringUtil.isEmpty(to) || EventLogBuildNumber.fromString(to).compareTo(build) > 0) &&
-             (StringUtil.isEmpty(from) || EventLogBuildNumber.fromString(from).compareTo(build) <= 0);
+      //TODO: check build number is not null
+      return (StatisticsEventLogUtil.isEmpty(to) || EventLogBuildNumber.fromString(to).compareTo(build) > 0) &&
+             (StatisticsEventLogUtil.isEmpty(from) || EventLogBuildNumber.fromString(from).compareTo(build) <= 0);
     }
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class StatisticsEventEscaper {
@@ -60,7 +59,11 @@ public class StatisticsEventEscaper {
     if (withDot && c == '.') {
       return true;
     }
-    return isAsciiControl(c) || StringUtil.isWhiteSpace(c) || c == ':' || c == ';' || c == ',';
+    return isAsciiControl(c) || isWhiteSpace(c) || c == ':' || c == ';' || c == ',';
+  }
+
+  public static boolean isWhiteSpace(char c) {
+    return c == '\n' || c == '\t' || c == ' ';
   }
 
   private static boolean isAsciiControl(char c) {

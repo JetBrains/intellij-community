@@ -1,13 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
+import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
@@ -89,7 +88,7 @@ public class EventLogStatisticsService implements StatisticsService {
         final LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal);
         final String error = validate(recordRequest, file);
-        if (StringUtil.isNotEmpty(error) || recordRequest == null) {
+        if (StatisticsEventLogUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {
             LOG.trace(file.getName() + "-> " + error);
           }
@@ -148,7 +147,7 @@ public class EventLogStatisticsService implements StatisticsService {
   private static String getResponseMessage(HttpResponse response) throws IOException {
     HttpEntity entity = response.getEntity();
     if (entity != null) {
-      return EntityUtils.toString(entity, CharsetToolkit.UTF8);
+      return EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8);
     }
     return Integer.toString(response.getStatusLine().getStatusCode());
   }
@@ -166,13 +165,13 @@ public class EventLogStatisticsService implements StatisticsService {
       return "File is empty or has invalid format: " + file.getName();
     }
 
-    if (StringUtil.isEmpty(request.getDevice())) {
+    if (StatisticsEventLogUtil.isEmpty(request.getDevice())) {
       return "Cannot upload event log, device ID is empty";
     }
-    else if (StringUtil.isEmpty(request.getProduct())) {
+    else if (StatisticsEventLogUtil.isEmpty(request.getProduct())) {
       return "Cannot upload event log, product code is empty";
     }
-    else if (StringUtil.isEmpty(request.getRecorder())) {
+    else if (StatisticsEventLogUtil.isEmpty(request.getRecorder())) {
       return "Cannot upload event log, recorder code is empty";
     }
     else if (request.getRecords().isEmpty()) {

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus;
 
+import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,8 +136,8 @@ public class FUSWhitelist {
     @NotNull
     public static BuildRange create(@Nullable String from, @Nullable String to) {
       return new BuildRange(
-        StringUtil.isNotEmpty(from) ? EventLogBuildNumber.fromString(from) : null,
-        StringUtil.isNotEmpty(to) ? EventLogBuildNumber.fromString(to) : null
+        StatisticsEventLogUtil.isNotEmpty(from) ? EventLogBuildNumber.fromString(from) : null,
+        StatisticsEventLogUtil.isNotEmpty(to) ? EventLogBuildNumber.fromString(to) : null
       );
     }
 

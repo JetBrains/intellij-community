@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +17,7 @@ public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber
   public EventLogBuildNumber(@NotNull int... components) {
     myComponents = components;
   }
+
   @NotNull
   public int[] getComponents() {
     return myComponents.clone();
@@ -24,14 +25,14 @@ public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber
 
   @Nullable
   public static EventLogBuildNumber fromString(@Nullable String version) {
-    if (StringUtil.isEmptyOrSpaces(version)) {
+    if (StatisticsEventLogUtil.isEmptyOrSpaces(version)) {
       return null;
     }
 
     String code = removeProductCode(version);
     int separator = code.indexOf('.');
     if (separator > 0) {
-      List<String> components = StringUtil.split(code, ".");
+      List<String> components = StatisticsEventLogUtil.split(code, ".");
       TIntArrayList intComponentsList = new TIntArrayList();
       for (String component : components) {
         intComponentsList.add(tryParseInt(component));

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.internal.statistic.StatisticsEventLogUtil
 import java.io.File
 import java.nio.file.Path
 
@@ -20,7 +20,7 @@ interface EventLogFilesProvider {
 class DefaultEventLogFilesProvider(val dir: Path, private val activeFileProvider: () -> String?): EventLogFilesProvider {
   override fun getLogFiles(): List<EventLogFile> {
     val activeFile = activeFileProvider()
-    val files = File(dir.toUri()).listFiles { f: File -> activeFile == null || !StringUtil.equals(f.name, activeFile) }
+    val files = File(dir.toUri()).listFiles { f: File -> activeFile == null || !StatisticsEventLogUtil.equals(f.name, activeFile) }
     return files?.map { EventLogFile(it) }?.toList() ?: emptyList()
   }
 }

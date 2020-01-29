@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.connect;
 
-import com.intellij.internal.statistic.EventLogHttpClientUtils;
+import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.jdom.Element;
@@ -56,7 +55,7 @@ public abstract class SettingsConnectionService {
     if (mySettingsUrl == null) return Collections.emptyMap();
 
     try {
-      HttpEntity entity = EventLogHttpClientUtils.create().execute(new HttpGet(mySettingsUrl)).getEntity();
+      HttpEntity entity = StatisticsEventLogUtil.create().execute(new HttpGet(mySettingsUrl)).getEntity();
       InputStream content = entity != null ? entity.getContent() : null;
       if (content != null) {
         Map<String, String> settings = new LinkedHashMap<>();
@@ -64,7 +63,7 @@ public abstract class SettingsConnectionService {
           Element root = JDOMUtil.load(content);
           for (String s : attributes) {
             String attributeValue = root.getAttributeValue(s);
-            if (StringUtil.isNotEmpty(attributeValue)) {
+            if (StatisticsEventLogUtil.isNotEmpty(attributeValue)) {
               settings.put(s, attributeValue);
             }
           }
