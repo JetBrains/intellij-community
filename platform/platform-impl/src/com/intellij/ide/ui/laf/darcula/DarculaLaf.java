@@ -97,6 +97,21 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     LOG.error(e.getMessage());
   }
 
+  @NotNull
+  private static Font toFont(UIDefaults defaults, Object key) {
+    Object value = defaults.get(key);
+    if (value instanceof Font) {
+      return (Font)value;
+    }
+    else if (value instanceof UIDefaults.ActiveValue) {
+      value = ((UIDefaults.ActiveValue)value).createValue(defaults);
+      if (value instanceof Font) {
+        return (Font)value;
+      }
+    }
+    throw new UnsupportedOperationException("Unable to extract Font from \"" + key + "\"");
+  }
+
   @Override
   public UIDefaults getDefaults() {
     try {
@@ -104,12 +119,12 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       UIDefaults defaults = base.getDefaults();
 
       if (SystemInfo.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
-        defaults.entrySet().stream().
-          filter(e -> StringUtil.endsWith(e.getKey().toString(), ".font")).
-          forEach(e -> {
-            Font font = (Font)e.getValue();
+        defaults.keySet().stream().
+          filter(key -> StringUtil.endsWith(key.toString(), ".font")).
+          forEach(key -> {
+            Font font = toFont(defaults, key);
             Font uiFont = new FontUIResource("Dialog", font.getStyle(), font.getSize());
-            defaults.put(e.getKey(), uiFont);
+            defaults.put(key, uiFont);
           });
       }
 
@@ -133,7 +148,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
           "meta released ENTER", "release"
         });
       }
-      defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
+      defaults.put("EditorPane.font", toFont(defaults, "TextField.font"));
       return defaults;
     }
     catch (Exception e) {
