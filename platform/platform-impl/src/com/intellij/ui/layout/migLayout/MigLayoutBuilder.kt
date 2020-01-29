@@ -57,9 +57,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
   override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = hashMapOf()
   override var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap()
-  override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
-  override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
-  override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
+  override var applyCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap()
+  override var resetCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap()
+  override var isModifiedCallbacks: MultiMap<JComponent?, () -> Boolean> = MultiMap()
 
   val topButtonGroup: ButtonGroup?
     get() = buttonGroupStack.lastOrNull()
@@ -71,7 +71,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     try {
       body()
 
-      resetCallbacks.add {
+      resetCallbacks.putValue(null) {
         selectRadioButtonInGroup(buttonGroup)
       }
 

@@ -65,6 +65,10 @@ interface RowBuilder : BaseBuilder {
   fun commentRow(text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1))
   }
+
+  fun onGlobalApply(callback: () -> Unit): Row
+  fun onGlobalReset(callback: () -> Unit): Row
+  fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
 inline fun <reified T : Any> InnerCell.buttonGroup(prop: KMutableProperty0<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
