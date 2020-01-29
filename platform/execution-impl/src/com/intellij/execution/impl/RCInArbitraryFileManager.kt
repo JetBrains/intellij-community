@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
+import com.intellij.configurationStore.digest
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
@@ -21,21 +22,22 @@ import java.io.ByteArrayInputStream
 internal class RCInArbitraryFileManager {
   private val LOG = logger<RCInArbitraryFileManager>()
 
-  private val filePathToConfigurations = mutableMapOf<String, MutableList<RunnerAndConfigurationSettingsImpl>>()
+  private class RunConfigInfo(val runConfig: RunnerAndConfigurationSettingsImpl, var digest: ByteArray)
 
-  private fun addRunConfiguration(filePath: String, settings: RunnerAndConfigurationSettingsImpl) {
+  private val filePathToConfigurations = mutableMapOf<String, MutableList<RunConfigInfo>>()
+
+  private fun addRunConfiguration(filePath: String, settings: RunnerAndConfigurationSettingsImpl, digest: ByteArray) {
     val runConfigs = filePathToConfigurations[filePath]
     if (runConfigs != null) {
-      runConfigs.add(settings)
+      runConfigs.add(RunConfigInfo(settings, digest))
     }
     else {
-      filePathToConfigurations[filePath] = mutableListOf(settings)
+      filePathToConfigurations[filePath] = mutableListOf(RunConfigInfo(settings, digest))
     }
   }
 
   internal fun loadRunConfigsFromFile(runManager: RunManagerImpl, file: VirtualFile): List<RunnerAndConfigurationSettingsImpl> {
     val path = file.path
-    filePathToConfigurations.remove(path)
 
     val bytes = try {
       VfsUtil.loadBytes(file)
@@ -58,6 +60,8 @@ internal class RCInArbitraryFileManager {
       return emptyList()
     }
 
+    val loadedRunConfigInfos = mutableListOf<RunConfigInfo>()
+
     for (configElement in element.getChildren("configuration")) {
       try {
         val settings = RunnerAndConfigurationSettingsImpl(runManager)
@@ -69,29 +73,59 @@ internal class RCInArbitraryFileManager {
         // readExternal() on the previous line sets level to PROJECT. But it must be ARBITRARY_FILE_IN_PROJECT
         settings.setStoreInArbitraryFileInProject()
 
-        addRunConfiguration(path, settings)
+        // Remember digest in order not to overwrite file with an equivalent content (e.g. different line endings or smth non-meaningful)
+        // similar to com.intellij.execution.impl.RunConfigurationSchemeManager.readData
+        val digest = settings.writeScheme().digest()
+        loadedRunConfigInfos.add(RunConfigInfo(settings, digest))
       }
       catch (e: Exception) {
         LOG.warn("Failed to read run configuration in $path", e)
       }
     }
 
-    return filePathToConfigurations[path] ?: emptyList()
+    val knownRunConfigInfos = filePathToConfigurations[path]
+    if (sameRunConfigs(loadedRunConfigInfos, knownRunConfigInfos)) {
+      return emptyList()
+    }
+    else {
+      filePathToConfigurations[path] = loadedRunConfigInfos
+      return loadedRunConfigInfos.map { it.runConfig }
+    }
+  }
+
+  private fun sameRunConfigs(runConfigs1: List<RunConfigInfo>, runConfigs2: List<RunConfigInfo>?): Boolean {
+    if (runConfigs1.isEmpty()) return runConfigs2 == null || runConfigs2.isEmpty()
+    if (runConfigs2 == null || runConfigs2.isEmpty()) return runConfigs1.isEmpty()
+    if (runConfigs1.size != runConfigs2.size) return false
+
+    val iterator = runConfigs2.iterator()
+    runConfigs1.forEach { if (!it.digest.contentEquals(iterator.next().digest)) return@sameRunConfigs false }
+
+    return true
   }
 
   internal fun saveRunConfigs() {
     val errors = SmartList<Throwable>()
     for (entry in filePathToConfigurations.entries) {
       val filePath = entry.key
-      val runConfigs = entry.value
+      val rcInfos = entry.value
 
       try {
+        var somethingChanged = false
         val rootElement = Element("component").setAttribute("name", "ProjectRunConfigurationManager")
-        for (runConfig in runConfigs) {
-          rootElement.addContent(runConfig.writeScheme())
+        for (rcInfo in rcInfos) {
+          val element = rcInfo.runConfig.writeScheme()
+          val newDigest = element.digest()
+          if (!rcInfo.digest.contentEquals(newDigest)) {
+            rcInfo.digest = newDigest
+            somethingChanged = true
+          }
+          rootElement.addContent(element)
         }
 
-        saveToFile(filePath, rootElement.toBufferExposingByteArray())
+        if (somethingChanged) {
+          saveToFile(filePath, rootElement.toBufferExposingByteArray())
+        }
       }
       catch (e: Exception) {
         errors.add(RuntimeException("Cannot save run configuration in $filePath", e))
