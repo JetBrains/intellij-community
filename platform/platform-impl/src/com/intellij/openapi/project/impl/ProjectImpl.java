@@ -311,13 +311,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
-
-    String activityNamePrefix = activityNamePrefix();
-    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startActivity("projectComponentsInitialized event handling");
     application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
-    if (activity != null) {
-      activity.end();
-    }
   }
 
   @Override
