@@ -10,10 +10,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionButtonComponent;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -62,6 +59,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
@@ -168,7 +166,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   public void repaintTrafficLightIcon() {
     if (myErrorStripeRenderer != null) {
-      myErrorStripeRenderer.refreshActions();
+      myErrorStripeRenderer.refreshActions(myEditor);
     }
 
     MyErrorPanel errorPanel = getErrorPanel();
@@ -449,8 +447,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     ActionGroup group;
     if (myErrorStripeRenderer != null && (group = myErrorStripeRenderer.getActions()) != null) {
       ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
-
       statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_POPUP, group, true) {
+        {
+          setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+          setOpaque(false);
+        }
+
         @Override
         @NotNull
         protected Color getSeparatorColor() {
@@ -458,19 +460,41 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           return separatorColor != null ? separatorColor : super.getSeparatorColor();
         }
 
+        @NotNull
         @Override
-        protected void tweakActionComponentUI(@NotNull Component actionComponent) {
-          if (actionComponent instanceof ActionButton) {
-            ((ActionButton)actionComponent).setLook(editorButtonLook);
-          }
+        protected ActionButton createToolbarButton(@NotNull AnAction action, ActionButtonLook look,
+                                                   @NotNull String place, @NotNull Presentation presentation,
+                                                   @NotNull Dimension minimumSize) {
+
+          ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
+            @Override
+            protected DataContext getDataContext() {
+              return getToolbarDataContext();
+            }
+
+            @Override
+            public void updateIcon() {
+              super.updateIcon();
+              revalidate();
+            }
+
+            @Override
+            protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
+              String propertyName = e.getPropertyName();
+              if (Presentation.PROP_VISIBLE.equals(propertyName)) {
+                setVisible(e.getNewValue() == Boolean.TRUE);
+              }
+              else {
+                super.presentationPropertyChanged(e);
+              }
+            }
+          };
+          actionButton.setLook(editorButtonLook);
+          return actionButton;
         }
       };
 
-      statusToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-
-      JComponent statusToolbarComponent = statusToolbar.getComponent();
-      statusToolbarComponent.setOpaque(false);
-      ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusToolbarComponent);
+      ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusToolbar.getComponent());
     }
     else {
       ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(null);

@@ -367,7 +367,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return customComponent;
   }
 
-  protected void tweakActionComponentUI(@NotNull Component actionComponent) {
+  private void tweakActionComponentUI(@NotNull Component actionComponent) {
     if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
       // tweak font & color for editor toolbar to match editor tabs style
       actionComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
@@ -412,7 +412,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     };
     actionButton.setLook(look);
-    tweakActionComponentUI(actionButton);
     return actionButton;
   }
 
