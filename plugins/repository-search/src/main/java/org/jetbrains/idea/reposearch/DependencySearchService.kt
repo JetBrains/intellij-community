@@ -186,6 +186,5 @@ class DependencySearchService(private val myProject: Project) {
 
     remoteProviders.addAll(remote)
     localProviders.addAll(local)
-
   }
 }
