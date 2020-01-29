@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,13 +34,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.LazyFqnClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
+import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature;
+import org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt;
+import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 
 import java.util.*;
 
@@ -61,14 +63,11 @@ public class GrClosureSignatureUtil {
     if (call instanceof GrMethodCall) {
       final GrExpression invokedExpression = ((GrMethodCall)call).getInvokedExpression();
       final PsiType type = invokedExpression.getType();
-      if (type instanceof GrClosureType) {
-        final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
-        final Trinity<GrSignature, ArgInfo<PsiType>[], Applicability> trinity =
-          getApplicableSignature(signature, PsiUtil.getArgumentTypes(invokedExpression, true), call);
-        if (trinity != null) {
-          return trinity.first;
+      if (type instanceof GroovyClosureType) {
+        Collection<CallSignature<?>> signatures = ((GroovyClosureType)type).applicableSignatures(ArgumentsKt.getArguments(call));
+        if (signatures.size() == 1) {
+          return new GrCallSignatureAdapter(ContainerUtil.getFirstItem(signatures));
         }
-        return null;
       }
     }
 
@@ -339,7 +338,7 @@ public class GrClosureSignatureUtil {
   }
 
   @Contract("null, _, _ -> true; _, null, _ -> true")
-  private static boolean isAssignableByConversion(@Nullable PsiType paramType, @Nullable PsiType argType, @NotNull PsiElement context) {
+  public static boolean isAssignableByConversion(@Nullable PsiType paramType, @Nullable PsiType argType, @NotNull PsiElement context) {
     if (argType == null || paramType == null) {
       return true;
     }

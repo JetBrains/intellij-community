@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
+import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.TypeConversionUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.isAssignableByConversion
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.ArgumentApplicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -39,17 +39,21 @@ fun argumentApplicability(parameterType: PsiType?, argumentType: PsiType?, conte
     return Applicability.canBeApplicable
   }
 
+  if (parameterType is PsiClassType && parameterType.resolve()?.qualifiedName == JAVA_LANG_OBJECT) {
+    return Applicability.applicable
+  }
+
   if (argumentType == null) {
     // argument passed but we cannot infer its type
     return Applicability.canBeApplicable
   }
 
-  val assignability = TypesUtil.canAssign(parameterType, argumentType, context, GrTypeConverter.Position.METHOD_PARAMETER)
-  if (assignability == ConversionResult.ERROR) {
-    return Applicability.inapplicable
+  return if (isAssignableByConversion(parameterType, argumentType, context)) {
+    Applicability.applicable
   }
-
-  return Applicability.applicable
+  else {
+    Applicability.inapplicable
+  }
 }
 
 fun parameterType(type: PsiType, substitutor: PsiSubstitutor, erase: Boolean): PsiType? {

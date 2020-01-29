@@ -9,13 +9,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
+import org.jetbrains.plugins.groovy.lang.resolve.api.DelegateArgumentMapping
 
 fun <X : CallParameter> compare(left: ArgumentMapping<X>, right: ArgumentMapping<X>): Int {
-  if (left is GdkArgumentMapping) {
-    return compare(left.original, right)
+  if (left is DelegateArgumentMapping) {
+    return compare(left.delegate, right)
   }
-  else if (right is GdkArgumentMapping) {
-    return compare(left, right.original)
+  else if (right is DelegateArgumentMapping) {
+    return compare(left, right.delegate)
   }
 
   if (left is NullArgumentMapping && right is NullArgumentMapping) {

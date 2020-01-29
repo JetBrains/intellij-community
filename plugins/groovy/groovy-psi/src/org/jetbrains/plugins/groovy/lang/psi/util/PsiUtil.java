@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.JavaIdentifier;
@@ -77,7 +76,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.AccessibilityKt;
+import org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 
 import java.util.*;
 
@@ -157,20 +158,6 @@ public class PsiUtil {
     }
 
     return Applicability.inapplicable;
-  }
-
-  public static boolean isApplicable(PsiType @Nullable [] argumentTypes,
-                                     @NotNull GrClosureType type,
-                                     @NotNull GroovyPsiElement context) {
-    return isApplicableConcrete(argumentTypes, type, context) != Applicability.inapplicable;
-  }
-
-  public static Applicability isApplicableConcrete(PsiType @Nullable [] argumentTypes,
-                                                   @NotNull GrClosureType type,
-                                                   @NotNull GroovyPsiElement context) {
-    if (argumentTypes == null) return Applicability.canBeApplicable;
-    List<GrSignature> signature = type.getSignatures();
-    return GrClosureSignatureUtil.isSignatureApplicableConcrete(signature, argumentTypes, context);
   }
 
   @Nullable
@@ -500,15 +487,15 @@ public class PsiUtil {
         if (reference != null) {
           Argument receiver = reference.getReceiverArgument();
           PsiType receiverType = receiver == null ? null : receiver.getType();
-          if (receiverType instanceof GrClosureType) {
-            return isRawClosureCall(call, result, (GrClosureType)receiverType);
+          if (receiverType instanceof GroovyClosureType) {
+            return isRawClosureCall(call, result, (GroovyClosureType)receiverType);
           }
         }
       }
       PsiType returnType = getSmartReturnType((PsiMethod)element);
       if (expression instanceof GrReferenceExpression && result.isInvokedOnProperty()) {
-        if (returnType instanceof GrClosureType) {
-          return isRawClosureCall(call, result, (GrClosureType)returnType);
+        if (returnType instanceof GroovyClosureType) {
+          return isRawClosureCall(call, result, (GroovyClosureType)returnType);
         }
       }
       else {
@@ -518,30 +505,18 @@ public class PsiUtil {
     if (element instanceof PsiVariable) {
       GrExpression expression = call.getInvokedExpression();
       final PsiType type = expression.getType();
-      if (type instanceof GrClosureType) {
-        return isRawClosureCall(call, result, (GrClosureType)type);
+      if (type instanceof GroovyClosureType) {
+        return isRawClosureCall(call, result, (GroovyClosureType)type);
       }
     }
 
     return false;
   }
 
-  private static boolean isRawClosureCall(GrMethodCallExpression call, GroovyResolveResult result, GrClosureType returnType) {
-    final List<GrSignature> signatures = returnType.getSignatures();
-    GrSignature _signature;
-    if (signatures.size() == 1) {
-      _signature = signatures.get(0);
-    }
-    else {
-      final PsiType[] types = getArgumentTypes(call.getInvokedExpression(), true);
-      final Trinity<GrSignature, GrClosureSignatureUtil.ArgInfo<PsiType>[], Applicability>
-        resultTrinity = types != null ? GrClosureSignatureUtil.getApplicableSignature(signatures, types, call) : null;
-      _signature = Trinity.getFirst(resultTrinity);
-    }
-    if (_signature != null) {
-      return isRawType(_signature.getReturnType(), TypesUtil.composeSubstitutors(_signature.getSubstitutor(), result.getSubstitutor()));
-    }
-    return false;
+  private static boolean isRawClosureCall(GrMethodCallExpression call, GroovyResolveResult result, GroovyClosureType closureType) {
+    List<Argument> arguments = ArgumentsKt.getArguments(call);
+    PsiType returnType = closureType.returnType(arguments);
+    return isRawType(returnType, result.getSubstitutor());
   }
 
   public static boolean isRawFieldAccess(GrReferenceExpression ref) {

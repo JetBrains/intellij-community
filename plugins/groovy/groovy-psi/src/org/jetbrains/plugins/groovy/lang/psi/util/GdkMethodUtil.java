@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.NullableComputable;
@@ -11,11 +11,11 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -23,17 +23,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
+import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter;
+import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
+import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -165,18 +166,18 @@ public class GdkMethodUtil {
   }
 
   @NotNull
-  private static GrMethod createMethod(@NotNull GrSignature signature,
+  private static GrMethod createMethod(@NotNull CallSignature<?> signature,
                                        @NotNull String name,
                                        @NotNull GrAssignmentExpression statement,
                                        @NotNull PsiClass closure) {
     final GrLightMethodBuilder builder = new GrLightMethodBuilder(statement.getManager(), name);
 
-    GrClosureParameter[] parameters = signature.getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      GrClosureParameter parameter = parameters[i];
-      final String parameterName = parameter.getName() != null ? parameter.getName() : "p" + i;
-      final PsiType type = parameter.getType() != null ? parameter.getType() : TypesUtil.getJavaLangObject(statement);
+    int i = 0;
+    for (CallParameter parameter : signature.getParameters()) {
+      final String parameterName = ObjectUtils.notNull(parameter.getParameterName(), "p" + i);
+      final PsiType type = ObjectUtils.notNull(parameter.getType(), () -> TypesUtil.getJavaLangObject(statement));
       builder.addParameter(parameterName, type, parameter.isOptional());
+      i++;
     }
 
     builder.setNavigationElement(statement.getLValue());
@@ -228,7 +229,7 @@ public class GdkMethodUtil {
     }
 
     final PsiType type = rValue.getType();
-    if (!(type instanceof GrClosureType)) {
+    if (!(type instanceof GroovyClosureType)) {
       return null;
     }
 
@@ -238,7 +239,7 @@ public class GdkMethodUtil {
     if (closure == null) return null;
 
     final List<GrMethod> methods = new ArrayList<>();
-    for (GrSignature signature : ((GrClosureType)type).getSignatures()) {
+    for (CallSignature<?> signature : ((GroovyClosureType)type).getSignatures()) {
       methods.add(createMethod(signature, mixedMethodName, assignment, closure));
     }
     return Trinity.create(original.first, original.second, methods);

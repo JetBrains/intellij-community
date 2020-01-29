@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiElement
@@ -42,8 +42,12 @@ open class BaseMethodResolveResult(
   final override fun getCandidate(): GroovyMethodCandidate? = myRealCandidate
 
   private val myRealCandidate by recursionAwareLazy {
+    createMethodCandidate(method, place, state)
+  }
+
+  protected open fun createMethodCandidate(method: PsiMethod, place: PsiElement, state: ResolveState): GroovyMethodCandidate {
     val mapping = myCandidate.argumentMapping
-    if (mapping != null && method is GrGdkMethod) {
+    return if (mapping != null && method is GrGdkMethod) {
       GdkMethodCandidate(method.staticMethod, buildQualifier(place as? GrReferenceExpression, state), mapping)
     }
     else {

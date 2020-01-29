@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -147,7 +147,7 @@ go('a', 'c', 1, 2, 3)
   }
 
   void testCallableProperty() {
-    doTest()
+    doTest(new GrUnresolvedAccessInspection())
   }
 
   void testEnumConstantConstructors() {
@@ -894,7 +894,7 @@ class E {
     }
 }
 
-new E() + a
+new E() <weak_warning descr="Cannot infer argument types">+</weak_warning> a
 '''
   }
 
