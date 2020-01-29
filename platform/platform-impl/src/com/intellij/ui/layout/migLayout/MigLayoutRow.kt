@@ -94,6 +94,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     builder.withButtonGroup(buttonGroup, body)
   }
 
+  override fun checkBoxGroup(title: String?, body: () -> Unit) {
+    if (title != null) {
+      label(title)
+      gapAfter = "${spacing.radioGroupTitleVerticalGap}px!"
+    }
+    body()
+  }
+
   override var enabled = true
     set(value) {
       if (field == value) {

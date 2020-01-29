@@ -278,6 +278,11 @@ abstract class Cell : BaseBuilder {
     return component(comment = comment)
   }
 
+  open fun radioButton(text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, comment: String? = null): CellBuilder<JBRadioButton> {
+    val component = JBRadioButton(text, getter())
+    return component(comment = comment).withSelectedBinding(PropertyBinding(getter, setter))
+  }
+
   open fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())
@@ -479,7 +484,7 @@ abstract class Cell : BaseBuilder {
   }
 
   fun comment(text: String, maxLineLength: Int = -1): CellBuilder<JLabel> {
-    return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength))
+    return component(ComponentPanelBuilder.createCommentComponent(text, true, false, maxLineLength))
   }
 
   fun placeholder(): CellBuilder<JComponent> {

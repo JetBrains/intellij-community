@@ -33,6 +33,8 @@ interface RowBuilder : BaseBuilder {
 
   fun createNoteOrCommentRow(component: JComponent): Row
 
+  fun checkBoxGroup(title: String?, body: () -> Unit)
+
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }

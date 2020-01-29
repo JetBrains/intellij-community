@@ -267,14 +267,20 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   @NotNull
   public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow, int maxLineLength) {
-    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength);
+    return createCommentComponent(commentText, isCommentBelow, true, maxLineLength);
+  }
+
+  @NotNull
+  public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow, boolean allowAutoWrapping,
+                                              int maxLineLength) {
+    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, allowAutoWrapping, maxLineLength);
   }
 
   private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier, @Nullable String commentText,
-                                              boolean isCommentBelow, int maxLineLength) {
+                                               boolean isCommentBelow, boolean allowAutoWrapping, int maxLineLength) {
     // todo why our JBLabel cannot render html if render panel without frame (test only)
     boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
-    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(true);
+    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(allowAutoWrapping);
 
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
@@ -336,7 +342,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         protected HyperlinkListener createHyperlinkListener() {
           return myHyperlinkListener;
         }
-      }, myCommentText, myCommentBelow, 70);
+      }, myCommentText, myCommentBelow, true, 70);
       comment.setBorder(getCommentBorder());
     }
 
