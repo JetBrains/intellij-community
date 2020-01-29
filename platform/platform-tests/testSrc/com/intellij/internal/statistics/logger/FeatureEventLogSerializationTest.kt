@@ -267,7 +267,7 @@ class FeatureEventLogSerializationTest {
         "\"group\":{\"id\":\"lifecycle\",\"version\":\"2\"}," +
         "\"event\":{\"count\":1,\"data\":{},\"id\":\"ideaapp.started\"}" +
       "}"
-    val deserialized = LogEventSerializer.fromString(json)
+    val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(json)
     assertNull(deserialized)
   }
 
@@ -278,7 +278,7 @@ class FeatureEventLogSerializationTest {
         "\"group\":{\"id\":\"lifecycle\",\"version\":\"2\"}," +
         "\"event\":{\"count\":1,\"data\":{},\"id\":\"ideaapp.started\"}" +
       "}"
-    val deserialized = LogEventSerializer.fromString(json)
+    val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(json)
     assertNull(deserialized)
   }
 
@@ -288,7 +288,7 @@ class FeatureEventLogSerializationTest {
       "{\"session\":12345,\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":1529428045322," +
         "\"event\":{\"count\":1,\"data\":{},\"id\":\"ideaapp.started\"}" +
       "}"
-    val deserialized = LogEventSerializer.fromString(json)
+    val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(json)
     assertNull(deserialized)
   }
 
@@ -298,7 +298,7 @@ class FeatureEventLogSerializationTest {
       "{\"session\":12345,\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":1529428045322," +
         "\"group\":{\"id\":\"lifecycle\",\"version\":\"2\"}" +
       "}"
-    val deserialized = LogEventSerializer.fromString(json)
+    val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(json)
     assertNull(deserialized)
   }
 
@@ -309,21 +309,21 @@ class FeatureEventLogSerializationTest {
         "\"recorder\":{\"id\":\"action-stats\",\"version\":\"2\"}," +
         "\"action\":{\"data\":{},\"id\":\"Run\"}" +
       "}"
-    val deserialized = LogEventSerializer.fromString(json)
+    val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(json)
     assertNull(deserialized)
   }
 
   @Test
   fun testInvalidJsonEvent() {
     val json = "\"session\":12345,\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":1529428045322}"
-    val deserialized = LogEventSerializer.fromString(json)
+    val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(json)
     assertNull(deserialized)
   }
 
   @Test
   fun testInvalidEvent() {
     val json = "{\"a\":12345,\"b\":\"183.0\",\"d\":\"-1\"}"
-    val deserialized = LogEventSerializer.fromString(json)
+    val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(json)
     assertNull(deserialized)
   }
 
@@ -343,7 +343,10 @@ class FeatureEventLogSerializationTest {
         out.append(LogEventSerializer.toString(event)).append("\n")
       }
       FileUtil.writeToFile(log, out.toString())
-      val actual = LogEventRecordRequest.create(log, "recorder-id", "IU", "user-id", 600, LogEventTrueFilter, false)
+      val actual = LogEventRecordRequest.create(
+        log, "recorder-id", "IU", "user-id",
+        600, LogEventTrueFilter, false, TestDataCollectorDebugLogger
+      )
       assertEquals(expected, actual)
     }
     finally {
@@ -355,7 +358,7 @@ class FeatureEventLogSerializationTest {
     val line = LogEventSerializer.toString(event)
     assertLogEventIsValid(JsonParser().parse(line).asJsonObject, isState, *dataOptions)
 
-    val deserialized = LogEventSerializer.fromString(line)
+    val deserialized = LogEventDeserializer(TestDataCollectorDebugLogger).fromString(line)
     assertEquals(event, deserialized)
   }
 

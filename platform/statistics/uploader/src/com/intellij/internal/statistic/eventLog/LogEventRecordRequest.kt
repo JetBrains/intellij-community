@@ -12,38 +12,40 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
 
   companion object {
     private const val RECORD_SIZE = 1000 * 1000 // 1000KB
-    //private val LOG = Logger.getInstance(LogEventRecordRequest::class.java)
 
-    fun create(file: File, recorder: String, product: String, deviceId: String, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
+    fun create(file: File, recorder: String, product: String, deviceId: String, filter: LogEventFilter,
+               internal: Boolean, logger: DataCollectorDebugLogger): LogEventRecordRequest? {
       try {
-        return create(file, recorder, product, deviceId, RECORD_SIZE, filter, internal)
+        return create(file, recorder, product, deviceId, RECORD_SIZE, filter, internal, logger)
       }
       catch (e: Exception) {
-        //LOG.warn("Failed reading event log file", e)
+        logger.warn("Failed reading event log file", e)
         return null
       }
     }
 
-    fun create(file: File, recorder: String, product: String, user: String, maxRecordSize: Int, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
+    fun create(file: File, recorder: String, product: String, user: String, maxRecordSize: Int,
+               filter: LogEventFilter, internal: Boolean, logger: DataCollectorDebugLogger): LogEventRecordRequest? {
       try {
+        val deserializer = LogEventDeserializer(logger)
         val records = ArrayList<LogEventRecord>()
         BufferedReader(FileReader(file.path)).use { reader ->
           val sizeEstimator = LogEventRecordSizeEstimator(product, user)
           var events = ArrayList<LogEvent>()
-          var line = fillNextBatch(reader, reader.readLine(), events, sizeEstimator, maxRecordSize, filter)
+          var line = fillNextBatch(reader, reader.readLine(), events, deserializer, sizeEstimator, maxRecordSize, filter)
           while (!events.isEmpty()) {
             records.add(LogEventRecord(events))
             events = ArrayList()
-            line = fillNextBatch(reader, line, events, sizeEstimator, maxRecordSize, filter)
+            line = fillNextBatch(reader, line, events, deserializer, sizeEstimator, maxRecordSize, filter)
           }
         }
         return LogEventRecordRequest(recorder, product, user, records, internal)
       }
       catch (e: JsonSyntaxException) {
-        //LOG.warn(e)
+        logger.warn(e.message ?: "", e)
       }
       catch (e: IOException) {
-        //LOG.warn(e)
+        logger.warn(e.message ?: "", e)
       }
       return null
     }
@@ -51,13 +53,14 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
     private fun fillNextBatch(reader: BufferedReader,
                               firstLine: String?,
                               events: MutableList<LogEvent>,
+                              deserializer: LogEventDeserializer,
                               estimator: LogEventRecordSizeEstimator,
                               maxRecordSize: Int,
                               filter: LogEventFilter) : String? {
       var recordSize = 0
       var line = firstLine
       while (line != null && recordSize + estimator.estimate(line) < maxRecordSize) {
-        val event = LogEventSerializer.fromString(line)
+        val event = deserializer.fromString(line)
         if (event != null && filter.accepts(event)) {
           recordSize += estimator.estimate(line)
           events.add(event)

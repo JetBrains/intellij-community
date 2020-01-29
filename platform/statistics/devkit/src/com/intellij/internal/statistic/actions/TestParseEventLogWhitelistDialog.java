@@ -212,7 +212,11 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
       FileUtil.writeToFile(log, text);
       String deviceId = EventLogConfiguration.INSTANCE.getDeviceId();
       final String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
-      final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(log, "FUS", productCode, deviceId, filter, true);
+      final TestDataCollectorDebugLogger logger = new TestDataCollectorDebugLogger();
+      final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(
+        log, "FUS", productCode, deviceId, filter, true, logger
+      );
+
       if (request == null) {
         throw new ParseEventLogWhitelistException("Failed parsing event log");
       }
@@ -260,6 +264,28 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
   public static class ParseEventLogWhitelistException extends Exception {
     public ParseEventLogWhitelistException(String s) {
       super(s);
+    }
+  }
+
+  private static class TestDataCollectorDebugLogger implements DataCollectorDebugLogger {
+    @Override
+    public void info(String message) { }
+
+    @Override
+    public void info(String message, Throwable t) { }
+
+    @Override
+    public void warn(String message) { }
+
+    @Override
+    public void warn(String message, Throwable t) { }
+
+    @Override
+    public void trace(String message) { }
+
+    @Override
+    public boolean isTraceEnabled() {
+      return false;
     }
   }
 }

@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class EventLogStatisticsService implements StatisticsService {
-  //private static final Logger LOG = Logger.getInstance(EventLogStatisticsService.class);
   private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
   private static final int MAX_FILES_TO_SEND = 5;
@@ -53,9 +52,12 @@ public class EventLogStatisticsService implements StatisticsService {
                                       @NotNull EventLogRecorderConfig config,
                                       @NotNull EventLogSettingsService settings,
                                       @NotNull EventLogResultDecorator decorator) {
-    final List<EventLogFile> logs = getLogFiles(config);
+    final EventLogApplicationInfo info = settings.getApplicationInfo();
+    final DataCollectorDebugLogger logger = info.getLogger();
+
+    final List<EventLogFile> logs = getLogFiles(config, logger);
     if (!config.isSendEnabled()) {
-      cleanupEventLogFiles(logs);
+      cleanupEventLogFiles(logs, logger);
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "Event Log collector is not enabled");
     }
 
@@ -69,12 +71,12 @@ public class EventLogStatisticsService implements StatisticsService {
     }
 
     if (!isSendLogsEnabled(device, settings.getPermittedTraffic())) {
-      cleanupEventLogFiles(logs);
+      cleanupEventLogFiles(logs, logger);
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
-    final boolean isInternal = settings.getApplicationInfo().isInternal();
-    final String productCode = settings.getApplicationInfo().getProductCode();
+    final boolean isInternal = info.isInternal();
+    final String productCode = info.getProductCode();
     final LogEventFilter filter = settings.getEventFilter();
     try {
       int failed = 0;
@@ -84,12 +86,12 @@ public class EventLogStatisticsService implements StatisticsService {
         final File file = logs.get(i).getFile();
         final String deviceId = device.getDeviceId();
         final LogEventRecordRequest recordRequest =
-          LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal);
+          LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger);
         final String error = validate(recordRequest, file);
         if (StatisticsEventLogUtil.isNotEmpty(error) || recordRequest == null) {
-          //if (LOG.isTraceEnabled()) {
-          //  LOG.trace(file.getName() + "-> " + error);
-          //}
+          if (logger.isTraceEnabled()) {
+            logger.trace(file.getName() + "-> " + error);
+          }
           decorator.failed(recordRequest);
           toRemove.add(file);
           failed++;
@@ -111,25 +113,26 @@ public class EventLogStatisticsService implements StatisticsService {
             }
           }
 
-          //if (LOG.isTraceEnabled()) {
-          //  LOG.trace(file.getName() + " -> " + getResponseMessage(response));
-          //}
+          if (logger.isTraceEnabled()) {
+            logger.trace(file.getName() + " -> " + getResponseMessage(response));
+          }
         }
         catch (Exception e) {
           failed++;
-          //if (LOG.isTraceEnabled()) {
-          //  LOG.trace(file.getName() + " -> " + e.getMessage());
-          //}
+          if (logger.isTraceEnabled()) {
+            logger.trace(file.getName() + " -> " + e.getMessage());
+          }
         }
       }
 
-      cleanupFiles(toRemove);
+      cleanupFiles(toRemove, logger);
       //TODO: add listeners
       //EventLogSystemLogger.logFilesSend(config.getRecorderId(), logs.size(), size, failed);
       return decorator.toResult();
     }
     catch (Exception e) {
-      //LOG.info(e);
+      final String message = e.getMessage();
+      logger.info(message != null ? message : "", e);
       throw new StatServiceException("Error during data sending.", e);
     }
   }
@@ -185,33 +188,34 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
-  protected static List<EventLogFile> getLogFiles(@NotNull EventLogRecorderConfig provider) {
+  protected static List<EventLogFile> getLogFiles(@NotNull EventLogRecorderConfig provider, @NotNull DataCollectorDebugLogger logger) {
     try {
       return provider.getLogFilesProvider().getLogFiles();
     }
     catch (Exception e) {
-      //LOG.info(e);
+      final String message = e.getMessage();
+      logger.info(message != null ? message : "", e);
     }
     return Collections.emptyList();
   }
 
-  private static void cleanupEventLogFiles(@NotNull List<EventLogFile> toRemove) {
+  private static void cleanupEventLogFiles(@NotNull List<EventLogFile> toRemove, @NotNull DataCollectorDebugLogger logger) {
     List<File> filesToRemove = new ArrayList<>();
     for (EventLogFile file : toRemove) {
       filesToRemove.add(file.getFile());
     }
-    cleanupFiles(filesToRemove);
+    cleanupFiles(filesToRemove, logger);
   }
 
-  private static void cleanupFiles(@NotNull List<File> toRemove) {
+  private static void cleanupFiles(@NotNull List<File> toRemove, @NotNull DataCollectorDebugLogger logger) {
     for (File file : toRemove) {
       if (!file.delete()) {
-        //LOG.warn("Failed deleting event log: " + file.getName());
+        logger.warn("Failed deleting event log: " + file.getName());
       }
 
-      //if (LOG.isTraceEnabled()) {
-      //  LOG.trace("Removed sent log: " + file.getName());
-      //}
+      if (logger.isTraceEnabled()) {
+        logger.trace("Removed sent log: " + file.getName());
+      }
     }
   }
 

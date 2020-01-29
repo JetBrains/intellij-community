@@ -9,10 +9,9 @@ import java.io.OutputStreamWriter
 import java.lang.reflect.Type
 import java.util.*
 
-object LogEventSerializer {
-  //private val LOG = Logger.getInstance(LogEventSerializer::class.java)
-  private val gson = GsonBuilder().registerTypeAdapter(LogEvent::class.java, LogEventJsonDeserializer()).create()
+private val gson = GsonBuilder().registerTypeAdapter(LogEvent::class.java, LogEventJsonDeserializer()).create()
 
+object LogEventSerializer {
   fun toString(session: LogEventRecordRequest, writer: OutputStreamWriter) {
     writer.write(toString(session))
   }
@@ -78,13 +77,15 @@ object LogEventSerializer {
   fun toString(event: LogEvent): String {
     return toJson(event).toString()
   }
+}
 
+class LogEventDeserializer(val logger: DataCollectorDebugLogger) {
   fun fromString(line: String): LogEvent? {
     return try {
       gson.fromJson(line, LogEvent::class.java)
     }
     catch (e : Exception) {
-      //LOG.trace("Failed deserializing event: '${e.message}'")
+      logger.trace("Failed deserializing event: '${e.message}'")
       null
     }
   }

@@ -4,8 +4,8 @@ package com.intellij.internal.statistic.eventLog;
 import org.jetbrains.annotations.NotNull;
 
 public class DeviceConfiguration {
-  private String myDeviceId;
-  private int myBucket;
+  private final String myDeviceId;
+  private final int myBucket;
 
   public DeviceConfiguration(@NotNull String deviceId, int bucket) {
     myDeviceId = deviceId;

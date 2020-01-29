@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.connect;
 
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
+import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.jdom.Element;
@@ -9,15 +10,12 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class SettingsConnectionService {
-  //private static final Logger LOG = Logger.getInstance(SettingsConnectionService.class);
-
   protected static final String SERVICE_URL_ATTR_NAME = "url";
 
   private Map<String, String> myAttributesMap;
@@ -31,9 +29,14 @@ public abstract class SettingsConnectionService {
   @Nullable
   private final String myDefaultServiceUrl;
 
-  protected SettingsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
+  @Nullable
+  private final DataCollectorDebugLogger myLogger;
+
+  protected SettingsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl,
+                                      @Nullable DataCollectorDebugLogger logger) {
     mySettingsUrl = settingsUrl;
     myDefaultServiceUrl = defaultServiceUrl;
+    myLogger = logger;
   }
 
   @SuppressWarnings("unused")
@@ -67,13 +70,19 @@ public abstract class SettingsConnectionService {
           }
         }
         catch (JDOMException e) {
-          //LOG.info(e);
+          if (myLogger != null) {
+            final String message = e.getMessage();
+            myLogger.info(message != null ? message : "");
+          }
         }
         return settings;
       }
     }
-    catch (IOException e) {
-      //LOG.warn(e);
+    catch (Exception e) {
+      if (myLogger != null) {
+        final String message = e.getMessage();
+        myLogger.warn(message != null ? message : "", e);
+      }
     }
     return Collections.emptyMap();
   }
