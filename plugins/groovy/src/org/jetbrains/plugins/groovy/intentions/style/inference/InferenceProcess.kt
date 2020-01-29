@@ -3,11 +3,14 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.search.SearchScope
+import org.jetbrains.plugins.groovy.intentions.closure.isClosureType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 /**
  * Performs full substitution for non-typed parameters of [method]
@@ -31,6 +34,13 @@ fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
   val inferredGraph = determineDependencies(graph)
   return instantiateTypeParameters(parameterizedDriver, inferredGraph, method, typeUsage)
 }
+
+private val forbiddenAnnotations =
+  setOf(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO,
+        GroovyCommonClassNames.GROOVY_TRANSFORM_STC_CLOSURE_PARAMS)
+
+internal fun GrParameter.eligibleForExtendedInference(): Boolean =
+  typeElement == null || (type.isClosureType() && (annotations.map { it.qualifiedName } intersect forbiddenAnnotations).isEmpty())
 
 private fun createDriver(method: GrMethod,
                          scope: SearchScope): InferenceDriver {

@@ -54,7 +54,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
                          scope: SearchScope): InferenceDriver {
       val elementFactory = GroovyPsiElementFactory.getInstance(virtualMethod.project)
       val targetParameters = setUpParameterMapping(method, virtualMethod)
-        .filter { it.key.typeElement == null }
+        .filter { it.key.eligibleForExtendedInference() }
         .map { it.value }
         .toSet()
       val typeParameters = mutableListOf<PsiTypeParameter>()

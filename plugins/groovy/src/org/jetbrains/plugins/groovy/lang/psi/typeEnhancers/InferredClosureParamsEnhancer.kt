@@ -10,6 +10,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.compose
+import org.jetbrains.plugins.groovy.intentions.style.inference.eligibleForExtendedInference
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -25,7 +26,7 @@ class InferredClosureParamsEnhancer : ClosureParamsEnhancer() {
   override fun getClosureParameterType(closureBlock: GrFunctionalExpression, index: Int): PsiType? {
     val methodCall = closureBlock.parentOfType<GrCall>() ?: return null
     val method = (methodCall.resolveMethod() as? GrMethod)
-    method?.takeIf { it.parameters.any { parameter -> parameter.typeElement == null } } ?: return null
+    method?.takeIf { it.parameters.any { parameter -> parameter.eligibleForExtendedInference() } } ?: return null
     val signatures = computeSignatures(methodCall, closureBlock, method) ?: return null
     val parameters = closureBlock.allParameters
     return signatures.singleOrNull { it.size == parameters.size }?.getOrNull(index)
@@ -58,7 +59,7 @@ class InferredClosureParamsEnhancer : ClosureParamsEnhancer() {
                                             virtualMethod: GrMethod): GrParameter? {
     val method = resolveResult.candidate?.method ?: return null
     val methodParameter = (resolveResult.candidate?.argumentMapping?.targetParameter(
-      ExpressionArgument(closureBlock))?.psi as? GrParameter)?.takeIf { it.typeElement == null } ?: return null
+      ExpressionArgument(closureBlock))?.psi as? GrParameter)?.takeIf { it.eligibleForExtendedInference() } ?: return null
     return virtualMethod.parameters.getOrNull(method.parameterList.getParameterIndex(methodParameter)) ?: return null
   }
 
