@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.ProjectExtensionPointName
-import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -370,8 +369,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
 
       if (!(settings as RunnerAndConfigurationSettingsImpl).isStoreInArbitraryFileInProject()) {
-      // scheme level can be changed (workspace -> project), so, ensure that scheme is added to corresponding scheme manager (if exists, doesn't harm)
-        settings.schemeManager?.addScheme(settings)
+        // scheme level can be changed (workspace -> project), so, ensure that scheme is added to corresponding scheme manager (if exists, doesn't harm)
+        (if (settings.isShared) projectSchemeManager else workspaceSchemeManager).addScheme(settings)
       }
     }
 
@@ -385,9 +384,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       eventPublisher.runConfigurationChanged(settings, existingId)
     }
   }
-
-  private val RunnerAndConfigurationSettings.schemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>?
-    get() = if (isShared) projectSchemeManager else workspaceSchemeManager
 
   override fun refreshUsagesList(profile: RunProfile) {
     if (profile !is RunConfiguration) {
@@ -1106,8 +1102,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
           iterator.remove()
           if (!(settings as RunnerAndConfigurationSettingsImpl).isStoreInArbitraryFileInProject()) {
-            settings.schemeManager?.removeScheme(settings)
+            (if (settings.isShared) projectSchemeManager else workspaceSchemeManager).removeScheme(settings)
           }
+
           recentlyUsedTemporaries.remove(settings)
           removed.add(settings)
           iconCache.remove(settings.uniqueID)
