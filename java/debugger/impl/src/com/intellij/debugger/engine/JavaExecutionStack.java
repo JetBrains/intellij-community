@@ -240,6 +240,7 @@ public class JavaExecutionStack extends XExecutionStack {
       int i = 0;
       boolean separator = true;
       for (StackFrameItem stackFrame : asyncStack) {
+        if (myContainer.isObsolete()) return;
         if (i > AsyncStacksUtils.getMaxStackLength()) {
           addFrameIfNeeded(new XStackFrame() {
             @Override
