@@ -32,7 +32,9 @@ internal constructor(private val project: Project,
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent {
-    val wrapper = RoundedPanel(BorderLayout(0, 0))
+    val wrapper = RoundedPanel(BorderLayout()).apply {
+      border = JBUI.Borders.empty(2, 0)
+    }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
     val component = GHPRReviewThreadComponent.create(project, thread, reviewService, avatarIconsProvider, currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
@@ -46,7 +48,9 @@ internal constructor(private val project: Project,
   }
 
   override fun createCommentComponent(side: Side, line: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
-    val wrapper = RoundedPanel(BorderLayout(0, 0))
+    val wrapper = RoundedPanel(BorderLayout()).apply {
+      border = JBUI.Borders.empty(2, 0)
+    }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
     val commentField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Comment") { text ->
