@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,7 +31,7 @@ public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber
     String versionWithoutCode = removeProductCode(version);
     int separator = versionWithoutCode.indexOf('.');
     if (separator > 0) {
-      List<String> components = split(versionWithoutCode);
+      List<String> components = StatisticsEventLogUtil.split(versionWithoutCode ,'.');
       return new EventLogBuildNumber(toIntArray(components));
     }
     return new EventLogBuildNumber(tryParseInt(versionWithoutCode), 0);
@@ -51,26 +50,6 @@ public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber
       array[componentsSize] = 0;
     }
     return array;
-  }
-
-  private static List<String> split(String text) {
-    List<String> result = new ArrayList<>();
-    int pos = 0;
-    int index = text.indexOf('.', pos);
-    while (index > 0) {
-      final int nextPos = index + 1;
-      String token = text.substring(pos, index);
-      if (token.length() != 0) {
-        result.add(token);
-      }
-      pos = nextPos;
-      index = text.indexOf('.', pos);
-    }
-
-    if (pos < text.length()) {
-      result.add(text.substring(pos));
-    }
-    return result;
   }
 
   @NotNull

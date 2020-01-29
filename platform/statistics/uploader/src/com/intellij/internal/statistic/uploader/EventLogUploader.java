@@ -1,15 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.uploader;
 
+import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalRecorderConfig;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class EventLogUploader {
   public static void main(String[] args) {
@@ -46,7 +48,10 @@ public class EventLogUploader {
 
     logger.info("Start uploading...");
     logger.info("{url:" + appInfo.getTemplateUrl() + ", product:" + appInfo.getProductCode() + ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
-    logger.info("{recorder:" + recorder.getRecorderId() + ", root:" + recorder.getLogFilesProvider().getLogFilesDir() + "}");
+    String logs = recorder.getLogFilesProvider().getLogFiles().stream().
+      map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining());
+
+    logger.info("{recorder:" + recorder.getRecorderId() + ", files:" + logs + "}");
     logger.info("{device:" + device.getDeviceId() + ", bucket:" + device.getBucket() + "}");
     try {
       //TODO: save the number of uploaded files and log it during the next IDE session
@@ -82,10 +87,10 @@ public class EventLogUploader {
   private static EventLogRecorderConfig newRecorderConfig(Map<String, String> options) {
     String recorder = options.get(EventLogUploaderOptions.RECORDER_OPTION);
     if (recorder != null) {
-      String dir = options.get(EventLogUploaderOptions.DIRECTORY_OPTION);
-      Path path = dir != null ? Paths.get(dir) : null;
-      if (path != null && path.toFile().exists()) {
-        return new EventLogExternalRecorderConfig(recorder, path.toString());
+      String logs = options.get(EventLogUploaderOptions.LOGS_OPTION);
+      if (logs != null) {
+        List<String> files = StatisticsEventLogUtil.split(logs, File.pathSeparatorChar);
+        return new EventLogExternalRecorderConfig(recorder, files);
       }
     }
     return null;

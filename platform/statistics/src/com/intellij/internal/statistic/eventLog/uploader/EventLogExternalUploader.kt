@@ -39,9 +39,9 @@ object EventLogExternalUploader {
                                    recorder: EventLogRecorderConfig,
                                    applicationInfo: EventLogApplicationInfo,
                                    shouldCopy: Boolean): Array<out String> {
-    val root = logsRoot(recorder)
-    if (root == null || !root.exists()) {
-      throw EventLogUploadException("Event logs root directory is not specified")
+    val logFiles = logsToSend(recorder)
+    if (logFiles.isEmpty()) {
+      throw EventLogUploadException("No available logs to send")
     }
 
     val tempDir = getTempDir()
@@ -66,7 +66,8 @@ object EventLogExternalUploader {
     args += UPLOADER_MAIN_CLASS
 
     addArgument(args, RECORDER_OPTION, recorder.getRecorderId())
-    addArgument(args, DIRECTORY_OPTION, root.toString())
+    val joinedPath: String = logFiles.joinToString(separator = File.pathSeparator)
+    addArgument(args, LOGS_OPTION, joinedPath)
     addArgument(args, DEVICE_OPTION, device.deviceId)
     addArgument(args, BUCKET_OPTION, device.bucket.toString())
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
@@ -87,7 +88,13 @@ object EventLogExternalUploader {
     args += value
   }
 
-  private fun logsRoot(recorder: EventLogRecorderConfig) = recorder.getLogFilesProvider().getLogFilesDir()?.toAbsolutePath()
+  private fun logsToSend(recorder: EventLogRecorderConfig): List<String> {
+    val dir = recorder.getLogFilesProvider().getLogFilesDir()
+    if (dir != null && dir.exists()) {
+      return dir.toFile().listFiles()?.take(5)?.map { it.absolutePath } ?: emptyList()
+    }
+    return emptyList()
+  }
 
   private fun joinAsClasspath(libCopies: List<String>, uploaderCopy: File): String {
     if (libCopies.isEmpty()) {

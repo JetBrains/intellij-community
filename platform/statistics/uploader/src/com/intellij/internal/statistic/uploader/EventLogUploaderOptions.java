@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.uploader;
 
 public interface EventLogUploaderOptions {
   String RECORDER_OPTION = "--recorder";
-  String DIRECTORY_OPTION = "--dir";
+  String LOGS_OPTION = "--files";
 
   String DEVICE_OPTION = "--device";
   String BUCKET_OPTION = "--bucket";

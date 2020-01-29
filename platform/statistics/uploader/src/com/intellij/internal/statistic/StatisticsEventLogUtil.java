@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StatisticsEventLogUtil {
   @NonNls public static final String UTF8 = "UTF-8";
@@ -63,5 +65,26 @@ public class StatisticsEventLogUtil {
     finally {
       stream.close();
     }
+  }
+
+  @NotNull
+  public static List<String> split(@NotNull String text, char separator) {
+    List<String> result = new ArrayList<>();
+    int pos = 0;
+    int index = text.indexOf(separator, pos);
+    while (index >= 0) {
+      final int nextPos = index + 1;
+      String token = text.substring(pos, index);
+      if (token.length() != 0) {
+        result.add(token);
+      }
+      pos = nextPos;
+      index = text.indexOf(separator, pos);
+    }
+
+    if (pos < text.length()) {
+      result.add(text.substring(pos));
+    }
+    return result;
   }
 }
