@@ -8,10 +8,7 @@ import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
-import org.apache.http.HeaderElement;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.utils.DateUtils;
@@ -92,11 +89,10 @@ public class FUStatisticsWhiteListGroupsService {
       if (!StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) {
         final HttpResponse response = StatisticsEventLogUtil.create(userAgent).execute(new HttpHead(serviceUrl));
         return Stream.of(response.getHeaders(HttpHeaders.LAST_MODIFIED)).
-          flatMap(header -> Stream.of(header.getElements())).
+          map(header -> header.getValue()).
           filter(Objects::nonNull).
-          map(HeaderElement::getValue).
           map(value -> DateUtils.parseDate(value).getTime()).
-          max(Long::compareTo).orElse(Long.MAX_VALUE);
+          max(Long::compareTo).orElse(0L);
       }
     }
     catch (IOException e) {
