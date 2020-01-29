@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class FileNameMacro extends Macro {
@@ -31,6 +32,7 @@ public class FileNameMacro extends Macro {
 
   @NotNull
   @Override
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getDescription() {
     return IdeBundle.message("macro.file.name");
   }
