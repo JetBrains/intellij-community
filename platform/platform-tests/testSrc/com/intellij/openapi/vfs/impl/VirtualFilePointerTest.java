@@ -867,22 +867,18 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCrazyMoronicPointersWithEmptyPathDontCrashAnything() {
-    VirtualFilePointer p = myVirtualFilePointerManager.create("file:/", disposable, null);
-    assertEquals("file:/", p.getUrl());
-    p = myVirtualFilePointerManager.create("file://", disposable, null);
-    assertEquals("file://", p.getUrl());
-    p = myVirtualFilePointerManager.create("file:///", disposable, null);
-    assertEquals("file://", p.getUrl());
-    p = myVirtualFilePointerManager.create("file:////", disposable, null);
-    assertEquals("file://", p.getUrl());
+  public void testFileUrlNormalization() {
+    assertEquals("file:/", myVirtualFilePointerManager.create("file:/", disposable, null).getUrl());
+    assertEquals("file://", myVirtualFilePointerManager.create("file://", disposable, null).getUrl());
+    assertEquals("file://", myVirtualFilePointerManager.create("file:///", disposable, null).getUrl());
+    assertEquals("file://", myVirtualFilePointerManager.create("file:////", disposable, null).getUrl());
   }
 
   @Test
-  public void testCleanupPathWithWindowsUNC() {
+  public void testUncPathNormalization() {
     assumeWindows();
-    final VirtualFilePointer path = createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null);
-    assertEquals("\\\\wsl$\\Ubuntu\\", path.getPresentableUrl());
+    assertEquals("\\\\wsl$\\Ubuntu\\", createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null).getPresentableUrl());
+    assertEquals("\\\\wsl$\\Ubuntu\\bin", createPointerByFile(new File("//wsl$//Ubuntu//bin//"), null).getPresentableUrl());
   }
 
   @Test
