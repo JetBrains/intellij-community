@@ -382,14 +382,10 @@ public final class TerminalView {
       myToolWindow = toolWindow;
     }
 
+    @NotNull
     @Override
     public RelativeRectangle getAcceptArea() {
       return new RelativeRectangle(myToolWindow.getComponent());
-    }
-
-    @Override
-    public RelativeRectangle getAcceptAreaFallback() {
-      return getAcceptArea();
     }
 
     @NotNull

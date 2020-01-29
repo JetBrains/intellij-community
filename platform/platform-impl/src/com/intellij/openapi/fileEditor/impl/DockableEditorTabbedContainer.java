@@ -23,8 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class DockableEditorTabbedContainer implements DockContainer.Persistent {
-
+public final class DockableEditorTabbedContainer implements DockContainer.Persistent {
   private final EditorsSplitters mySplitters;
   private final Project myProject;
 
@@ -72,11 +71,13 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
     }
   }
 
+  @NotNull
   @Override
   public RelativeRectangle getAcceptArea() {
     return new RelativeRectangle(mySplitters);
   }
 
+  @NotNull
   @Override
   public RelativeRectangle getAcceptAreaFallback() {
     JRootPane root = mySplitters.getRootPane();

@@ -13,18 +13,24 @@ import javax.swing.*;
 import java.awt.*;
 
 public interface DockContainer extends Disposable, Activatable {
-  enum ContentResponse {ACCEPT_MOVE, ACCEPT_COPY, DENY;
+  enum ContentResponse {
+    ACCEPT_MOVE, ACCEPT_COPY, DENY;
+
     public boolean canAccept() {
       return this != DENY;
     }
   }
 
+  @NotNull
   RelativeRectangle getAcceptArea();
 
   /**
    * This area is used when nothing was found with getAcceptArea
    */
-  RelativeRectangle getAcceptAreaFallback();
+  @NotNull
+  default RelativeRectangle getAcceptAreaFallback() {
+    return getAcceptArea();
+  }
 
   @NotNull
   ContentResponse getContentResponse(@NotNull DockableContent<?> content, RelativePoint point);
@@ -62,24 +68,16 @@ public interface DockContainer extends Disposable, Activatable {
   interface Dialog extends DockContainer {}
 
   interface Persistent extends DockContainer {
-
     String getDockContainerType();
 
     Element getState();
   }
 
   interface Listener {
-    void contentAdded(@NotNull Object key);
-    void contentRemoved(Object key);
+    default void contentAdded(@SuppressWarnings("unused") @NotNull Object key) {
+    }
 
-    class Adapter implements Listener {
-      @Override
-      public void contentAdded(@NotNull Object key) {
-      }
-
-      @Override
-      public void contentRemoved(Object key) {
-      }
+    default void contentRemoved(Object key) {
     }
   }
 }
