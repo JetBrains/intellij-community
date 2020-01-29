@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus;
 
 import com.google.gson.GsonBuilder;
+import com.intellij.internal.statistic.EventLogHttpClientUtils;
 import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
@@ -9,12 +10,21 @@ import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondi
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.HttpRequests;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import org.apache.http.HeaderElement;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.utils.DateUtils;
+import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.emptyList;
@@ -67,9 +77,11 @@ public class FUStatisticsWhiteListGroupsService {
 
     String content = null;
     try {
-      content = HttpRequests.request(serviceUrl)
-        .productNameAsUserAgent()
-        .readString(null);
+      HttpResponse response = EventLogHttpClientUtils.create().execute(new HttpGet(serviceUrl));
+      HttpEntity entity = response.getEntity();
+      if (entity != null) {
+        content = EntityUtils.toString(entity, CharsetToolkit.UTF8);
+      }
     }
     catch (IOException e) {
       LOG.info(e);
@@ -80,9 +92,13 @@ public class FUStatisticsWhiteListGroupsService {
   private static long lastModifiedWhitelist(@Nullable String serviceUrl) {
     try {
       if (!StringUtil.isEmptyOrSpaces(serviceUrl)) {
-        return HttpRequests.head(serviceUrl).
-          productNameAsUserAgent().
-          connect(r -> r.getConnection().getLastModified());
+        final HttpResponse response = EventLogHttpClientUtils.create().execute(new HttpHead(serviceUrl));
+        return Stream.of(response.getHeaders(HttpHeaders.LAST_MODIFIED)).
+          flatMap(header -> Stream.of(header.getElements())).
+          filter(Objects::nonNull).
+          map(HeaderElement::getValue).
+          map(value -> DateUtils.parseDate(value).getTime()).
+          max(Long::compareTo).orElse(Long.MAX_VALUE);
       }
     }
     catch (IOException e) {

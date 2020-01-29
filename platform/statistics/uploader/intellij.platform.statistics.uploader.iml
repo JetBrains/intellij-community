@@ -17,9 +17,9 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>

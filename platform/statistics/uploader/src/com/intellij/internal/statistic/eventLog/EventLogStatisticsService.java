@@ -6,24 +6,32 @@ import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.HttpRequests;
+import org.apache.http.Consts;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.entity.GzipCompressingEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.OutputStreamWriter;
+import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.zip.GZIPOutputStream;
 
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance(EventLogStatisticsService.class);
+  private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
   private static final int MAX_FILES_TO_SEND = 5;
 
@@ -92,33 +100,22 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         try {
-          HttpRequests
-            .post(serviceUrl, HttpRequests.JSON_CONTENT_TYPE)
-            .isReadResponseOnError(true)
-            .tuner(connection -> connection.setRequestProperty("Content-Encoding", "gzip"))
-            .connect(request -> {
-              final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-              try (OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(out), StandardCharsets.UTF_8)) {
-                LogEventSerializer.INSTANCE.toString(recordRequest, writer);
-              }
-              request.write(out.toByteArray());
-              if (LOG.isTraceEnabled()) {
-                LOG.trace(file.getName() + " -> " + readResponse(request));
-              }
-              return null;
-            });
-          decorator.succeed(recordRequest);
-          toRemove.add(file);
-        }
-        catch (HttpRequests.HttpStatusException e) {
-          failed++;
-          decorator.failed(recordRequest);
-          if (e.getStatusCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+          HttpResponse response = execute(serviceUrl, recordRequest);
+          int code = response.getStatusLine().getStatusCode();
+          if (code == HttpStatus.SC_OK) {
+            decorator.succeed(recordRequest);
             toRemove.add(file);
+          }
+          else {
+            failed++;
+            decorator.failed(recordRequest);
+            if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
+              toRemove.add(file);
+            }
           }
 
           if (LOG.isTraceEnabled()) {
-            LOG.trace(file.getName() + " -> " + e.getMessage());
+            LOG.trace(file.getName() + " -> " + getResponseMessage(response));
           }
         }
         catch (Exception e) {
@@ -140,14 +137,20 @@ public class EventLogStatisticsService implements StatisticsService {
     }
   }
 
-  @Nullable
-  private static String readResponse(@NotNull HttpRequests.Request request) {
-    try {
-      return request.readString();
+  @NotNull
+  private static HttpResponse execute(String serviceUrl, LogEventRecordRequest recordRequest) throws IOException {
+    HttpPost post = new HttpPost(serviceUrl);
+    post.setEntity(new GzipCompressingEntity(new StringEntity(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON)));
+    return HttpClientBuilder.create().build().execute(post);
+  }
+
+  @NotNull
+  private static String getResponseMessage(HttpResponse response) throws IOException {
+    HttpEntity entity = response.getEntity();
+    if (entity != null) {
+      return EntityUtils.toString(entity, CharsetToolkit.UTF8);
     }
-    catch (Exception e) {
-      return e.getMessage();
-    }
+    return Integer.toString(response.getStatusLine().getStatusCode());
   }
 
   private static boolean isSendLogsEnabled(@NotNull DeviceConfiguration userData, int percent) {

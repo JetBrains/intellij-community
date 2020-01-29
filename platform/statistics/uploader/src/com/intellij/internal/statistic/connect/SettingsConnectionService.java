@@ -1,15 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.connect;
 
+import com.intellij.internal.statistic.EventLogHttpClientUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.HttpRequests;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -47,15 +51,17 @@ public abstract class SettingsConnectionService {
     return myDefaultServiceUrl;
   }
 
-  @Nullable
+  @NotNull
   private Map<String, String> readSettings(final String... attributes) {
     if (mySettingsUrl == null) return Collections.emptyMap();
-    return HttpRequests.request(mySettingsUrl)
-      .productNameAsUserAgent()
-      .connect(request -> {
+
+    try {
+      HttpEntity entity = EventLogHttpClientUtils.create().execute(new HttpGet(mySettingsUrl)).getEntity();
+      InputStream content = entity != null ? entity.getContent() : null;
+      if (content != null) {
         Map<String, String> settings = new LinkedHashMap<>();
         try {
-          Element root = JDOMUtil.load(request.getReader());
+          Element root = JDOMUtil.load(content);
           for (String s : attributes) {
             String attributeValue = root.getAttributeValue(s);
             if (StringUtil.isNotEmpty(attributeValue)) {
@@ -67,7 +73,12 @@ public abstract class SettingsConnectionService {
           LOG.info(e);
         }
         return settings;
-      }, Collections.emptyMap(), LOG);
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    return Collections.emptyMap();
   }
 
   @Nullable
@@ -81,6 +92,6 @@ public abstract class SettingsConnectionService {
     if (myAttributesMap == null || myAttributesMap.isEmpty()) {
       myAttributesMap = readSettings(getAttributeNames());
     }
-    return myAttributesMap != null ? myAttributesMap.get(attributeValue) : null;
+    return myAttributesMap.get(attributeValue);
   }
 }
