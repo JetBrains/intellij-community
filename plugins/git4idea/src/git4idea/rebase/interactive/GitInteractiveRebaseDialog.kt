@@ -295,7 +295,7 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
         row,
         column,
         row == table.rowCount - 1,
-        shouldDrawNode(row),
+        getDrawNodeType(row),
         table.editingRow == row,
         getRowHeight(row)
       )
@@ -369,10 +369,28 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
     subjectColumn.cellEditor = CommitMessageCellEditor(project, this, disposable)
   }
 
-  private fun shouldDrawNode(row: Int): Boolean {
-    val entryWithEditedMessage = model.getEntry(row)
-    return entryWithEditedMessage.entry.action != GitRebaseEntry.Action.FIXUP &&
-           entryWithEditedMessage.entry.action != GitRebaseEntry.Action.DROP
+  private fun getDrawNodeType(row: Int): CommitIconRenderer.NodeType = when {
+    isFixupOrDrop(row) -> CommitIconRenderer.NodeType.NO_NODE
+    isFixupRoot(row) -> CommitIconRenderer.NodeType.DOUBLE_NODE
+    else -> CommitIconRenderer.NodeType.SIMPLE_NODE
+  }
+
+  private fun isFixupOrDrop(row: Int): Boolean {
+    val commitRow = model.getEntry(row)
+    return commitRow.entry.action == GitRebaseEntry.Action.FIXUP || commitRow.entry.action == GitRebaseEntry.Action.DROP
+  }
+
+  private fun isFixupRoot(rowToCheck: Int): Boolean {
+    if (isFixupOrDrop(rowToCheck)) {
+      return false
+    }
+    for (row in rowToCheck + 1 until model.rowCount) {
+      val rowAction = model.getEntry(row).entry.action
+      if (rowAction != GitRebaseEntry.Action.DROP) {
+        return rowAction == GitRebaseEntry.Action.FIXUP
+      }
+    }
+    return false
   }
 
   private class CommitMessageCellEditor(
@@ -428,11 +446,14 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
 private class CommitIconRenderer : SimpleColoredRenderer() {
   companion object {
     private val GRAPH_COLOR = DefaultColorGenerator().getColor(1)
-    private const val NODE_WIDTH = 16
+    private const val NODE_WIDTH = 8
     private const val LINE_WIDTH = 1.5f
+    private const val NODE_CENTER_X = NODE_WIDTH
+    private const val NODE_CENTER_Y = DEFAULT_CELL_HEIGHT / 2
   }
+
   private var isHead = false
-  private var withNode = true
+  private var nodeType = NodeType.SIMPLE_NODE
   private var rowHeight = 0
 
   override fun paintComponent(g: Graphics) {
@@ -447,7 +468,7 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
     row: Int,
     column: Int,
     isHead: Boolean,
-    withNode: Boolean,
+    nodeType: NodeType,
     editing: Boolean,
     rowHeight: Int
   ) {
@@ -457,15 +478,22 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
     cellState.updateRenderer(this)
     border = null
     this.isHead = isHead
-    this.withNode = withNode
+    this.nodeType = nodeType
     this.rowHeight = rowHeight
   }
 
   private fun Graphics2D.drawCommitIcon() {
     val tableRowHeight = this@CommitIconRenderer.rowHeight
     setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    if (withNode) {
-      drawNode()
+    when (nodeType) {
+      NodeType.SIMPLE_NODE -> {
+        drawNode()
+      }
+      NodeType.DOUBLE_NODE -> {
+        drawDoubleNode()
+      }
+      NodeType.NO_NODE -> {
+      }
     }
     drawEdge(tableRowHeight, false)
     if (!isHead) {
@@ -473,13 +501,28 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
     }
   }
 
-  private fun Graphics2D.drawNode() {
-    val x0 = NODE_WIDTH / 2
-    val y0 = DEFAULT_CELL_HEIGHT / 2
-    drawCircle(x0, y0)
+  private fun Graphics2D.drawDoubleNode() {
+    val circleRadius = NODE_WIDTH / 2
+    val backgroundCircleRadius = circleRadius + 1
+    val leftCircleX0 = NODE_CENTER_X
+    val y0 = NODE_CENTER_Y
+    val rightCircleX0 = leftCircleX0 + circleRadius
+
+    // right circle
+    drawCircle(rightCircleX0, y0)
+
+    // distance between circles
+    drawCircle(leftCircleX0, y0, backgroundCircleRadius, this@CommitIconRenderer.background)
+
+    // left circle
+    drawCircle(leftCircleX0, y0)
   }
 
-  private fun Graphics2D.drawCircle(x0: Int, y0: Int, circleRadius: Int = NODE_WIDTH / 4, circleColor: Color = GRAPH_COLOR) {
+  private fun Graphics2D.drawNode() {
+    drawCircle(NODE_CENTER_X, NODE_CENTER_Y)
+  }
+
+  private fun Graphics2D.drawCircle(x0: Int, y0: Int, circleRadius: Int = NODE_WIDTH / 2, circleColor: Color = GRAPH_COLOR) {
     val circle = Ellipse2D.Double(
       x0 - circleRadius + 0.5,
       y0 - circleRadius + 0.5,
@@ -491,12 +534,16 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
   }
 
   private fun Graphics2D.drawEdge(tableRowHeight: Int, isDownEdge: Boolean) {
-    val y1 = tableRowHeight / 2
+    val y1 = NODE_CENTER_Y
     val y2 = if (isDownEdge) tableRowHeight else 0
-    val x = NODE_WIDTH / 2
+    val x = NODE_CENTER_X
     color = GRAPH_COLOR
     stroke = BasicStroke(LINE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
     drawLine(x, y1, x, y2)
+  }
+
+  enum class NodeType {
+    NO_NODE, SIMPLE_NODE, DOUBLE_NODE
   }
 }
 
