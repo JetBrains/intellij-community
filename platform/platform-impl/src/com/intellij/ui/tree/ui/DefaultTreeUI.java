@@ -9,10 +9,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -109,10 +109,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   private static int getExpandedRow(@NotNull JTree tree) {
-    if (tree instanceof Tree) {
-      Tree custom = (Tree)tree;
-      Collection<Integer> items = custom.getExpandableItemsHandler().getExpandedItems();
-      if (!items.isEmpty()) return items.iterator().next();
+    if (tree instanceof ComponentWithExpandableItems) {
+      ComponentWithExpandableItems<?> component = (ComponentWithExpandableItems<?>)tree;
+      Collection<?> items = component.getExpandableItemsHandler().getExpandedItems();
+      Object item = items.isEmpty() ? null : items.iterator().next();
+      if (item instanceof Integer) return (Integer)item;
     }
     return -1;
   }
