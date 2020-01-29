@@ -1,6 +1,8 @@
 echo ") \\"
 echo "    ((r)->direct) ? \\"
 echo -n "	bus_${n}((r)->res"
+echo $'\101\102\103\010'
+echo $'this is \'a single string\'\' it?'
 ""
 "abc"
 "abc""abc"

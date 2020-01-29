@@ -85,7 +85,7 @@ Comment                  = # {InputCharacter}*
 EscapedChar              = "\\" [^\n]
 Quote                    = \"
 
-UnclosedRawString        = '[^']*
+UnclosedRawString        = '([^'] | {EscapedChar})*
 RawString                = {UnclosedRawString}'
 
 WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}

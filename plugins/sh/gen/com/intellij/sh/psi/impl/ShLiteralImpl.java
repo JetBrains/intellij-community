@@ -33,7 +33,6 @@ public class ShLiteralImpl extends ShSimpleCommandElementImpl implements ShLiter
   }
 
   @Override
-  @NotNull
   public PsiReference[] getReferences() {
     return ShPsiImplUtil.getReferences(this);
   }

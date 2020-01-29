@@ -1042,6 +1042,44 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE
+  static boolean double_quot_string(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "double_quot_string")) return false;
+    if (!nextTokenIs(b, OPEN_QUOTE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, OPEN_QUOTE);
+    p = r; // pin = 1
+    r = r && report_error_(b, double_quot_string_1(b, l + 1));
+    r = p && consumeToken(b, CLOSE_QUOTE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // (STRING_CONTENT | vars | <<notQuote>>)*
+  private static boolean double_quot_string_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "double_quot_string_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!double_quot_string_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "double_quot_string_1", c)) break;
+    }
+    return true;
+  }
+
+  // STRING_CONTENT | vars | <<notQuote>>
+  private static boolean double_quot_string_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "double_quot_string_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, STRING_CONTENT);
+    if (!r) r = vars(b, l + 1);
+    if (!r) r = notQuote(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // elif compound_list then_clause
   public static boolean elif_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elif_clause")) return false;
@@ -2459,52 +2497,33 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE) | RAW_STRING
+  // double_quot_string | ['$'] RAW_STRING
   public static boolean string(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string")) return false;
-    if (!nextTokenIs(b, "<string>", OPEN_QUOTE, RAW_STRING)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, STRING, "<string>");
-    r = string_0(b, l + 1);
-    if (!r) r = consumeToken(b, RAW_STRING);
+    r = double_quot_string(b, l + 1);
+    if (!r) r = string_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE
-  private static boolean string_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "string_0")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, OPEN_QUOTE);
-    p = r; // pin = 1
-    r = r && report_error_(b, string_0_1(b, l + 1));
-    r = p && consumeToken(b, CLOSE_QUOTE) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // (STRING_CONTENT | vars | <<notQuote>>)*
-  private static boolean string_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "string_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!string_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "string_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // STRING_CONTENT | vars | <<notQuote>>
-  private static boolean string_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "string_0_1_0")) return false;
+  // ['$'] RAW_STRING
+  private static boolean string_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "string_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, STRING_CONTENT);
-    if (!r) r = vars(b, l + 1);
-    if (!r) r = notQuote(b, l + 1);
+    r = string_1_0(b, l + 1);
+    r = r && consumeToken(b, RAW_STRING);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // ['$']
+  private static boolean string_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "string_1_0")) return false;
+    consumeToken(b, DOLLAR);
+    return true;
   }
 
   /* ********************************************************** */
