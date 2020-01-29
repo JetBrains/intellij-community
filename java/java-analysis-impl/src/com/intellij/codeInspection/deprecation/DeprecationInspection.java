@@ -5,6 +5,7 @@ import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,9 @@ public class DeprecationInspection extends DeprecationInspectionBase {
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if(!Registry.is("kotlin.deprecation.inspection.enabled", false) && holder.getFile().getLanguage().getID().equals("kotlin"))
+      return PsiElementVisitor.EMPTY_VISITOR;
+
     return ApiUsageUastVisitor.createPsiElementVisitor(
       new DeprecatedApiUsageProcessor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES,
                                       IGNORE_IMPORT_STATEMENTS, IGNORE_METHODS_OF_DEPRECATED,
