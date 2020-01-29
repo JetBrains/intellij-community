@@ -3,15 +3,15 @@ package com.intellij.internal.statistic;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.jetbrains.annotations.Contract;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class StatisticsEventLogUtil {
   @NonNls public static final String UTF8 = "UTF-8";
@@ -54,5 +54,14 @@ public class StatisticsEventLogUtil {
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;
+  }
+
+  public static Element parseXml(@NotNull InputStream stream) throws JDOMException, IOException, IllegalStateException {
+    try {
+      return new SAXBuilder().build(stream).getRootElement();
+    }
+    finally {
+      stream.close();
+    }
   }
 }

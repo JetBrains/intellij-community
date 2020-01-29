@@ -3,6 +3,10 @@ package com.intellij.internal.statistic.uploader
 
 import com.intellij.internal.statistic.StatisticsEventLogUtil
 import com.intellij.testFramework.UsefulTestCase
+import org.jdom.Element
+import org.jdom.JDOMException
+import java.io.ByteArrayInputStream
+
 
 class EventLogUtilTest : UsefulTestCase() {
 
@@ -10,8 +14,26 @@ class EventLogUtilTest : UsefulTestCase() {
     val actual = StatisticsEventLogUtil.mergeArrays(a1, a2)
 
     assertEquals(expected.size, actual.size)
-    for ((index, s) in actual.withIndex()) {
+    for ((index, _) in actual.withIndex()) {
       assertEquals(expected[index], actual[index])
+    }
+  }
+
+  private fun doTestParseXml(text: String, expected: Element) {
+    val stream = ByteArrayInputStream(text.toByteArray(Charsets.UTF_8))
+    val actual = StatisticsEventLogUtil.parseXml(stream)
+    assertElementsEquals(expected, actual)
+  }
+
+  private fun doTestParseInvalidXml(text: String) {
+    val stream = ByteArrayInputStream(text.toByteArray(Charsets.UTF_8))
+    try {
+      StatisticsEventLogUtil.parseXml(stream)
+      //should be unreachable
+      assertFalse(true)
+    }
+    catch (e: JDOMException) {
+      // ignore
     }
   }
 
@@ -36,5 +58,76 @@ class EventLogUtilTest : UsefulTestCase() {
                      arrayOf("A", "B", "C", "D", "E", "F", "G"))
     doTestMergeArray(arrayOf("A", "B", "C", "X", "Y", "Z"), arrayOf("D", "E", "F", "G"),
                      arrayOf("A", "B", "C", "X", "Y", "Z", "D", "E", "F", "G"))
+  }
+
+  fun test_parse_valid_xml() {
+    doTestParseXml(
+      "<service url=\"http://127.0.0.1\" report=\"10\"/>",
+      newElement("url" to "http://127.0.0.1", "report" to "10")
+    )
+  }
+
+  fun test_parse_empty_xml() {
+    doTestParseXml("<service />", newElement())
+  }
+
+  fun test_parse_valid_xml_with_ending_tags() {
+    doTestParseXml(
+      "<service url=\"http://127.0.0.1\" report=\"10\"></service>",
+      newElement("url" to "http://127.0.0.1", "report" to "10")
+    )
+  }
+
+  fun test_parse_invalid_xml_without_closing_tag() {
+    doTestParseInvalidXml(
+      "<service url=\"http://127.0.0.1\" report=\"10\">"
+    )
+  }
+
+  fun test_parse_invalid_xml_trimmed() {
+    doTestParseInvalidXml(
+      "<service url=\"http://127.0.0.1\" report=\"10\"/"
+    )
+  }
+
+  fun test_parse_invalid_without_closing_quote() {
+    doTestParseInvalidXml(
+      "<service url=\"http://127.0.0.1\" report=\"10/>"
+    )
+  }
+
+  fun test_parse_invalid_xml() {
+    doTestParseInvalidXml(
+      "service"
+    )
+  }
+
+  private fun newElement(vararg attributes: Pair<String, String>): Element {
+    val element = Element("service")
+    for (attribute in attributes) {
+      element.setAttribute(attribute.first, attribute.second)
+    }
+    return element
+  }
+
+  private fun assertElementsEquals(first: Element, second: Element) {
+    assertEquals(first.name, second.name)
+    val firstAttributes = first.attributes
+    val secondAttributes = second.attributes
+    assertEquals(firstAttributes.size, secondAttributes.size)
+
+    for (firstAttr in firstAttributes) {
+      val secondAttr = secondAttributes.find { it.name == firstAttr.name }
+      assertNotNull(secondAttr)
+      assertEquals(firstAttr.value, secondAttr!!.value)
+    }
+
+    val firstChildren = first.children
+    val secondChildren = second.children
+    assertEquals(firstChildren.size, secondChildren.size)
+
+    for ((index, firstChild) in firstChildren.withIndex()) {
+      assertElementsEquals(firstChild, secondChildren[index])
+    }
   }
 }
