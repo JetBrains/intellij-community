@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="IDEA" type="Application" factoryName="Application" singleton="true">
-    <log_file alias="idea.log" path="$PROJECT_DIR$/system/log/idea.log" />
-    <log_file alias="build.log" path="$PROJECT_DIR$/system/log/build-log/build.log" />
+    <log_file alias="idea.log" path="$PROJECT_DIR$/system/idea/log/idea.log" />
+    <log_file alias="build.log" path="$PROJECT_DIR$/system/idea/log/build-log/build.log" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <module name="intellij.idea.community.main" />
     <shortenClasspath name="CLASSPATH_FILE" />
