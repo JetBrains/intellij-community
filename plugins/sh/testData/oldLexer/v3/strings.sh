@@ -79,3 +79,5 @@ c'
 \!
 abc\
 abc
+echo 'word \''
+echo 'this is \'a s isn\'t it?'

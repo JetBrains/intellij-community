@@ -304,8 +304,7 @@ variable ::= var {
 }
 
 number ::= int | hex | octal {extends=literal}
-string ::= double_quot_string | ['$'] RAW_STRING {extends=literal}
-private double_quot_string ::= OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE {pin(".*")=1}
+string ::= OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE | RAW_STRING {pin(".*")=1 extends=literal}
 private w ::= word | string | number | not_lvalue
 private newlines ::= '\n'*
 

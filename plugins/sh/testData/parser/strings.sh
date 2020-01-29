@@ -84,3 +84,4 @@ c'
 \!
 abc\
 abc
+echo 'this is \'a s isn\'t it?'

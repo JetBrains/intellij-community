@@ -56,8 +56,7 @@ SHELL_SCRIPT
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement($)('$')
-            PsiElement(RAW_STRING)(''\101\102\103\010'')
+            PsiElement(RAW_STRING)('$'\101\102\103\010'')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -68,8 +67,7 @@ SHELL_SCRIPT
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement($)('$')
-            PsiElement(RAW_STRING)(''this is \'a single string\'\' it?'')
+            PsiElement(RAW_STRING)('$'this is \'a single string\'\' it?'')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -623,16 +621,14 @@ SHELL_SCRIPT
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement($)('$')
-            PsiElement(RAW_STRING)('''')
+            PsiElement(RAW_STRING)('$''')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           STRING
-            PsiElement($)('$')
-            PsiElement(RAW_STRING)(''abc'')
+            PsiElement(RAW_STRING)('$'abc'')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -796,3 +792,27 @@ SHELL_SCRIPT
         GENERIC_COMMAND_DIRECTIVE
           LITERAL
             PsiElement(word)('abc\\nabc')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(RAW_STRING)(''this is \'')
+          LITERAL
+            PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('s')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('isn\'t')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('it?')
+          STRING
+            PsiElement(RAW_STRING)(''')
