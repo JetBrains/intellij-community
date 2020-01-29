@@ -10,18 +10,16 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.*
 class GdkArgumentMapping(
   method: PsiMethod,
   private val receiverArgument: Argument,
-  val original: ArgumentMapping
-) : ArgumentMapping {
+  val original: ArgumentMapping<PsiCallParameter>
+) : ArgumentMapping<PsiCallParameter> {
 
   private val receiverParameter: PsiParameter = method.parameterList.parameters.first()
 
   override val arguments: Arguments = listOf(receiverArgument) + original.arguments
 
-  override val varargParameter: PsiParameter? get() = original.varargParameter
-
-  override fun targetParameter(argument: Argument): PsiParameter? {
+  override fun targetParameter(argument: Argument): PsiCallParameter? {
     return if (argument == receiverArgument) {
-      receiverParameter
+      PsiCallParameterImpl(receiverParameter, PsiSubstitutor.EMPTY)
     }
     else {
       original.targetParameter(argument)

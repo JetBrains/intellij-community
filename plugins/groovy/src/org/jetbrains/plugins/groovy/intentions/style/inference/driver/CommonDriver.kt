@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
@@ -187,7 +187,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
                                 mapping: Map<GrParameter, GrParameter>) {
     val argumentMapping = ((call as? GrMethodCall)?.advancedResolve() as? GroovyMethodResult)?.candidate?.argumentMapping ?: return
     argumentMapping.expectedTypes.forEach { (_, argument) ->
-      val virtualParameter = mapping[argumentMapping.targetParameter(argument)]?.takeIf { it in samCandidates.keys } ?: return@forEach
+      val virtualParameter = mapping[argumentMapping.targetParameter(argument)?.psi]?.takeIf { it in samCandidates.keys } ?: return@forEach
       val argumentType = argument.type as? PsiClassType ?: return@forEach
       if (virtualParameter in samCandidates.keys) {
         if (argument.type.isClosureTypeDeep()) {

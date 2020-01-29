@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument
@@ -13,8 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
-import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import java.util.*
 
@@ -70,32 +67,36 @@ fun getExpressionArguments(expressionArguments: Array<out GrExpression>): Argume
   }
 }
 
-fun argumentMapping(method: PsiMethod, substitutor: PsiSubstitutor, arguments: Arguments, context: PsiElement): ArgumentMapping = when {
-  method.isEffectivelyVarArgs -> {
+fun <X : CallParameter> argumentMapping(parameters: List<X>,
+                                        vararg: Boolean,
+                                        arguments: Arguments,
+                                        substitutor: PsiSubstitutor,
+                                        context: PsiElement): ArgumentMapping<X> = when {
+  vararg -> {
     val invokedAsIs = run(fun(): Boolean {
       // call foo(X[]) as is, i.e. with argument of type X[] (or subtype)
-      val parameters = method.parameterList.parameters
       if (arguments.size != parameters.size) return false
       val parameterType = parameterType(parameters.last().type, substitutor, true)
       val lastArgApplicability = argumentApplicability(parameterType, arguments.last().runtimeType, context)
       return lastArgApplicability == Applicability.applicable
     })
     if (invokedAsIs) {
-      PositionalArgumentMapping(method, arguments, context)
+      PositionalArgumentMapping(parameters, arguments, context)
     }
     else {
-      VarargArgumentMapping(method, arguments, context)
+      VarargArgumentMapping(parameters, arguments, context)
     }
   }
   arguments.isEmpty() -> {
-    val parameters = method.parameterList.parameters
     val parameter = parameters.singleOrNull()
     if (parameter != null && !parameter.isOptional && parameter.type is PsiClassType && !PsiUtil.isCompileStatic(context)) {
       NullArgumentMapping(parameter)
     }
     else {
-      PositionalArgumentMapping(method, arguments, context)
+      PositionalArgumentMapping(parameters, arguments, context)
     }
   }
-  else -> PositionalArgumentMapping(method, arguments, context)
+  else -> {
+    PositionalArgumentMapping(parameters, arguments, context)
+  }
 }

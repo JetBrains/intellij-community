@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
@@ -264,7 +264,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val candidate = (outerCall.properResolve() as? GroovyMethodResult)?.candidate ?: continue
       val argumentMapping = candidate.argumentMapping ?: continue
       argumentMapping.arguments.forEach { argument ->
-        val param = mapping[argumentMapping.targetParameter(argument)?.name] ?: return@forEach
+        val param = mapping[argumentMapping.targetParameter(argument)?.psi?.name] ?: return@forEach
         processOuterArgument(argument, param)
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.psi.PsiElement
@@ -64,7 +64,7 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
     for (call in callUsages) {
       val argumentMapping = (call.advancedResolve() as? GroovyMethodResult)?.candidate?.argumentMapping ?: continue
       val argument = argumentMapping.expectedTypes.find { it.second.isReferenceTo(parameter) }?.second ?: continue
-      val targetParameter = argumentMapping.targetParameter(argument) as? GrParameter ?: continue
+      val targetParameter = argumentMapping.targetParameter(argument)?.psi as? GrParameter ?: continue
       val closureParamsAnno = targetParameter.modifierList.findAnnotation(GROOVY_TRANSFORM_STC_CLOSURE_PARAMS) ?: continue
       acceptParameter(parameter, availableParameterNumber(closureParamsAnno), emptyList())
       break
@@ -107,7 +107,7 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
       val mapping = (call.advancedResolve() as? GroovyMethodResult)?.candidate?.argumentMapping ?: continue
       mapping.expectedTypes.forEach { (_, arg) ->
         val expression = (arg as? ExpressionArgument)?.expression ?: return@forEach
-        val targetParameter = mapping.targetParameter(arg) ?: return@forEach
+        val targetParameter = mapping.targetParameter(arg)?.psi ?: return@forEach
         expressionStorage[targetParameter]?.add(expression)
       }
     }

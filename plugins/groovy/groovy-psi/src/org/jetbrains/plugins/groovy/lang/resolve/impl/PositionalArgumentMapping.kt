@@ -1,27 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.*
-import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 
-class PositionalArgumentMapping(
-  method: PsiMethod,
+class PositionalArgumentMapping<out P : CallParameter>(
+  private val parameters: List<P>,
   override val arguments: Arguments,
   private val context: PsiElement
-) : ArgumentMapping {
+) : ArgumentMapping<P> {
 
-  private val parameterToArgument: Map<PsiParameter, Argument?>? by lazy {
-    mapByPosition(arguments, method.parameterList.parameters.toList(), PsiParameter::isOptional, false)
+  private val parameterToArgument: Map<P, Argument?>? by lazy {
+    mapByPosition(arguments, parameters, CallParameter::isOptional, false)
   }
 
-  private val argumentToParameter: Map<Argument, PsiParameter>? by lazy {
+  private val argumentToParameter: Map<Argument, P>? by lazy {
     parameterToArgument?.mapNotNull { (parameter, argument) ->
       if (argument == null) null else Pair(argument, parameter)
     }?.toMap()
   }
 
-  override fun targetParameter(argument: Argument): PsiParameter? = argumentToParameter?.get(argument)
+  override fun targetParameter(argument: Argument): P? = argumentToParameter?.get(argument)
 
   override fun expectedType(argument: Argument): PsiType? = targetParameter(argument)?.type
 

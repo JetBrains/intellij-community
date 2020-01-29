@@ -58,14 +58,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
-import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
+import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processDeclarationsWithCallsite;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
@@ -860,10 +858,10 @@ public class ResolveUtil {
       if (variant instanceof GroovyMethodResult && ((GroovyMethodResult)variant).getCandidate() != null) {
         GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
         if (candidate != null) {
-          ArgumentMapping mapping = candidate.getArgumentMapping();
+          ArgumentMapping<PsiCallParameter> mapping = candidate.getArgumentMapping();
           if (mapping != null) {
             ExpressionArgument argument = new ExpressionArgument(arg);
-            PsiParameter targetParameter = mapping.targetParameter(argument);
+            PsiParameter targetParameter = doIfNotNull(mapping.targetParameter(argument), PsiCallParameter::getPsi);
             PsiType expectedType = mapping.expectedType(argument);
             ContainerUtil.addIfNotNull(expectedParams, Pair.create(targetParameter, expectedType));
           }
