@@ -33,7 +33,7 @@ private val NOTIFICATION_GROUP = NotificationGroup("Build Script Found", Notific
 private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
 
-class PlainJavaProjectOpenProcessor : StartupActivity {
+class SetupJavaProjectFromSourcesActivity : StartupActivity {
 
   override fun runActivity(project: Project) {
     if (project.hasBeenOpenedBySpecificProcessor()) {
