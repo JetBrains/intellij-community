@@ -68,4 +68,5 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testUnaryPlusMinus() { doTest(); }
   public void testWidenPlusInLoop() { doTest(); }
   public void testWidenMulInLoop() { doTest(); }
+  public void testReduceBinOpOnCast() { doTest(); }
 }
