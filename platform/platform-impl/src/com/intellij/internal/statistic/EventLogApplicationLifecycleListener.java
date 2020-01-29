@@ -8,6 +8,10 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import org.jetbrains.annotations.NotNull;
 
 public class EventLogApplicationLifecycleListener implements AppLifecycleListener {
 
@@ -15,9 +19,13 @@ public class EventLogApplicationLifecycleListener implements AppLifecycleListene
   public void appWillBeClosed(boolean isRestart) {
     if (!isRestart && !PluginManagerCore.isRunningFromSources()) {
       StatisticsEventLoggerProvider config = FeatureUsageLogger.INSTANCE.getConfig();
-      if (config.isSendEnabled()) {
-        boolean isUpdateInProgress = isUpdateInProgress();
-        EventLogExternalUploader.INSTANCE.startExternalUpload(config.getRecorderId(), false, isUpdateInProgress);
+      if (config.isSendEnabled() && !isUpdateInProgress()) {
+        ProgressManager.getInstance().run(new Task.Modal(null, "Starting External Log Uploader", false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            EventLogExternalUploader.INSTANCE.startExternalUpload(config.getRecorderId(), false, false);
+          }
+        });
       }
     }
   }
