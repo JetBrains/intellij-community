@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.connect;
 
 import com.intellij.internal.statistic.JDOMUtil;
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.jdom.Element;
@@ -18,7 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class SettingsConnectionService {
-  private static final Logger LOG = Logger.getInstance(SettingsConnectionService.class);
+  //private static final Logger LOG = Logger.getInstance(SettingsConnectionService.class);
 
   protected static final String SERVICE_URL_ATTR_NAME = "url";
 
@@ -69,13 +68,13 @@ public abstract class SettingsConnectionService {
           }
         }
         catch (JDOMException e) {
-          LOG.info(e);
+          //LOG.info(e);
         }
         return settings;
       }
     }
     catch (IOException e) {
-      LOG.warn(e);
+      //LOG.warn(e);
     }
     return Collections.emptyMap();
   }

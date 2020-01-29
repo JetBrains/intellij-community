@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
-import com.intellij.openapi.diagnostic.Logger;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -48,7 +47,7 @@ import static java.util.Collections.emptyList;
  * </ol>
  */
 public class FUStatisticsWhiteListGroupsService {
-  private static final Logger LOG = Logger.getInstance(FUStatisticsWhiteListGroupsService.class);
+  //private static final Logger LOG = Logger.getInstance(FUStatisticsWhiteListGroupsService.class);
 
   /**
    * @return null if error happened during groups fetching
@@ -81,7 +80,7 @@ public class FUStatisticsWhiteListGroupsService {
       }
     }
     catch (IOException e) {
-      LOG.info(e);
+      //LOG.info(e);
     }
     return content;
   }
@@ -99,7 +98,7 @@ public class FUStatisticsWhiteListGroupsService {
       }
     }
     catch (IOException e) {
-      LOG.info(e);
+      //LOG.info(e);
     }
     return 0;
   }
@@ -112,7 +111,7 @@ public class FUStatisticsWhiteListGroupsService {
       groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
     }
     catch (Exception e) {
-      LOG.info(e);
+      //LOG.info(e);
     }
     return groups;
   }

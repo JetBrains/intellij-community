@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.openapi.diagnostic.Logger;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -28,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class EventLogStatisticsService implements StatisticsService {
-  private static final Logger LOG = Logger.getInstance(EventLogStatisticsService.class);
+  //private static final Logger LOG = Logger.getInstance(EventLogStatisticsService.class);
   private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
   private static final int MAX_FILES_TO_SEND = 5;
@@ -88,9 +87,9 @@ public class EventLogStatisticsService implements StatisticsService {
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal);
         final String error = validate(recordRequest, file);
         if (StatisticsEventLogUtil.isNotEmpty(error) || recordRequest == null) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(file.getName() + "-> " + error);
-          }
+          //if (LOG.isTraceEnabled()) {
+          //  LOG.trace(file.getName() + "-> " + error);
+          //}
           decorator.failed(recordRequest);
           toRemove.add(file);
           failed++;
@@ -112,15 +111,15 @@ public class EventLogStatisticsService implements StatisticsService {
             }
           }
 
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(file.getName() + " -> " + getResponseMessage(response));
-          }
+          //if (LOG.isTraceEnabled()) {
+          //  LOG.trace(file.getName() + " -> " + getResponseMessage(response));
+          //}
         }
         catch (Exception e) {
           failed++;
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(file.getName() + " -> " + e.getMessage());
-          }
+          //if (LOG.isTraceEnabled()) {
+          //  LOG.trace(file.getName() + " -> " + e.getMessage());
+          //}
         }
       }
 
@@ -130,7 +129,7 @@ public class EventLogStatisticsService implements StatisticsService {
       return decorator.toResult();
     }
     catch (Exception e) {
-      LOG.info(e);
+      //LOG.info(e);
       throw new StatServiceException("Error during data sending.", e);
     }
   }
@@ -191,7 +190,7 @@ public class EventLogStatisticsService implements StatisticsService {
       return provider.getLogFilesProvider().getLogFiles();
     }
     catch (Exception e) {
-      LOG.info(e);
+      //LOG.info(e);
     }
     return Collections.emptyList();
   }
@@ -207,12 +206,12 @@ public class EventLogStatisticsService implements StatisticsService {
   private static void cleanupFiles(@NotNull List<File> toRemove) {
     for (File file : toRemove) {
       if (!file.delete()) {
-        LOG.warn("Failed deleting event log: " + file.getName());
+        //LOG.warn("Failed deleting event log: " + file.getName());
       }
 
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Removed sent log: " + file.getName());
-      }
+      //if (LOG.isTraceEnabled()) {
+      //  LOG.trace("Removed sent log: " + file.getName());
+      //}
     }
   }
 

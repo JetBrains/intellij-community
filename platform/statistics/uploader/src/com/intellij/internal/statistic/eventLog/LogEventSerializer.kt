@@ -5,13 +5,12 @@ package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.*
 import com.google.gson.reflect.TypeToken
-import com.intellij.openapi.diagnostic.Logger
 import java.io.OutputStreamWriter
 import java.lang.reflect.Type
 import java.util.*
 
 object LogEventSerializer {
-  private val LOG = Logger.getInstance(LogEventSerializer::class.java)
+  //private val LOG = Logger.getInstance(LogEventSerializer::class.java)
   private val gson = GsonBuilder().registerTypeAdapter(LogEvent::class.java, LogEventJsonDeserializer()).create()
 
   fun toString(session: LogEventRecordRequest, writer: OutputStreamWriter) {
@@ -85,7 +84,7 @@ object LogEventSerializer {
       gson.fromJson(line, LogEvent::class.java)
     }
     catch (e : Exception) {
-      LOG.trace("Failed deserializing event: '${e.message}'")
+      //LOG.trace("Failed deserializing event: '${e.message}'")
       null
     }
   }

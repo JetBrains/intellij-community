@@ -5,13 +5,12 @@ import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EventLogUploadSettingsService extends SettingsConnectionService implements EventLogSettingsService {
-  private static final Logger LOG = Logger.getInstance(EventLogUploadSettingsService.class);
+  //private static final Logger LOG = Logger.getInstance(EventLogUploadSettingsService.class);
 
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   private static final String DICTIONARY_SERVICE = "dictionary-service";
@@ -47,7 +46,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
         return Integer.parseInt(permitted);
       }
       catch (NumberFormatException e) {
-        LOG.trace("Permitted traffic is not defined or has invalid format: '" + permitted + "'");
+        //LOG.trace("Permitted traffic is not defined or has invalid format: '" + permitted + "'");
       }
     }
     return 0;
