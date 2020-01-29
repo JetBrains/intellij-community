@@ -47,8 +47,8 @@ public class JUnit5MalformedParameterizedArgumentsTest extends LightQuickFixPara
     super.tearDown();
   }
 
-  private void cleanupEnvironment(Project project) {
-    WriteCommandAction.writeCommandAction(project).compute(() -> {
+  private boolean cleanupEnvironment(Project project) {
+    return WriteCommandAction.writeCommandAction(project).compute(() -> {
       try {
         getSourceRoot()
           .findChild("org")
