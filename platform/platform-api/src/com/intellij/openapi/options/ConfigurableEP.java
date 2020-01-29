@@ -68,24 +68,23 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
     ResourceBundle resourceBundle = findBundle();
     if (resourceBundle == null || key == null) {
-      if (providerClass == null) {
-        displayName = instanceClass == null ? implementationClass : instanceClass;
-      }
-      else {
-        displayName = providerClass;
-      }
-
       if (key == null) {
         LOG.warn("Bundle key missed for " + displayName);
       }
       else {
         LOG.warn("Bundle missed for " + displayName);
       }
+
+      if (providerClass == null) {
+        return instanceClass == null ? implementationClass : instanceClass;
+      }
+      else {
+        return providerClass;
+      }
     }
     else {
-      displayName = CommonBundle.message(resourceBundle, key);
+      return CommonBundle.message(resourceBundle, key);
     }
-    return displayName;
   }
 
   /**
