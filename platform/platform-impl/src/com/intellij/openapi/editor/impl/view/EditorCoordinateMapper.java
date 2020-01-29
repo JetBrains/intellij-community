@@ -75,7 +75,7 @@ class EditorCoordinateMapper {
   }
 
   private int getInlaysHeight(int visualLine, boolean above) {
-    return EditorUtil.getTotalInlaysHeight(myView.getEditor().getInlayModel().getBlockElementsForVisualLine(visualLine, above));
+    return EditorUtil.getInlaysHeight(myView.getEditor(), visualLine, above);
   }
 
   @NotNull
