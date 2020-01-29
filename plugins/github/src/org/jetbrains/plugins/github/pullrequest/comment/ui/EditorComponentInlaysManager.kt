@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -112,8 +113,21 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
     }
 
     private fun calcWidth(): Int {
-      val visibleEditorTextWidth = editor.scrollPane.viewport.width - editor.scrollPane.verticalScrollBar.width - if (verticalScrollbarFlipped) 4 else 0
+      val visibleEditorTextWidth = editor.scrollPane.viewport.width - getVerticalScrollbarWidth() - getGutterTextGap()
       return min(max(visibleEditorTextWidth, 0), maximumEditorTextWidth)
+    }
+
+    private fun getVerticalScrollbarWidth(): Int {
+      val width = editor.scrollPane.verticalScrollBar.width
+      return if (!verticalScrollbarFlipped) width * 2 else width
+    }
+
+    private fun getGutterTextGap(): Int {
+      return if (verticalScrollbarFlipped) {
+        val gutter = (editor as EditorEx).gutterComponentEx
+        gutter.width - gutter.whitespaceSeparatorOffset
+      }
+      else 0
     }
   }
 }
