@@ -162,12 +162,13 @@ private fun dereference(tree: LighterAST,
                         canBeNulls: HashSet<String>,
                         notNulls: HashSet<String>,
                         queue: ArrayDeque<LighterASTNode>) {
-  if (expression == null) return
-  if (expression.tokenType == REFERENCE_EXPRESSION && JavaLightTreeUtil.findExpressionChild(tree, expression) == null) {
-    JavaLightTreeUtil.getNameIdentifierText(tree, expression)?.takeIf(canBeNulls::remove)?.let(notNulls::add)
+  val stripped = JavaLightTreeUtil.skipParenthesesDown(tree, expression)
+  if (stripped == null) return
+  if (stripped.tokenType == REFERENCE_EXPRESSION && JavaLightTreeUtil.findExpressionChild(tree, stripped) == null) {
+    JavaLightTreeUtil.getNameIdentifierText(tree, stripped)?.takeIf(canBeNulls::remove)?.let(notNulls::add)
   }
   else {
-    queue.addFirst(expression)
+    queue.addFirst(stripped)
   }
 }
 
