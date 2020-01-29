@@ -21,6 +21,7 @@ internal object DotnetIconSync {
 
   private val committer by lazy(::triggeredBy)
   private val context = Context().apply {
+    doPush = false
     iconsFilter = { file ->
       // need to filter designers' icons using developers' icon-robots.txt
       Icon(file).isValid && file.toRelativeString(iconsRepoDir)
@@ -49,18 +50,19 @@ internal object DotnetIconSync {
     val tmpCommit = transformIconsToIdeaFormat()
     try {
       syncPaths.forEach {
-        context.doPush = false
         context.devRepoDir = context.devRepoRoot.resolve(it.devPath)
         context.iconsRepoDir = context.iconsRepo.resolve(it.iconsPath)
         step("Syncing icons for ${it.devPath}..")
         checkIcons(context)
       }
       generateClasses()
-      createBranchForMerge()
-      val changes = commitChanges(tmpCommit)
-      if (changes != null && isUnderTeamCity()) {
-        pushBranchForMerge()
-        triggerMerge()
+      if (isUnderTeamCity()) {
+        createBranchForMerge()
+        val changes = commitChanges(tmpCommit)
+        if (changes != null) {
+          pushBranchForMerge()
+          triggerMerge()
+        }
       }
     }
     finally {

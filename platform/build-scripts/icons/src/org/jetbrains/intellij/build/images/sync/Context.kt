@@ -80,7 +80,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                                  ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf<String>()
 
     devRepoDir = findDirectoryIgnoringCase(System.getProperty(devRepoArg)) ?: {
-      log("WARNING: $devRepoArg not found")
+      warn("$devRepoArg not found")
       File(System.getProperty("user.dir"))
     }()
     val iconsRepoRelativePath = System.getProperty(iconsRepoPathArg) ?: ""
@@ -114,7 +114,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       ?.mapNotNull {
         val split = it.split(':')
         if (split.size != 3) {
-          log("WARNING: malformed line in 'teamcity.build.changedFiles.file' : $it")
+          warn("malformed line in 'teamcity.build.changedFiles.file' : $it")
           return@mapNotNull null
         }
         val (file, _, commit) = split
@@ -130,12 +130,12 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   }
 
   private fun cloneIconsRepoToTempDir(): File {
-    log("WARNING: $iconsRepoArg not found")
+    val uri = "ssh://git@git.jetbrains.team/IntelliJIcons.git"
+    log("$iconsRepoArg not found. Have to perform full clone of $uri")
     val tmp = Files.createTempDirectory("icons-sync").toFile()
     Runtime.getRuntime().addShutdownHook(thread(start = false) {
       tmp.deleteRecursively()
     })
-    val uri = "ssh://git@git.jetbrains.team/IntelliJIcons.git"
     return callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
   }
 
@@ -173,4 +173,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
     }
   }
+
+  fun warn(message: String) = System.err.println(message)
 }
