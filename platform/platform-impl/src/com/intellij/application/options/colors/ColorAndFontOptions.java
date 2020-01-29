@@ -90,12 +90,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private boolean myApplyCompleted = false;
   private boolean myDisposeCompleted = false;
   private final Disposable myDisposable = Disposer.newDisposable();
-
-  public ColorAndFontOptions() {
-    ColorAndFontDescriptorsProvider.EP_NAME.addExtensionPointListener(
-      () -> mySchemes.values().forEach(scheme -> initScheme(scheme)), null);
-  }
-
+  
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   public void addListener(@NotNull ColorAndFontSettingsListener listener) {
