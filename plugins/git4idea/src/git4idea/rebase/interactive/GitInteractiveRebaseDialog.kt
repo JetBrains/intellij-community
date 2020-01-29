@@ -221,7 +221,11 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
   override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
     when (aValue) {
       is GitRebaseEntry.Action -> {
-        rows[rowIndex].action = aValue
+        val row = rows[rowIndex]
+        if (aValue != GitRebaseEntry.Action.REWORD) {
+          row.newMessage = row.details.fullMessage
+        }
+        row.action = aValue
       }
       is String -> {
         rows[rowIndex].action =
