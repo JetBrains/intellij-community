@@ -43,6 +43,7 @@ public class ID<K, V> extends IndexId<K,V> {
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<>();
 
   private static final Map<ID, PluginId> ourIdToPluginId = Collections.synchronizedMap(new THashMap<>());
+  private static final Map<ID, Throwable> ourIdToRegistrationStackTrace = Collections.synchronizedMap(new THashMap<>());
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final short myUniqueId;
@@ -91,6 +92,8 @@ public class ID<K, V> extends IndexId<K,V> {
 
     PluginId oldPluginId = ourIdToPluginId.put(this, pluginId);
     assert oldPluginId == null : "ID with name '" + name + "' is already registered in " + oldPluginId + " but current caller is " + pluginId;
+
+    ourIdToRegistrationStackTrace.put(this, new Throwable());
   }
 
   private static short stringToId(@NotNull String name) {
@@ -160,9 +163,16 @@ public class ID<K, V> extends IndexId<K,V> {
       String actualPluginIdStr = actualPluginId == null ? null : actualPluginId.getIdString();
       String requiredPluginIdStr = requiredPluginId == null ? null : requiredPluginId.getIdString();
 
-
       if (!Comparing.equal(actualPluginIdStr, requiredPluginIdStr)) {
-        throw new AssertionError("ID with name '" + name + "' requested for plugin " + requiredPluginIdStr + " but registered for " + actualPluginIdStr);
+        Throwable registrationStackTrace = ourIdToRegistrationStackTrace.get(id);
+        String message = "ID with name '" + name +
+                         "' requested for plugin " + requiredPluginIdStr +
+                         " but registered for " + actualPluginIdStr + (registrationStackTrace == null ? " registration stack trace: " : "");
+        if (registrationStackTrace != null) {
+          throw new AssertionError(message, registrationStackTrace);
+        } else {
+          throw new AssertionError(message);
+        }
       }
     }
     return id;
@@ -191,6 +201,7 @@ public class ID<K, V> extends IndexId<K,V> {
   public synchronized static void unloadId(@NotNull ID<?, ?> id) {
     LOG.assertTrue(id.equals(ourRegistry.remove(id.getUniqueId())));
     ourIdToPluginId.remove(id);
+    ourIdToRegistrationStackTrace.remove(id);
   }
 
   public static void dump() {
