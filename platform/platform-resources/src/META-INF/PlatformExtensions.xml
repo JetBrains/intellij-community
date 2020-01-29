@@ -503,7 +503,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OsSpecificState"/>
     <applicationConfigurable
         groupId="editor"
-        groupWeight="189"
+        groupWeight="188"
         bundle="messages.IdeBundle"
         key="configurable.font.name"
         instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"

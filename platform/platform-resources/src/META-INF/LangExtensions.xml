@@ -422,9 +422,16 @@
 
     <!-- Editor -->
     <search.topHitProvider implementation="com.intellij.application.options.editor.EditorOptionsTopHitProvider"/>
-    <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptionsPanel" id="preferences.editor" key="title.editor"
-                             bundle="messages.ApplicationBundle" order="after preferences.lookFeel"
+    <applicationConfigurable groupId="editor" groupWeight="190"
+                             instance="com.intellij.application.options.editor.EditorOptionsPanel"
+                             id="preferences.editor" key="title.editor"
+                             bundle="messages.ApplicationBundle"
+                             order="after preferences.lookFeel"
                              childrenEPName="com.intellij.editorOptionsProvider"/>
+    <applicationConfigurable groupId="editor" groupWeight="189"
+                             instance="com.intellij.application.options.editor.EditorCodeEditingConfigurable"
+                             id="preferences.editor.code.editing" key="title.code.editing"
+                             bundle="messages.ApplicationBundle"/>
     <applicationConfigurable parentId="preferences.editor" instance="com.intellij.execution.console.ConsoleConfigurable" id="Console"
                              bundle="messages.IdeBundle" key="configurable.Console.display.name"/>
 
