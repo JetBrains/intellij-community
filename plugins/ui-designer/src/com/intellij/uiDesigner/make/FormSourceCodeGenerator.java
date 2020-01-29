@@ -3,7 +3,6 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.DynamicBundle;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public final class FormSourceCodeGenerator {
@@ -62,8 +59,6 @@ public final class FormSourceCodeGenerator {
   @NonNls private static final TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<>();
 
   private boolean myNeedGetMessageFromBundle;
-  private static final String getMessageFromBundleMethod = "$$$getMessageFromBundle$$$";
-  private static final String cachedGetBundleMethodField = "$$$cachedGetBundleMethod$$$";
 
   private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
     PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
@@ -516,11 +511,13 @@ public final class FormSourceCodeGenerator {
   private void generateGetMessageFromBundle(PsiClass aClass, PsiMethod anchor, PsiElementFactory elementFactory, boolean condition) {
     String dynamicBundleClassName = DynamicBundle.class.getName();
 
-    for (PsiMethod oldMethod : aClass.findMethodsByName(getMessageFromBundleMethod, false)) {
+    String methodName = AsmCodeGenerator.GET_MESSAGE_FROM_BUNDLE;
+    for (PsiMethod oldMethod : aClass.findMethodsByName(methodName, false)) {
       oldMethod.delete();
     }
 
-    PsiField oldField = aClass.findFieldByName(cachedGetBundleMethodField, false);
+    String fieldName = AsmCodeGenerator.CACHED_GET_BUNDLE_METHOD;
+    PsiField oldField = aClass.findFieldByName(fieldName, false);
     if (oldField != null) {
       oldField.delete();
     }
@@ -531,19 +528,19 @@ public final class FormSourceCodeGenerator {
 
     PsiField cachedMethodField =
       elementFactory.createFieldFromText(
-        "private static java.lang.reflect.Method " + cachedGetBundleMethodField + " = null;",
+        "private static java.lang.reflect.Method " + fieldName + " = null;",
         null);
 
     String methodText =
-      "private String " + getMessageFromBundleMethod + "(String path, String key) {\n" +
+      "private String " + methodName + "(String path, String key) {\n" +
       " ResourceBundle bundle;\n" +
       "try {\n" +
       "    Class<?> thisClass = this.getClass();\n" +
-      "    if (" + cachedGetBundleMethodField + " == null) {\n" +
+      "    if (" + fieldName + " == null) {\n" +
       "        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass(\"" + dynamicBundleClassName + "\");\n" +
-      "        " + cachedGetBundleMethodField + " = dynamicBundleClass.getMethod(\"getBundle\", String.class, Class.class);\n" +
+      "        " + fieldName + " = dynamicBundleClass.getMethod(\"getBundle\", String.class, Class.class);\n" +
       "    }\n" +
-      "    bundle = (ResourceBundle)" + cachedGetBundleMethodField + ".invoke(null, path, thisClass);\n" +
+      "    bundle = (ResourceBundle)" + fieldName + ".invoke(null, path, thisClass);\n" +
       "} catch (Exception e) {\n" +
       "    bundle = ResourceBundle.getBundle(path);\n" +
       "}\n" +
@@ -1098,7 +1095,7 @@ public final class FormSourceCodeGenerator {
     }
     else {
       myNeedGetMessageFromBundle = true;
-      startMethodCall("this", getMessageFromBundleMethod);
+      startMethodCall("this", AsmCodeGenerator.GET_MESSAGE_FROM_BUNDLE);
       push(descriptor.getBundleName());
       push(descriptor.getKey());
       endMethod();
