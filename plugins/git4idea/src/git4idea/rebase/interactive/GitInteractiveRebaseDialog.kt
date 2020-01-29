@@ -339,6 +339,7 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
   }
 
   private fun getDrawNodeType(row: Int): CommitIconRenderer.NodeType = when {
+    model.getEntry(row).entry.action == GitRebaseEntry.Action.EDIT -> CommitIconRenderer.NodeType.EDIT
     isFixupOrDrop(row) -> CommitIconRenderer.NodeType.NO_NODE
     isFixupRoot(row) -> CommitIconRenderer.NodeType.DOUBLE_NODE
     else -> CommitIconRenderer.NodeType.SIMPLE_NODE
@@ -509,9 +510,6 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
       val entryWithEditedMessage = commitsTable.model.getEntry(row)
       var attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES
       when (entryWithEditedMessage.entry.action) {
-        GitRebaseEntry.Action.EDIT -> {
-          icon = AllIcons.Actions.Pause
-        }
         GitRebaseEntry.Action.DROP -> {
           attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null)
         }
@@ -586,10 +584,15 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
       }
       NodeType.NO_NODE -> {
       }
+      NodeType.EDIT -> {
+        drawEditNode()
+      }
     }
-    drawEdge(tableRowHeight, false)
-    if (!isHead) {
-      drawEdge(tableRowHeight, true)
+    if (nodeType != NodeType.EDIT) {
+      drawEdge(tableRowHeight, false)
+      if (!isHead) {
+        drawEdge(tableRowHeight, true)
+      }
     }
   }
 
@@ -608,6 +611,11 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
 
     // left circle
     drawCircle(leftCircleX0, y0)
+  }
+
+  private fun Graphics2D.drawEditNode() {
+    val icon = AllIcons.Actions.Pause
+    icon.paintIcon(null, this@drawEditNode, NODE_CENTER_X - icon.iconWidth / 2, NODE_CENTER_Y - icon.iconHeight / 2)
   }
 
   private fun Graphics2D.drawNode() {
@@ -635,7 +643,7 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
   }
 
   enum class NodeType {
-    NO_NODE, SIMPLE_NODE, DOUBLE_NODE
+    NO_NODE, SIMPLE_NODE, DOUBLE_NODE, EDIT
   }
 }
 
