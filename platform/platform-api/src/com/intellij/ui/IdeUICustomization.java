@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -20,6 +21,7 @@ public class IdeUICustomization {
   /**
    * Returns the name to be displayed in the UI for the "project" concept (Rider changes this to "solution").
    */
+  @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   public String getProjectConceptName() {
     return "project";
@@ -33,6 +35,7 @@ public class IdeUICustomization {
   /**
    * Returns the name to be displayed in the UI for the "Project" concept (Rider changes this to "Solution").
    */
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getProjectDisplayName() {
     return StringUtil.capitalize(getProjectConceptName());
   }
@@ -40,6 +43,7 @@ public class IdeUICustomization {
   /**
    * Returns the name of the "Close Project" action (with mnemonic if needed).
    */
+  @Nls
   public String getCloseProjectActionText() {
     return IdeBundle.message("action.close.project");
   }
@@ -47,6 +51,7 @@ public class IdeUICustomization {
   /**
    * Returns the title of the Project view toolwindow.
    */
+  @Nls
   public String getProjectViewTitle() {
     return StringUtil.capitalize(getProjectConceptName());
   }
