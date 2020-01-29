@@ -503,8 +503,6 @@
     <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
     <attachSourcesProvider implementation="com.intellij.jarFinder.IvyAttachSourceProvider"/>
 
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.NewProjectCheckoutListener" order="last"/>
-
     <!-- new project wizard -->
     <projectImportProvider implementation="com.intellij.ide.util.projectWizard.ModuleImportProvider"/>
     <projectImportProvider implementation="com.intellij.ide.util.projectWizard.ImportFromSourcesProvider"/>
