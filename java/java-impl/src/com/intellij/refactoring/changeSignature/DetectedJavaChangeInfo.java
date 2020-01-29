@@ -208,10 +208,10 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       }
 
       if (oldParameter != null) {
-        parameterInfos[i] = new ParameterInfoImpl(oldParameter.getOldIndex(),
-                                                  oldParameter.getName(),
-                                                  oldParameter.getTypeWrapper(),
-                                                  null);
+        parameterInfos[i] = ParameterInfoImpl.create(oldParameter.getOldIndex())
+          .withName(oldParameter.getName())
+          .withType(oldParameter.getTypeWrapper())
+          .withDefaultValue(null);
         untouchedParams.put(parameterInfos[i], oldParameter.getOldIndex());
       }
     }
@@ -230,10 +230,10 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
         }
         final CanonicalTypes.Type typeWrapper = parameterInfo.getTypeWrapper();
         if (!typeWrapper.isValid()) return false;
-        parameterInfos[i] = new ParameterInfoImpl(oldParameter != null ? oldParameter.getOldIndex() : NEW_PARAMETER,
-                                                  parameterInfo.getName(),
-                                                  typeWrapper,
-                                                  null);
+        parameterInfos[i] = ParameterInfoImpl.create(oldParameter != null ? oldParameter.getOldIndex() : NEW_PARAMETER)
+          .withName(parameterInfo.getName())
+          .withType(typeWrapper)
+          .withDefaultValue(null);
       }
     }
     return true;

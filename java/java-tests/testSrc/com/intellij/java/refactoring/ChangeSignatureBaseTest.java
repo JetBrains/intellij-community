@@ -46,7 +46,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
       ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
       for (int i = 0; i < parameters.length; i++) {
         PsiType type = myFactory.createTypeFromText(parameters[i], method);
-        parameterInfos[i] = new ParameterInfoImpl(NEW_PARAMETER, "p" + (i + 1), type);
+        parameterInfos[i] = ParameterInfoImpl.createNew().withName("p" + (i + 1)).withType(type);
       }
       return parameterInfos;
     };
@@ -153,7 +153,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
       if (myInfos == null) {
         myInfos = new ParameterInfoImpl[method.getParameterList().getParametersCount()];
         for (int i = 0; i < myInfos.length; i++) {
-          myInfos[i] = new ParameterInfoImpl(i);
+          myInfos[i] = ParameterInfoImpl.create(i);
         }
       }
       for (ParameterInfoImpl info : myInfos) {

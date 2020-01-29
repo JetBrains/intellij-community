@@ -6,24 +6,22 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 public class ChangeSignatureTouchLambdaTest extends ChangeSignatureBaseTest {
  
   public void testVariableDeclaration() {
-    doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
+    doTest(null, null, null, new ParameterInfoImpl[] {ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
   }
 
   public void testMethodArgument() {
-    doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
+    doTest(null, null, null, new ParameterInfoImpl[] {ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
   }
 
   public void testDefaultMethodTouched() {
-    doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
+    doTest(null, null, null, new ParameterInfoImpl[] {ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
   }
 
   public void testDelegateInInterface() {
-    doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN, "false")}, new ThrownExceptionInfo[0], true);
+    doTest(null, null, null, new ParameterInfoImpl[] {ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN).withDefaultValue("false")}, new ThrownExceptionInfo[0], true);
   }
 
   public void testAddExceptionToCatchInOneLineLambda() {

@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(MethodParameterFix.class);
 
@@ -125,10 +123,10 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
         newParameter.setName(parameter.getName());
         parameter = newParameter;
       }
-      result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
+      result.add(ParameterInfoImpl.create(i).withName(parameter.getName()).withType(parameter.getType()));
     }
     if (parameters.length == myIndex) {
-      result.add(new ParameterInfoImpl(NEW_PARAMETER, newParameter.getName(), newParameter.getType()));
+      result.add(ParameterInfoImpl.createNew().withName(newParameter.getName()).withType(newParameter.getType()));
     }
     return result.toArray(new ParameterInfoImpl[0]);
   }

@@ -342,7 +342,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       final String paramName = parameter.getName();
       for (PsiParameter param : parameters) {
         if (!Comparing.strEqual(paramName, param.getName())) {
-          psiParameters.add(new ParameterInfoImpl(paramIdx, param.getName(), param.getType()));
+          psiParameters.add(ParameterInfoImpl.create(paramIdx).withName(param.getName()).withType(param.getType()));
         }
         paramIdx++;
       }

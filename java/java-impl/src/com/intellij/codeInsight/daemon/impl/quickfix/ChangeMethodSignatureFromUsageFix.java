@@ -46,8 +46,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 /**
  * @author cdr
  */
@@ -285,7 +283,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (buf.length() > 0) buf.append(", ");
         final PsiType parameterType = PsiUtil.convertAnonymousToBaseType(paramType);
         final String presentableText = escapePresentableType(parameterType);
-        final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(pi, parameter.getName(), parameter.getType());
+        final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi).withName(parameter.getName()).withType(parameter.getType());
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           buf.append(presentableText);
           result.add(parameterInfo);
@@ -302,7 +300,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       for(int i = pi; i < parameters.length; i++) {
         if (buf.length() > 0) buf.append(", ");
         buf.append("<s>").append(escapePresentableType(parameters[i].getType())).append("</s>");
-        final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(pi, parameters[i].getName(), parameters[i].getType());
+        final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi)
+          .withName(parameters[i].getName())
+          .withType(parameters[i].getType());
         removedParams.add(parameterInfo);
       }
     }
@@ -333,7 +333,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         PsiUtil.ensureValidType(paramType);
         final String presentableText = escapePresentableType(paramType);
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
-          result.add(new ParameterInfoImpl(i, parameter.getName(), paramType));
+          result.add(ParameterInfoImpl.create(i).withName(parameter.getName()).withType(paramType));
           buf.append(presentableText);
         }
         else {
@@ -344,7 +344,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
             exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
           }
           if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return null;
-          final ParameterInfoImpl changedParameterInfo = new ParameterInfoImpl(i, parameter.getName(), exprType);
+          final ParameterInfoImpl changedParameterInfo = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(exprType);
           result.add(changedParameterInfo);
           changedParams.add(changedParameterInfo);
           buf.append("<s>").append(presentableText).append("</s> <b>").append(escapePresentableType(exprType)).append("</b>");
@@ -396,7 +396,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         .areTypesAssignmentCompatible(paramType, expression));
       if (parameterAssignable) {
         final PsiType type = parameter.getType();
-        result.add(new ParameterInfoImpl(pi, parameter.getName(), type));
+        result.add(ParameterInfoImpl.create(pi).withName(parameter.getName()).withType(type));
         buf.append(escapePresentableType(type));
         pi++;
         ei++;
@@ -405,7 +405,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (pi == parameters.length - 1) {
           assert varargParam != null;
           final PsiType type = varargParam.getType();
-          result.add(new ParameterInfoImpl(pi, varargParam.getName(), type));
+          result.add(ParameterInfoImpl.create(pi).withName(varargParam.getName()).withType(type));
           buf.append(escapePresentableType(type));
         }
         pi++;
@@ -422,7 +422,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return false;
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
-        final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(NEW_PARAMETER, name, exprType, expression.getText().replace('\n', ' '));
+        final ParameterInfoImpl newParameterInfo = ParameterInfoImpl.createNew()
+          .withName(name)
+          .withType(exprType)
+          .withDefaultValue(expression.getText().replace('\n', ' '));
         result.add(newParameterInfo);
         newParams.add(newParameterInfo);
         buf.append("<b>").append(escapePresentableType(exprType)).append("</b>");

@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 /**
  * @author Mike
  */
@@ -85,7 +83,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     final List<ParameterInfoImpl> parameterInfos =
       new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
-    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(NEW_PARAMETER, varName, type, varName, false);
+    ParameterInfoImpl parameterInfo = ParameterInfoImpl.createNew().withName(varName).withType(type).withDefaultValue(varName);
     if (!method.isVarArgs()) {
       parameterInfos.add(parameterInfo);
     }

@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER
-
 /**
  * @author Maxim.Medvedev
  */
@@ -29,15 +27,15 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void testParameterReorder() throws Exception {
-    doTest null, [new ParameterInfoImpl(1), new ParameterInfoImpl(0)], false
+    doTest null, [ParameterInfoImpl.create(1), ParameterInfoImpl.create(0)], false
   }
 
   void testGenericTypes() throws Exception {
     doTest null, null, "T", { PsiMethod method ->
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
       return [
-        new ParameterInfoImpl(NEW_PARAMETER, "x", factory.createTypeFromText("T", method.getParameterList()), "null"),
-        new ParameterInfoImpl(NEW_PARAMETER, "y", factory.createTypeFromText("C<T>", method.getParameterList()), "null")
+        ParameterInfoImpl.createNew().withName("x").withType(factory.createTypeFromText("T", method.getParameterList())).withDefaultValue("null"),
+        ParameterInfoImpl.createNew().withName("y").withType(factory.createTypeFromText("C<T>", method.getParameterList())).withDefaultValue("null")
       ]
     }, false
   }
@@ -46,7 +44,7 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
     doTest null, null, null, { PsiMethod method ->
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
       return [
-        new ParameterInfoImpl(0, "t", factory.createTypeFromText("T", method), null)
+        ParameterInfoImpl.create(0).withName("t").withType(factory.createTypeFromText("T", method)).withDefaultValue(null)
       ]
     }, false
   }
@@ -55,98 +53,93 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
     doTest null, null, null, { PsiMethod method ->
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
       return [
-        new ParameterInfoImpl(NEW_PARAMETER, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
-        new ParameterInfoImpl(NEW_PARAMETER, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
-        new ParameterInfoImpl(NEW_PARAMETER, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
+        ParameterInfoImpl.createNew().withName("t").withType(factory.createTypeFromText("T", method.getParameterList())).withDefaultValue("null"),
+        ParameterInfoImpl.createNew().withName("u").withType(factory.createTypeFromText("U", method.getParameterList())).withDefaultValue("null"),
+        ParameterInfoImpl.createNew().withName("cu").withType(factory.createTypeFromText("C<U>", method.getParameterList())).withDefaultValue("null")
       ]
     }, false
   }
 
   void testDefaultConstructor() throws Exception {
-    doTest null, [new ParameterInfoImpl(NEW_PARAMETER, "j", PsiType.INT, "27")], false
+    doTest null, [ParameterInfoImpl.createNew().withName("j").withType(PsiType.INT).withDefaultValue("27")], false
   }
 
   void testGenerateDelegate() throws Exception {
-    doTest null, [new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")], true
+    doTest null, [ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")], true
   }
 
-  /*public void testGenerateDelegateForAbstract() throws Exception {
+  /*void testGenerateDelegateForAbstract() throws Exception {
     doTest(null,
-           new ParameterInfoImpl[] {
-             new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")
-           }, true);
+           [
+             ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")
+           ], true)
   }
 
-  public void testGenerateDelegateWithReturn() throws Exception {
+  void testGenerateDelegateWithReturn() throws Exception {
     doTest(null,
-           new ParameterInfoImpl[] {
-             new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")
-           }, true);
+           [
+             ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")
+           ], true)
   }
 
-  public void testGenerateDelegateWithParametersReordering() throws Exception {
+  void testGenerateDelegateWithParametersReordering() throws Exception {
     doTest(null,
-           new ParameterInfoImpl[] {
-             new ParameterInfoImpl(1),
-             new ParameterInfoImpl(NEW_PARAMETER, "c", PsiType.CHAR, "'a'"),
-             new ParameterInfoImpl(0, "j", PsiType.INT)
-           }, true);
+           [
+             ParameterInfoImpl.create(1),
+             ParameterInfoImpl.createNew().withName("c").withType(PsiType.CHAR).withDefaultValue("'a'"),
+             ParameterInfoImpl.create(0).withName("j").withType(PsiType.INT)
+           ], true)
   }
 
-  public void testGenerateDelegateConstructor() throws Exception {
-    doTest(null, new ParameterInfoImpl[0], true);
-  }
-  */
+  void testGenerateDelegateConstructor() throws Exception {
+    doTest(null, [], true)
+  }*/
 
   void testGenerateDelegateDefaultConstructor() throws Exception {
-    doTest null, [new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "27")], true
+    doTest null, [ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")], true
   }
 
-  /*
-  public void testSCR40895() throws Exception {
-    doTest(null, new ParameterInfoImpl[] {
-      new ParameterInfoImpl(0, "y", PsiType.INT),
-      new ParameterInfoImpl(1, "b", PsiType.BOOLEAN)
-    }, false);
+  /*void testSCR40895() throws Exception {
+    doTest(null, [
+      ParameterInfoImpl.create(0).withName("y").withType(PsiType.INT),
+      ParameterInfoImpl.create(1).withName("b").withType(PsiType.BOOLEAN)
+    ], false)
   }
 
 
-  public void testSuperCallFromOtherMethod() throws Exception {
-    doTest(null, new ParameterInfoImpl[] {
-      new ParameterInfoImpl(NEW_PARAMETER, "nnn", PsiType.INT, "-222"),
-    }, false);
-  }
-  */
+  void testSuperCallFromOtherMethod() throws Exception {
+    doTest(null, [
+      ParameterInfoImpl.createNew().withName("nnn").withType(PsiType.INT).withDefaultValue("-222"),
+    ], false)
+  }*/
 
-  /*//todo?
-  public void testUseAnyVariable() throws Exception {
-    doTest(null, null, null, new GenParams() {
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
-        return new ParameterInfoImpl[] {
-          new ParameterInfoImpl(NEW_PARAMETER, "l", factory.createTypeFromText("List", method), "null", true)
-        };
-      }
-    }, false);
+  //todo?
+  /*void testUseAnyVariable() throws Exception {
+    doTest(null, null, null, { PsiMethod method ->
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
+      return [
+        ParameterInfoImpl.createNew().withName("l").withType(factory.createTypeFromText("List", method)).withDefaultValue("null").useAnySingleVariable()
+      ]
+    }, false)
   }*/
 
   /*
-  public void testRemoveVarargParameter() throws Exception {
-    doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
+  void testRemoveVarargParameter() throws Exception {
+    doTest(null, null, null, [ParameterInfoImpl.create(0)], [], false)
   }
 
 
-  public void testEnumConstructor() throws Exception {
-    doTest(null, new ParameterInfoImpl[] {
-      new ParameterInfoImpl(NEW_PARAMETER, "i", PsiType.INT, "10")
-    }, false);
+  void testEnumConstructor() throws Exception {
+    doTest(null, [
+      ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("10")
+    ], false)
   }
   */
 
   void testVarargs1() throws Exception {
     doTest null, [
-      new ParameterInfoImpl(NEW_PARAMETER, "b", PsiType.BOOLEAN, "true"),
-      new ParameterInfoImpl(0)
+      ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN).withDefaultValue("true"),
+      ParameterInfoImpl.create(0)
     ], false
   }
 
@@ -165,23 +158,21 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
                  new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
-               };
+               }
              }
            },
-           false);
+           false)
   }*/
 
   /*
-  public void testAddRuntimeException() throws Exception {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           new GenExceptions() {
-             public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
-               return new ThrownExceptionInfo[] {
-                 new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
-               };
-             }
-           },
-           false);
+  void testAddRuntimeException() throws Exception {
+    doTest(null, null, null, new SimpleParameterGen(), { PsiMethod method ->
+      return [
+        new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName(
+          "java.lang.RuntimeException", method.getResolveScope()))
+      ]
+    },
+           false)
   }
   */
 
@@ -196,12 +187,12 @@ class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
 
   /*
   //todo
-  public void testReorderWithVarargs() throws Exception {  // IDEADEV-26977
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    doTest(null, new ParameterInfoImpl[] {
-        new ParameterInfoImpl(1),
-        new ParameterInfoImpl(0, "s", factory.createTypeFromText("java.lang.String...", myFixture.getFile()))
-    }, false);
+  void testReorderWithVarargs() throws Exception {  // IDEADEV-26977
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory()
+    doTest(null, [
+        ParameterInfoImpl.create(1),
+        ParameterInfoImpl.create(0).withName("s").withType(factory.createTypeFromText("java.lang.String...", myFixture.getFile()))
+    ], false)
   }
   */
 

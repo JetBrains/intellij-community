@@ -40,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private static final Key<Map<SmartPsiElementPointer<PsiField>, Boolean>> FIELDS = Key.create("CONSTRUCTOR_PARAMS");
 
@@ -243,13 +241,19 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     for (PsiVariable param : params) {
       final PsiType paramType = param.getType();
       if (param instanceof PsiParameter) {
-        newParamInfos[i++] = new ParameterInfoImpl(parameterList.getParameterIndex((PsiParameter)param), param.getName(), paramType, param.getName());
+        newParamInfos[i++] = ParameterInfoImpl.create(parameterList.getParameterIndex((PsiParameter)param))
+          .withName(param.getName())
+          .withType(paramType)
+          .withDefaultValue(param.getName());
       } else {
         try {
           settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(paramType).size() > 1;
           final String uniqueParameterName = getUniqueParameterName(parameters, param, usedFields);
           usedFields.put((PsiField)param, uniqueParameterName);
-          newParamInfos[i++] = new ParameterInfoImpl(NEW_PARAMETER, uniqueParameterName, paramType, uniqueParameterName);
+          newParamInfos[i++] = ParameterInfoImpl.createNew()
+            .withName(uniqueParameterName)
+            .withType(paramType)
+            .withDefaultValue(uniqueParameterName);
         }
         finally {
           settings.PREFER_LONGER_NAMES = preferLongerNames;

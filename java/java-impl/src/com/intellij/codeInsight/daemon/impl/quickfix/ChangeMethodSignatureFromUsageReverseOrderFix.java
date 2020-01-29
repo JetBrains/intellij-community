@@ -73,7 +73,7 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
         .areTypesAssignmentCompatible(paramType, expression));
       if (parameterAssignable) {
         final PsiType type = parameter.getType();
-        result.add(0, new ParameterInfoImpl(pi, parameter.getName(), type));
+        result.add(0, ParameterInfoImpl.create(pi).withName(parameter.getName()).withType(type));
         params.add(0, escapePresentableType(type));
         pi--;
         ei--;
@@ -82,7 +82,7 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
         if (pi == parameters.length - 1) {
           assert varargParam != null;
           final PsiType type = varargParam.getType();
-          result.add(0, new ParameterInfoImpl(pi, varargParam.getName(), type));
+          result.add(0, ParameterInfoImpl.create(pi).withName(varargParam.getName()).withType(type));
           params.add(0, escapePresentableType(type));
         }
         pi--;
@@ -94,7 +94,10 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
         if (exprType == null) return false;
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
-        final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(NEW_PARAMETER, name, exprType, expression.getText().replace('\n', ' '));
+        final ParameterInfoImpl newParameterInfo = ParameterInfoImpl.createNew()
+          .withName(name)
+          .withType(exprType)
+          .withDefaultValue(expression.getText().replace('\n', ' '));
         result.add(0, newParameterInfo);
         newParams.add(newParameterInfo);
         params.add(0, "<b>" + escapePresentableType(exprType) + "</b>");

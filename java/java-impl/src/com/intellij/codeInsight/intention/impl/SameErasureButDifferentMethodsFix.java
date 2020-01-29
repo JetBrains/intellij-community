@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -48,7 +48,7 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
       PsiParameter parameter = parameters[i];
       PsiParameter superParameter = superParameters[i];
       PsiType superParameterType = superSubstitutor.substitute(superParameter.getType());
-      infos[i] = new ParameterInfoImpl(i, parameter.getName(), superParameterType);
+      infos[i] = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(superParameterType);
     }
 
     ChangeSignatureProcessor processor =

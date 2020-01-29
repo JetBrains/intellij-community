@@ -62,7 +62,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
       }
     }
     PsiClassType stringType = PsiType.getJavaLangString(getPsiManager(), GlobalSearchScope.allScope(getProject()));
-    final ParameterInfoImpl[] newParameters = {new ParameterInfoImpl(NEW_PARAMETER, "param", stringType)};
+    final ParameterInfoImpl[] newParameters = {ParameterInfoImpl.createNew().withName("param").withType(stringType)};
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(newParameters, new ThrownExceptionInfo[0], methods, null, method));
   }
 
@@ -132,7 +132,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   }
 
   private void parameterPropagationTest(final PsiMethod method, final HashSet<PsiMethod> psiMethods, final PsiType paramType) {
-    final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{new ParameterInfoImpl(NEW_PARAMETER, "clazz", paramType, "null")};
+    final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("clazz").withType(paramType).withDefaultValue("null")};
     doTest(newParameters, new ThrownExceptionInfo[0], psiMethods, null, method);
   }
 
@@ -181,7 +181,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     ParameterInfoImpl[] result = new ParameterInfoImpl[parameters.length + newParameters.length];
     for (int i = 0; i < parameters.length; i++) {
-      result[i] = new ParameterInfoImpl(i);
+      result[i] = ParameterInfoImpl.create(i);
     }
     System.arraycopy(newParameters, 0, result, parameters.length, newParameters.length);
     return result;

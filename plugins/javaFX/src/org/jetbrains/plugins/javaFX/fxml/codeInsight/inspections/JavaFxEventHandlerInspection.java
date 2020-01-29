@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -219,7 +219,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
       final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
       if (declaredType == null) return;
 
-      final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(0, parameterName, declaredType);
+      final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(0).withName(parameterName).withType(declaredType);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         final ChangeSignatureProcessor processor =
           new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(),

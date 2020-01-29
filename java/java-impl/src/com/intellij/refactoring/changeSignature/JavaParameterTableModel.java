@@ -34,8 +34,6 @@ import java.awt.event.KeyEvent;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 public class JavaParameterTableModel extends ParameterTableModelBase<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>> {
   private final Project myProject;
 
@@ -68,7 +66,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
   @Override
   protected ParameterTableModelItemBase<ParameterInfoImpl> createRowItem(@Nullable ParameterInfoImpl parameterInfo) {
     if (parameterInfo == null) {
-      parameterInfo = new ParameterInfoImpl(NEW_PARAMETER);
+      parameterInfo = ParameterInfoImpl.createNew();
     }
     JavaCodeFragmentFactory f = JavaCodeFragmentFactory.getInstance(myProject);
     final PsiTypeCodeFragment paramTypeCodeFragment =

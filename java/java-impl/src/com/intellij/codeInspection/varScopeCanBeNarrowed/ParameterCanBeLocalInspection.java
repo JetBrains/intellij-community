@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -161,7 +161,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         for (int i = 0; i < parameters.length; i++) {
           PsiParameter psiParameter = parameters[i];
           if (psiParameter == parameter) continue;
-          info.add(new ParameterInfoImpl(i, psiParameter.getName(), psiParameter.getType()));
+          info.add(ParameterInfoImpl.create(i).withName(psiParameter.getName()).withType(psiParameter.getType()));
         }
         final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());

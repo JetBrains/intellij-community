@@ -32,8 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 /**
  * @author dsl
  */
@@ -148,18 +146,23 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
       PsiParameter[] parameters = myMember.getParameterList().getParameters();
 
       if (mySettings.isMakeClassParameter()) {
-        params.add(new ParameterInfoImpl(NEW_PARAMETER, mySettings.getClassParameterName(),
-                                         factory.createType(containingClass, PsiSubstitutor.EMPTY), "this"));
+        params.add(ParameterInfoImpl.createNew()
+                     .withName(mySettings.getClassParameterName())
+                     .withType(factory.createType(containingClass, PsiSubstitutor.EMPTY))
+                     .withDefaultValue("this"));
       }
 
       if (mySettings.isMakeFieldParameters()) {
         for (Settings.FieldParameter parameter : mySettings.getParameterOrderList()) {
-          params.add(new ParameterInfoImpl(NEW_PARAMETER, mySettings.getClassParameterName(), parameter.type, parameter.field.getName()));
+          params.add(ParameterInfoImpl.createNew()
+                       .withName(mySettings.getClassParameterName())
+                       .withType(parameter.type)
+                       .withDefaultValue(parameter.field.getName()));
         }
       }
 
       for (int i = 0; i < parameters.length; i++) {
-        params.add(new ParameterInfoImpl(i));
+        params.add(ParameterInfoImpl.create(i));
       }
 
       final PsiType returnType = myMember.getReturnType();

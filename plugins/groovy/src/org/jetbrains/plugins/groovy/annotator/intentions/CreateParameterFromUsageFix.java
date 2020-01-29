@@ -132,7 +132,10 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
     else {
       JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, false, ref);
       final List<ParameterInfoImpl> parameterInfos = new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
-      ParameterInfoImpl parameterInfo = new ParameterInfoImpl(NEW_PARAMETER, name, type, PsiTypesUtil.getDefaultValueOfType(type), false);
+      ParameterInfoImpl parameterInfo = ParameterInfoImpl.createNew()
+        .withName(name)
+        .withType(type)
+        .withDefaultValue(PsiTypesUtil.getDefaultValueOfType(type));
       if (!method.isVarArgs()) {
         parameterInfos.add(parameterInfo);
       }
