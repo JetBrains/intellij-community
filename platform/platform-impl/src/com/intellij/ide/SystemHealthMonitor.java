@@ -177,7 +177,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       @Override
       public void run() {
         if (!reported.get()) {
-          Future<Long> future = ourFreeSpaceCalculation.get();
+          Future<@Nullable Long> future = ourFreeSpaceCalculation.get();
           if (future == null) {
             ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
               // file.getUsableSpace() can fail and return 0 e.g. after MacOSX restart or awakening from sleep
@@ -187,7 +187,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
                 TimeoutUtil.sleep(5000);  // hopefully we will not hummer disk too much
                 fileUsableSpace = file.getUsableSpace();
               }
-
               return fileUsableSpace;
             }));
           }
@@ -197,11 +196,13 @@ final class SystemHealthMonitor extends PreloadingActivity {
           }
 
           try {
-            final long fileUsableSpace = future.get();
-            final long timeout = Math.min(3600, Math.max(5, (fileUsableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS));
+            Long result = future.get();
+            if (result == null) return;
             ourFreeSpaceCalculation.set(null);
 
-            if (fileUsableSpace < LOW_DISK_SPACE_THRESHOLD) {
+            long usableSpace = result;
+            long timeout = Math.min(3600, Math.max(5, (usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS));
+            if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
               if (ReadAction.compute(() -> NotificationsConfiguration.getNotificationsConfiguration()) == null) {
                 ourFreeSpaceCalculation.set(future);
                 restart(1);
@@ -213,8 +214,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
               SwingUtilities.invokeLater(() -> {
                 String productName = ApplicationNamesInfo.getInstance().getFullProductName();
                 String message = IdeBundle.message("low.disk.space.message", productName);
-                if (fileUsableSpace < 100 * 1024) {
-                  LOG.warn(message + " (" + fileUsableSpace + ")");
+                if (usableSpace < 100 * 1024) {
+                  LOG.warn(message + " (" + usableSpace + ")");
                   Messages.showErrorDialog(message, "Fatal Configuration Problem");
                   reported.compareAndSet(true, false);
                   restart(timeout);
