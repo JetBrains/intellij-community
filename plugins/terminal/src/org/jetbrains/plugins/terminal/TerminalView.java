@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -70,7 +71,9 @@ import java.util.Set;
 
 public final class TerminalView {
   private final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
+  private static final Logger LOG = Logger.getInstance(TerminalView.class);
 
+  private ToolWindow myToolWindow;
   private final Project myProject;
   private final LocalTerminalDirectRunner myTerminalRunner;
   private TerminalDockContainer myDockContainer;
@@ -90,7 +93,13 @@ public final class TerminalView {
   }
 
   void initToolWindow(@NotNull ToolWindow toolWindow) {
-    ((ToolWindowImpl)toolWindow).setTabActions(
+    if (myToolWindow != null) {
+      LOG.error("Terminal tool window already initialized");
+      return;
+    }
+    myToolWindow = toolWindow;
+
+    ((ToolWindowEx)toolWindow).setTabActions(
       new DumbAwareAction(() -> IdeBundle.message("action.DumbAware.TerminalView.text.new.session"),
                           () -> IdeBundle.message("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
       @Override
@@ -105,27 +114,27 @@ public final class TerminalView {
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
-        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(id) &&
+        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(id) && myToolWindow == toolWindow &&
             toolWindow.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
           // open a new session if all tabs were closed manually
-          createNewSession(toolWindow, myTerminalRunner, null, true);
+          createNewSession(myTerminalRunner, null, true);
         }
       }
     });
 
     if (myDockContainer == null) {
-      myDockContainer = new TerminalDockContainer(toolWindow);
+      myDockContainer = new TerminalDockContainer();
       Disposer.register(myProject, myDockContainer);
       DockManager.getInstance(myProject).register(myDockContainer);
     }
   }
 
-  void restoreTabs(@NotNull ToolWindow toolWindow, @Nullable TerminalArrangementState arrangementState) {
-    ContentManager contentManager = toolWindow.getContentManager();
+  void restoreTabs(@Nullable TerminalArrangementState arrangementState) {
+    ContentManager contentManager = myToolWindow.getContentManager();
 
     if (arrangementState != null) {
       for (TerminalTabState tabState : arrangementState.myTabStates) {
-        createNewSession(toolWindow, myTerminalRunner, tabState, false);
+        createNewSession(myTerminalRunner, tabState, false);
       }
 
       Content content = contentManager.getContent(arrangementState.mySelectedTabIndex);
@@ -156,25 +165,14 @@ public final class TerminalView {
     return (ShellTerminalWidget)Objects.requireNonNull(widget);
   }
 
-  @Nullable
+  @NotNull
   private JBTerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState, boolean requestFocus) {
-    ToolWindow toolWindow = getWindow();
-    return toolWindow == null ? null : createNewSession(toolWindow, terminalRunner, tabState, requestFocus);
-  }
-
-  @Nullable
-  private ToolWindow getWindow() {
-    return ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-  }
-
-  @Nullable
-  private JBTerminalWidget createNewSession(@NotNull ToolWindow toolWindow, @NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState, boolean requestFocus) {
-    if (toolWindow.isAvailable()) {
-      Content content = createNewTab(null, terminalRunner, toolWindow, tabState, requestFocus);
-      toolWindow.activate(null);
-      return Objects.requireNonNull(getWidgetByContent(content));
-    }
-    return null;
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    // ensure #initToolWindow is called
+    Objects.requireNonNull(toolWindow).activate(null);
+    LOG.assertTrue(toolWindow == myToolWindow);
+    Content content = createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
+    return Objects.requireNonNull(getWidgetByContent(content));
   }
 
   @NotNull
@@ -184,7 +182,7 @@ public final class TerminalView {
 
   @NotNull
   private Content createNewTab(@Nullable JBTerminalWidget terminalWidget,
-                               @NotNull AbstractTerminalRunner terminalRunner,
+                               @NotNull AbstractTerminalRunner<?> terminalRunner,
                                @NotNull ToolWindow toolWindow,
                                @Nullable TerminalTabState tabState,
                                boolean requestFocus) {
@@ -263,7 +261,7 @@ public final class TerminalView {
       public void onSessionClosed() {
         Content content = toolWindow.getContentManager().getSelectedContent();
         if (content != null) {
-          removeTab(toolWindow, content, true);
+          removeTab(toolWindow, content);
         }
       }
 
@@ -308,7 +306,7 @@ public final class TerminalView {
 
     terminalWidget.addListener(widget -> {
       ApplicationManager.getApplication().invokeLater(() -> {
-        removeTab(toolWindow, content, true);
+        removeTab(toolWindow, content);
       }, myProject.getDisposed());
     });
 
@@ -325,8 +323,8 @@ public final class TerminalView {
     return result;
   }
 
-  private static void removeTab(@NotNull ToolWindow toolWindow, @NotNull Content content, boolean keepFocus) {
-    toolWindow.getContentManager().removeContent(content, true, keepFocus, keepFocus);
+  private static void removeTab(@NotNull ToolWindow toolWindow, @NotNull Content content) {
+    toolWindow.getContentManager().removeContent(content, true, true, true);
   }
 
   @NotNull
@@ -370,17 +368,14 @@ public final class TerminalView {
     return content.getUserData(TERMINAL_WIDGET_KEY);
   }
 
-  public void detachWidgetAndRemoveContent(@NotNull ToolWindow toolWindow, @NotNull Content content) {
+  public void detachWidgetAndRemoveContent(@NotNull Content content) {
+    ContentManager contentManager = myToolWindow.getContentManager();
+    LOG.assertTrue(contentManager.getIndexOfContent(content) >= 0, "Not a terminal content");
+    contentManager.removeContent(content, true);
     content.putUserData(TERMINAL_WIDGET_KEY, null);
-    toolWindow.getContentManager().removeContent(content, true);
   }
 
   private final class TerminalDockContainer implements DockContainer {
-    private final ToolWindow myToolWindow;
-
-    TerminalDockContainer(ToolWindow toolWindow) {
-      myToolWindow = toolWindow;
-    }
 
     @NotNull
     @Override
