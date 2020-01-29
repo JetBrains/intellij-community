@@ -194,6 +194,27 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testLineSeparatorNearBlockInlay2() throws Exception {
+    initText("a\nb");
+    addBlockInlay(2, true);
+    addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
+    checkResult();
+  }
+
+  public void testLineSeparatorNearBlockInlay3() throws Exception {
+    initText("a\nb");
+    addBlockInlay(1, false);
+    addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
+    checkResult();
+  }
+
+  public void testLineSeparatorNearBlockInlay4() throws Exception {
+    initText("a\nb");
+    addBlockInlay(1, false);
+    addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
+    checkResult();
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
