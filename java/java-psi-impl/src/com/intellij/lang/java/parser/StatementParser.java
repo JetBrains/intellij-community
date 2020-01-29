@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -160,16 +160,31 @@ public class StatementParser {
       skipQualifiedName(builder);
       IElementType suspectedLT = builder.getTokenType(), next = builder.lookAhead(1);
       refPos.rollbackTo();
+
       if (suspectedLT == JavaTokenType.LT || suspectedLT == JavaTokenType.DOT && next == JavaTokenType.AT) {
+        final boolean constructorRef;
+
         PsiBuilder.Marker declStatement = builder.mark();
         PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
+
         if (decl == null) {
           PsiBuilder.Marker marker = myParser.getReferenceParser().parseType(builder, 0);
-          error(builder, JavaErrorBundle.message("expected.identifier"));
-          if (marker == null) builder.advanceLexer();
+          // if the type declaration ends with "::" then it is a method reference to a constructor
+          constructorRef = builder.getTokenType() == JavaTokenType.DOUBLE_COLON;
+          if (!constructorRef) {
+            error(builder, JavaErrorBundle.message("expected.identifier"));
+            if (marker == null) builder.advanceLexer();
+          }
         }
-        done(declStatement, JavaElementType.DECLARATION_STATEMENT);
-        return declStatement;
+        else {
+          constructorRef = false;
+        }
+
+        if (!constructorRef) {
+          done(declStatement, JavaElementType.DECLARATION_STATEMENT);
+          return declStatement;
+        }
+        declStatement.rollbackTo();
       }
     }
 
