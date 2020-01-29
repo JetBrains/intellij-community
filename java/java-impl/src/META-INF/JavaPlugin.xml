@@ -1991,6 +1991,11 @@
 
     <appStarter implementation="com.intellij.internal.DumpJdkIndexStarter"/>
     <appStarter implementation="com.intellij.internal.UpdateIndexesLayoutStarter"/>
+    <applicationService serviceImplementation="com.intellij.internal.SharedIndexesLoader"/>
+
+    <registryKey key="shared.indexes.url"
+                 defaultValue="https://idea-indexes-cdn.s3-eu-west-1.amazonaws.com/"
+                 description="Shared Indexes download URL" />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
