@@ -3,8 +3,8 @@
 class TextBlockMigration {
 
   void escapeSpaces() {
-    String block = "text  \n" +
-                   "block\n";
+    String block = "text  block  \n" +
+                   " ";
   }
 
 }

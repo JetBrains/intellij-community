@@ -180,7 +180,7 @@ public class PsiLiteralUtil {
    * @param s                    original text
    * @param escapeStartQuote     true if first quote should be escaped (e.g. when copy-pasting into text block after two quotes)
    * @param escapeEndQuote       true if last quote should be escaped (e.g. inserting text into text block before closing quotes)
-   * @param escapeSpacesInTheEnd true if spaces in the end of the line should be converted to \040 even if no new line in the end is present
+   * @param escapeSpacesInTheEnd true if spaces in the end of the line should be preserved even if no new line in the end is present
    */
   @NotNull
   public static String escapeTextBlockCharacters(@NotNull String s, boolean escapeStartQuote,
@@ -246,12 +246,12 @@ public class PsiLiteralUtil {
       i++;
     }
     if (i >= s.length() && escapeSpacesInTheEnd) {
-      result.append(StringUtil.repeat("\\040", nSpaces));
+      result.append(StringUtil.repeat(" ", nSpaces - 1)).append("\\s");
       return i;
     }
     int nextIdx = i >= s.length() ? -1 : parseBackSlash(s, i);
     if (nextIdx != -1 && nextIdx < s.length() && s.charAt(nextIdx) == 'n') {
-      result.append(StringUtil.repeat("\\040", nSpaces));
+      result.append(StringUtil.repeat(" ", nSpaces - 1)).append("\\s");
       return i;
     }
     result.append(StringUtil.repeatSymbol(' ', nSpaces));
@@ -324,35 +324,13 @@ public class PsiLiteralUtil {
   }
 
   /**
-   * Replaces all unescaped quotes with escaped ones.
-   * If text contains backslash escape sequence it's replaced with a regular backslash.
-   * The rest of the symbols are left unchanged.
+   * Parse backslash at given index. It will be parsed even in case when backslash is represented as unicode escape sequence.
+   *
+   * @param str text
+   * @param idx parse from
+   * @return index where next char starts, -1 otherwise
    */
-  @NotNull
-  public static String escapeQuotes(@NotNull String str) {
-    StringBuilder sb = new StringBuilder(str.length());
-    int nSlashes = 0;
-    int idx = 0;
-    while (idx < str.length()) {
-      char c = str.charAt(idx);
-      int nextIdx = parseBackSlash(str, idx);
-      if (nextIdx > 0) {
-        nSlashes++;
-      }
-      else {
-        if (c == '\"' && nSlashes % 2 == 0) {
-          sb.append('\\');
-        }
-        nSlashes = 0;
-        nextIdx = idx + 1;
-      }
-      sb.append(c);
-      idx = nextIdx;
-    }
-    return sb.toString();
-  }
-
-  private static int parseBackSlash(@NotNull String str, int idx) {
+  public static int parseBackSlash(@NotNull String str, int idx) {
     char c = str.charAt(idx);
     if (c != '\\') return -1;
     int nextIdx = parseEscapedBackSlash(str, idx);

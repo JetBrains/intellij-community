@@ -23,6 +23,6 @@ public class TextBlockBackwardMigrationInspectionTest extends LightQuickFixParam
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_13_PREVIEW;
+    return LanguageLevel.JDK_14_PREVIEW;
   }
 }
