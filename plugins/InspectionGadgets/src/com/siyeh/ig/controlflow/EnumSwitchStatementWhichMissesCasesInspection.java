@@ -47,7 +47,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   public boolean ignoreSwitchStatementsWithDefault = true;
 
   @NotNull
-  String buildErrorString(String enumName, Set<String> names) {
+  static String buildErrorString(String enumName, Set<String> names) {
     if (names.size() == 1) {
       return InspectionGadgetsBundle
         .message("enum.switch.statement.which.misses.cases.problem.descriptor.single", enumName, names.iterator().next());
@@ -78,7 +78,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       }
 
       public void processSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
-        final PsiExpression expression = switchBlock.getExpression();
+        final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(switchBlock.getExpression());
         if (expression == null) return;
         final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
         if (aClass == null || !aClass.isEnum()) return;
