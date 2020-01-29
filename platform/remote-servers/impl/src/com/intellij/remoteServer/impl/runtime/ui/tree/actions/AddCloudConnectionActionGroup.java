@@ -42,7 +42,7 @@ public class AddCloudConnectionActionGroup extends ActionGroup {
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (e.getPlace().equals(ActionPlaces.ACTION_SEARCH)) {
-        e.getPresentation().setText(CloudBundle.message("new.cloud.connection.configurable.title", myServerType.getPresentableName()));
+        e.getPresentation().setText(() -> CloudBundle.message("new.cloud.connection.configurable.title", myServerType.getPresentableName()));
       }
       else {
         e.getPresentation().setText(myServerType.getPresentableName());

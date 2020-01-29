@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>Ant</name>
   <id>AntSupport</id>
+  <category>Build Tools</category>
   <description><![CDATA[
   Provides integration with the <a href="http://ant.apache.org/">Ant</a> build tool.
 <ul><li>Dedicated tool window</li>

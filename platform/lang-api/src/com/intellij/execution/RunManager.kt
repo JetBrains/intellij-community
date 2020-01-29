@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution
 
 import com.intellij.execution.configurations.*
@@ -222,7 +222,7 @@ abstract class RunManager {
 
   // due to historical reasons findSettings() searches by name in addition to instance and this behavior is bad for isTemplate,
   // so, client cannot for now use `findSettings()?.isTemplate() ?: false`.
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   abstract fun isTemplate(configuration: RunConfiguration): Boolean
 }
 

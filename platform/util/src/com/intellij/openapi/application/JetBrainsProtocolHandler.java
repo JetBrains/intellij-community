@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import gnu.trove.THashMap;
@@ -45,20 +44,15 @@ public final class JetBrainsProtocolHandler {
     ourCommand = urlParts.get(1);
     ourMainParameter = ContainerUtil.getOrElse(urlParts, 2, null);
     Map<String, String> parameters = new THashMap<>();
-    String query = uri.getRawQuery();
-    if (query != null) {
-      computeParameters(query, parameters);
-    }
+    computeParameters(uri.getRawQuery(), parameters);
     parameters.put(FRAGMENT_PARAM_NAME, uri.getFragment());
     ourParameters = Collections.unmodifiableMap(parameters);
     initialized = true;
   }
 
   // well, Netty cannot be added as dependency and so, QueryStringDecoder cannot be used
-  private static void computeParameters(@NotNull String rawQuery, @SuppressWarnings("SameParameterValue") @NotNull Map<String, String> parameters) {
-    if (StringUtilRt.isEmpty(rawQuery)) {
-      return;
-    }
+  private static void computeParameters(@Nullable String rawQuery, Map<String, String> parameters) {
+    if (StringUtil.isEmpty(rawQuery)) return;
 
     for (String keyValue : StringUtil.split(rawQuery, "&")) {
       if (keyValue.contains("=")) {

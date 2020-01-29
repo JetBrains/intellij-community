@@ -54,6 +54,10 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(dynamicText, dynamicDescription, icon);
   }
 
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Icon icon) {
+    super(dynamicText, icon);
+  }
+
   private static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
     private final Consumer<? super AnActionEvent> myActionPerformed;
 
@@ -61,7 +65,8 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
       myActionPerformed = actionPerformed;
     }
 
-    private SimpleDumbAwareAction(@Nls(capitalization = Nls.Capitalization.Title) String text, Consumer<? super AnActionEvent> actionPerformed) {
+    private SimpleDumbAwareAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                                  Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;
     }

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -32,18 +33,16 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -56,41 +55,134 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class InlineLocalHandler extends JavaInlineActionHandler {
   private static final Logger LOG = Logger.getInstance(InlineLocalHandler.class);
 
   @Override
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiLocalVariable;
+    return element instanceof PsiLocalVariable || element instanceof PsiPatternVariable;
   }
 
   @Override
   public void inlineElement(Project project, Editor editor, PsiElement element) {
     final PsiReference psiReference = TargetElementUtil.findReference(editor);
     final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? (PsiReferenceExpression)psiReference : null;
-    invoke(project, editor, (PsiLocalVariable)element, refExpr);
+    doInline(project, editor, (PsiVariable)element, refExpr);
   }
 
   /**
    * should be called in AtomicAction
    */
   public static void invoke(@NotNull final Project project,
-                            final Editor editor,
+                            @NotNull final Editor editor,
                             @NotNull PsiLocalVariable local,
                             PsiReferenceExpression refExpr) {
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
+    doInline(project, editor, local, refExpr);
+  }
 
+  @TestOnly
+  public static void inlineVariable(@NotNull final Project project,
+                                    @NotNull final Editor editor,
+                                    @NotNull PsiVariable var,
+                                    PsiReferenceExpression refExpr) {
+    doInline(project, editor, var, refExpr);
+  }
+
+  private static void doInline(@NotNull final Project project,
+                               @NotNull final Editor editor,
+                               @NotNull PsiVariable var,
+                               PsiReferenceExpression refExpr) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, var)) return;
+    Collection<PsiElement> allRefs = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReferencesSearch.search(var).mapping(PsiReference::getElement).findAll(),
+      FindBundle.message("find.usages.dialog.title"), true, project);
+    if (allRefs == null) return;
+    if (allRefs.isEmpty()) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String message = RefactoringBundle.message("variable.is.never.used", var.getName());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(var), HelpID.INLINE_VARIABLE);
+      }, ModalityState.NON_MODAL);
+      return;
+    }
+    Runnable runnable;
+    if (var instanceof PsiLocalVariable) {
+      runnable = prepareLocalInline(project, editor, (PsiLocalVariable)var, refExpr, allRefs);
+    }
+    else {
+      runnable = preparePatternInline(project, editor, (PsiPatternVariable)var, refExpr, allRefs);
+    }
+    if (runnable == null) return;
+
+    CommandProcessor.getInstance()
+      .executeCommand(project, () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(runnable),
+                      RefactoringBundle.message("inline.command", var.getName()), null);
+  }
+
+  private static @Nullable Runnable preparePatternInline(@NotNull final Project project,
+                                                         @NotNull final Editor editor,
+                                                         @NotNull PsiPatternVariable pattern,
+                                                         @Nullable PsiReferenceExpression refExpr,
+                                                         @NotNull Collection<PsiElement> allRefs) {
+    String initializerText = JavaPsiPatternUtil.getEffectiveInitializerText(pattern);
+    if (initializerText == null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String message = RefactoringBundle.message("cannot.perform.refactoring");
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(pattern), HelpID.INLINE_VARIABLE);
+      }, ModalityState.NON_MODAL);
+      return null;
+    }
+    List<PsiElement> refsToInlineList = new ArrayList<>(allRefs);
+    boolean inlineAll = askInlineAll(project, pattern, refExpr, refsToInlineList);
+    if (refsToInlineList.isEmpty()) return null;
+    final PsiElement[] refsToInline = PsiUtilCore.toPsiElementArray(refsToInlineList);
+    PsiExpression defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, pattern);
+
+    final EditorColorsManager manager = EditorColorsManager.getInstance();
+    final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, refsToInline, attributes, true, null);
+    }
+
+    return () -> {
+      final String refactoringId = "refactoring.inline.pattern.variable";
+      PsiElement scope = pattern.getDeclarationScope();
+      try {
+        RefactoringEventData beforeData = new RefactoringEventData();
+        beforeData.addElements(refsToInline);
+        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+          .refactoringStarted(refactoringId, beforeData);
+
+        List<SmartPsiElementPointer<PsiExpression>> exprs = WriteAction.compute(
+          () -> inlineOccurrences(project, pattern, defToInline, refsToInline));
+
+        if (inlineAll && ReferencesSearch.search(pattern).findFirst() == null) {
+          QuickFixFactory.getInstance().createRemoveUnusedVariableFix(pattern).invoke(project, editor, pattern.getContainingFile());
+        }
+
+        highlightOccurrences(project, editor, exprs);
+      }
+      finally {
+        final RefactoringEventData afterData = new RefactoringEventData();
+        afterData.addElement(scope);
+        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
+      }
+    };
+  }
+
+  private static Runnable prepareLocalInline(@NotNull final Project project,
+                                             @NotNull final Editor editor,
+                                             @NotNull PsiLocalVariable local,
+                                             @Nullable PsiReferenceExpression refExpr,
+                                             @NotNull Collection<PsiElement> allRefs) {
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
 
     final String localName = local.getName();
@@ -98,45 +190,29 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     final List<PsiElement> innerClassesWithUsages = Collections.synchronizedList(new ArrayList<>());
     final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<>());
     final PsiElement containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class, PsiLambdaExpression.class);
-    final Query<PsiReference> query = ReferencesSearch.search(local);
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      if (query.findFirst() == null) {
-        LOG.assertTrue(refExpr == null);
-        ApplicationManager.getApplication().invokeLater(() -> {
-          String message = RefactoringBundle.message("variable.is.never.used", localName);
-          CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_VARIABLE);
-        }, ModalityState.NON_MODAL);
-        return;
-      }
-      query.forEach(psiReference -> {
-        final PsiElement element = psiReference.getElement();
-        PsiElement innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
-        while (innerClass != containingClass && innerClass != null) {
-          final PsiElement parentPsiClass = PsiTreeUtil.getParentOfType(innerClass.getParent(), PsiClass.class, PsiLambdaExpression.class);
-          if (parentPsiClass == containingClass) {
-            if (innerClass instanceof PsiLambdaExpression) {
-              if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
-                innerClassesWithUsages.add(element);
-                innerClass = parentPsiClass;
-                continue;
-              }
+    for (PsiElement element : allRefs) {
+      PsiElement innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
+      while (innerClass != containingClass && innerClass != null) {
+        final PsiElement parentPsiClass = PsiTreeUtil.getParentOfType(innerClass.getParent(), PsiClass.class, PsiLambdaExpression.class);
+        if (parentPsiClass == containingClass) {
+          if (innerClass instanceof PsiLambdaExpression) {
+            if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
+              innerClassesWithUsages.add(element);
+              innerClass = parentPsiClass;
+              continue;
             }
-            innerClassesWithUsages.add(innerClass);
-            innerClassUsages.add(element);
           }
-          innerClass = parentPsiClass;
+          innerClassesWithUsages.add(innerClass);
+          innerClassUsages.add(element);
         }
-        return true;
-      });
-
-    }, "Find Usages", true, project)) {
-      return;
+        innerClass = parentPsiClass;
+      }
     }
     final PsiCodeBlock containerBlock = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
     if (containerBlock == null) {
       final String message = RefactoringBundle.getCannotRefactorMessage("Variable is declared outside a code block");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_VARIABLE);
-      return;
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
+      return null;
     }
 
     final PsiExpression defToInline;
@@ -145,13 +221,13 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       if (defToInline == null) {
         final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_VARIABLE);
-        return;
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
+        return null;
       }
     }
     catch (RuntimeException e) {
       processWrappedAnalysisCanceledException(project, editor, e);
-      return;
+      return null;
     }
 
     List<PsiElement> refsToInlineList = new ArrayList<>();
@@ -160,7 +236,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
     catch (RuntimeException e) {
       processWrappedAnalysisCanceledException(project, editor, e);
-      return;
+      return null;
     }
     for (PsiElement innerClassUsage : innerClassUsages) {
       if (!refsToInlineList.contains(innerClassUsage)) {
@@ -169,31 +245,17 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
     if (refsToInlineList.isEmpty()) {
       String message = RefactoringBundle.message("variable.is.never.used.before.modification", localName);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_VARIABLE);
-      return;
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
+      return null;
     }
 
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     InlineUtil.checkChangedBeforeLastAccessConflicts(conflicts, defToInline, local);
 
-    if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
+    if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return null;
 
-    final Ref<Boolean> inlineAll = new Ref<>(true);
-    if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-      int occurrencesCount = refsToInlineList.size();
-      if (refExpr != null && EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
-        final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, local, refExpr, occurrencesCount);
-        if (!inlineLocalDialog.showAndGet()) {
-          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-          return;
-        }
-
-        if (inlineLocalDialog.isInlineThis()) {
-          refsToInlineList = Collections.singletonList(refExpr);
-          inlineAll.set(false);
-        }
-      }
-    }
+    boolean inlineAll = askInlineAll(project, local, refExpr, refsToInlineList);
+    if (refsToInlineList.isEmpty()) return null;
 
     final PsiElement[] refsToInline = PsiUtilCore.toPsiElementArray(refsToInlineList);
 
@@ -201,7 +263,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
 
-    if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // TODO : check if initializer uses fieldNames that possibly will be hidden by other
       //       locals with the same names after inlining
       highlightManager.addOccurrenceHighlights(
@@ -216,9 +278,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       LOG.assertTrue(defs.length > 0);
       highlightManager.addOccurrenceHighlights(editor, defs, attributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_VARIABLE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
       WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-      return;
+      return null;
     }
 
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(defToInline, PsiTryStatement.class);
@@ -232,12 +294,13 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       final PsiFile otherFile = ref.getContainingFile();
       if (!otherFile.equals(workingFile)) {
         String message = RefactoringBundle.message("variable.is.referenced.in.multiple.files", localName);
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_VARIABLE);
-        return;
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
+        return null;
       }
       if (tryStatement != null && !PsiTreeUtil.isAncestor(tryStatement, ref, false)) {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Unable to inline outside try/catch statement", getRefactoringName(), HelpID.INLINE_VARIABLE);
-        return;
+        CommonRefactoringUtil.showErrorHint(project, editor, "Unable to inline outside try/catch statement", getRefactoringName(local),
+                                            HelpID.INLINE_VARIABLE);
+        return null;
       }
     }
 
@@ -252,9 +315,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
         String message =
           RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_VARIABLE);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        return;
+        return null;
       }
     }
 
@@ -262,34 +325,31 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     if (writeAccess != null) {
       HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{writeAccess}, writeAttributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_VARIABLE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
       WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-      return;
+      return null;
     }
 
     if (Arrays.stream(refsToInline).anyMatch(ref -> ref.getParent() instanceof PsiResourceExpression)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage("Variable is used as resource reference"),
-                                          getRefactoringName(), HelpID.INLINE_VARIABLE);
-      return;
+      CommonRefactoringUtil
+        .showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage("Variable is used as resource reference"),
+                       getRefactoringName(local), HelpID.INLINE_VARIABLE);
+      return null;
     }
 
-    final Runnable runnable = () -> {
+    return () -> {
       final String refactoringId = "refactoring.inline.local.variable";
       try {
-        SmartPsiElementPointer<PsiExpression>[] exprs = new SmartPsiElementPointer[refsToInline.length];
 
         RefactoringEventData beforeData = new RefactoringEventData();
         beforeData.addElements(refsToInline);
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
+        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+          .refactoringStarted(refactoringId, beforeData);
 
-        WriteAction.run(() -> {
-          final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-          for (int idx = 0; idx < refsToInline.length; idx++) {
-            PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)refsToInline[idx];
-            exprs[idx] = pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement));
-          }
+        List<SmartPsiElementPointer<PsiExpression>> exprs = WriteAction.compute(() -> {
+          List<SmartPsiElementPointer<PsiExpression>> pointers = inlineOccurrences(project, local, defToInline, refsToInline);
 
-          if (inlineAll.get()) {
+          if (inlineAll) {
             if (!isInliningVariableInitializer(defToInline)) {
               deleteInitializer(defToInline);
             }
@@ -297,29 +357,14 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
               defToInline.delete();
             }
           }
+          return pointers;
         });
 
-        if (inlineAll.get() && ReferencesSearch.search(local).findFirst() == null && editor != null) {
+        if (inlineAll && ReferencesSearch.search(local).findFirst() == null) {
           QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
         }
 
-        if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-          highlightManager.addOccurrenceHighlights(editor, ContainerUtil.convert(exprs, new PsiExpression[refsToInline.length],
-                                                                                 pointer -> pointer.getElement()), attributes, true, null);
-          if (exprs.length > 1) {
-            Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-            Shortcut[] shortcuts = keymap.getShortcuts("FindNext");
-            String message;
-            if (shortcuts.length > 0) {
-              message = "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to go through " + exprs.length + " inlined occurrences";
-            }
-            else {
-              message = exprs.length + " occurrences were inlined";
-            }
-            HintManagerImpl.getInstanceImpl().showInformationHint(editor, message, HintManager.UNDER);
-          }
-          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        }
+        highlightOccurrences(project, editor, exprs);
 
         WriteAction.run(() -> {
           for (SmartPsiElementPointer<PsiExpression> expr : exprs) {
@@ -333,18 +378,76 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
       }
     };
-
-    CommandProcessor.getInstance().executeCommand(project, () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(runnable), RefactoringBundle.message("inline.command", localName), null);
   }
 
+  @NotNull
+  static List<SmartPsiElementPointer<PsiExpression>> inlineOccurrences(@NotNull Project project,
+                                                                       @NotNull PsiVariable local,
+                                                                       PsiExpression defToInline,
+                                                                       PsiElement[] refsToInline) {
+    List<SmartPsiElementPointer<PsiExpression>> pointers = new ArrayList<>();
+    final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+    for (PsiElement element : refsToInline) {
+      PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)element;
+      pointers.add(pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement)));
+    }
+    return pointers;
+  }
+
+  static boolean askInlineAll(@NotNull Project project,
+                              @NotNull PsiVariable variable,
+                              @Nullable PsiReferenceExpression refExpr,
+                              @NotNull List<PsiElement> refsToInlineList) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
+    int occurrencesCount = refsToInlineList.size();
+    if (refExpr != null && EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
+      final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, variable, refExpr, occurrencesCount);
+      if (!inlineLocalDialog.showAndGet()) {
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        refsToInlineList.clear();
+        return false;
+      }
+      else if (inlineLocalDialog.isInlineThis()) {
+        refsToInlineList.clear();
+        refsToInlineList.add(refExpr);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static void highlightOccurrences(@NotNull Project project,
+                                   @Nullable Editor editor,
+                                   @NotNull List<SmartPsiElementPointer<PsiExpression>> exprs) {
+    final EditorColorsManager manager = EditorColorsManager.getInstance();
+    final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+      PsiExpression[] occurrences = ContainerUtil.map2Array(exprs, new PsiExpression[exprs.size()], SmartPsiElementPointer::getElement);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, occurrences, attributes, true, null);
+      if (exprs.size() > 1) {
+        Shortcut shortcut = KeymapUtil.getPrimaryShortcut("FindNext");
+        String message;
+        if (shortcut != null) {
+          message = "Press " + KeymapUtil.getShortcutText(shortcut) + " to go through " + exprs.size() + " inlined occurrences";
+        }
+        else {
+          message = exprs.size() + " occurrences were inlined";
+        }
+        HintManagerImpl.getInstanceImpl().showInformationHint(editor, message, HintManager.UNDER);
+      }
+      WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+    }
+  }
+  
   private static void processWrappedAnalysisCanceledException(@NotNull Project project,
                                                               Editor editor,
                                                               RuntimeException e) {
     Throwable cause = e.getCause();
     if (cause instanceof AnalysisCanceledException) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("extract.method.control.flow.analysis.failed")),
-                                          getRefactoringName(), HelpID.INLINE_VARIABLE);
+                                          RefactoringBundle.getCannotRefactorMessage(
+                                            RefactoringBundle.message("extract.method.control.flow.analysis.failed")),
+                                          RefactoringBundle.message("inline.variable.title"), HelpID.INLINE_VARIABLE);
       return;
     }
     throw e;
@@ -424,10 +527,10 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return getRefactoringName();
+    return getRefactoringName(element);
   }
 
-  private static String getRefactoringName() {
-    return RefactoringBundle.message("inline.variable.title");
+  private static String getRefactoringName(PsiElement variable) {
+    return RefactoringBundle.message(variable instanceof PsiPatternVariable ? "inline.pattern.variable.title" : "inline.variable.title");
   }
 }

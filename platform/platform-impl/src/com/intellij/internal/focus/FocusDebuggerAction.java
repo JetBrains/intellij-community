@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.focus;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -53,9 +54,9 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
   public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myFocusDrawer == null) {
-      presentation.setText("Start Focus Debugger");
+      presentation.setText(() -> IdeBundle.message("action.presentation.FocusDebuggerAction.text.start.focus.debugger"));
     } else {
-      presentation.setText("Stop Focus Debugger");
+      presentation.setText(() -> IdeBundle.message("action.presentation.FocusDebuggerAction.text.stop.focus.debugger"));
     }
   }
 

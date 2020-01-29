@@ -20,20 +20,14 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class CredentialsManagerImpl extends CredentialsManager {
 
   @Override
-  public List<CredentialsType> getAllTypes() {
-    return new ArrayList<>(getExTypes());
-  }
-
-  @Override
-  public List<CredentialsTypeEx> getExTypes() {
-    return Arrays.asList(CredentialsTypeEx.EP_NAME.getExtensions());
+  public List<CredentialsType<?>> getAllTypes() {
+    return Arrays.asList(CredentialsType.EP_NAME.getExtensions());
   }
 
   @Override

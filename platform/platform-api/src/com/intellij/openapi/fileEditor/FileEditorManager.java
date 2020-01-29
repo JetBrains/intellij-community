@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -172,13 +172,15 @@ public abstract class FileEditorManager {
    * @deprecated Use {@link com.intellij.util.messages.MessageBus} instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
    */
   @Deprecated
-  public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
+  }
 
   /**
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
   @Deprecated
-  public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable);
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
+  }
 
   /**
    * Removes specified {@code listener}
@@ -187,7 +189,8 @@ public abstract class FileEditorManager {
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
   @Deprecated
-  public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
+  public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
+  }
 
   /**
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.

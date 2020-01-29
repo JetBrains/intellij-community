@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -115,7 +116,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
       e.getPresentation().setIcon(getIcon());
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
-      e.getPresentation().setText("Close. Alt-Click to Close Others.");
+      e.getPresentation().setText(() -> IdeBundle.message("action.presentation.LightEditTabs.text"));
     }
 
     private Icon getIcon() {
@@ -194,7 +195,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     return null;
   }
 
-  private static class EditorContainer extends JPanel implements DataProvider {
+  private class EditorContainer extends JPanel implements DataProvider {
 
     private EditorContainer(Editor editor) {
       super(new BorderLayout());
@@ -206,6 +207,13 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return LightEditUtil.getProject();
+      }
+      else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return getSelectedFile();
+      }
+      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        final VirtualFile selectedFile = getSelectedFile();
+        return selectedFile != null ? new VirtualFile[] {selectedFile} : VirtualFile.EMPTY_ARRAY;
       }
       return null;
     }

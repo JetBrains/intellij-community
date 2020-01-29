@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeVal
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesStorage;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.internal.statistic.eventLog.EventLogSystemEvents.*;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
@@ -103,12 +105,21 @@ public class SensitiveDataValidator {
   @NotNull
   protected final WhitelistGroupRulesStorage myWhiteListStorage;
 
+  static {
+    CustomWhiteListRule.EP_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
+      @Override
+      public void extensionListChanged() {
+        ourInstances.clear();
+      }
+    }, ApplicationManager.getApplication());
+  }
+
   @NotNull
   public static SensitiveDataValidator getInstance(@NotNull String recorderId) {
     return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
-        final WhitelistGroupRulesStorage whitelistStorage = WhitelistStorageProvider.getInstance(recorderId);
+        final WhitelistGroupRulesStorage whitelistStorage = WhitelistStorageProvider.newStorage(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
                ? new BlindSensitiveDataValidator(whitelistStorage)
                : new SensitiveDataValidator(whitelistStorage);
@@ -116,8 +127,17 @@ public class SensitiveDataValidator {
     );
   }
 
+  @Nullable
+  public static SensitiveDataValidator getIfInitialized(@NotNull String recorderId) {
+    return ourInstances.get(recorderId);
+  }
+
   protected SensitiveDataValidator(@NotNull WhitelistGroupRulesStorage storage) {
     myWhiteListStorage = storage;
+  }
+
+  public WhitelistGroupRulesStorage getWhiteListStorage() {
+    return myWhiteListStorage;
   }
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
@@ -157,7 +177,7 @@ public class SensitiveDataValidator {
   }
 
   private static boolean isSystemEventId(@Nullable String eventId) {
-    return "invoked".equals(eventId) || "registered".equals(eventId);
+    return STATE_COLLECTOR_INVOKED.equals(eventId) || COLLECTOR_REGISTERED.equals(eventId) || STATE_COLLECTOR_FAILED.equals(eventId);
   }
 
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
@@ -179,6 +199,9 @@ public class SensitiveDataValidator {
     return whiteListRule.validateEventData(key, entryValue, context);
   }
 
+  public void update() {
+    myWhiteListStorage.update();
+  }
 
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
     protected BlindSensitiveDataValidator(@NotNull WhitelistGroupRulesStorage whiteListStorage) {

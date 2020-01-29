@@ -667,4 +667,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testCompareEqualObjectWithNull() { doTest(); }
   public void testNullabilityAfterCastAndInstanceOf() { doTest(); }
   public void testInstanceOfTernary() { doTest(); }
+  public void testStringContains() { doTest(); }
 }

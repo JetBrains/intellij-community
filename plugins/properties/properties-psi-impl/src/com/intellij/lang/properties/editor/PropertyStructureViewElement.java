@@ -26,7 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.BooleanSupplier;
 
-public class PropertyStructureViewElement implements StructureViewTreeElement {
+public class PropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private static final TextAttributesKey GROUP_KEY;
 
   public static final String PROPERTY_GROUP_KEY_TEXT = "<property>";
@@ -58,6 +58,18 @@ public class PropertyStructureViewElement implements StructureViewTreeElement {
   public PsiElement getPsiElement() {
     PsiElement element = myProperty.getPsiElement();
     return element.isValid() ? element : null;
+  }
+
+  @NotNull
+  @Override
+  public IProperty[] getProperties() {
+    return new IProperty[] {myProperty};
+  }
+
+  @Nullable
+  @Override
+  public PsiFile[] getFiles() {
+    return null;
   }
 
   public void setPresentableName(final String presentableName) {

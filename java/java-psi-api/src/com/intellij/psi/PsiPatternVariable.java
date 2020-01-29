@@ -20,6 +20,6 @@ public interface PsiPatternVariable extends PsiParameter {
   @Override
   PsiIdentifier getNameIdentifier();
 
-  @Nullable
+  @NotNull
   PsiPattern getPattern();
 }

@@ -55,7 +55,7 @@ object JdkInstaller {
 
     if (targetDir.isFile) return null to "Target path is an existing file"
     if (targetDir.isDirectory && targetDir.listFiles()?.isNotEmpty() == true) {
-      return null to "Target path is an existing non-empty directory"
+      return null to "Target path is an existing non-empty directory: $targetDir"
     }
 
     return targetDir to null

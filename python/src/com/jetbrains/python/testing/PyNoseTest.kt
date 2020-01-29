@@ -26,7 +26,8 @@ class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, env
 
 
 class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
-  PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST)) {
+  PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST)),
+  PyTestConfigurationWithCustomSymbol {
   @ConfigField
   var regexPattern: String = ""
 
@@ -41,6 +42,9 @@ class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
       regexPattern.isEmpty() -> ""
       else -> "-m $regexPattern"
     }
+
+  override val fileSymbolSeparator get() = ":"
+  override val symbolSymbolSeparator get() = "."
 
   override fun isFrameworkInstalled(): Boolean = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST)
 }

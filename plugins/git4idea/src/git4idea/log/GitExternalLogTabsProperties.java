@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -20,13 +21,8 @@ import java.util.*;
     @Storage(value = "git.external.log.tabs.xml", roamingType = RoamingType.DISABLED)
   }
 )
-public class GitExternalLogTabsProperties implements PersistentStateComponent<GitExternalLogTabsProperties.State>, VcsLogTabsProperties {
-  @NotNull private final VcsLogApplicationSettings myAppSettings;
+public final class GitExternalLogTabsProperties implements PersistentStateComponent<GitExternalLogTabsProperties.State>, VcsLogTabsProperties {
   private State myState = new State();
-
-  public GitExternalLogTabsProperties(@NotNull VcsLogApplicationSettings settings) {
-    myAppSettings = settings;
-  }
 
   @Nullable
   @Override
@@ -62,7 +58,7 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
     @NotNull private final String myId;
 
     MyVcsLogUiProperties(@NotNull String id) {
-      super(myAppSettings);
+      super(ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class));
       myId = id;
     }
 

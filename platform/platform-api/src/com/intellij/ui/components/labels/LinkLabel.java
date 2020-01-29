@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,16 +48,16 @@ public class LinkLabel<T> extends JLabel {
     this("", AllIcons.Ide.Link);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon) {
+  public LinkLabel(@Nls String text, @Nullable Icon icon) {
     this(text, icon, null, null, null);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
+  public LinkLabel(@Nls String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
   }
 
   @NotNull
-  public static LinkLabel<?> create(@Nullable String text, @Nullable Runnable action) {
+  public static LinkLabel<?> create(@Nullable @Nls String text, @Nullable Runnable action) {
     return new LinkLabel<>(text, null, action == null ? null : new LinkListener<Object>() {
       @Override
       public void linkSelected(LinkLabel source, Object linkData) {
@@ -65,11 +66,11 @@ public class LinkLabel<T> extends JLabel {
     }, null, null);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
+  public LinkLabel(@Nls String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
-  public LinkLabel(String text,
+  public LinkLabel(@Nls String text,
                    @Nullable Icon icon,
                    @Nullable LinkListener<T> aListener,
                    @Nullable T aLinkData,

@@ -11,16 +11,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.S
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
-import com.intellij.ui.content.ContentManagerAdapter
 import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
 import java.util.function.Predicate
-
-internal val ToolWindow.id: String? get() = (this as? ToolWindowImpl)?.id
 
 internal val isCommitToolWindow = Registry.get("vcs.commit.tool.window")
 internal val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF }
@@ -123,7 +120,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     return allContents.filter { predicate.test(it) }.toList()
   }
 
-  private inner class ContentProvidersListener : ContentManagerAdapter() {
+  private inner class ContentProvidersListener : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
       val content = event.content
       val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return

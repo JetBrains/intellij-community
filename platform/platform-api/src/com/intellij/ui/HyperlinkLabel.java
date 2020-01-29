@@ -59,11 +59,11 @@ public class HyperlinkLabel extends HighlightableComponent {
     this(text, UIUtil.getLabelBackground());
   }
 
-  public HyperlinkLabel(String text, Color background) {
+  public HyperlinkLabel(@Nls String text, Color background) {
     this(text, PlatformColors.BLUE, background, PlatformColors.BLUE);
   }
 
-  public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
+  public HyperlinkLabel(@Nls String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
     myAnchorAttributes = StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?
                          new CustomTextAttributes(textBackgroundColor) :
                          new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
@@ -84,11 +84,11 @@ public class HyperlinkLabel extends HighlightableComponent {
     myFontSize = fontSize;
   }
 
-  public void setHyperlinkText(String text) {
+  public void setHyperlinkText(@Nls String text) {
     setHyperlinkText("", text, "");
   }
 
-  public void setHyperlinkText(String beforeLinkText, String linkText, String afterLinkText) {
+  public void setHyperlinkText(@Nls String beforeLinkText, String linkText, String afterLinkText) {
     myUseIconAsLink = beforeLinkText.isEmpty();
     prepareText(beforeLinkText, linkText, afterLinkText);
   }

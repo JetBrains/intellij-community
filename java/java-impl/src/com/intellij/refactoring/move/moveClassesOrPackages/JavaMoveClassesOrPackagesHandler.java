@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -30,6 +31,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
@@ -274,19 +276,12 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
 
   public static boolean hasJavaFiles(PsiDirectory directory) {
     final boolean [] containsJava = new boolean[]{false};
-    directory.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (containsJava[0]) return;
-        if (element instanceof PsiDirectory) {
-          super.visitElement(element);
-        }
-      }
-
-      @Override
-      public void visitFile(@NotNull PsiFile file) {
-        containsJava[0] = file instanceof PsiJavaFile;
-      }
+    VfsUtil.processFileRecursivelyWithoutIgnored(directory.getVirtualFile(), file -> {
+      if (file.getFileType() == JavaFileType.INSTANCE) {
+        containsJava[0] = true;
+        return false;
+      } 
+      return true;
     });
     return containsJava[0];
   }

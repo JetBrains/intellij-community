@@ -9,7 +9,7 @@
     <a href="http://www.jetbrains.org/intellij/sdk/docs/">IntelliJ Platform SDK Docs</a>
   ]]></description>
 
-  <category>inspection</category>
+  <category>Plugin Development</category>
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>

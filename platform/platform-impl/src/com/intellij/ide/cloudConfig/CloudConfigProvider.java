@@ -40,14 +40,4 @@ public abstract class CloudConfigProvider {
   public abstract int initSteps(@NotNull List<AbstractCustomizeWizardStep> steps);
 
   public abstract void startupWizardFinished();
-
-  private static CloudConfigTestProvider myTestProvider;
-
-  public static @Nullable CloudConfigTestProvider getTestProvider() {
-    return myTestProvider;
-  }
-
-  public static void setTestProvider(@NotNull CloudConfigTestProvider provider) {
-    myTestProvider = provider;
-  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console
 
 import com.intellij.openapi.components.*
@@ -12,12 +12,8 @@ import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService.MyState
 import java.util.*
 
 @State(name = "GroovyConsoleState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class GroovyConsoleStateService(
-  private val modulePointerManager: ModulePointerManager,
-  private val fileManager: VirtualFileManager
-) : PersistentStateComponent<MyState> {
-
-  private val myFileModuleMap: MutableMap<VirtualFile, ModulePointer?> = Collections.synchronizedMap(HashMap())
+internal class GroovyConsoleStateService(private val project: Project) : PersistentStateComponent<MyState> {
+  private val fileModuleMap: MutableMap<VirtualFile, ModulePointer?> = Collections.synchronizedMap(HashMap())
 
   class Entry {
     var url: String? = null
@@ -29,9 +25,9 @@ class GroovyConsoleStateService(
   }
 
   override fun getState(): MyState {
-    synchronized(myFileModuleMap) {
+    synchronized(fileModuleMap) {
       val result = MyState()
-      for ((file, pointer) in myFileModuleMap) {
+      for ((file, pointer) in fileModuleMap) {
         val e = Entry()
         e.url = file.url
         e.moduleName = pointer?.moduleName
@@ -42,25 +38,27 @@ class GroovyConsoleStateService(
   }
 
   override fun loadState(state: MyState) {
-    synchronized(myFileModuleMap) {
-      myFileModuleMap.clear()
+    val virtualFileManager = VirtualFileManager.getInstance()
+    val modulePointerManager = ModulePointerManager.getInstance(project)
+    synchronized(fileModuleMap) {
+      fileModuleMap.clear()
       for (entry in state.list) {
         val url = entry.url ?: continue
-        val file = fileManager.findFileByUrl(url) ?: continue
+        val file = virtualFileManager.findFileByUrl(url) ?: continue
         val pointer = entry.moduleName?.let(modulePointerManager::create)
-        myFileModuleMap[file] = pointer
+        fileModuleMap[file] = pointer
       }
     }
   }
 
   fun isProjectConsole(file: VirtualFile): Boolean {
-    return myFileModuleMap.containsKey(file)
+    return fileModuleMap.containsKey(file)
   }
 
-  fun getSelectedModule(file: VirtualFile): Module? = myFileModuleMap[file]?.module
+  fun getSelectedModule(file: VirtualFile): Module? = fileModuleMap[file]?.module
 
   fun setFileModule(file: VirtualFile, module: Module?) {
-    myFileModuleMap[file] = module?.let(modulePointerManager::create)
+    fileModuleMap[file] = module?.let(ModulePointerManager.getInstance(project)::create)
   }
 
   companion object {

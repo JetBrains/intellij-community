@@ -17,7 +17,7 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.ARRAY
 
-  override fun isEqualToDefault() = if (defaultValue == null) value.isEmpty() else value.size == 1 && value.first() == defaultValue
+  override fun isEqualToDefault() = if (defaultValue == null) value.isEmpty() else value.size == 1 && value.firstOrNull() == defaultValue
 
   override fun getValue(thisRef: BaseState) = value
 

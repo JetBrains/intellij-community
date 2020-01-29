@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
@@ -189,11 +190,12 @@ public final class AllVcses implements AllVcsesI, Disposable {
   private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
     String message = "The " + vcs + " plugin was unbundled and needs to be installed manually";
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("", message, NotificationType.WARNING, null);
-    notification.addAction(NotificationAction.createSimple("Install", () -> {
+    notification
+      .addAction(NotificationAction.createSimple(() -> VcsBundle.message("action.NotificationAction.AllVcses.text.install"), () -> {
       notification.expire();
       installPlugin(vcs);
     }));
-    notification.addAction(NotificationAction.createSimple("Read More", () -> {
+    notification.addAction(NotificationAction.createSimple(() -> VcsBundle.message("action.NotificationAction.AllVcses.text.read.more"), () -> {
       BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
     }));
     VcsNotifier.getInstance(myProject).notify(notification);
@@ -227,7 +229,8 @@ public final class AllVcses implements AllVcsesI, Disposable {
       private void showErrorNotification(@NotNull ObsoleteVcs vcs, @NotNull String message) {
         String title = "Failed to Install Plugin";
         Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
-        notification.addAction(NotificationAction.createSimple("Open Plugin Page", () -> {
+        notification.addAction(
+          NotificationAction.createSimple(() -> VcsBundle.message("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
           BrowserUtil.browse(vcs.pluginUrl);
         }));
         VcsNotifier.getInstance(myProject).notify(notification);

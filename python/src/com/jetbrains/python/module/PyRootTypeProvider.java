@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,8 +45,6 @@ public abstract class PyRootTypeProvider {
   public abstract void apply(Module module);
 
   public abstract boolean isModified(Module module);
-
-  public abstract boolean isMine(ContentFolder folder);
 
   public void removeRoot(ContentEntry contentEntry, @NotNull final VirtualFilePointer root, ModifiableRootModel model) {
     getRoots().remove(contentEntry, root);
@@ -134,6 +131,4 @@ public abstract class PyRootTypeProvider {
 
   public abstract ContentEntryEditingAction createRootEntryEditingAction(JTree tree,
                                                                          Disposable disposable, PyContentEntriesEditor editor, ModifiableRootModel model);
-
-  public abstract ContentFolder[] createFolders(ContentEntry contentEntry);
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.preview.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
@@ -305,9 +306,10 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   }
 
   private class MoveToStandardViewAction extends AnAction {
-    MoveToStandardViewAction() {
-      super("Move to standard view", "Move to standard view", AllIcons.Actions.MoveTo2);
-    }
+  MoveToStandardViewAction() {
+    super(() -> IdeBundle.message("action.AnAction.text.move.to.standard.view"),
+          () -> IdeBundle.message("action.AnAction.description.move.to.standard.view"), AllIcons.Actions.MoveTo2);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

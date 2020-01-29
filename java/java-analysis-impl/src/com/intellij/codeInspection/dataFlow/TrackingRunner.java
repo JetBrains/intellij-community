@@ -825,7 +825,7 @@ public class TrackingRunner extends DataFlowRunner {
         CauseItem[] specialCause = findRelationCause(relationType, leftChange, leftSpecial, rightChange, rightSpecial);
         if (specialCause.length > 0) {
           CauseItem item =
-            new CauseItem("Values cannot be equal because " + leftValue + "." + leftField + " != " + rightValue + "." + rightField,
+            new CauseItem("values cannot be equal because " + leftValue + "." + leftField + " != " + rightValue + "." + rightField,
                           (PsiElement)null);
           item.addChildren(specialCause);
           return new CauseItem[]{item};

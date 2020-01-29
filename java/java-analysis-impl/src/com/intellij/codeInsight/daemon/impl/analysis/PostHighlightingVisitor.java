@@ -397,7 +397,7 @@ class PostHighlightingVisitor {
     else if (parameter instanceof PsiPatternVariable) {
       HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier);
       if (highlightInfo != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(parameter));
+        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createDeleteFix(parameter));
         return highlightInfo;
       }
     }

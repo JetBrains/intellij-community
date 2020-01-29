@@ -39,7 +39,7 @@ public class RemoveFromIgnoreListAction extends BasicAction {
 
     presentation.setEnabledAndVisible(true);
     presentation.setText(myActionName);
-    presentation.setDescription(SvnBundle.message("action.Subversion.UndoIgnore.description"));
+    presentation.setDescription(() -> SvnBundle.message("action.Subversion.UndoIgnore.description"));
   }
 
   @Override

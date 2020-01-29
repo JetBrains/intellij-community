@@ -27,7 +27,7 @@ public class AnnotationsPreloader {
   private final MergingUpdateQueue myUpdateQueue;
   private final Project myProject;
 
-  public AnnotationsPreloader(final Project project) {
+  public AnnotationsPreloader(@NotNull Project project) {
     myProject = project;
     myUpdateQueue = new MergingUpdateQueue("Annotations preloader queue", 1000, true, null, project, null, false);
 

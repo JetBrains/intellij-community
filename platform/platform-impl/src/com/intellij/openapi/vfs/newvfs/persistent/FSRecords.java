@@ -26,10 +26,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -539,6 +536,11 @@ public class FSRecords {
   }
 
   private FSRecords() {
+  }
+
+  @ApiStatus.Internal
+  public static int getVersion() {
+    return VERSION;
   }
 
   static void connect() {

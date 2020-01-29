@@ -100,7 +100,9 @@ public abstract class DynamicBundle extends AbstractBundle {
       return new ResourceBundle() {
         @Override
         protected Object handleGetObject(@NotNull String key) {
-          return rb.getObject(key) + BundleBase.L10N_MARKER;
+          Object get = rb.getObject(key);
+          assert get instanceof String : "Language bundles should contain only strings";
+          return BundleBase.appendLocalizationMarker((String)get);
         }
 
         @NotNull

@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,11 +179,11 @@ public abstract class StatusText {
     return myText;
   }
 
-  public StatusText setText(String text) {
+  public StatusText setText(@Nls String text) {
     return setText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public StatusText setText(String text, SimpleTextAttributes attrs) {
+  public StatusText setText(@Nls String text, SimpleTextAttributes attrs) {
     return clear().appendText(text, attrs);
   }
 
@@ -230,7 +231,7 @@ public abstract class StatusText {
   }
 
   @NotNull
-  public StatusText appendSecondaryText(@NotNull String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
+  public StatusText appendSecondaryText(@NotNull @Nls String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
     mySecondaryComponent.append(text, attrs);
     mySecondaryListeners.add(listener);
     if (listener != null) {

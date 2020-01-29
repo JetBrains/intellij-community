@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -12,7 +13,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.vfs.encoding.*;
+import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
+import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.encoding.EncodingManagerListener;
+import com.intellij.openapi.vfs.encoding.EncodingUtil;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -47,7 +51,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   @Override
   protected ListPopup createPopup(DataContext context) {
     ChangeFileEncodingAction action = new ChangeFileEncodingAction();
-    action.getTemplatePresentation().setText("File Encoding");
+    action.getTemplatePresentation().setText(() -> IdeBundle.message("action.presentation.EncodingPanel.text"));
     return action.createPopup(context);
   }
 

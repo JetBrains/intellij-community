@@ -328,11 +328,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiElement finallyBlock = findEnclosingFinallyBlockElement(throwingElement, elementToJumpTo);
     if (finallyBlock == null) return false;
 
-    List<PsiElement> unhandledExceptionCatchBlocks = finallyBlockToUnhandledExceptions.get(finallyBlock);
-    if (unhandledExceptionCatchBlocks == null) {
-      unhandledExceptionCatchBlocks = new ArrayList<>();
-      finallyBlockToUnhandledExceptions.put(finallyBlock, unhandledExceptionCatchBlocks);
-    }
+    List<PsiElement> unhandledExceptionCatchBlocks =
+      finallyBlockToUnhandledExceptions.computeIfAbsent(finallyBlock, k -> new ArrayList<>());
     int index = unhandledExceptionCatchBlocks.indexOf(elementToJumpTo);
     if (index == -1) {
       index = unhandledExceptionCatchBlocks.size();
@@ -1601,6 +1598,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final PsiExpression operand = expression.getOperand();
     operand.accept(this);
+
+    PsiPattern pattern = expression.getPattern();
+    if (pattern instanceof PsiTypeTestPattern) {
+      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+
+      if (variable != null) {
+        myCurrentFlow.addInstruction(new WriteVariableInstruction(variable));
+      }
+    }
 
     finishElement(expression);
   }

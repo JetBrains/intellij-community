@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit.actions;
 
 import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightEditSaveAsAction extends DumbAwareAction {
   public LightEditSaveAsAction() {
-    super("Save as...");
+    super(() -> ActionsBundle.message("action.LightEditSaveAsAction.text"));
   }
 
   @Override

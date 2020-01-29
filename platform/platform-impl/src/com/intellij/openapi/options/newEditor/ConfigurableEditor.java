@@ -46,9 +46,6 @@ import static java.awt.Toolkit.getDefaultToolkit;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 
-/**
- * @author Sergey.Malenkov
- */
 class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
   private static final String RESET_NAME = "Reset";
   private static final String RESET_DESCRIPTION = "Rollback changes for this configuration element";
@@ -285,7 +282,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   private JComponent createDefaultContent(Configurable configurable) {
     JComponent content = new JPanel(new BorderLayout());
-    content.setBorder(JBUI.Borders.empty(10));
+    content.setBorder(JBUI.Borders.empty(5, 16, 16, 16));
     String key = configurable == null ? null : ConfigurableVisitor.getId(configurable) + ".settings.description";
     String description = key == null ? null : getString(configurable, key);
     if (description == null) {

@@ -14,9 +14,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   public static final Predicate<Configurable> ALL = configurable -> true;
 

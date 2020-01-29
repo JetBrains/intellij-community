@@ -2,7 +2,7 @@
   <id>com.jetbrains.changeReminder</id>
   <name>ChangeReminder</name>
   <vendor>JetBrains</vendor>
-
+  <category>Version Controls</category>
   <description><![CDATA[Predicts files that you may have forgotten to modify based on the commit history.
 
 <ul><li>Supports Git</li>

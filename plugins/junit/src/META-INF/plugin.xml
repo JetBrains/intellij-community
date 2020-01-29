@@ -28,6 +28,7 @@
         </ul>
       ]]>
    </description>
+  <category>Test Tools</category>
   <depends>com.intellij.modules.java</depends>
   <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">

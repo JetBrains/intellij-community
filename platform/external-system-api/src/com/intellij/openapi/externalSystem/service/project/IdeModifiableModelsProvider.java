@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -37,6 +38,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserDataHolder {
+
+  ExtensionPointName<ModifiableModelsProviderExtension<ModifiableModel>> EP_NAME =
+    ExtensionPointName.create("com.intellij.externalSystem.modifiableModelsProvider");
+
   @NotNull
   Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
 

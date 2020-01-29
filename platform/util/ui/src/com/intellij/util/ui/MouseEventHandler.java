@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import javax.swing.event.MouseInputListener;
@@ -6,9 +6,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class MouseEventHandler extends MouseAdapter implements MouseInputListener {
   /**
    * The event shouldn't be just delegated to JComponent.processMouseEvent() or processMouseMotionEvent(), check its ID first

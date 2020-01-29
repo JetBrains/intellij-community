@@ -5,12 +5,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Random;
-import java.util.zip.CRC32;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
@@ -18,7 +14,7 @@ import static org.junit.Assume.assumeFalse;
 public class SymlinkPatchTest extends PatchTestCase {
   @Override
   public void setUp() throws Exception {
-    assumeFalse(Utils.IS_WINDOWS);
+    assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
 
     super.setUp();
 
@@ -98,29 +94,30 @@ public class SymlinkPatchTest extends PatchTestCase {
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Resources/r1.bin"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Resources/r2.bin"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("A"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Libraries/lib1.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Libraries/lib2.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r1.bin"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r2.bin"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Previous"), Paths.get("A"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("B"));
     Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
     Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
 
     Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "A.framework/Versions/Current", 2305843012767948427L),  // = crc32("A") | SYM_LINK
+      new CreateAction(patch, "A.framework/Versions/B/"),
+      new CreateAction(patch, "A.framework/Versions/B/Libraries/"),
+      new CreateAction(patch, "A.framework/Versions/B/Libraries/lib1.dylib"),
+      new CreateAction(patch, "A.framework/Versions/B/Libraries/lib2.dylib"),
+      new CreateAction(patch, "A.framework/Versions/B/Resources/"),
+      new CreateAction(patch, "A.framework/Versions/B/Resources/r1.bin"),
+      new CreateAction(patch, "A.framework/Versions/B/Resources/r2.bin"),
+      new CreateAction(patch, "A.framework/Versions/Current"),
+      new CreateAction(patch, "A.framework/Versions/Previous"),
       new UpdateAction(patch, "A.framework/Versions/A/Libraries/lib1.dylib", l1),
       new UpdateAction(patch, "A.framework/Versions/A/Libraries/lib2.dylib", l2),
       new UpdateAction(patch, "A.framework/Versions/A/Resources/r1.bin", r1),
       new UpdateAction(patch, "A.framework/Versions/A/Resources/r2.bin", r2));
-  }
-
-  private static long randomFile(Path file) throws IOException {
-    Random rnd = new Random();
-    int size = (1 + rnd.nextInt(1023)) * 1024;
-    byte[] data = new byte[size];
-    rnd.nextBytes(data);
-
-    Files.createDirectories(file.getParent());
-    Files.write(file, data);
-
-    CRC32 crc32 = new CRC32();
-    crc32.update(data);
-    return crc32.getValue();
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -293,8 +294,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     ShowSchemesActionsListAction(@NotNull Collection<? extends AnAction> actions) {
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
-      getTemplatePresentation().setText("Show Scheme Actions");
-      getTemplatePresentation().setDescription("Show Scheme Actions");
+      getTemplatePresentation().setText(() -> IdeBundle.message("action.presentation.AbstractSchemesPanel.text"));
+      getTemplatePresentation().setDescription(() -> IdeBundle.message("action.presentation.AbstractSchemesPanel.description"));
       addAll(actions);
     }
 

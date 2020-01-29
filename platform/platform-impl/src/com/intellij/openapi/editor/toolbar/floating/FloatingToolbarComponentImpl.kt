@@ -78,6 +78,7 @@ class FloatingToolbarComponentImpl(
     actionToolbar = ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true)
     actionToolbar.setTargetComponent(this)
     actionToolbar.setMinimumButtonSize(Dimension(22, 22))
+    actionToolbar.setSkipWindowAdjustments(true)
     actionToolbar.setReservePlaceAutoPopupIcon(false)
     actionToolbar.isOpaque = false
     add(actionToolbar, BorderLayout.CENTER)

@@ -4,10 +4,10 @@ class TextBlockMigration {
 
   void concatenationWithExtraSpaces() {
     String code = """
-            <html>\040\040
+            <html> \s
               <body>
               </body>
-            </html>\040\040""";
+            </html> \s""";
   }
 
 }

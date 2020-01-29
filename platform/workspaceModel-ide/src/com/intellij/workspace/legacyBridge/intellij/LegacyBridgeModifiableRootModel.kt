@@ -113,6 +113,7 @@ class LegacyBridgeModifiableRootModel(
     val entity = currentModel.contentEntities.firstOrNull { it.url == contentEntryUrl }
                  ?: error("ContentEntry $entry does not belong to modifiableRootModel of module ${legacyBridgeModule.name}")
 
+    entry.clearSourceFolders()
     diff.removeEntity(entity)
 
     if (assertChangesApplied && contentEntries.any { it.url == contentEntryUrl.url }) {

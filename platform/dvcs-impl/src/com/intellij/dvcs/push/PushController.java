@@ -58,7 +58,6 @@ public class PushController implements Disposable {
   @NotNull private final VcsPushDialog myDialog;
   @NotNull private final ModalityState myModalityState;
   @Nullable private final Repository myCurrentlyOpenedRepository;
-  private final List<PrePushHandler> myHandlers = new ArrayList<>();
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final ExecutorService myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DVCS Push");
@@ -71,7 +70,6 @@ public class PushController implements Disposable {
                         @NotNull List<? extends Repository> preselectedRepositories,
                         @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
     myProject = project;
-    ContainerUtil.addAll(myHandlers, PrePushHandler.EP_NAME.getExtensions(project));
     myAllRepos = allRepos;
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
@@ -442,13 +440,14 @@ public class PushController implements Disposable {
   @NotNull
   @CalledInAny
   public PrePushHandler.Result executeHandlers(@NotNull ProgressIndicator indicator) throws ProcessCanceledException, HandlerException {
-    if (myHandlers.isEmpty()) return PrePushHandler.Result.OK;
+    List<PrePushHandler> handlers = PrePushHandler.EP_NAME.getExtensionList(myProject);
+    if (handlers.isEmpty()) return PrePushHandler.Result.OK;
     List<PushInfo> pushDetails = preparePushDetails();
-    StepsProgressIndicator stepsIndicator = new StepsProgressIndicator(indicator, myHandlers.size());
+    StepsProgressIndicator stepsIndicator = new StepsProgressIndicator(indicator, handlers.size());
     stepsIndicator.setIndeterminate(false);
     stepsIndicator.setFraction(0);
-    for (int index = 0; index < myHandlers.size(); index++) {
-      PrePushHandler handler = myHandlers.get(index);
+    for (int index = 0; index < handlers.size(); index++) {
+      PrePushHandler handler = handlers.get(index);
       stepsIndicator.checkCanceled();
       stepsIndicator.setText(handler.getPresentableName());
       PrePushHandler.Result prePushHandlerResult;
@@ -456,7 +455,7 @@ public class PushController implements Disposable {
         prePushHandlerResult = handler.handle(pushDetails, stepsIndicator);
       }
       catch (Throwable e) {
-        List<String> skippedHandlers = myHandlers.stream()
+        List<String> skippedHandlers = handlers.stream()
           .skip(index + 1)
           .map(h -> h.getPresentableName())
           .collect(Collectors.toList());

@@ -138,7 +138,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
+    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.duplicate"),
+                                                       () -> DebuggerBundle.message("action.AnActionButton.description.duplicate"),
+                                                       PlatformIcons.COPY_ICON) {
       @Override
       public boolean isEnabled() {
         return table.getSelectedRowCount() == 1;
@@ -158,7 +160,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton("Enable Selected", "Enable Selected", PlatformIcons.SELECT_ALL_ICON) {
+    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.enable.selected"),
+                                                       () -> DebuggerBundle.message("action.AnActionButton.description.enable.selected"),
+                                                       PlatformIcons.SELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
         return table.getSelectedRowCount() > 0;
@@ -170,7 +174,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         table.repaint();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Disable Selected", "Disable Selected", PlatformIcons.UNSELECT_ALL_ICON) {
+    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.disable.selected"),
+                                                       () -> DebuggerBundle.message("action.AnActionButton.description.disable.selected"),
+                                                       PlatformIcons.UNSELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
         return table.getSelectedRowCount() > 0;
@@ -196,7 +202,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
 
-    decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
+    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.import"),
+                                                       () -> DebuggerBundle.message("action.AnActionButton.description.import"),
+                                                       AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
@@ -233,7 +241,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         }
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.ToolbarDecorator.Export) {
+    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.export"),
+                                                       () -> DebuggerBundle.message("action.AnActionButton.description.export"),
+                                                       AllIcons.ToolbarDecorator.Export) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()

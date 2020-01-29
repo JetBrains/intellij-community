@@ -49,6 +49,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     @JvmStatic
     protected val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
+
+    // not as file level function to avoid scope cluttering
+    @Internal
+    fun <T> isLightService(serviceClass: Class<T>): Boolean {
+      return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
+    }
   }
 
   @Suppress("LeakingThis")
@@ -812,10 +818,6 @@ private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId):
     is PluginException, is ExtensionInstantiationException -> error as RuntimeException
     else -> PluginException(error, pluginId)
   }
-}
-
-internal fun <T> isLightService(serviceClass: Class<T>): Boolean {
-  return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
 }
 
 fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId?) {

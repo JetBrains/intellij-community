@@ -189,6 +189,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     if (incomplete) {
+      myDescriptionChildText = element.getChildTextTrim("description");
+      myCategory = element.getChildTextTrim("category");
       if (LOG.isDebugEnabled()) {
         LOG.debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
       }

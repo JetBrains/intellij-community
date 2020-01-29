@@ -43,6 +43,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
   static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
@@ -103,7 +104,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       for (Configuration configuration : myConfigurations) {
         configuration.initialize();
       }
-
       profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
       configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
       if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
@@ -170,7 +170,10 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   @Override
   public List<LocalInspectionToolWrapper> getChildren() {
     if (Registry.is("ssr.separate.inspections")) {
-      return ContainerUtil.map(getConfigurations(), configuration -> new StructuralSearchInspectionToolWrapper(configuration));
+      return getConfigurations().stream()
+        .filter(configuration -> configuration.getOrder() == 0)
+        .map(configuration -> new StructuralSearchInspectionToolWrapper(configuration))
+        .collect(Collectors.toList());
     }
     return Collections.emptyList();
   }
@@ -221,24 +224,25 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return Collections.unmodifiableList(myConfigurations);
   }
 
-  public void addConfiguration(Configuration configuration) {
-    for (int i = 0, size = myConfigurations.size(); i < size; i++) {
-      final Configuration c = myConfigurations.get(i);
-      if (c.getName().equals(configuration.getName())) {
-        myConfigurations.set(i, configuration);
-        return;
-      }
-    }
+  public List<Configuration> getConfigurationsWithUuid(@NotNull UUID uuid) {
+    return ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
+  }
+
+  public void addConfiguration(@NotNull Configuration configuration) {
     myConfigurations.add(configuration);
   }
 
-  public void removeConfiguration(String shortName) {
+  public void removeConfiguration(@NotNull Configuration configuration) {
     for (int i = 0, size = myConfigurations.size(); i < size; i++) {
       final Configuration c = myConfigurations.get(i);
-      if (c.getUuid().toString().equals(shortName)) {
+      if (c.equals(configuration)) {
         myConfigurations.remove(i);
         return;
       }
     }
+  }
+
+  public void removeConfigurationWithUuid(@NotNull UUID uuid) {
+    myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
   }
 }

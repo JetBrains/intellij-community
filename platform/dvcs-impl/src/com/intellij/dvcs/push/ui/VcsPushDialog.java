@@ -133,7 +133,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @NotNull
   private JPanel createSouthOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %dpx 0 0, flowx, gapx %dpx", JBUI.scale(20), JBUI.scale(16))));
+    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %spx 0 0, flowx, gapx %spx", JBUI.scale(20), JBUI.scale(16))));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.SOUTH) {
         optionsPanel.add(panel);

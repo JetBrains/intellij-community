@@ -590,6 +590,39 @@ class LegacyBridgeModulesTest {
     assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
     assertEmpty(entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java).toList())
   }
+
+  @Test
+  fun `test remove content entity removes related source folders`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val antLibraryFolder = "ant-lib"
+
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      moduleModel.commit()
+      module
+    }
+
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      val tempDir = temporaryDirectoryRule.newPath().toFile()
+      val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
+      val contentEntry = model.addContentEntry(url)
+      contentEntry.addSourceFolder("$url/$antLibraryFolder", TestCustomSourceRootType.INSTANCE)
+    }
+
+    val entityStore = WorkspaceModel.getInstance(project).entityStore
+    assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
+    assertEquals(1, entityStore.current.entities(SourceRootEntity::class.java).count())
+
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      val contentEntries = model.contentEntries
+      assertEquals(1, contentEntries.size)
+      model.removeContentEntry(contentEntries[0])
+    }
+
+    assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
+    assertEmpty(entityStore.current.entities(SourceRootEntity::class.java).toList())
+  }
 }
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory,

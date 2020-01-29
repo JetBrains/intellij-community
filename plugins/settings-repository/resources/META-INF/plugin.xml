@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>Settings Repository</name>
   <id>org.jetbrains.settingsRepository</id>
+  <category>IDE Settings</category>
   <description><![CDATA[
   <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
   <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using VCS -> Sync Settings.</p>

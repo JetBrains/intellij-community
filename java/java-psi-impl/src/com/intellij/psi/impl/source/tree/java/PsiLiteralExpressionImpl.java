@@ -163,13 +163,21 @@ public class PsiLiteralExpressionImpl
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       if (line.length() > 0) {
-        sb.append(StringUtil.trimTrailing(line.substring(prefix), ' '));
+        sb.append(trimTrailingSpaces(line.substring(prefix)));
       }
       if (i < lines.length - 1) {
         sb.append('\n');
       }
     }
     return sb.toString();
+  }
+
+  @NotNull
+  private static String trimTrailingSpaces(@NotNull String line) {
+    int index = line.length() - 1;
+    while (index >= 0 && line.charAt(index) == ' ') index--;
+    if (index >= 0 && index < line.length() - 1 && line.charAt(index) == '\\') index++;
+    return line.substring(0, index + 1);
   }
 
   public int getTextBlockIndent() {

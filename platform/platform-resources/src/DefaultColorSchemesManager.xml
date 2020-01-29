@@ -2328,13 +2328,17 @@
       </option>
       <option name="XPATH.KEYWORD">
         <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-          <option name="FONT_TYPE" value="1" />
+          <option name="FOREGROUND" value="e8bf6a" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="XPATH.XPATH_NAME">
         <value>
-          <option name="FOREGROUND" value="da4939" />
+          <option name="FOREGROUND" value="cc7832" />
+        </value>
+      </option>
+      <option name="XPATH.FUNCTION">
+        <value>
+          <option name="FOREGROUND" value="e8bf6a" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="XPATH.XPATH_VARIABLE">

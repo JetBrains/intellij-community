@@ -54,9 +54,15 @@ public class MouseWheelSmoothScroll {
 
     InertialAnimator animator = isHorizontalScroll(e) ? horizontal : vertical;
     int value = bar.getValue();
-    int delta = getRoundedAtLeastToOne(TouchScrollUtil.isTouchScroll(e) ?
-                                       TouchScrollUtil.getDelta(e) :
-                                       getDelta(bar, e, animator.myTargetValue));
+    int delta;
+    if (TouchScrollUtil.isTouchScroll(e)) {
+      delta = getRoundedAtLeastToOne(TouchScrollUtil.getDelta(e));
+    } else {
+      delta = (int)getDelta(bar, e, animator.myTargetValue);
+      if (delta == 0) {
+        return;
+      }
+    }
     int targetValue = value + delta;
 
     if (TouchScrollUtil.isBegin(e)) {
@@ -129,7 +135,7 @@ public class MouseWheelSmoothScroll {
           }
         }
         for (int i = 0; i < scroll; i++) {
-          int increment = scrollable.getScrollableUnitIncrement(rect, orientation, direction) * direction;
+          int increment = max(scrollable.getScrollableUnitIncrement(rect, orientation, direction), 0) * direction;
           if (isVertical) {
             rect.y += increment;
           }
@@ -138,7 +144,7 @@ public class MouseWheelSmoothScroll {
           }
           delta += increment;
         }
-        return delta == 0 ? rotation : delta;
+        return delta;
       }
     }
 

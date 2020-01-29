@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -58,16 +58,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
-import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
+import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processDeclarationsWithCallsite;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUpAndGetElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReceiverKt.processReceiverType;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
@@ -188,7 +187,7 @@ public class ResolveUtil {
     if (scope instanceof GrFunctionalExpression) {
       ResolveState _state = state.put(ClassHint.RESOLVE_CONTEXT, scope);
 
-      if (!processNonCodeMembers(GrClosureType.create((GrFunctionalExpression)scope, false), processor, place, _state)) return false;
+      if (!processNonCodeMembers(TypesUtil.createType(GROOVY_LANG_CLOSURE, scope), processor, place, _state)) return false;
     }
 
     if (scope instanceof GrStatementOwner) {
@@ -859,10 +858,10 @@ public class ResolveUtil {
       if (variant instanceof GroovyMethodResult && ((GroovyMethodResult)variant).getCandidate() != null) {
         GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
         if (candidate != null) {
-          ArgumentMapping mapping = candidate.getArgumentMapping();
+          ArgumentMapping<PsiCallParameter> mapping = candidate.getArgumentMapping();
           if (mapping != null) {
             ExpressionArgument argument = new ExpressionArgument(arg);
-            PsiParameter targetParameter = mapping.targetParameter(argument);
+            PsiParameter targetParameter = doIfNotNull(mapping.targetParameter(argument), PsiCallParameter::getPsi);
             PsiType expectedType = mapping.expectedType(argument);
             ContainerUtil.addIfNotNull(expectedParams, Pair.create(targetParameter, expectedType));
           }

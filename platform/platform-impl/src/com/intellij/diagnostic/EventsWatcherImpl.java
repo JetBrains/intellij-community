@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -37,7 +38,6 @@ import java.util.stream.Stream;
 
 @ApiStatus.Experimental
 public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposable {
-
   private static final int PUBLISHER_INITIAL_DELAY = 100;
   private static final int PUBLISHER_PERIOD = 1000;
 
@@ -85,10 +85,9 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
   @Nullable
   private MatchResult myCurrentResult = null;
 
-  public EventsWatcherImpl(@NotNull MessageBus messageBus) {
-    myMessageBus = messageBus;
-    myMessageBus.connect(this)
-      .subscribe(RunnablesListener.TOPIC, myWriter);
+  public EventsWatcherImpl() {
+    myMessageBus = ApplicationManager.getApplication().getMessageBus();
+    myMessageBus.connect(this).subscribe(RunnablesListener.TOPIC, myWriter);
   }
 
   @Override

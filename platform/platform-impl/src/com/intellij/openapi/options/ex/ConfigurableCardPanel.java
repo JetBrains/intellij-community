@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.util.ui.JBUI;
@@ -25,9 +26,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Sergey.Malenkov
- */
 public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configurable, JComponent> {
   private static final Logger LOG = Logger.getInstance(ConfigurableCardPanel.class);
 
@@ -126,11 +124,13 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
               panel.add(BorderLayout.CENTER, component);
               component = panel;
             }
-            component.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
+            component.setBorder(JBUI.Borders.empty(5, 16, 16, 16));
           }
           if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
             JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
             scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
+            scroll.getVerticalScrollBar().setBackground(JBColor.PanelBackground);
+            scroll.getHorizontalScrollBar().setBackground(JBColor.PanelBackground);
             component = scroll;
           }
         }

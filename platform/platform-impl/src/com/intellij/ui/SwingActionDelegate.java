@@ -16,9 +16,6 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
-/**
- * @author Sergey.Malenkov
- */
 public class SwingActionDelegate extends AnAction implements DumbAware {
   private static final Key<Function<String, JComponent>> FUNCTION = Key.create("SwingActionsMapping");
   private final String mySwingActionId;

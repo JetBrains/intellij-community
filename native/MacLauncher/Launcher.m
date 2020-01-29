@@ -464,17 +464,16 @@ NSString *getOverridePropertiesPath() {
 }
 
 - (void)process_cwd {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
-    NSString *cwd = [jvmInfo objectForKey:@"WorkingDirectory"];
-    if (cwd != nil && cwd != NULL) {
-        cwd = [self expandMacros:cwd];
-        if (chdir([cwd UTF8String]) != 0) {
-            NSLog(@"Cannot chdir to working directory at %@", cwd);
+    const char *cmd = getenv("_");
+    if (cmd != NULL && strcmp(cmd, "/usr/bin/open") == 0) {
+        const char *pwd = getenv("PWD");
+        if (pwd != NULL && chdir(pwd) != 0) {
+            NSLog(@"Cannot chdir() to %s", pwd);
         }
-    } else {
-        NSString *dir = [[NSFileManager defaultManager] currentDirectoryPath];
-        NSLog(@"WorkingDirectory is absent in Info.plist. Current Directory: %@", dir);
     }
+
+    NSString *dir = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSLog(@"Current Directory: %@", dir);
 }
 
 BOOL validationJavaVersion(){

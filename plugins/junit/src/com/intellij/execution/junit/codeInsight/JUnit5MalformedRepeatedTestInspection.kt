@@ -14,7 +14,6 @@ import com.intellij.psi.*
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.ExpressionUtils
-import org.jetbrains.annotations.Nls
 
 class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionTool() {
   object Annotations {
@@ -38,14 +37,14 @@ class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionToo
         if (repeatedAnno != null) {
           val testAnno = AnnotationUtil.findAnnotations(method, JUnitUtil.TEST5_JUPITER_ANNOTATIONS)
           if (testAnno.isNotEmpty()) {
-            holder.registerProblem(testAnno[0], "Suspicious combination @Test and @RepeatedTest",
+            holder.registerProblem(testAnno[0], InspectionGadgetsBundle.message("junit5.malformed.repetition.description.suspicious.combination"),
                                    DeleteElementFix(testAnno[0]))
           }
           val repeatedNumber = repeatedAnno.findDeclaredAttributeValue("value")
           if (repeatedNumber is PsiExpression) {
             val constant = ExpressionUtils.computeConstantExpression(repeatedNumber)
             if (constant is Int && constant <= 0) {
-              holder.registerProblem(repeatedNumber, "The number of repetitions must be greater than zero")
+              holder.registerProblem(repeatedNumber, InspectionGadgetsBundle.message("junit5.malformed.repetition.description.positive.number"))
             }
           }
         }
@@ -55,19 +54,21 @@ class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionToo
           val repetitionInfoParam = method.parameterList.parameters.find { it.type == repetitionType }
           if (repetitionInfoParam != null) {
             if (MetaAnnotationUtil.isMetaAnnotated(method, Annotations.NON_REPEATED_ANNOTATIONS)) {
-              holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam, "RepetitionInfo is injected for @RepeatedTest only")
+              holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam,
+                                     InspectionGadgetsBundle.message("junit5.malformed.repetition.description.injected.for.repeatedtest"))
             }
             else {
               val anno = MetaAnnotationUtil.findMetaAnnotations(method, JUnitUtil.TEST5_STATIC_CONFIG_METHODS).findFirst().orElse(null)
               if (anno != null) {
                 val qName = anno.qualifiedName
                 holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam,
-                                       "RepetitionInfo is injected for @BeforeEach/@AfterEach only, but not for " + StringUtil.getShortName(qName!!))
+                                       InspectionGadgetsBundle.message(
+                                         "junit5.malformed.repetition.description.injected.for.each", StringUtil.getShortName(qName!!)))
               }
               else {
                 if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_CONFIG_METHODS) && method.containingClass?.methods?.find { MetaAnnotationUtil.isMetaAnnotated(it, Annotations.NON_REPEATED_ANNOTATIONS)} != null) {
                   holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam,
-                                         "RepetitionInfo won't be injected for @Test methods")
+                                         InspectionGadgetsBundle.message("junit5.malformed.repetition.description.injected.for.test"))
                 }
               }
             }

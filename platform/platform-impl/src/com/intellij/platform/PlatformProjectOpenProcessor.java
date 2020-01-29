@@ -42,6 +42,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
+import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +109,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @Nullable
   public Project openProjectAndFile(@NotNull VirtualFile virtualFile, int line, int column, boolean tempProject) {
     // force open in a new frame if temp project
-    OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ tempProject);
+    OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ tempProject, null);
     Path file = Paths.get(virtualFile.getPath());
     if (tempProject) {
       return createTempProjectAndOpenFile(file, options);
@@ -169,9 +170,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       throw new RuntimeException(e);
     }
 
-    OpenProjectTask copy = options.copy();
-    copy.isNewProject = true;
-    copy.setDummyProjectName(dummyProjectName);
+    OpenProjectTask copy = options.copyAsNewProject(dummyProjectName, true);
     Project project = openExistingProject(file, baseDir, copy);
     if (project != null) {
       openFileFromCommandLine(project, file, copy.line, copy.column);
@@ -333,16 +332,16 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     Project project;
     boolean isNewProject = options.isNewProject;
     if (isNewProject) {
-      String projectName = options.getDummyProjectName();
+      String projectName = options.getProjectName();
       if (projectName == null) {
         projectName = baseDir.getFileName().toString();
       }
-      project = ((ProjectManagerImpl)ProjectManager.getInstance()).newProject(baseDir, projectName, options);
+      project = ((ProjectManagerEx)ProjectManager.getInstance()).newProject(baseDir, projectName, options);
     }
     else {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
-        indicator.setText("Checking project configuration...");
+        indicator.setText(IdeUICustomization.getInstance().projectMessage("project.checking.configuration"));
       }
       project = ProjectManagerImpl.convertAndLoadProject(baseDir);
       if (indicator != null) {
@@ -354,7 +353,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       return Pair.empty();
     }
 
-    Module module = configureNewProject(project, baseDir, file, options.getDummyProjectName() == null, isNewProject);
+    Module module = configureNewProject(project, baseDir, file, options.isDummyProject(), isNewProject);
 
     if (isNewProject) {
       project.save();

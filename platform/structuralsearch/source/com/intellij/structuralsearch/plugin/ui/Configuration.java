@@ -27,6 +27,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   @NonNls private static final String DESCRIPTION_ATTRIBUTE_NAME = "description";
   @NonNls private static final String SUPPRESS_ID_ATTRIBUTE_NAME = "suppressId";
   @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
+  @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
 
   private String name;
   private String category;
@@ -37,6 +38,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   private String suppressId;
   private String newSuppressId;
   private String problemDescriptor;
+  private int order;
 
   private transient String myCurrentVariableName = null;
 
@@ -62,15 +64,22 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     newSuppressId = configuration.newSuppressId;
     suppressId = configuration.suppressId;
     problemDescriptor = configuration.problemDescriptor;
+    order = configuration.order;
   }
 
   public abstract Configuration copy();
 
+  public void initialize() {
+    if (!StringUtil.equals(suppressId, newSuppressId)) {
+      final String shortName = uuid.toString();
+      HighlightDisplayKey.unregister(shortName);
+      HighlightDisplayKey.register(uuid.toString(), name, newSuppressId);
+      suppressId = newSuppressId;
+    }
+  }
+
   @NotNull
   public String getName() {
-    if (StringUtil.isEmptyOrSpaces(name)) {
-      return StringUtil.collapseWhiteSpace(getMatchOptions().getSearchPattern());
-    }
     return name;
   }
 
@@ -97,13 +106,53 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.created = created;
   }
 
-  public void resetUuid() {
-    uuid = UUID.randomUUID();
-  }
-
   @NotNull
   public UUID getUuid() {
-    return uuid == null ? (uuid = UUID.randomUUID()) : uuid;
+    if (uuid == null) {
+      return uuid = UUID.randomUUID();
+    }
+    return uuid;
+  }
+
+  public void setUuid(@NotNull UUID uuid) {
+    this.uuid = uuid;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public String getSuppressId() {
+    return suppressId;
+  }
+
+  public String getNewSuppressId() {
+    return newSuppressId;
+  }
+
+  public void setSuppressId(String suppressId) {
+    newSuppressId = suppressId;
+  }
+
+  public String getProblemDescriptor() {
+    return this.problemDescriptor;
+  }
+
+  public void setProblemDescriptor(String problemDescriptor) {
+    this.problemDescriptor = problemDescriptor;
+  }
+
+  public int getOrder() {
+    return order;
+  }
+
+  public void setOrder(int order) {
+    if (order < 0) throw new IllegalArgumentException();
+    this.order = order;
   }
 
   @Override
@@ -135,6 +184,13 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     if (problemDescriptorAttribute != null) {
       problemDescriptor = problemDescriptorAttribute.getValue();
     }
+    final Attribute mainAttribute = element.getAttribute(ORDER_ATTRIBUTE_NAME);
+    if (mainAttribute != null) {
+      try {
+        order = Math.max(0, mainAttribute.getIntValue());
+      }
+      catch (DataConversionException ignore) {}
+    }
   }
 
   @Override
@@ -154,6 +210,9 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     }
     if (!StringUtil.isEmpty(problemDescriptor)) {
       element.setAttribute(PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME, problemDescriptor);
+    }
+    if (order != 0) {
+      element.setAttribute(ORDER_ATTRIBUTE_NAME, String.valueOf(order));
     }
   }
 
@@ -198,42 +257,5 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   @Override
   public int hashCode() {
     return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setSuppressId(String suppressId) {
-    newSuppressId = suppressId;
-  }
-
-  public String getSuppressId() {
-    return suppressId;
-  }
-
-  public String getNewSuppressId() {
-    return newSuppressId;
-  }
-
-  public void initialize() {
-    if (!StringUtil.equals(suppressId, newSuppressId)) {
-      final String shortName = uuid.toString();
-      HighlightDisplayKey.unregister(shortName);
-      HighlightDisplayKey.register(uuid.toString(), name, newSuppressId);
-      suppressId = newSuppressId;
-    }
-  }
-
-  public void setProblemDescriptor(String problemDescriptor) {
-    this.problemDescriptor = problemDescriptor;
-  }
-
-  public String getProblemDescriptor() {
-    return this.problemDescriptor;
   }
 }

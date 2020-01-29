@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,12 +27,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,10 +47,6 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INSTANCE_METHODS = true;
-  private JBCheckBox myReportInvariantClassesCB;
-  private JPanel myPanel;
-  private JBCheckBox myReportPrivateMethodsCB;
-  private JBCheckBox myReportInstanceMethodsCB;
 
   @NotNull
   @Override
@@ -456,21 +451,13 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return Pair.createNonNull(field, type);
   }
 
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    myReportInvariantClassesCB.setSelected(REPORT_INVARIANT_CLASSES);
-    myReportPrivateMethodsCB.setSelected(REPORT_PRIVATE_METHODS);
-    myReportInstanceMethodsCB.setSelected(REPORT_INSTANCE_METHODS);
-    return myPanel;
-  }
-
-  @Override
-  public void readSettings(@NotNull Element node) {
-    super.readSettings(node);
-    myReportInvariantClassesCB.addItemListener(__ -> REPORT_INVARIANT_CLASSES = myReportInvariantClassesCB.isSelected());
-    myReportPrivateMethodsCB.addItemListener(__ -> REPORT_PRIVATE_METHODS = myReportPrivateMethodsCB.isSelected());
-    myReportInstanceMethodsCB.addItemListener(__ -> REPORT_INSTANCE_METHODS = myReportInstanceMethodsCB.isSelected());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.invariant.option"), "REPORT_INVARIANT_CLASSES");
+    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.private.option"), "REPORT_PRIVATE_METHODS");
+    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.instance.option"), "REPORT_INSTANCE_METHODS");
+    return panel;
   }
 }

@@ -1,4 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("UsePropertyAccessSyntax")
+
 package com.intellij.ide.plugins
 
 import com.intellij.codeInspection.GlobalInspectionTool
@@ -26,16 +28,16 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
-import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.write
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
-import junit.framework.Assert.*
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
+import org.junit.Assume.assumeFalse
 import java.io.File
 
 @RunsInEdt
@@ -50,6 +52,12 @@ class DynamicPluginsTest {
     val projectRule = ProjectRule()
 
     val receivedNotifications = mutableListOf<UISettings>()
+
+    @JvmStatic
+    @BeforeClass
+    fun check() {
+      assumeFalse(SystemProperties.getBooleanProperty("skip.DynamicPluginsTest", true))
+    }
   }
 
   @Rule
@@ -78,11 +86,11 @@ class DynamicPluginsTest {
     descriptor.setLoader(DynamicPlugins::class.java.classLoader)
     DynamicPlugins.loadPlugin(descriptor, false)
     ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
-    assertEquals(1, receivedNotifications.size)
+    assertThat(receivedNotifications).hasSize(1)
 
     DynamicPlugins.unloadPlugin(descriptor, false)
     ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
-    assertEquals(1, receivedNotifications.size)
+    assertThat(receivedNotifications).hasSize(1)
   }
 
   @Test
@@ -90,20 +98,20 @@ class DynamicPluginsTest {
     val pluginFile = inMemoryFs.fs.getPath("/plugin/META-INF/plugin.xml")
     pluginFile.write("<idea-plugin>\n  <id>bar</id>\n</idea-plugin>")
     val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
-    Assertions.assertThat(descriptor).isNotNull
+    assertThat(descriptor).isNotNull
 
     DynamicPlugins.loadPlugin(descriptor, false)
 
     PluginManagerCore.saveDisabledPlugins(arrayListOf(PluginId.getId("bar")), false)
     DynamicPlugins.unloadPlugin(descriptor, true)
-    assertNull(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader)
+    assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
     PluginManagerCore.saveDisabledPlugins(arrayListOf(), false)
     val newDescriptor = loadDescriptorInTest(pluginFile.parent.parent)
     PluginManagerCore.initClassLoader(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor, true)
     try {
-      assertNotNull(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader)
+      assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNotNull()
     }
     finally {
       DynamicPlugins.unloadPlugin(newDescriptor)
@@ -122,7 +130,7 @@ class DynamicPluginsTest {
 
     val disposable2 = loadExtensionWithText(extensionTag, DynamicPlugins::class.java.classLoader)
     val service2 = ServiceManager.getService(MyPersistentComponent::class.java)
-    assertEquals(data, service2.myState.stateData)
+    assertThat(service2.myState.stateData).isEqualTo(data)
     Disposer.dispose(disposable2)
   }
 
@@ -139,9 +147,9 @@ class DynamicPluginsTest {
       </idea-plugin>
     """.trimIndent(), DynamicPlugins::class.java.classLoader)
     val group = ActionManager.getInstance().getAction("ListActions") as DefaultActionGroup
-    assertTrue(group.getChildren(null).any { it is ShowQuickActionPopupAction })
+    assertThat(group.getChildren(null).any { it is ShowQuickActionPopupAction }).isTrue()
     Disposer.dispose(disposable)
-    assertFalse(group.getChildren(null).any { it is ShowQuickActionPopupAction })
+    assertThat(group.getChildren(null).any { it is ShowQuickActionPopupAction }).isFalse()
   }
 
   @Test
@@ -153,7 +161,7 @@ class DynamicPluginsTest {
                 <depends optional="true" config-file="bar.xml">bar</depends>
             </idea-plugin>
           """,
-          """
+      """
                     <idea-plugin>
                         <actions>
                             <group id="FooBarGroup">
@@ -164,12 +172,12 @@ class DynamicPluginsTest {
     try {
       val plugin2Disposable = loadPluginWithText("<idea-plugin><id>bar</id></idea-plugin>", DynamicPluginsTest::class.java.classLoader)
       try {
-        assertNotNull(ActionManager.getInstance().getAction("FooBarGroup"))
+        assertThat(ActionManager.getInstance().getAction("FooBarGroup")).isNotNull()
       }
       finally {
         Disposer.dispose(plugin2Disposable)
       }
-      assertNull(ActionManager.getInstance().getAction("FooBarGroup"))
+      assertThat(ActionManager.getInstance().getAction("FooBarGroup")).isNull()
     }
     finally {
       Disposer.dispose(plugin1Disposable)
@@ -203,13 +211,13 @@ class DynamicPluginsTest {
       """.trimIndent(), DynamicPluginsTest::class.java.classLoader)
       try {
         val ep = Extensions.getRootArea().getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("bar.barExtension")
-        assertNotNull(ep)
-        assertEquals("foo", ep!!.extensionList.single().key)
+        assertThat(ep).isNotNull()
+        assertThat(ep!!.extensionList.single().key).isEqualTo("foo")
       }
       finally {
         Disposer.dispose(plugin2Disposable)
       }
-      assertNull(Extensions.getRootArea().getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("bar.barExtension"))
+      assertThat(Extensions.getRootArea().getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("bar.barExtension")).isNull()
     }
     finally {
       Disposer.dispose(plugin1Disposable)
@@ -237,17 +245,17 @@ class DynamicPluginsTest {
                 """)
     try {
       val ep = Extensions.getRootArea().getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("foo.barExtension")
-      assertNotNull(ep)
+      assertThat(ep).isNotNull()
       val plugin2Disposable = loadPluginWithText("<idea-plugin><id>bar</id></idea-plugin>", DynamicPluginsTest::class.java.classLoader)
       try {
         val extension = ep!!.extensionList.single()
-        assertEquals("foo", extension.key)
-        assertEquals(PluginManagerCore.getPlugin(PluginId.getId("foo")), extension.pluginDescriptor)
+        assertThat(extension.key).isEqualTo("foo")
+        assertThat(extension.pluginDescriptor).isEqualTo(PluginManagerCore.getPlugin(PluginId.getId("foo")))
       }
       finally {
         Disposer.dispose(plugin2Disposable)
       }
-      assertEquals(0, ep!!.extensionList.size)
+      assertThat(ep!!.extensionList).isEmpty()
     }
     finally {
       Disposer.dispose(plugin1Disposable)
@@ -258,7 +266,7 @@ class DynamicPluginsTest {
   fun loadOptionalDependencyDescriptor() {
     val plugin1Disposable = loadPluginWithText("<idea-plugin><id>foo</id></idea-plugin>", DynamicPluginsTest::class.java.classLoader)
     try {
-      assertNull(ServiceManager.getService(MyPersistentComponent::class.java))
+      assertThat(ServiceManager.getService(MyPersistentComponent::class.java)).isNull()
       val plugin2Disposable = loadPluginWithOptionalDependency(
         """<idea-plugin>
                 <id>bar</id>
@@ -272,12 +280,12 @@ class DynamicPluginsTest {
        """
       )
       try {
-        assertNotNull(ServiceManager.getService(MyPersistentComponent::class.java))
+        assertThat(ServiceManager.getService(MyPersistentComponent::class.java)).isNotNull()
       }
       finally {
         Disposer.dispose(plugin2Disposable)
       }
-      assertNull(ServiceManager.getService(MyPersistentComponent::class.java))
+      assertThat(ServiceManager.getService(MyPersistentComponent::class.java)).isNull()
     }
     finally {
       Disposer.dispose(plugin1Disposable)
@@ -291,7 +299,7 @@ class DynamicPluginsTest {
       <projectService serviceImplementation="${MyProjectService::class.java.name}"/>
     """.trimIndent(), DynamicPluginsTest::class.java.classLoader)
     try {
-      assertNotNull(ServiceManager.getService(project, MyProjectService::class.java))
+      assertThat(ServiceManager.getService(project, MyProjectService::class.java)).isNotNull()
     }
     finally {
       Disposer.dispose(disposable)
@@ -306,23 +314,25 @@ class DynamicPluginsTest {
       <projectService serviceImplementation="${MyProjectService::class.java.name}"/>
     """.trimIndent(), DynamicPluginsTest::class.java.classLoader)
     try {
-      assertTrue(ServiceManager.getService(project, MyProjectService::class.java).executed)
+      assertThat(ServiceManager.getService(project, MyProjectService::class.java).executed).isTrue()
     }
     finally {
       Disposer.dispose(disposable)
     }
   }
+
   @Test
   fun unloadEPWithDefaultAttributes() {
-    val disposable = loadExtensionWithText("<globalInspection implementationClass=\"${MyInspectionTool::class.java.name}\" cleanupTool=\"false\"/>",
-                                           DynamicPlugins::class.java.classLoader)
+    val disposable = loadExtensionWithText(
+      "<globalInspection implementationClass=\"${MyInspectionTool::class.java.name}\" cleanupTool=\"false\"/>",
+      DynamicPlugins::class.java.classLoader)
     try {
-      assertTrue(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name })
+      assertThat(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name }).isTrue()
     }
     finally {
       Disposer.dispose(disposable)
     }
-    assertFalse(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name })
+    assertThat(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name }).isFalse()
   }
 
   @Test
@@ -331,12 +341,24 @@ class DynamicPluginsTest {
     val disposable = loadExtensionWithText("<projectConfigurable instance=\"${MyConfigurable::class.java.name}\" displayName=\"foo\"/>",
                                            DynamicPlugins::class.java.classLoader)
     try {
-      assertTrue(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name })
+      assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isTrue()
     }
     finally {
       Disposer.dispose(disposable)
     }
-    assertFalse(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name })
+    assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isFalse()
+  }
+
+  @Test
+  fun loadExistingFileTypeModification() {
+    @Suppress("SpellCheckingInspection")
+    val textToLoad = "<fileType name=\"PLAIN_TEXT\" language=\"PLAIN_TEXT\" fileNames=\".texttest\"/>"
+    var disposable = loadExtensionWithText(textToLoad, DynamicPlugins::class.java.classLoader)
+    Disposer.dispose(disposable)
+
+    UIUtil.dispatchAllInvocationEvents()
+    disposable = loadExtensionWithText(textToLoad, DynamicPlugins::class.java.classLoader)
+    Disposer.dispose(disposable)
   }
 
   private fun loadPluginWithOptionalDependency(pluginXmlText: String, optionalDependencyDescriptorText: String): Disposable {
@@ -345,18 +367,18 @@ class DynamicPluginsTest {
     FileUtil.createParentDirs(plugin)
     FileUtil.writeToFile(plugin, pluginXmlText.trimIndent())
     FileUtil.writeToFile(File(directory, "/plugin/META-INF/bar.xml"), optionalDependencyDescriptorText.trimIndent())
-    
+
     val descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
     descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
-    Assertions.assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
-    
+    assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
+
     DynamicPlugins.loadPlugin(descriptor, false)
-    
+
     return Disposable {
       val unloadDescriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
       val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
       DynamicPlugins.unloadPlugin(unloadDescriptor, false)
-      Assertions.assertThat(canBeUnloaded).isTrue()
+      assertThat(canBeUnloaded).isTrue()
     }
   }
 

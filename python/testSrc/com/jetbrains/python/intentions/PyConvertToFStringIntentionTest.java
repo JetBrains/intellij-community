@@ -88,9 +88,19 @@ public class PyConvertToFStringIntentionTest extends PyIntentionTestCase {
   public void testPercentOperatorExpressionContainsOriginalHostQuote() {
     doNegativeTest();
   }
-  
+
   public void testPercentOperatorExpressionContainsAlternativeHostQuote() {
     doNegativeTest();
+  }
+
+  // PY-24232
+  public void testPercentOperatorRemovingEscapingFromPercentSigns() {
+    doTest();
+  }
+
+  // PY-38319
+  public void testPercentOperatorAddingEscapingToCurlyBraces() {
+    doTest();
   }
 
   public void testFormatMethodSimple() {

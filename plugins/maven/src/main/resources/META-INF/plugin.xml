@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>org.jetbrains.idea.maven</id>
-
   <name>Maven</name>
+  <category>Build Tools</category>
   <description>
     <![CDATA[
       Provides <a href="http://maven.apache.org/">Maven</a> support.

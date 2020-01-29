@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -205,7 +206,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         myPluginModel.changeEnableDisable(myPlugin);
       }
     };
-    AbstractAction uninstallAction = new AbstractAction("Uninstall") {
+    AbstractAction uninstallAction = new AbstractAction(IdeBundle.message("plugins.configurable.uninstall.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         doUninstall();
@@ -386,11 +387,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     StatusText text = myEmptyPanel.getEmptyText();
     text.clear();
     if (multiSelection) {
-      text.setText("Several plugins selected.");
-      text.appendSecondaryText("Select one plugin to preview plugin details.", StatusText.DEFAULT_ATTRIBUTES, null);
+      text.setText(IdeBundle.message("plugins.configurable.several.plugins"));
+      text.appendSecondaryText(IdeBundle.message("plugins.configurable.one.plugin.details"), StatusText.DEFAULT_ATTRIBUTES, null);
     }
     else {
-      text.setText("Select plugin to preview details");
+      text.setText(IdeBundle.message("plugins.configurable.plugin.details"));
     }
   }
 
@@ -425,7 +426,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myDownloads.setVisible(downloads != null);
 
       String size = PluginManagerConfigurable.getSize(myPlugin);
-      mySize.setText("Size: " + size);
+      mySize.setText(IdeBundle.message("plugins.configurable.size.0", size));
       mySize.setVisible(!StringUtil.isEmptyOrSpaces(size));
     }
 
@@ -444,8 +445,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myHomePage.hide();
     }
     else {
-      myHomePage.show("Plugin homepage", () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
-                                                                  URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
+      myHomePage.show(IdeBundle.message("plugins.configurable.plugin.homepage.link"), () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
+                                                                                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
 
     String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
@@ -527,7 +528,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       boolean installed = InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId());
       myRestartButton.setVisible(installed);
 
-      myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null && !installedWithoutRestart, "Installed");
+      myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null && !installedWithoutRestart,
+                                 IdeBundle.message("plugins.configurable.installed"));
       myInstallButton.setVisible(!installed);
 
       myUpdateButton.setVisible(false);
@@ -549,7 +551,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         if (uninstalledWithoutRestart) {
           myRestartButton.setVisible(false);
           myInstallButton.setVisible(true);
-          myInstallButton.setEnabled(false, "Uninstalled");
+          myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
         }
         else {
           myRestartButton.setVisible(true);

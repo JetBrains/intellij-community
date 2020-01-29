@@ -235,7 +235,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/google/auto/tree/master/common"),
     new LibraryLicense(libraryName: "Gradle", license: "Apache 2.0", url: "http://gradle.org/",
                        licenseUrl: "http://gradle.org/license"),
-    new LibraryLicense(name: "Grazi Language Detector", libraryName: "tanvd.grazi:grazi-language-detector:0.1.3",
+    new LibraryLicense(name: "Grazi Language Detector", libraryName: "tanvd.grazi:grazi-language-detector:0.1.5",
                        license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
                        url: "https://jetbrains.team/p/grazi/code/grazi-language-detector"),

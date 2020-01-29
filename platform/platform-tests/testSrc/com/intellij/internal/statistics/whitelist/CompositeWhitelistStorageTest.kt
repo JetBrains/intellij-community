@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist
 
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules
 import com.intellij.internal.statistic.eventLog.whitelist.InMemoryWhitelistStorage
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
 import org.assertj.core.api.Assertions.assertThat
 
@@ -15,8 +15,8 @@ internal class CompositeWhitelistStorageTest : WhitelistBaseStorageTest() {
   }
 
   fun testGetGroupRulesFromTest() {
-    val mergedStorage = WhitelistStorageProvider.getInstance(recorderId)
-    WhitelistTestGroupStorage.getInstance(recorderId)
+    val storage = SensitiveDataValidator.getInstance(recorderId).whiteListStorage
+    WhitelistTestGroupStorage.getTestStorage(recorderId)!!
       .addGroupWithCustomRules(
         groupId,
         "{\n" +
@@ -28,13 +28,13 @@ internal class CompositeWhitelistStorageTest : WhitelistBaseStorageTest() {
       )
     InMemoryWhitelistStorage.eventsValidators[groupId] = WhiteListGroupRules.EMPTY
 
-    val groupRules = mergedStorage.getGroupRules(groupId)
+    val groupRules = storage.getGroupRules(groupId)
     assertThat(groupRules).isNotNull
     assertThat(groupRules!!.eventDataRules).isNotEmpty
   }
 
   fun testGetGroupRules() {
-    val mergedStorage = WhitelistStorageProvider.getInstance(recorderId)
+    val mergedStorage = SensitiveDataValidator.getInstance(recorderId).whiteListStorage
     InMemoryWhitelistStorage.eventsValidators[groupId] = WhiteListGroupRules.EMPTY
 
     val groupRules = mergedStorage.getGroupRules(groupId)

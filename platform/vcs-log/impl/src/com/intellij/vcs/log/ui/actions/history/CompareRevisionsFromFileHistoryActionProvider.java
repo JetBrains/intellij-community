@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
@@ -36,12 +37,12 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
     }
 
     if (log.getSelectedCommits().size() >= 2) {
-      e.getPresentation().setText("Compare");
-      e.getPresentation().setDescription("Compare selected versions");
+      e.getPresentation().setText(() -> VcsBundle.message("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
+      e.getPresentation().setDescription(() -> VcsBundle.message("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
     }
     else {
-      e.getPresentation().setText("Show Diff");
-      e.getPresentation().setDescription("Show diff with previous version");
+      e.getPresentation().setText(() -> VcsBundle.message("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
+      e.getPresentation().setDescription(() -> VcsBundle.message("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
     }
     e.getPresentation().setVisible(true);
 

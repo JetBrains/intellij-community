@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -54,16 +54,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected History myHistory = new History(new Place.Navigator() {
     @Override
-    public void setHistory(final History history) {
+    public void setHistory(History history) {
       myHistory = history;
     }
-
-    @Override
-    @Nullable
-    public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-      return null;
-    }
   });
+
   private JComponent myMaster;
 
   public void setHistory(final History history) {
@@ -119,11 +114,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     mySplitter.setHonorComponentsMinimumSize(true);
 
     installAutoScroll();
-    reInitWholePanelIfNeeded();
   }
 
   protected void reInitWholePanelIfNeeded() {
-    if (!myToReInitWholePanel) return;
+    if (!myToReInitWholePanel) {
+      return;
+    }
 
     myWholePanel = new NonOpaquePanel(new BorderLayout()) {
       @Override

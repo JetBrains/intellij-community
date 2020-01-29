@@ -80,6 +80,20 @@ public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
     doTest();
   }
 
+  public void testTitledBorder() throws IOException {
+    doTest();
+  }
+
+  public void testTitledBorderInternal() throws IOException {
+    setInternal(true);
+    doTest();
+    setInternal(false);
+  }
+
+  public void testTitleFromBundle() throws IOException {
+    doTest();
+  }
+
   private void doTest() throws IOException {
     final VirtualFile form = myTestProjectRoot.findChild("Test.form");
     assertNotNull(form);
@@ -101,5 +115,9 @@ public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
     assertNotNull(psiFile);
     final String text = StringUtil.convertLineSeparators(psiFile.getText());
     assertEquals(expectedText, text);
+  }
+
+  private static void setInternal(boolean value) {
+    System.getProperties().setProperty("idea.is.internal", Boolean.toString(value));
   }
 }

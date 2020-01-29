@@ -39,9 +39,6 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Sergey.Malenkov
- */
 final class SettingsEditor extends AbstractEditor implements DataProvider {
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
@@ -212,8 +209,8 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myEditor.setPreferredSize(JBUI.size(800, 600));
     myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
     myBanner = new Banner(myEditor.getResetAction());
-    searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 10));
+    searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
+    myBanner.setBorder(JBUI.Borders.empty(5, 3, 0, 10)); // because banner sets doubled left value
     mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());

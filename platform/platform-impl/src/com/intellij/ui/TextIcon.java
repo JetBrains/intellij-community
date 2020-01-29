@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -12,9 +12,6 @@ import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static java.awt.RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class TextIcon implements Icon {
   private static final FontRenderContext CONTEXT =
     new FontRenderContext(null, AntialiasingType.getKeyForCurrentScope(false), VALUE_FRACTIONALMETRICS_OFF);

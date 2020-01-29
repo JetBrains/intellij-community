@@ -15,11 +15,11 @@ import org.jetbrains.concurrency.resolvedPromise
 internal class DeployToServerRunner : ProgramRunner<RunnerSettings> {
   override fun getRunnerId() = "DeployToServer"
 
-  override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
+  override fun execute(environment: ExecutionEnvironment) {
     val state = environment.state ?: return
-    ExecutionManager.getInstance(environment.project).startRunProfile(environment, callback, {
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
       resolvedPromise(executeState(state, environment, this))
-    })
+    }
   }
 
   override fun canRun(executorId: String, profile: RunProfile): Boolean {

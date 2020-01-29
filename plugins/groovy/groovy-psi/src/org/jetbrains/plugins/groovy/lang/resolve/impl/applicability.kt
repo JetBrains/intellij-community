@@ -1,20 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicabilities
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
-import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityData
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.ArgumentApplicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
 
-fun mapApplicability(map: Map<Argument, PsiParameter>, substitutor: PsiSubstitutor, erase: Boolean, context: PsiElement): Applicability {
+fun mapApplicability(map: Map<Argument, CallParameter>, substitutor: PsiSubstitutor, erase: Boolean, context: PsiElement): Applicability {
   for ((argument, parameter) in map) {
     val parameterType = parameterType(parameter.type, substitutor, erase)
     val applicability = argumentApplicability(parameterType, argument.runtimeType, context)
@@ -25,11 +24,13 @@ fun mapApplicability(map: Map<Argument, PsiParameter>, substitutor: PsiSubstitut
   return Applicability.applicable
 }
 
-fun highlightApplicabilities(map: Map<Argument, PsiParameter>, substitutor: PsiSubstitutor, context: PsiElement): Applicabilities {
+fun highlightApplicabilities(map: Map<Argument, CallParameter>,
+                             substitutor: PsiSubstitutor,
+                             context: PsiElement): Map<Argument, ArgumentApplicability> {
   return map.entries.associate { (argument, parameter) ->
     val parameterType = parameterType(parameter.type, substitutor, false)
     val applicability = argumentApplicability(parameterType, argument.type, context)
-    return@associate argument to ApplicabilityData(parameterType, applicability)
+    return@associate argument to ArgumentApplicability(parameterType, applicability)
   }
 }
 

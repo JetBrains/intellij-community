@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindBundle;
@@ -50,8 +50,10 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     comboBox.addActionListener(e -> {
       if (myUpdating) return;
       final VirtualFile directory = getDirectory();
-      final ComboBox source = (ComboBox)e.getSource();
+      final ComboBox<?> source = (ComboBox<?>)e.getSource();
       if (directory == null) {
+
+        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", "error");
         final Balloon balloon = JBPopupFactory.getInstance()
           .createHtmlTextBalloonBuilder("Not a directory", AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
@@ -60,6 +62,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
         source.requestFocus();
       }
       else {
+        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", null);
       }
       if (myCallback != null && directory != null) {
@@ -151,7 +154,9 @@ public class DirectoryComboBoxWithButtons extends JPanel {
 
   private class RecursiveAction extends ToggleAction {
     RecursiveAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
+      super(() -> FindBundle.message("find.scope.directory.recursive.checkbox"),
+            () -> FindBundle.message("find.recursively.hint"),
+            AllIcons.Actions.ShowAsTree);
     }
 
     @Override

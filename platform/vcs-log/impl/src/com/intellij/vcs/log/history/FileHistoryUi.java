@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -81,7 +81,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
     };
 
-    boolean isDiffPreviewAsEditor = Registry.is("show.diff.preview.as.editor.tab");
+    boolean isDiffPreviewAsEditor = Registry.is("vcs.log.show.diff.preview.as.editor.tab");
 
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
     myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !isDiffPreviewAsEditor);

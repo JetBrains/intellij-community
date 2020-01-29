@@ -54,7 +54,7 @@ abstract class SaveAndSyncHandler {
 
   abstract fun refreshOpenFiles()
 
-  abstract fun disableAutoSave(): AccessToken
+  open fun disableAutoSave(): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
 
   abstract fun blockSaveOnFrameDeactivation()
 

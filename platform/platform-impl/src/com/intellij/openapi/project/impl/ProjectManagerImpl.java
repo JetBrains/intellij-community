@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UnsafeWeakList;
@@ -177,10 +178,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    OpenProjectTask options = new OpenProjectTask();
-    options.useDefaultProjectAsTemplate = useDefaultProjectSettings;
-    options.isNewProject = true;
-    return newProject(Paths.get(toCanonicalName(filePath)), projectName, options);
+    return newProject(Paths.get(toCanonicalName(filePath)), projectName, OpenProjectTask.newProject(useDefaultProjectSettings));
   }
 
   @Override
@@ -301,7 +299,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (indicator != null) {
       indicator.setIndeterminate(false);
       // getting project name is not cheap and not possible at this moment
-      indicator.setText("Loading components...");
+      indicator.setText(ProjectBundle.message("project.loading.components"));
     }
 
     Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
@@ -435,13 +433,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static void doLoadProject(@NotNull Project project, @Nullable ProgressIndicator indicator) {
     Activity waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue");
     if (indicator != null) {
-      indicator.setText(ApplicationManager.getApplication().isInternal() ? "Waiting on event queue..." : "Preparing workspace...");
+      //noinspection HardCodedStringLiteral
+      indicator.setText(ApplicationManager.getApplication().isInternal() ? "Waiting on event queue..." : ProjectBundle.message("project.preparing.workspace"));
       indicator.setIndeterminate(true);
     }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       waitEdtActivity.end();
       if (indicator != null && ApplicationManager.getApplication().isInternal()) {
+        //noinspection HardCodedStringLiteral
         indicator.setText("Running project opened tasks...");
       }
       fireProjectOpened(project);
@@ -518,7 +518,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     else {
       project = doCreateProject(null, file);
       ConversionResult finalConversionResult = conversionResult;
-      ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
+      ProgressManager.getInstance().run(new Task.Modal(project, IdeUICustomization.getInstance().projectMessage("project.load.progress"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -838,7 +838,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     //noinspection deprecation
     List<ProjectComponent> components = project.getComponentInstancesOfType(ProjectComponent.class, false);
     for (int i = components.size() - 1; i >= 0; i--) {
-      ProjectComponent component = components.get(i);
+      @SuppressWarnings("deprecation") ProjectComponent component = components.get(i);
       try {
         component.projectClosed();
       }
@@ -934,7 +934,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         count++;
       }
     }
-    return Messages.showYesNoDialog(project, message.toString(), "Unsaved Project", Messages.getWarningIcon()) == Messages.YES;
+    return Messages.showYesNoDialog(project, message.toString(), IdeUICustomization.getInstance().projectMessage("project.unsaved"), Messages.getWarningIcon()) == Messages.YES;
   }
 
   public static class UnableToSaveProjectNotification extends Notification {
@@ -947,7 +947,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
-      super("Project Settings", "Could not save project",
+      super("Project Settings", IdeUICustomization.getInstance().projectMessage("project.cannot.save"),
             "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
             " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR,
             (notification, event) -> {

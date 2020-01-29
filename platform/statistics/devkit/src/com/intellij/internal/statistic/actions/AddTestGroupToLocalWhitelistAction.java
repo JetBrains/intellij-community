@@ -26,13 +26,12 @@ import java.io.IOException;
  * If "Add custom validation rules" is disabled, all event id and event data values from the group will be allowed.
  */
 public class AddTestGroupToLocalWhitelistAction extends AnAction {
-  private static final LayeredIcon ICON = new LayeredIcon(AllIcons.General.Add, AllIcons.Actions.Scratch);
-
   public AddTestGroupToLocalWhitelistAction() {
-    super(ActionsBundle.message("action.AddTestGroupToLocalWhitelistAction.text"),
-          ActionsBundle.message("action.AddTestGroupToLocalWhitelistAction.description"),
-          ICON);
+    super(() -> ActionsBundle.message("action.AddTestGroupToLocalWhitelistAction.text"),
+          () -> ActionsBundle.message("action.AddTestGroupToLocalWhitelistAction.description"), ICON);
   }
+
+  private static final LayeredIcon ICON = new LayeredIcon(AllIcons.General.Add, AllIcons.Actions.Scratch);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -51,7 +50,12 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final String recorderId = dialog.getRecorderId();
-        final WhitelistTestGroupStorage testWhitelist = WhitelistTestGroupStorage.getInstance(recorderId);
+        final WhitelistTestGroupStorage testWhitelist = WhitelistTestGroupStorage.getTestStorage(recorderId);
+        if (testWhitelist == null) {
+          showNotification(project, NotificationType.ERROR, "Cannot find test whitelist storage.");
+          return;
+        }
+
         try {
           if (dialog.isCustomRules()) {
             testWhitelist.addGroupWithCustomRules(dialog.getGroupId(), dialog.getCustomRules());

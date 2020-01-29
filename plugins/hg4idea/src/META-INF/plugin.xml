@@ -12,7 +12,7 @@
         </ul>
       ]]>
   </description>
-  <category>VCS Integration</category>
+  <category>Version Controls</category>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.vcs</depends>
 
@@ -127,7 +127,7 @@
         <keyboard-shortcut first-keystroke="alt shift P" keymap="$default"/>
       </action>
       <action class="org.zmlx.hg4idea.action.mq.HgQFoldActionFromPatches" id="hg4idea.QFold"
-              icon="AllIcons.Modules.Merge">
+              icon="AllIcons.Vcs.Merge">
         <keyboard-shortcut first-keystroke="alt shift D" keymap="$default"/>
       </action>
       <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QDelete"

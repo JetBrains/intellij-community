@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.JBColor;
 
 import java.awt.*;
@@ -19,7 +20,7 @@ public class UpdateButton extends ColorButton {
     setBgColor(BackgroundColor);
     setBorderColor(BorderColor);
 
-    setText("Update");
+    setText(IdeBundle.message("plugins.configurable.update.button"));
     setWidth72(this);
   }
 }

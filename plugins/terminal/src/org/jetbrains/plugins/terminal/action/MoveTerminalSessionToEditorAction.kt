@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,8 +12,8 @@ import org.jetbrains.plugins.terminal.TerminalView
 import org.jetbrains.plugins.terminal.vfs.TerminalEditorWidgetListener
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 
-class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase(), DumbAware {
-  override fun actionPerformed(e: AnActionEvent, activeToolWindow: ToolWindow, selectedContent: Content?) {
+private class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase(), DumbAware {
+  override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, selectedContent: Content?) {
     val tabInfo = TabInfo(selectedContent!!.component)
       .setText(selectedContent.displayName)
     val project = e.project!!
@@ -26,7 +26,7 @@ class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase()
     terminalWidget.listener = TerminalEditorWidgetListener(project, file)
 
     terminalWidget.moveDisposable(fileEditor)
-    terminalView.detachWidgetAndRemoveContent(selectedContent)
+    terminalView.detachWidgetAndRemoveContent(toolWindow, selectedContent)
 
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
   }

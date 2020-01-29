@@ -50,6 +50,7 @@ import org.junit.runners.Suite;
   StreamApiMigrationInspectionTestSuite.SummingTest.class,
   StreamApiMigrationInspectionTestSuite.Java9Test.class,
   StreamApiMigrationInspectionTestSuite.Java10Test.class,
+  StreamApiMigrationInspectionTestSuite.Java14Test.class,
 })
 public class StreamApiMigrationInspectionTestSuite {
   public static abstract class StreamApiMigrationInspectionBaseTest extends LightQuickFixParameterizedTestCase {
@@ -226,6 +227,13 @@ public class StreamApiMigrationInspectionTestSuite {
     @Override
     String getFolder() {
       return "java10";
+    }
+  }
+
+  public static class Java14Test extends StreamApiMigrationInspectionBaseTest {
+    @Override
+    String getFolder() {
+      return "java14";
     }
   }
 }

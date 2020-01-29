@@ -6,6 +6,7 @@
     <p></p>
     <p>Originally developed by Theory In Practice.</p>
     ]]></description>
+    <category>Test Tools</category>
     <vendor>JetBrains</vendor>
     <depends>com.intellij.modules.java</depends>
 

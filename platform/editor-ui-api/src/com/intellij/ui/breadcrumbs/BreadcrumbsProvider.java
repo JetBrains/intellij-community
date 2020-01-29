@@ -14,7 +14,6 @@ import static java.util.Collections.emptyList;
 
 /**
  * @author Alexey.Pegov
- * @author Sergey.Malenkov
  */
 public interface BreadcrumbsProvider {
   ExtensionPointName<BreadcrumbsProvider> EP_NAME = ExtensionPointName.create("com.intellij.breadcrumbsInfoProvider");

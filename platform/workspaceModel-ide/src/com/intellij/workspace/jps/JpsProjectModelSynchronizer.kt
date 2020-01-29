@@ -140,26 +140,15 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   // Logic from com.intellij.openapi.module.impl.ModuleManagerImpl.loadState(java.util.Set<com.intellij.openapi.module.impl.ModulePath>)
   private fun loadStateOfUnloadedModules(modulePaths: List<ModulePath>) {
-    val modulePathsToLoad = modulePaths.toMutableSet()
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
 
-    val iterator = modulePathsToLoad.iterator()
-    val unloadedModulePaths = mutableListOf<ModulePath>()
-
-    while (iterator.hasNext()) {
-      val element = iterator.next()
-      if (element.moduleName in unloadedModuleNames) {
-        unloadedModulePaths += element
-        iterator.remove()
-      }
-    }
+    val (unloadedModulePaths, modulePathsToLoad) = modulePaths.partition { it.moduleName in unloadedModuleNames }
 
     val unloaded = UnloadedModuleDescriptionImpl.createFromPaths(unloadedModulePaths, project).toMutableList()
 
     if (unloaded.isNotEmpty()) {
-      val changeUnloaded = AutomaticModuleUnloader.getInstance(project).processNewModules(modulePathsToLoad, unloaded)
+      val changeUnloaded = AutomaticModuleUnloader.getInstance(project).processNewModules(modulePathsToLoad.toSet(), unloaded)
       unloaded.addAll(changeUnloaded.toUnloadDescriptions)
-      unloadedModulePaths += changeUnloaded.toUnload
     }
 
     val unloadedModules = LegacyBridgeModuleManagerComponent.getInstance(project).unloadedModules

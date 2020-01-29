@@ -72,23 +72,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
-    if (myVariable instanceof PsiPatternVariable) {
-      removePatternVariable((PsiPatternVariable)myVariable);
-    } else {
-      removeVariableAndReferencingStatements(editor);
-    }
-  }
-
-  private static void removePatternVariable(PsiPatternVariable variable) {
-    Runnable action = () -> {
-      PsiPattern pattern = variable.getPattern();
-      if (pattern instanceof PsiTypeTestPattern) {
-        variable.replace(variable.getTypeElement());
-        return;
-      }
-      throw new UnsupportedOperationException("Unable to remove pattern variable " + variable.getName());
-    };
-    ApplicationManager.getApplication().runWriteAction(action);
+    removeVariableAndReferencingStatements(editor);
   }
 
   private void removeVariableAndReferencingStatements(Editor editor) {

@@ -110,8 +110,17 @@ public abstract class Language extends UserDataHolderBase {
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
+  public static void unregisterLanguages(ClassLoader classLoader) {
+    List<Class<? extends Language>> classes = new ArrayList<>(ourRegisteredLanguages.keySet());
+    for (Class<? extends Language> clazz : classes) {
+      if (clazz.getClassLoader() == classLoader) {
+        unregisterLanguage(ourRegisteredLanguages.get(clazz));
+      }
+    }
+    IElementType.unregisterElementTypes(classLoader);
+  }
+
   public static void unregisterLanguage(@NotNull Language language) {
-    IElementType.unregisterElementTypes(language);
     ReferenceProvidersRegistry.getInstance().unloadProvidersFor(language);
     ourRegisteredLanguages.remove(language.getClass());
     ourRegisteredIDs.remove(language.getID());

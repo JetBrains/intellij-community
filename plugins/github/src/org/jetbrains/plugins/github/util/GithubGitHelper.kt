@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,16 +19,14 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
  * accessible url - url that matches at least one registered account
  * possible url - accessible urls + urls that match github.com + urls that match server saved in old settings
  */
-class GithubGitHelper(private val githubSettings: GithubSettings,
-                      private val authenticationManager: GithubAuthenticationManager,
-                      private val migrationHelper: GithubAccountsMigrationHelper) {
-
+@Service
+class GithubGitHelper {
   fun getRemoteUrl(server: GithubServerPath, repoPath: GHRepositoryPath): String {
     return getRemoteUrl(server, repoPath.owner, repoPath.repository)
   }
 
   fun getRemoteUrl(server: GithubServerPath, user: String, repo: String): String {
-    return if (githubSettings.isCloneGitUsingSsh) {
+    return if (GithubSettings.getInstance().isCloneGitUsingSsh) {
       "git@${server.host}:${server.suffix?.substring(1).orEmpty()}/$user/$repo.git"
     }
     else {
@@ -43,7 +42,7 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
     return repository.getRemoteUrls().any(::isRemoteUrlAccessible)
   }
 
-  private fun isRemoteUrlAccessible(url: String) = authenticationManager.getAccounts().find { it.server.matches(url) } != null
+  private fun isRemoteUrlAccessible(url: String) = GithubAuthenticationManager.getInstance().getAccounts().find { it.server.matches(url) } != null
 
   fun getPossibleRepositories(repository: GitRepository): Set<GHRepositoryCoordinates> {
     val knownServers = getKnownGithubServers()
@@ -78,8 +77,8 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
 
   private fun getKnownGithubServers(): Set<GithubServerPath> {
     val registeredServers = mutableSetOf(GithubServerPath.DEFAULT_SERVER)
-    migrationHelper.getOldServer()?.run(registeredServers::add)
-    authenticationManager.getAccounts().mapTo(registeredServers) { it.server }
+    GithubAccountsMigrationHelper.getInstance().getOldServer()?.run(registeredServers::add)
+    GithubAuthenticationManager.getInstance().getAccounts().mapTo(registeredServers) { it.server }
     return registeredServers
   }
 

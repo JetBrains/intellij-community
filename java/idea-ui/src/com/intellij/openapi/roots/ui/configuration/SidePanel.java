@@ -11,11 +11,11 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -37,7 +37,7 @@ public class SidePanel extends JPanel {
     myModel = new DefaultListModel<>();
     myList = new JBList<>(myModel);
     myList.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    myList.setBorder(new EmptyBorder(5, 0, 0, 0));
+    myList.setBorder(JBUI.Borders.emptyTop(5));
     final ListItemDescriptor<SidePanelItem> descriptor = new ListItemDescriptor<SidePanelItem>() {
       @Override
       public String getTextFor(final SidePanelItem value) {
@@ -154,7 +154,7 @@ public class SidePanel extends JPanel {
     repaint();
   }
 
-  public void addSeparator(String text) {
+  public void addSeparator(@Nls String text) {
     myIndex2Separator.put(myModel.size(), text);
   }
 

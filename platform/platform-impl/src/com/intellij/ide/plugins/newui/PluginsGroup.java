@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ public class PluginsGroup {
   public UIPluginGroup ui;
   public Runnable clearCallback;
 
-  public PluginsGroup(@NotNull String title) {
+  public PluginsGroup(@NotNull @Nls String title) {
     myTitlePrefix = title;
     this.title = title;
   }

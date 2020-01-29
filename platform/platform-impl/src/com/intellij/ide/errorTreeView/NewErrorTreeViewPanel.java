@@ -621,7 +621,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class StopAction extends DumbAwareAction {
     StopAction() {
-      super(IdeBundle.message("action.stop"), null, AllIcons.Actions.Suspend);
+      super(() -> IdeBundle.message("action.stop"), AllIcons.Actions.Suspend);
     }
 
     @Override
@@ -646,7 +646,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class ShowWarningsAction extends ToggleAction implements DumbAware {
     ShowWarningsAction() {
-      super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
+      super(() -> IdeBundle.message("action.show.warnings"), AllIcons.General.ShowWarning);
     }
 
     @Override
@@ -666,7 +666,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class ShowInfosAction extends ToggleAction implements DumbAware {
     ShowInfosAction() {
-      super(IdeBundle.message("action.show.infos"), null, AllIcons.General.ShowInfos);
+      super(() -> IdeBundle.message("action.show.infos"), AllIcons.General.ShowInfos);
     }
 
     @Override

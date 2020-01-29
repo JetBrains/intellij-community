@@ -2,7 +2,9 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -50,6 +52,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed;
+  private boolean myStateLoaded = false;
 
   private final RootProviderChangeListener myRootProviderChangeListener = new RootProviderChangeListener();
 
@@ -273,6 +276,20 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
     myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
+
+    if (myStateLoaded) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        app.invokeLater(() -> projectJdkChanged(), app.getNoneModalityState());
+      }
+    } else {
+      myStateLoaded = true;
+    }
+  }
+
+  @Override
+  public void noStateLoaded() {
+    myStateLoaded = true;
   }
 
   @Override

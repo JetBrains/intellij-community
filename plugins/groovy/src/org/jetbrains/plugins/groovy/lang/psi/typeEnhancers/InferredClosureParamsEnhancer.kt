@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -58,7 +58,7 @@ class InferredClosureParamsEnhancer : ClosureParamsEnhancer() {
                                             virtualMethod: GrMethod): GrParameter? {
     val method = resolveResult.candidate?.method ?: return null
     val methodParameter = (resolveResult.candidate?.argumentMapping?.targetParameter(
-      ExpressionArgument(closureBlock)) as? GrParameter)?.takeIf { it.typeElement == null } ?: return null
+      ExpressionArgument(closureBlock))?.psi as? GrParameter)?.takeIf { it.typeElement == null } ?: return null
     return virtualMethod.parameters.getOrNull(method.parameterList.getParameterIndex(methodParameter)) ?: return null
   }
 

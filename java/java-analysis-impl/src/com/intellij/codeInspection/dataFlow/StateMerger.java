@@ -8,7 +8,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.LongStreamEx;
@@ -57,11 +56,7 @@ class StateMerger {
 
         final Collection<DfaMemoryStateImpl> group = ContainerUtil.newArrayList(ContainerUtil.concat(group1, group2));
 
-        replacements.stripAndMerge(group, original -> {
-          DfaMemoryStateImpl copy = original.createCopy();
-          fact.removeFromState(copy);
-          return copy;
-        });
+        replacements.stripAndMerge(group, fact);
       }
 
       if (replacements.hasMerges()) return replacements.getMergeResult();
@@ -339,6 +334,11 @@ class StateMerger {
 
     abstract void removeFromState(@NotNull DfaMemoryStateImpl state);
 
+    void restoreCommonState(DfaMemoryStateImpl stripped, Collection<DfaMemoryStateImpl> merged) {
+      DfType commonType = StreamEx.of(merged).map(s -> s.getDfType(myVar)).foldLeft(DfTypes.BOTTOM, DfType::join);
+      stripped.meetDfType(myVar, commonType);
+    }
+
     @NotNull
     static EqualityFact createEqualityFact(@NotNull DfaVariableValue var, @NotNull DfaValue val) {
       if (val instanceof DfaVariableValue && val.getID() < var.getID()) {
@@ -491,22 +491,25 @@ class StateMerger {
       return null;
     }
 
-    private void stripAndMerge(@NotNull Collection<DfaMemoryStateImpl> group,
-                               @NotNull Function<DfaMemoryStateImpl, DfaMemoryStateImpl> stripper) {
+    private void stripAndMerge(@NotNull Collection<DfaMemoryStateImpl> group, @NotNull Fact fact) {
       if (group.size() <= 1) return;
 
       MultiMap<DfaMemoryStateImpl, DfaMemoryStateImpl> strippedToOriginals = MultiMap.create();
       for (DfaMemoryStateImpl original : group) {
-        strippedToOriginals.putValue(stripper.fun(original), original);
+        DfaMemoryStateImpl copy = original.createCopy();
+        fact.removeFromState(copy);
+        strippedToOriginals.putValue(copy, original);
       }
       for (Map.Entry<DfaMemoryStateImpl, Collection<DfaMemoryStateImpl>> entry : strippedToOriginals.entrySet()) {
         Collection<DfaMemoryStateImpl> merged = entry.getValue();
         if (merged.size() > 1) {
+          DfaMemoryStateImpl stripped = entry.getKey();
+          fact.restoreCommonState(stripped, merged);
           for (DfaMemoryStateImpl state : merged) {
-            entry.getKey().afterMerge(state);
+            stripped.afterMerge(state);
           }
           myRemovedStates.addAll(merged);
-          myMerged.add(entry.getKey());
+          myMerged.add(stripped);
         }
       }
     }

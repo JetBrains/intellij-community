@@ -91,7 +91,7 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   }
 
   @Override
-  protected boolean convertSubstitutionChunk(@NotNull Field field, @NotNull StringBuilder fStringText) {
+  protected boolean processSubstitutionChunk(@NotNull Field field, @NotNull StringBuilder fStringText) {
 
     final String stringText = myPyString.getText();
 
@@ -128,7 +128,7 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
           specOffset = nestedField.getFieldEnd();
 
           // recursively format nested field
-          if (!convertSubstitutionChunk(nestedField, fStringText)) {
+          if (!processSubstitutionChunk(nestedField, fStringText)) {
             return false;
           }
         }
@@ -140,6 +140,11 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
 
     fStringText.append("}");
     return true;
+  }
+
+  @Override
+  protected void processLiteralChunk(@NotNull String chunk, @NotNull StringBuilder fStringText) {
+    fStringText.append(chunk);
   }
 
   @Nullable

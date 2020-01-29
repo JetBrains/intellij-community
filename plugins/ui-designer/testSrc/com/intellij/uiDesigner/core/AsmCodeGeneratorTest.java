@@ -267,6 +267,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     return findMethod(parent, methodName, params);
   }
 
+  private static void setInternal(boolean value) {
+    System.getProperties().setProperty("idea.is.internal", Boolean.toString(value));
+  }
+
   public void testCardLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestCardLayout.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof CardLayout);
@@ -350,6 +354,19 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals("Test Value", border.getTitle());
     assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
+    assertEquals(border.getClass().getName(), "javax.swing.border.TitledBorder");
+  }
+
+  public void testTitledBorderInternal() throws Exception {
+    setInternal(true);
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
+    setInternal(false);
+
+    assertTrue(panel.getBorder() instanceof TitledBorder);
+    TitledBorder border = (TitledBorder) panel.getBorder();
+    assertEquals("Test Value", border.getTitle());
+    assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
+    assertEquals(border.getClass().getName(), "com.intellij.ui.border.IdeaTitledBorder");
   }
   
   public void testTitledSeparator() throws Exception {

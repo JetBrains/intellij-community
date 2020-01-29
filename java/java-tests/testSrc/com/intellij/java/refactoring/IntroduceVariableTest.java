@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
@@ -20,6 +21,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /**
  * @author dsl
@@ -33,7 +36,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
 
   public void testSimpleExpression() { doTest("i", false, false, true, "int"); }
   public void testInsideFor() { doTest("temp", false, false, true, "int"); }
-  public void testReplaceAll() { doTest("s", true, true, true, CommonClassNames.JAVA_LANG_STRING); }
+  public void testReplaceAll() { doTest("s", true, true, true, JAVA_LANG_STRING); }
   public void testIDEADEV3678() { doTest("component", true, true, true, CommonClassNames.JAVA_LANG_OBJECT); }
   public void testIDEADEV13369() { doTest("ints", true, true, true, "int[]"); }
   public void testAnonymousClass() { doTest("temp", true, false, true, "int"); }
@@ -42,8 +45,8 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testAnonymousClass3() { doTest("j", true, false, false, "Foo"); }
   public void testAnonymousClass4() { doTest("j", true, false, false, "int"); }
   public void testAnonymousClass5() { doTest("j", true, false, false, "int"); }
-  public void testAnonymousClass6() { doTest("str", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testAnonymousClass7() { doTest("str", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testAnonymousClass6() { doTest("str", true, false, false, JAVA_LANG_STRING); }
+  public void testAnonymousClass7() { doTest("str", true, false, false, JAVA_LANG_STRING); }
   public void testLambda() { doTest("j", true, false, false, "int"); }
   public void testParenthesized() { doTest("temp", true, false, false, "int"); }
   public void testExpectedType8Inference() { doTest("temp", true, false, false, "java.util.Map<java.lang.String,java.util.List<java.lang.String>>"); }
@@ -51,22 +54,22 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testMethodCallInSwitch() { doTest("i", true, true, true, "int"); }
   public void testFunctionalExpressionInSwitchJava13Preview() { doTest("p", true, true, true, "java.util.function.Predicate<java.lang.String>"); }
   public void testParenthesizedOccurrence1() { doTest("empty", true, true, true, "boolean"); }
-  public void testParenthesizedOccurrence2() { doTest("s", true, true, true, CommonClassNames.JAVA_LANG_STRING); }
+  public void testParenthesizedOccurrence2() { doTest("s", true, true, true, JAVA_LANG_STRING); }
   public void testAfterSemicolon() { doTest("s", true, true, true, CommonClassNames.JAVA_LANG_RUNNABLE); }
-  public void testConflictingField() { doTest("name", true, false, true, CommonClassNames.JAVA_LANG_STRING); }
+  public void testConflictingField() { doTest("name", true, false, true, JAVA_LANG_STRING); }
   public void testConflictingFieldInExpression() { doTest("name", false, false, true, "int"); }
   public void testStaticConflictingField() { doTest("name", false, false, true, "int"); }
   public void testNonConflictingField() { doTest("name", false, false, true, "int"); }
   public void testScr16910() { doTest("i", true, true, false, "int"); }
-  public void testSCR18295() { doTest("it", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testSCR18295a() { doTest("it", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testFromInjected() { doTest("regexp", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testSCR18295() { doTest("it", true, false, false, JAVA_LANG_STRING); }
+  public void testSCR18295a() { doTest("it", false, false, false, JAVA_LANG_STRING); }
+  public void testFromInjected() { doTest("regexp", false, false, false, JAVA_LANG_STRING); }
   public void testSCR10412() { doTest("newVar", false, false, false, "java.lang.String[]"); }
   public void testSCR22718() { doTest("object", true, true, false, CommonClassNames.JAVA_LANG_OBJECT); }
-  public void testSCR26075() { doTest("ok", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testSCR26075() { doTest("ok", false, false, false, JAVA_LANG_STRING); }
 
   public void testSCR26075For() {
-    doTest(new MockIntroduceVariableHandler("wrong", false, false, false, CommonClassNames.JAVA_LANG_STRING) {
+    doTest(new MockIntroduceVariableHandler("wrong", false, false, false, JAVA_LANG_STRING) {
       @Override
       protected void assertValidationResult(boolean validationResult) {
         assertFalse(validationResult);
@@ -76,18 +79,18 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
       protected boolean reportConflicts(MultiMap<PsiElement, String> conflicts, final Project project, IntroduceVariableSettings dialog) {
         assertEquals(2, conflicts.size());
         Collection<String> conflictsMessages = conflicts.values();
-        assertTrue(conflictsMessages.contains("Introducing variable may break code logic"));
+        assertTrue(conflictsMessages.contains(RefactoringBundle.message("introducing.variable.may.break.code.logic")));
         assertTrue(conflictsMessages.contains("Local variable <b><code>c</code></b> is modified in loop body"));
         return false;
       }
     });
   }
 
-  public void testConflictingFieldInOuterClass() { doTest("text", true, true, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testConflictingFieldInOuterClass() { doTest("text", true, true, false, JAVA_LANG_STRING); }
   public void testSkipSemicolon() { doTest("mi5", false, false, false, "int"); }
-  public void testSkipErroneousParen() { doTest("x", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testInsideIf() { doTest("s1", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testInsideElse() { doTest("s1", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testSkipErroneousParen() { doTest("x", false, false, false, JAVA_LANG_STRING); }
+  public void testInsideIf() { doTest("s1", false, false, false, JAVA_LANG_STRING); }
+  public void testInsideElse() { doTest("s1", false, false, false, JAVA_LANG_STRING); }
   public void testInsideWhile() { doTest("temp", false, false, false, "int"); }
   public void testWhileCondition() { doTest("temp", true, false, false, "Node"); }
   public void testWhileCondition2() { doTest("temp", true, false, false, "Node"); }
@@ -96,8 +99,8 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testWhileConditionPlusNormal() { doTest("temp", true, false, false, "int"); }
   public void testWhileConditionPlusNormal2() { doTest("temp", true, false, false, "int"); }
   public void testWhileConditionAndOr() { doTest("temp", true, false, false, "boolean");}
-  public void testField() { doTest("temp", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testFieldAll() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testField() { doTest("temp", false, false, false, JAVA_LANG_STRING); }
+  public void testFieldAll() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testCaseLabel() { doTest("temp", true, false, false, "int"); }
   public void testCaseLabelSingle() { doTest(new IntroduceVariableHandler()); }
   public void testCaseLabelRuleSingle() { doTest(new IntroduceVariableHandler()); }
@@ -108,41 +111,63 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
       doTest("temp", true, false, false, "");
     }
     catch (RuntimeException e) {
-      assertEquals("Error message:Cannot perform refactoring.\nEnum constant in switch label cannot be extracted", e.getMessage());
+      assertEquals("Error message:" +
+                   RefactoringBundle.message("cannot.perform.refactoring") + "\n" +
+                   RefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"), e.getMessage());
       return;
     }
     fail("Should not be able to perform refactoring");
   }
-  
+
+  public void testPatternVariableUsedAfterwards() {
+    try {
+      doTest("temp", true, false, false, "");
+    }
+    catch (RuntimeException e) {
+      assertEquals("Error message:" +
+                   RefactoringBundle.message("cannot.perform.refactoring") + "\n" +
+                   RefactoringBundle.message("selected.expression.introduces.pattern.variable", "s"), e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+  public void testPatternVariableNotUsedAfterwards() {
+    doTest("temp", true, false, false, "boolean");
+  }
+  public void testPatternVariableDeclarationJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationUsedInLocalJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationAfterIfJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testNonPatternDeclarationJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+
   public void testTernaryBothBranches() { doTest("temp", true, false, false, "int"); }
-  public void testIfConditionAndChain() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testReturnAndChain() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testReturnOrChain() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testReturnTernary() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testAssignTernary() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testEnsureCodeBlockAroundBreakStatementJava13Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testEnsureCodeBlockForThrowsJava13Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testFromSwitchStatementJava13Preview() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testIfConditionAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testReturnAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testReturnOrChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testReturnTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testAssignTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testEnsureCodeBlockAroundBreakStatementJava13Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testEnsureCodeBlockForThrowsJava13Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testFromSwitchStatementJava13Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
 
   public void testVarTypeExtractedJava10() {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "java.util.ArrayList<java.lang.String>"));
   }
 
-  public void testDeclareTernary() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testLambdaAndChain() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testDeclareTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testLambdaAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testSCR40281() { doTest("temp", false, false, false, "Set<? extends Map<?,java.lang.String>.Entry<?,java.lang.String>>"); }
   public void testWithIfBranches() { doTest("temp", true, false, false, "int"); }
   public void testInsideTryWithResources() { doTest("temp", true, false, false, "java.io.FileInputStream"); }
   public void testInsideForLoop() { doTest("temp", true, false, false, "int"); }
   public void testInsideForLoopIndependentFromLoopVariable() { doTest("temp", true, false, false, "int"); }
-  public void testDistinguishLambdaParams() { doTest("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testDistinguishLambdaParams() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testDuplicateGenericExpressions() { doTest("temp", true, false, false, "Foo2<? extends java.lang.Runnable>"); }
   public void testStaticImport() { doTest("i", true, true, false, "int"); }
   public void testGenericTypeMismatch() { doTest("i", true, true, false, CommonClassNames.JAVA_LANG_OBJECT); }
   public void testGenericTypeMismatch1() { doTest("i", true, true, false, "java.util.List<java.lang.String>"); }
   public void testThisQualifier() { doTest("count", true, true, false, "int"); }
-  public void testSubLiteral() { doTest("str", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testSubLiteral1() { doTest("str", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testSubLiteral() { doTest("str", false, false, false, JAVA_LANG_STRING); }
+  public void testSubLiteral1() { doTest("str", false, false, false, JAVA_LANG_STRING); }
 
   public void testSubLiteralFailure() {
     try {
@@ -155,14 +180,14 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     fail("Should not be able to perform refactoring");
   }
 
-  public void testSubLiteralFromExpression() { doTest("str", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
-  public void testSubExpressionFromMagicString() { doTest("str", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testSubLiteralFromExpression() { doTest("str", false, false, false, JAVA_LANG_STRING); }
+  public void testSubExpressionFromMagicString() { doTest("str", false, false, false, JAVA_LANG_STRING); }
   public void testSubExpressionFromPrimitiveWithConversion() { doTest("i", false, false, false, "int"); }
-  public void testSubPrimitiveLiteral() { doTest("str", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testSubPrimitiveLiteral() { doTest("str", false, false, false, JAVA_LANG_STRING); }
   public void testArrayFromVarargs() { doTest("strings", false, false, false, "java.lang.String[]"); }
   public void testArrayFromVarargs1() { doTest("strings", false, false, false, "java.lang.String[]"); }
   public void testEnumArrayFromVarargs() { doTest("strings", false, false, false, "E[]"); }
-  public void testFromFinalFieldOnAssignment() { doTest("strings", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testFromFinalFieldOnAssignment() { doTest("strings", false, false, false, JAVA_LANG_STRING); }
 
   public void testNoArrayFromVarargs() {
     try {
@@ -199,19 +224,19 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
 
   public void testNonExpression() { doTest("sum", true, true, false, "int"); }
   public void testTypeAnnotations() { doTest("y1", true, false, false, "@TA C"); }
-  public void testReturnStatementWithoutSemicolon() { doTest("b", true, true, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testReturnStatementWithoutSemicolon() { doTest("b", true, true, false, JAVA_LANG_STRING); }
   public void testAndAndSubexpression() { doTest("ab", true, true, false, "boolean"); }
   public void testSubexpressionWithSpacesInSelection() { doTest("ab", true, true, false, "boolean"); }
-  public void testSubexpressionWithSpacesInSelectionAndTailingComment() { doTest("ab", true, true, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testSubexpressionWithSpacesInSelectionAndTailingComment() { doTest("ab", true, true, false, JAVA_LANG_STRING); }
   public void testDuplicatesAnonymousClassCreationWithSimilarParameters () { doTest("foo1", true, true, false, "Foo"); }
-  public void testDifferentForeachParameters() { doTest("toStr", true, true, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testDifferentForeachParameters() { doTest("toStr", true, true, false, JAVA_LANG_STRING); }
   public void testCollapsedToDiamond() { doTest("a", true, true, true, "java.util.ArrayList<java.lang.String>"); }
   public void testCantCollapsedToDiamond() { doTest("a", true, true, true, "Foo<java.lang.Number>"); }
   public void testFromForInitializer() { doTest("list", true, true, true, "java.util.List"); }
   public void testInvalidPostfixExpr() { doTest("a1", true, false, true, "int[]"); }
   public void testPolyadic() { doTest("b1", true, true, true, "boolean"); }
   public void testAssignmentToUnresolvedReference() { doTest("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"); }
-  public void testSubstringInSwitch() { doTest("ba", false, false, false, CommonClassNames.JAVA_LANG_STRING);}
+  public void testSubstringInSwitch() { doTest("ba", false, false, false, JAVA_LANG_STRING);}
 
   public void testNameSuggestion() {
     String expectedTypeName = "Path";
@@ -262,7 +287,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
 
   public void testIncorrectExpressionSelected() {
     try {
-      doTest("toString", false, false, false, CommonClassNames.JAVA_LANG_STRING);
+      doTest("toString", false, false, false, JAVA_LANG_STRING);
     }
     catch (Exception e) {
       assertEquals("Error message:Cannot perform refactoring.\nSelected block should represent an expression", e.getMessage());
@@ -273,7 +298,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
 
   public void testIncompatibleTypesForSelectionSubExpression() {
     try {
-      doTest("s", false, false, false, CommonClassNames.JAVA_LANG_STRING);
+      doTest("s", false, false, false, JAVA_LANG_STRING);
     }
     catch (Exception e) {
       assertEquals("Error message:Cannot perform refactoring.\nSelected block should represent an expression", e.getMessage());
@@ -285,7 +310,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testMultiCatchSimple() { doTest("e", true, true, false, "java.lang.Exception", true); }
   public void testMultiCatchTyped() { doTest("b", true, true, false, "java.lang.Exception", true); }
   public void testBeforeVoidStatement() { doTest("c", false, false, false, CommonClassNames.JAVA_LANG_OBJECT); }
-  public void testWriteUsages() { doTest("c", true, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testWriteUsages() { doTest("c", true, false, false, JAVA_LANG_STRING); }
   public void testLambdaExpr() { doTest("c", false, false, false, "SAM<java.lang.Integer>"); }
   public void testMethodRef() { doTest("c", false, false, false, "Test.Bar"); }
   public void testLambdaExprNotAccepted() { doTest("c", false, false, false, "SAM<java.lang.Integer>"); }
@@ -313,7 +338,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     fail("Should not be able to perform refactoring");
   }
 
-  public void testOneLineLambdaVoidCompatible() { doTest("c", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testOneLineLambdaVoidCompatible() { doTest("c", false, false, false, JAVA_LANG_STRING); }
   public void testOneLineLambdaValueCompatible() { doTest("c", false, false, false, "int"); }
   public void testPutInLambdaBody() { doTest("c", false, false, false, "int"); }
   public void testPutInLambdaBodyMultipleOccurrences() { doTest("c", true, false, false, "java.lang.Class<?>"); }
@@ -325,9 +350,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testNoNameConflict() { doTest("cTest", false, false, false, "cTest"); }
   public void testMethodReferenceExpr() { doTest("m", false, false, false, "Foo.I"); }
   public void testDenotableType1() { doTest("m", false, false, false, "A<? extends A<? extends java.lang.Object>>"); }
-  public void testKeepComments() { doTest("m", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testKeepComments() { doTest("m", false, false, false, JAVA_LANG_STRING); }
   public void testDenotableType2() { doTest("m", false, false, false, "I<? extends I<?>>"); }
-  public void testExpectedTypeInsteadOfNullForVarargs() { doTest("s", false, false, false, CommonClassNames.JAVA_LANG_STRING); }
+  public void testExpectedTypeInsteadOfNullForVarargs() { doTest("s", false, false, false, JAVA_LANG_STRING); }
   public void testDenotableType3() { doTest("m", false, false, false, "java.util.function.IntFunction<java.lang.Class<?>[]>"); }
   public void testCapturedWildcardUpperBoundSuggestedAsType() { doTest("m", false, false, false, "I"); }
   public void testArrayOfCapturedWildcardUpperBoundSuggestedAsType() { doTest("m", false, false, false, "I[]"); }

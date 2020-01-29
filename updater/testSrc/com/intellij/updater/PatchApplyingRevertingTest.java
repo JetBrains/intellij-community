@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -587,6 +589,36 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     resetNewerDir();
     Utils.setExecutable(new File(myNewerDir, "bin/to_become_plain"), false);
     Utils.setExecutable(new File(myNewerDir, "bin/to_become_executable"), true);
+
+    assertAppliedAndReverted();
+  }
+
+  @Test
+  public void multipleDirectorySymlinks() throws Exception {
+    assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
+
+    resetNewerDir();
+
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r1.bin"));
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r2.bin"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("A"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
+
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Resources/r1.bin"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Resources/r2.bin"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Libraries/lib1.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Libraries/lib2.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r1.bin"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r2.bin"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Previous"), Paths.get("A"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("B"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
+    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
 
     assertAppliedAndReverted();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
@@ -89,13 +89,16 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     return null;
   }
 
+  void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
+
   /**
-   * @deprecated Use {@link #execute(ExecutionEnvironment, Callback)}
+   * @deprecated Use {@link #execute(ExecutionEnvironment)} and {@link ExecutionEnvironment#setCallback(Callback)}
    */
   @Deprecated
-  default void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
-    execute(environment, null);
+  default void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
+    if (callback != null) {
+      environment.setCallback(callback);
+    }
+    execute(environment);
   }
-
-  void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException;
 }

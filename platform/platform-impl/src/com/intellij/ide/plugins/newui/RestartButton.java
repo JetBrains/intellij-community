@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
@@ -32,6 +33,6 @@ public class RestartButton extends InstallButton {
 
   @Override
   protected void setTextAndSize() {
-    setText("Restart IDE");
+    setText(IdeBundle.message("plugins.configurable.restart.ide.button"));
   }
 }

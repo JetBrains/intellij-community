@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
@@ -29,43 +14,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author: Roman Chernyatchik
- */
 public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   private SMTestRunnerResultsForm myResultsViewer;
   @Nullable private final String mySplitterProperty;
   private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  /**
-   * @deprecated use other CTORs
-   */
-  @Deprecated
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
-    this(consoleProperties, environment, null);
-  }
-
-  /**
-   * @deprecated use other CTORs
-   */
-  @Deprecated
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
-                              @SuppressWarnings("unused") final ExecutionEnvironment environment,
-                              @Nullable final String splitterProperty) {
-    super(consoleProperties, null);
-    mySplitterProperty = splitterProperty;
-  }
-
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties) {
-    this(consoleProperties, (String)null);
+  public SMTRunnerConsoleView(TestConsoleProperties consoleProperties) {
+    this(consoleProperties, null);
   }
 
   /**
    * @param splitterProperty Key to store (project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
    */
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
-                              @Nullable final String splitterProperty) {
+  public SMTRunnerConsoleView(TestConsoleProperties consoleProperties, @Nullable String splitterProperty) {
     super(consoleProperties, null);
+
     mySplitterProperty = splitterProperty;
   }
 
@@ -84,11 +47,11 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
     super.initUI();
 
     // Console
-    myResultsViewer.addEventsListener(new TestResultsViewer.SMEventsAdapter() {
+    myResultsViewer.addEventsListener(new TestResultsViewer.EventsListener() {
       @Override
-      public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
-                             @NotNull final TestResultsViewer viewer,
-                             @NotNull final TestFrameworkRunningModel model) {
+      public void onSelected(@Nullable SMTestProxy selectedTestProxy,
+                             @NotNull TestResultsViewer viewer,
+                             @NotNull TestFrameworkRunningModel model) {
         if (selectedTestProxy == null || myResultsViewer.getTreeBuilder().isDisposed()) {
           return;
         }
@@ -136,10 +99,6 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
 
   public void addAttachToProcessListener(@NotNull AttachToProcessListener listener) {
     myAttachToProcessListeners.add(listener);
-  }
-
-  public void remoteAttachToProcessListener(@NotNull AttachToProcessListener listener) {
-    myAttachToProcessListeners.remove(listener);
   }
 
   @Override

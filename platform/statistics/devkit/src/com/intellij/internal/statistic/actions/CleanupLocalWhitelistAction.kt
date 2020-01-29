@@ -11,15 +11,32 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.ui.LayeredIcon
 
-class CleanupLocalWhitelistAction : AnAction(ActionsBundle.message("action.CleanupLocalWhitelistAction.text"),
-                                             ActionsBundle.message("action.CleanupLocalWhitelistAction.description"),
-                                             ICON) {
+class CleanupLocalWhitelistAction : AnAction {
+  private val recorderId: String?
+
+  constructor() : super(ActionsBundle.message("action.CleanupLocalWhitelistAction.text"),
+                        ActionsBundle.message("action.CleanupLocalWhitelistAction.description"),
+                        ICON) {
+    recorderId = null
+  }
+
+  constructor(recorder: String) : super(ActionsBundle.message("action.CleanupLocalWhitelistAction.text"),
+                                        ActionsBundle.message("action.CleanupLocalWhitelistAction.description"),
+                                        ICON) {
+    recorderId = recorder
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Removing Local Whitelist", false) {
       override fun run(indicator: ProgressIndicator) {
-        WhitelistTestGroupStorage.cleanupAll()
+        if (recorderId == null) {
+          WhitelistTestGroupStorage.cleanupAll()
+        }
+        else {
+          WhitelistTestGroupStorage.cleanupAll(listOf(recorderId))
+        }
       }
     })
   }

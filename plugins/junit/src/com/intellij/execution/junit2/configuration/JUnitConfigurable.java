@@ -255,7 +255,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
     myChangeListLabeledComponent.getComponent().setModel(model);
-    model.addElement("All");
+    model.addElement(ExecutionBundle.message("test.discovery.by.all.changes.combo.item"));
 
     if (!project.isDefault()) {
       final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();

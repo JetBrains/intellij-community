@@ -97,7 +97,8 @@ internal fun doRead(reader: Reader): MappingNode? {
       .setUseMarks(false)
       .setScalarResolver(LightScalarResolver())
       .build()
-    return Composer(ParserImpl(StreamReader(it, settings), settings), settings.scalarResolver).singleNode.orElse(null) as? MappingNode
+    val parser = ParserImpl(StreamReader(it, settings), settings)
+    return Composer(parser, settings).singleNode.orElse(null) as? MappingNode
   }
 }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -23,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"))
-public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
+public final class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
 
@@ -141,15 +142,18 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
   public @interface StripTrailingSpaces {}
 
-  public EditorSettingsExternalizable() { this(new OsSpecificState()); }
+  public EditorSettingsExternalizable() {
+    this(ApplicationManager.getApplication().getService(OsSpecificState.class));
+  }
 
+  @NonInjectable
   public EditorSettingsExternalizable(@NotNull OsSpecificState state) {
     myOsSpecificState = state;
   }
 
   public static EditorSettingsExternalizable getInstance() {
     if (ApplicationManager.getApplication().isDisposed()) {
-      return new EditorSettingsExternalizable();
+      return new EditorSettingsExternalizable(new OsSpecificState());
     }
     else {
       return ServiceManager.getService(EditorSettingsExternalizable.class);

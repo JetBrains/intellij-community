@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -337,7 +338,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       e.getPresentation().setIcon(AllIcons.Actions.Close);
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
-      e.getPresentation().setText("Close. Alt-Click to Close Others.");
+      e.getPresentation().setText(() -> IdeBundle.message("action.presentation.EditorTabbedContainer.text"));
     }
 
     @Override

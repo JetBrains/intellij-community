@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -303,6 +304,7 @@ public class LightEditServiceImpl implements LightEditService,
   @Override
   @Nullable
   public FileType getExplicitFileType(@NotNull VirtualFile virtualFile) {
+    if (virtualFile instanceof StubVirtualFile) return null;
     final String url = virtualFile.getPresentableUrl();
     if (myConfiguration.pathToExtensionMap.containsKey(url)) {
       String name = virtualFile.getNameWithoutExtension();

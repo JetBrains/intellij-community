@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
@@ -8,8 +8,9 @@ import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
 
-fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
+fun <X : CallParameter> compare(left: ArgumentMapping<X>, right: ArgumentMapping<X>): Int {
   if (left is GdkArgumentMapping) {
     return compare(left.original, right)
   }
@@ -30,7 +31,7 @@ fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
   }
 
   if (left is VarargArgumentMapping && right is VarargArgumentMapping) {
-    return left.compare(right)
+    return VarargArgumentMapping.compare(left, right)
   }
   else if (left is VarargArgumentMapping) {
     // prefer right
@@ -50,7 +51,7 @@ fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
   }
 }
 
-fun positionalParametersDistance(map: Map<Argument, PsiParameter>, context: PsiElement): Long {
+fun positionalParametersDistance(map: Map<Argument, CallParameter>, context: PsiElement): Long {
   var result = 0L
   for ((argument, parameter) in map) {
     val runtimeType = argument.runtimeType ?: continue

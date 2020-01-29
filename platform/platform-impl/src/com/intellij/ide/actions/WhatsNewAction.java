@@ -22,9 +22,9 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     e.getPresentation().setVisible(visible);
     if (visible) {
       e.getPresentation()
-        .setText(IdeBundle.message("whatsnew.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
+        .setText(() -> IdeBundle.message("whatsnew.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
       e.getPresentation().setDescription(
-        IdeBundle.message("whatsnew.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
+        () -> IdeBundle.message("whatsnew.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
   }
 }

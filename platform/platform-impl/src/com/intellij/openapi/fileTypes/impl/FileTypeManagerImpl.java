@@ -9,10 +9,7 @@ import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -268,23 +265,43 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         fireBeforeFileTypesChanged();
         initializeMatchers(extension);
-        FileType fileType = instantiateFileTypeBean(extension);
-        fireFileTypesChanged(fileType, null);
+        FileType fileType = mergeOrInstantiateFileTypeBean(extension);
+
+        fileTypeChanged(fileType, ApplicationManager.getApplication().isUnitTestMode());
       }
 
       @Override
       public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-        final FileType fileType = findFileTypeByName(extension.name);
-        if (fileType == null) return;
-        unregisterFileType(fileType);
-        if (fileType instanceof LanguageFileType) {
-          final LanguageFileType languageFileType = (LanguageFileType)fileType;
-          if (!languageFileType.isSecondary()) {
-            Language.unregisterLanguage(languageFileType.getLanguage());
+        if (extension.implementationClass != null) {
+          final FileType fileType = findFileTypeByName(extension.name);
+          if (fileType == null) return;
+          unregisterFileType(fileType);
+        }
+        else {
+          StandardFileType stdFileType = myStandardFileTypes.get(extension.name);
+          if (stdFileType != null) {
+            unregisterMatchers(stdFileType, extension);
           }
         }
       }
     }, this);
+  }
+
+  private void unregisterMatchers(@NotNull StandardFileType stdFileType, @NotNull FileTypeBean extension) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      stdFileType.matchers.removeAll(extension.getMatchers());
+      fileTypeChanged(stdFileType.fileType, ApplicationManager.getApplication().isUnitTestMode());
+    });
+  }
+
+  private void fileTypeChanged(@NotNull FileType stdFileType, boolean later) {
+    if (later) {
+      //avoid PCE when reloading file type
+      ApplicationManager.getApplication().invokeLater(
+        () -> WriteAction.run(() -> fireFileTypesChanged(stdFileType, null)));
+    } else {
+      fireFileTypesChanged(stdFileType, null);
+    }
   }
 
   @VisibleForTesting
@@ -437,13 +454,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private void instantiatePendingFileTypes() {
     final Collection<FileTypeBean> fileTypes = new ArrayList<>(myPendingFileTypes.values());
     for (FileTypeBean fileTypeBean : fileTypes) {
-      final StandardFileType type = myStandardFileTypes.get(fileTypeBean.name);
-      if (type != null) {
-        type.matchers.addAll(fileTypeBean.getMatchers());
-      }
-      else {
-        instantiateFileTypeBean(fileTypeBean);
-      }
+      mergeOrInstantiateFileTypeBean(fileTypeBean);
+    }
+  }
+
+  @NotNull
+  private FileType mergeOrInstantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
+    final StandardFileType type = myStandardFileTypes.get(fileTypeBean.name);
+    if (type != null) {
+      type.matchers.addAll(fileTypeBean.getMatchers());
+      return type.fileType;
+    }
+    else {
+      return instantiateFileTypeBean(fileTypeBean);
     }
   }
 

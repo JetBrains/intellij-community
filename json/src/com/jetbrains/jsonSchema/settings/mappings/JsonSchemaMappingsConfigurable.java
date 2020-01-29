@@ -73,7 +73,10 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
+    result.add(new DumbAwareAction(
+      () -> JsonBundle.message("action.DumbAware.JsonSchemaMappingsConfigurable.text.add"),
+      () -> JsonBundle.message("action.DumbAware.JsonSchemaMappingsConfigurable.description.add"),
+      IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
       }

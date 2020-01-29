@@ -63,6 +63,13 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
+  public JComponent wrapWithSpoiler(@NotNull JComponent dumbAwareContent,
+                                    @NotNull Runnable updateRunnable,
+                                    @NotNull Disposable parentDisposable) {
+    return null;
+  }
+
+  @Override
   public void showDumbModeNotification(@NotNull String message) {
     throw new UnsupportedOperationException();
   }

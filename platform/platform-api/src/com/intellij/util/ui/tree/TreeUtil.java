@@ -833,30 +833,44 @@ public final class TreeUtil {
 
     final TreePath leadSelectionPath = tree.getLeadSelectionPath();
 
-    int threshold = 1; // allowed path count to collapse
-    if (!tree.isRootVisible()) threshold++;
-    if (!tree.getShowsRootHandles()) threshold++;
+    int minCount = 1; // allowed path count to collapse
+    if (!tree.isRootVisible()) minCount++;
+    if (!tree.getShowsRootHandles()) {
+      minCount++;
+      strict = true;
+    }
 
+    // use the parent path of the normalized selection path to prohibit its collapsing
+    TreePath prohibited = leadSelectionPath == null ? null : normalize(leadSelectionPath, minCount, keepSelectionLevel).getParentPath();
     // Collapse all
     while (0 < row--) {
       if (!strict && row == 0) break;
       TreePath path = tree.getPathForRow(row);
       assert path != null : "path is not found at row " + row;
-      int count = path.getPathCount();
-      if (count == threshold && row > 0) strict = true;
-      if (count >= threshold && !isAlwaysExpand(path)) tree.collapsePath(path);
+      int pathCount = path.getPathCount();
+      if (pathCount < minCount) continue;
+      if (pathCount == minCount && row > 0) strict = true;
+      if (!isAlwaysExpand(path) && !path.isDescendant(prohibited)) tree.collapsePath(path);
     }
-    if (!strict) threshold++; // top level node is not collapsed
+    if (leadSelectionPath == null) return; // no selection to restore
+    if (!strict) minCount++; // top level node is not collapsed
+    internalSelect(tree, normalize(leadSelectionPath, minCount, keepSelectionLevel));
+  }
 
-    if (leadSelectionPath != null) {
-      TreePath path = leadSelectionPath;
-      if (keepSelectionLevel >= 0) {
-        int count = path.getPathCount() - Math.max(keepSelectionLevel, threshold);
-        while (0 < count--) path = path.getParentPath(); // normalize to given level
-      }
-      tree.makeVisible(path);
-      internalSelect(tree, path);
-    }
+  /**
+   * @param path               a path to normalize
+   * @param minCount           a minimal number of elements in the resulting path
+   * @param keepSelectionLevel a maximal number of elements in the selection path or negative value to preserve the given path
+   * @return a parent path with the specified number of elements, or the given {@code path} if it does not have enough elements
+   */
+  @NotNull
+  private static TreePath normalize(@NotNull TreePath path, int minCount, int keepSelectionLevel) {
+    if (keepSelectionLevel < 0) return path;
+    if (keepSelectionLevel > minCount) minCount = keepSelectionLevel;
+    int pathCount = path.getPathCount();
+    while (minCount < pathCount--) path = path.getParentPath();
+    assert path != null : "unexpected minCount: " + minCount;
+    return path;
   }
 
   /**

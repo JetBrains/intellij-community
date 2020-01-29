@@ -536,7 +536,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       group.add(mapDirectoryActionGroup);
 
       if (myCanChangePatchFile) {
-        group.add(new DumbAwareAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
+        group.add(new DumbAwareAction(() -> VcsBundle.message("action.DumbAware.ApplyPatchDifferentiatedDialog.text.refresh"),
+                                      () -> VcsBundle.message("action.DumbAware.ApplyPatchDifferentiatedDialog.description.refresh"),
+           AllIcons.Actions.Refresh) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             syncUpdatePatchFileAndScheduleReloadIfNeeded(null);

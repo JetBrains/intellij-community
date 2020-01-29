@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -52,9 +51,9 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final String REFS_STORAGE = "refs";
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
-  public static final int VERSION = 6;
+  public static final int VERSION = 7;
   public static final int NO_INDEX = -1;
-  private static final int REFS_VERSION = 1;
+  private static final int REFS_VERSION = 2;
 
   @NotNull private final MyPersistentBTreeEnumerator myCommitIdEnumerator;
   @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;

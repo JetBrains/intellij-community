@@ -46,7 +46,6 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private int valuesCount; // TODO: valuesCount should be persistent
 
   static final int VERSION = 6;
-  private static final Version ourVersion = new Version(VERSION);
 
   public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     this(file, dataDescriptor, initialSize, null, 0);

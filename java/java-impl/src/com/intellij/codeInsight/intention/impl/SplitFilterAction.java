@@ -51,7 +51,7 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
     }
     for (PsiElement child = expression.getFirstChild(); child != token; child = child.getNextSibling()) {
       if (child instanceof PsiExpression) {
-        for (PsiPatternVariable variable : JavaPsiPatternUtil.getPatternVariablesVisibleOutsideOf((PsiExpression)child)) {
+        for (PsiPatternVariable variable : JavaPsiPatternUtil.getExposedPatternVariables((PsiExpression)child)) {
           for (PsiExpression operand : afterOperands) {
             if (VariableAccessUtils.variableIsUsed(variable, operand)) return true;
           }

@@ -3,6 +3,7 @@ package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.branch.isGroupingEnabled
+import com.intellij.dvcs.branch.setGrouping
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.diagnostic.Logger
@@ -183,11 +184,7 @@ internal abstract class BranchGroupingAction(private val key: GroupingKey,
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
     val branchSettings = GitVcsSettings.getInstance(project).branchSettings
-
-    val keyId = key.id
-    if (state && branchSettings.groupingKeyIds.add(keyId) || !state && branchSettings.groupingKeyIds.remove(keyId)) {
-      branchSettings.intIncrementModificationCount()
-    }
+    branchSettings.setGrouping(key, state)
     setSelected(key, state)
   }
 }

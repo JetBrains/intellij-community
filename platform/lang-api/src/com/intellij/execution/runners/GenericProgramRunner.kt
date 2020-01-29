@@ -11,26 +11,26 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
 abstract class GenericProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
-  @Throws(ExecutionException::class)
-  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
-    execute(environment, callback, environment.state ?: return)
+  final override fun execute(environment: ExecutionEnvironment) {
+    execute(environment, environment.callback, environment.state ?: return)
   }
 
-  @Throws(ExecutionException::class)
-  protected open fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
-    ExecutionManager.getInstance(environment.project).startRunProfile(environment, callback, {
+  protected open fun execute(environment: ExecutionEnvironment, state: RunProfileState) {
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
       resolvedPromise(doExecute(state, environment))
-    })
+    }
   }
 
-  @Throws(ExecutionException::class)
+  protected open fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+    execute(environment, state)
+  }
+
   protected open fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
     @Suppress("DEPRECATION")
     return doExecute(environment.project, state, environment.contentToReuse, environment)
   }
 
   @Deprecated("")
-  @Throws(ExecutionException::class)
   protected open fun doExecute(project: Project,
                                state: RunProfileState,
                                contentToReuse: RunContentDescriptor?,
@@ -41,11 +41,11 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : ProgramRunner<S
 
 abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
   @Throws(ExecutionException::class)
-  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
+  final override fun execute(environment: ExecutionEnvironment) {
     val state = environment.state ?: return
-    ExecutionManager.getInstance(environment.project).startRunProfile(environment, callback, {
+    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
       execute(environment, state)
-    })
+    }
   }
 
   @Throws(ExecutionException::class)

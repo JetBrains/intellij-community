@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -698,11 +697,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23632
   public void testMockPatchObject() {
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/"+ getTestDirectoryPath() + "/lib");
-    assertNotNull(libDir);
-
     runWithAdditionalClassEntryInSdkRoots(
-      libDir,
+      getTestDirectoryPath() + "/lib",
       () -> {
         final PsiFile file = myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
         configureInspection();
@@ -830,12 +826,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-39682
   public void testWildcardIgnorePatternReferenceForNestedBinaryModule() {
-    // TODO simplify runWithAdditionalClassEntryInSdkRoots to accept a relative path directly
-    final String testDataDir = getTestDataPath() + "/" + getTestDirectoryPath();
-    final VirtualFile sitePackagesDir = StandardFileSystems.local().findFileByPath(testDataDir + "/site-packages");
-    final VirtualFile skeletonsDir = StandardFileSystems.local().findFileByPath(testDataDir + "/python_stubs");
-    runWithAdditionalClassEntryInSdkRoots(sitePackagesDir, () -> {
-      runWithAdditionalClassEntryInSdkRoots(skeletonsDir, () -> {
+    runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/python_stubs", () -> {
         myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
         final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
         inspection.ignoredIdentifiers.add("pkg.*");

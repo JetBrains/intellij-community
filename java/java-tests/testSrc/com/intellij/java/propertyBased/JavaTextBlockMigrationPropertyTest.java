@@ -45,7 +45,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
+    return JAVA_14;
   }
 
   @Override
@@ -86,8 +86,8 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     MigrationInvoker migrationInvoker = new MigrationInvoker();
     BackwardMigrationInvoker backwardMigrationInvoker = new BackwardMigrationInvoker();
     for (PsiPolyadicExpression concatenation : concatenations) {
-      if (SuppressionUtil.isSuppressed(concatenation, migrationInvoker.getToolId()) ||
-          SuppressionUtil.isSuppressed(concatenation, backwardMigrationInvoker.getToolId())) {
+      if (SuppressionUtil.isSuppressed(concatenation, MigrationInvoker.getToolId()) ||
+          SuppressionUtil.isSuppressed(concatenation, BackwardMigrationInvoker.getToolId())) {
         continue;
       }
       PsiExpression[] operands = concatenation.getOperands();
@@ -142,7 +142,6 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     }
     // IDEA-226395
     String[] textBlockLines = getTextBlockLines(lines);
-    if (textBlockLines == null) return null;
     int indent = PsiLiteralUtil.getTextBlockIndent(textBlockLines, true, true);
     if (indent > 0 && textBlockLines.length > 0 && textBlockLines[textBlockLines.length - 1].endsWith("\n")) indent = 0;
     if (indent > 0) return null;
@@ -150,17 +149,10 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     return StringUtil.join(lines);
   }
 
-  private static String @Nullable [] getTextBlockLines(String @NotNull [] lines) {
-    String[] blockLines = new String[lines.length];
-    boolean escapeStartQuote = false;
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      boolean isLastLine = i == lines.length - 1;
-      line = PsiLiteralUtil.escapeTextBlockCharacters(line, escapeStartQuote, isLastLine, isLastLine);
-      escapeStartQuote = line.endsWith("\"");
-      blockLines[i] = line;
-    }
-    return blockLines;
+  @NotNull
+  private static String @NotNull [] getTextBlockLines(String @NotNull [] lines) {
+    String blockLines = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.join(lines), true, true, true);
+    return blockLines.split("(?<=\n)");
   }
 
   private static <T extends PsiElement> void invokeIntention(@NotNull T element,
@@ -206,9 +198,6 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
 
     @NotNull
     String getFixHint();
-
-    @NotNull
-    String getToolId();
   }
 
   private static class MigrationInvoker implements ActionInvoker<PsiPolyadicExpression> {
@@ -230,8 +219,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     }
 
     @NotNull
-    @Override
-    public String getToolId() {
+    private static String getToolId() {
       return "TextBlockMigration";
     }
   }
@@ -249,8 +237,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     }
 
     @NotNull
-    @Override
-    public String getToolId() {
+    private static String getToolId() {
       return "TextBlockBackwardMigration";
     }
   }

@@ -40,7 +40,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return ReadAction.compute(() -> {
       if (myModule.isDisposed()) return Collections.emptySet();
       Set<VirtualFile> result = new LinkedHashSet<>();
-      VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
+      List<VirtualFile[]> allRoots = Arrays.asList(
+        ModuleRootManager.getInstance(myModule).getContentRoots(),
+        ModuleRootManager.getInstance(myModule).getSourceRoots()
+      );
       for (VirtualFile[] roots : allRoots) {
         for (VirtualFile root : roots) {
           DirectoryInfo info = getInfoForFileOrDirectory(root);

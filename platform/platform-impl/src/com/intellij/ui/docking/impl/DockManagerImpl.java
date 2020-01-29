@@ -454,7 +454,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       IdeEventQueue.getInstance().addPostprocessor(this, this);
 
-      myContainer.addListener(new DockContainer.Listener.Adapter() {
+      myContainer.addListener(new DockContainer.Listener() {
         @Override
         public void contentRemoved(Object key) {
           getReady().doWhenDone(() -> {

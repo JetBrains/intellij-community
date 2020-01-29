@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.lang.Language
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -300,9 +301,9 @@ object DynamicPlugins {
           }
 
           if (!pluginDescriptor.useIdeaClassLoader) {
-            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader ||
-                ApplicationManager.getApplication().isUnitTestMode) {
+            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
               IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
+              Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
             }
           }
 

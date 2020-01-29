@@ -38,6 +38,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -66,7 +67,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Add);
-    presentation.setText("Add Structural Search && Replace Inspection");
+    presentation.setText(() -> SSRBundle.message("add.inspection.button"));
     return Arrays.asList(actionGroup, new RemoveTemplateAction(panel));
   }
 
@@ -75,7 +76,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     private final SingleInspectionProfilePanel myPanel;
 
     private RemoveTemplateAction(SingleInspectionProfilePanel panel) {
-      super("Remove Structural Search && Replace Inspection", null, AllIcons.General.Remove);
+      super(SSRBundle.message("remove.inspection.button"), null, AllIcons.General.Remove);
       myPanel = panel;
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myPanel);
     }
@@ -95,7 +96,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
       assert wrapper != null;
       final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
-      inspection.removeConfiguration(shortName);
+      inspection.removeConfigurationWithUuid(UUID.fromString(shortName));
       profile.removeTool(shortName);
       profile.getProfileManager().fireProfileChanged(profile);
     }
@@ -118,51 +119,62 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     public void actionPerformed(@NotNull AnActionEvent e) {
       final SearchContext context = new SearchContext(e.getDataContext());
       final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
-      if (!dialog.showAndGet()) return;
+      if (!dialog.showAndGet()) {
+        return;
+      }
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final Project project = e.getData(CommonDataKeys.PROJECT);
       assert project != null;
-      final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
-      assert wrapper != null;
-      final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
       final Configuration configuration = dialog.getConfiguration();
-
-      configuration.resetUuid();
-      if (!saveInspection(project, inspection, configuration)) {
+      if (!createNewInspection(configuration, profile, project)) {
         return;
       }
-      addConfigurationToProfile(project, profile, configuration);
-      profile.getProfileManager().fireProfileChanged(profile);
       myPanel.selectInspectionTool(configuration.getUuid().toString());
     }
 
-    private static void addConfigurationToProfile(@NotNull Project project,
-                                                  InspectionProfileImpl profile,
-                                                  Configuration configuration) {
-      final String shortName = configuration.getUuid().toString();
-      final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
-      if (toolWrapper != null) {
-        // already added
-        return;
-      }
-      final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
-      wrapped.setProfile(profile);
-      profile.addTool(project, wrapped, null);
-
-      // enable inspection even when profile is locked, because either:
-      // - user just added this inspection explicitly
-      // - or inspection was just imported from enabled old SSR inspection
-      profile.setToolEnabled(shortName, true);
-    }
   }
 
-  public static boolean saveInspection(Project project,
-                                       SSBasedInspection inspection,
-                                       Configuration configuration) {
+  public static boolean createNewInspection(Configuration configuration, InspectionProfileImpl profile, Project project) {
+    final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
+    assert wrapper != null;
+    final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
+
+    configuration.setUuid(UUID.randomUUID());
+    if (!saveInspection(project, inspection, configuration)) {
+      return false;
+    }
+    addConfigurationToProfile(project, profile, configuration);
+    profile.getProfileManager().fireProfileChanged(profile);
+    return true;
+  }
+
+  private static void addConfigurationToProfile(@NotNull Project project, InspectionProfileImpl profile, Configuration configuration) {
+    final String shortName = configuration.getUuid().toString();
+    final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
+    if (toolWrapper != null) {
+      // already added
+      return;
+    }
+    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
+    wrapped.setProfile(profile);
+    profile.addTool(project, wrapped, null);
+
+    // enable inspection even when profile is locked, because either:
+    // - user just added this inspection explicitly
+    // - or inspection was just imported from enabled old SSR inspection
+    profile.setToolEnabled(shortName, true);
+  }
+
+  public static boolean saveInspection(Project project, SSBasedInspection inspection, Configuration configuration) {
     final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
     final boolean result = dialog.showAndGet();
     if (result) {
-      configuration.setName(dialog.getName());
+      inspection.removeConfiguration(configuration);
+      final String name = dialog.getName();
+      for (Configuration c : inspection.getConfigurationsWithUuid(configuration.getUuid())) {
+        c.setName(name);
+      }
+      configuration.setName(name);
       configuration.setDescription(dialog.getDescription());
       configuration.setSuppressId(dialog.getSuppressId());
       configuration.setProblemDescriptor(dialog.getProblemDescriptor());
@@ -195,38 +207,41 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       myDescriptionTextArea.setPreferredSize(new Dimension(375, 125));
       myDescriptionTextArea.setMinimumSize(new Dimension(200, 50));
       mySuppressIdTextField = new JTextField(configuration.getNewSuppressId());
+      setTitle(SSRBundle.message("meta.data.dialog.title"));
       init();
     }
 
     @Override
     protected @NotNull List<ValidationInfo> doValidateAll() {
       final List<ValidationInfo> result = new SmartList<>();
-      final String name = getName();
-      if (name.isEmpty()) {
-        result.add(new ValidationInfo("Name must not be empty", myNameTextField));
-      }
       final List<Configuration> configurations = myInspection.getConfigurations();
-      for (Configuration configuration : configurations) {
-        if (!configuration.equals(myConfiguration) && configuration.getName().equals(name)) {
-          result.add(new ValidationInfo("Inspection with name '" + name + "' already exists", myNameTextField));
-          break;
+      final String name = getName();
+      if (StringUtil.isEmpty(name)) {
+        result.add(new ValidationInfo(SSRBundle.message("name.must.not.be.empty.warning"), myNameTextField));
+      }
+      else {
+        for (Configuration configuration : configurations) {
+          if (configuration.getOrder() == 0 && !configuration.equals(myConfiguration) && configuration.getName().equals(name)) {
+            result.add(new ValidationInfo(SSRBundle.message("inspection.with.name.exists.warning", name), myNameTextField));
+            break;
+          }
         }
       }
       final String suppressId = getSuppressId();
-      if (!suppressId.isEmpty()) {
+      if (!StringUtil.isEmpty(suppressId)) {
         if (!mySuppressIdPattern.matcher(suppressId).matches()) {
-          result.add(new ValidationInfo("Suppress ID must match regex [a-zA-Z_0-9.-]+", mySuppressIdTextField));
+          result.add(new ValidationInfo(SSRBundle.message("suppress.id.must.match.regex.warning"), mySuppressIdTextField));
         }
         else {
           final HighlightDisplayKey key = HighlightDisplayKey.findById(suppressId);
           if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuid().toString())) {
-            result.add(new ValidationInfo("Suppress ID '" + suppressId + "' is already in use by another inspection",
+            result.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId),
                                           mySuppressIdTextField));
           }
           else {
             for (Configuration configuration : configurations) {
               if (suppressId.equals(configuration.getNewSuppressId())) {
-                result.add(new ValidationInfo("Suppress ID '" + suppressId + "' is already in use by another inspection",
+                result.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId),
                                               mySuppressIdTextField));
                 break;
               }
@@ -240,12 +255,12 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      final FormBuilder builder = FormBuilder.createFormBuilder()
-        .addLabeledComponent("Inspection name:", myNameTextField, true)
-        .addLabeledComponent("Problem tool tip (use macro #ref to insert highlighted code):", myProblemDescriptorTextField, true)
-        .addLabeledComponentFillVertically("Description:", myDescriptionTextArea)
-        .addLabeledComponent("Suppress ID:", mySuppressIdTextField);
-      return builder.getPanel();
+      return new FormBuilder()
+        .addLabeledComponent(SSRBundle.message("inspection.name.label"), myNameTextField, true)
+        .addLabeledComponent(SSRBundle.message("problem.descriptor.label"), myProblemDescriptorTextField, true)
+        .addLabeledComponentFillVertically(SSRBundle.message("description.label"), myDescriptionTextArea)
+        .addLabeledComponent(SSRBundle.message("suppress.id.label"), mySuppressIdTextField)
+        .getPanel();
     }
 
     public String getName() {

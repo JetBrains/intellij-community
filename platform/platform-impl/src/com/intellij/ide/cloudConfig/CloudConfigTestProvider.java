@@ -3,18 +3,29 @@ package com.intellij.ide.cloudConfig;
 
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 /**
  * @author Alexander Lobas
  */
-public interface CloudConfigTestProvider {
-  void initLocalClient(@NotNull File location);
+public abstract class CloudConfigTestProvider {
+  private static CloudConfigTestProvider myProvider;
 
-  @NotNull String getStatusInfo();
+  public static @Nullable CloudConfigTestProvider getProvider() {
+    return myProvider;
+  }
 
-  @NotNull String getActions(@NotNull StatusBar statusBar);
+  public static void setProvider(@NotNull CloudConfigTestProvider provider) {
+    myProvider = provider;
+  }
 
-  void runAction(@NotNull StatusBar statusBar, @NotNull String name);
+  public abstract void initLocalClient(@NotNull File location);
+
+  public abstract @NotNull String getStatusInfo();
+
+  public abstract @NotNull String getActions(@NotNull StatusBar statusBar);
+
+  public abstract void runAction(@NotNull StatusBar statusBar, @NotNull String name);
 }

@@ -116,13 +116,18 @@ public class CacheUpdateRunner {
     final Application application = ApplicationManager.getApplication();
     Disposable listenerDisposable = Disposer.newDisposable();
     Ref<Boolean> shouldSetUpListener = new Ref<>(true);
-    application.invokeLater(() -> {
+    Runnable setUpListenerRunnable = () -> {
       synchronized (shouldSetUpListener) {
         if (shouldSetUpListener.get()) {
           application.addApplicationListener(canceller, listenerDisposable);
         }
       }
-    }, ModalityState.any());
+    };
+    if (application.isDispatchThread()) {
+      setUpListenerRunnable.run();
+    } else {
+      application.invokeLater(setUpListenerRunnable, ModalityState.any());
+    }
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     try {

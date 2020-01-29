@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>Bytecode Viewer</name>
   <id>ByteCodeViewer</id>
+  <category>Other Tools</category>
   <description>
     <![CDATA[Shows the bytecode of a compiled Java class file.<p>
 

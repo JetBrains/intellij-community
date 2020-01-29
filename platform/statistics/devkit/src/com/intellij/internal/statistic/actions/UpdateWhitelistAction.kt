@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -15,7 +15,7 @@ class UpdateWhitelistAction(val recorder: String) : DumbAwareAction() {
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Updating Whitelist", false) {
       override fun run(indicator: ProgressIndicator) {
-        WhitelistStorageProvider.getInstance(recorder).update()
+        SensitiveDataValidator.getInstance(recorder).update()
       }
     })
   }

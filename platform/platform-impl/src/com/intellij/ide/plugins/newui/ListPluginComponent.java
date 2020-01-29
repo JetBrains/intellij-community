@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +22,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +154,8 @@ public class ListPluginComponent extends JPanel {
 
         myInstallButton
           .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
-        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null, "Installed");
+        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null,
+                                   IdeBundle.message("plugin.status.installed"));
         ColorButton.setWidth72(myInstallButton);
       }
     }
@@ -234,7 +237,8 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else {
-      String version = !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : "bundled";
+      String version = !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : IdeBundle.message("plugin.status.bundled");
+      
       if (!StringUtil.isEmptyOrSpaces(version)) {
         myVersion = createRatingLabel(panel, version, null);
       }
@@ -480,11 +484,11 @@ public class ListPluginComponent extends JPanel {
         enableRestart();
       }
       else if (myInstallButton != null) {
-        myInstallButton.setEnabled(false, "Installed");
+        myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
       }
       else if (myUpdateButton != null) {
         myUpdateButton.setEnabled(false);
-        myUpdateButton.setText("Installed");
+        myUpdateButton.setText(IdeBundle.message("plugin.status.installed"));
       }
     }
 
@@ -625,7 +629,7 @@ public class ListPluginComponent extends JPanel {
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
+    group.add(new MyAnAction(result.first ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"), null, KeyEvent.VK_SPACE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPluginModel.changeEnableDisable(result.second, result.first);
@@ -642,7 +646,7 @@ public class ListPluginComponent extends JPanel {
       group.addSeparator();
     }
 
-    group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
+    group.add(new MyAnAction(IdeBundle.message("plugins.configurable.uninstall.button"), IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (!MyPluginModel.showUninstallDialog(ListPluginComponent.this, selection)) {
@@ -810,7 +814,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public abstract static class MyAnAction extends DumbAwareAction {
-    MyAnAction(@Nullable String text, @Nullable String actionId, int keyCode) {
+    MyAnAction(@Nls @Nullable String text, @Nullable String actionId, int keyCode) {
       super(text);
       ShortcutSet shortcutSet = null;
       if (actionId != null) {

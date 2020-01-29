@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.*
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
@@ -104,11 +105,14 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   private fun createContentManager(): ContentManagerImpl {
-    val contentUi = ToolWindowContentUi(this, windowInfo.contentUiType)
-    this.contentUi = contentUi
-    val contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
+    val contentManager = ContentManagerImpl(canCloseContent, toolWindowManager.project, parentDisposable,
+                                            ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
+                                              val result = ToolWindowContentUi(this, contentManager, componentGetter.get())
+                                              contentUi = result
+                                              result
+                                            })
 
-    addContentNotInHierarchyComponents(contentUi)
+    addContentNotInHierarchyComponents(contentUi!!)
 
     val contentComponent = contentManager.component
     InternalDecorator.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
@@ -118,7 +122,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       }
     }))
 
-    val decorator = InternalDecorator(this, contentUi)
+    val decorator = InternalDecorator(this, contentUi!!)
     this.decorator = decorator
 
     var decoratorChild = contentManager.component
@@ -319,6 +323,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   override fun getComponent(): JComponent {
     if (toolWindowManager.project.isDisposed) {
       // nullable because of TeamCity plugin
+      @Suppress("HardCodedStringLiteral")
       return JLabel("Do not call getComponent() on dispose")
     }
     return contentManager.value.component
@@ -483,7 +488,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     group.addSeparator()
     group.add(object : ContextHelpAction() {
       override fun getHelpId(dataContext: DataContext): String? {
-        val content = getContentManagerIfCreated()?.selectedContent
+        val content = contentManagerIfCreated?.selectedContent
         if (content != null) {
           val helpId = content.helpId
           if (helpId != null) {
@@ -512,7 +517,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   private inner class GearActionGroup internal constructor() : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
-      templatePresentation.text = "Show Options Menu"
+      templatePresentation.text = IdeBundle.message("show.options.menu")
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {
         if (additionalGearActions.isPopup && !additionalGearActions.templatePresentation.text.isNullOrEmpty()) {

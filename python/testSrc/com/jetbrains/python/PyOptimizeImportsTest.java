@@ -141,10 +141,8 @@ public class PyOptimizeImportsTest extends PyTestCase {
   public void testPyiStubInInterpreterPaths() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
-    final VirtualFile stubDir = myFixture.findFileInTempDir("stubs");
-    assertNotNull(stubDir);
 
-    runWithAdditionalClassEntryInSdkRoots(stubDir, () -> {
+    runWithAdditionalClassEntryInSdkRoots(testName + "/stubs", () -> {
       myFixture.configureByFile("main.py");
       OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
       myFixture.checkResultByFile(testName + "/main.after.py");

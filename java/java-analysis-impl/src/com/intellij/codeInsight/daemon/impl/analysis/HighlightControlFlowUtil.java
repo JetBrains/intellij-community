@@ -26,6 +26,7 @@ import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -496,82 +497,67 @@ public class HighlightControlFlowUtil {
     if (codeBlock == null) return null;
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, codeBlock);
 
-    boolean alreadyAssigned = false;
     boolean inLoop = false;
-    for (ControlFlowUtil.VariableInfo variableInfo : codeBlockProblems) {
-      if (variableInfo.expression == expression) {
-        alreadyAssigned = true;
-        inLoop = variableInfo instanceof InitializedInLoopProblemInfo;
-        break;
-      }
+    boolean canDefer = false;
+    ControlFlowUtil.VariableInfo variableInfo = ContainerUtil.find(codeBlockProblems, vi -> vi.expression == expression);
+    if (variableInfo != null) {
+      inLoop = variableInfo instanceof InitializedInLoopProblemInfo;
+      canDefer = !inLoop;
     }
-    boolean canDefer = !inLoop;
+    else if (!(variable instanceof PsiField && isFieldInitializedInAnotherMember((PsiField)variable, expression, codeBlock))) {
+      return null;
+    }
 
-    if (!alreadyAssigned) {
-      if (!(variable instanceof PsiField)) return null;
-      final PsiField field = (PsiField)variable;
-      final PsiClass aClass = field.getContainingClass();
-      if (aClass == null) return null;
-      // field can get assigned in other field initializers or in class initializers
-      List<PsiMember> members = new ArrayList<>(Arrays.asList(aClass.getFields()));
-      boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
-      final PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
-      if (enclosingConstructorOrInitializer != null
-          && aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getContainingClass(), aClass)) {
-        members.addAll(Arrays.asList(aClass.getInitializers()));
-        Collections.sort(members, PsiUtil.BY_POSITION);
-      }
+    String description =
+      JavaErrorBundle.message(inLoop ? "variable.assigned.in.loop" : "variable.already.assigned", variable.getName());
+    final HighlightInfo highlightInfo =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+    HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
+    if (canDefer) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
+    }
+    return highlightInfo;
+  }
 
-      for (PsiMember member : members) {
-        if (member == field) continue;
-        PsiElement context = member instanceof PsiField ? ((PsiField)member).getInitializer()
-                                                        : ((PsiClassInitializer)member).getBody();
+  private static boolean isFieldInitializedInAnotherMember(@NotNull PsiField field,
+                                                           @NotNull PsiReferenceExpression expression,
+                                                           @NotNull PsiElement codeBlock) {
+    final PsiClass aClass = field.getContainingClass();
+    if (aClass == null) return false;
+    boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    final PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
 
-        if (context != null
-            && member.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
-            && !variableDefinitelyNotAssignedIn(field, context)) {
-          if (context == codeBlock) {
-            return null;
-          }
-          alreadyAssigned = true;
-          break;
+    if (!isFieldStatic) {
+      // constructor that delegates to another constructor cannot assign final fields
+      if (enclosingConstructorOrInitializer instanceof PsiMethod) {
+        PsiMethodCallExpression chainedCall =
+          JavaPsiConstructorUtil.findThisOrSuperCallInConstructor((PsiMethod)enclosingConstructorOrInitializer);
+        if (JavaPsiConstructorUtil.isChainedConstructorCall(chainedCall)) {
+          return true;
         }
       }
-
-      if (!alreadyAssigned && !isFieldStatic) {
-        // then check if instance field already assigned in other constructor
-        final PsiMethod ctr = codeBlock.getParent() instanceof PsiMethod ?
-                              (PsiMethod)codeBlock.getParent() : null;
-        // assignment to final field in several constructors threatens us only if these are linked (there is this() call in the beginning)
-        final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? JavaHighlightUtil.getChainedConstructors(ctr) : Collections.emptyList();
-        if (!redirectedConstructors.isEmpty() && aClass.isRecord()) {
-          alreadyAssigned = true;
-        } else {
-          for (PsiMethod redirectedConstructor : redirectedConstructors) {
-            PsiCodeBlock body = redirectedConstructor.getBody();
-            if (body != null && variableDefinitelyAssignedIn(variable, body)) {
-              alreadyAssigned = true;
-              break;
-            }
-          }
-        }
-      }
-      canDefer = !alreadyAssigned;
     }
 
-    if (alreadyAssigned) {
-      String description =
-        JavaErrorBundle.message(inLoop ? "variable.assigned.in.loop" : "variable.already.assigned", variable.getName());
-      final HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
-      if (canDefer) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
-      }
-      return highlightInfo;
+    // field can get assigned in other field initializers or in class initializers
+    List<PsiMember> members = new ArrayList<>(Arrays.asList(aClass.getFields()));
+    if (enclosingConstructorOrInitializer != null
+        && aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getContainingClass(), aClass)) {
+      members.addAll(Arrays.asList(aClass.getInitializers()));
+      Collections.sort(members, PsiUtil.BY_POSITION);
     }
 
-    return null;
+    for (PsiMember member : members) {
+      if (member == field) continue;
+      PsiElement context = member instanceof PsiField ? ((PsiField)member).getInitializer()
+                                                      : ((PsiClassInitializer)member).getBody();
+
+      if (context != null
+          && member.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
+          && !variableDefinitelyNotAssignedIn(field, context)) {
+        return context != codeBlock;
+      }
+    }
+    return false;
   }
 
   @NotNull

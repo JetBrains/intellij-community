@@ -49,9 +49,19 @@ public abstract class BundleBase {
     String result = postprocessValue(bundle, value, params);
 
     if (SHOW_LOCALIZED_MESSAGES) {
-      return result + L10N_MARKER;
+      return appendLocalizationMarker(result);
     }
     return result;
+  }
+
+  private static final String[] SUFFIXES = {"</body></html>", "</html>"};
+
+  @NotNull
+  protected static String appendLocalizationMarker(@NotNull String result) {
+    for (String suffix : SUFFIXES) {
+      if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
+    }
+    return result + L10N_MARKER;
   }
 
   @NotNull

@@ -1,9 +1,12 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -556,6 +559,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     runPythonTest(
       new CreateConfigurationTestTask<PyTestConfiguration>(myFrameworkName, PyTestConfiguration.class) {
 
+
         @NotNull
         private PyFunction getFunction(@NotNull final String folder) {
           final PyFile file = (PyFile)myFixture.configureByFile(String.format("configurationByContext/%s/test_foo.py", folder));
@@ -570,14 +574,33 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                           @NotNull final PsiElement elementToRightClickOn) {
 
 
-          final PyTestConfiguration sameConfig = createConfigurationByElement(getFunction("bar"), PyTestConfiguration.class);
+          PyFunction bar = getFunction("bar");
+          final PyTestConfiguration sameConfig = createConfigurationByElement(bar, PyTestConfiguration.class);
           Assert.assertEquals("Same element must provide same config", sameConfig, configuration);
 
-          final PyTestConfiguration differentConfig = createConfigurationByElement(getFunction("foo"), PyTestConfiguration.class);
+          PyFunction foo = getFunction("foo");
+          final PyTestConfiguration differentConfig = createConfigurationByElement(foo, PyTestConfiguration.class);
           //Although targets are same, working dirs are different
           assert differentConfig.getTarget().equals(configuration.getTarget());
 
           Assert.assertNotEquals("Function from different folder must provide different config", differentConfig, configuration);
+
+          try {
+            // Test "custom symbol" mode: instead of QN we must get custom with additional arguments pointing to file and symbol
+            ((PyTestConfiguration)RunManager.getInstance(getProject())
+              .getConfigurationTemplate(new PyTestFactory())
+              .getConfiguration())
+              .setWorkingDirectory(bar.getContainingFile().getParent().getVirtualFile().getPath());
+            PyTestConfiguration customConfiguration = createConfigurationByElement(foo, PyTestConfiguration.class);
+            assertEquals(PyRunTargetVariant.CUSTOM, customConfiguration.getTarget().getTargetType());
+            assertEquals(foo.getContainingFile().getVirtualFile().getPath() + "::test_test", customConfiguration.getAdditionalArguments());
+          }
+          finally {
+            ((PyTestConfiguration)RunManager.getInstance(getProject())
+              .getConfigurationTemplate(new PyTestFactory())
+              .getConfiguration())
+              .setWorkingDirectory(null);
+          }
         }
 
         @NotNull

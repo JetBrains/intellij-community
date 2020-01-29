@@ -7,11 +7,25 @@ import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconsTransformation
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-class DotnetIconsTransformationTest {
+@RunWith(Parameterized::class)
+internal class DotnetIconsTransformationTest(private val braces: DotnetIcon.Braces) {
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters
+    fun braces(): Collection<Array<Any>> = DotnetIcon.BRACES.map {
+      @Suppress("RemoveExplicitTypeArguments")
+      arrayOf<Any>(it)
+    }
+  }
+
   @Rule
   @JvmField
   val iconsRepo = TemporaryFolder()
+
+  private fun String.brace() : String = if (isNotEmpty()) "${braces.start}$this${braces.end}" else this
 
   private data class Suffix(val after: String, val before: String)
 
@@ -19,7 +33,7 @@ class DotnetIconsTransformationTest {
     val name = "icon"
     val ext = "svg"
     suffices.forEach {
-      val suffix = if (it.isNotEmpty()) "[$it]" else ""
+      val suffix = it.brace()
       iconsRepo.newFile("$name$suffix.$ext").writeText(suffix)
     }
     DotnetIconsTransformation.transformToIdeaFormat(iconsRepo.root.toPath())
@@ -44,21 +58,21 @@ class DotnetIconsTransformationTest {
   @Test
   fun `light icons test`() = `icons test`(
     dotnetLightSuffices + "unknown",
-    listOf(Suffix("", "[${dotnetLightSuffices.first()}]"))
+    listOf(Suffix("", dotnetLightSuffices.first().brace()))
   )
 
   @Test
   fun `dark icons test`() = `icons test`(
     dotnetDarkSuffices + "unknown",
-    listOf(Suffix(ideaDarkSuffix, "[${dotnetDarkSuffices.first()}]"))
+    listOf(Suffix(ideaDarkSuffix, dotnetDarkSuffices.first().brace()))
   )
 
   @Test
   fun `mixed icons test`() = `icons test`(
     dotnetDarkSuffices + dotnetLightSuffices + "unknown",
     listOf(
-      Suffix("", "[${dotnetLightSuffices.first()}]"),
-      Suffix(ideaDarkSuffix, "[${dotnetDarkSuffices.first()}]")
+      Suffix("", dotnetLightSuffices.first().brace()),
+      Suffix(ideaDarkSuffix, dotnetDarkSuffices.first().brace())
     )
   )
 }

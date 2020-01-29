@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -342,6 +343,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowUninstallWithoutRestart = false;
       }
+      else if (!installedPluginDescriptor.isEnabled()) {
+        FileUtil.delete(installedPluginDescriptor.getPath());
+      }
       else if (DynamicPlugins.allowLoadUnloadSynchronously(installedPluginDescriptor)) {
         if (!PluginInstaller.uninstallDynamicPlugin(parentComponent, installedPluginDescriptor, true)) {
           allowUninstallWithoutRestart = false;
@@ -560,7 +564,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       myInstallsRequiringRestart |= restartRequired;
     }
     if (!success && showErrors) {
-      Messages.showErrorDialog("Plugin \"" + descriptor.getName() + "\" download or installing failed",
+      Messages.showErrorDialog(IdeBundle.message("plugins.configurable.plugin.installing.failed", descriptor.getName()),
                                IdeBundle.message("action.download.and.install.plugin"));
     }
   }
@@ -759,7 +763,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   @NotNull
   String getEnabledTitle(@NotNull IdeaPluginDescriptor plugin) {
-    return isEnabled(plugin) ? "Disable" : "Enable";
+    return isEnabled(plugin) ? IdeBundle.message("plugins.configurable.disable.button") : IdeBundle.message("plugins.configurable.enable.button");
   }
 
   void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {

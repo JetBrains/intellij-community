@@ -1165,6 +1165,20 @@ std::wstring GetCurrentDirectoryAsString()
   return std::wstring(buffer.data(), sizeWithoutTerminatingZero);
 }
 
+static void SetPathVariable(const wchar_t *varName, REFKNOWNFOLDERID rfId)
+{
+  wchar_t env_var_buffer[1];
+  if (GetEnvironmentVariableW(varName, env_var_buffer, 1) == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+  {
+    wchar_t *path = NULL;
+    if (SHGetKnownFolderPath(rfId, KF_FLAG_DONT_VERIFY, NULL, &path) == S_OK)
+    {
+      SetEnvironmentVariableW(varName, path);
+      CoTaskMemFree(path);
+    }
+  }
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
                        LPTSTR    lpCmdLine,
@@ -1186,6 +1200,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     CloseHandle(parentProcHandle);
     return 0;
   }
+
+  // ensures path variables are defined
+  SetPathVariable(L"APPDATA", FOLDERID_RoamingAppData);
+  SetPathVariable(L"LOCALAPPDATA", FOLDERID_LocalAppData);
 
   //it's OK to return 0 here, because the control is transferred to the first instance
   int exitCode = CheckSingleInstance();

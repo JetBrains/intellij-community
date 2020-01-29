@@ -62,10 +62,10 @@ public class IElementType {
     }
   }
 
-  public static void unregisterElementTypes(@NotNull Language language) {
+  public static void unregisterElementTypes(@NotNull ClassLoader loader) {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
-      if (type != null && type.getLanguage().equals(language)) {
+      if (type != null && type.getClass().getClassLoader() == loader) {
         ourRegistry[i] = null;
       }
     }

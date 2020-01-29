@@ -693,6 +693,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   private static DfaValue getConversionResult(DfaValue value, PsiPrimitiveType type, DfaValueFactory factory, DfaMemoryState state) {
+    if (value instanceof DfaBinOpValue) {
+      value = ((DfaBinOpValue)value).tryReduceOnCast(state, type);
+    }
     if (value instanceof DfaVariableValue && type != null && 
         (type.equals(value.getType()) || 
         TypeConversionUtil.isSafeConversion(type, value.getType()) && TypeConversionUtil.isSafeConversion(PsiType.INT, type))) {

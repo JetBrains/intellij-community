@@ -142,6 +142,13 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
           outChars.append('\r');
           break;
 
+        case's':
+          outChars.append(' ');
+          break;
+
+        case '\n':
+          break;
+
         case'\\':
           outChars.append('\\');
           break;

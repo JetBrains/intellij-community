@@ -128,16 +128,8 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     private static String @NotNull [] getTextBlockLines(String @NotNull [] lines) {
-      StringBuilder blockLines = new StringBuilder();
-      boolean escapeStartQuote = false;
-      for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        boolean isLastLine = i == lines.length - 1;
-        line = PsiLiteralUtil.escapeTextBlockCharacters(line, escapeStartQuote, isLastLine, isLastLine);
-        escapeStartQuote = line.endsWith("\"");
-        blockLines.append(line);
-      }
-      return blockLines.toString().split("(?<=\n)");
+      String blockLines = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.join(lines), true, true, true);
+      return blockLines.split("(?<=\n)");
     }
 
     private static String concatenateTextBlockLines(String @NotNull [] lines, int indent) {

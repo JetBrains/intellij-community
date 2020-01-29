@@ -83,7 +83,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
         new Notification(ShBundle.message("sh.title.case"), "", ShBundle.message("sh.fmt.install.question"),
                          NotificationType.INFORMATION);
       notification.addAction(
-        NotificationAction.createSimple(ShBundle.message("sh.fmt.install"), () -> {
+        NotificationAction.createSimple(() -> ShBundle.message("sh.fmt.install"), () -> {
           notification.expire();
           ShShfmtFormatterUtil.download(project, settings, () -> Notifications.Bus
             .notify(new Notification(ShBundle.message("sh.title.case"), "",
@@ -93,7 +93,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
               new Notification(ShBundle.message("sh.title.case"), "", ShBundle.message("sh.fmt.cannot.download"),
                                NotificationType.ERROR)));
         }));
-      notification.addAction(NotificationAction.createSimple(ShBundle.message("sh.fmt.no.thanks"), () -> {
+      notification.addAction(NotificationAction.createSimple(() -> ShBundle.message("sh.fmt.no.thanks"), () -> {
         notification.expire();
         ShSettings.setShfmtPath(ShSettings.I_DO_MIND);
       }));

@@ -7,6 +7,10 @@ import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
 internal class DotnetIcon(private val file: Path) {
+  class Braces(val start: String, val end: String)
+  companion object {
+    val BRACES = listOf(Braces("[", "]"), Braces("(", ")"))
+  }
   private val extension = "." + file.toFile().extension
   private val fullName = file.fileName.toString().removeSuffix(extension)
   val name: String
@@ -16,16 +20,21 @@ internal class DotnetIcon(private val file: Path) {
   override fun equals(other: Any?) = other is DotnetIcon && file.toString() == other.file.toString()
 
   init {
-    val suffixStart = fullName.lastIndexOf("[")
-    val suffixEnd = fullName.lastIndexOf("]")
-    name = when (suffixStart) {
-      in 1 until suffixEnd -> fullName.substring(suffixStart..suffixEnd)
-      else -> ""
-    }.let(fullName::removeSuffix)
-    suffix = fullName
-      .removePrefix(name)
-      .removePrefix("[")
-      .removeSuffix("]")
+    var suffix = ""
+    var name = fullName
+    for (braces in BRACES) {
+      val start = fullName.lastIndexOf(braces.start)
+      val end = fullName.lastIndexOf(braces.end)
+      if (start in 1 until end) {
+        name = fullName.removeSuffix(fullName.substring(start..end))
+        suffix = fullName.removePrefix(name)
+          .removePrefix(braces.start)
+          .removeSuffix(braces.end)
+        break
+      }
+    }
+    this.name = name
+    this.suffix = suffix
   }
 
   fun changeSuffix(suffix: String) : DotnetIcon {

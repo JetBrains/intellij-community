@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.ApplicationManager
@@ -23,7 +23,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
                                              private val maxFileSize: String = "200KB") {
-  open val logger: StatisticsEventLogger = createLogger()
+  open val logger: StatisticsEventLogger by lazy { createLogger() }
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
@@ -51,18 +51,14 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   }
 }
 
-class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1) {
+internal class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1) {
   override val logger: StatisticsEventLogger = EmptyStatisticsEventLogger()
 
-  override fun isRecordEnabled(): Boolean {
-    return false
-  }
-  override fun isSendEnabled(): Boolean {
-    return false
-  }
+  override fun isRecordEnabled() = false
+  override fun isSendEnabled() = false
 }
 
-class EmptyStatisticsEventLogger : StatisticsEventLogger {
+internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
   override fun getActiveLogFile(): EventLogFile? = null

@@ -1,6 +1,7 @@
 <idea-plugin>
   <id>org.jetbrains.plugins.textmate</id>
   <name>TextMate bundles</name>
+  <category>Other Tools</category>
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[

@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
+  <category>Other Tools</category>
   <vendor>JetBrains</vendor>
   <description>
       <![CDATA[

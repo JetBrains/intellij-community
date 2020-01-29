@@ -7,6 +7,8 @@ import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.HashSet;
@@ -23,9 +25,6 @@ import static com.intellij.ui.tree.TreePathUtil.convertArrayToTreePath;
 import static com.intellij.ui.tree.TreeTestUtil.node;
 import static com.intellij.util.containers.ContainerUtil.set;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class TreeUtilVisitTest {
   @Test
   public void testAcceptDepth1() {
@@ -374,7 +373,7 @@ public final class TreeUtilVisitTest {
   }
 
   private static void testCollapseAll(boolean visible, boolean showHandles, boolean strict, int keepSelectionLevel, String expected) {
-    TreeTest.test(TreeUtilVisitTest::rootDeep, test
+    TreeTest.test(TreeTest.FAST, 1, TreeUtilVisitTest::rootDeep, test
       -> configureRoot(test, visible, showHandles, ()
       -> TreeUtil.expandAll(test.getTree(), ()
       -> select(test, convertArrayToVisitor("2", "22", "222", "2222"), path
@@ -383,6 +382,16 @@ public final class TreeUtilVisitTest {
   }
 
   private static void collapseAll(@NotNull TreeTest test, boolean strict, int keepSelectionLevel, @NotNull Runnable onDone) {
+    test.getTree().addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+      }
+
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        throw new UnsupportedOperationException("do not expand while collapse");
+      }
+    });
     TreeUtil.collapseAll(test.getTree(), strict, keepSelectionLevel);
     onDone.run();
   }

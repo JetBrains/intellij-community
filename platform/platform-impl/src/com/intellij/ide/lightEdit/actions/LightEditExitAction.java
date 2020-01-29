@@ -2,13 +2,14 @@
 package com.intellij.ide.lightEdit.actions;
 
 import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
 public class LightEditExitAction extends DumbAwareAction {
   public LightEditExitAction() {
-    super("E&xit");
+    super(() -> ActionsBundle.message("action.LightEditExitAction.text"));
   }
 
   @Override

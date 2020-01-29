@@ -75,7 +75,7 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 public final class StartupUtil {
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
+  private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   private static SocketLock ourSocketLock;
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
@@ -84,9 +84,8 @@ public final class StartupUtil {
 
   /* called by the app after startup */
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
-    if (ourSocketLock != null) {
-      ourSocketLock.setCommandProcessor(processor);
-    }
+    if (ourSocketLock == null) throw new AssertionError("Not initialized yet");
+    ourSocketLock.setCommandProcessor(processor);
   }
 
   // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
@@ -456,7 +455,7 @@ public final class StartupUtil {
   }
 
   private static synchronized void lockSystemDirs(String[] args) throws Exception {
-    if (ourSocketLock != null) throw new AssertionError();
+    if (ourSocketLock != null) throw new AssertionError("Already initialized");
     ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
     Pair<SocketLock.ActivationStatus, CliResult> status = ourSocketLock.lockAndTryActivate(args);
@@ -575,7 +574,9 @@ public final class StartupUtil {
       }
     }
 
-    log.info("charsets: JNU=" + System.getProperty("sun.jnu.encoding") + " file=" + System.getProperty("file.encoding"));
+    log.info("Locale=" + Locale.getDefault() +
+             " JNU=" + System.getProperty("sun.jnu.encoding") +
+             " file.encoding=" + System.getProperty("file.encoding"));
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {

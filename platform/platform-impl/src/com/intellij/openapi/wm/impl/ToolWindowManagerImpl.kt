@@ -757,20 +757,21 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   fun hideToolWindow(id: String, hideSide: Boolean, moveFocus: Boolean) {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
+    val entry = idToEntry.get(id)!!
+    if (!entry.readOnlyWindowInfo.isVisible) {
+      return
+    }
+
     val info = getRegisteredMutableInfoOrLogError(id)
-    if (doHide(idToEntry.get(id)!!, info, dirtyMode = false, hideSide = hideSide, moveFocus = moveFocus)) {
-      fireStateChanged()
+    val moveFocusAfter = moveFocus && entry.toolWindow.isActive
+    doHide(entry, info, dirtyMode = false, hideSide = hideSide)
+    fireStateChanged()
+    if (moveFocusAfter) {
+      activateEditorComponent()
     }
   }
 
-  private fun doHide(entry: ToolWindowEntry, info: WindowInfoImpl, dirtyMode: Boolean, hideSide: Boolean = false, moveFocus: Boolean = true): Boolean {
-    // info.isActive is not reliable (not set to false on focus lost)
-    val wasActive = entry.toolWindow.isActive
-
-    if (!wasActive && !info.isVisible) {
-      return false
-    }
-
+  private fun doHide(entry: ToolWindowEntry, info: WindowInfoImpl, dirtyMode: Boolean, hideSide: Boolean = false) {
     // hide and deactivate
     doDeactivateToolWindow(info, entry, dirtyMode = dirtyMode)
 
@@ -817,12 +818,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
       activeStack.remove(entry, false)
     }
-
-    if (moveFocus && wasActive) {
-      activateEditorComponent()
-    }
-
-    return true
   }
 
   /**
@@ -892,6 +887,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     entry.toolWindow.scheduleContentInitializationIfNeeded()
+    fireToolWindowShown(entry.id, entry.toolWindow)
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindowImpl {
@@ -1396,7 +1392,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val wasVisible = entry.readOnlyWindowInfo.isVisible
     val wasFocused = entry.toolWindow.isActive
     if (wasVisible) {
-      doHide(entry, info, dirtyMode = true, moveFocus = false)
+      doHide(entry, info, dirtyMode = true)
     }
 
     task()
@@ -1416,6 +1412,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   protected open fun fireStateChanged() {
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this)
+  }
+
+  private fun fireToolWindowShown(id: String, toolWindow: ToolWindow) {
+    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowShown(id, toolWindow)
   }
 
   internal fun setToolWindowAutoHide(id: String, autoHide: Boolean) {

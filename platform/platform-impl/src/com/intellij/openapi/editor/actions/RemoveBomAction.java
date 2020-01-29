@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -33,7 +34,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
 
   public RemoveBomAction() {
-    super("Remove BOM");
+    super(() -> IdeBundle.message("remove.byte.order.mark"));
   }
 
   @Override
@@ -61,7 +62,8 @@ public class RemoveBomAction extends AnAction implements DumbAware {
 
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
-    e.getPresentation().setDescription("Remove byte order mark from "+fromWhere);
+    String finalFromWhere = fromWhere;
+    e.getPresentation().setDescription(() -> IdeBundle.message("remove.byte.order.mark.from", finalFromWhere));
   }
 
   @Override
@@ -73,7 +75,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     List<VirtualFile> filesToProcess = getFilesWithBom(files);
     if (filesToProcess.isEmpty()) return;
     List<VirtualFile> filesUnableToProcess = new ArrayList<>();
-    new Task.Backgroundable(getEventProject(e), "Removing BOM", true, () -> false) {
+    new Task.Backgroundable(getEventProject(e), IdeBundle.message("removing.byte.order.mark"), true, () -> false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);

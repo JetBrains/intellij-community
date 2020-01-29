@@ -1271,7 +1271,7 @@ return yylength()-s.length();
             // fall through
           case 160: break;
           case 40: 
-            { return PyTokenTypes.FSTRING_TEXT;
+            { return fStringHelper.getTextTokenType();
             } 
             // fall through
           case 161: break;

@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class InstallFromDiskAction extends DumbAwareAction {
   public InstallFromDiskAction() {
-    super("Install Plugin from Disk...", null, AllIcons.Nodes.Plugin);
+    super(() -> IdeBundle.message("action.InstallFromDiskAction.text"), AllIcons.Nodes.Plugin);
   }
 
   @Override

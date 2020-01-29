@@ -1,6 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
@@ -81,7 +79,7 @@ import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
-public class SvnVcs extends AbstractVcs {
+public final class SvnVcs extends AbstractVcs {
   private static final Logger LOG = wrapLogger(Logger.getInstance(SvnVcs.class));
 
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
@@ -137,12 +135,12 @@ public class SvnVcs extends AbstractVcs {
 
   private final boolean myLogExceptions;
 
-  public SvnVcs(@NotNull Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBranchesStorage storage) {
+  public SvnVcs(@NotNull Project project) {
     super(project, VCS_NAME);
 
-    myLoadedBranchesStorage = storage;
+    myLoadedBranchesStorage = project.getService(SvnLoadedBranchesStorage.class);
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
-    myConfiguration = svnConfiguration;
+    myConfiguration = SvnConfiguration.getInstance(project);
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     cmdClientFactory = new CmdClientFactory(this);
@@ -158,7 +156,7 @@ public class SvnVcs extends AbstractVcs {
     }
     else {
       myEntriesFileListener = new SvnEntriesFileListener(project);
-      upgradeIfNeeded(bus);
+      upgradeIfNeeded(project.getMessageBus());
 
       myChangeListListener = new SvnChangelistListener(this);
 

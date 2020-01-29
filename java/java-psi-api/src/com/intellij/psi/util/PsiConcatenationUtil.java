@@ -29,9 +29,9 @@ public class PsiConcatenationUtil {
 
   /**
    * @deprecated use {@code buildUnescapedFormatString} instead and use either
-   * {@code com.intellij.openapi.util.text.StringUtil#escapeStringCharacters(java.lang.String)}
+   * {@link StringUtil#escapeStringCharacters(String)}
    * or
-   * {@code com.intellij.openapi.util.text.StringUtil#escapeTextBlockCharacters(java.lang.String)}
+   * {@link PsiLiteralUtil#escapeTextBlockCharacters(String)}
    * to escape the resulting string.
    */
   @Deprecated

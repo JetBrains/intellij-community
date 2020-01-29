@@ -4,7 +4,6 @@ class TextBlocks {
       System.out.println("""
               first
                second
-                third
-               \\for<caret>th\"""");
+                third \\forth\""<caret>"");
   }
 }

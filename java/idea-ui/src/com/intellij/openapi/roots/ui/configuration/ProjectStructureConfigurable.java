@@ -95,8 +95,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>",
-                                                     SwingConstants.CENTER);
+  private final JLabel myEmptySelection = new JLabel(
+    ProjectBundle.message("project.structure.empty.text"),
+    SwingConstants.CENTER);
 
   private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
 
@@ -193,7 +194,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     boolean isDefaultProject = myProject == ProjectManager.getInstance().getDefaultProject();
 
     mySidePanel = new SidePanel(this);
-    mySidePanel.addSeparator("Project Settings");
+    mySidePanel.addSeparator(ProjectBundle.message("project.settings.title"));
     addProjectConfig();
     if (!isDefaultProject) {
       addModulesConfig();
@@ -212,7 +213,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
       }
     }
 
-    mySidePanel.addSeparator("Platform Settings");
+    mySidePanel.addSeparator(ProjectBundle.message("project.structure.platform.title"));
     addJdkListConfig();
     addGlobalLibrariesConfig();
 

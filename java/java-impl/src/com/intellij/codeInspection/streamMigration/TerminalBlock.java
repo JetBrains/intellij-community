@@ -7,19 +7,19 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -105,10 +105,11 @@ class TerminalBlock {
     PsiStatement single = getSingleStatement();
     if (single instanceof PsiIfStatement) {
       PsiIfStatement ifStatement = (PsiIfStatement)single;
-      if(ifStatement.getElseBranch() == null && ifStatement.getCondition() != null) {
+      PsiExpression condition = ifStatement.getCondition();
+      if(ifStatement.getElseBranch() == null && condition != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         if(thenBranch != null) {
-          return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
+          return fromCondition(condition, false, thenBranch);
         }
       }
     }
@@ -117,7 +118,8 @@ class TerminalBlock {
       // extract filter with negation
       if(first instanceof PsiIfStatement) {
         PsiIfStatement ifStatement = (PsiIfStatement)first;
-        if(ifStatement.getCondition() == null) return null;
+        PsiExpression condition = ifStatement.getCondition();
+        if(condition == null) return null;
         PsiStatement branch = ifStatement.getThenBranch();
         if(branch instanceof PsiBlockStatement) {
           PsiStatement[] statements = ((PsiBlockStatement)branch).getCodeBlock().getStatements();
@@ -132,10 +134,30 @@ class TerminalBlock {
         } else {
           statements = Arrays.copyOfRange(myStatements, 1, myStatements.length);
         }
-        return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, true), myVariable, statements);
+        return fromCondition(condition, true, statements);
       }
     }
     return null;
+  }
+
+  @Nullable
+  private TerminalBlock fromCondition(PsiExpression condition, boolean negated, PsiStatement... statements) {
+    TerminalBlock result = new TerminalBlock(this, new FilterOp(condition, myVariable, negated), myVariable, statements);
+    List<PsiPatternVariable> vars = JavaPsiPatternUtil.getExposedPatternVariables(condition);
+    if (!vars.isEmpty()) {
+      List<PsiPatternVariable> used =
+        ContainerUtil.filter(vars, var -> Stream.of(statements).anyMatch(st -> VariableAccessUtils.variableIsUsed(var, st)));
+      if (used.size() > 1) return null;
+      if (!used.isEmpty()) {
+        PsiPatternVariable var = used.get(0);
+        String text = JavaPsiPatternUtil.getEffectiveInitializerText(var);
+        if (text == null) return null;
+        if (Stream.of(statements).anyMatch(st -> VariableAccessUtils.variableIsUsed(myVariable, st))) return null;
+        PsiExpression mappingExpression = JavaPsiFacade.getElementFactory(condition.getProject()).createExpressionFromText(text, var);
+        result = new TerminalBlock(result, new MapOp(mappingExpression, myVariable, var.getType()), var, statements);
+      }
+    }
+    return result;
   }
 
   /**

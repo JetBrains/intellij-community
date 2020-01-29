@@ -5,11 +5,13 @@ import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkAllNotificationsAsReadAction extends DumbAwareAction {
   public MarkAllNotificationsAsReadAction() {
-    super("Mark all notifications as read", "Mark all unread notifications as read", AllIcons.Actions.Selectall);
+    super(() -> VcsBundle.message("action.MarkAllNotificationsAsReadAction.text"),
+          () -> VcsBundle.message("action.MarkAllNotificationsAsReadAction.description"), AllIcons.Actions.Selectall);
   }
 
   @Override

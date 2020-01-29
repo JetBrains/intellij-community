@@ -146,4 +146,12 @@ public abstract class ActionButtonLook {
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
     icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
   }
+
+  /**
+   * @deprecated Use {@link ActionButtonLook#paintIcon(Graphics, ActionButtonComponent, Icon, int, int)}
+   */
+  @Deprecated
+  public void paintIconAt(Graphics g, Icon icon, int x, int y) {
+    icon.paintIcon(null, g, x, y);
+  }
 }

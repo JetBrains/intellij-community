@@ -5,6 +5,7 @@
 <idea-plugin>
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
+  <category>Other Tools</category>
   <description>Enables task and context management</description>
   <vendor>JetBrains</vendor>
 

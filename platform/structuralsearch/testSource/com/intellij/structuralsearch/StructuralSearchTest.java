@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -2260,9 +2260,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   public void testFindEnums() {
     String s = "class Foo {} class Bar {} enum X {}";
-    String s2 = "enum 'x {}";
 
-    assertEquals(1, findMatchesCount(s,s2));
+    assertEquals(1, findMatchesCount(s, "enum 'x {}"));
+
+    String in = "enum E {" +
+                "  A(1), B(2), C(3)" +
+                "}";
+    assertEquals(1, findMatchesCount(in, "enum '_E { 'A(2) }"));
+    assertEquals(0, findMatchesCount(in, "enum '_E { 'A('_x{0,0}) }"));
+    assertEquals(0, findMatchesCount(in, "enum '_E { 'A(2) {} }"));
   }
 
   public void testFindDeclaration() {
