@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -42,7 +41,8 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
 
     // todo get current project structure, and later setup from sources only if it wasn't manually changed by the user
 
-    ProgressManager.getInstance().run(object: Task.Backgroundable(project, "Searching for project sources...", true) {
+    val title = JavaUiBundle.message("task.searching.for.project.sources")
+    ProgressManager.getInstance().run(object: Task.Backgroundable(project, title, true) {
       override fun run(indicator: ProgressIndicator) {
         val projectDir = project.baseDir
         val importers = searchImporters(projectDir)
@@ -102,17 +102,16 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
       }
     }
 
-    // todo wording
     val title: String
     val content: String
     if (providersAndFiles.keySet().size == 1) {
       val processor = providersAndFiles.keySet().single()
       val files = providersAndFiles[processor]
-      title = "${processor.name} ${StringUtil.pluralize("Project", files.size)} Found"
+      title = JavaUiBundle.message("build.script.found.notification", processor.name, files.size)
       content = filesToLinks(files, projectDirectory)
     }
     else {
-      title = "Build Scripts Found"
+      title = JavaUiBundle.message("build.scripts.from.multiple.providers.found.notification")
       content = providersAndFiles.asMap().entries.joinToString("<br/>") { (provider, files) ->
         provider.name + ": " + filesToLinks(files, projectDirectory)
       }
@@ -121,7 +120,12 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
     val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION, showFileInProjectViewListener)
 
     if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
-      val actionName = if (providersAndFiles.keySet().size > 1) "Import All" else "Import"
+      val actionName = if (providersAndFiles.keySet().size > 1) {
+        JavaUiBundle.message("build.script.found.notification.import.all")
+      }
+      else {
+        JavaUiBundle.message("build.script.found.notification.import")
+      }
       notification.addAction(NotificationAction.createSimpleExpiring(actionName) {
         for ((provider, files) in providersAndFiles.asMap()) {
           for (file in files) {
@@ -169,9 +173,10 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
   }
 
   private fun notifyAboutAutomaticProjectStructure(project: Project) {
-    val message = "<b>Project structure has been automatically detected</b>"
+    val message = "<b>${JavaUiBundle.message("project.structure.automatically.detected.notification")}</b>"
     val notification = NOTIFICATION_GROUP.createNotification("", message, NotificationType.INFORMATION, null)
-    notification.addAction(NotificationAction.createSimpleExpiring("Configure...") {
+    notification.addAction(NotificationAction.createSimpleExpiring(
+      JavaUiBundle.message("project.structure.automatically.detected.notification.configure.action")) {
       ProjectSettingsService.getInstance(project).openProjectSettings()
     })
     notification.notify(project)
