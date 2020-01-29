@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -24,6 +25,7 @@ public interface RollbackEnvironment {
    *
    * @return the user-readable name of operation (for example, "Rollback" or "Revert").
    */
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getRollbackOperationName();
 
   /**
