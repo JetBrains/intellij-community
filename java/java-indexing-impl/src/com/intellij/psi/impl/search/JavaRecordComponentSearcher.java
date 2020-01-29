@@ -7,8 +7,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
@@ -23,10 +26,19 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
                              queryParameters.getEffectiveSearchScope(),
                              false,
                              info.myLightMethod);
+
         optimizer.searchWord(info.myName,
                              new LocalSearchScope(info.myClass),
                              true,
                              info.myLightField);
+
+        PsiParameter parameter = info.myLightCompactConstructorParameter;
+        if (parameter != null) {
+          optimizer.searchWord(info.myName,
+                               new LocalSearchScope(parameter.getDeclarationScope()),
+                               true,
+                               parameter);
+        }
       }
     }
   }
@@ -37,27 +49,36 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
       if (name == null) return null;
       PsiClass containingClass = recordComponent.getContainingClass();
       if (containingClass == null) return null;
+
       PsiMethod[] methods = containingClass.findMethodsByName(name, false);
       if (methods.length != 1) return null;
+
       PsiField field = containingClass.findFieldByName(name, false);
       if (field == null) return null;
-      PsiMethod method = methods[0];
-      return new RecordNavigationInfo(method, field, name, recordComponent.getContainingClass());
+
+      PsiMethod compactConstructor = ContainerUtil.find(containingClass.getConstructors(), JavaPsiRecordUtil::isCompactConstructor);
+      PsiParameter parameter = compactConstructor != null 
+                               ? ContainerUtil.find(compactConstructor.getParameterList().getParameters(), p -> name.equals(p.getName())) 
+                               : null;
+      return new RecordNavigationInfo(methods[0], field, parameter, name, recordComponent.getContainingClass());
     });
   }
 
   private static class RecordNavigationInfo {
     @NotNull final PsiMethod myLightMethod;
     @NotNull final PsiField myLightField;
+    @Nullable final PsiParameter myLightCompactConstructorParameter;
     @NotNull final String myName;
     @NotNull final PsiClass myClass;
 
     private RecordNavigationInfo(@NotNull PsiMethod lightMethod,
                                  @NotNull PsiField lightField,
+                                 @Nullable PsiParameter parameter, 
                                  @NotNull String name,
                                  @NotNull PsiClass aClass) {
       myLightMethod = lightMethod;
       myLightField = lightField;
+      myLightCompactConstructorParameter = parameter;
       myName = name;
       myClass = aClass;
     }

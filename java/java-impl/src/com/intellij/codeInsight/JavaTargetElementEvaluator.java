@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
+import com.intellij.psi.impl.light.LightRecordMember;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -147,6 +149,14 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           if (qualifiedName == null) return null;
           return JavaPsiFacade.getInstance(refElement.getProject()).findClass(qualifiedName, refElement.getResolveScope());
         }
+      }
+
+      if (refElement instanceof LightRecordMember) {
+        return ((LightRecordMember)refElement).getRecordComponent();
+      }
+
+      if (refElement instanceof LightRecordCanonicalConstructor) {
+        return ((LightRecordCanonicalConstructor)refElement).getContainingClass();
       }
     }
     return super.adjustReferenceOrReferencedElement(file, editor, offset, flags, refElement);
