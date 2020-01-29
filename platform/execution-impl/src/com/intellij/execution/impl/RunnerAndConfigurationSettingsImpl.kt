@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
@@ -47,7 +47,7 @@ internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
 const val SINGLETON = "singleton"
 
 enum class RunConfigurationLevel {
-  WORKSPACE, PROJECT, TEMPORARY
+  WORKSPACE, PROJECT, TEMPORARY, ARBITRARY_FILE_IN_PROJECT
 }
 
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
@@ -114,6 +114,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     else if (level == RunConfigurationLevel.PROJECT) {
       level = RunConfigurationLevel.WORKSPACE
     }
+  }
+
+  fun isStoreInArbitraryFileInProject() = level == RunConfigurationLevel.ARBITRARY_FILE_IN_PROJECT
+
+  fun setStoreInArbitraryFileInProject() {
+    level = RunConfigurationLevel.ARBITRARY_FILE_IN_PROJECT
   }
 
   override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)

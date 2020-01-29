@@ -1,0 +1,33 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.execution.impl
+
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.FilePropertyPusher
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
+
+/**
+ * This class doesn't push any file properties, it is used for scanning the project for `*.run.xml` files - files with run configurations.
+ * This is to handle run configurations stored in arbitrary files within project content (not in .idea/runConfigurations/).
+ */
+class RCInArbitraryFileScanner : FilePropertyPusher<Nothing> {
+
+  override fun acceptsFile(file: VirtualFile, project: Project): Boolean {
+    if (file.name.endsWith(".run.xml") && !file.path.contains("/.idea/")) {
+      RunManagerImpl.getInstanceImpl(project).loadConfigurationsFromArbitraryFile(file)
+    }
+    return false
+  }
+
+  override fun acceptsFile(file: VirtualFile): Boolean = false
+  override fun acceptsDirectory(file: VirtualFile, project: Project): Boolean = false
+  private val key = Key.create<Nothing>("RCInArbitraryFileScanner")
+  override fun getFileDataKey(): Key<Nothing> = key
+  override fun pushDirectoriesOnly(): Boolean = false
+  override fun getDefaultValue(): Nothing = throw NotImplementedError("not expected to be called")
+  override fun getImmediateValue(project: Project, file: VirtualFile?): Nothing? = null
+  override fun getImmediateValue(module: Module): Nothing? = null
+  override fun persistAttribute(project: Project, fileOrDir: VirtualFile, value: Nothing) {}
+  override fun afterRootsChanged(project: Project) {}
+}

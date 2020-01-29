@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
@@ -175,6 +176,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
                                                                                       streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
 
+  private val rcInArbitraryFileManager = RCInArbitraryFileManager()
+
   private val isFirstLoadState = AtomicBoolean(true)
 
   private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
@@ -317,6 +320,15 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return template
   }
 
+  internal fun loadConfigurationsFromArbitraryFile(file: VirtualFile) {
+    lock.write {
+      val runConfigs = rcInArbitraryFileManager.loadRunConfigsFromFile(this, file)
+      for (runConfig in runConfigs) {
+        addConfiguration(runConfig)
+      }
+    }
+  }
+
   override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
     doAddConfiguration(settings, isCheckRecentsLimit = true)
   }
@@ -350,8 +362,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           settings as RunnerAndConfigurationSettingsImpl)
       }
 
+      if (!(settings as RunnerAndConfigurationSettingsImpl).isStoreInArbitraryFileInProject()) {
       // scheme level can be changed (workspace -> project), so, ensure that scheme is added to corresponding scheme manager (if exists, doesn't harm)
-      settings.schemeManager?.addScheme(settings as RunnerAndConfigurationSettingsImpl)
+        settings.schemeManager?.addScheme(settings)
+      }
     }
 
     if (existingId == null) {
@@ -490,6 +504,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     workspaceSchemeManager.save()
 
     lock.read {
+      rcInArbitraryFileManager.saveRunConfigs()
+
       workspaceSchemeManagerProvider.writeState(element)
 
       if (idToSettings.size > 1) {
