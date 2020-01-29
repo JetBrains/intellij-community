@@ -122,6 +122,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   /**
    * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Attribute("groupPath")
   public String groupPath;
 
