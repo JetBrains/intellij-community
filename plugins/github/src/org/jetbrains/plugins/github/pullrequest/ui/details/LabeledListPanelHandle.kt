@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.ui.popup.IconButton
-import com.intellij.ui.InplaceButton
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
@@ -13,14 +11,12 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.WrapLayout
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
-import java.awt.Cursor
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -33,25 +29,15 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
 
   val label = JLabel().apply {
     foreground = UIUtil.getContextHelpForeground()
-    border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP + 2, 0, UIUtil.DEFAULT_VGAP + 2, UIUtil.DEFAULT_HGAP / 2)
+    border = JBUI.Borders.empty(6, 0, 6, 5)
   }
   val panel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
 
-  protected val editButton = InplaceButton(IconButton(null,
-                                                      resizeSquareIcon(AllIcons.General.Inline_edit),
-                                                      resizeSquareIcon(AllIcons.General.Inline_edit_hovered)),
-                                           ActionListener { (::editList)() }).apply {
-    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+  protected val editButton = InlineIconButton(resizeSquareIcon(AllIcons.General.Inline_edit),
+                                              resizeSquareIcon(AllIcons.General.Inline_edit_hovered)).apply {
+    border = JBUI.Borders.empty(4, 0)
     isVisible = securityService.currentUserCanEditPullRequestsMetadata()
-    isFocusable = true
-    addKeyListener(object : KeyAdapter() {
-      override fun keyPressed(e: KeyEvent) {
-        if (e.keyCode == KeyEvent.VK_ENTER || e.keyCode == KeyEvent.VK_SPACE) {
-          doClick()
-          e.consume()
-        }
-      }
-    })
+    actionListener = ActionListener { editList() }
   }
 
   private fun resizeSquareIcon(icon: Icon): Icon {
