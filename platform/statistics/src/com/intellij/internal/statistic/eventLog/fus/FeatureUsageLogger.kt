@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.EmptyStatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.getEventLogProvider
-import com.intellij.util.concurrency.NonUrgentExecutor
 
 /**
  * An entry point class to record in event log an information about feature usages.
@@ -28,9 +27,7 @@ object FeatureUsageLogger {
 
   init {
     if (isEnabled()) {
-      NonUrgentExecutor.getInstance().execute {
-        initStateEventTrackers()
-      }
+      initStateEventTrackers()
     }
   }
 
