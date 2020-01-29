@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import java.util.concurrent.TimeUnit
 
-internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 33, sendFrequencyMs = TimeUnit.MINUTES.toMillis(15)) {
+internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 34, sendFrequencyMs = TimeUnit.MINUTES.toMillis(15)) {
   override fun isRecordEnabled(): Boolean {
     return !ApplicationManager.getApplication().isHeadlessEnvironment &&
            Registry.`is`("feature.usage.event.log.collect.and.upload") &&

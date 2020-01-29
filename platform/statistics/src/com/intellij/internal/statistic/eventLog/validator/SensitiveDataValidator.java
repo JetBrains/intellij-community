@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.internal.statistic.eventLog.EventLogSystemEvents.*;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
@@ -176,7 +177,7 @@ public class SensitiveDataValidator {
   }
 
   private static boolean isSystemEventId(@Nullable String eventId) {
-    return "invoked".equals(eventId) || "registered".equals(eventId);
+    return STATE_COLLECTOR_INVOKED.equals(eventId) || COLLECTOR_REGISTERED.equals(eventId) || STATE_COLLECTOR_FAILED.equals(eventId);
   }
 
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
