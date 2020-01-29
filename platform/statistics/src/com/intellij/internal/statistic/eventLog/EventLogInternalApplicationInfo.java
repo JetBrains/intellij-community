@@ -7,13 +7,13 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-public class EventLogApplicationInfoImpl implements EventLogApplicationInfo {
+public class EventLogInternalApplicationInfo implements EventLogApplicationInfo {
   private static final DataCollectorDebugLogger LOG =
     new InternalDataCollectorDebugLogger(Logger.getInstance(EventLogStatisticsService.class));
 
   private final boolean myIsTest;
 
-  public EventLogApplicationInfoImpl(boolean isTest) {
+  public EventLogInternalApplicationInfo(boolean isTest) {
     myIsTest = isTest;
   }
 

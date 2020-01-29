@@ -14,10 +14,14 @@ interface EventLogRecorderConfig {
 }
 
 interface EventLogFilesProvider {
+  fun getLogFilesDir(): Path?
+
   fun getLogFiles(): List<EventLogFile>
 }
 
-class DefaultEventLogFilesProvider(val dir: Path, private val activeFileProvider: () -> String?): EventLogFilesProvider {
+class DefaultEventLogFilesProvider(private val dir: Path, private val activeFileProvider: () -> String?): EventLogFilesProvider {
+  override fun getLogFilesDir(): Path = dir
+
   override fun getLogFiles(): List<EventLogFile> {
     val activeFile = activeFileProvider()
     val files = File(dir.toUri()).listFiles { f: File -> activeFile == null || !StatisticsEventLogUtil.equals(f.name, activeFile) }

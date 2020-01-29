@@ -25,7 +25,7 @@ public final class EventLogBuildNumber implements Comparable<EventLogBuildNumber
 
   @Nullable
   public static EventLogBuildNumber fromString(@Nullable String version) {
-    if (StatisticsEventLogUtil.isEmptyOrSpaces(version)) {
+    if (version == null || StatisticsEventLogUtil.isEmptyOrSpaces(version)) {
       return null;
     }
 

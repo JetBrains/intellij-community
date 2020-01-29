@@ -56,12 +56,12 @@ public class StatisticsUploadAssistant {
   public static StatisticsService getEventLogStatisticsService(@NotNull String recorderId) {
     return new EventLogStatisticsService(
       new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
-      new EventLogRecorderConfigImpl(recorderId),
-      new EventLogApplicationInfoImpl(false)
+      new EventLogInternalRecorderConfig(recorderId),
+      new EventLogInternalApplicationInfo(false)
     );
   }
 
   public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTest) {
-    return new EventLogUploadSettingsService(recorderId, new EventLogApplicationInfoImpl(isTest));
+    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(isTest));
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
@@ -68,6 +69,8 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
 }
 
 object EmptyEventLogFilesProvider: EventLogFilesProvider {
+  override fun getLogFilesDir(): Path? = null
+
   override fun getLogFiles(): List<EventLogFile> = emptyList()
 }
 

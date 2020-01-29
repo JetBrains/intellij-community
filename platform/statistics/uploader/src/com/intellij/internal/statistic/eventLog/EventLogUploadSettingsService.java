@@ -15,7 +15,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   private static final String PERCENT_TRAFFIC = "percent-traffic";
 
   @NotNull
-  private EventLogApplicationInfo myApplicationInfo;
+  private final EventLogApplicationInfo myApplicationInfo;
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo application) {
     super(getConfigUrl(recorderId, application.getTemplateUrl(), application.isTest()), null, application.getLogger());

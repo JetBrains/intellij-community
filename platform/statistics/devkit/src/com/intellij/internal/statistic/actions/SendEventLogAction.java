@@ -66,7 +66,7 @@ public class SendEventLogAction extends AnAction {
       private StatisticsResult send() {
         return EventLogStatisticsService.send(
           new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
-          new EventLogRecorderConfigImpl(FUS_RECORDER),
+          new EventLogInternalRecorderConfig(FUS_RECORDER),
           new EventLogTestSettingsService(),
           new EventLogTestResultDecorator()
         );
@@ -92,7 +92,7 @@ public class SendEventLogAction extends AnAction {
     }
   }
 
-  private static class EventLogTestApplication extends EventLogApplicationInfoImpl {
+  private static class EventLogTestApplication extends EventLogInternalApplicationInfo {
     private EventLogTestApplication() {
       super(true);
     }

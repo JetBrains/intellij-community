@@ -3,10 +3,10 @@ package com.intellij.internal.statistic.eventLog;
 
 import org.jetbrains.annotations.NotNull;
 
-public class EventLogRecorderConfigImpl implements EventLogRecorderConfig {
-  private String myRecorderId;
+public class EventLogInternalRecorderConfig implements EventLogRecorderConfig {
+  private final String myRecorderId;
 
-  public EventLogRecorderConfigImpl(@NotNull String recorderId) {
+  public EventLogInternalRecorderConfig(@NotNull String recorderId) {
     myRecorderId = recorderId;
   }
 
