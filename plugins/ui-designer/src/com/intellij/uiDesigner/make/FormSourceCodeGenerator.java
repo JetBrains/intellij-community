@@ -882,15 +882,14 @@ public final class FormSourceCodeGenerator {
 
     final boolean borderNone = borderType.equals(BorderType.NONE);
     if (!borderNone || borderTitle != null) {
-
-      if (Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) {
-        generateIdeaTitledBorder(variable, borderTitle);
-        return;
-      }
-
       startMethodCall(variable, "setBorder");
 
-      startStaticMethodCall(BorderFactory.class, "createTitledBorder");
+      boolean isInternal = Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue();
+
+      Class<?> titledBorderFactoryClass = isInternal ? IdeBorderFactory.PlainSmallWithIndent.class
+                                                     : BorderFactory.class;
+
+      startStaticMethodCall(titledBorderFactoryClass, "createTitledBorder");
 
       if (!borderNone) {
         startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
@@ -937,15 +936,6 @@ public final class FormSourceCodeGenerator {
       endMethod(); // setBorder
     }
   }
-
-  private void generateIdeaTitledBorder(String variable, StringDescriptor borderTitle) {
-    startMethodCall(variable, "setBorder");
-    startStaticMethodCall(IdeBorderFactory.class, "createTitledBorder");
-    push(borderTitle);
-    endMethod();
-    endMethod();
-  }
-
 
   private static boolean isCustomBorder(final LwContainer container) {
     return container.getBorderTitleJustification() != 0 || container.getBorderTitlePosition() != 0 ||
