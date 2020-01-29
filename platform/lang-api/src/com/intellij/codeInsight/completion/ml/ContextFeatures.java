@@ -17,6 +17,9 @@ public interface ContextFeatures extends UserDataHolder {
   @Nullable
   String categoricalValue(@NotNull String name);
 
+  @Nullable
+  String classNameValue(@NotNull String name);
+
   @NotNull
   Map<String, String> asMap();
 }
