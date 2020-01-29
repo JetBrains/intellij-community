@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.lightEdit.project.LightEditProjectManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,7 @@ import java.util.List;
 public class LightEditServiceImpl implements LightEditService,
                                              Disposable,
                                              LightEditorListener,
+                                             AppLifecycleListener,
                                              PersistentStateComponent<LightEditConfiguration> {
   private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
 
@@ -64,6 +67,8 @@ public class LightEditServiceImpl implements LightEditService,
   public LightEditServiceImpl() {
     myEditorManager = new LightEditorManagerImpl(this);
     myEditorManager.addListener(this);
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    connection.subscribe(AppLifecycleListener.TOPIC,this);
     Disposer.register(this, myEditorManager);
   }
 
@@ -322,5 +327,10 @@ public class LightEditServiceImpl implements LightEditService,
 
   void registerFileType(@NotNull VirtualFile virtualFile, @NotNull FileType fileType) {
     myConfiguration.pathToExtensionMap.put(virtualFile.getPresentableUrl(), fileType.getDefaultExtension());
+  }
+
+  @Override
+  public void appClosing() {
+    myLightEditProjectManager.close();
   }
 }
