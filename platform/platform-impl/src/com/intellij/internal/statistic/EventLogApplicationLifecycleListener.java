@@ -11,13 +11,14 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 public class EventLogApplicationLifecycleListener implements AppLifecycleListener {
 
   @Override
   public void appWillBeClosed(boolean isRestart) {
-    if (!isRestart && !PluginManagerCore.isRunningFromSources()) {
+    if (!isRestart && !PluginManagerCore.isRunningFromSources() && isSendingOnExitEnabled()) {
       StatisticsEventLoggerProvider config = FeatureUsageLogger.INSTANCE.getConfig();
       if (config.isSendEnabled() && !isUpdateInProgress()) {
         ProgressManager.getInstance().run(new Task.Modal(null, "Starting External Log Uploader", false) {
@@ -28,6 +29,10 @@ public class EventLogApplicationLifecycleListener implements AppLifecycleListene
         });
       }
     }
+  }
+
+  private static boolean isSendingOnExitEnabled() {
+    return Registry.get("feature.usage.event.log.send.on.ide.close").asBoolean();
   }
 
   private static boolean isUpdateInProgress() {
