@@ -1232,8 +1232,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
         return;
       }
-      AnAction oldValue = myId2Action.remove(actionId);
-      myAction2Id.remove(oldValue);
+      AnAction actionToRemove = myId2Action.remove(actionId);
+      myAction2Id.remove(actionToRemove);
       myId2Index.remove(actionId);
 
       for (final Map.Entry<PluginId, Collection<String>> entry : myPlugin2Id.entrySet()) {
@@ -1247,10 +1247,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
             customActionSchema.invalidateCustomizedActionGroup(groupId);
           }
           DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
-          group.remove(oldValue, actionId);
+          group.remove(actionToRemove, actionId);
+          if (!(group instanceof ActionGroupStub)) {
+            //group can be used as a stub in other actions
+            for (String parentOfGroup : myId2GroupId.get(groupId)) {
+              DefaultActionGroup parentOfGroupAction = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(parentOfGroup));
+              for (AnAction stub : parentOfGroupAction.getChildActionsOrStubs()) {
+                if (stub instanceof ActionGroupStub && ((ActionGroupStub)stub).getId() == groupId) {
+                  ((ActionGroupStub)stub).remove(actionToRemove, actionId);
+                }
+              }
+            }
+          }
         }
       }
-      if (oldValue instanceof ActionGroup) {
+      if (actionToRemove instanceof ActionGroup) {
         myId2GroupId.values().remove(actionId);
       }
     }
