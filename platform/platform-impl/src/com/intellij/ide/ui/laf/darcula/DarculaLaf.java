@@ -18,6 +18,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
@@ -342,6 +343,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   @Override
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getName() {
     return NAME;
   }
@@ -352,6 +354,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   @Override
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getDescription() {
     return "IntelliJ Dark Look and Feel";
   }
