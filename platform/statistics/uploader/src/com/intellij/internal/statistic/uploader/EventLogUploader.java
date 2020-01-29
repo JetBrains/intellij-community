@@ -17,7 +17,7 @@ public class EventLogUploader {
   }
 
   private static void execute(String[] args) {
-    DataCollectorDebugLogger logger = new EmptyDataCollectorDebugLogger();
+    DataCollectorDebugLogger logger = new ExternalDataCollectorLogger();
     logger.info("Process started with '" + String.join(" ", args) + "'");
 
     if (args.length == 0) {
