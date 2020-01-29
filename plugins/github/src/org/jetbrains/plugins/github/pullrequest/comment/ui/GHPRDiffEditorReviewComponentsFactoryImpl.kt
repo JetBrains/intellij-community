@@ -5,12 +5,10 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
@@ -24,8 +22,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
-internal constructor(private val project: Project,
-                     private val reviewService: GHPRReviewServiceAdapter,
+internal constructor(private val reviewService: GHPRReviewServiceAdapter,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                      private val currentUser: GHUser)
@@ -36,7 +33,7 @@ internal constructor(private val project: Project,
       border = JBUI.Borders.empty(2, 0)
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
-    val component = GHPRReviewThreadComponent.create(project, thread, reviewService, avatarIconsProvider, currentUser).apply {
+    val component = GHPRReviewThreadComponent.create(thread, reviewService, avatarIconsProvider, currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
     }
     wrapper.add(component, BorderLayout.NORTH)
@@ -47,21 +44,25 @@ internal constructor(private val project: Project,
     return wrapper
   }
 
-  override fun createCommentComponent(side: Side, line: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
+  override fun createCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
     val wrapper = RoundedPanel(BorderLayout()).apply {
       border = JBUI.Borders.empty(2, 0)
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
-    val commentField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Comment") { text ->
+    val model = GHPRSubmittableTextField.Model {
       val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
       val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-      reviewService.addComment(EmptyProgressIndicator(), text, commitSha, filePath, diffLine).successOnEdt {
-        onSuccess(it)
+      reviewService.addComment(EmptyProgressIndicator(), it, commitSha, filePath, diffLine).successOnEdt {
+        hideCallback()
       }
+    }
+
+    val commentField = GHPRSubmittableTextField.create(model, avatarIconsProvider, currentUser, "Comment") {
+      hideCallback()
     }.apply {
-      border = JBUI.Borders.empty(12)
+      border = JBUI.Borders.empty(8)
     }
 
     wrapper.add(commentField, BorderLayout.NORTH)

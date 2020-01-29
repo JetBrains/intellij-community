@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.diff.comparison.ComparisonManagerImpl
@@ -7,7 +7,6 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.diff.impl.patch.PatchReader
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -22,8 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
-class GHPRChangesDiffHelperImpl(private val project: Project,
-                                private val reviewService: GHPRReviewService,
+class GHPRChangesDiffHelperImpl(private val reviewService: GHPRReviewService,
                                 private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                 private val currentUser: GHUser)
   : GHPRChangesDiffHelper {
@@ -47,7 +45,7 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
       val diffData = provider.findChangeDiffData(change) ?: return null
       val createReviewCommentHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
 
-      return GHPRDiffReviewSupportImpl(project, reviewService, diffData.diffRanges,
+      return GHPRDiffReviewSupportImpl(reviewService, diffData.diffRanges,
                                        { mapThread(diffData, it) },
                                        createReviewCommentHelper,
                                        avatarIconsProviderFactory, currentUser)

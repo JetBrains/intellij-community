@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
@@ -33,8 +32,7 @@ import javax.swing.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GHPRTimelineItemComponentFactory(private val project: Project,
-                                       private val reviewService: GHPRReviewServiceAdapter,
+class GHPRTimelineItemComponentFactory(private val reviewService: GHPRReviewServiceAdapter,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
@@ -74,7 +72,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         })
       }
       add(GHPRReviewThreadsPanel(reviewThreadsModel) {
-        GHPRReviewThreadComponent.createWithDiff(project, it, reviewService, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
+        GHPRReviewThreadComponent.createWithDiff(it, reviewService, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
       })
     }
 

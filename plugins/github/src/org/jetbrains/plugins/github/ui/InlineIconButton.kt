@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.ui.BaseButtonBehavior
 import com.intellij.util.ui.JBInsets
@@ -14,7 +17,9 @@ import javax.swing.plaf.ComponentUI
 
 class InlineIconButton(val icon: Icon,
                        val hoveredIcon: Icon = icon,
-                       val disabledIcon: Icon = IconLoader.getDisabledIcon(icon))
+                       val disabledIcon: Icon = IconLoader.getDisabledIcon(icon),
+                       val tooltip: String? = null,
+                       val shortcut: ShortcutSet? = null)
   : JComponent() {
 
   var actionListener: ActionListener? = null
@@ -76,6 +81,11 @@ class InlineIconButton(val icon: Icon,
           }
         }
       }
+      HelpTooltip.dispose(c)
+      HelpTooltip()
+        .setTitle(c.tooltip)
+        .setShortcut(c.shortcut?.let { KeymapUtil.getFirstKeyboardShortcutText(it) })
+        .installOn(c)
 
       c.isOpaque = false
       c.isFocusable = true
@@ -84,6 +94,7 @@ class InlineIconButton(val icon: Icon,
 
     override fun uninstallUI(c: JComponent) {
       buttonBehavior = null
+      HelpTooltip.dispose(c)
     }
   }
 }

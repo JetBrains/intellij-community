@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
@@ -9,7 +9,6 @@ import com.intellij.diff.util.Range
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -24,8 +23,7 @@ import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successAsync
 import kotlin.properties.Delegates
 
-class GHPRDiffReviewSupportImpl(private val project: Project,
-                                private val reviewService: GHPRReviewServiceAdapter,
+class GHPRDiffReviewSupportImpl(private val reviewService: GHPRReviewServiceAdapter,
                                 private val diffRanges: List<Range>,
                                 private val reviewThreadMapper: (GHPullRequestReviewThread) -> GHPRDiffReviewThreadMapping?,
                                 private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
@@ -47,7 +45,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     val diffRangesModel = SingleValueModel(if (reviewService.canComment()) diffRanges else null)
     loadReviewThreads(reviewThreadsModel, viewer)
 
-    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, reviewService,
+    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(reviewService,
                                                                       createCommentParametersHelper,
                                                                       avatarIconsProviderFactory, currentUser)
     when (viewer) {

@@ -39,7 +39,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
@@ -142,7 +142,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         with(context.commentService) {
           if (canComment()) {
             val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
-            add(createCommentField(project, commentServiceAdapter, avatarIconsProvider, context.currentUser), CC().growX())
+            add(createCommentField(commentServiceAdapter, avatarIconsProvider, context.currentUser), CC().growX())
           }
         }
       }
@@ -213,13 +213,13 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     }
   }
 
-  private fun createCommentField(project: Project,
-                                 commentService: GHPRCommentServiceAdapter,
+  private fun createCommentField(commentService: GHPRCommentServiceAdapter,
                                  avatarIconsProvider: GHAvatarIconsProvider,
                                  currentUser: GHUser): JComponent {
-    return GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser) {
+    val model = GHPRSubmittableTextField.Model {
       commentService.addComment(EmptyProgressIndicator(), it)
     }
+    return GHPRSubmittableTextField.create(model, avatarIconsProvider, currentUser)
   }
 
   private fun createItemComponentFactory(project: Project,
@@ -231,7 +231,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(project, reviewService, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
+    return GHPRTimelineItemComponentFactory(reviewService, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
                                             eventsFactory,
                                             currentUser)
   }
