@@ -33,7 +33,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
   public EventLogStatisticsService(@NotNull DeviceConfiguration device,
                                    @NotNull EventLogRecorderConfig config,
-                                   @NotNull EventLogApplication application) {
+                                   @NotNull EventLogApplicationInfo application) {
     myDeviceConfiguration = device;
     myRecorderConfiguration = config;
     mySettingsService = new EventLogUploadSettingsService(config.getRecorderId(), application);
@@ -68,6 +68,8 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
+    final boolean isInternal = settings.getApplicationInfo().isInternal();
+    final String productCode = settings.getApplicationInfo().getProductCode();
     final LogEventFilter filter = settings.getEventFilter();
     try {
       int failed = 0;
@@ -76,7 +78,8 @@ public class EventLogStatisticsService implements StatisticsService {
       for (int i = 0; i < size; i++) {
         final File file = logs.get(i).getFile();
         final String deviceId = device.getDeviceId();
-        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, config.getRecorderId(), deviceId, filter, settings.isInternal());
+        final LogEventRecordRequest recordRequest =
+          LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal);
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {

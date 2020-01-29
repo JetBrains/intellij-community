@@ -92,7 +92,7 @@ public class SendEventLogAction extends AnAction {
     }
   }
 
-  private static class EventLogTestApplication extends EventLogApplicationImpl {
+  private static class EventLogTestApplication extends EventLogApplicationInfoImpl {
     private EventLogTestApplication() {
       super(true);
     }

@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist
 
+import com.intellij.internal.statistic.eventLog.EventLogBuildNumber
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange
-import com.intellij.openapi.util.BuildNumber
 
 class WhitelistBuilder {
   private val groupIds: MutableSet<String> = HashSet()
@@ -29,7 +29,7 @@ class WhitelistBuilder {
     return this
   }
 
-  fun addBuild(id: String, from: BuildNumber?, to: BuildNumber?): WhitelistBuilder {
+  fun addBuild(id: String, from: EventLogBuildNumber?, to: EventLogBuildNumber?): WhitelistBuilder {
     if (!groupBuilds.containsKey(id)) {
       groupIds.add(id)
       groupBuilds[id] = mutableListOf()

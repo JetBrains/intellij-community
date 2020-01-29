@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.eventLog;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -20,11 +19,12 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   private static final String DICTIONARY_SERVICE = "dictionary-service";
   private static final String PERCENT_TRAFFIC = "percent-traffic";
 
-  private boolean myInternal;
+  @NotNull
+  private EventLogApplicationInfo myApplicationInfo;
 
-  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplication application) {
+  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo application) {
     super(getConfigUrl(recorderId, application.getTemplateUrl(), application.isTest()), null);
-    myInternal = application.isInternal();
+    myApplicationInfo = application;
   }
 
   @NotNull
@@ -68,8 +68,8 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   }
 
   @Override
-  public boolean isInternal() {
-    return myInternal;
+  public @NotNull EventLogApplicationInfo getApplicationInfo() {
+    return myApplicationInfo;
   }
 
   @Nullable
@@ -84,6 +84,6 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   public String getWhiteListProductUrl() {
     final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
     if (approvedGroupsServiceUrl == null) return null;
-    return approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+    return approvedGroupsServiceUrl + myApplicationInfo.getProductCode() + ".json";
   }
 }

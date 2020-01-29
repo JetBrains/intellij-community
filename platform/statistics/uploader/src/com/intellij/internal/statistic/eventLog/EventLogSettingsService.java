@@ -17,5 +17,6 @@ public interface EventLogSettingsService {
   @NotNull
   LogEventFilter getEventFilter();
 
-  boolean isInternal();
+  @NotNull
+  EventLogApplicationInfo getApplicationInfo();
 }

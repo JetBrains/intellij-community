@@ -2,18 +2,24 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 
-public class EventLogApplicationImpl implements EventLogApplication {
+public class EventLogApplicationInfoImpl implements EventLogApplicationInfo {
   private boolean myIsTest;
 
-  public EventLogApplicationImpl(boolean isTest) {
+  public EventLogApplicationInfoImpl(boolean isTest) {
     myIsTest = isTest;
   }
 
   @Override
   public String getTemplateUrl() {
     return ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
+  }
+
+  @Override
+  public String getProductCode() {
+    return ApplicationInfo.getInstance().getBuild().getProductCode();
   }
 
   @Override

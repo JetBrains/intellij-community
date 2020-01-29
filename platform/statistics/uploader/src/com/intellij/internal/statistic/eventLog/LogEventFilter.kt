@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
-import com.intellij.openapi.util.BuildNumber
 
 interface LogEventFilter {
   fun accepts(event: LogEvent) : Boolean
@@ -16,8 +15,8 @@ class LogEventWhitelistFilter(val whitelist: FUSWhitelist) : LogEventFilter {
 
 object LogEventSnapshotBuildFilter : LogEventFilter {
   override fun accepts(event: LogEvent): Boolean {
-    val parts = BuildNumber.fromString(event.build).components
-    return parts.size != 2 || parts[1] != 0
+    val parts = EventLogBuildNumber.fromString(event.build)?.components
+    return parts != null && (parts.size != 2 || parts[1] != 0)
   }
 }
 

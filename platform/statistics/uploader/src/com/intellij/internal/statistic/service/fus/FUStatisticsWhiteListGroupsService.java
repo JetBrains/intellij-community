@@ -2,12 +2,12 @@
 package com.intellij.internal.statistic.service.fus;
 
 import com.google.gson.GsonBuilder;
+import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +145,7 @@ public class FUStatisticsWhiteListGroupsService {
     @Nullable
     public WLRule rules;
 
-    public boolean accepts(BuildNumber current) {
+    public boolean accepts(EventLogBuildNumber current) {
       if (!isValid()) {
         return false;
       }
@@ -181,9 +181,9 @@ public class FUStatisticsWhiteListGroupsService {
     public String from;
     public String to;
 
-    public boolean contains(BuildNumber build) {
-      return (StringUtil.isEmpty(to) || BuildNumber.fromString(to).compareTo(build) > 0) &&
-             (StringUtil.isEmpty(from) || BuildNumber.fromString(from).compareTo(build) <= 0);
+    public boolean contains(EventLogBuildNumber build) {
+      return (StringUtil.isEmpty(to) || EventLogBuildNumber.fromString(to).compareTo(build) > 0) &&
+             (StringUtil.isEmpty(from) || EventLogBuildNumber.fromString(from).compareTo(build) <= 0);
     }
   }
 }

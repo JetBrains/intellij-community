@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.JsonSyntaxException
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
 import java.io.BufferedReader
 import java.io.File
@@ -16,9 +15,9 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
     private const val RECORD_SIZE = 1000 * 1000 // 1000KB
     private val LOG = Logger.getInstance(LogEventRecordRequest::class.java)
 
-    fun create(file: File, recorder: String, deviceId: String, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
+    fun create(file: File, recorder: String, product: String, deviceId: String, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
       try {
-        return create(file, recorder, ApplicationInfo.getInstance().build.productCode, deviceId, RECORD_SIZE, filter, internal)
+        return create(file, recorder, product, deviceId, RECORD_SIZE, filter, internal)
       }
       catch (e: Exception) {
         LOG.warn("Failed reading event log file", e)

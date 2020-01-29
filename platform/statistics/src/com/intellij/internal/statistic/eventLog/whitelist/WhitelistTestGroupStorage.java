@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
+import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
@@ -9,7 +10,6 @@ import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWh
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLRule;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +63,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   @NotNull
   protected Map<String, WhiteListGroupRules> createValidators(@NotNull WLGroups groups, @NotNull WLGroups productionGroups) {
     final WLRule rules = merge(groups.rules, productionGroups.rules);
-    final BuildNumber buildNumber = BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
+    final EventLogBuildNumber buildNumber = EventLogBuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
       filter(group -> group.accepts(buildNumber)).
       collect(Collectors.toMap(group -> group.id, group -> createRules(group, rules)));

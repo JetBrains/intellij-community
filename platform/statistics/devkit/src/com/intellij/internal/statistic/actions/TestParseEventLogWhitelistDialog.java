@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -209,8 +210,9 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
     final File log = FileUtil.createTempFile("feature-event-log", ".log");
     try {
       FileUtil.writeToFile(log, text);
-      final String deviceId = EventLogConfiguration.INSTANCE.getDeviceId();
-      final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(log, "FUS", deviceId, filter, true);
+      String deviceId = EventLogConfiguration.INSTANCE.getDeviceId();
+      final String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
+      final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(log, "FUS", productCode, deviceId, filter, true);
       if (request == null) {
         throw new ParseEventLogWhitelistException("Failed parsing event log");
       }
