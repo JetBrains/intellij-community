@@ -408,35 +408,8 @@ public final class TerminalView {
     }
 
     @Override
-    public void closeAll() {
-
-    }
-
-    @Override
-    public void addListener(Listener listener, Disposable parent) {
-
-    }
-
-    @Override
     public boolean isEmpty() {
       return false;
-    }
-
-    @Nullable
-    @Override
-    public Image startDropOver(@NotNull DockableContent content, RelativePoint point) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public Image processDropOver(@NotNull DockableContent content, RelativePoint point) {
-      return null;
-    }
-
-    @Override
-    public void resetDropOver(@NotNull DockableContent content) {
-
     }
 
     @Override

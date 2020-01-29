@@ -17,6 +17,7 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
+
     TerminalView terminalView = TerminalView.getInstance(project);
     terminalView.initToolWindow(toolWindow);
     terminalView.restoreTabs(TerminalArrangementManager.getInstance(project).getArrangementState());

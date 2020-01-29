@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -142,11 +142,6 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
     window.setFilePinned(file, dockableEditor.isPinned());
-  }
-
-  @Override
-  public Image startDropOver(@NotNull DockableContent content, RelativePoint point) {
-    return null;
   }
 
   @Override
