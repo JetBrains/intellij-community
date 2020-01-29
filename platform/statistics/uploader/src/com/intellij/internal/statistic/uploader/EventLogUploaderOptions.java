@@ -2,6 +2,8 @@
 package com.intellij.internal.statistic.uploader;
 
 public interface EventLogUploaderOptions {
+  String IDE_TOKEN = "--ide-token";
+
   String RECORDER_OPTION = "--recorder";
   String LOGS_OPTION = "--files";
 

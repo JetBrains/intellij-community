@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class EventLogUploader {
+  private static final int WAIT_FOR_IDE_MS = 1000;
+
   public static void main(String[] args) {
     execute(args);
   }
@@ -46,10 +48,15 @@ public class EventLogUploader {
       return;
     }
 
+    if (!waitForIde(logger, options, 20)) {
+      logger.warn("Cannot send logs because IDE didn't close during " + (10 * WAIT_FOR_IDE_MS) + "ms");
+      return;
+    }
+
     logger.info("Start uploading...");
     logger.info("{url:" + appInfo.getTemplateUrl() + ", product:" + appInfo.getProductCode() + ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
     String logs = recorder.getLogFilesProvider().getLogFiles().stream().
-      map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining());
+      map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
 
     logger.info("{recorder:" + recorder.getRecorderId() + ", files:" + logs + "}");
     logger.info("{device:" + device.getDeviceId() + ", bucket:" + device.getBucket() + "}");
@@ -106,5 +113,28 @@ public class EventLogUploader {
       return new EventLogExternalApplicationInfo(url, productCode, isInternal, isTest, logger);
     }
     return null;
+  }
+
+  private static boolean waitForIde(DataCollectorDebugLogger logger, Map<String, String> options, int maxAttempts) {
+    String ideToken = options.get(EventLogUploaderOptions.IDE_TOKEN);
+    if (ideToken == null) {
+      return true;
+    }
+
+    logger.info("IDE token file: " + ideToken);
+    File token = new File(ideToken);
+    try {
+      int attempt = 0;
+      while (attempt < maxAttempts && token.exists()) {
+        logger.info("Waiting for " + WAIT_FOR_IDE_MS + "ms for IDE to close. Attempt #" + attempt);
+        //noinspection BusyWait
+        Thread.sleep(WAIT_FOR_IDE_MS);
+        attempt++;
+      }
+    }
+    catch (InterruptedException e) {
+      // ignore
+    }
+    return !token.exists();
   }
 }

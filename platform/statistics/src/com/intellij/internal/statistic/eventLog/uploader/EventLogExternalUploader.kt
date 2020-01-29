@@ -65,6 +65,7 @@ object EventLogExternalUploader {
     args += "-Djava.io.tmpdir=${tempDir.path}"
     args += UPLOADER_MAIN_CLASS
 
+    addArgument(args, IDE_TOKEN, Paths.get(PathManager.getSystemPath(), "token").toAbsolutePath().toString())
     addArgument(args, RECORDER_OPTION, recorder.getRecorderId())
     val joinedPath: String = logFiles.joinToString(separator = File.pathSeparator)
     addArgument(args, LOGS_OPTION, joinedPath)
