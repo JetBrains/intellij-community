@@ -19,8 +19,8 @@ public class StatisticsEventLogUtil {
   @NonNls public static final String UTF8 = "UTF-8";
 
   @NotNull
-  public static HttpClient create() {
-    return HttpClientBuilder.create().setUserAgent("IntelliJ").build();
+  public static HttpClient create(@NotNull String userAgent) {
+    return HttpClientBuilder.create().setUserAgent(userAgent).build();
   }
 
   public static boolean isEmpty(@Nullable String s) {

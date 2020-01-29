@@ -67,6 +67,7 @@ object EventLogExternalUploader {
     addArgument(args, BUCKET_OPTION, device.bucket.toString())
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
+    addArgument(args, USER_AGENT_OPTION, applicationInfo.userAgent)
 
     if (applicationInfo.isInternal) {
       args += INTERNAL_OPTION

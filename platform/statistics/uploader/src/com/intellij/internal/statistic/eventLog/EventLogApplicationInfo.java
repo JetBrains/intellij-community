@@ -10,6 +10,9 @@ public interface EventLogApplicationInfo {
   @NotNull
   String getProductCode();
 
+  @NotNull
+  String getUserAgent();
+
   boolean isInternal();
 
   boolean isTest();

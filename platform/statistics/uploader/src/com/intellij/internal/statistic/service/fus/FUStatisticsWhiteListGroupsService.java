@@ -53,27 +53,29 @@ public class FUStatisticsWhiteListGroupsService {
    * @return null if error happened during groups fetching
    */
   @Nullable
-  public static FUSWhitelist getApprovedGroups(@NotNull String serviceUrl) {
-    final String content = getFUSWhiteListContent(serviceUrl);
+  public static FUSWhitelist getApprovedGroups(@NotNull String userAgent, @NotNull String serviceUrl) {
+    final String content = getFUSWhiteListContent(userAgent, serviceUrl);
     return content != null ? parseApprovedGroups(content) : null;
   }
 
   @Nullable
   public static String loadWhiteListFromServer(@NotNull EventLogUploadSettingsService settingsService) {
-    return getFUSWhiteListContent(settingsService.getWhiteListProductUrl());
+    String userAgent = settingsService.getApplicationInfo().getUserAgent();
+    return getFUSWhiteListContent(userAgent, settingsService.getWhiteListProductUrl());
   }
 
   public static long lastModifiedWhitelist(@NotNull EventLogUploadSettingsService settingsService) {
-    return lastModifiedWhitelist(settingsService.getWhiteListProductUrl());
+    String userAgent = settingsService.getApplicationInfo().getUserAgent();
+    return lastModifiedWhitelist(userAgent, settingsService.getWhiteListProductUrl());
   }
 
   @Nullable
-  private static String getFUSWhiteListContent(@Nullable String serviceUrl) {
+  private static String getFUSWhiteListContent(@NotNull String userAgent, @Nullable String serviceUrl) {
     if (StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) return null;
 
     String content = null;
     try {
-      HttpResponse response = StatisticsEventLogUtil.create().execute(new HttpGet(serviceUrl));
+      HttpResponse response = StatisticsEventLogUtil.create(userAgent).execute(new HttpGet(serviceUrl));
       HttpEntity entity = response.getEntity();
       if (entity != null) {
         content = EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8);
@@ -85,10 +87,10 @@ public class FUStatisticsWhiteListGroupsService {
     return content;
   }
 
-  private static long lastModifiedWhitelist(@Nullable String serviceUrl) {
+  private static long lastModifiedWhitelist(@NotNull String userAgent, @Nullable String serviceUrl) {
     try {
       if (!StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) {
-        final HttpResponse response = StatisticsEventLogUtil.create().execute(new HttpHead(serviceUrl));
+        final HttpResponse response = StatisticsEventLogUtil.create(userAgent).execute(new HttpHead(serviceUrl));
         return Stream.of(response.getHeaders(HttpHeaders.LAST_MODIFIED)).
           flatMap(header -> Stream.of(header.getElements())).
           filter(Objects::nonNull).

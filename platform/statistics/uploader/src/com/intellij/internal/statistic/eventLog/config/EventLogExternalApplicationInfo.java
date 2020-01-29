@@ -4,20 +4,24 @@ package com.intellij.internal.statistic.eventLog.config;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class EventLogExternalApplicationInfo implements EventLogApplicationInfo {
   private final DataCollectorDebugLogger myLogger;
 
   private final String myTemplateUrl;
   private final String myProductCode;
+  private final String myUserAgent;
   private final boolean myIsInternal;
   private final boolean myIsTest;
 
   public EventLogExternalApplicationInfo(@NotNull String templateUrl, @NotNull String productCode,
+                                         @Nullable String userAgent,
                                          boolean isInternal, boolean isTest,
                                          @NotNull DataCollectorDebugLogger logger) {
     myTemplateUrl = templateUrl;
     myProductCode = productCode;
+    myUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
     myIsInternal = isInternal;
     myIsTest = isTest;
     myLogger = logger;
@@ -33,6 +37,12 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   @Override
   public String getProductCode() {
     return myProductCode;
+  }
+
+  @NotNull
+  @Override
+  public String getUserAgent() {
+    return myUserAgent;
   }
 
   @Override

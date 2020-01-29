@@ -17,9 +17,9 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   @NotNull
   private final EventLogApplicationInfo myApplicationInfo;
 
-  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo application) {
-    super(getConfigUrl(recorderId, application.getTemplateUrl(), application.isTest()), null, application.getLogger());
-    myApplicationInfo = application;
+  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
+    super(getConfigUrl(recorderId, appInfo.getTemplateUrl(), appInfo.isTest()), null, appInfo.getUserAgent(), appInfo.getLogger());
+    myApplicationInfo = appInfo;
   }
 
   @NotNull
@@ -76,7 +76,8 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   protected FUSWhitelist getWhitelistedGroups() {
     final String productUrl = getWhiteListProductUrl();
     if (productUrl == null) return null;
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl);
+    String userAgent = myApplicationInfo.getUserAgent();
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(userAgent, productUrl);
   }
 
   @NonNls

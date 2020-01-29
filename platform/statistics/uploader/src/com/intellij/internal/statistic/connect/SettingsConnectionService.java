@@ -29,13 +29,17 @@ public abstract class SettingsConnectionService {
   @Nullable
   private final String myDefaultServiceUrl;
 
+  @NotNull
+  private final String myUserAgent;
+
   @Nullable
   private final DataCollectorDebugLogger myLogger;
 
   protected SettingsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl,
-                                      @Nullable DataCollectorDebugLogger logger) {
+                                      @NotNull String userAgent, @Nullable DataCollectorDebugLogger logger) {
     mySettingsUrl = settingsUrl;
     myDefaultServiceUrl = defaultServiceUrl;
+    myUserAgent = userAgent;
     myLogger = logger;
   }
 
@@ -56,7 +60,7 @@ public abstract class SettingsConnectionService {
     if (mySettingsUrl == null) return Collections.emptyMap();
 
     try {
-      HttpEntity entity = StatisticsEventLogUtil.create().execute(new HttpGet(mySettingsUrl)).getEntity();
+      HttpEntity entity = StatisticsEventLogUtil.create(myUserAgent).execute(new HttpGet(mySettingsUrl)).getEntity();
       InputStream content = entity != null ? entity.getContent() : null;
       if (content != null) {
         Map<String, String> settings = new LinkedHashMap<>();

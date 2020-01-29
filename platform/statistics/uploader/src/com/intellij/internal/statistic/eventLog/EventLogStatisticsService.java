@@ -14,7 +14,6 @@ import org.apache.http.client.entity.GzipCompressingEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +105,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         try {
-          HttpResponse response = execute(serviceUrl, recordRequest);
+          HttpResponse response = execute(info.getUserAgent(), serviceUrl, recordRequest);
           int code = response.getStatusLine().getStatusCode();
           if (code == HttpStatus.SC_OK) {
             decorator.onSucceed(recordRequest);
@@ -141,10 +140,10 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
-  private static HttpResponse execute(String serviceUrl, LogEventRecordRequest recordRequest) throws IOException {
+  private static HttpResponse execute(@NotNull String userAgent, String serviceUrl, LogEventRecordRequest recordRequest) throws IOException {
     HttpPost post = new HttpPost(serviceUrl);
     post.setEntity(new GzipCompressingEntity(new StringEntity(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON)));
-    return HttpClientBuilder.create().build().execute(post);
+    return StatisticsEventLogUtil.create(userAgent).execute(post);
   }
 
   @NotNull

@@ -54,7 +54,8 @@ public class EventLogUploader {
     }
 
     logger.info("Start uploading...");
-    logger.info("{url:" + appInfo.getTemplateUrl() + ", product:" + appInfo.getProductCode() + ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
+    logger.info("{url:" + appInfo.getTemplateUrl() + ", product:" + appInfo.getProductCode() + ", userAgent:" + appInfo.getUserAgent() +
+                ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
     String logs = recorder.getLogFilesProvider().getLogFiles().stream().
       map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
 
@@ -107,10 +108,11 @@ public class EventLogUploader {
   private static EventLogApplicationInfo newApplicationInfo(Map<String, String> options, DataCollectorDebugLogger logger) {
     String url = options.get(EventLogUploaderOptions.URL_OPTION);
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
+    String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
-      return new EventLogExternalApplicationInfo(url, productCode, isInternal, isTest, logger);
+      return new EventLogExternalApplicationInfo(url, productCode, userAgent, isInternal, isTest, logger);
     }
     return null;
   }
