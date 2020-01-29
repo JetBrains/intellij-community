@@ -94,6 +94,7 @@ interface CellBuilder<out T : JComponent> {
   val component: T
 
   fun comment(text: String, maxLineLength: Int = 70): CellBuilder<T>
+  fun commentComponent(text: String, maxLineLength: Int = 70): CellBuilder<T>
   fun focused(): CellBuilder<T>
   fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
   fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>

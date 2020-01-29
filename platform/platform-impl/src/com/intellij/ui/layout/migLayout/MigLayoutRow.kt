@@ -36,15 +36,20 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     // as static method to ensure that members of current row are not used
     private fun createCommentRow(parent: MigLayoutRow,
                                  comment: String,
-                                 component: JComponent,
+                                 maxLineLength: Int,
                                  indent: Int,
                                  isParentRowLabeled: Boolean,
-                                 maxLineLength: Int) {
+                                 forComponent: Boolean,
+                                 columnIndex: Int) {
       val cc = CC()
       val commentRow = parent.createChildRow()
       commentRow.isComment = true
       commentRow.addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength), cc)
-      if (isParentRowLabeled) {
+      if (forComponent) {
+        cc.horizontal.gapBefore = BoundSize.NULL_SIZE
+        cc.skip = columnIndex
+      }
+      else if (isParentRowLabeled) {
         cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         cc.skip()
       }
@@ -367,11 +372,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   private val JComponent.constraints get() = builder.componentConstraints.getOrPut(this) { CC() }
 
-  fun addCommentRow(component: JComponent, comment: String, maxLineLength: Int = 70) {
+  fun addCommentRow(component: JComponent, comment: String, maxLineLength: Int, forComponent: Boolean) {
     gapAfter = "${spacing.commentVerticalTopGap}px!"
 
     val isParentRowLabeled = labeled
-    createCommentRow(this, comment, component, indent, isParentRowLabeled, maxLineLength)
+    createCommentRow(this, comment, maxLineLength, indent, isParentRowLabeled, forComponent, columnIndex)
   }
 
   private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: CC): Boolean {
@@ -455,7 +460,12 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
-    row.addCommentRow(component, text, maxLineLength)
+    row.addCommentRow(component, text, maxLineLength, forComponent = false)
+    return this
+  }
+
+  override fun commentComponent(text: String, maxLineLength: Int): CellBuilder<T> {
+    row.addCommentRow(component, text, maxLineLength, forComponent = true)
     return this
   }
 
