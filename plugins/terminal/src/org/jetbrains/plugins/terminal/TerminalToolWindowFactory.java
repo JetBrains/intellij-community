@@ -20,8 +20,11 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
 
     TerminalView terminalView = TerminalView.getInstance(project);
     terminalView.initToolWindow(toolWindow);
-    terminalView.restoreTabs(TerminalArrangementManager.getInstance(project).getArrangementState());
+    TerminalArrangementManager terminalArrangementManager = TerminalArrangementManager.getInstance(project);
+    if (toolWindow.isAvailable()) {
+      terminalView.restoreTabs(toolWindow, terminalArrangementManager.getArrangementState());
+    }
     // allow to save tabs after the tabs are restored
-    TerminalArrangementManager.getInstance(project).setToolWindow(toolWindow);
+    terminalArrangementManager.setToolWindow(toolWindow);
   }
 }

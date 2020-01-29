@@ -120,12 +120,7 @@ public final class TerminalView {
     }
   }
 
-  void restoreTabs(@Nullable TerminalArrangementState arrangementState) {
-    ToolWindow toolWindow = getWindow();
-    if (toolWindow == null || !toolWindow.isAvailable()) {
-      return;
-    }
-
+  void restoreTabs(@NotNull ToolWindow toolWindow, @Nullable TerminalArrangementState arrangementState) {
     ContentManager contentManager = toolWindow.getContentManager();
 
     if (arrangementState != null) {
