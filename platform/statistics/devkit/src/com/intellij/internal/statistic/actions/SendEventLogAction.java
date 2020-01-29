@@ -108,12 +108,12 @@ public class SendEventLogAction extends AnAction {
     private final List<LogEventRecordRequest> myFailed = new ArrayList<>();
 
     @Override
-    public void succeed(@NotNull LogEventRecordRequest request) {
+    public void onSucceed(@NotNull LogEventRecordRequest request) {
       mySucceed.add(request);
     }
 
     @Override
-    public void failed(@Nullable LogEventRecordRequest request) {
+    public void onFailed(@Nullable LogEventRecordRequest request) {
       if (request != null) {
         myFailed.add(request);
       }
@@ -124,7 +124,7 @@ public class SendEventLogAction extends AnAction {
 
     @NotNull
     @Override
-    public StatisticsResult toResult() {
+    public StatisticsResult onFinished() {
       int total = mySucceed.size() + myFailed.size();
       if (mySucceed.isEmpty() && myFailed.isEmpty()) {
         return new StatisticsResult(StatisticsResult.ResultCode.NOTHING_TO_SEND, "No files to upload.");

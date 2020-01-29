@@ -6,10 +6,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface EventLogResultDecorator {
-  void succeed(@NotNull LogEventRecordRequest request);
+  default void onLogsLoaded(int localFiles) {}
 
-  void failed(@Nullable LogEventRecordRequest request);
+  void onSucceed(@NotNull LogEventRecordRequest request);
+
+  void onFailed(@Nullable LogEventRecordRequest request);
 
   @NotNull
-  StatisticsResult toResult();
+  StatisticsResult onFinished();
 }

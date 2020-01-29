@@ -35,17 +35,25 @@ public class EventLogStatisticsService implements StatisticsService {
   private final EventLogSettingsService mySettingsService;
   private final EventLogRecorderConfig myRecorderConfiguration;
 
+  private final EventLogSendListener mySendListener;
+
   public EventLogStatisticsService(@NotNull DeviceConfiguration device,
                                    @NotNull EventLogRecorderConfig config,
-                                   @NotNull EventLogApplicationInfo application) {
+                                   @NotNull EventLogApplicationInfo application,
+                                   @Nullable EventLogSendListener listener) {
     myDeviceConfiguration = device;
     myRecorderConfiguration = config;
     mySettingsService = new EventLogUploadSettingsService(config.getRecorderId(), application);
+    mySendListener = listener;
   }
 
   @Override
   public StatisticsResult send() {
-    return send(myDeviceConfiguration, myRecorderConfiguration, mySettingsService, new EventLogCounterResultDecorator());
+    return send(myDeviceConfiguration, myRecorderConfiguration, mySettingsService, new EventLogCounterResultDecorator(mySendListener));
+  }
+
+  public StatisticsResult send(@NotNull EventLogResultDecorator decorator) {
+    return send(myDeviceConfiguration, myRecorderConfiguration, mySettingsService, decorator);
   }
 
   public static StatisticsResult send(@NotNull DeviceConfiguration device,
@@ -79,7 +87,7 @@ public class EventLogStatisticsService implements StatisticsService {
     final String productCode = info.getProductCode();
     final LogEventFilter filter = settings.getEventFilter();
     try {
-      int failed = 0;
+      decorator.onLogsLoaded(logs.size());
       final List<File> toRemove = new ArrayList<>(logs.size());
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
@@ -92,9 +100,8 @@ public class EventLogStatisticsService implements StatisticsService {
           if (logger.isTraceEnabled()) {
             logger.trace(file.getName() + "-> " + error);
           }
-          decorator.failed(recordRequest);
+          decorator.onFailed(recordRequest);
           toRemove.add(file);
-          failed++;
           continue;
         }
 
@@ -102,12 +109,11 @@ public class EventLogStatisticsService implements StatisticsService {
           HttpResponse response = execute(serviceUrl, recordRequest);
           int code = response.getStatusLine().getStatusCode();
           if (code == HttpStatus.SC_OK) {
-            decorator.succeed(recordRequest);
+            decorator.onSucceed(recordRequest);
             toRemove.add(file);
           }
           else {
-            failed++;
-            decorator.failed(recordRequest);
+            decorator.onFailed(recordRequest);
             if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
               toRemove.add(file);
             }
@@ -118,7 +124,6 @@ public class EventLogStatisticsService implements StatisticsService {
           }
         }
         catch (Exception e) {
-          failed++;
           if (logger.isTraceEnabled()) {
             logger.trace(file.getName() + " -> " + e.getMessage());
           }
@@ -126,9 +131,7 @@ public class EventLogStatisticsService implements StatisticsService {
       }
 
       cleanupFiles(toRemove, logger);
-      //TODO: add listeners
-      //EventLogSystemLogger.logFilesSend(config.getRecorderId(), logs.size(), size, failed);
-      return decorator.toResult();
+      return decorator.onFinished();
     }
     catch (Exception e) {
       final String message = e.getMessage();
@@ -220,22 +223,38 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   private static class EventLogCounterResultDecorator implements EventLogResultDecorator {
+    private final EventLogSendListener myListener;
+
+    private int myLocalFiles = -1;
     private int myFailed = 0;
     private int mySucceed = 0;
 
+    private EventLogCounterResultDecorator(@Nullable EventLogSendListener listener) {
+      myListener = listener;
+    }
+
     @Override
-    public void succeed(@NotNull LogEventRecordRequest request) {
+    public void onLogsLoaded(int localFiles) {
+      myLocalFiles = localFiles;
+    }
+
+    @Override
+    public void onSucceed(@NotNull LogEventRecordRequest request) {
       mySucceed++;
     }
 
     @Override
-    public void failed(@Nullable LogEventRecordRequest request) {
+    public void onFailed(@Nullable LogEventRecordRequest request) {
       myFailed++;
     }
 
     @NotNull
     @Override
-    public StatisticsResult toResult() {
+    public StatisticsResult onFinished() {
+      if (myListener != null) {
+        myListener.onLogsSend(mySucceed, myFailed, myLocalFiles);
+      }
+
       int total = mySucceed + myFailed;
       if (total == 0) {
         return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to upload.");
