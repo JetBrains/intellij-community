@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive
 
 import com.intellij.icons.AllIcons
@@ -29,18 +29,14 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.index.IndexedDetails.Companion.getSubject
 import com.intellij.vcs.log.graph.DefaultColorGenerator
-import com.intellij.vcs.log.graph.EdgePrintElement
-import com.intellij.vcs.log.graph.NodePrintElement
-import com.intellij.vcs.log.graph.PrintElement
-import com.intellij.vcs.log.paint.ColorGenerator
 import com.intellij.vcs.log.paint.PaintParameters
-import com.intellij.vcs.log.paint.SimpleGraphCellPainter
 import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
+import git4idea.rebase.interactive.CommitsTable.Companion.DEFAULT_CELL_HEIGHT
 import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.*
@@ -48,6 +44,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.geom.Ellipse2D
 import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
@@ -261,7 +258,7 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
 
 private open class CommitsTable(val project: Project, val model: CommitsTableModel, private val disposable: Disposable) : JBTable(model) {
   companion object {
-    private const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
+    const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
   }
 
   init {
@@ -430,36 +427,9 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
 
 private class CommitIconRenderer : SimpleColoredRenderer() {
   companion object {
-    private val UP_EDGE = object : EdgePrintElement {
-      override fun getPositionInOtherRow(): Int = 0
-      override fun getType(): EdgePrintElement.Type = EdgePrintElement.Type.UP
-      override fun getLineStyle(): EdgePrintElement.LineStyle = EdgePrintElement.LineStyle.SOLID
-      override fun hasArrow(): Boolean = false
-      override fun getRowIndex(): Int = 0
-      override fun getPositionInCurrentRow(): Int = 0
-      override fun getColorId(): Int = 0
-      override fun isSelected(): Boolean = false
-    }
-    private val NODE = object : NodePrintElement {
-      override fun getRowIndex(): Int = 0
-      override fun getPositionInCurrentRow(): Int = 0
-      override fun getColorId(): Int = 0
-      override fun isSelected(): Boolean = false
-    }
-  }
-
-  private val nodeColor = DefaultColorGenerator().getColor(1)
-  private val painter = object : SimpleGraphCellPainter(ColorGenerator { nodeColor }) {
-    fun drawDownLine(g2: Graphics2D) {
-      val tableRowHeight = this@CommitIconRenderer.rowHeight
-      val nodeWidth = PaintParameters.getNodeWidth(rowHeight)
-      val y2: Int = tableRowHeight
-      val y1: Int = rowHeight / 2
-      val x: Int = nodeWidth / 2
-      g2.color = nodeColor
-      g2.stroke = BasicStroke(PaintParameters.getLineThickness(rowHeight), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
-      g2.drawLine(x, y1, x, y2)
-    }
+    private val GRAPH_COLOR = DefaultColorGenerator().getColor(1)
+    private const val NODE_WIDTH = 16
+    private const val LINE_WIDTH = 1.5f
   }
   private var isHead = false
   private var withNode = true
@@ -467,7 +437,7 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    drawCommitIcon(g as Graphics2D)
+    (g as Graphics2D).drawCommitIcon()
   }
 
   fun update(
@@ -491,15 +461,42 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
     this.rowHeight = rowHeight
   }
 
-  private fun drawCommitIcon(g2: Graphics2D) {
-    val elements = mutableListOf<PrintElement>(UP_EDGE)
+  private fun Graphics2D.drawCommitIcon() {
+    val tableRowHeight = this@CommitIconRenderer.rowHeight
+    setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     if (withNode) {
-      elements.add(NODE)
+      drawNode()
     }
-    painter.draw(g2, elements)
+    drawEdge(tableRowHeight, false)
     if (!isHead) {
-      painter.drawDownLine(g2)
+      drawEdge(tableRowHeight, true)
     }
+  }
+
+  private fun Graphics2D.drawNode() {
+    val x0 = NODE_WIDTH / 2
+    val y0 = DEFAULT_CELL_HEIGHT / 2
+    drawCircle(x0, y0)
+  }
+
+  private fun Graphics2D.drawCircle(x0: Int, y0: Int, circleRadius: Int = NODE_WIDTH / 4, circleColor: Color = GRAPH_COLOR) {
+    val circle = Ellipse2D.Double(
+      x0 - circleRadius + 0.5,
+      y0 - circleRadius + 0.5,
+      2.0 * circleRadius,
+      2.0 * circleRadius
+    )
+    color = circleColor
+    fill(circle)
+  }
+
+  private fun Graphics2D.drawEdge(tableRowHeight: Int, isDownEdge: Boolean) {
+    val y1 = tableRowHeight / 2
+    val y2 = if (isDownEdge) tableRowHeight else 0
+    val x = NODE_WIDTH / 2
+    color = GRAPH_COLOR
+    stroke = BasicStroke(LINE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
+    drawLine(x, y1, x, y2)
   }
 }
 
