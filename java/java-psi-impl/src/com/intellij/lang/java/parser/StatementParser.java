@@ -162,29 +162,22 @@ public class StatementParser {
       refPos.rollbackTo();
 
       if (suspectedLT == JavaTokenType.LT || suspectedLT == JavaTokenType.DOT && next == JavaTokenType.AT) {
-        final boolean constructorRef;
-
         PsiBuilder.Marker declStatement = builder.mark();
-        PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
 
-        if (decl == null) {
-          PsiBuilder.Marker marker = myParser.getReferenceParser().parseType(builder, 0);
-          // if the type declaration ends with "::" then it is a method reference to a constructor
-          constructorRef = builder.getTokenType() == JavaTokenType.DOUBLE_COLON;
-          if (!constructorRef) {
-            error(builder, JavaErrorBundle.message("expected.identifier"));
-            if (marker == null) builder.advanceLexer();
-          }
-        }
-        else {
-          constructorRef = false;
-        }
-
-        if (!constructorRef) {
+        if (myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK) != null) {
           done(declStatement, JavaElementType.DECLARATION_STATEMENT);
           return declStatement;
         }
-        declStatement.rollbackTo();
+
+        PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, 0);
+        if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
+          error(builder, JavaErrorBundle.message("expected.identifier"));
+          if (type == null) builder.advanceLexer();
+          done(declStatement, JavaElementType.DECLARATION_STATEMENT);
+          return declStatement;
+        }
+
+        declStatement.rollbackTo();  // generic type followed by the double colon is a good candidate for being a constructor reference
       }
     }
 
