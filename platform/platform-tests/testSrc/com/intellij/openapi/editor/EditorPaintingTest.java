@@ -186,6 +186,14 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testLineSeparatorRepaint() throws Exception {
+    initText("a\nb");
+    RangeHighlighter highlighter = addRangeHighlighter(3, 3, 0, null);
+    highlighter.setLineSeparatorColor(Color.red);
+    highlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
+    checkPartialRepaint(0);
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());

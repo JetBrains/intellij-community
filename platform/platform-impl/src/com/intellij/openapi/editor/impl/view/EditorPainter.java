@@ -114,6 +114,8 @@ public class EditorPainter implements TextDrawingCallback {
     private final int myEndVisualLine;
     private final int myStartOffset;
     private final int myEndOffset;
+    private final int mySeparatorHighlightersStartOffset;
+    private final int mySeparatorHighlightersEndOffset;
     private final ClipDetector myClipDetector;
     private final IterationState.CaretData myCaretData;
     private final Map<Integer, Couple<Integer>> myVirtualSelectionMap;
@@ -143,6 +145,8 @@ public class EditorPainter implements TextDrawingCallback {
       myEndVisualLine = myView.yToVisualLine(myClip.y + myClip.height - 1);
       myStartOffset = myView.visualLineToOffset(myStartVisualLine);
       myEndOffset = myView.visualLineToOffset(myEndVisualLine + 1);
+      mySeparatorHighlightersStartOffset = DocumentUtil.getLineStartOffset(myView.visualLineToOffset(myStartVisualLine - 1), myDocument);
+      mySeparatorHighlightersEndOffset = DocumentUtil.getLineEndOffset(myView.visualLineToOffset(myEndVisualLine + 2), myDocument);
       myClipDetector = new ClipDetector(myEditor, myClip);
       myCaretData = myEditor.isPaintSelection() ? IterationState.createCaretData(myEditor) : null;
       myVirtualSelectionMap = createVirtualSelectionMap(myEditor, myStartVisualLine, myEndVisualLine);
@@ -560,12 +564,11 @@ public class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintLineMarkersSeparators(MarkupModelEx markupModel) {
-      // we decrement startOffset to capture also line-range highlighters on the previous line,
-      // cause they can render a separator visible on current line
-      markupModel.processRangeHighlightersOverlappingWith(myStartOffset - 1, myEndOffset, highlighter -> {
-        paintLineMarkerSeparator(highlighter);
-        return true;
-      });
+      markupModel.processRangeHighlightersOverlappingWith(mySeparatorHighlightersStartOffset, mySeparatorHighlightersEndOffset,
+                                                          highlighter -> {
+                                                            paintLineMarkerSeparator(highlighter);
+                                                            return true;
+                                                          });
     }
 
     private void paintLineMarkerSeparator(RangeHighlighter marker) {
