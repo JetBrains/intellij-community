@@ -1,3 +1,8 @@
+# 16
+
+* add `run manager initialization` 
+* add `projectComponentsInitialized event handling` 
+
 ## 15
 
 * add `project frame assigning` (`APP_INIT`).

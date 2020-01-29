@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -311,7 +311,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
+
+    String activityNamePrefix = activityNamePrefix();
+    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startActivity("projectComponentsInitialized event handling");
     application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
+    if (activity != null) {
+      activity.end();
+    }
   }
 
   @Override

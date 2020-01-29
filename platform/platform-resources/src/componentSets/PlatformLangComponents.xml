@@ -25,6 +25,8 @@
     <listener class="com.intellij.internal.statistic.local.ActionsLocalSummaryListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 
     <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+
+    <listener class="com.intellij.execution.impl.ProjectRunConfigurationInitializer" topic="com.intellij.openapi.project.impl.ProjectLifecycleListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.ide.bookmarks.BookmarkManager$BookmarkManagerPsiDocumentManagerListener" topic="com.intellij.psi.PsiDocumentListener" activeInTestMode="false"/>
