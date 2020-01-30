@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -40,7 +40,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "15"
+    internal const val VERSION = "16"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->

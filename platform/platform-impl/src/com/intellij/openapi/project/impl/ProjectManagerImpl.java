@@ -308,7 +308,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     boolean succeed = false;
     try {
-      project.registerComponents();
+      ProjectLoadHelper.registerComponents(project);
       project.getStateStore().setPath(file, isRefreshVfsNeeded, template);
       project.init(indicator);
       succeed = true;

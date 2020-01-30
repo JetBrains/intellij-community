@@ -2,7 +2,6 @@
 package com.intellij.execution
 
 import com.intellij.execution.configurations.*
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -24,7 +23,7 @@ abstract class RunManager {
         // https://gist.github.com/develar/5bcf39b3f0ec08f507ec112d73375f2b
         LOG.debug("Must be not called before project components initialized")
       }
-      return ServiceManager.getService(project, RunManager::class.java)
+      return project.getService(RunManager::class.java)
     }
 
     @JvmStatic

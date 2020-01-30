@@ -1,7 +1,8 @@
 # 16
 
-* add `run manager initialization` 
-* add `projectComponentsInitialized event handling` 
+* add `RunManager initialization` 
+* add `projectComponentCreated event handling` 
+* add `projectComponentCreated` 
 
 ## 15
 
