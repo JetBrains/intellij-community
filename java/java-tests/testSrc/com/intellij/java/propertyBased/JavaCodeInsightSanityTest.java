@@ -50,7 +50,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+    return JAVA_14;
   }
 
   public void testRandomActivity() {
