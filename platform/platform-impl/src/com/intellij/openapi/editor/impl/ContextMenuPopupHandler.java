@@ -36,8 +36,8 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
         JPopupMenu popupComponent = popupMenu.getComponent();
         EditorMouseHoverPopupControl.disablePopupsWhileShowing(event.getEditor(), popupComponent);
         popupComponent.show(c, e.getX(), e.getY());
-        event.consume();
       }
+      event.consume();
     }
     return true;
   }

@@ -2581,6 +2581,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               if (myMousePressedEvent != null) {
                 if (mySettings.isDndEnabled()) {
                   if (!myDragStarted) {
+                    if (ApplicationManager.getApplication().isUnitTestMode()) {
+                      // It can lead to process hanging, and breaking drag-n-drop in other applications
+                      throw new UnsupportedOperationException("Drag'n'drop operation shouldn't be started in tests");
+                    }
                     myDragStarted = true;
                     boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
                     mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
@@ -4062,8 +4066,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private boolean isPointAfterSelectionEnd(Point p) {
-      Point selectionEnd = visualPositionToXY(mySelectionModel.getSelectionEndPosition());
-      return p.y >= selectionEnd.y + getLineHeight() || p.y >= selectionEnd.y && p.x > selectionEnd.x;
+      VisualPosition selectionEndPosition = mySelectionModel.getSelectionEndPosition();
+      Point selectionEnd = visualPositionToXY(selectionEndPosition);
+      return p.y >= selectionEnd.y + getLineHeight() ||
+             p.y >= selectionEnd.y && p.x > selectionEnd.x && xyToVisualPosition(p).column > selectionEndPosition.column;
     }
   }
 
