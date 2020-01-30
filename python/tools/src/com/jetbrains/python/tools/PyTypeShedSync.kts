@@ -24,29 +24,41 @@ println("Bundled: ${bundled.abs()}")
 println("Syncing")
 sync(repo, bundled)
 
-val whiteList = setOf(
+val whiteList = sequenceOf(
   "__builtin__",
   "__future__",
+  "_codecs",
   "_importlib_modulespec",
   "_io",
+  "_thread",
   "abc",
   "argparse",
   "asyncio",
   "attr",
+  "audioop",
   "builtins",
+  "cmath",
   "collections",
   "concurrent",
+  "configparser",
   "contextvars",
   "cPickle",
   "crypt",
+  "Crypto",
+  "csv",
   "ctypes",
   "datetime",
+  "dbm",
+  "decimal",
   "email",
   "exceptions",
   "functools",
   "genericpath",
+  "gflags",
+  "http",
   "io",
   "itertools",
+  "json",
   "logging",
   "macpath",
   "math",
@@ -54,12 +66,14 @@ val whiteList = setOf(
   "multiprocessing",
   "ntpath",
   "numbers",
-  "pathlib",
-  "queue",
   "os",
   "os2emxpath",
+  "pathlib",
+  "pickle",
   "posix",
   "posixpath",
+  "pyexpat",
+  "queue",
   "re",
   "shutil",
   "signal",
@@ -71,6 +85,7 @@ val whiteList = setOf(
   "sys",
   "threading",
   "time",
+  "turtle",
   "types",
   "typing",
   "typing_extensions",
@@ -79,7 +94,7 @@ val whiteList = setOf(
   "uuid",
   "werkzeug",
   "xml"
-)
+).mapTo(hashSetOf()) { it.toLowerCase() }
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, whiteList)
@@ -127,7 +142,7 @@ fun cleanTopLevelPackages(typeshed: Path, whiteList: Set<String>) {
     .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("third_party")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
-    .filter { it.nameWithoutExtension() !in whiteList }
+    .filter { it.nameWithoutExtension().toLowerCase() !in whiteList }
     .forEach { it.delete() }
 }
 
