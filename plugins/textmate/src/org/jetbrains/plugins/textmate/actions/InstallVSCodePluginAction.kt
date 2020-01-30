@@ -141,7 +141,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
         DownloadUtil.downloadAtomically(indicator, "${selectedValue.url}/Microsoft.VisualStudio.Services.VSIXPackage", temp)
 
         indicator.text = "Unzipping $selectedValue..."
-        val extensionDir = File(File(PathManager.getConfigPath(), "vscode"), selectedValue.name)
+        val extensionDir = PathManager.getConfigDir().resolve("vscode").resolve(selectedValue.name).toFile()
         ZipUtil.extract(temp, extensionDir, null)
 
         indicator.text = "Applying $selectedValue"

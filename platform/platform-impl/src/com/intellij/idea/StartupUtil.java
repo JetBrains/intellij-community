@@ -82,9 +82,11 @@ public final class StartupUtil {
 
   private StartupUtil() { }
 
-  /* called by the app after startup */
+  // called by the app after startup
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
-    if (ourSocketLock == null) throw new AssertionError("Not initialized yet");
+    if (ourSocketLock == null) {
+      throw new AssertionError("Not initialized yet");
+    }
     ourSocketLock.setCommandProcessor(processor);
   }
 
@@ -131,8 +133,8 @@ public final class StartupUtil {
         Method invokeMethod = clazz.getDeclaredMethod("invoke");
         invokeMethod.invoke(null);
       }
-      catch (Exception ex) {
-        log.error("Failed pre-app class init for class " + classBeforeAppProperty, ex);
+      catch (Exception e) {
+        log.error("Failed pre-app class init for class " + classBeforeAppProperty, e);
       }
     }
   }
@@ -166,11 +168,11 @@ public final class StartupUtil {
     }
 
     activity = StartUpMeasurer.startMainActivity("config path computing");
-    String configPath = PathManager.getConfigPath();
+    Path configPath = PathManager.getConfigDir();
     activity = activity.endAndStart("config path existence check");
 
     // this check must be performed before system directories are locked
-    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(configPath));
+    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(configPath);
 
     activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
@@ -221,7 +223,7 @@ public final class StartupUtil {
 
       if (configImportNeeded) {
         appStarter.beforeImportConfigs();
-        Path newConfigDir = Paths.get(PathManager.getConfigPath());
+        Path newConfigDir = PathManager.getConfigDir();
         runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log), initUiTask);
         appStarter.importFinished(newConfigDir);
       }

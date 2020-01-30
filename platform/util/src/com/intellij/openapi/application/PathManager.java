@@ -232,8 +232,15 @@ public class PathManager {
   }
 
   @NotNull
+  public static Path getConfigDir() {
+    return Paths.get(getConfigPath());
+  }
+
+  @NotNull
   public static String getConfigPath() {
-    if (ourConfigPath != null) return ourConfigPath;
+    if (ourConfigPath != null) {
+      return ourConfigPath;
+    }
 
     String explicit = getExplicitPath(PROPERTY_CONFIG_PATH);
     if (explicit != null) {

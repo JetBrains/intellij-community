@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
@@ -201,7 +201,7 @@ public class CompilerTester {
       Map<String, String> userMacros = pathMacroManager.getUserMacros();
       if (!userMacros.isEmpty()) {
         // require to be presented on disk
-        Path configDir = Paths.get(PathManager.getConfigPath());
+        Path configDir = PathManager.getConfigDir();
         Path macroFilePath = configDir.resolve("options").resolve(JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME);
         if (!Files.exists(macroFilePath)) {
           String message = "File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros;
