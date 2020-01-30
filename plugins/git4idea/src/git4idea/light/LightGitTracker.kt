@@ -82,8 +82,8 @@ internal class LightGitTracker : Disposable {
 
   private fun checkGit() {
     try {
-      GitExecutableManager.getInstance().identifyVersion(gitExecutable)
-      hasGit = true
+      val version = GitExecutableManager.getInstance().identifyVersion(gitExecutable)
+      hasGit = version.isSupported
     }
     catch (e: GitVersionIdentificationException) {
       hasGit = false
