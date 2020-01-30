@@ -55,7 +55,7 @@ fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): Fi
   val h = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root), executable, GitCommand.STATUS, emptyList())
   h.setSilent(true)
   h.addParameters("--porcelain", "-z", "--no-renames")
-  if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(GitExecutableManager.getInstance().identifyVersion(executable))) {
+  if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(GitExecutableManager.getInstance().getVersion(executable))) {
     h.addParameters("--ignored=matching")
   } else {
     h.addParameters("--ignored")
