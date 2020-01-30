@@ -27,10 +27,17 @@ class PositionalArgumentMapping<out P : CallParameter>(
   override fun expectedType(argument: Argument): PsiType? = targetParameter(argument)?.type
 
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
-    get() = argumentToParameter?.asSequence()
-              ?.mapNotNull { (argument, parameter) -> Pair(parameter.type, argument) }
-              ?.asIterable()
-            ?: emptyList()
+    get() {
+      return (parameterToArgument ?: return emptyList()).mapNotNull { (parameter, argument) ->
+        val expectedType = parameter.type
+        if (expectedType == null || argument == null) {
+          null
+        }
+        else {
+          Pair(expectedType, argument)
+        }
+      }
+    }
 
   override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability {
     val map = argumentToParameter ?: return Applicability.inapplicable

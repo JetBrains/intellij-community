@@ -56,7 +56,7 @@ fun argumentApplicability(parameterType: PsiType?, argumentType: PsiType?, conte
   }
 }
 
-fun parameterType(type: PsiType, substitutor: PsiSubstitutor, erase: Boolean): PsiType? {
+fun parameterType(type: PsiType?, substitutor: PsiSubstitutor, erase: Boolean): PsiType? {
   return if (erase) {
     TypeConversionUtil.erasure(type, substitutor)
   }

@@ -10,7 +10,9 @@ class NullArgumentMapping<out P : CallParameter>(parameter: P) : ArgumentMapping
 
   override val arguments: Arguments = singleNullArgumentList
 
-  override val expectedTypes: List<Pair<PsiType, Argument>> = listOf(Pair(parameter.type, singleNullArgument))
+  override val expectedTypes: List<Pair<PsiType, Argument>> = parameter.type?.let { expectedType ->
+    listOf(Pair(expectedType, singleNullArgument))
+  } ?: emptyList()
 
   override fun targetParameter(argument: Argument): P? = null
 

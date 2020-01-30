@@ -55,9 +55,16 @@ class VarargArgumentMapping<out P : CallParameter>(
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() {
       val (positional, varargs) = mapping ?: return emptyList()
-      val positionalSequence = positional.asSequence().map { (argument, parameter) -> Pair(parameter.type, argument) }
-      val varargsSequence = varargs.asSequence().map { Pair(varargType, it) }
-      return (positionalSequence + varargsSequence).asIterable()
+      val result = ArrayList<Pair<PsiType, Argument>>()
+      positional.mapNotNullTo(result) { (argument, parameter) ->
+        parameter.type?.let { expectedType ->
+          Pair(expectedType, argument)
+        }
+      }
+      varargs.mapTo(result) {
+        Pair(varargType, it)
+      }
+      return result
     }
 
   override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability {
