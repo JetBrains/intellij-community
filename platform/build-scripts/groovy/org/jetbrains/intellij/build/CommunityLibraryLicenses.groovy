@@ -228,7 +228,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/cucumber/gherkin"),
     new LibraryLicense(libraryName: "Gradle", license: "Apache 2.0", url: "http://gradle.org/",
                        licenseUrl: "http://gradle.org/license"),
-    new LibraryLicense(name: "Grazi Language Detector", libraryName: "tanvd.grazi:grazi-language-detector:0.1.5",
+    new LibraryLicense(name: "Grazi Language Detector", libraryName: "tanvd.grazi:grazi-language-detector:0.1.6",
                        license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
                        url: "https://jetbrains.team/p/grazi/code/grazi-language-detector"),
