@@ -64,7 +64,8 @@ public class DeclarationParser {
   @Nullable
   private PsiBuilder.Marker parseClassFromKeyword(PsiBuilder builder, PsiBuilder.Marker declaration, boolean isAnnotation, Context context) {
     IElementType keywordTokenType = builder.getTokenType();
-    if (isRecordToken(builder, keywordTokenType)) {
+    boolean isRecord = isRecordToken(builder, keywordTokenType);
+    if (isRecord) {
       if (builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
         builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
         keywordTokenType = JavaTokenType.RECORD_KEYWORD;
@@ -88,6 +89,11 @@ public class DeclarationParser {
 
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
       parseElementList(builder, ListType.RECORD_COMPONENTS);
+    }
+    else if (isRecord && context == Context.CODE_BLOCK) {
+      error(builder, JavaErrorBundle.message("expected.lparen"));
+      declaration.drop();
+      return null;
     }
 
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
