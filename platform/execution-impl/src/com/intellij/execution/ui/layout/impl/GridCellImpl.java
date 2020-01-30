@@ -390,7 +390,8 @@ public final class GridCellImpl implements GridCell {
       myContainer.minimize(each, new CellTransform.Restore() {
         @Override
         public ActionCallback restoreInGrid() {
-          return restore(each);
+          restore(each);
+          return ActionCallback.DONE;
         }
       });
       updateSelection(isShowing);
@@ -433,9 +434,8 @@ public final class GridCellImpl implements GridCell {
     }
   }
 
-  ActionCallback restore(Content content) {
+  void restore(@NotNull Content content) {
     myMinimizedContents.remove(content);
-    return ActionCallback.DONE;
   }
 
   private static class GridCellTabs extends SingleHeightTabs {
@@ -446,12 +446,12 @@ public final class GridCellImpl implements GridCell {
       return new DefaultTabPainterAdapter(JBTabPainter.getDEBUGGER());
     }
 
-    private GridCellTabs(ViewContextEx context, GridImpl container) {
+    private GridCellTabs(@NotNull ViewContextEx context, @NotNull GridImpl container) {
       super(context.getProject(), context.getFocusManager(), container);
 
       myContext = context;
       JBRunnerTabsBase tabs = ((RunnerContentUi)myContext).myTabs;
-      ((JBTabsImpl)tabs).addNestedTabs(this);
+      ((JBTabsImpl)tabs).addNestedTabs(this, myContext);
     }
 
     @Override

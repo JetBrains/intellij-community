@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -124,7 +123,6 @@ public final class TerminalView {
 
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer();
-      Disposer.register(myProject, myDockContainer);
       DockManager.getInstance(myProject).register(myDockContainer);
     }
   }
@@ -376,7 +374,6 @@ public final class TerminalView {
   }
 
   private final class TerminalDockContainer implements DockContainer {
-
     @NotNull
     @Override
     public RelativeRectangle getAcceptArea() {
@@ -420,17 +417,10 @@ public final class TerminalView {
 
     @Override
     public void showNotify() {
-
     }
 
     @Override
     public void hideNotify() {
-
-    }
-
-    @Override
-    public void dispose() {
-
     }
   }
 }
@@ -440,8 +430,9 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   private final PropertiesComponent myPropertiesComponent;
   private final ToolWindow myWindow;
 
-  TerminalToolWindowPanel(PropertiesComponent propertiesComponent, ToolWindow window) {
+  TerminalToolWindowPanel(@NotNull PropertiesComponent propertiesComponent, @NotNull ToolWindow window) {
     super(false, true);
+
     myPropertiesComponent = propertiesComponent;
     myWindow = window;
     installDnD(window);

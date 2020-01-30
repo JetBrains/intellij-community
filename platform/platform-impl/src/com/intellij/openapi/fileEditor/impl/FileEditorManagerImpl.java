@@ -319,9 +319,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     synchronized (myInitLock) {
       result = mySplitters;
       if (result == null) {
-        result = new EditorsSplitters(this, true);
+        result = new EditorsSplitters(this, true, this);
         mySplitters = result;
-        Disposer.register(this, mySplitters);
       }
     }
     return result;
@@ -1501,8 +1500,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return null;
   }
 
-//======================= Misc =====================
-
   private static void assertDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
@@ -1549,7 +1546,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     final VirtualFile file;
     final FileEditor editor;
     final FileEditorProvider provider;
-    if (composite == null || composite.isDisposed()) {
+    if (composite == null) {
       file = null;
       editor = null;
       provider = null;
@@ -1564,9 +1561,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   @Override
-  public boolean isChanged(@NotNull final EditorComposite editor) {
-    final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
-    if (fileStatusManager == null) return false;
+  public boolean isChanged(@NotNull EditorComposite editor) {
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
+    if (fileStatusManager == null) {
+      return false;
+    }
     FileStatus status = fileStatusManager.getStatus(editor.getFile());
     return status != FileStatus.UNKNOWN && status != FileStatus.NOT_CHANGED;
   }

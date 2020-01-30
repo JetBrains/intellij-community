@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public interface DockContainer extends Disposable, Activatable {
+public interface DockContainer extends Activatable {
   enum ContentResponse {
     ACCEPT_MOVE, ACCEPT_COPY, DENY;
 

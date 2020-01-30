@@ -91,24 +91,28 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   }
 
   @Nullable
-  private JBTabs getTabsAt(DockableContent content, RelativePoint point) {
-    if (content instanceof EditorTabbedContainer.DockableEditor) {
-      JBTabs targetTabs = mySplitters.getTabsAt(point);
-      if (targetTabs != null) {
-        return targetTabs;
-      } else {
-        EditorWindow wnd = mySplitters.getCurrentWindow();
-        if (wnd != null) {
-          EditorTabbedContainer tabs = wnd.getTabbedPane();
-          if (tabs != null) {
-            return tabs.getTabs();
-          }
-        } else {
-          EditorWindow[] windows = mySplitters.getWindows();
-          for (EditorWindow each : windows) {
-            if (each.getTabbedPane() != null && each.getTabbedPane().getTabs() != null) {
-              return each.getTabbedPane().getTabs();
-            }
+  private JBTabs getTabsAt(DockableContent<?> content, RelativePoint point) {
+    if (!(content instanceof EditorTabbedContainer.DockableEditor)) {
+      return null;
+    }
+
+    JBTabs targetTabs = mySplitters.getTabsAt(point);
+    if (targetTabs != null) {
+      return targetTabs;
+    }
+    else {
+      EditorWindow wnd = mySplitters.getCurrentWindow();
+      if (wnd != null) {
+        EditorTabbedContainer tabs = wnd.getTabbedPane();
+        if (tabs != null) {
+          return tabs.getTabs();
+        }
+      }
+      else {
+        EditorWindow[] windows = mySplitters.getWindows();
+        for (EditorWindow each : windows) {
+          if (each.getTabbedPane() != null && each.getTabbedPane().getTabs() != null) {
+            return each.getTabbedPane().getTabs();
           }
         }
       }
@@ -186,14 +190,13 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     return mySplitters;
   }
 
-  public void close(VirtualFile file) {
+  public void close(@NotNull VirtualFile file) {
     mySplitters.closeFile(file, false);
   }
 
   @Override
   public void closeAll() {
-    VirtualFile[] files = mySplitters.getOpenFiles();
-    for (VirtualFile each : files) {
+    for (VirtualFile each : mySplitters.getOpenFiles()) {
       close(each);
     }
   }
@@ -212,11 +215,6 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   @Override
   public boolean isEmpty() {
     return mySplitters.isEmptyVisible();
-  }
-
-  @Override
-  public void dispose() {
-    closeAll();
   }
 
   @Override

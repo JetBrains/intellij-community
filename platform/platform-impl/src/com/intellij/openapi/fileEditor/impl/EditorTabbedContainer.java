@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -59,21 +58,20 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 
-public final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
+public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
   private final JBTabsEx myTabs;
 
-  @NonNls public static final String HELP_ID = "ideaInterface.editor";
+  @NonNls
+  public static final String HELP_ID = "ideaInterface.editor";
 
   private final TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
 
   EditorTabbedContainer(@NotNull EditorWindow window, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    Disposer.register(parentDisposable, this);
-
     myWindow = window;
     myProject = project;
-    myTabs =  new EditorTabs(project, this, window);
+    myTabs = new EditorTabs(project, parentDisposable, window);
     myTabs.getComponent().setFocusable(false);
     myTabs.getComponent().setTransferHandler(new MyTransferHandler());
     myTabs
@@ -319,10 +317,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   public Component getComponentAt(final int i) {
     final TabInfo tab = myTabs.getTabAt(i);
     return tab.getComponent();
-  }
-
-  @Override
-  public void dispose() {
   }
 
   public final class CloseTab extends AnAction implements DumbAware {
@@ -613,7 +607,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       super(project, parentDisposable);
 
       myWindow = window;
-      IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
+      IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), parentDisposable);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
 
       project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {

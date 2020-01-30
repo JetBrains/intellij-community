@@ -5,8 +5,8 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notebook.editor.BackedVirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -23,7 +23,10 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -50,9 +53,6 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-/**
- * Author: msk
- */
 public class EditorWindow {
   private static final Logger LOG = Logger.getInstance(EditorWindow.class);
 
@@ -74,19 +74,20 @@ public class EditorWindow {
     }
   };
 
-  protected EditorWindow(@NotNull EditorsSplitters owner) {
+  protected EditorWindow(@NotNull EditorsSplitters owner, @NotNull Disposable parentDisposable) {
     myOwner = owner;
     myPanel = new JPanel(new BorderLayout());
     myPanel.setOpaque(false);
     myPanel.setFocusable(false);
 
-    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), myOwner);
+    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), parentDisposable);
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
-    // Tab layout policy
+    // tab layout policy
     if (UISettings.getInstance().getScrollTabLayoutInEditor()) {
       setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-    } else {
+    }
+    else {
       setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
     }
 
@@ -94,13 +95,11 @@ public class EditorWindow {
     if (myOwner.getCurrentWindow() == null) {
       myOwner.setCurrentWindow(this, false);
     }
-    ApplicationManager.getApplication().getMessageBus().connect(myOwner).subscribe(UISettingsListener.TOPIC,
-                                                                                   uiSettings -> updateTabsVisibility());
-    updateTabsVisibility();
+    updateTabsVisibility(UISettings.getInstance());
   }
 
-  private void updateTabsVisibility() {
-    myTabbedPane.getTabs().getPresentation().setHideTabs(UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE || UISettings.getInstance().getPresentationMode());
+  void updateTabsVisibility(@NotNull UISettings settings) {
+    myTabbedPane.getTabs().getPresentation().setHideTabs(settings.getEditorTabPlacement() == UISettings.TABS_NONE || settings.getPresentationMode());
   }
 
   public boolean isShowing() {
@@ -109,8 +108,7 @@ public class EditorWindow {
 
   public void closeAllExcept(final VirtualFile selectedFile) {
     getManager().runBulkTabChange(myOwner, splitters -> {
-      final VirtualFile[] files = getFiles();
-      for (final VirtualFile file : files) {
+      for (VirtualFile file : getFiles()) {
         if (!Comparing.equal(file, selectedFile) && !isFilePinned(file)) {
           closeFile(file);
         }
@@ -120,9 +118,6 @@ public class EditorWindow {
 
   void dispose() {
     try {
-      Disposer.dispose(myTabbedPane);
-      myPanel.removeAll();
-      myPanel.revalidate();
       myOwner.removeWindow(this);
     }
     finally {
@@ -558,72 +553,74 @@ public class EditorWindow {
   }
 
   @Nullable
-  public EditorWindow split(final int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew) {
+  public EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew) {
     checkConsistency();
-    final FileEditorManagerImpl fileEditorManager = myOwner.getManager();
-    if (splitAvailable()) {
-      if (!forceSplit && inSplitter()) {
-        final EditorWindow[] siblings = findSiblings();
-        final EditorWindow target = siblings[0];
-        if (virtualFile != null) {
-          final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).first;
-          syncCaretIfPossible(editors);
-        }
-        return target;
-      }
-      final JPanel panel = myPanel;
-      panel.setBorder(null);
-      final int tabCount = getTabCount();
-      if (tabCount != 0) {
-        myPanel = new JPanel(new BorderLayout());
-        myPanel.setOpaque(false);
+    if (!splitAvailable()) {
+      return null;
+    }
 
-        final Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
-        final EditorWindow res = new EditorWindow(myOwner);
-        final EditorWithProviderComposite selectedEditor = getSelectedEditor();
-        panel.remove(myTabbedPane.getComponent());
-        panel.add(splitter, BorderLayout.CENTER);
-        splitter.setFirstComponent(myPanel);
-        myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-        splitter.setSecondComponent(res.myPanel);
-          /*
-          for (int i = 0; i != tabCount; ++i) {
-            final EditorWithProviderComposite eC = getEditorAt(i);
-            final VirtualFile file = eC.getFile();
-            fileEditorManager.openFileImpl3(res, file, false, null);
-            res.setFilePinned (file, isFilePinned (file));
-          }
-          */
-        // open only selected file in the new splitter instead of opening all tabs
-        final VirtualFile file = selectedEditor.getFile();
-
-        if (virtualFile == null) {
-          for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
-            VirtualFile associatedFile = finder.getAssociatedFileToOpen(fileEditorManager.getProject(), file);
-
-            if (associatedFile != null) {
-              virtualFile = associatedFile;
-              break;
-            }
-          }
-        }
-
-        final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
-        HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
-        final FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
-                                                                     new FileEditorOpenOptions()
-                                                                       .withCurrentTab(true)
-                                                                       .withFocusEditor(focusNew)
-                                                                       .withExactState()).first;
+    FileEditorManagerImpl fileEditorManager = myOwner.getManager();
+    if (!forceSplit && inSplitter()) {
+      final EditorWindow[] siblings = findSiblings();
+      final EditorWindow target = siblings[0];
+      if (virtualFile != null) {
+        final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).first;
         syncCaretIfPossible(editors);
-        res.setFilePinned(nextFile, isFilePinned(file));
-        if (!focusNew) {
-          res.setSelectedEditor(selectedEditor, true);
-          getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(selectedEditor.getComponent(), true));
-        }
-        panel.revalidate();
-        return res;
       }
+      return target;
+    }
+
+    final JPanel panel = myPanel;
+    panel.setBorder(null);
+    final int tabCount = getTabCount();
+    if (tabCount != 0) {
+      myPanel = new JPanel(new BorderLayout());
+      myPanel.setOpaque(false);
+
+      final Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
+      final EditorWindow res = new EditorWindow(myOwner, myOwner.parentDisposable);
+      final EditorWithProviderComposite selectedEditor = getSelectedEditor();
+      panel.remove(myTabbedPane.getComponent());
+      panel.add(splitter, BorderLayout.CENTER);
+      splitter.setFirstComponent(myPanel);
+      myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+      splitter.setSecondComponent(res.myPanel);
+        /*
+        for (int i = 0; i != tabCount; ++i) {
+          final EditorWithProviderComposite eC = getEditorAt(i);
+          final VirtualFile file = eC.getFile();
+          fileEditorManager.openFileImpl3(res, file, false, null);
+          res.setFilePinned (file, isFilePinned (file));
+        }
+        */
+      // open only selected file in the new splitter instead of opening all tabs
+      final VirtualFile file = selectedEditor.getFile();
+      if (virtualFile == null) {
+        for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
+          VirtualFile associatedFile = finder.getAssociatedFileToOpen(fileEditorManager.getProject(), file);
+
+          if (associatedFile != null) {
+            virtualFile = associatedFile;
+            break;
+          }
+        }
+      }
+
+      final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
+      HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
+      final FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
+                                                                   new FileEditorOpenOptions()
+                                                                     .withCurrentTab(true)
+                                                                     .withFocusEditor(focusNew)
+                                                                     .withExactState()).first;
+      syncCaretIfPossible(editors);
+      res.setFilePinned(nextFile, isFilePinned(file));
+      if (!focusNew) {
+        res.setSelectedEditor(selectedEditor, true);
+        getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(selectedEditor.getComponent(), true));
+      }
+      panel.revalidate();
+      return res;
     }
     return null;
   }

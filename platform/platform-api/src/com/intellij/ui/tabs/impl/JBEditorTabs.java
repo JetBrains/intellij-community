@@ -2,10 +2,8 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -31,18 +29,21 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
    */
   @Deprecated
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
+
   private boolean myAlphabeticalModeChanged = false;
 
-  public JBEditorTabs(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parent) {
-    super(project, focusManager, parent);
+  public JBEditorTabs(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
+    super(project, focusManager, parentDisposable);
 
-    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(UISettingsListener.TOPIC, (settings) -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        resetTabsCache();
-        relayout(true, false);
-      });
-    });
     setSupportsCompression(true);
+  }
+
+  @Override
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+    resetTabsCache();
+    relayout(true, false);
+
+    super.uiSettingsChanged(uiSettings);
   }
 
   /**

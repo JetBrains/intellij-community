@@ -14,6 +14,8 @@ import java.util.Set;
 public abstract class DockManager {
   public abstract void register(@NotNull DockContainer container);
 
+  public abstract void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable);
+
   public abstract void register(@NotNull String id, @NotNull DockContainerFactory factory, @NotNull Disposable parentDisposable);
 
   public static DockManager getInstance(@NotNull Project project) {

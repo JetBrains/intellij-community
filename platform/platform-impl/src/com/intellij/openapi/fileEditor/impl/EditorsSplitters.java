@@ -65,7 +65,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
-public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
+public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
   private static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
   private static final String PINNED = "pinned";
@@ -81,11 +81,15 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private Element mySplittersElement;  // temporarily used during initialization
   int myInsideChange;
   private final MyFocusWatcher myFocusWatcher;
-  private final Alarm myIconUpdaterAlarm = new Alarm();
+  private final Alarm myIconUpdaterAlarm;
+  final Disposable parentDisposable;
   private final UIBuilder myUIBuilder = new UIBuilder();
 
-  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer) {
+  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer, @NotNull Disposable parentDisposable) {
     super(new BorderLayout());
+
+    myIconUpdaterAlarm = new Alarm(parentDisposable);
+    this.parentDisposable = parentDisposable;
 
     setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
     PropertyChangeListener l = e -> {
@@ -96,21 +100,25 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     };
 
     UIManager.getDefaults().addPropertyChangeListener(l);
-    Disposer.register(this, () -> UIManager.getDefaults().removePropertyChangeListener(l));
+    Disposer.register(parentDisposable, () -> UIManager.getDefaults().removePropertyChangeListener(l));
 
     myManager = manager;
+
     myFocusWatcher = new MyFocusWatcher();
+    Disposer.register(parentDisposable, () -> {
+      myFocusWatcher.deinstall(this);
+    });
+
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
     clear();
 
     if (createOwnDockableContainer) {
       DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
-      Disposer.register(manager.getProject(), dockable);
       DockManager.getInstance(manager.getProject()).register(dockable);
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
         invalidate();
@@ -137,16 +145,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myFocusWatcher.install(this);
   }
 
-  private void stopListeningFocus() {
-    myFocusWatcher.deinstall(this);
-  }
-
-  @Override
-  public void dispose() {
-    myIconUpdaterAlarm.cancelAllRequests();
-    stopListeningFocus();
-  }
-
   @Nullable
   public VirtualFile getCurrentFile() {
     if (myCurrentWindow != null) {
@@ -154,7 +152,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     return null;
   }
-
 
   private boolean showEmptyText() {
     return myCurrentWindow == null || myCurrentWindow.getFiles().length == 0;
@@ -507,8 +504,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return null;
   }
 
-  void closeFile(VirtualFile file, boolean moveFocus) {
-    final List<EditorWindow> windows = findWindows(file);
+  void closeFile(@NotNull VirtualFile file, boolean moveFocus) {
+    List<EditorWindow> windows = findWindows(file);
     boolean isProjectOpen = myManager.getProject().isOpen();
     if (!windows.isEmpty()) {
       final VirtualFile nextFile = findNextFile(file);
@@ -535,7 +532,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    if (!myManager.getProject().isOpen()) return;
+    for (EditorWindow window : myWindows) {
+      window.updateTabsVisibility(uiSettings);
+    }
+
+    if (!myManager.getProject().isOpen()) {
+      return;
+    }
+
     for (VirtualFile file : getOpenFiles()) {
       updateFileBackgroundColor(file);
       updateFileIcon(file);
@@ -601,7 +605,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   protected EditorWindow createEditorWindow() {
-    return new EditorWindow(this);
+    return new EditorWindow(this, parentDisposable);
   }
 
   /**
@@ -628,12 +632,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       if (requestFocus) {
         window.requestFocus(true);
       }
-    } else {
+    }
+    else {
       fireRunnable.run();
     }
   }
 
-  void addWindow(EditorWindow window) {
+  void addWindow(@NotNull EditorWindow window) {
     myWindows.add(window);
   }
 
@@ -680,9 +685,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull
-  private List<EditorWindow> findWindows(final VirtualFile file) {
+  private List<EditorWindow> findWindows(@NotNull VirtualFile file) {
     List<EditorWindow> res = new ArrayList<>();
-    for (final EditorWindow window : myWindows) {
+    for (EditorWindow window : myWindows) {
       if (window.findFileComposite(file) != null) {
         res.add(window);
       }
@@ -755,7 +760,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private final class MyFocusWatcher extends FocusWatcher {
     @Override
-    protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
+    protected void focusedComponentChanged(Component component, AWTEvent cause) {
       EditorWindow newWindow = null;
 
       if (component != null) {

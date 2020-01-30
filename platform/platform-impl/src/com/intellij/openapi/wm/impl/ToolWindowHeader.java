@@ -277,7 +277,7 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     Insets insets = getInsets();
-    int height = JBUI.scale(SingleHeightTabs.getUNSCALED_PREF_HEIGHT()) - insets.top - insets.bottom;
+    int height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom;
     return new Dimension(size.width, height);
   }
 
