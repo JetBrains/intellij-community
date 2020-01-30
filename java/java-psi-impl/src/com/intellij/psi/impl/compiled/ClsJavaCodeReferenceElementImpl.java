@@ -28,6 +28,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiAnnotatedJavaCodeReferenceElement {
   private final PsiElement myParent;
@@ -43,7 +45,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private final String myQualifiedName;
   private final PsiReferenceParameterList myRefParameterList;
 
-  public ClsJavaCodeReferenceElementImpl(PsiElement parent, @NotNull String canonicalText) {
+  public ClsJavaCodeReferenceElementImpl(@NotNull PsiElement parent, @NotNull String canonicalText) {
     myParent = parent;
 
     String canonical = TypeInfo.internFrequentType(canonicalText);
@@ -200,12 +202,18 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     PsiFile file = getContainingFile();
     if (file == null) {
-      throw new PsiInvalidElementAccessException(this);
+      return diagnoseNoFile();
     }
     final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
     ResolveResult[] results = resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode,file);
     if (results.length == 0) return JavaResolveResult.EMPTY_ARRAY;
     return (JavaResolveResult[])results;
+  }
+
+  private JavaResolveResult @NotNull [] diagnoseNoFile() {
+    PsiElement root = SyntaxTraverser.psiApi().parents(this).last();
+    PsiUtilCore.ensureValid(Objects.requireNonNull(root));
+    throw new PsiInvalidElementAccessException(this, "parent=" + myParent + ", root=" + root + ", canonicalText=" + myCanonicalText);
   }
 
   @Override
