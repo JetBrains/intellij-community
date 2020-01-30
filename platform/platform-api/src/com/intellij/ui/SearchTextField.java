@@ -325,7 +325,7 @@ public class SearchTextField extends JPanel {
   protected void setEmptyHistory() {
   }
 
-  public class MyModel extends AbstractListModel {
+  public class MyModel extends AbstractListModel<String> {
     private List<String> myFullList = new ArrayList<>();
 
     private String mySelectedItem;
@@ -416,7 +416,7 @@ public class SearchTextField extends JPanel {
   protected void showPopup() {
     addCurrentTextToHistory();
     if (myPopup == null || !myPopup.isVisible()) {
-      final JList list = new JBList(myModel);
+      final JList<String> list = new JBList<>(myModel);
       final Runnable chooseRunnable = createItemChosenCallback(list);
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
