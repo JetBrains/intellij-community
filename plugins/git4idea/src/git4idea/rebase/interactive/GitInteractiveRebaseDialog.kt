@@ -107,10 +107,13 @@ internal class GitInteractiveRebaseDialog(
   }
   private val actions = listOf<AnAction>(
     ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable),
-    ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, "Stop to Edit", "Stop to Edit", AllIcons.Actions.Pause, commitsTable),
     ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable),
     FixupAction(commitsTable),
     RewordAction(commitsTable)
+  )
+  private val contextMenuOnlyActions = listOf<AnAction>(
+    ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, "Stop to Edit", "Stop to Edit", AllIcons.Actions.Pause, commitsTable),
+    ShowGitRebaseEditorLikeEntriesAction(project, commitsTable)
   )
 
   init {
@@ -122,7 +125,7 @@ internal class GitInteractiveRebaseDialog(
     commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
     PopupHandler.installRowSelectionTablePopup(
       commitsTable,
-      DefaultActionGroup(actions),
+      DefaultActionGroup(actions + contextMenuOnlyActions),
       "Git.Interactive.Rebase.Dialog",
       ActionManager.getInstance()
     )
@@ -143,8 +146,6 @@ internal class GitInteractiveRebaseDialog(
     actions.forEach {
       decorator.addExtraAction(AnActionButton.fromAction(it))
     }
-
-    decorator.addExtraAction(AnActionButton.fromAction(ShowGitRebaseEditorLikeEntriesAction(project, commitsTable)))
 
     val tablePanel = decorator.createPanel()
     val resetEntriesLabelPanel = BorderLayoutPanel().addToCenter(resetEntriesLabel).apply {
