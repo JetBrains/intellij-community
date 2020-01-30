@@ -1,14 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
-import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.MacUIUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -23,7 +20,7 @@ import javax.swing.event.ListDataListener
 
 class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRReviewCommentModel>,
                                     private val avatarIconsProvider: GHAvatarIconsProvider)
-  : JPanel(VerticalLayout(8)) {
+  : JPanel(VerticalLayout(UI.scale(8))) {
 
   private val foldModel = SingleValueModel(true)
   private val foldThreshold = 2
@@ -54,7 +51,7 @@ class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRRev
 
       override fun intervalAdded(e: ListDataEvent) {
         for (i in e.index0..e.index1) {
-          add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(i)), i + 1)
+          add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
         }
         validate()
         repaint()
@@ -67,11 +64,11 @@ class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRRev
     })
     foldModel.addValueChangedListener { updateFolding() }
 
-    add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(0)))
-    add(unfoldButtonPanel)
+    add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(0)), VerticalLayout.FILL_HORIZONTAL)
+    add(unfoldButtonPanel, VerticalLayout.FILL_HORIZONTAL)
 
     for (i in 1 until commentsModel.size) {
-      add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(i)))
+      add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL)
     }
     updateFolding()
 
