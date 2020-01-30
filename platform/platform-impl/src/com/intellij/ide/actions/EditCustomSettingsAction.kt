@@ -58,7 +58,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
         catch (ex: IOException) {
           Logger.getInstance(javaClass).warn(file.path, ex)
           val message = IdeBundle.message("edit.custom.settings.failed", file, ex.message)
-          Messages.showErrorDialog(project, message, CommonBundle.message("title.error"))
+          Messages.showErrorDialog(project, message, CommonBundle.getErrorTitle())
           return
         }
       }
@@ -110,7 +110,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
           catch (ex: IOException) {
             Logger.getInstance(javaClass).warn(file.path, ex)
             val message = IdeBundle.message("edit.custom.settings.failed", file, ex.message)
-            Messages.showErrorDialog(this.window, message, CommonBundle.message("title.error"))
+            Messages.showErrorDialog(this.window, message, CommonBundle.getErrorTitle())
           }
         }
       }.show()

@@ -110,12 +110,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     if (online) {
       if (modules.length == 0) {
         Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.modules.error.message"),
-                                   CommonBundle.message("title.error"), Messages.getErrorIcon());
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return false;
       }
       if (isBadSdk(project, modules)) {
         Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.jdk.error.message"),
-                                   CommonBundle.message("title.error"), Messages.getErrorIcon());
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
 
         SdkPopupFactory
           .newBuilder()

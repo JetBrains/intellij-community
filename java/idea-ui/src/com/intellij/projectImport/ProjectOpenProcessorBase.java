@@ -183,7 +183,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
             IdeBundle.message("title.open.project"),
             IdeBundle.message("project.import.open.existing.openExisting"),
             IdeBundle.message("project.import.open.existing.reimport"),
-            CommonBundle.message("button.cancel"),
+            CommonBundle.getCancelButtonText(),
             Messages.getQuestionIcon());
           if (result == Messages.CANCEL) return null;
           shouldOpenExisting = result == Messages.YES;

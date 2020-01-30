@@ -789,7 +789,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   private boolean confirmDeletion(int count) {
-    return MessageDialogBuilder.yesNo("Confirm Delete", "Delete " + count + " items?").project(myProject).yesText("Delete").noText(CommonBundle.message("button.cancel")).doNotAsk(
+    return MessageDialogBuilder.yesNo("Confirm Delete", "Delete " + count + " items?").project(myProject).yesText("Delete").noText(
+      CommonBundle.getCancelButtonText()).doNotAsk(
       new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
