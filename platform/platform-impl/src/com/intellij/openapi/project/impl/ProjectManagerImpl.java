@@ -676,9 +676,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           ProjectImpl projectImpl = (ProjectImpl)project;
           projectImpl.stopServicePreloading();
           projectImpl.disposeEarlyDisposable();
-          projectImpl.startDispose();
         }
-        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (project instanceof ProjectImpl) {
+            ((ProjectImpl)project).startDispose();
+          }
+          Disposer.dispose(project);
+        });
       }
       return true;
     }
