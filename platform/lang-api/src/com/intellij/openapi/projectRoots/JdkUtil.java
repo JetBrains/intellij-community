@@ -159,7 +159,7 @@ public final class JdkUtil {
                                                                         @NotNull TargetEnvironmentRequest request,
                                                                         @Nullable TargetEnvironmentConfiguration targetConfiguration)
     throws CantRunException {
-    TargetedCommandLineBuilder commandLine = new TargetedCommandLineBuilder();
+    TargetedCommandLineBuilder commandLine = new TargetedCommandLineBuilder(request);
     JavaLanguageRuntimeConfiguration javaConfiguration = targetConfiguration != null
                                                          ? targetConfiguration.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class)
                                                          : null;
