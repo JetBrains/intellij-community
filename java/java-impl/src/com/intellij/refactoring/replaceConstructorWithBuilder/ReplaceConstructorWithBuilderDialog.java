@@ -112,10 +112,10 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Parameters to Pass to the Builder"), BorderLayout.CENTER);
+    panel.add(new JLabel(RefactoringBundle.message("constructor.with.builder.parameters.to.pass.to.the.builder.title")), BorderLayout.CENTER);
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
-    actionGroup.addAction(new AnAction("Rename Setters Prefix") {
+    actionGroup.addAction(new AnAction(RefactoringBundle.message("constructor.with.builder.rename.setters.prefix.action.name")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         applyNewSetterPrefix();
@@ -130,7 +130,9 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   }
 
   private void applyNewSetterPrefix() {
-    final String setterPrefix = Messages.showInputDialog(myTable, "New setter prefix:", "Rename Setters Prefix", null,
+    final String setterPrefix = Messages.showInputDialog(myTable, RefactoringBundle
+                                                           .message("constructor.with.builder.new.setter.prefix.dialog.message"), RefactoringBundle
+                                                           .message("constructor.with.builder.rename.setters.prefix.action.name"), null,
                                                          mySetterPrefix, new MySetterPrefixInputValidator());
     if (setterPrefix != null) {
       mySetterPrefix = setterPrefix;

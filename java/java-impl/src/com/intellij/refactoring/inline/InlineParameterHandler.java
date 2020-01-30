@@ -118,7 +118,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         }
         return true;
       });
-    }, "Searching for Method Usages", true, project)) {
+    }, RefactoringBundle.message("inline.parameter.method.usages.progress"), true, project)) {
       return;
     }
     final PsiReference reference = TargetElementUtil.findReference(editor);
@@ -151,11 +151,12 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     }
     if (occurrences.isEmpty()) {
       CommonRefactoringUtil
-        .showErrorHint(project, editor, "Method has no usages", RefactoringBundle.message("inline.parameter.refactoring"), null);
+        .showErrorHint(project, editor, RefactoringBundle.message("inline.parameter.no.usages.warning.message"), RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
     if (!result[0]) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot find constant initializer for parameter", RefactoringBundle.message("inline.parameter.refactoring"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("inline.parameter.cannot.find.initializer.warning.message"), 
+                                          RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
     if (!refInitializer.isNull()) {
@@ -174,7 +175,8 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
     if (refConstantInitializer.isNull()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot find constant initializer for parameter", RefactoringBundle.message("inline.parameter.refactoring"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          RefactoringBundle.message("inline.parameter.cannot.find.initializer.warning.message"), RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
 
@@ -191,14 +193,14 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       }
     });
     if (!isNotConstantAccessible.isNull() && isNotConstantAccessible.get()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Constant initializer is not accessible in method body", RefactoringBundle.message("inline.parameter.refactoring"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("inline.parameter.not.accessible.warning.message"), RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
 
     for (PsiReference psiReference : ReferencesSearch.search(psiParameter)) {
       final PsiElement element = psiReference.getElement();
       if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Inline parameter which has write usages is not supported", RefactoringBundle.message("inline.parameter.refactoring"), null);
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("inline.parameter.write.usages.warning.message"), RefactoringBundle.message("inline.parameter.refactoring"), null);
         return;
       }
     }

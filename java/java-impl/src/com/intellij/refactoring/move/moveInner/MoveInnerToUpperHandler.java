@@ -74,7 +74,7 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
   @Nullable
   @Override
   public String getActionName(PsiElement @NotNull [] elements) {
-    return "Move Inner Class to Upper Level...";
+    return RefactoringBundle.message("move.inner.class.to.upper.level.action.name");
   }
 
   @Override

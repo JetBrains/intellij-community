@@ -361,7 +361,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
               additionalPanel.add(createLabeledPanel("Default value:", myDefaultValueEditor), BorderLayout.WEST);
 
               if (!isGenerateDelegate()) {
-                myAnyVar = new JCheckBox("&Use Any Var");
+                myAnyVar = new JCheckBox(RefactoringBundle.message("change.signature.use.any.checkbox"));
                 UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myAnyVar);
                 DialogUtil.registerMnemonic(myAnyVar, '&');
                 myAnyVar.addActionListener(new ActionListener() {
@@ -691,7 +691,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       for (final ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
         if (item.parameter.oldParameterIndex < 0) {
           if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText()))
-            return new ValidationInfo("Default value is missing. Method calls will contain blanks instead of the new parameter value.");
+            return new ValidationInfo(RefactoringBundle.message("change.signature.default.value.missing.warning.message"));
         }
       }
     }

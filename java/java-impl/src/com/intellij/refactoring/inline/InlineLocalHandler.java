@@ -298,7 +298,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         return null;
       }
       if (tryStatement != null && !PsiTreeUtil.isAncestor(tryStatement, ref, false)) {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Unable to inline outside try/catch statement", getRefactoringName(local),
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("inline.local.unable.try.catch.warning.message"), getRefactoringName(local),
                                             HelpID.INLINE_VARIABLE);
         return null;
       }

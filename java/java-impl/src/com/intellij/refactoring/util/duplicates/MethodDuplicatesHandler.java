@@ -89,7 +89,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                    AnalysisUIOptions.getInstance(project), false);
     if (dlg.showAndGet()) {
       AnalysisScope selectedScope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Locate duplicates", true) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, RefactoringBundle.message("locate.duplicates.action.name"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);

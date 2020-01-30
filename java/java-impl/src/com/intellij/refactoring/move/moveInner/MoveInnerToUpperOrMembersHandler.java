@@ -91,7 +91,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
   @Nullable
   @Override
   public String getActionName(PsiElement @NotNull [] elements) {
-    return "Move Inner Class...";
+    return RefactoringBundle.message("move.inner.class.action.name");
   }
 
   private static class SelectInnerOrMembersRefactoringDialog extends DialogWrapper {

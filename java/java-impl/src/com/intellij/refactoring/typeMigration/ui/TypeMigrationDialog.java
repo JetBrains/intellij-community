@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -75,7 +77,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   @Override
   protected void doAction() {
     if (myScopeChooserCombo.getSelectedScope() == null) {
-      Messages.showErrorDialog("Scope is not chosen", "Error");
+      Messages.showErrorDialog(RefactoringBundle.message("type.migration.no.scope.warning.message"), CommonBundle.getErrorTitle());
       return;
     }
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
@@ -101,7 +103,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     appendMigrationTypeEditor(panel, gc);
     LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<>();
     scopeChooserComponent.setComponent(myScopeChooserCombo);
-    scopeChooserComponent.setText("Choose scope where change signature may occur");
+    scopeChooserComponent.setText(RefactoringBundle.message("type.migration.choose.scope.title"));
     panel.add(scopeChooserComponent, gc);
     return panel;
   }
@@ -192,7 +194,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints gc) {
       final PsiType type = getRootType();
       final String typeText = type != null ? type.getPresentableText() : "<unknown>";
-      panel.add(new JLabel("Migrate " + getElementPresentation(myRoots[0]) + " \"" + typeText + "\" to"), gc);
+      panel.add(new JLabel(RefactoringBundle.message("type.migration.label", getElementPresentation(myRoots[0]), typeText)), gc);
       panel.add(myToTypeEditor, gc);
     }
 

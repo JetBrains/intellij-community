@@ -126,7 +126,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     if (!StringUtil.isEmpty(qName)) {
       PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
       if (!helper.isQualifiedName(qName)) {
-        Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.specified"), "Invalid Package Name",
+        Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.specified"),
+                                   RefactoringBundle.message("move.classes.invalid.package.name.warning.message"),
                                    Messages.getErrorIcon());
         return false;
       }

@@ -193,7 +193,7 @@ public class MigrationPanel extends JPanel implements Disposable {
                 }
                 WriteCommandAction.writeCommandAction(myProject).run(() -> TypeMigrationProcessor.change(usages, myLabeler, myProject));
               }, myProject.getDisposed());
-            }, "Type Migration", false, myProject);
+            }, RefactoringBundle.message("type.migration.action.name"), false, myProject);
           }
         }
         UsageViewContentManager.getInstance(myProject).closeContent(myContent);

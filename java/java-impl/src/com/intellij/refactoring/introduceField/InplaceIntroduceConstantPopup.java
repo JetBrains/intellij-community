@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.ui.JBUI;
@@ -92,7 +93,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     final GridBagConstraints rgc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              JBUI.emptyInsets(), 0, 0);
-    myReplaceAllCb = new JCheckBox("Replace all occurrences");
+    myReplaceAllCb = new JCheckBox(RefactoringBundle.message("replace.all.occurences.checkbox"));
     myReplaceAllCb.setMnemonic('a');
     myReplaceAllCb.setFocusable(false);
     myReplaceAllCb.setVisible(myOccurrences.length > 1);
@@ -104,7 +105,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
     myMoveToAnotherClassCb =
-      new JCheckBox("Move to another class", JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS);
+      new JCheckBox(RefactoringBundle.message("introduce.constant.move.to.another.class.checkbox"), JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS);
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
     left.add(myMoveToAnotherClassCb,

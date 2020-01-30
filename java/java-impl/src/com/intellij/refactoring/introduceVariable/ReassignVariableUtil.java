@@ -34,6 +34,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
@@ -87,7 +88,7 @@ public class ReassignVariableUtil {
 
         JBPopup popup = JBPopupFactory.getInstance()
           .createPopupChooserBuilder(vars)
-          .setTitle("Choose variable to reassign")
+          .setTitle(RefactoringBundle.message("introduce.local.variable.to.reassign.title"))
           .setRequestFocus(true)
           .setRenderer(SimpleListCellRenderer.<PsiVariable>create((label, value, index) -> {
             if (value != null) {

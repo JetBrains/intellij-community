@@ -114,8 +114,8 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
 
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("refactoring.cannot.be.performed") +
-                                                           ": Class " + aClass.getName() + " is final", getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
+      CommonRefactoringUtil.showErrorHint(project, editor,  RefactoringBundle.message("refactoring.cannot.be.performed") + 
+                                                            RefactoringBundle.message("class.is.final.warning.message", aClass.getName()), getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
       return;
     }
 

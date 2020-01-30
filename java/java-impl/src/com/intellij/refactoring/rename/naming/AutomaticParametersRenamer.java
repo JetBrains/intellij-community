@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.refactoring.RefactoringBundle;
 
 public class AutomaticParametersRenamer extends AutomaticRenamer {
   public AutomaticParametersRenamer(PsiParameter param, String newParamName) {
@@ -43,12 +44,12 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
 
   @Override
   public String getDialogTitle() {
-    return "Rename Parameters";
+    return RefactoringBundle.message("rename.parameters.dialog.title");
   }
 
   @Override
   public String getDialogDescription() {
-    return "Rename parameter in hierarchy to:";
+    return RefactoringBundle.message("rename.parameter.in.hierarchy.to.dialog.description");
   }
 
   @Override

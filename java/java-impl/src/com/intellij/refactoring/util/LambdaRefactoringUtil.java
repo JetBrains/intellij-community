@@ -15,6 +15,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.Function;
@@ -363,8 +364,9 @@ public class LambdaRefactoringUtil {
         SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
         if (!sideEffects.isEmpty()) {
           if (ApplicationManager.getApplication().isUnitTestMode() ||
-              Messages.showYesNoDialog(lambdaExpression.getProject(), "There are possible side effects found in method reference qualifier." +
-                                                                  "\nIntroduce local variable?", "Side Effects Detected", Messages.getQuestionIcon()) == Messages.YES) {
+              Messages.showYesNoDialog(lambdaExpression.getProject(),
+                                       RefactoringBundle.message("lambda.to.reference.side.effect.warning.message"),
+                                       RefactoringBundle.message("side.effects.detected.title"), Messages.getQuestionIcon()) == Messages.YES) {
             //ensure introduced before lambda
             qualifierExpression.putUserData(ElementToWorkOn.PARENT, lambdaExpression);
             new IntroduceVariableHandler().invoke(qualifierExpression.getProject(), editor, qualifierExpression);

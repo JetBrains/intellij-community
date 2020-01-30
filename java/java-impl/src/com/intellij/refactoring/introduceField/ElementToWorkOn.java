@@ -146,7 +146,7 @@ public class ElementToWorkOn {
                 }
                 processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, var, selectedValue));
               }
-            }, new PsiExpressionTrimRenderer.RenderFunction(), "Expressions", selection, ScopeHighlighter.NATURAL_RANGER);
+            }, new PsiExpressionTrimRenderer.RenderFunction(), RefactoringBundle.message("introduce.target.chooser.expressions.title"), selection, ScopeHighlighter.NATURAL_RANGER);
             return;
           }
         }

@@ -95,7 +95,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
           (Runnable)() -> hasMethodReferenceOnInstance[0] = !MethodReferencesSearch.search((PsiMethod)member).forEach(reference -> {
             final PsiElement element = reference.getElement();
             return !(element instanceof PsiMethodReferenceExpression);
-          }), "Search for method references", true, project)) return;
+          }), RefactoringBundle.message("make.static.method.references.progress"), true, project)) return;
       }
 
       if (classRefsInMember.length > 0 || hasMethodReferenceOnInstance[0]) {

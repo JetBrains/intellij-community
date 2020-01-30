@@ -478,7 +478,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                             new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
-                                                                      "Search Method Duplicates...", true, myProject);
+                                                                      RefactoringBundle.message("introduce.parameter.duplicates.progress"), true, myProject);
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {

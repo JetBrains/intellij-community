@@ -206,7 +206,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox superMethod = new JCheckBox("Refactor super method", true);
+    final JCheckBox superMethod = new JCheckBox(RefactoringBundle.message("introduce.parameter.super.method.checkbox"), true);
     superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList<PsiMethod> list = new JBList<>(validEnclosingMethods.toArray(PsiMethod.EMPTY_ARRAY));
