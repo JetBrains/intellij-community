@@ -21,6 +21,7 @@ import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -3228,11 +3229,21 @@ public class HighlightUtil extends HighlightUtilBase {
       boolean isSufficient(LanguageLevel useSiteLevel) {
         return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
       }
+
+      @Override
+      LanguageLevel getStandardLevel() {
+        return LanguageLevel.JDK_14;
+      }
     },
     SWITCH_EXPRESSION(LanguageLevel.JDK_13_PREVIEW, "feature.switch.expressions") {
       @Override
       boolean isSufficient(LanguageLevel useSiteLevel) {
         return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
+      }
+
+      @Override
+      LanguageLevel getStandardLevel() {
+        return LanguageLevel.JDK_14;
       }
     },
     TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
@@ -3259,6 +3270,24 @@ public class HighlightUtil extends HighlightUtilBase {
     boolean isSufficient(LanguageLevel useSiteLevel) {
       return useSiteLevel.isAtLeast(level) && (!level.isPreview() || useSiteLevel.isPreview());
     }
+
+    /**
+     * Override if feature was preview and then accepted as standard
+     */
+    LanguageLevel getStandardLevel() {
+      return level.isPreview() ? null : level;
+    }
+  }
+
+  private static LanguageLevel getApplicableLevel(PsiFile file, Feature feature) {
+    LanguageLevel standardLevel = feature.getStandardLevel();
+    if (standardLevel != null && feature.level.isPreview()) {
+      JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
+      if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
+        return standardLevel;
+      }
+    }
+    return feature.level;
   }
 
   static HighlightInfo checkFeature(@NotNull PsiElement element,
@@ -3268,7 +3297,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(element, feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(feature.level));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(getApplicableLevel(file, feature)));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createShowModulePropertiesFix(element));
       return info;
     }
