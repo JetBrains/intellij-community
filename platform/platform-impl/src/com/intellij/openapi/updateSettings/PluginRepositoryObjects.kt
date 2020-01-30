@@ -34,8 +34,8 @@ data class IntellijUpdateMetadata(
   val version: String = "",
   val notes: String = "",
   val dependencies: Set<String> = emptySet(),
-  val since: String = "",
-  val until: String = "",
+  val since: String? = null,
+  val until: String? = null,
   val productCode: String? = null
 ) {
   fun toPluginNode(): PluginNode {
