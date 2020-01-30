@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -133,11 +134,22 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     if (element instanceof PsiRecordComponent) {
       PsiClass containingClass = ((PsiRecordComponent)element).getContainingClass();
       if (containingClass != null) {
-        PsiMethod explicitGetter = ContainerUtil
-          .find(containingClass.findMethodsByName(((PsiRecordComponent)element).getName(), false), m -> m.getParameters().length == 0);
+        String name = ((PsiRecordComponent)element).getName();
+        if (name != null) {
+          PsiMethod explicitGetter = ContainerUtil
+            .find(containingClass.findMethodsByName(name, false), m -> m.getParameters().length == 0);
 
-        if (explicitGetter != null) {
-          addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()), allRenames);
+          if (explicitGetter != null) {
+            addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()), allRenames);
+          }
+
+          PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
+          if (canonicalConstructor != null) {
+            PsiParameter parameter = ContainerUtil.find(canonicalConstructor.getParameterList().getParameters(), p -> name.equals(p.getName()));
+            if (parameter != null) {
+              allRenames.put(parameter, newName);
+            }
+          }
         }
       }
     }
