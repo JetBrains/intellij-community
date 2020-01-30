@@ -220,13 +220,13 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     });
     myRunnerPanel = new JPanel(new GridBagLayout());
     myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    myRunnerPanel.add(new JLabel("Choose coverage runner:"), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(10), 0, 0));
+    myRunnerPanel.add(new JLabel(ExecutionBundle.message("run.configuration.choose.coverage.runner")), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(10), 0, 0));
     myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     final JPanel cPanel = new JPanel(new VerticalFlowLayout());
 
-    mySamplingRb = new JRadioButton("Sampling");
+    mySamplingRb = new JRadioButton(ExecutionBundle.message("run.configuration.coverage.sampling"));
     cPanel.add(mySamplingRb);
-    myTracingRb = new JRadioButton("Tracing");
+    myTracingRb = new JRadioButton(ExecutionBundle.message("run.configuration.coverage.tracing"));
     cPanel.add(myTracingRb);
 
     final ButtonGroup group = new ButtonGroup();
@@ -244,7 +244,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     mySamplingRb.addActionListener(samplingListener);
     myTracingRb.addActionListener(samplingListener);
 
-    myTrackPerTestCoverageCb = new JCheckBox("Track per test coverage");
+    myTrackPerTestCoverageCb = new JCheckBox(ExecutionBundle.message("run.configuration.track.per.test.coverage"));
     final JBPanel tracingPanel = JBUI.Panels.simplePanel(myTrackPerTestCoverageCb).withBorder(JBUI.Borders.emptyLeft(15));
     cPanel.add(tracingPanel);
     myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
@@ -276,7 +276,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     panel.add(myExcludeClassFilterEditor, bagConstraints);
 
     bagConstraints.weighty = 0;
-    myTrackTestSourcesCb = new JCheckBox("Enable coverage in test folders");
+    myTrackTestSourcesCb = new JCheckBox(ExecutionBundle.message("run.configuration.enable.coverage.in.test.folders"));
     panel.add(myTrackTestSourcesCb, bagConstraints);
 
     gc.weighty = 1;

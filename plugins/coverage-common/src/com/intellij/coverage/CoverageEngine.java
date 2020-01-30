@@ -3,6 +3,7 @@ package com.intellij.coverage;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -349,7 +350,7 @@ public abstract class CoverageEngine {
   }
 
   public static String getEditorTitle() {
-    return "Code Coverage";
+    return ExecutionBundle.message("coverage.tab.title");
   }
 
   public CoverageViewExtension createCoverageViewExtension(Project project,
