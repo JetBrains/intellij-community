@@ -375,6 +375,11 @@
 
     <suggestedRefactoringSupport language="Python"
                                  implementationClass="com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport"/>
+
+    <!-- Targets API -->
+    <experimentalFeature id="python.use.targets.api.for.run.configurations">
+      <description>Switches Python Run Configurations to Targets API. This might be unstable.</description>
+    </experimentalFeature>
   </extensions>
 
   <extensionPoints>

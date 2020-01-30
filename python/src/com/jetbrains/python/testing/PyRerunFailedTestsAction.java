@@ -9,6 +9,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -23,12 +25,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.run.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
@@ -43,7 +45,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     if (model == null) {
       return null;
     }
-    return new MyTestRunProfile((AbstractPythonRunConfiguration)model.getProperties().getConfiguration());
+    return new MyTestRunProfile((AbstractPythonRunConfiguration<?>)model.getProperties().getConfiguration());
   }
 
   private class MyTestRunProfile extends MyRunProfile {
@@ -54,13 +56,13 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
     @Override
     public Module @NotNull [] getModules() {
-      return ((AbstractPythonRunConfiguration)getPeer()).getModules();
+      return ((AbstractPythonRunConfiguration<?>)getPeer()).getModules();
     }
 
     @Nullable
     @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-      final AbstractPythonTestRunConfiguration<?> configuration = ((AbstractPythonTestRunConfiguration)getPeer());
+      final AbstractPythonTestRunConfiguration<?> configuration = ((AbstractPythonTestRunConfiguration<?>)getPeer());
 
       // If configuration wants to take care about rerun itself
       if (configuration instanceof TestRunConfigurationReRunResponsible) {
@@ -75,7 +77,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
         return ((TestRunConfigurationReRunResponsible)configuration).rerunTests(executor, env, failedTestElements);
       }
       return new FailedPythonTestCommandLineStateBase(configuration, env,
-                                                      (PythonTestCommandLineStateBase)configuration.getState(executor, env));
+                                                      (PythonTestCommandLineStateBase<?>)configuration.getState(executor, env));
     }
   }
 
@@ -84,8 +86,8 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     private final Project myProject;
 
     FailedPythonTestCommandLineStateBase(AbstractPythonTestRunConfiguration<?> configuration,
-                                                ExecutionEnvironment env,
-                                                PythonTestCommandLineStateBase<?> state) {
+                                         ExecutionEnvironment env,
+                                         PythonTestCommandLineStateBase<?> state) {
       super(configuration, env);
       myState = state;
       myProject = configuration.getProject();
@@ -103,12 +105,23 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
-    public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
+    public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers)
+      throws ExecutionException {
       // Insane rerun tests with out of spec.
       if (getTestSpecs().isEmpty()) {
         throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
       }
       return super.execute(executor, processStarter, patchers);
+    }
+
+    @Override
+    public @NotNull ExecutionResult execute(Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
+      throws ExecutionException {
+      // Insane rerun tests with out of spec.
+      if (getTestSpecs().isEmpty()) {
+        throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
+      }
+      return super.execute(executor, converter);
     }
 
     @NotNull
@@ -155,9 +168,33 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
+    protected void addBeforeParameters(@NotNull PythonScriptExecution testScriptExecution) {
+      myState.addBeforeParameters(testScriptExecution);
+    }
+
+    @Override
+    protected void addTestRunnerParameters(GeneralCommandLine cmd) {
+      myState.addTestRunnerParameters(cmd);
+    }
+
+    @Override
+    protected void addAfterParameters(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
+                                      @NotNull PythonScriptExecution testScriptExecution) {
+      myState.addAfterParameters(targetEnvironmentRequest, testScriptExecution);
+    }
+
+    @Override
     public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
       super.customizeEnvironmentVars(envs, passParentEnvs);
       myState.customizeEnvironmentVars(envs, passParentEnvs);
+    }
+
+    @Override
+    public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
+                                                        @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                        boolean passParentEnvs) {
+      super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs);
+      myState.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs);
     }
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -40,9 +41,17 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       try {
+        boolean useTargetsAPI = Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations");
+
         ExecutionResult executionResult;
         RunProfile profile = env.getRunProfile();
-        if (state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
+        if (useTargetsAPI && state instanceof PythonCommandLineState) {
+          // TODO [cloud-api.python] profile functionality must be applied here:
+          //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineFirst() - host:port is put in user data
+          //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineForBuildout()
+          executionResult = ((PythonCommandLineState)state).execute(env.getExecutor());
+        }
+        else if (!useTargetsAPI && state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
           executionResult = ((PythonCommandLineState)state).execute(env.getExecutor(), (CommandLinePatcher)profile);
         }
         else {
