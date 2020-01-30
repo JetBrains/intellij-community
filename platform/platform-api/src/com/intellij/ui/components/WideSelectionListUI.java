@@ -56,7 +56,7 @@ public final class WideSelectionListUI extends BasicListUI {
       }
     }
     super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
-    if (!selected && row == leadSelectionIndex && g instanceof Graphics2D) {
+    if (!selected && row == leadSelectionIndex && g instanceof Graphics2D && list.hasFocus()) {
       g.setColor(UIUtil.getListSelectionBackground(true));
       if (JList.VERTICAL == list.getLayoutOrientation()) {
         int viewportX = 0;

@@ -238,7 +238,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
               }
             }
-            if (!selected && lead && g instanceof Graphics2D) {
+            if (!selected && lead && focused && g instanceof Graphics2D) {
               g.setColor(getBackground(tree, path, row, true));
               DRAW.paint((Graphics2D)g, viewportX, bounds.y, viewportWidth, bounds.height, 0);
             }
