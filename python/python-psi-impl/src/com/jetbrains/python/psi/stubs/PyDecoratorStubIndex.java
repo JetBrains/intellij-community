@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
@@ -36,8 +37,12 @@ public class PyDecoratorStubIndex extends StringStubIndexExtension<PyDecorator> 
    */
   public static final StubIndexKey<String, PyDecorator> KEY = StubIndexKey.createIndexKey("Python.Decorator");
 
-  public static Collection<PyDecorator> find(String name, Project project) {
-    return StubIndex.getElements(KEY, name, project, ProjectScope.getAllScope(project), PyDecorator.class);
+  public static Collection<PyDecorator> find(@NotNull String name, @NotNull Project project) {
+    return find(name, project, ProjectScope.getAllScope(project));
+  }
+
+  public static Collection<PyDecorator> find(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return StubIndex.getElements(KEY, name, project, scope, PyDecorator.class);
   }
 
   @NotNull
