@@ -57,14 +57,15 @@ public class ImportIntoShelfAction extends DumbAwareAction {
 
       final List<VirtualFile> patchTypeFiles = new ArrayList<>();
       final boolean filesFound = pm.runProcessWithProgressSynchronously(
-        (Runnable)() -> patchTypeFiles.addAll(shelveChangesManager.gatherPatchFiles(files)), "Looking for Patch Files...", true, project);
+        () -> patchTypeFiles.addAll(shelveChangesManager.gatherPatchFiles(files)),
+        VcsBundle.message("looking.for.patch.files"), true, project);
       if (!filesFound || patchTypeFiles.isEmpty()) return;
       if (!patchTypeFiles.equals(files)) {
         final String message = "Found " + (patchTypeFiles.size() == 1 ?
                                            "one patch file (" + patchTypeFiles.get(0).getPath() + ")." :
                                            (patchTypeFiles.size() + " patch files.")) +
                                "\nContinue with import?";
-        final int toImport = Messages.showYesNoDialog(project, message, "Import Patches", Messages.getQuestionIcon());
+        final int toImport = Messages.showYesNoDialog(project, message, VcsBundle.message("import.patches"), Messages.getQuestionIcon());
         if (Messages.NO == toImport) return;
       }
       pm.runProcessWithProgressSynchronously(() -> {
@@ -80,7 +81,7 @@ public class ImportIntoShelfAction extends DumbAwareAction {
         if (lists.isEmpty() && exceptions.isEmpty()) {
           VcsBalloonProblemNotifier.showOverChangesView(project, "No patches found", MessageType.WARNING);
         }
-      }, "Import Patches into Shelf...", true, project);
+      }, VcsBundle.message("import.patches.into.shelf"), true, project);
     });
   }
 }
