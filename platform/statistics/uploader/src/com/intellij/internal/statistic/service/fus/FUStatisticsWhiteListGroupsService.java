@@ -9,9 +9,11 @@ import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.GroupFilterCondition;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import org.apache.http.*;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.utils.DateUtils;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,8 +73,8 @@ public class FUStatisticsWhiteListGroupsService {
     if (StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) return null;
 
     String content = null;
-    try {
-      HttpResponse response = StatisticsEventLogUtil.create(userAgent).execute(new HttpGet(serviceUrl));
+    try (CloseableHttpClient client = StatisticsEventLogUtil.create(userAgent);
+         CloseableHttpResponse response = client.execute(new HttpGet(serviceUrl))) {
       HttpEntity entity = response.getEntity();
       if (entity != null) {
         content = EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8);
@@ -85,18 +87,19 @@ public class FUStatisticsWhiteListGroupsService {
   }
 
   private static long lastModifiedWhitelist(@NotNull String userAgent, @Nullable String serviceUrl) {
-    try {
-      if (!StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) {
-        final HttpResponse response = StatisticsEventLogUtil.create(userAgent).execute(new HttpHead(serviceUrl));
-        return Stream.of(response.getHeaders(HttpHeaders.LAST_MODIFIED)).
+    if (!StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) {
+      try (CloseableHttpClient client = StatisticsEventLogUtil.create(userAgent);
+           CloseableHttpResponse response = client.execute(new HttpHead(serviceUrl))) {
+        Header[] headers = response.getHeaders(HttpHeaders.LAST_MODIFIED);
+        return Stream.of(headers).
           map(header -> header.getValue()).
           filter(Objects::nonNull).
           map(value -> DateUtils.parseDate(value).getTime()).
           max(Long::compareTo).orElse(0L);
       }
-    }
-    catch (IOException e) {
-      //LOG.info(e);
+      catch (IOException e) {
+        //LOG.info(e);
+      }
     }
     return 0;
   }

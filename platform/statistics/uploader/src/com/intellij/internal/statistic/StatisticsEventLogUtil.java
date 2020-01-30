@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic;
 
-import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -19,7 +19,7 @@ public class StatisticsEventLogUtil {
   @NonNls public static final String UTF8 = "UTF-8";
 
   @NotNull
-  public static HttpClient create(@NotNull String userAgent) {
+  public static CloseableHttpClient create(@NotNull String userAgent) {
     return HttpClientBuilder.create().setUserAgent(userAgent).build();
   }
 
