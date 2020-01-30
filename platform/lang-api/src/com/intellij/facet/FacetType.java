@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,9 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
    *                            subfacets to a facet of the specified type. If this parameter is {@code null} it will be possible to add facet of this type
    *                            directly to a module
    */
-  public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName,
+  public FacetType(final @NotNull FacetTypeId<F> id,
+                   final @NotNull @NonNls String stringId,
+                   final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName,
                    final @Nullable FacetTypeId underlyingFacetType) {
     myId = id;
     myStringId = stringId;
@@ -60,7 +63,9 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
    * @param stringId        unique string id of the facet type
    * @param presentableName name of this facet type which will be shown in UI
    */
-  public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName) {
+  public FacetType(final @NotNull FacetTypeId<F> id,
+                   final @NotNull @NonNls String stringId,
+                   final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
     this(id, stringId, presentableName, null);
   }
 
