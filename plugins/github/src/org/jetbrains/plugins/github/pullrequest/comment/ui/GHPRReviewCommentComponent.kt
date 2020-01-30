@@ -11,6 +11,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -69,19 +70,20 @@ object GHPRReviewCommentComponent {
       isVisible = comment.canBeDeleted
     }
 
+    val contentPanel = BorderLayoutPanel().andTransparent().addToCenter(textPane).addToBottom(editorWrapper)
+
     return JPanel(null).apply {
       isOpaque = false
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill(),
-                         AC().gap("${UI.scale(8)}").gap("${UI.scale(12)}").gap("${UI.scale(8)}").gap("push"))
+                         AC().gap("${UI.scale(8)}"))
 
       add(avatarLabel, CC().pushY())
-      add(titlePane, CC().growX().pushX().minWidth("0"))
-      add(editButton, CC().hideMode(3))
-      add(deleteButton, CC().hideMode(3))
-      add(textPane, CC().newline().skip().spanX(4).grow().push().minWidth("0").minHeight("0"))
-      add(editorWrapper, CC().newline().skip().spanX(4).grow().push().minWidth("0").minHeight("0"))
+      add(titlePane, CC().minWidth("0").split(3).alignX("left"))
+      add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
+      add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
+      add(contentPanel, CC().newline().skip().grow().push().minWidth("0").minHeight("0"))
     }
   }
 
