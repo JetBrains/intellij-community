@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.HttpRequests
+import org.jetbrains.annotations.TestOnly
 import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
 
@@ -40,76 +41,86 @@ class SharedIndexesLoader {
     @JvmStatic fun getInstance() = service<SharedIndexesLoader>()
   }
 
-  fun lookupIndexes(project: Project?,
-                  kind: String,
-                  sourceHash: String,
-                  callback: (ProgressIndicator, List<SharedIndexInfo>) -> Unit) {
+  fun lookupIndexes(project: Project,
+                    kind: String,
+                    sourceHash: String,
+                    callback: (ProgressIndicator, List<SharedIndexInfo>) -> Unit) {
 
     ProgressManager.getInstance().run(object: Task.Backgroundable(project, "Looking for Shared Indexes", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
       override fun run(indicator: ProgressIndicator) {
         indicator.text = "Looking for Shared Indexes..."
 
-        val indexUrl = SharedIndexesCdn.hashIndexUrl(kind, sourceHash)
-        LOG.info("Checking index at $indexUrl...")
+        val entries = downloadIndexesList(kind, sourceHash, indicator)
 
-        val rawDataXZ = try {
-          HttpRequests.request(indexUrl).readBytes(indicator)
-        } catch (e: HttpRequests.HttpStatusException) {
-          LOG.info("No indexes available for hash $sourceHash. ${e.message}",e )
-          return
-        }
-
-        val rawData = try {
-          ByteArrayInputStream(rawDataXZ).use { input ->
-            XZInputStream(input).use {
-              it.readBytes()
-            }
-          }
-        } catch (e: Exception) {
-          LOG.warn("Failed to unpack index data for hash $sourceHash. ${e.message}", e)
-          return
-        }
-
-        LOG.info("Downloaded the $indexUrl...")
-
-        val json = try {
-          ObjectMapper().readTree(rawData)
-        } catch (e: Exception) {
-          LOG.warn("Failed to read index data JSON for hash $sourceHash. ${e.message}", e)
-          return
-        }
-
-        val listVersion = json.get("list_version")?.asText()
-        if (listVersion != "1") {
-          LOG.warn("Index data version mismatch. Current version is $listVersion")
-          return
-        }
-
-        val entries = (json.get("entries") as? ArrayNode) ?: run {
-          LOG.warn("Index data format is incomplete. Missing 'entries' element")
-          return
-        }
-
-        val indexes = entries.elements().asSequence().mapNotNull { node ->
-          if (node !is ObjectNode) return@mapNotNull null
-
-          val url = node.get("url")?.asText() ?: return@mapNotNull null
-          val sha = node.get("sha256")?.asText() ?: return@mapNotNull null
-          val data = (node.get("metadata") as? ObjectNode) ?: return@mapNotNull null
-
-          SharedIndexInfo(url, sha, data)
-        }.toList()
-
-        LOG.info("Detected ${indexes.size} batches for the hash $sourceHash")
-
-        if (indexes.isEmpty()) {
-          LOG.info("No indexes found for $sourceHash")
-          return
-        }
-
-        callback(indicator, indexes)
+        indicator.text = "Inspecting Shared Indexes..."
+        callback(indicator, entries)
       }
     })
+  }
+
+  @TestOnly
+  fun downloadIndexesList(kind: String,
+                          sourceHash: String,
+                          indicator: ProgressIndicator?
+  ): List<SharedIndexInfo> {
+    val indexUrl = SharedIndexesCdn.hashIndexUrl(kind, sourceHash)
+    LOG.info("Checking index at $indexUrl...")
+
+    val rawDataXZ = try {
+      HttpRequests.request(indexUrl).throwStatusCodeException(true).readBytes(indicator)
+    } catch (e: HttpRequests.HttpStatusException) {
+      LOG.info("No indexes available for hash $sourceHash. ${e.message}", e)
+      return listOf()
+    }
+
+    val rawData = try {
+      ByteArrayInputStream(rawDataXZ).use { input ->
+        XZInputStream(input).use {
+          it.readBytes()
+        }
+      }
+    } catch (e: Exception) {
+      LOG.warn("Failed to unpack index data for hash $sourceHash. ${e.message}", e)
+      return listOf()
+    }
+
+    LOG.info("Downloaded the $indexUrl...")
+
+    val json = try {
+      ObjectMapper().readTree(rawData)
+    } catch (e: Exception) {
+      LOG.warn("Failed to read index data JSON for hash $sourceHash. ${e.message}", e)
+      return listOf()
+    }
+
+    val listVersion = json.get("list_version")?.asText()
+    if (listVersion != "1") {
+      LOG.warn("Index data version mismatch. Current version is $listVersion")
+      return listOf()
+    }
+
+    val entries = (json.get("entries") as? ArrayNode) ?: run {
+      LOG.warn("Index data format is incomplete. Missing 'entries' element")
+      return listOf()
+    }
+
+    val indexes = entries.elements().asSequence().mapNotNull { node ->
+      if (node !is ObjectNode) return@mapNotNull null
+
+      val url = node.get("url")?.asText() ?: return@mapNotNull null
+      val sha = node.get("sha256")?.asText() ?: return@mapNotNull null
+      val data = (node.get("metadata") as? ObjectNode) ?: return@mapNotNull null
+
+      SharedIndexInfo(url, sha, data)
+    }.toList()
+
+    LOG.info("Detected ${indexes.size} batches for the hash $sourceHash")
+
+    if (indexes.isEmpty()) {
+      LOG.info("No indexes found for $sourceHash")
+    }
+
+    return indexes
   }
 }
 
