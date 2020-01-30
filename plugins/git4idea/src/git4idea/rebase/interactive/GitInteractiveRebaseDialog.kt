@@ -4,8 +4,10 @@ package git4idea.rebase.interactive
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -105,8 +107,8 @@ internal class GitInteractiveRebaseDialog(
       return CommittedChangesTreeBrowser.zipChanges(changes)
     }
   }
+  private val pickAction = ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable)
   private val actions = listOf<AnAction>(
-    ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable),
     ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable),
     FixupAction(commitsTable),
     RewordAction(commitsTable)
@@ -132,7 +134,12 @@ internal class GitInteractiveRebaseDialog(
     commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
     PopupHandler.installRowSelectionTablePopup(
       commitsTable,
-      DefaultActionGroup(actions + listOf(Separator.getInstance()) + contextMenuOnlyActions),
+      DefaultActionGroup().apply {
+        add(pickAction)
+        addAll(actions)
+        addSeparator()
+        addAll(contextMenuOnlyActions)
+      },
       "Git.Interactive.Rebase.Dialog",
       ActionManager.getInstance()
     )
@@ -150,6 +157,8 @@ internal class GitInteractiveRebaseDialog(
       .setPanelBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
       .disableAddAction()
       .disableRemoveAction()
+      .addExtraAction(AnActionButton.fromAction(pickAction))
+      .addExtraAction(AnActionButtonSeparator())
     actions.forEach {
       decorator.addExtraAction(AnActionButton.fromAction(it))
     }
@@ -733,6 +742,20 @@ private class RewordAction(table: CommitsTable) :
 
   override fun actionPerformed(e: AnActionEvent) {
     TableUtil.editCellAt(table, table.selectedRows.single(), SUBJECT_COLUMN)
+  }
+}
+
+private class AnActionButtonSeparator : AnActionButton("Separator"), CustomComponentAction, DumbAware {
+  companion object {
+    private val SEPARATOR_HEIGHT = JBUI.scale(20)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    throw UnsupportedOperationException()
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String) = JSeparator(SwingConstants.VERTICAL).apply {
+    preferredSize = Dimension(preferredSize.width, SEPARATOR_HEIGHT)
   }
 }
 
