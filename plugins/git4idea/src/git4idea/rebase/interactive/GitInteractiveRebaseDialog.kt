@@ -112,7 +112,14 @@ internal class GitInteractiveRebaseDialog(
     RewordAction(commitsTable)
   )
   private val contextMenuOnlyActions = listOf<AnAction>(
-    ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, "Stop to Edit", "Stop to Edit", AllIcons.Actions.Pause, commitsTable),
+    ChangeEntryStateAction(
+      GitRebaseEntry.Action.EDIT,
+      GitBundle.getString("rebase.interactive.dialog.stop.to.edit.text"),
+      GitBundle.getString("rebase.interactive.dialog.stop.to.edit.text"),
+      null,
+      commitsTable
+    ),
+    Separator.getInstance(),
     ShowGitRebaseEditorLikeEntriesAction(project, commitsTable)
   )
 
@@ -125,7 +132,7 @@ internal class GitInteractiveRebaseDialog(
     commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
     PopupHandler.installRowSelectionTablePopup(
       commitsTable,
-      DefaultActionGroup(actions + contextMenuOnlyActions),
+      DefaultActionGroup(actions + listOf(Separator.getInstance()) + contextMenuOnlyActions),
       "Git.Interactive.Rebase.Dialog",
       ActionManager.getInstance()
     )
@@ -656,11 +663,11 @@ private open class ChangeEntryStateAction(
   protected val action: GitRebaseEntry.Action,
   title: String,
   description: String,
-  icon: Icon,
+  icon: Icon?,
   protected val table: CommitsTable
 ) : DumbAwareAction(title, description, icon) {
 
-  constructor(action: GitRebaseEntry.Action, icon: Icon, table: CommitsTable) :
+  constructor(action: GitRebaseEntry.Action, icon: Icon?, table: CommitsTable) :
     this(action, action.name.capitalize(), action.name.capitalize(), icon, table)
 
   init {
