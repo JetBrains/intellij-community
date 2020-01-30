@@ -357,14 +357,17 @@ object DynamicPlugins {
           val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
           val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
           MemoryDumpHelper.captureMemoryDump(snapshotPath)
-          GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath",
-                                   NotificationType.WARNING).notify(null)
+          notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
         }
         LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
       }
 
       return classLoaderUnloaded
     }
+  }
+
+  internal fun notify(text: String, notificationType: NotificationType) {
+    GROUP.createNotification(text, notificationType).notify(null)
   }
 
   private fun unloadPluginDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl,
