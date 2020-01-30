@@ -9,10 +9,7 @@
 
   <description>
       <![CDATA[
-Collects code coverage information for Java.
-<ul><li>Adds the Coverage tab to run/debug configurations</li>
-<li>Generates standalone HTML reports for external use</li>
-<li>Supports two modes of analysis: sampling and tracing</li></ul>
+Collects and displays coverage information for Java.
 <p>
 To run your code with coverage, open the <b>Run</b> menu and click <b>Run with Coverage</b>.
 Results are displayed in the <b>Coverage</b> tool window, in the <b>Project</b> tool window, and in the editor.
