@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -180,15 +180,7 @@ public class Matcher {
     matchContext.setShouldRecursivelyMatch(context.shouldRecursivelyMatch());
     visitor.setMatchContext(matchContext);
 
-    matchContext.setSink(
-      new DuplicateFilteringResultSink(
-        new DefaultMatchResultSink() {
-          @Override
-          public void newMatch(MatchResult result) {
-            processor.process(result, configuration);
-          }
-        }
-      )
+    matchContext.setSink(new DuplicateFilteringResultSink(new InspectionResultSink(processor, configuration))
     );
   }
 
@@ -358,6 +350,26 @@ public class Matcher {
       findMatches(sink, options);
     } finally {
       isTesting = false;
+    }
+  }
+
+  private static class InspectionResultSink extends DefaultMatchResultSink {
+    private final Configuration myConfiguration;
+    private PairProcessor<? super MatchResult, ? super Configuration> myProcessor;
+
+    InspectionResultSink(PairProcessor<? super MatchResult, ? super Configuration> processor, Configuration configuration) {
+      myProcessor = processor;
+      myConfiguration = configuration;
+    }
+
+    @Override
+    public void newMatch(MatchResult result) {
+      myProcessor.process(result, myConfiguration);
+    }
+
+    @Override
+    public void matchingFinished() {
+      myProcessor = null;
     }
   }
 
