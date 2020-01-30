@@ -29,7 +29,11 @@ fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet())
 }
 
 @JvmOverloads
-fun loadExtensionWithText(extensionTag: String, loader: ClassLoader, ns: String = "com.intellij"): Disposable {
+fun loadExtensionWithText(
+  extensionTag: String,
+  loader: ClassLoader = DynamicPlugins::class.java.classLoader,
+  ns: String = "com.intellij"
+): Disposable {
   val name = "test" + abs(extensionTag.hashCode())
   val text = """<idea-plugin>
   <name>$name</name>

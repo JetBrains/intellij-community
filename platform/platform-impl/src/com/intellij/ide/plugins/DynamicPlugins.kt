@@ -347,6 +347,9 @@ object DynamicPlugins {
     } finally {
       IdeEventQueue.getInstance().flushQueue()
 
+      if (ApplicationManager.getApplication().isUnitTestMode && !(loadedPluginDescriptor.pluginClassLoader is PluginClassLoader)) {
+        return true
+      }
       val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
       if (!classLoaderUnloaded) {
         if (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable() && !ApplicationManager.getApplication().isUnitTestMode) {
