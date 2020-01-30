@@ -106,7 +106,7 @@ internal class GitInteractiveRebaseDialog(
     }
   }
   private val actions = listOf<AnAction>(
-    ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Checked, commitsTable),
+    ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable),
     ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, "Stop to Edit", "Stop to Edit", AllIcons.Actions.Pause, commitsTable),
     ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable),
     FixupAction(commitsTable),
