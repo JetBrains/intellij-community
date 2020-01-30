@@ -75,7 +75,12 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     if (!StringUtil.isEmpty(suppressId)) {
       return suppressId;
     }
-    return getShortName();
+    return SSBasedInspection.SHORT_NAME;
+  }
+
+  @Override
+  public @Nullable String getAlternativeID() {
+    return SSBasedInspection.SHORT_NAME;
   }
 
   @Nullable
