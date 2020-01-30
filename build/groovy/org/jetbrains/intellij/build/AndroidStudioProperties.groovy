@@ -146,6 +146,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.app-inspection.ide", "android.jar")
       withModule("intellij.android.databinding", "android.jar")
       withModule("intellij.android.debuggers", "android.jar")
+      withModule("intellij.android.emulator", "android.jar")
       withModule("intellij.android.lang", "android.jar")
       withModule("intellij.android.lang-databinding", "android.jar")
       withModule("intellij.android.mlkit", "android.jar")

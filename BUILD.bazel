@@ -123,6 +123,8 @@ iml_project(
         "//tools/adt/idea/designer/customview:intellij.android.designer.customview.tests",
         "//tools/adt/idea/designer:intellij.android.designer",
         "//tools/adt/idea/designer:intellij.android.designer.tests",
+        "//tools/adt/idea/emulator:intellij.android.emulator",
+        "//tools/adt/idea/emulator:intellij.android.emulator.tests",
         "//tools/adt/idea/gradle-tooling/studio-gradle-tooling-api:intellij.android.gradle-tooling.api",
         "//tools/adt/idea/gradle-tooling/studio-gradle-tooling-impl:intellij.android.gradle-tooling.impl",
         "//tools/adt/idea/ide-perf-tests:intellij.android.ide-perf-tests",
