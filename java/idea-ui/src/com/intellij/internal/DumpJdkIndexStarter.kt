@@ -30,7 +30,6 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val jdkHomeKey = "jdk-home"
     val tempKey = "temp"
     val outputKey = "output"
-    val baseUrlKey = "base-url"
 
     println("")
     println("  [idea] ${commandName} ... (see keys below)")
@@ -41,13 +40,11 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     println("                                         (!) it will be cleared by the tool")
     println("       --$outputKey=<output path>     --- location of the indexes CDN image,")
     println("                                         it will be updated with new data")
-    println("       [--$baseUrlKey=<URL>]          --- CDN base URL for index.json files")
     println("")
     println("")
     println("")
 
     val nameHint = args.arg(nameHintKey, "").nullize(true)
-    val baseUrl = args.arg(baseUrlKey, "").nullize(true)?.trim()?.trimEnd('/')
     val jdkHome = args.argFile(jdkHomeKey, System.getProperty("java.home"))
     val tempDir = args.argFile(tempKey).recreateDir()
     val outputDir = args.argFile(outputKey).apply { mkdirs() }
@@ -152,12 +149,9 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val indexDir = (outputDir / indexKind / hash).apply { mkdirs() }
     fun indexFile(nameSuffix: String) = indexDir / "${indexChunk.name}-${infraVersion.weakVersionHash}$nameSuffix"
 
-    FileUtil.copy(indexZipXZ, indexFile(".ijx"))
+    FileUtil.copy(indexZipXZ, indexFile(".ijx.xz"))
     FileUtil.writeToFile(indexFile(".json"), indexMetadata)
     FileUtil.writeToFile(indexFile(".sha256"), indexZipXZ.sha256())
-    if (baseUrl != null) {
-      UpdateIndexesLayoutStarter.rebuildIndexForHashDir(indexDir, baseUrl)
-    }
 
     exitProcess(0)
   }
