@@ -394,6 +394,7 @@ object DynamicPlugins {
       for (point in it) {
         val rootArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
         rootArea.unregisterExtensionPoint(point.name)
+        point.clearExtensionClass()
       }
     }
     pluginDescriptor.project.extensionPoints?.let {
@@ -402,7 +403,14 @@ object DynamicPlugins {
         for (openProject in openProjects) {
           openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
         }
+        point.clearExtensionClass()
       }
+    }
+    loadedPluginDescriptor.app.extensionPoints?.forEach {
+      it.clearExtensionClass()
+    }
+    loadedPluginDescriptor.project.extensionPoints?.forEach {
+      it.clearExtensionClass()
     }
 
     val appServiceInstances = application.unloadServices(pluginDescriptor.app)
