@@ -730,7 +730,7 @@ private class RewordAction(table: CommitsTable) :
 }
 
 private class ShowGitRebaseEditorLikeEntriesAction(private val project: Project, private val table: CommitsTable) :
-  DumbAwareAction("Show Entries", "Show Entries", AllIcons.General.Information) {
+  DumbAwareAction(GitBundle.getString("rebase.interactive.dialog.view.git.commands.text")) {
 
   private fun getEntries(): List<GitRebaseEntry> = table.model.entries.map { it.entry }
 
