@@ -55,8 +55,8 @@ class FileSequenceModelHelper {
   }
 
   private fun <T> calculateProbability(node: NGramModelNode<T>, count: Int, isIncomplete: Boolean): Double {
-    val contextCount = if (isIncomplete) max(node.count - 1, 0) else node.count
-    if (contextCount == 0) return 0.0
+    val contextCount = if (isIncomplete) node.count - 1 else node.count
+    if (contextCount <= 0 || count <= 0) return 0.0
     return count / contextCount.toDouble()
   }
 }

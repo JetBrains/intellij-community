@@ -53,7 +53,8 @@ sealed class FilePredictionFeature {
 
   private class DoubleValue(override val value: Double) : FilePredictionFeature() {
     override fun addToEventData(key: String, data: FeatureUsageData) {
-      data.addData(key, value)
+      val rounded = if (value.isFinite()) "%.5f".format(value).toDouble() else -1.0
+      data.addData(key, rounded)
     }
   }
 }
