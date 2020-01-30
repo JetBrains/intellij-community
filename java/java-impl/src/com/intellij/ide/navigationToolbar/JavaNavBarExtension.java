@@ -112,4 +112,12 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
   protected List<NodeProvider<?>> getApplicableNodeProviders() {
     return myNodeProviders;
   }
+
+  @Override
+  protected boolean acceptParentFromModel(@Nullable PsiElement psiElement) {
+    if (psiElement instanceof PsiJavaFile) {
+      return ((PsiJavaFile) psiElement).getClasses().length > 1;
+    }
+    return true;
+  }
 }
