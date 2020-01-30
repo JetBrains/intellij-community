@@ -58,6 +58,8 @@ class LegacyBridgeRootsWatcher(
           }
         }
         s.entities(SdkEntity::class.java).forEach { roots.add(it.homeUrl) }
+        s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutput?.let { roots.add(it) } }
+        s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutputForTests?.let { roots.add(it) } }
 
         syncNewRootsToContainer(
           newRoots = roots,
