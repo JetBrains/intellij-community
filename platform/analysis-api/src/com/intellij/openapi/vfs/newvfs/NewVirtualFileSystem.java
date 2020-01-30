@@ -24,7 +24,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   }
 
   @Override
-  public void refreshWithoutFileWatcher(final boolean asynchronous) {
+  public void refreshWithoutFileWatcher(boolean asynchronous) {
     refresh(asynchronous);
   }
 
@@ -34,7 +34,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   }
 
   @Override
-  public boolean isSymLink(@NotNull final VirtualFile file) {
+  public boolean isSymLink(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -47,14 +47,16 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   protected abstract String extractRootPath(@NotNull String path);
 
   @Override
-  public void addVirtualFileListener(@NotNull final VirtualFileListener listener) {
+  @SuppressWarnings("deprecation")
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
     VirtualFileListener wrapper = new VirtualFileFilteringListener(listener, this);
     VirtualFileManager.getInstance().addVirtualFileListener(wrapper);
     myListenerWrappers.put(listener, wrapper);
   }
 
   @Override
-  public void removeVirtualFileListener(@NotNull final VirtualFileListener listener) {
+  @SuppressWarnings("deprecation")
+  public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     VirtualFileListener wrapper = myListenerWrappers.remove(listener);
     if (wrapper != null) {
       VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
@@ -82,7 +84,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public abstract void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException;
 
   @Override
-  public abstract void renameFile(final Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
+  public abstract void renameFile(Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
 
   public boolean markNewFilesAsDirty() {
     return false;
