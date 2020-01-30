@@ -81,7 +81,7 @@ class UVariableValue private constructor(
           val constant = value.toConstant()
           if (constant is UIntConstant && constant.type == UNumericType.INT) {
             val castConstant = UIntConstant(constant.value, variable.type)
-            return create(variable, value.coerceConstant(castConstant), dependencies)
+            return UVariableValue(variable, value.coerceConstant(castConstant), dependencies)
           }
         }
       }
