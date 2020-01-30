@@ -189,6 +189,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   @NotNull
+  @Nls
   protected String getIntentionActionFamilyName() {
     return "Editor notification";
   }

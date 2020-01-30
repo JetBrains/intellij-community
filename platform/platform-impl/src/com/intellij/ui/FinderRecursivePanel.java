@@ -34,6 +34,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,6 +156,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   @NotNull
   protected abstract List<T> getListItems();
 
+  @Nls
   protected String getListEmptyText() {
     return "No entries";
   }

@@ -6,6 +6,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,11 +21,14 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   protected static final int SMALL_GAP = 10;
   protected static final int GAP = 20;
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected abstract String getTitle();
 
+  @Nls
   protected abstract String getHTMLHeader();
 
   @Nullable
+  @Nls
   protected String getHTMLFooter() {
     return null;
   }

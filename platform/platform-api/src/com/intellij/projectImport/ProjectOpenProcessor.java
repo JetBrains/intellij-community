@@ -8,6 +8,7 @@ package com.intellij.projectImport;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ public abstract class ProjectOpenProcessor {
     new ExtensionPointName<>("com.intellij.projectOpenProcessor");
 
   @NotNull
+  @Nls
   public abstract String getName();
 
   @Nullable

@@ -71,6 +71,7 @@ public interface StatusBarWidget extends Disposable {
 
   interface TextPresentation extends WidgetPresentation {
     @NotNull
+    @Nls
     String getText();
 
     /**
