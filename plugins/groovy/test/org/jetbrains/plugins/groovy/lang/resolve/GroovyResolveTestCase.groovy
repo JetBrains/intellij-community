@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.text.StringUtil
@@ -47,7 +47,7 @@ abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length())
 
     if (newFilePath == null) {
-      myFixture.configureByText("aaa." + vFile.extension, fileText)
+      myFixture.configureByText(vFile.getName(), fileText)
     }
     else {
       myFixture.configureByText(newFilePath, fileText)
