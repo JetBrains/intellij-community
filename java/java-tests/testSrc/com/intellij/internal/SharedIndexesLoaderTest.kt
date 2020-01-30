@@ -12,7 +12,7 @@ class SharedIndexesLoaderTest : BasePlatformTestCase() {
   fun test_read_random_hash_ok() {
     val indexes = networkRetry {
       SharedIndexesLoader.getInstance()
-        .downloadIndexesList("jdk", "9f29c2ba6436e7dc64b011d71f14918f0b7e3e7f", null)
+        .downloadIndexesList(SharedIndexRequest( "jdk", "9f29c2ba6436e7dc64b011d71f14918f0b7e3e7f"), null)
     }
     Assert.assertTrue("$indexes", indexes.isNotEmpty())
   }
@@ -21,7 +21,7 @@ class SharedIndexesLoaderTest : BasePlatformTestCase() {
   fun test_read_random_hash_miss() {
     val indexes = networkRetry {
       SharedIndexesLoader.getInstance()
-        .downloadIndexesList("jdk", "9f29c2ba6436__missing__e71f14918f0b7e3e7f", null)
+        .downloadIndexesList(SharedIndexRequest("jdk", "9f29c2ba6436__missing__e71f14918f0b7e3e7f"), null)
     }
 
     Assert.assertTrue("$indexes", indexes.isEmpty())

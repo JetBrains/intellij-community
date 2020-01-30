@@ -39,10 +39,10 @@ class SharedIndexMetadataTest : BasePlatformTestCase() {
   fun testNoStubIndexesShouldNotMatch() = doMatchTest(false) { this.copy(stub = emptyMap()) }
 
   @Test
-  fun testExtraStubIndexShouldNotMatch() = doMatchTest(false) { this.copy(addToStub = mapOf("jonnyzzz" to "42")) }
+  fun testExtraStubIndexShouldNotMatch() = doMatchTest(true) { this.copy(addToStub = mapOf("jonnyzzz" to "42")) }
 
   @Test
-  fun testMissingStubIndexShouldNotMatch() = doMatchTest(false) { this.copy(removeFromStub = setOf(stubIndexVersions.keys.first())) }
+  fun testMissingStubIndexShouldNotMatch() = doMatchTest(true) { this.copy(removeFromStub = setOf(stubIndexVersions.keys.first())) }
 
   @Test
   fun testSelfSerializationIsStable() {
