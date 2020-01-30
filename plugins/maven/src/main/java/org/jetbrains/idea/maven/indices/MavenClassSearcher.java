@@ -19,12 +19,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.server.MavenServerIndexer;
 
@@ -46,7 +48,9 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       i -> i.search(patternAndQuery.second, 50).stream()
     ).collect(Collectors.toSet());
 
-    return new ArrayList<>(processResults(infos, patternAndQuery.first, maxResult));
+    ArrayList<MavenClassSearchResult> results = new ArrayList<>(processResults(infos, patternAndQuery.first, maxResult));
+    Collections.sort(results, Comparator.comparing(MavenClassSearchResult::getClassName));
+    return results;
   }
 
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
@@ -125,7 +129,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
             result.put(key, new MavenClassSearchResult(artifactInfo, classFQName, "default package"));
           }
           else {
-            result.put(key, new MavenClassSearchResult(artifactInfo, classFQName.substring(0, pos), classFQName.substring(pos + 1)));
+            result.put(key, new MavenClassSearchResult(artifactInfo, classFQName.substring(pos + 1), classFQName.substring(0, pos)));
           }
         }
         else {
@@ -142,6 +146,11 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       }
     }
 
+    result.values().forEach(a ->
+                              Arrays.sort(a.getSearchResults().getItems(),
+                                          Comparator.comparing(MavenDependencyCompletionItem::getVersion, VersionComparatorUtil.COMPARATOR)
+                                            .reversed())
+    );
     return result.values();
   }
 }
