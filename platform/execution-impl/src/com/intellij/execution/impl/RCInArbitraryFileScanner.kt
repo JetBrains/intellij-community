@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 
 /**
  * This class doesn't push any file properties, it is used for scanning the project for `*.run.xml` files - files with run configurations.
@@ -13,9 +14,13 @@ import com.intellij.openapi.vfs.VirtualFile
  */
 class RCInArbitraryFileScanner : FilePropertyPusher<Nothing> {
 
+  companion object {
+    fun isFileWithRunConfigs(path: String) = !path.contains("/.idea/") && PathUtil.getFileName(path).endsWith(".run.xml")
+  }
+
   override fun acceptsFile(file: VirtualFile, project: Project): Boolean {
-    if (file.name.endsWith(".run.xml") && !file.path.contains("/.idea/")) {
-      RunManagerImpl.getInstanceImpl(project).loadRunConfigsFromArbitraryFile(file)
+    if (isFileWithRunConfigs(file.path)) {
+      RunManagerImpl.getInstanceImpl(project).reloadRunConfigsFromArbitraryFile(file)
     }
     return false
   }

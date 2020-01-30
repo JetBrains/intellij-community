@@ -319,10 +319,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return template
   }
 
-  internal fun loadRunConfigsFromArbitraryFile(file: VirtualFile) {
+  internal fun reloadRunConfigsFromArbitraryFile(file: VirtualFile) {
     lock.write {
-      val runConfigs = rcInArbitraryFileManager.loadRunConfigsFromFile(this, file)
-      for (runConfig in runConfigs) {
+      val deletedAndAddedRunConfigs = rcInArbitraryFileManager.reloadRunConfigsFromFile(this, file)
+
+      removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs)
+
+      for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
         addConfiguration(runConfig)
       }
     }
@@ -332,6 +335,24 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     lock.write {
       val deletedConfigs = rcInArbitraryFileManager.deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
       removeConfigurations(deletedConfigs)
+    }
+  }
+
+  // Paths in <code>deletedFilePaths</code> and <code>updatedFilePaths</code> may be not related to the project, use ProjectIndex.isInContent() when needed
+  internal fun updateRunConfigsFromArbitraryFiles(deletedFilePaths: Collection<String>, updatedFilePaths: Collection<String>) {
+    lock.write {
+      val deletedRunConfigs = rcInArbitraryFileManager.deleteRunConfigsFromFiles(deletedFilePaths)
+      removeConfigurations(deletedRunConfigs)
+
+      for (filePath in updatedFilePaths) {
+        val deletedAndAddedRunConfigs = rcInArbitraryFileManager.reloadRunConfigsFromFile(this, filePath)
+
+        removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs)
+
+        for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
+          addConfiguration(runConfig)
+        }
+      }
     }
   }
 

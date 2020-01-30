@@ -539,6 +539,7 @@
     <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
     <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="last"/>
     <filePropertyPusher implementation="com.intellij.execution.impl.RCInArbitraryFileScanner"/>
+    <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
