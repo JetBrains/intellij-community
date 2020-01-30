@@ -1,4 +1,3 @@
-# Stubs for threading
 
 from typing import (
     Any, Callable, Iterable, List, Mapping, Optional, Tuple, Type, Union,
@@ -13,6 +12,8 @@ _TF = Callable[[FrameType, str, Any], Optional[Callable[..., Any]]]
 _PF = Callable[[FrameType, str, Any], None]
 _T = TypeVar('_T')
 
+
+__all__: List[str]
 
 def active_count() -> int: ...
 if sys.version_info < (3,):

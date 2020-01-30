@@ -1,4 +1,4 @@
-from typing import AnyStr, Dict, List, Mapping, Tuple, Union, Sequence, IO, Optional, TypeVar
+from typing import AnyStr, Dict, IO, List, Mapping, NamedTuple, Optional, Sequence, Tuple, TypeVar, Union
 
 error = OSError
 
@@ -78,10 +78,7 @@ class stat_result(object):
     st_mtime: int
     st_ctime: int
 
-class statvfs_result(object):
-    n_fields: int
-    n_sequence_fields: int
-    n_unnamed_fields: int
+class statvfs_result(NamedTuple):
     f_bsize: int
     f_frsize: int
     f_blocks: int

@@ -270,17 +270,33 @@ else:
 
 
 if sys.platform != 'win32':
-    class statvfs_result:  # Unix only
-        f_bsize: int
-        f_frsize: int
-        f_blocks: int
-        f_bfree: int
-        f_bavail: int
-        f_files: int
-        f_ffree: int
-        f_favail: int
-        f_flag: int
-        f_namemax: int
+    if sys.version_info >= (3, 7):
+        # f_fsid was added in https://github.com/python/cpython/pull/4571
+        class statvfs_result(NamedTuple):  # Unix only
+            f_bsize: int
+            f_frsize: int
+            f_blocks: int
+            f_bfree: int
+            f_bavail: int
+            f_files: int
+            f_ffree: int
+            f_favail: int
+            f_flag: int
+            f_namemax: int
+            f_fsid: int
+    else:
+        class statvfs_result(NamedTuple):  # Unix only
+            f_bsize: int
+            f_frsize: int
+            f_blocks: int
+            f_bfree: int
+            f_bavail: int
+            f_files: int
+            f_ffree: int
+            f_favail: int
+            f_flag: int
+            f_namemax: int
+
 
 # ----- os function stubs -----
 if sys.version_info >= (3, 6):

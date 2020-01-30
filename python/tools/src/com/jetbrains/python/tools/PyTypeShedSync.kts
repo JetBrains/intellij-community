@@ -102,9 +102,9 @@ fun sync(repo: Path, bundled: Path) {
                         ".gitignore",
                         ".travis.yml",
                         "CONTRIBUTING.md",
-                        "README.md",
                         "LICENSE",
-                        "requirements-tests-py2.txt",
+                        "pyproject.toml",
+                        "README.md",
                         "requirements-tests-py3.txt")
 
   Files
