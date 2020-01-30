@@ -16,4 +16,14 @@ public class ReduceBinOpOnCast {
       if (<warning descr="Condition 'res == b' is always 'true'">res == b</warning>) {}
     }
   }
+  
+  void testTwoChecks(int a, short b) {
+    if (a == 0x10000 || a == 0x20000 || a == 0) {
+      <warning descr="Variable update does nothing">b</warning> += a;
+    }
+  }
+  
+  void testDoubleCast(int x) {
+    double d = x + 1;
+  }
 }
