@@ -18,6 +18,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.config.GitExecutableManager
+import git4idea.config.GitVersionIdentificationException
 import git4idea.index.getFileStatus
 import java.util.*
 
@@ -32,7 +33,10 @@ internal class LightGitTracker : Disposable {
     get() = GitExecutableManager.getInstance().pathToGit
 
   @Volatile
-  private var state: State = State()
+  private var hasGit: Boolean = false
+
+  @Volatile
+  private var state: State = State.Blank
   val currentLocation: String?
     get() = state.location
   val statuses: Map<VirtualFile, FileStatus>
@@ -44,19 +48,46 @@ internal class LightGitTracker : Disposable {
                                                                            MyFrameStateListener())
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES,
                                                                            MyBulkFileListener())
+
+    singleTaskController.request(Request.CheckGit)
   }
 
   fun getFileStatus(file: VirtualFile): FileStatus {
     return state.statuses[file] ?: FileStatus.NOT_CHANGED
   }
 
-  private fun updateCurrentState(s: State) {
-    val statusesMap = lightEditorManager.openFiles.associateWith {
-      s.statuses[it] ?: state.statuses[it] ?: FileStatus.NOT_CHANGED
+  private fun updateCurrentState(updater: StateUpdater) {
+    when (updater) {
+      StateUpdater.Clear -> {
+        val previousStatuses = state.statuses
+        val statusesChanged = previousStatuses.isNotEmpty() && previousStatuses.values.any { it != FileStatus.NOT_CHANGED }
+        val changed = statusesChanged || !(state.location.isNullOrBlank())
+
+        state = State.Blank
+
+        if (changed) eventDispatcher.multicaster.update()
+        if (statusesChanged) lightEditService.updateFileStatus(previousStatuses.keys)
+      }
+      is StateUpdater.Update -> {
+        val newState = updater.state
+        val statusesMap = lightEditorManager.openFiles.associateWith {
+          newState.statuses[it] ?: state.statuses[it] ?: FileStatus.NOT_CHANGED
+        }
+        state = newState.copy(statuses = statusesMap)
+        eventDispatcher.multicaster.update()
+        if (newState.statuses.isNotEmpty()) lightEditService.updateFileStatus(newState.statuses.keys)
+      }
     }
-    state = s.copy(statuses = statusesMap)
-    eventDispatcher.multicaster.update()
-    if (s.statuses.isNotEmpty()) lightEditService.updateFileStatus(s.statuses.keys)
+  }
+
+  private fun checkGit() {
+    try {
+      GitExecutableManager.getInstance().identifyVersion(gitExecutable)
+      hasGit = true
+    }
+    catch (e: GitVersionIdentificationException) {
+      hasGit = false
+    }
   }
 
   fun addUpdateListener(listener: LightGitTrackerListener, parent: Disposable) {
@@ -68,6 +99,8 @@ internal class LightGitTracker : Disposable {
 
   private inner class MyBulkFileListener : BulkFileListener {
     override fun after(events: MutableList<out VFileEvent>) {
+      if (!hasGit) return
+
       val targetFiles = events.filter { it.isFromSave || it.isFromRefresh }.mapNotNullTo(mutableSetOf()) { it.file }
       val lightTargetFiles = lightEditorManager.openFiles.intersect(targetFiles)
       if (lightTargetFiles.isNotEmpty()) {
@@ -78,7 +111,7 @@ internal class LightGitTracker : Disposable {
 
   private inner class MyFrameStateListener : FrameStateListener {
     override fun onFrameActivated() {
-      val requests = mutableListOf<Request>()
+      val requests = mutableListOf<Request>(Request.CheckGit)
 
       val selectedFile = lightEditService.selectedFile
       if (selectedFile != null) {
@@ -98,6 +131,8 @@ internal class LightGitTracker : Disposable {
 
   private inner class MyLightEditorListener : LightEditorListener {
     override fun afterSelect(editorInfo: LightEditorInfo?) {
+      if (!hasGit) return
+
       state = state.copy(location = null)
 
       val selectedFile = editorInfo?.file
@@ -112,8 +147,13 @@ internal class LightGitTracker : Disposable {
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, State>("Light Git Tracker", this::updateCurrentState, this) {
-    override fun process(requests: List<Request>, previousResult: State?): State {
+    BaseSingleTaskController<Request, StateUpdater>("Light Git Tracker", this::updateCurrentState, this) {
+    override fun process(requests: List<Request>, previousResult: StateUpdater?): StateUpdater {
+      if (requests.contains(Request.CheckGit)) {
+        checkGit()
+      }
+      if (!hasGit) return StateUpdater.Clear
+
       val locationFile = requests.lastInstance(Request.Location::class.java)?.file
       val files = requests.filterIsInstance(Request.Status::class.java).flatMapTo(mutableSetOf()) { it.files }
 
@@ -127,7 +167,7 @@ internal class LightGitTracker : Disposable {
       }
 
       val statuses = mutableMapOf<VirtualFile, FileStatus>()
-      previousResult?.statuses?.let { statuses.putAll(it) }
+      previousResult?.state?.statuses?.let { statuses.putAll(it) }
       for (file in files) {
         try {
           if (file != locationFile || location != null) {
@@ -138,17 +178,27 @@ internal class LightGitTracker : Disposable {
         }
       }
 
-      return State(location, statuses)
+      return StateUpdater.Update(State(location, statuses))
     }
   }
 
   private data class State(val location: String?, val statuses: Map<VirtualFile, FileStatus>) {
-    constructor() : this(null, emptyMap())
+    private constructor() : this(null, emptyMap())
+
+    companion object {
+      val Blank = State()
+    }
+  }
+
+  private sealed class StateUpdater(val state: State) {
+    object Clear : StateUpdater(State.Blank)
+    class Update(s: State) : StateUpdater(s)
   }
 
   private sealed class Request {
     class Location(val file: VirtualFile) : Request()
     class Status(val files: Collection<VirtualFile>) : Request()
+    object CheckGit : Request()
   }
 
   companion object {
