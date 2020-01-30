@@ -767,6 +767,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return extensionClass;
   }
 
+  public void clearExtensionClass() {
+    myExtensionClass = null;
+  }
+
   @Override
   public String toString() {
     return getName();
