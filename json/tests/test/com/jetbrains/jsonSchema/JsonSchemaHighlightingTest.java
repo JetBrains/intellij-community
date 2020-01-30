@@ -1184,4 +1184,17 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/functionSchema.json"));
     doTest(schemaText, "{\"bindings\": [\"queueTrigger\"]}");
   }
+
+  public void testLargeInteger() {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"sampled\": {\n" +
+           "      \"type\": \"integer\",\n" +
+           "      \"minimum\": 0\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"sampled\": 15123456789 \n" +
+                "}\n");
+  }
 }
