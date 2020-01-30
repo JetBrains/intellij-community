@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -321,6 +322,7 @@ object DynamicPlugins {
           }
           jdomSerializer.clearSerializationCaches()
           BeanBinding.clearSerializationCaches()
+          TypeFactory.defaultInstance().clearCache()
           Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
 
           if (disable) {
