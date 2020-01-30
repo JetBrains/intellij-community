@@ -119,8 +119,8 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
       int endOffset = ShShellcheckUtil.calcOffset(sequence, document.getLineStartOffset(result.endLine - 1), result.endColumn);
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
 
-      boolean isInOuter = ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range));
-      if (isInOuter) continue;
+      // We skip results which out of scope for current file or intersect with outer language elements
+      if (!file.getTextRange().contains(range) || ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range))) continue;
 
       long code = result.code;
       String message = result.message;
