@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.images.ImageExtension
 import java.io.File
 import java.nio.file.Files
+import java.util.*
 import java.util.function.Consumer
 import kotlin.concurrent.thread
 
@@ -14,6 +15,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   companion object {
     const val iconsCommitHashesToSyncArg = "sync.icons.commits"
     private const val iconsRepoArg = "icons.repo"
+    internal val globallyExcludedCommits = Collections.synchronizedList(mutableListOf<CommitInfo>())
   }
 
   var devRepoDir: File
@@ -175,4 +177,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   }
 
   fun warn(message: String) = System.err.println(message)
+  fun excludeGlobally(commit: CommitInfo) {
+    globallyExcludedCommits += commit
+  }
 }

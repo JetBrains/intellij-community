@@ -47,7 +47,7 @@ internal object DotnetIconSync {
   private fun step(msg: String) = println("\n** $msg")
 
   fun sync() {
-    val tmpCommit = transformIconsToIdeaFormat()
+    transformIconsToIdeaFormat()
     try {
       syncPaths.forEach {
         context.devRepoDir = context.devRepoRoot.resolve(it.devPath)
@@ -58,7 +58,7 @@ internal object DotnetIconSync {
       generateClasses()
       if (isUnderTeamCity()) {
         createBranchForMerge()
-        val changes = commitChanges(tmpCommit)
+        val changes = commitChanges()
         if (changes != null) {
           pushBranchForMerge()
           triggerMerge()
@@ -70,19 +70,20 @@ internal object DotnetIconSync {
     }
   }
 
-  private fun transformIconsToIdeaFormat(): CommitInfo {
+  private fun transformIconsToIdeaFormat() {
     step("Transforming icons from Dotnet to Idea format..")
     syncPaths.forEach {
       val path = context.iconsRepo.resolve(it.iconsPath).toPath()
       DotnetIconsTransformation.transformToIdeaFormat(path)
     }
-    return muteStdOut {
-      context.iconsRepo.commit(
+    muteStdOut {
+      val tmpCommit = context.iconsRepo.commit(
         "temporary commit, shouldn't be pushed",
         "DotnetIconSyncRobot",
         "dotnet-icon-sync-robot-no-reply@jetbrains.com"
-      )
-    } ?: error("Unable to make a commit")
+      ) ?: error("Unable to make a commit")
+      context.excludeGlobally(tmpCommit)
+    }
   }
 
   private fun generateClasses() {
@@ -90,14 +91,10 @@ internal object DotnetIconSync {
     generateIconsClasses(DotnetIconsClasses(context.devRepoDir.absolutePath))
   }
 
-  private fun commitChanges(tmpCommit: CommitInfo): CommitInfo? {
+  private fun commitChanges(): CommitInfo? {
     step("Committing changes..")
-    val changes = context.iconsCommitsToSync.mapValues {
-      it.value.filterNot { commit ->
-        commit.hash == tmpCommit.hash
-      }
-    }
-    val commit = context.devRepoRoot.commit(changes.commitMessage(context.iconsRepo), committer.name, committer.email) {
+    val changes = context.iconsCommitsToSync.commitMessage(context.iconsRepo)
+    val commit = context.devRepoRoot.commit(changes, committer.name, committer.email) {
       it.fileName.toString().endsWith(".java")
     }
     if (commit != null) {
@@ -110,9 +107,7 @@ internal object DotnetIconSync {
   }
 
   private fun File.commit(message: String, user: String, email: String, filter: (Path) -> Boolean = { false }) =
-    with(gitStatus(this, includeUntracked = true)) {
-      modified + added
-    }.filter {
+    gitStatus(this, includeUntracked = true).all().filter {
       val path = toPath().resolve(it)
       isImage(path) || filter(path)
     }.let {

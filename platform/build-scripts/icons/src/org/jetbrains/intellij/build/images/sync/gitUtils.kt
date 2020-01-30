@@ -114,7 +114,7 @@ internal fun resetToPreviousCommit(repo: File) {
 internal fun stageFiles(files: List<String>, repo: File) {
   // OS has argument length limit
   splitAndTry(1000, files, repo) {
-    execute(repo, GIT, "add", "--ignore-errors", *it.toTypedArray())
+    execute(repo, GIT, "add", "--no-ignore-removal", "--ignore-errors", *it.toTypedArray())
   }
 }
 
@@ -224,11 +224,11 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
 }
 
 private fun monoRepoMergeAwareCommitInfo(repo: File, path: String) =
-  commitInfo(repo, "--", path)?.let { commitInfo ->
+  pathInfo(repo, "--", path)?.let { commitInfo ->
     if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
       val strippedPath = path.stripMergedRepoPrefix()
       commitInfo.parents.asSequence().mapNotNull {
-        commitInfo(repo, it, "--", strippedPath)
+        pathInfo(repo, it, "--", strippedPath)
       }.firstOrNull()
     }
     else commitInfo
@@ -319,24 +319,42 @@ internal fun head(repo: File): String {
   return heads.getValue(repo)
 }
 
-internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {
-  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%cn/%ce/%s", "--date=raw", *args)
-    .splitNotBlank("/")
-  // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
-  return if (output.size >= 6) {
-    CommitInfo(
-      repo = repo,
-      hash = output[0],
-      timestamp = output[1].splitWithSpace()[0].toLong(),
-      parents = output[2].splitWithSpace(),
-      committer = Committer(name = output[3], email = output[4]),
-      subject = output.subList(5, output.size)
-        .joinToString(separator = "/")
-        .removeSuffix(System.lineSeparator())
-    )
+internal fun commitInfo(repo: File, vararg args: String) = gitLog(repo, 1, *args).singleOrNull()
+private fun pathInfo(repo: File, vararg args: String): CommitInfo? {
+  var log: List<CommitInfo>
+  var i = 1
+  do {
+    log = gitLog(repo, i++, "--follow", *args)
   }
-  else null
+  while (log.isNotEmpty() && Context.globallyExcludedCommits.containsAll(log))
+  return log.firstOrNull {
+    !Context.globallyExcludedCommits.contains(it)
+  }
 }
+
+private fun gitLog(repo: File, count: Int, vararg args: String): List<CommitInfo> =
+  execute(
+    repo, GIT, "log",
+    "--max-count", count.toString(),
+    "--format=%H/%cd/%P/%cn/%ce/%s",
+    "--date=raw", *args
+  ).lineSequence().mapNotNull {
+    val output = it.splitNotBlank("/")
+    // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
+    if (output.size >= 6) {
+      CommitInfo(
+        repo = repo,
+        hash = output[0],
+        timestamp = output[1].splitWithSpace()[0].toLong(),
+        parents = output[2].splitWithSpace(),
+        committer = Committer(name = output[3], email = output[4]),
+        subject = output.subList(5, output.size)
+          .joinToString(separator = "/")
+          .removeSuffix(System.lineSeparator())
+      )
+    }
+    else null
+  }.toList()
 
 internal data class CommitInfo(
   val hash: String,
