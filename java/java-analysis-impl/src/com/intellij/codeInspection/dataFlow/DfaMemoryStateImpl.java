@@ -924,6 +924,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (constant.getValue() instanceof PsiType) {
       if (!processGetClass(value, (PsiType)constant.getValue(), false)) return false;
     }
+    SpecialField field = SpecialField.fromQualifierType(constant.getPsiType());
+    if (field != null) {
+      if (!meetDfType(field.createValue(getFactory(), value), field.fromConstant(constant.getValue()))) return false;
+    }
     DfType dfType = constant.tryNegate();
     if (dfType == null) return true;
     EqClass eqClass = getEqClass(value);
