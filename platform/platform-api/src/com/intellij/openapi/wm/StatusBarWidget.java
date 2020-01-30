@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,7 @@ public interface StatusBarWidget extends Disposable {
 
   interface WidgetPresentation {
     @Nullable
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     String getTooltipText();
 
     @Nullable
