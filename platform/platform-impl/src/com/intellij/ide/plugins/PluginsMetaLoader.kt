@@ -37,7 +37,7 @@ object PluginsMetaLoader {
 
   private val AVAILABLE_PLUGINS_XML_IDS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
 
-  private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')}/api/getCompatibleUpdates"
+  private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')}/api/search/compatibleUpdates"
 
   private val objectMapper = ObjectMapper()
 
