@@ -1990,7 +1990,6 @@
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
 
     <appStarter implementation="com.intellij.internal.DumpJdkIndexStarter"/>
-    <appStarter implementation="com.intellij.internal.UpdateIndexesLayoutStarter"/>
     <applicationService serviceImplementation="com.intellij.internal.SharedIndexesLoader"/>
 
     <registryKey key="shared.indexes.url"
