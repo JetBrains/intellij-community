@@ -117,13 +117,23 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitMethodCall(call); // visitExpression
 
     if (isFake(call)) return;
-    if (hasErrorElements(call.getArgumentList())) return;
+    GrArgumentList argumentList = call.getArgumentList();
+    if (hasErrorElements(argumentList)) return;
 
     GroovyMethodCallReference callReference = call.getCallReference();
     if (callReference == null) {
       return;
     }
-    CallReferenceHighlighter highlighter = new MethodCallReferenceHighlighter(callReference, call.getArgumentList(), myHighlightSink);
+
+    PsiElement highlightElement;
+    if (argumentList.getTextLength() == 0) {
+      highlightElement = call;
+    }
+    else {
+      highlightElement = argumentList;
+    }
+
+    CallReferenceHighlighter highlighter = new MethodCallReferenceHighlighter(callReference, highlightElement, myHighlightSink);
     if (highlighter.highlightMethodApplicability()) {
       return;
     }
