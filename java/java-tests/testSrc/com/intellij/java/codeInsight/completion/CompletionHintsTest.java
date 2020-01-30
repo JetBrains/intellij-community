@@ -1699,7 +1699,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   private void checkResultWithInlays(String text) {
-    waitForParameterInfo();
     myFixture.checkResultWithInlays(text);
   }
 
@@ -1725,12 +1724,10 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
   private void methodOverloadUp() {
     myFixture.performEditorAction(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
-    waitForParameterInfo();
   }
 
   private void methodOverloadDown() {
     myFixture.performEditorAction(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
-    waitForParameterInfo();
   }
 
   private void home() {

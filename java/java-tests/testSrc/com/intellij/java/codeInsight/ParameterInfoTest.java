@@ -83,7 +83,8 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                                         "    }\n" +
                                         "}\n");
 
-    showParameterInfo();
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
     assertEquals("<html><b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right</html>", hintFixture.getCurrentHintText());
   }
 
@@ -132,7 +133,8 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                               "           super(<caret>\"a\", 1);\n" +
                               "       }\n" +
                               "   }");
-    showParameterInfo();
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
     assertEquals("<html><b>String s</b>, int... p</html>", hintFixture.getCurrentHintText());
   }
 
@@ -147,7 +149,8 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                               "    String[] a = foo(args, args.len<caret>gth);\n" +
                               "  }\n" +
                               "}");
-    showParameterInfo();
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
     assertEquals("<html>String[] args, <b>int l</b></html>", hintFixture.getCurrentHintText());
   }
 
