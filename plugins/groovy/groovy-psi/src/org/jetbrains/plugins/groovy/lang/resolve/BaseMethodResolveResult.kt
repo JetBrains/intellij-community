@@ -48,7 +48,7 @@ open class BaseMethodResolveResult(
   protected open fun createMethodCandidate(method: PsiMethod, place: PsiElement, state: ResolveState): GroovyMethodCandidate {
     val mapping = myCandidate.argumentMapping
     return if (mapping != null && method is GrGdkMethod) {
-      GdkMethodCandidate(method.staticMethod, buildQualifier(place as? GrReferenceExpression, state), mapping)
+      GdkMethodCandidate(method.staticMethod, buildQualifier(place as? GrReferenceExpression, state), place, mapping)
     }
     else {
       myCandidate

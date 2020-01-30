@@ -20,7 +20,7 @@ class MethodCandidateImpl(
 
   override val argumentMapping: ArgumentMapping<PsiCallParameter>? by recursionAwareLazy {
     arguments?.let {
-      MethodSignature(method, erasureSubstitutor).applyTo(it, context)
+      MethodSignature(method, erasureSubstitutor, context).applyTo(it, context)
     }
   }
 }

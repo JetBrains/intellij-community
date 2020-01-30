@@ -9,13 +9,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature
 import org.jetbrains.plugins.groovy.lang.resolve.impl.MethodSignature
 
 internal class GroovyMethodReferenceType(
-  myMethodReference: GrReferenceExpression
+  private val myMethodReference: GrReferenceExpression
 ) : GroovyClosureType(myMethodReference) {
 
   override val signatures: List<CallSignature<*>> by lazyPub {
     myMethodReference.resolve(false).mapNotNullTo(SmartList()) { result ->
       (result.element as? PsiMethod)?.let {
-        MethodSignature(it, result.substitutor)
+        MethodSignature(it, result.substitutor, myMethodReference)
       }
     }
   }

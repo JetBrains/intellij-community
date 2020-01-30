@@ -6,14 +6,12 @@ import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
-import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
-import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature
-import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
 
 internal class MethodSignature(
   private val method: PsiMethod,
-  private val substitutor: PsiSubstitutor
+  private val substitutor: PsiSubstitutor,
+  context: PsiElement
 ) : CallSignature<PsiCallParameter> {
 
   override val isVararg: Boolean by lazyPub {
@@ -22,7 +20,7 @@ internal class MethodSignature(
 
   override val parameters: List<PsiCallParameter> by lazyPub {
     method.parameterList.parameters.map { psi ->
-      PsiCallParameterImpl(psi, substitutor)
+      PsiCallParameterImpl(psi, substitutor, context)
     }
   }
 
