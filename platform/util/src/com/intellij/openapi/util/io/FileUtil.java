@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
@@ -23,7 +23,9 @@ import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
@@ -801,7 +803,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String resolveShortWindowsName(@NotNull String path) throws IOException {
-    return SystemInfo.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
+    return SystemInfo.isWindows && containsWindowsShortName(path) ? Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString() : path;
   }
 
   public static boolean containsWindowsShortName(@NotNull String path) {
