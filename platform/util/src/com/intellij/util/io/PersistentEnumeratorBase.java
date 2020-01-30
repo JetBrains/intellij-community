@@ -171,7 +171,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     myDoCaching = doCaching;
 
     if (!Files.exists(file)) {
-      assert file.getFileSystem() == FileSystems.getDefault();
+      assert file.getFileSystem() == FileSystems.getDefault() : file + " in " + file.getFileSystem();
       FileUtil.delete(keyStreamFile());
       if (!FileUtil.createIfDoesntExist(file.toFile())) {
         throw new IOException("Cannot create empty file: " + file);
