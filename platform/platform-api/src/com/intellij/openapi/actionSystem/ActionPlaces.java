@@ -39,7 +39,7 @@ public abstract class ActionPlaces {
   public static final String TOOLWINDOW_POPUP = "ToolwindowPopup";
   public static final String TOOLWINDOW_TITLE = "ToolwindowTitle";
   public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
-  public static final String EDITOR_INSPECTIONS_POPUP = "EditorInspectionsToolbar";
+  public static final String EDITOR_INSPECTIONS_TOOLBAR = "EditorInspectionsToolbar";
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";

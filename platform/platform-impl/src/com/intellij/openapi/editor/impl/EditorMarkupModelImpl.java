@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.hint.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -59,7 +60,6 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
@@ -120,13 +120,82 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private int myCurrentHintAnchorY;
   private boolean myKeepHint;
 
-  private ActionToolbar statusToolbar;
+  private final ActionToolbar statusToolbar;
+  private Icon statusIcon;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
     myEditor = editor;
     myEditorFragmentRenderer = new EditorFragmentRenderer();
     setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
+
+    AnAction nextErrorAction = findAction("GotoNextError", AllIcons.General.ArrowDown);
+    AnAction prevErrorAction = findAction("GotoPreviousError", AllIcons.General.ArrowUp);
+    DefaultActionGroup navigateGroup = new DefaultActionGroup(Separator.create(), nextErrorAction, prevErrorAction) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setVisible(statusIcon != null);
+      }
+    };
+
+    ActionGroup actions = new DefaultActionGroup(new StatusAction(), navigateGroup);
+    ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
+    statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
+      @Override
+      @NotNull
+      protected Color getSeparatorColor() {
+        Color separatorColor = myEditor.getColorsScheme().getColor(EditorColors.SEPARATOR_BELOW_COLOR);
+        return separatorColor != null ? separatorColor : super.getSeparatorColor();
+      }
+
+      @NotNull
+      @Override
+      protected ActionButton createToolbarButton(@NotNull AnAction action, ActionButtonLook look,
+                                                 @NotNull String place, @NotNull Presentation presentation,
+                                                 @NotNull Dimension minimumSize) {
+
+        ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
+          @Override
+          protected DataContext getDataContext() {
+            return getToolbarDataContext();
+          }
+
+          @Override
+          public void updateIcon() {
+            super.updateIcon();
+            revalidate();
+          }
+
+          @Override
+          public Dimension getPreferredSize() {
+            Icon icon = getIcon();
+            Dimension size = new Dimension(Math.max(icon.getIconWidth(), DEFAULT_MINIMUM_BUTTON_SIZE.width),
+                                           Math.max(icon.getIconHeight(), DEFAULT_MINIMUM_BUTTON_SIZE.height));
+
+            if (myAction instanceof StatusAction) {
+              JBInsets.addTo(size, JBUI.insets(0, 4));
+            }
+            JBInsets.addTo(size, getInsets());
+            return size;
+          }
+        };
+
+        actionButton.setLook(editorButtonLook);
+        return actionButton;
+      }
+    };
+
+    statusToolbar.setMiniMode(true);
+    ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusToolbar.getComponent());
+  }
+
+  private static AnAction findAction(@NotNull String id, @NotNull Icon icon) {
+    ActionManager am = ActionManager.getInstance();
+    AnAction action = am.getAction(id);
+
+    action.getTemplatePresentation().setIcon(icon);
+    action.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));
+    return action;
   }
 
   private int offsetToLine(int offset, @NotNull Document document) {
@@ -166,7 +235,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   public void repaintTrafficLightIcon() {
     if (myErrorStripeRenderer != null) {
-      myErrorStripeRenderer.refreshActions(myEditor);
+      Icon newIcon = myErrorStripeRenderer.getStatus(myEditor).getIcon();
+      if (newIcon != statusIcon) {
+        statusIcon = newIcon;
+        statusToolbar.getComponent().revalidate();
+        statusToolbar.getComponent().repaint();
+      }
     }
 
     MyErrorPanel errorPanel = getErrorPanel();
@@ -443,62 +517,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myErrorStripeRenderer = renderer;
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
-
-    ActionGroup group;
-    if (myErrorStripeRenderer != null && (group = myErrorStripeRenderer.getActions()) != null) {
-      ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
-      statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_POPUP, group, true) {
-        {
-          setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-          setOpaque(false);
-        }
-
-        @Override
-        @NotNull
-        protected Color getSeparatorColor() {
-          Color separatorColor = myEditor.getColorsScheme().getColor(EditorColors.SEPARATOR_BELOW_COLOR);
-          return separatorColor != null ? separatorColor : super.getSeparatorColor();
-        }
-
-        @NotNull
-        @Override
-        protected ActionButton createToolbarButton(@NotNull AnAction action, ActionButtonLook look,
-                                                   @NotNull String place, @NotNull Presentation presentation,
-                                                   @NotNull Dimension minimumSize) {
-
-          ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
-            @Override
-            protected DataContext getDataContext() {
-              return getToolbarDataContext();
-            }
-
-            @Override
-            public void updateIcon() {
-              super.updateIcon();
-              revalidate();
-            }
-
-            @Override
-            protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
-              String propertyName = e.getPropertyName();
-              if (Presentation.PROP_VISIBLE.equals(propertyName)) {
-                setVisible(e.getNewValue() == Boolean.TRUE);
-              }
-              else {
-                super.presentationPropertyChanged(e);
-              }
-            }
-          };
-          actionButton.setLook(editorButtonLook);
-          return actionButton;
-        }
-      };
-
-      ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusToolbar.getComponent());
-    }
-    else {
-      ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(null);
-    }
   }
 
   @Nullable
@@ -1456,6 +1474,20 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_MOUSEOVER |
                   HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_SCROLLING;
       hintManager.showEditorHint(myEditorPreviewHint, myEditor, point, flags, 0, false, hintInfo);
+    }
+  }
+
+  private class StatusAction extends AnAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      System.out.println("StatusAction");
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (e.getPresentation().getIcon() != statusIcon) {
+        e.getPresentation().setIcon(statusIcon);
+      }
     }
   }
 
