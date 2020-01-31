@@ -88,7 +88,10 @@ public class DfaAssist implements DebuggerContextListener {
     if (event == DebuggerSession.Event.DETACHED || event == DebuggerSession.Event.DISPOSE) {
       cleanUp();
     }
-    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) return;
+    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
+      cancelComputation();
+      return;
+    }
     SourcePosition sourcePosition = newContext.getSourcePosition();
     if (sourcePosition == null) {
       cleanUp();
@@ -135,11 +138,15 @@ public class DfaAssist implements DebuggerContextListener {
     });
   }
 
-  private void cleanUp() {
+  private void cancelComputation() {
     CancellablePromise<?> promise = myPromise;
     if (promise != null) {
       promise.cancel();
     }
+  }
+
+  private void cleanUp() {
+    cancelComputation();
     ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myInlays));
   }
 
