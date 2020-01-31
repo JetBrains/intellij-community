@@ -215,8 +215,14 @@ public class StackFrameItem {
     }
   }
 
-  public CapturedStackFrame createFrame(DebugProcessImpl debugProcess) {
+  public XStackFrame createFrame(DebugProcessImpl debugProcess) {
     return new CapturedStackFrame(debugProcess, this);
+  }
+
+  public static void setWithSeparator(XStackFrame frame, boolean withSeparator) {
+    if (frame instanceof CapturedStackFrame) {
+      ((CapturedStackFrame)frame).setWithSeparator(withSeparator);
+    }
   }
 
   public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
