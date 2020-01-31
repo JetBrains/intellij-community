@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Comparator;
 
 /**
@@ -67,7 +68,14 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public String suggestHomePath() {
-    return null;
+    Collection<String> paths = suggestHomePaths();
+    return paths.isEmpty() ? null : paths.iterator().next();
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> suggestHomePaths() {
+    return JdkFinder.getInstance().suggestHomePaths();
   }
 
   @Override

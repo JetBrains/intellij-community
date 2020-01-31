@@ -751,6 +751,10 @@
 
     <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
 
+    <applicationService
+      serviceInterface="com.intellij.openapi.projectRoots.JdkFinder"
+      serviceImplementation="com.intellij.openapi.projectRoots.impl.JdkFinderImpl"/>
+
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
 
     <runDashboardCustomizer implementation="com.intellij.execution.testframework.sm.runner.SMTRunnerRunDashboardCustomizer"
