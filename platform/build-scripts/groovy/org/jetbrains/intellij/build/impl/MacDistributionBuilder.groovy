@@ -293,6 +293,7 @@ TODO(b/118034991): generate product-info.json files (or not) */
             }
             exclude(name: "*.txt")
             exclude(name: "_codesign/*") // Android Studio: don't include _codesign in the bundle
+            exclude(name: "lib/dbus-java-*.jar") // Android Studio: don't include dbus-java (b/148288696)
           }
         }
 
