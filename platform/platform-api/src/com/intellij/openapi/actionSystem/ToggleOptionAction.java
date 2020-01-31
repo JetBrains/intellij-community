@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.Nls;
@@ -51,17 +51,27 @@ public class ToggleOptionAction extends ToggleAction {
     presentation.setEnabledAndVisible(supported);
     if (supported) {
       Toggleable.setSelected(presentation, option.isSelected());
-      presentation.setText(option.getName());
-      presentation.setDescription(option.getDescription());
+      String name = option.getName();
+      if (name != null) presentation.setText(name);
+      String description = option.getDescription();
+      if (description != null) presentation.setDescription(description);
       if (ActionPlaces.isPopupPlace(event.getPlace())) presentation.setIcon(null);
     }
   }
 
   public interface Option {
-    @NotNull
+    /**
+     * @return a not null string to override an action name
+     */
+    @Nullable
     @Nls(capitalization = Nls.Capitalization.Title)
-    String getName();
+    default String getName() {
+      return null;
+    }
 
+    /**
+     * @return a not null string to override an action description
+     */
     @Nullable
     @Nls(capitalization = Nls.Capitalization.Sentence)
     default String getDescription() {
