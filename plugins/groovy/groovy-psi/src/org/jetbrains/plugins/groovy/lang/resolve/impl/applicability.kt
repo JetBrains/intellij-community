@@ -14,14 +14,17 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
 
 fun mapApplicability(map: Map<Argument, CallParameter>, context: PsiElement): Applicability {
+  var result = Applicability.applicable
   for ((argument, parameter) in map) {
     val parameterType = TypeConversionUtil.erasure(parameter.type)
-    val applicability = argumentApplicability(parameterType, argument.runtimeType, context)
-    if (applicability != Applicability.applicable) {
-      return applicability
+    val argumentType = argument.runtimeType
+    when (val applicability = argumentApplicability(parameterType, argumentType, context)) {
+      Applicability.inapplicable -> return applicability
+      Applicability.canBeApplicable -> result = Applicability.canBeApplicable
+      Applicability.applicable -> Unit
     }
   }
-  return Applicability.applicable
+  return result
 }
 
 fun highlightApplicabilities(map: Map<Argument, CallParameter>,

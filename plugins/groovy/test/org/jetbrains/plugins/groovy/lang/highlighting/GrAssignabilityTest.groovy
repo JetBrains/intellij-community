@@ -919,4 +919,20 @@ class E {
 new E() <weak_warning descr="Cannot infer argument types">+</weak_warning> a
 '''
   }
+
+  void 'test inapplicable with unknown argument'() {
+    testHighlighting '''\
+def foo(String s, int x) {}
+def foo(String s, Object o) {}
+def foo(String s, String x) {}
+
+// second and third overloads are applicable;
+// first overload is inapplicable independently of the first arg type;
+foo<weak_warning descr="Cannot infer argument types">(unknown, "hi")</weak_warning>
+
+// only second overload is applicable;
+// because of that we don't highlight unknown args
+foo(unknown, new Object())  
+'''
+  }
 }
