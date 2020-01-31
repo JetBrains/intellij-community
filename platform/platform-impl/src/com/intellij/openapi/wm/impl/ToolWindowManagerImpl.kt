@@ -1300,7 +1300,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun setToolWindowAnchorImpl(entry: ToolWindowEntry, currentInfo: WindowInfo, layoutInfo: WindowInfoImpl, anchor: ToolWindowAnchor, order: Int) {
     // if tool window isn't visible or only order number is changed then just remove/add stripe button
     val toolWindowPane = toolWindowPane!!
-    if (!currentInfo.isVisible || anchor == currentInfo.anchor || currentInfo.isFloating || currentInfo.type == ToolWindowType.WINDOWED) {
+    if (!currentInfo.isVisible || anchor == currentInfo.anchor || currentInfo.type == ToolWindowType.FLOATING || currentInfo.type == ToolWindowType.WINDOWED) {
       doSetAnchor(entry, layoutInfo, anchor, order)
     }
     else {
@@ -1749,7 +1749,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val toolWindow = source.toolWindow
     val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
-    if (info.isFloating) {
+    if (info.type == ToolWindowType.FLOATING) {
       val owner = SwingUtilities.getWindowAncestor(source)
       if (owner != null) {
         info.floatingBounds = owner.bounds
@@ -1862,7 +1862,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     idToEntry.forEach { (id, entry) ->
       val info = layout.getInfo(id) ?: return@forEach
       if (info.isVisible) {
-        if (info.isFloating) {
+        if (info.type == ToolWindowType.FLOATING) {
           if (entry.floatingDecorator == null) {
             violations.add("Floating window has no decorator: $id")
           }

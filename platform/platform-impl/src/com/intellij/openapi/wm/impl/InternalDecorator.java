@@ -137,7 +137,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     // push "apply" request forward
-    if (info.isFloating()) {
+    if (info.getType() == ToolWindowType.FLOATING) {
       FloatingDecorator floatingDecorator = (FloatingDecorator)SwingUtilities.getAncestorOfClass(FloatingDecorator.class, this);
       if (floatingDecorator != null) {
         floatingDecorator.apply(info);

@@ -208,7 +208,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         addAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager);
       }
     }
-    else if (info.isSliding()) {
+    else if (info.getType() == ToolWindowType.SLIDING) {
       addSlidingComponent(decorator, info, dirtyMode);
     }
     else {

@@ -160,7 +160,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     }
   }
 
-  public static DnDSupportBuilder createBuilder(JComponent component) {
+  @NotNull
+  public static DnDSupportBuilder createBuilder(@NotNull JComponent component) {
     final JComponent myComponent = component;
     final Ref<Boolean> asTarget = Ref.create(true);
     final Ref<Boolean> asSource = Ref.create(true);
