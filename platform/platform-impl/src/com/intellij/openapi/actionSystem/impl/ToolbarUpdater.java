@@ -24,8 +24,6 @@ import java.lang.ref.WeakReference;
  * @author Konstantin Bulenkov
  */
 public abstract class ToolbarUpdater implements Activatable {
-  private final ActionManagerEx myActionManager;
-  private final KeymapManagerEx myKeymapManager;
   private final JComponent myComponent;
 
   private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
@@ -35,12 +33,6 @@ public abstract class ToolbarUpdater implements Activatable {
   private boolean myListenersArmed;
 
   public ToolbarUpdater(@NotNull JComponent component) {
-    this(KeymapManagerEx.getInstanceEx(), component);
-  }
-
-  public ToolbarUpdater(@NotNull KeymapManagerEx keymapManager, @NotNull JComponent component) {
-    myActionManager = ActionManagerEx.getInstanceEx();
-    myKeymapManager = keymapManager;
     myComponent = component;
     myWeakTimerListener = new WeakTimerListener(myTimerListener);
     new UiNotifyConnector(component, this);
@@ -48,31 +40,29 @@ public abstract class ToolbarUpdater implements Activatable {
 
   @Override
   public void showNotify() {
-    if (myListenersArmed) return;
+    if (myListenersArmed) {
+      return;
+    }
+
     myListenersArmed = true;
-    myActionManager.addTimerListener(500, myWeakTimerListener);
-    myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
-    myKeymapManager.addWeakListener(myKeymapManagerListener);
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    actionManager.addTimerListener(500, myWeakTimerListener);
+    actionManager.addTransparentTimerListener(500, myWeakTimerListener);
+    KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener);
     updateActionTooltips();
   }
 
   @Override
   public void hideNotify() {
-    if (!myListenersArmed) return;
+    if (!myListenersArmed) {
+      return;
+    }
+
     myListenersArmed = false;
-    myActionManager.removeTimerListener(myWeakTimerListener);
-    myActionManager.removeTransparentTimerListener(myWeakTimerListener);
-    myKeymapManager.removeWeakListener(myKeymapManagerListener);
-  }
-
-  @NotNull
-  public KeymapManagerEx getKeymapManager() {
-    return myKeymapManager;
-  }
-
-  @NotNull
-  public ActionManagerEx getActionManager() {
-    return myActionManager;
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    actionManager.removeTimerListener(myWeakTimerListener);
+    actionManager.removeTransparentTimerListener(myWeakTimerListener);
+    KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener);
   }
 
   public void updateActions(boolean now, boolean forced) {
@@ -137,7 +127,7 @@ public abstract class ToolbarUpdater implements Activatable {
         return;
       }
 
-      updateActions(false, myActionManager.isTransparentOnlyActionsUpdateNow(), false);
+      updateActions(false, ActionManagerEx.getInstanceEx().isTransparentOnlyActionsUpdateNow(), false);
     }
   }
 

@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -156,7 +155,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myVisibleActions = new ArrayList<>();
     myDataManager = DataManager.getInstance();
     myDecorateButtons = decorateButtons;
-    myUpdater = new ToolbarUpdater(KeymapManagerEx.getInstanceEx(), this) {
+    myUpdater = new ToolbarUpdater(this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
         if (!ApplicationManager.getApplication().isDisposed()) {
