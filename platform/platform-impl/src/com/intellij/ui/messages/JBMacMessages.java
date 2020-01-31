@@ -116,6 +116,10 @@ public class JBMacMessages extends MacMessagesEmulation {
     }
 
     if (_window == null) {
+      _window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    }
+
+    if (_window == null) {
       _window = WindowManager.getInstance().findVisibleFrame();
     }
 
