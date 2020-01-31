@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
@@ -121,7 +122,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private boolean myKeepHint;
 
   private final ActionToolbar statusToolbar;
-  private Icon statusIcon;
+  private AnalyzerStatus analyzerStatus;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -134,7 +135,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     DefaultActionGroup navigateGroup = new DefaultActionGroup(Separator.create(), nextErrorAction, prevErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setVisible(statusIcon != null);
+        e.getPresentation().setEnabledAndVisible(AnalyzerStatus.Companion.showNavigation(analyzerStatus));
       }
     };
 
@@ -164,6 +165,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           public void updateIcon() {
             super.updateIcon();
             revalidate();
+            repaint();
           }
 
           @Override
@@ -172,7 +174,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             Dimension size = new Dimension(Math.max(icon.getIconWidth(), DEFAULT_MINIMUM_BUTTON_SIZE.width),
                                            Math.max(icon.getIconHeight(), DEFAULT_MINIMUM_BUTTON_SIZE.height));
 
-            if (myAction instanceof StatusAction) {
+            if (getIcon() instanceof LayeredIcon) {
               JBInsets.addTo(size, JBUI.insets(0, 4));
             }
             JBInsets.addTo(size, getInsets());
@@ -235,9 +237,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   public void repaintTrafficLightIcon() {
     if (myErrorStripeRenderer != null) {
-      Icon newIcon = myErrorStripeRenderer.getStatus(myEditor).getIcon();
-      if (newIcon != statusIcon) {
-        statusIcon = newIcon;
+      AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus(myEditor);
+      if (newStatus != analyzerStatus) {
+        analyzerStatus = newStatus;
+
         statusToolbar.getComponent().revalidate();
         statusToolbar.getComponent().repaint();
       }
@@ -1485,8 +1488,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (e.getPresentation().getIcon() != statusIcon) {
-        e.getPresentation().setIcon(statusIcon);
+      if (AnalyzerStatus.Companion.otherIcon(e.getPresentation().getIcon(), analyzerStatus)) {
+        e.getPresentation().setIcon(AnalyzerStatus.Companion.icon(analyzerStatus));
       }
     }
   }

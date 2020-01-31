@@ -22,5 +22,5 @@ import java.awt.*;
 public interface ErrorStripeRenderer {
   void paint(Component c, Graphics g, Rectangle r);
 
-  default ErrorStatus getStatus(Editor editor) { return null; }
+  default AnalyzerStatus getStatus(Editor editor) { return null; }
 }
