@@ -2,6 +2,7 @@ package com.intellij.coverage;
 
 import com.intellij.coverage.view.CoverageView;
 import com.intellij.coverage.view.CoverageViewManager;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -32,7 +33,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
     final Runnable request = createRenewRequest(suite, dataManager);
     if (request != null) {
       if (myProject.isDisposed()) return;
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Loading Coverage Data", false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, ExecutionBundle.message("coverage.view.loading.data"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           request.run();

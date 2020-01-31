@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
@@ -154,10 +155,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     if (info == null) return null;
     if (info.totalClassCount == 0 || info.totalLineCount == 0) return null;
     if (subCoverageActive) {
-      return info.coveredClassCount + info.getCoveredLineCount() > 0 ? "covered" : null;
+      return info.coveredClassCount + info.getCoveredLineCount() > 0 ? ExecutionBundle.message("coverage.view.text.covered") : null;
     }
-    return (int)((double)info.coveredClassCount / info.totalClassCount * 100) +  "% classes, " +
-           (int)((double)info.getCoveredLineCount() / info.totalLineCount * 100) + "% lines covered";
+    return ExecutionBundle.message("coverage.view.text.classes.covered", (int)((double)info.coveredClassCount / info.totalClassCount * 100)) +  ", " +
+           ExecutionBundle.message("coverage.view.text.lines.covered", (int)((double)info.getCoveredLineCount() / info.totalLineCount * 100));
   }
 
   /**
@@ -263,10 +264,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     if (info == null) return null;
     if (info.totalMethodCount == 0 || info.totalLineCount == 0) return null;
     if (coverageDataManager.isSubCoverageActive()){
-      return info.coveredMethodCount + info.fullyCoveredLineCount + info.partiallyCoveredLineCount > 0 ? "covered" : null;
+      return info.coveredMethodCount + info.fullyCoveredLineCount + info.partiallyCoveredLineCount > 0 ? ExecutionBundle.message("coverage.view.text.covered") : null;
     }
-    return (int)((double)info.coveredMethodCount / info.totalMethodCount * 100) +  "% methods, " +
-           (int)((double)(info.fullyCoveredLineCount + info.partiallyCoveredLineCount) / info.totalLineCount * 100) + "% lines covered";
+    return ExecutionBundle.message("coverage.view.text.methods.covered", (int)((double)info.coveredMethodCount / info.totalMethodCount * 100)) +  ", " +
+           ExecutionBundle.message("coverage.view.text.lines.covered", (int)((double)(info.fullyCoveredLineCount + info.partiallyCoveredLineCount) / info.totalLineCount * 100));
   }
 
   @Nullable

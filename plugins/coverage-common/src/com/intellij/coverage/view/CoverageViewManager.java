@@ -4,6 +4,7 @@ package com.intellij.coverage.view;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageOptionsProvider;
 import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
@@ -40,6 +41,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true, true);
     toolWindow.setHelpId(CoverageView.HELP_ID);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCoverage);
+    toolWindow.setStripeTitle(ExecutionBundle.message("coverage.view.title"));
     myContentManager = toolWindow.getContentManager();
     ContentManagerWatcher.watchContentManager(toolWindow, myContentManager);
   }

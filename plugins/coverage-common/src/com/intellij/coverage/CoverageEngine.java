@@ -310,7 +310,7 @@ public abstract class CoverageEngine {
                                                        @NotNull final DataContext dataContext,
                                                        @NotNull final CoverageSuitesBundle currentSuite) {
     final ExportToHTMLDialog dialog = new ExportToHTMLDialog(project, true);
-    dialog.setTitle("Generate Coverage Report for: \'" + currentSuite.getPresentableName() + "\'");
+    dialog.setTitle(ExecutionBundle.message("generate.coverage.report.for", currentSuite.getPresentableName()));
 
     return dialog;
   }

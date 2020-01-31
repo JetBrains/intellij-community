@@ -1,5 +1,6 @@
 package com.intellij.coverage;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,14 +17,14 @@ public class CoverageExecutor extends Executor {
   @Override
   @NotNull
   public String getStartActionText() {
-    return "Run with Co_verage";
+   return ExecutionBundle.message("run.with.coverage");
   }
 
   @NotNull
   @Override
   public String getStartActionText(@NotNull String configurationName) {
     String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
-    return TextWithMnemonic.parse("Run%s with Co_verage").replaceFirst("%s", configName).toString();
+    return TextWithMnemonic.parse(ExecutionBundle.message("run.with.coverage.mnemonic")).replaceFirst("%s", configName).toString();
   }
 
   @NotNull
