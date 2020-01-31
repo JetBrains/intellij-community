@@ -44,6 +44,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -394,8 +395,12 @@ public class CreateTestDialog extends DialogWrapper {
     if (defaultDescriptor != null && (attachedLibraries.contains(defaultDescriptor) || attachedLibraries.isEmpty())) {
       myLibrariesCombo.setSelectedItem(defaultDescriptor);
     }
-    else {
-      myLibrariesCombo.setSelectedIndex(0);
+    else if (!descriptors.isEmpty()) {
+      List<TestFramework> applicableFrameworks = attachedLibraries.isEmpty() ? descriptors : attachedLibraries;
+      TestFramework preferredFramework =
+        ObjectUtils.notNull(ContainerUtil.find(applicableFrameworks, d -> d.getLanguage().equals(myTargetClass.getLanguage())),
+                            applicableFrameworks.get(0));
+      myLibrariesCombo.setSelectedItem(preferredFramework);
     }
 
     myFixLibraryButton.addActionListener(new ActionListener() {
