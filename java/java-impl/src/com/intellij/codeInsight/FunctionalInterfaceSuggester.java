@@ -256,17 +256,13 @@ public class FunctionalInterfaceSuggester {
 
                 for (int i = 0; i < targetMethodParameters.length; i++) {
                   left[i + offset] = parameters[i + offset].getType();
-                  final PsiType rightType = targetMethodParameters[i].getType();
-                  right[i + offset] = partialSubstitutor.substitute(rightType);
+                  right[i + offset] = partialSubstitutor.substitute(targetMethodParameters[i].getType());
                 }
 
                 left[parameters.length] = method.isConstructor() ? qualifierType : partialSubstitutor.substitute(method.getReturnType());
                 right[parameters.length] = returnType;
 
-                final PsiType type = getAcceptableType(interface2Consider, expression, left, right);
-                if (type != null) {
-                  types.add(type);
-                }
+                ContainerUtil.addIfNotNull(types, getAcceptableType(interface2Consider, expression, left, right));
               }
             }
             else if (maybeDefaultConstructorRef(referenceExpression, interfaceMethod, element)) {
@@ -274,10 +270,7 @@ public class FunctionalInterfaceSuggester {
               final PsiType[] left = new PsiType[] { qualifierType };
               final PsiType[] right = new PsiType[] { returnType };
 
-              final PsiType type = getAcceptableType(interface2Consider, expression, left, right);
-              if (type != null) {
-                types.add(type);
-              }
+              ContainerUtil.addIfNotNull(types, getAcceptableType(interface2Consider, expression, left, right));
             }
           }
           return types;
@@ -296,17 +289,13 @@ public class FunctionalInterfaceSuggester {
    *
    * @return {@code true} if {@code expression} is the method reference to a default constructor, otherwise {@code false}
    */
-  private static boolean maybeDefaultConstructorRef(
-    @NotNull final PsiMethodReferenceExpression expression,
-    @NotNull final PsiMethod interfaceMethod,
-    @NotNull final PsiElement element
-  ) {
-    boolean noDeclaredConstructors = element instanceof PsiClass &&
-      ((PsiClass)element).getConstructors().length == 0;
-
-    boolean noParameters = interfaceMethod.getParameterList().isEmpty();
-
-    return expression.isConstructor() && noDeclaredConstructors && noParameters;
+  private static boolean maybeDefaultConstructorRef(@NotNull final PsiMethodReferenceExpression expression,
+                                                    @NotNull final PsiMethod interfaceMethod,
+                                                    @NotNull final PsiElement element) {
+    return element instanceof PsiClass &&
+           ((PsiClass)element).getConstructors().length == 0 &&
+           expression.isConstructor() &&
+           !interfaceMethod.hasParameters();
   }
 
   /**
@@ -322,27 +311,18 @@ public class FunctionalInterfaceSuggester {
    * otherwise {@code null}
    */
   @Nullable
-  private static PsiType getAcceptableType(
-    @NotNull final PsiClass interface2Consider,
+  private static PsiType getAcceptableType(@NotNull final PsiClass interface2Consider,
     @NotNull final PsiFunctionalExpression expression,
     @NotNull final PsiType[] left,
-    @NotNull final PsiType[] right
-  ) {
+    @NotNull final PsiType[] right) {
     final Project project = interface2Consider.getProject();
 
     final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(project)
-      .inferTypeArguments(
-        interface2Consider.getTypeParameters(),
-        left,
-        right,
-        PsiUtil.getLanguageLevel(expression)
-      );
+      .inferTypeArguments(interface2Consider.getTypeParameters(), left, right, PsiUtil.getLanguageLevel(expression));
 
     final PsiType type = JavaPsiFacade.getElementFactory(project).createType(interface2Consider, substitutor);
 
-    boolean isAcceptableType = expression.isAcceptable(type);
-
-    return isAcceptableType ? type : null;
+    return expression.isAcceptable(type) ? type : null;
   }
 
   /**
@@ -355,10 +335,8 @@ public class FunctionalInterfaceSuggester {
    * that is generated from {@code expression}
    */
   @NotNull
-  private static PsiSubstitutor getPartialSubstitutor(
-    @NotNull final PsiMethodReferenceExpression expression,
-    @NotNull final PsiMethod method
-  ) {
+  private static PsiSubstitutor getPartialSubstitutor(@NotNull final PsiMethodReferenceExpression expression, 
+                                                      @NotNull final PsiMethod method) {
     final PsiType[] typeArguments = expression.getTypeParameters();
 
     if (typeArguments.length > 0) {
