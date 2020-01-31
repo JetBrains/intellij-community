@@ -884,57 +884,85 @@ public final class FormSourceCodeGenerator {
     if (!borderNone || borderTitle != null) {
       startMethodCall(variable, "setBorder");
 
-      boolean isInternal = Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue();
+      String borderFactoryName = borderFactoryClassName(container, borderTitle);
 
-      Class<?> titledBorderFactoryClass = isInternal ? IdeBorderFactory.PlainSmallWithIndent.class
-                                                     : BorderFactory.class;
-
-      startStaticMethodCall(titledBorderFactoryClass, "createTitledBorder");
+      startStaticMethodCall(borderFactoryName, "createTitledBorder");
 
       if (!borderNone) {
-        startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
-        if (borderType.equals(BorderType.LINE)) {
-          if (container.getBorderColor() == null) {
-            pushVar("java.awt.Color.black");
-          }
-          else {
-            pushColor(container.getBorderColor());
-          }
-        }
-        else if (borderType.equals(BorderType.EMPTY) && borderSize != null) {
-          push(borderSize.top);
-          push(borderSize.left);
-          push(borderSize.bottom);
-          push(borderSize.right);
-        }
-        endMethod();
+        pushBorderFactoryMethod(container, borderType, borderSize, borderFactoryMethodName);
       }
-      else if (isCustomBorder(container)) {
-        push((String) null);
+      else {
+        push("null");
       }
-
-      push(borderTitle);
-
-      if (isCustomBorder(container)) {
-        push(container.getBorderTitleJustification(), ourTitleJustificationMap);
-        push(container.getBorderTitlePosition(), ourTitlePositionMap);
-        if (container.getBorderTitleFont() != null || container.getBorderTitleColor() != null) {
-          if (container.getBorderTitleFont() == null) {
-            push((String) null);
-          }
-          else {
-            pushFont(variable, container.getBorderTitleFont(), "getFont");
-          }
-          if (container.getBorderTitleColor() != null) {
-            pushColor(container.getBorderTitleColor());
-          }
-        }
-      }
+      pushBorderProperties(container, variable, borderTitle);
 
       endMethod(); // createTitledBorder
-
       endMethod(); // setBorder
     }
+  }
+
+  @NotNull
+  private String borderFactoryClassName(LwContainer container, StringDescriptor borderTitle) {
+    StringDescriptor titledBorderFactoryDescriptor =
+      (StringDescriptor)container.getDelegeeClientProperties().get(AsmCodeGenerator.ourBorderFactoryClientProperty);
+
+    boolean useIdeBorderFactory =
+      borderTitle != null && Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue();
+
+    if (titledBorderFactoryDescriptor == null && useIdeBorderFactory) {
+      titledBorderFactoryDescriptor  = StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      container.getDelegeeClientProperties().put(AsmCodeGenerator.ourBorderFactoryClientProperty, titledBorderFactoryDescriptor);
+    }
+    boolean isCustomFactory = titledBorderFactoryDescriptor != null && !titledBorderFactoryDescriptor.getValue().isEmpty();
+
+    return isCustomFactory ?
+           titledBorderFactoryDescriptor.getValue().replace('$', '.') :
+           BorderFactory.class.getName();
+  }
+
+  private void pushBorderProperties(LwContainer container, String variable, StringDescriptor borderTitle) {
+    push(borderTitle);
+    push(container.getBorderTitleJustification(), ourTitleJustificationMap);
+    push(container.getBorderTitlePosition(), ourTitlePositionMap);
+    pushFont(container, variable);
+    pushColor(container);
+  }
+
+  private void pushColor(LwContainer container) {
+    if (container.getBorderTitleColor() == null) {
+      push((String) null);
+    }
+    else {
+      pushColor(container.getBorderTitleColor());
+    }
+  }
+
+  private void pushFont(LwContainer container, String variable) {
+    if (container.getBorderTitleFont() == null) {
+      push((String) null);
+    }
+    else {
+      pushFont(variable, container.getBorderTitleFont(), "getFont");
+    }
+  }
+
+  private void pushBorderFactoryMethod(LwContainer container, BorderType borderType, Insets borderSize, String borderFactoryMethodName) {
+    startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
+    if (borderType.equals(BorderType.LINE)) {
+      if (container.getBorderColor() == null) {
+        pushVar("java.awt.Color.black");
+      }
+      else {
+        pushColor(container.getBorderColor());
+      }
+    }
+    else if (borderType.equals(BorderType.EMPTY) && borderSize != null) {
+      push(borderSize.top);
+      push(borderSize.left);
+      push(borderSize.bottom);
+      push(borderSize.right);
+    }
+    endMethod();
   }
 
   private static boolean isCustomBorder(final LwContainer container) {
@@ -1258,15 +1286,19 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack.push(Boolean.TRUE);
   }
 
-  private void startStaticMethodCall(final Class aClass, @NonNls final String methodName) {
+  private void startStaticMethodCall(final String fullClassName, @NonNls final String methodName) {
     checkParameter();
 
-    myBuffer.append(aClass.getName());
+    myBuffer.append(fullClassName);
     myBuffer.append('.');
     myBuffer.append(methodName);
     myBuffer.append('(');
 
     myIsFirstParameterStack.push(Boolean.TRUE);
+  }
+
+  private void startStaticMethodCall(final Class aClass, @NonNls final String methodName) {
+    startStaticMethodCall(aClass.getCanonicalName(), methodName);
   }
 
   void endMethod() {
