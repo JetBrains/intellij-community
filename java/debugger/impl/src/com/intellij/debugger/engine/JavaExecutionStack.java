@@ -255,9 +255,9 @@ public class JavaExecutionStack extends XExecutionStack {
           separator = true;
           continue;
         }
-        StackFrameItem.CapturedStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
+        XStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
         if (showFrame(newFrame)) {
-          newFrame.setWithSeparator(separator);
+          StackFrameItem.setWithSeparator(newFrame, separator);
           addFrameIfNeeded(newFrame, false);
           separator = false;
         }
