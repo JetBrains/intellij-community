@@ -1,56 +1,49 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl.commands
+package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.FloatingDecorator
-import com.intellij.openapi.wm.impl.ToolWindowImpl
-import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.util.Alarm
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.awt.Window
 import javax.swing.SwingUtilities
 
-private val LOG = logger<RequestFocusInToolWindowCommand>()
+private val LOG = logger<ToolWindowManagerImpl>()
 
 internal fun requestFocusInToolWindow(toolWindow: ToolWindowImpl) {
-  RequestFocusInToolWindowCommand(toolWindow).request(0)
+  requestFocusInToolWindow(toolWindow, Alarm(toolWindow.disposable), 0)
 }
 
-private class RequestFocusInToolWindowCommand(private val toolWindow: ToolWindowImpl) {
-  private val checkerAlarm = Alarm(toolWindow.disposable)
+private fun requestFocusInToolWindow(toolWindow: ToolWindowImpl, checkerAlarm: Alarm, delay: Int) {
+  checkerAlarm.addRequest(object : Runnable {
+    val startTime = System.currentTimeMillis()
 
-  fun request(delay: Int) {
-    checkerAlarm.addRequest(object : Runnable {
-      val startTime = System.currentTimeMillis()
+    override fun run() {
+      if (System.currentTimeMillis() - startTime > 10000) {
+        LOG.debug { "tool window ${toolWindow.id} - cannot wait for showing component" }
+        return
+      }
 
-      override fun run() {
-        if (System.currentTimeMillis() - startTime > 10000) {
-          LOG.debug { "tool window ${toolWindow.id} - cannot wait for showing component" }
-          return
+      val component = getShowingComponentToRequestFocus(toolWindow)
+      if (component == null) {
+        checkerAlarm.cancelAllRequests()
+        requestFocusInToolWindow(toolWindow, checkerAlarm, 100)
+      }
+      else {
+        val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().permanentFocusOwner
+        val manager = toolWindow.toolWindowManager
+        if (owner !== component) {
+          manager.focusManager.requestFocusInProject(component, manager.project)
+          bringOwnerToFront(toolWindow)
         }
-
-        val component = getShowingComponentToRequestFocus(toolWindow)
-        if (component == null) {
-          checkerAlarm.cancelAllRequests()
-          request(100)
-        }
-        else {
-          val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().permanentFocusOwner
-          val manager = toolWindow.toolWindowManager
-          if (owner !== component) {
-            manager.focusManager.requestFocusInProject(component, manager.project)
-            bringOwnerToFront(toolWindow)
-          }
-          manager.focusManager.doWhenFocusSettlesDown {
-            updateToolWindow(toolWindow, component)
-          }
+        manager.focusManager.doWhenFocusSettlesDown {
+          updateToolWindow(toolWindow, component)
         }
       }
-    }, delay)
-  }
+    }
+  }, delay)
 }
 
 private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {

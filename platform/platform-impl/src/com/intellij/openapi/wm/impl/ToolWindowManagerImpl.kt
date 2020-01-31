@@ -49,7 +49,6 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.commands.requestFocusInToolWindow
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.GuiUtils
