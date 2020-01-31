@@ -18,7 +18,7 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                            val isDummyProject: Boolean = false) {
   constructor(project: Project) : this(false, project = project)
 
-  constructor(forceOpenInNewFrame: Boolean = false, projectToClose: Project?) : this(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = false)
+  constructor(forceOpenInNewFrame: Boolean = false, projectToClose: Project?) : this(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = true)
 
   companion object {
     @JvmStatic
