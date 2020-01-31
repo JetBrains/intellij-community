@@ -1,23 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.projectRoots.impl
+package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.intellij.jdkDownloader.JdkItem
-import com.intellij.jdkDownloader.JdkListParser
-import com.intellij.jdkDownloader.JdkPredicate
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.BuildNumber
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.ListAssert
 import org.assertj.core.api.ObjectAssert
 import org.junit.Test
-import java.io.File
 
 class JdkListTest {
   private val om = ObjectMapper()
-  private fun buildPredicate(build: String) = JdkPredicate(BuildNumber.fromString(build), "any")
+  private fun buildPredicate(build: String) = JdkPredicate(
+    BuildNumber.fromString(build), "any")
 
   @Test
   fun `parse feed v1`() {
@@ -120,7 +117,8 @@ class JdkListTest {
 
   private inline fun assertForEachOS(json: ObjectNode, assert: ListAssert<JdkItem>.() -> Unit) {
     for (osType in listOf("windows", "linux", "macOS")) {
-      val predicate = JdkPredicate(BuildNumber.fromString("201.123"), osType)
+      val predicate = JdkPredicate(
+        BuildNumber.fromString("201.123"), osType)
       val data = JdkListParser.parseJdkList(json, predicate)
       assertThat(data)
         .withFailMessage("should have items for $osType")
@@ -252,7 +250,7 @@ class JdkListTest {
   }
 
   private fun loadTestData(@Suppress("SameParameterValue") name: String): ObjectNode {
-    val rawData = File(PathManagerEx.getTestDataPath("/jdkDownload/$name")).readBytes()
+    val rawData = PathManagerEx.findFileUnderCommunityHome("platform/lang-impl/testData/jdkDownload/$name").readBytes()
     return ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
   }
 }

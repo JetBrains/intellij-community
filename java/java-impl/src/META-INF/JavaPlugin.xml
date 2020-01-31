@@ -295,14 +295,6 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
 
     <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
-    <registryKey key="java.detector.enabled" defaultValue="true" description="Toggles JDK detection features" />
-    <registryKey key="java.detector.include.embedded" defaultValue="false" description="Include embedded JetBrains Runtime" />
-
-    <sdkDownload implementation="com.intellij.jdkDownloader.JdkDownloader" />
-    <unknownSdkResolver implementation="com.intellij.jdkDownloader.JdkAuto"/>
-    <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
-    <registryKey key="jdk.downloader.ui" defaultValue="true" description="Use the list of JDKs to download and install in one click"/>
-    <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
 

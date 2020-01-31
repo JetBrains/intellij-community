@@ -1,17 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
-package com.intellij.openapi.projectRoots.impl
+package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.jdkDownloader.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.lang.RuntimeException
 
 internal fun jdkItemForTest(url: String,
                             packageType: JdkPackageType,
@@ -48,35 +45,14 @@ class JdkDownloaderTest {
   )
 
   private val mockTarGZ2 = jdkItemForTest(packageType = JdkPackageType.TAR_GZ,
-                                         url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data-2.tar.gz",
-                                         size = 318,
-                                         sha256 = "963af2c1578a376340f60c5adabf217f59006cfc8b2b3fc97edda2e90c0295e2"
+                                          url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data-2.tar.gz",
+                                          size = 318,
+                                          sha256 = "963af2c1578a376340f60c5adabf217f59006cfc8b2b3fc97edda2e90c0295e2"
   )
   private val mockZip = jdkItemForTest(packageType = JdkPackageType.ZIP,
                                        url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data.zip",
                                        size = 604,
                                        sha256 = "1cf15536c1525f413190fd53243f343511a17e6ce7439ccee4dc86f0d34f9e81")
-
-  @Test
-  fun `default model can be downloaded and parsed`() {
-    lateinit var lastError: Throwable
-    run {
-      repeat(5) {
-        val result = runCatching {
-          val data = JdkListDownloader.downloadForUI(null)
-          Assert.assertTrue(data.isNotEmpty())
-        }
-        if (result.isSuccess) return
-        lastError = result.exceptionOrNull()!!
-
-        if (lastError.message?.startsWith("Failed to download list of available JDKs") == true) {
-          Thread.sleep(5000)
-        }
-        else throw lastError
-      }
-    }
-    throw RuntimeException("Failed to download JDK list within several tries", lastError)
-  }
 
   @Test
   fun `unpacking tar gz`() = testUnpacking(mockTarGZ) { dir ->
@@ -176,7 +152,8 @@ class JdkDownloaderTest {
 
   private inline fun testUnpacking(item: JdkItem, resultDir: (File) -> Unit) {
     val dir = fsRule.newFolder()
-    JdkInstaller.installJdk(JdkInstallRequest(item, dir), null)
+    JdkInstaller.installJdk(
+      JdkInstallRequest(item, dir), null)
     resultDir(dir)
   }
 }

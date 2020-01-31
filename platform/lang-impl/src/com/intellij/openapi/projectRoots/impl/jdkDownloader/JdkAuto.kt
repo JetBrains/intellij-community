@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.jdkDownloader
+package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType
 import com.intellij.openapi.roots.ui.configuration.*
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.*
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener
@@ -22,9 +23,10 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
     if (!Registry.`is`("jdk.auto.setup")) return null
     if (ApplicationManager.getApplication().isUnitTestMode) return null
 
-    return object : UnknownSdkLookup {
-      val sdkType = JavaSdk.getInstance()
+    val sdkType = SdkType.getAllTypes()
+                    .singleOrNull(notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value) ?: return null
 
+    return object : UnknownSdkLookup {
       val lazyDownloadModel by lazy {
         indicator.text = "Downloading JDK list..."
         JdkListDownloader.downloadModelForJdkInstaller(indicator)

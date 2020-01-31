@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.projectRoots.impl
+package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.jdkDownloader.*
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
 import org.junit.Assert
 import org.junit.Test

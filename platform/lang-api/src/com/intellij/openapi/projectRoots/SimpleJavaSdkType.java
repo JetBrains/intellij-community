@@ -113,6 +113,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
 
   private static final Condition<SdkTypeId> TRUE = sdkTypeId -> true;
   private static final Condition<SdkTypeId> NOT_SIMPLE_JAVA_TYPE = sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
+  private static final Condition<SdkTypeId> NOT_DEPENDENT_TYPE = sdkTypeId -> (sdkTypeId instanceof SdkType && ((SdkType)sdkTypeId).getDependencyType() == null);
 
   @NotNull
   public static Condition<SdkTypeId> notSimpleJavaSdkType() {
@@ -125,11 +126,16 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return sdkTypeId -> NOT_SIMPLE_JAVA_TYPE.value(sdkTypeId) && condition.value(sdkTypeId);
   }
 
+  /**
+   * @return an SdkTypeId predicate that returns true only for JavaSdkType instances.
+   * If there are more more JavaSdkType non-dependent SDK Types, that predicate also
+   * filters out the SimpleJavaSdkType implementation
+   */
   @NotNull
   public static Condition<SdkTypeId> notSimpleJavaSdkTypeIfAlternativeExists() {
     boolean hasNotSimple = Stream.of(SdkType.getAllTypes())
       .filter(notSimpleJavaSdkType()::value)
-      .anyMatch(it -> it instanceof JavaSdkType && it.getDependencyType() == null);
+      .anyMatch(it -> it instanceof JavaSdkType && it.getDependencyType() == null && !((JavaSdkType)it).isDependent());
 
     if (hasNotSimple) {
       //we found another JavaSdkType (e.g. JavaSdkImpl), there is no need for SimpleJavaSdkType
@@ -138,5 +144,16 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
       //there is only one JavaSdkType, so it is no need to filter anything
       return TRUE;
     }
+  }
+
+  /**
+   * @return an SdkTypeId predicate that returns true only for JavaSdkType which is not
+   * a dependent SDK type. Moreover, if there are several matches, the SimpleJavaSdkType
+   * is filtered out too
+   */
+  @NotNull
+  public static Condition<SdkTypeId> notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType() {
+    Condition<SdkTypeId> preferablyNotSimple = notSimpleJavaSdkTypeIfAlternativeExists();
+    return sdkType -> sdkType instanceof JavaSdkType && NOT_DEPENDENT_TYPE.value(sdkType) && preferablyNotSimple.value(sdkType);
   }
 }
