@@ -31,6 +31,9 @@ public class ModuleDataServiceJavaExtension implements ModuleDataServiceExtensio
     LanguageLevel level = LanguageLevel.parse(data.getSourceCompatibility());
     if (level != null) {
       try {
+        if (data.isPreview()) {
+          level = LanguageLevel.valueOf(level.name() + "_PREVIEW");
+        }
         modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
       }
       catch (IllegalArgumentException e) {

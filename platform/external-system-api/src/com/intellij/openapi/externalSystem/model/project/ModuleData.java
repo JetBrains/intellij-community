@@ -35,6 +35,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @NotNull private List<File> artifacts;
   private String @Nullable [] ideModuleGroup;
   @Nullable private String sourceCompatibility;
+  private boolean isPreview;
   @Nullable private String targetCompatibility;
   @Nullable private String sdkName;
   @Nullable private String productionModuleId;
@@ -210,6 +211,14 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
     this.sourceCompatibility = sourceCompatibility;
+  }
+
+  public boolean isPreview() {
+    return isPreview;
+  }
+
+  public void setPreview(boolean preview) {
+    isPreview = preview;
   }
 
   @Nullable
