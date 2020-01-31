@@ -7,11 +7,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -70,20 +67,5 @@ public class EditorMouseHoverPopupControl {
 
   public void addListener(@NotNull Runnable listener) {
     ourListeners.add(listener);
-  }
-
-  public static void disablePopupsWhileShowing(@NotNull Editor editor, @NotNull Component popupComponent) {
-    new UiNotifyConnector.Once(popupComponent, new Activatable() {
-      @Override
-      public void showNotify() {
-        disablePopups(editor);
-        new UiNotifyConnector.Once(popupComponent, new Activatable() {
-          @Override
-          public void hideNotify() {
-            enablePopups(editor);
-          }
-        });
-      }
-    });
   }
 }
