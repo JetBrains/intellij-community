@@ -143,19 +143,24 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           val toolWindowManager = getInstance(project) as ToolWindowManagerImpl
           val toolWindowId = toolWindowManager.activeToolWindowId ?: return
 
-          val activeToolWindow = toolWindowManager.idToEntry.get(toolWindowId) ?: return
-          val windowInfo = activeToolWindow.readOnlyWindowInfo
+          val activeEntry = toolWindowManager.idToEntry.get(toolWindowId) ?: return
+          val windowInfo = activeEntry.readOnlyWindowInfo
+          // just removed
+          if (!windowInfo.isVisible) {
+            return
+          }
+
           if (!(windowInfo.isAutoHide || windowInfo.type == ToolWindowType.SLIDING)) {
             return
           }
 
           // let's check that it is a toolwindow who loses the focus
-          if (isInActiveToolWindow(event.source, activeToolWindow.toolWindow) && !isInActiveToolWindow(event.oppositeComponent, activeToolWindow.toolWindow)) {
+          if (isInActiveToolWindow(event.source, activeEntry.toolWindow) && !isInActiveToolWindow(event.oppositeComponent, activeEntry.toolWindow)) {
             // a toolwindow lost focus
             val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
             if (!focusGoesToPopup) {
               val info = toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindowId)
-              toolWindowManager.doDeactivateToolWindow(info, activeToolWindow)
+              toolWindowManager.doDeactivateToolWindow(info, activeEntry)
             }
           }
         }
