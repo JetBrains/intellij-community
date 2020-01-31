@@ -37,6 +37,11 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
     return true;
   }
 
+  @Override
+  public String getID() {
+    return getTool().getID();
+  }
+
   @NotNull
   @Override
   public String getGroupDisplayName() {
