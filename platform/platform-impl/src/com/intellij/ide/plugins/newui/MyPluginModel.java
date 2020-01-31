@@ -12,7 +12,9 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -87,7 +89,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean isModified() {
-    if (needRestart || !myDynamicPluginsToInstall.isEmpty() || !myDynamicPluginsToUninstall.isEmpty() || !myPluginsToRemoveOnCancel.isEmpty()) {
+    if (needRestart ||
+        !myDynamicPluginsToInstall.isEmpty() ||
+        !myDynamicPluginsToUninstall.isEmpty() ||
+        !myPluginsToRemoveOnCancel.isEmpty()) {
       return true;
     }
 
@@ -293,14 +298,18 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return myInstallingWithUpdatesPlugins.contains(descriptor);
   }
 
-  void installOrUpdatePlugin(@Nullable JComponent parentComponent, @NotNull IdeaPluginDescriptor descriptor, @Nullable IdeaPluginDescriptor updateDescriptor, @NotNull ModalityState modalityState) {
+  void installOrUpdatePlugin(@Nullable JComponent parentComponent,
+                             @NotNull IdeaPluginDescriptor descriptor,
+                             @Nullable IdeaPluginDescriptor updateDescriptor,
+                             @NotNull ModalityState modalityState) {
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(Collections.singletonList(descriptor))) {
       return;
     }
 
     boolean allowUninstallWithoutRestart = true;
     if (updateDescriptor != null) {
-      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
+      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManager
+        .loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
       if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowUninstallWithoutRestart = false;
       }
@@ -331,7 +340,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
 
-    installPlugin(pluginsToInstall, getAllRepoPlugins(), prepareToInstall(descriptor, updateDescriptor), allowUninstallWithoutRestart, modalityState);
+    installPlugin(pluginsToInstall, getAllRepoPlugins(), prepareToInstall(descriptor, updateDescriptor), allowUninstallWithoutRestart,
+                  modalityState);
   }
 
   private void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
@@ -724,7 +734,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   @NotNull
   String getEnabledTitle(@NotNull IdeaPluginDescriptor plugin) {
-    return isEnabled(plugin) ? IdeBundle.message("plugins.configurable.disable.button") : IdeBundle.message("plugins.configurable.enable.button");
+    return isEnabled(plugin)
+           ? IdeBundle.message("plugins.configurable.disable.button")
+           : IdeBundle.message("plugins.configurable.enable.button");
   }
 
   void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
@@ -801,6 +813,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
   }
 
+  public void runRestartButton(@NotNull Component component) {
+    if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
+      needRestart = true;
+      createShutdownCallback = false;
+
+      DialogWrapper settings = DialogWrapper.findInstance(component);
+      assert settings instanceof SettingsDialog : settings;
+      ((SettingsDialog)settings).applyAndClose(false /* will be saved on app exit */);
+
+      ApplicationManager.getApplication().exit(true, false, true);
+    }
+  }
+
   static boolean showUninstallDialog(@NotNull Component uiParent, @NotNull List<? extends ListPluginComponent> selection) {
     int size = selection.size();
     return showUninstallDialog(uiParent, size == 1 ? selection.get(0).myPlugin.getName() : null, size);
@@ -856,7 +881,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     try {
       descriptorImpl.setDeleted(true);
       // Load descriptor to make sure we get back all the data cleared after the descriptor has been loaded
-      IdeaPluginDescriptorImpl fullDescriptor = PluginManager.loadDescriptor(descriptorImpl.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
+      IdeaPluginDescriptorImpl fullDescriptor =
+        PluginManager.loadDescriptor(descriptorImpl.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
       LOG.assertTrue(fullDescriptor != null);
       needRestartForUninstall = PluginInstaller.prepareToUninstall(fullDescriptor);
       InstalledPluginsState.getInstance().onPluginUninstall(descriptorImpl, needRestartForUninstall);

@@ -46,6 +46,10 @@ public class PluginUpdateDialog extends DialogWrapper {
   private final Collection<PluginDownloader> myDownloaders;
 
   private final MyPluginModel myPluginModel = new MyPluginModel() {
+    @Override
+    public void runRestartButton(@NotNull Component component) {
+      doOKAction();
+    }
   };
   private final PluginsGroupComponent myPluginsPanel;
   private final PluginsGroup myGroup;
