@@ -3,11 +3,18 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.Clock;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.junit.After;
 
 public class CancellationCheckTest extends LightPlatformTestCase {
 
   private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
+
+  @After
+  public void reset() {
+    Clock.reset();
+  }
 
   public void testNormal() {
     int period = 10;
@@ -37,15 +44,11 @@ public class CancellationCheckTest extends LightPlatformTestCase {
   }
 
   private void runWithCheckCancellation(CancellationCheck cancellation, int period, int times, int depth) {
+    Clock.setTime(1L);
     cancellation.withCancellationCheck(() -> {
       for (int attempt = 0; attempt < times * 2; attempt++) {
         myProgressIndicator.checkCanceled();
-        try {
-          Thread.sleep(period);
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
+        Clock.setTime(Clock.getTime() + period);
         if (depth - 1 > 0) {
           runWithCheckCancellation(cancellation, period, times, depth - 1);
         }
@@ -53,4 +56,5 @@ public class CancellationCheckTest extends LightPlatformTestCase {
       return null;
     });
   }
+
 }
