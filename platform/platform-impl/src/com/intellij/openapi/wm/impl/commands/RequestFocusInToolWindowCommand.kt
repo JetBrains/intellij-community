@@ -1,138 +1,138 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl.commands;
+package com.intellij.openapi.wm.impl.commands
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.*;
-import com.intellij.util.Alarm;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.FloatingDecorator
+import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.util.Alarm
+import java.awt.Component
+import java.awt.KeyboardFocusManager
+import java.awt.Window
+import javax.swing.SwingUtilities
 
-import javax.swing.*;
-import java.awt.*;
+private val LOG = logger<RequestFocusInToolWindowCommand>()
 
-public final class RequestFocusInToolWindowCommand implements Runnable {
-  private static final Logger LOG = Logger.getInstance(RequestFocusInToolWindowCommand.class);
-  private final ToolWindowImpl toolWindow;
+internal fun requestFocusInToolWindow(toolWindow: ToolWindowImpl) {
+  RequestFocusInToolWindowCommand(toolWindow).request(0)
+}
 
-  public RequestFocusInToolWindowCommand(@NotNull ToolWindowImpl toolWindow) {
-    this.toolWindow = toolWindow;
-  }
+private class RequestFocusInToolWindowCommand(private val toolWindow: ToolWindowImpl) {
+  private val checkerAlarm = Alarm(toolWindow.disposable)
 
-  @Override
-  public void run() {
-    Alarm checkerAlarm = new Alarm(toolWindow.getDisposable());
-    checkerAlarm.addRequest(new Runnable() {
-      final long startTime = System.currentTimeMillis();
+  fun request(delay: Int) {
+    checkerAlarm.addRequest(object : Runnable {
+      val startTime = System.currentTimeMillis()
 
-      @Override
-      public void run() {
+      override fun run() {
         if (System.currentTimeMillis() - startTime > 10000) {
-          LOG.debug(toolWindow.getId(), " tool window - cannot wait for showing component");
-          return;
+          LOG.debug { "tool window ${toolWindow.id} - cannot wait for showing component" }
+          return
         }
 
-        Component component = getShowingComponentToRequestFocus(toolWindow);
+        val component = getShowingComponentToRequestFocus(toolWindow)
         if (component == null) {
-          checkerAlarm.addRequest(this, 100);
+          checkerAlarm.cancelAllRequests()
+          request(100)
         }
         else {
-          Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
-          ToolWindowManagerImpl manager = toolWindow.getToolWindowManager();
-          if (owner != component) {
-            manager.getFocusManager().requestFocusInProject(component, manager.getProject());
-            bringOwnerToFront(toolWindow);
+          val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().permanentFocusOwner
+          val manager = toolWindow.toolWindowManager
+          if (owner !== component) {
+            manager.focusManager.requestFocusInProject(component, manager.project)
+            bringOwnerToFront(toolWindow)
           }
-          manager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(toolWindow, component));
+          manager.focusManager.doWhenFocusSettlesDown {
+            updateToolWindow(toolWindow, component)
+          }
         }
       }
-    }, 0);
+    }, delay)
   }
+}
 
-  private static void bringOwnerToFront(@NotNull ToolWindowImpl toolWindow) {
-    final Window owner = SwingUtilities.getWindowAncestor(toolWindow.getComponent());
-    //Toolwindow component shouldn't take focus back if new dialog or frame appears
-    //Example: Ctrl+D on file history brings a diff dialog to front and then hides it by main frame by calling
-    // toFront on toolwindow window
-    Window activeFrame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (activeFrame != null && activeFrame != owner) {
-      return;
-    }
-    //if (owner == null) {
-    //  System.out.println("owner = " + owner);
-    //  return;
-    //}
-    // if owner is active window or it has active child window which isn't floating decorator then
-    // don't bring owner window to font. If we will make toFront every time then it's possible
-    // the following situation:
-    // 1. user perform refactoring
-    // 2. "Do not show preview" dialog is popping up.
-    // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
-    // isn't active.
-    if (owner != null && owner.getFocusOwner() == null) {
-      Window activeWindow = getActiveWindow(owner.getOwnedWindows());
-      if (activeWindow == null || activeWindow instanceof FloatingDecorator) {
-        LOG.debug("owner.toFront()");
-        //Thread.dumpStack();
-        //System.out.println("------------------------------------------------------");
-        owner.toFront();
-      }
-    }
+private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {
+  val owner = SwingUtilities.getWindowAncestor(toolWindow.component)
+  //Toolwindow component shouldn't take focus back if new dialog or frame appears
+  //Example: Ctrl+D on file history brings a diff dialog to front and then hides it by main frame by calling
+  // toFront on toolwindow window
+  val activeFrame = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+  if (activeFrame != null && activeFrame !== owner) {
+    return
   }
-
-  @Nullable
-  public static Component getShowingComponentToRequestFocus(@NotNull ToolWindowImpl toolWindow) {
-    JComponent container = toolWindow.getComponentIfInitialized();
-    if (container == null || !container.isShowing()) {
-      LOG.debug(toolWindow.getId(), " tool window: parent container is hidden: ", container);
-      return null;
-    }
-
-    FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
-    if (policy == null) {
-      LOG.warn(toolWindow.getId() + " tool window does not provide focus traversal policy");
-      return null;
-    }
-
-    Component component = toolWindow.getToolWindowManager().getFocusManager().getFocusTargetFor(container);
-    if (component == null || !component.isShowing()) {
-      LOG.debug(toolWindow.getId(), " tool window: default component is hidden: ", container);
-      return null;
-    }
-    return component;
-  }
-
-  private static void updateToolWindow(@NotNull ToolWindowImpl toolWindow, @NotNull Component component) {
-    if (component.isFocusOwner()) {
-      toolWindow.getToolWindowManager().updateToolWindow(toolWindow, component);
-    }
-
-    updateFocusedComponentForWatcher(component);
-  }
-
-  private static void updateFocusedComponentForWatcher(@NotNull Component c) {
-    WindowWatcher watcher = ((WindowManagerImpl)WindowManager.getInstance()).getWindowWatcher();
-    FocusWatcher focusWatcher = watcher.getFocusWatcherFor(c);
-    if (focusWatcher != null && c.isFocusOwner()) {
-      focusWatcher.setFocusedComponentImpl(c);
+  //if (owner == null) {
+  //  System.out.println("owner = " + owner);
+  //  return;
+  //}
+  // if owner is active window or it has active child window which isn't floating decorator then
+  // don't bring owner window to font. If we will make toFront every time then it's possible
+  // the following situation:
+  // 1. user perform refactoring
+  // 2. "Do not show preview" dialog is popping up.
+  // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
+  // isn't active.
+  if (owner != null && owner.focusOwner == null) {
+    val activeWindow = getActiveWindow(owner.ownedWindows)
+    if (activeWindow == null || activeWindow is FloatingDecorator) {
+      LOG.debug("owner.toFront()")
+      //Thread.dumpStack();
+      //System.out.println("------------------------------------------------------");
+      owner.toFront()
     }
   }
+}
 
-  /**
-   * @return first active window from hierarchy with specified roots. Returns {@code null}
-   *         if there is no active window in the hierarchy.
-   */
-  private static Window getActiveWindow(Window @NotNull [] windows) {
-    for (Window window : windows) {
-      if (window.isShowing() && window.isActive()) {
-        return window;
-      }
-      window = getActiveWindow(window.getOwnedWindows());
-      if (window != null) {
-        return window;
-      }
-    }
-    return null;
+internal fun getShowingComponentToRequestFocus(toolWindow: ToolWindowImpl): Component? {
+  val container = toolWindow.getComponentIfInitialized()
+  if (container == null || !container.isShowing) {
+    LOG.debug { "tool window ${toolWindow.id} parent container is hidden: $container" }
+    return null
   }
+
+  val policy = container.focusTraversalPolicy
+  if (policy == null) {
+    LOG.warn("${toolWindow.id} tool window does not provide focus traversal policy")
+    return null
+  }
+
+  val component: Component? = toolWindow.toolWindowManager.focusManager.getFocusTargetFor(container)
+  if (component == null || !component.isShowing) {
+    LOG.debug { " tool window ${toolWindow.id} default component is hidden: $container" }
+    return null
+  }
+  return component
+}
+
+private fun updateToolWindow(toolWindow: ToolWindowImpl, component: Component) {
+  if (component.isFocusOwner) {
+    toolWindow.toolWindowManager.updateToolWindow(toolWindow, component)
+  }
+  updateFocusedComponentForWatcher(component)
+}
+
+private fun updateFocusedComponentForWatcher(c: Component) {
+  val watcher = (WindowManager.getInstance() as WindowManagerImpl).windowWatcher
+  val focusWatcher = watcher.getFocusWatcherFor(c)
+  if (focusWatcher != null && c.isFocusOwner) {
+    focusWatcher.setFocusedComponentImpl(c)
+  }
+}
+
+/**
+ * @return first active window from hierarchy with specified roots. Returns `null`
+ * if there is no active window in the hierarchy.
+ */
+private fun getActiveWindow(windows: Array<Window>): Window? {
+  for (window in windows) {
+    if (window.isShowing && window.isActive) {
+      return window
+    }
+
+    getActiveWindow(window.ownedWindows)?.let {
+      return it
+    }
+  }
+  return null
 }
