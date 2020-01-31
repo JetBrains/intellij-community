@@ -70,7 +70,7 @@ object GHPRSubmittableTextField {
     }.apply {
       icon = avatarIconsProvider.getIcon(author.avatarUrl)
       isFocusable = true
-      border = JBUI.Borders.empty(if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 4 else 2, 0)
+      border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset() - 2, 0)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
@@ -140,9 +140,11 @@ object GHPRSubmittableTextField {
 
   private fun createCancelButton() =
     InlineIconButton(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered, tooltip = "Cancel", shortcut = CANCEL_SHORTCUT_SET).apply {
-      border = JBUI.Borders.empty(if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 6 else 4, 0)
+      border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset(), 0)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
+
+  private fun getEditorTextFieldVerticalOffset() = if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 6 else 4
 
   private fun createTextFieldWithInlinedButton(textField: EditorTextField, button: JComponent): JComponent {
 
