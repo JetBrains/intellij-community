@@ -5,12 +5,9 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
-import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -27,7 +24,6 @@ public class SerializedStubTree {
                                                               ? new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer()
                                                               : new StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer();
 
-  private static final Logger LOG = Logger.getInstance(SerializedStubTree.class);
   private static final MessageDigest HASHER = DigestUtil.sha256();
 
   // serialized tree
@@ -151,7 +147,6 @@ public class SerializedStubTree {
     return myIndexedStubs;
   }
 
-  // willIndexStub is one time optimization hint, once can safely pass false
   @NotNull
   public Stub getStub() throws SerializerNotFoundException {
     return getStub(mySerializationManager);
@@ -198,19 +193,6 @@ public class SerializedStubTree {
   }
 
   @NotNull
-  private String dumpStub() {
-    String deserialized;
-    try {
-      deserialized = "stub: " + DebugUtil.stubTreeToString(getStub());
-    }
-    catch (SerializerNotFoundException e) {
-      LOG.error(e);
-      deserialized = "error while stub deserialization: " + e.getMessage();
-    }
-    return deserialized + "\n bytes: " + toHexString(myTreeBytes, myTreeByteLength);
-  }
-
-  @NotNull
   static Map<StubIndexKey, Map<Object, StubIdList>> indexTree(@NotNull Stub root) {
     ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
                                     new ObjectStubTree((ObjectStubBase)root, false);
@@ -230,23 +212,10 @@ public class SerializedStubTree {
   }
 
   private byte[] myTreeHash;
-  synchronized byte @NotNull [] getTreeHash() {
+  public synchronized byte @NotNull [] getTreeHash() {
     if (myTreeHash == null) {
       myTreeHash = DigestUtil.calculateContentHash(HASHER, myTreeBytes, 0, myTreeByteLength);
     }
     return myTreeHash;
-  }
-
-  static void reportStubTreeHashCollision(@NotNull SerializedStubTree newTree,
-                                          @NotNull SerializedStubTree existingTree) {
-    String oldTreeDump = "\nexisting tree " + existingTree.dumpStub();
-    String newTreeDump = "\nnew tree " + newTree.dumpStub();
-    byte[] hash = newTree.getTreeHash();
-    LOG.info("Stub tree hashing collision. Different trees have the same hash = " + toHexString(hash, hash.length) +
-             ". Hashing algorithm = " + HASHER.getAlgorithm() + "." + oldTreeDump + newTreeDump, new Exception());
-  }
-
-  private static String toHexString(byte[] hash, int length) {
-    return IntStreamEx.of(hash).limit(length).mapToObj(b -> String.format("%02x", b & 0xFF)).joining();
   }
 }
