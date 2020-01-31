@@ -2,14 +2,14 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.internal.statistic.actions.StatisticsEventLogToolWindow.Companion.buildLogMessage
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventAction
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
+import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow
+import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow.Companion.buildLogMessage
+import com.intellij.internal.statistic.toolwindow.StatisticsLogFilterModel
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {

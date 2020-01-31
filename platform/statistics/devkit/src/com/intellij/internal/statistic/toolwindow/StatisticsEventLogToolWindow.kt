@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.actions
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.statistic.toolwindow
 
 import com.intellij.diagnostic.logging.LogConsoleBase
 import com.intellij.diagnostic.logging.LogFilter
@@ -7,10 +7,11 @@ import com.intellij.diagnostic.logging.LogFilterListener
 import com.intellij.diagnostic.logging.LogFilterModel
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.internal.statistic.StatisticsBundle
-import com.intellij.internal.statistic.actions.StatisticsEventLogToolWindow.Companion.rejectedValidationTypes
+import com.intellij.internal.statistic.actions.*
 import com.intellij.internal.statistic.eventLog.EventLogNotificationService
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
+import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow.Companion.rejectedValidationTypes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
