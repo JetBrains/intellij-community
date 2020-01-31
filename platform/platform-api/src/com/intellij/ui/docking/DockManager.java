@@ -12,6 +12,10 @@ import java.awt.event.MouseEvent;
 import java.util.Set;
 
 public abstract class DockManager {
+  /**
+   * @deprecated Use {@link #register(DockContainer, Disposable)}
+   */
+  @Deprecated
   public abstract void register(@NotNull DockContainer container);
 
   public abstract void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable);
@@ -24,9 +28,10 @@ public abstract class DockManager {
 
   public abstract DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent<?> content);
 
-  public abstract Set<DockContainer> getContainers();
+  @NotNull
+  public abstract Set<@NotNull DockContainer> getContainers();
 
-  public abstract IdeFrame getIdeFrame(DockContainer container);
+  public abstract IdeFrame getIdeFrame(@NotNull DockContainer container);
 
   public abstract String getDimensionKeyForFocus(@NotNull String key);
 

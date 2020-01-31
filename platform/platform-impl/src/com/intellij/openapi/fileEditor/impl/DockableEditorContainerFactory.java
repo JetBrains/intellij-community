@@ -14,6 +14,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
   public static final String TYPE = "file-editors";
@@ -26,8 +27,9 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
     myFileEditorManager = fileEditorManager;
   }
 
+  @NotNull
   @Override
-  public DockContainer createContainer(DockableContent content) {
+  public DockContainer createContainer(@Nullable DockableContent content) {
     return createContainer(false);
   }
 

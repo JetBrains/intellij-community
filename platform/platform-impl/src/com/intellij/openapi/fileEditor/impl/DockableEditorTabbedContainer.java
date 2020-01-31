@@ -15,6 +15,7 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ui.update.Activatable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public final class DockableEditorTabbedContainer implements DockContainer.Persistent {
+public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
   private final EditorsSplitters mySplitters;
   private final Project myProject;
 

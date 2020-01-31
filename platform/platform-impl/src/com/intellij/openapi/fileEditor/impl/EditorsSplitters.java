@@ -115,7 +115,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
     if (createOwnDockableContainer) {
       DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
-      DockManager.getInstance(manager.getProject()).register(dockable);
+      DockManager.getInstance(manager.getProject()).register(dockable, parentDisposable);
     }
 
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {

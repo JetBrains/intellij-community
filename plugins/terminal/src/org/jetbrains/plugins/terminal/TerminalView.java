@@ -123,7 +123,7 @@ public final class TerminalView {
 
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer();
-      DockManager.getInstance(myProject).register(myDockContainer);
+      DockManager.getInstance(myProject).register(myDockContainer, toolWindow.getDisposable());
     }
   }
 
@@ -413,14 +413,6 @@ public final class TerminalView {
     @Override
     public boolean isDisposeWhenEmpty() {
       return false;
-    }
-
-    @Override
-    public void showNotify() {
-    }
-
-    @Override
-    public void hideNotify() {
     }
   }
 }
