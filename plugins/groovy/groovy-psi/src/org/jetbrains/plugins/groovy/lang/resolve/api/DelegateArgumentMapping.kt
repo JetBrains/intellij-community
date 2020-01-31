@@ -13,7 +13,7 @@ abstract class DelegateArgumentMapping<out X : CallParameter>(
   override fun targetParameter(argument: Argument): X? = delegate.targetParameter(argument)
   override fun expectedType(argument: Argument): PsiType? = delegate.expectedType(argument)
   override val expectedTypes: Iterable<Pair<PsiType, Argument>> get() = delegate.expectedTypes
-  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability = delegate.applicability(substitutor, erase)
+  override fun applicability(): Applicability = delegate.applicability()
 
   override fun highlightingApplicabilities(substitutor: PsiSubstitutor): ApplicabilityResult = delegate.highlightingApplicabilities(
     substitutor

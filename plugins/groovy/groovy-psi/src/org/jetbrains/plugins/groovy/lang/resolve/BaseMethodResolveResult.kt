@@ -31,7 +31,7 @@ open class BaseMethodResolveResult(
 
   private val myApplicability by recursionAwareLazy {
     arguments?.let { checkProviders(arguments.map(::ErasedArgument), method) }
-    ?: myCandidate.argumentMapping?.applicability(contextSubstitutor, true)
+    ?: myCandidate.argumentMapping?.applicability()
     ?: Applicability.canBeApplicable
   }
 

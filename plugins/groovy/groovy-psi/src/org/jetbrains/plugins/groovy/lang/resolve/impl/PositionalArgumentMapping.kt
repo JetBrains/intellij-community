@@ -39,9 +39,9 @@ class PositionalArgumentMapping<out P : CallParameter>(
       }
     }
 
-  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability {
+  override fun applicability(): Applicability {
     val map = argumentToParameter ?: return Applicability.inapplicable
-    return mapApplicability(map, substitutor, erase, context)
+    return mapApplicability(map, context)
   }
 
   val distance: Long

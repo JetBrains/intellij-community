@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.typing
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.recursionSafeLazy
@@ -83,7 +82,7 @@ abstract class GroovyClosureType(
       }
     }
     val (applicable, canChooseOverload) = allMappings.filterApplicable { (_, mapping) ->
-      mapping.applicability(PsiSubstitutor.EMPTY, true)
+      mapping.applicability()
     }
     if (applicable.isEmpty()) {
       return allMappings

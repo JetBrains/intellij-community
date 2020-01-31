@@ -20,7 +20,7 @@ class NullArgumentMapping<out P : CallParameter>(parameter: P) : ArgumentMapping
 
   // call `def foo(String a) {}` with `foo()` is actually `foo(null)`
   // Also see https://issues.apache.org/jira/browse/GROOVY-8248
-  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability = Applicability.applicable
+  override fun applicability(): Applicability = Applicability.applicable
 
   private companion object {
     private val singleNullArgument = JustTypeArgument(PsiType.NULL)

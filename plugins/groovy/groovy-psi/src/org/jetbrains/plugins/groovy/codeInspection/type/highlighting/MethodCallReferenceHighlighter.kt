@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiSubstitutor
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.generateCreateMethodActions
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -60,7 +59,7 @@ class MethodCallReferenceHighlighter(
     }
     else {
       totalApplicability(mappings.map {
-        it.applicability(PsiSubstitutor.EMPTY, true)
+        it.applicability()
       })
     }
 

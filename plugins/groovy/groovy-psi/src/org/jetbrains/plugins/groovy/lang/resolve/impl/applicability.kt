@@ -13,9 +13,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.Argumen
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
 
-fun mapApplicability(map: Map<Argument, CallParameter>, substitutor: PsiSubstitutor, erase: Boolean, context: PsiElement): Applicability {
+fun mapApplicability(map: Map<Argument, CallParameter>, context: PsiElement): Applicability {
   for ((argument, parameter) in map) {
-    val parameterType = parameterType(parameter.type, substitutor, erase)
+    val parameterType = TypeConversionUtil.erasure(parameter.type)
     val applicability = argumentApplicability(parameterType, argument.runtimeType, context)
     if (applicability != Applicability.applicable) {
       return applicability
