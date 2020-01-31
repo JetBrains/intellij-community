@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
@@ -23,7 +22,7 @@ import java.util.List;
 public abstract class SearchPopupController {
   protected final PluginSearchTextField myTextField;
   protected SearchPopup myPopup;
-  private final JBPopupListener mySearchPopupListener = new JBPopupAdapter() {
+  private final JBPopupListener mySearchPopupListener = new JBPopupListener() {
     @Override
     public void onClosed(@NotNull LightweightWindowEvent event) {
       myPopup = null;

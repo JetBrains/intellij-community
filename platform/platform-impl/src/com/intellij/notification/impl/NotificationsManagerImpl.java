@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.application.Topics;
@@ -171,7 +171,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             notification.expire();
           }
           else {
-            balloon.addListener(new JBPopupAdapter() {
+            balloon.addListener(new JBPopupListener() {
               @Override
               public void onClosed(@NotNull LightweightWindowEvent event) {
                 if (!event.isOk()) {
