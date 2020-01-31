@@ -14,7 +14,9 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.stream.Stream;
 
 /**
  * @author Gregory.Shrago
@@ -75,6 +77,11 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   @NotNull
   @Override
   public Collection<String> suggestHomePaths() {
+    //there is no need to search for JDKs if there is JavaSdkImpl registered
+    if (!notSimpleJavaSdkTypeIfAlternativeExists().value(this)) {
+      return Collections.emptyList();
+    }
+
     return JdkFinder.getInstance().suggestHomePaths();
   }
 
@@ -104,6 +111,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     };
   }
 
+  private static final Condition<SdkTypeId> TRUE = sdkTypeId -> true;
   private static final Condition<SdkTypeId> NOT_SIMPLE_JAVA_TYPE = sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
 
   @NotNull
@@ -115,5 +123,20 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<? super SdkTypeId> condition) {
     if (condition == null) return NOT_SIMPLE_JAVA_TYPE;
     return sdkTypeId -> NOT_SIMPLE_JAVA_TYPE.value(sdkTypeId) && condition.value(sdkTypeId);
+  }
+
+  @NotNull
+  public static Condition<SdkTypeId> notSimpleJavaSdkTypeIfAlternativeExists() {
+    boolean hasNotSimple = Stream.of(SdkType.getAllTypes())
+      .filter(notSimpleJavaSdkType()::value)
+      .anyMatch(it -> it instanceof JavaSdkType && it.getDependencyType() == null);
+
+    if (hasNotSimple) {
+      //we found another JavaSdkType (e.g. JavaSdkImpl), there is no need for SimpleJavaSdkType
+      return NOT_SIMPLE_JAVA_TYPE;
+    } else {
+      //there is only one JavaSdkType, so it is no need to filter anything
+      return TRUE;
+    }
   }
 }
