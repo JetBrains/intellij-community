@@ -88,9 +88,13 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
       while (i < length) {
         int nSlashes = 0;
         int next = i;
-        while ((next = PsiLiteralUtil.parseBackSlash(text, next)) != -1) {
+        while (next < length && (next = PsiLiteralUtil.parseBackSlash(text, next)) != -1) {
           nSlashes++;
           i = next;
+        }
+        if (i >= length) {
+          result.append(StringUtil.repeatSymbol('\\', nSlashes));
+          break;
         }
         next = parseQuote(i, text, nSlashes, result);
         if (next != -1) {
@@ -109,10 +113,6 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
     }
 
     private static int parseEscapedChar(int i, @NotNull String text, int nSlashes, @NotNull StringBuilder result) {
-      if (i > text.length()) {
-        result.append(StringUtil.repeatSymbol('\\', nSlashes));
-        return i;
-      }
       int next = parseEscapedSpace(i, text, nSlashes, result);
       if (next != -1) return next;
       next = parseEscapedLineBreak(i, text, nSlashes, result);
