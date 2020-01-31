@@ -404,7 +404,9 @@ public class DeclarationParser {
   }
 
   private static boolean isRecordToken(PsiBuilder builder, IElementType tokenType) {
-    return tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) && builder.lookAhead(1) == JavaTokenType.IDENTIFIER;
+    return tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
+           builder.lookAhead(1) == JavaTokenType.IDENTIFIER &&
+           getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14_PREVIEW);
   }
 
   @NotNull

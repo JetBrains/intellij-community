@@ -56,4 +56,8 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testLocalRecordWithoutParens() { doTest(true); }
   public void testCompactConstructor0() { doTest(true); }
   public void testCompactConstructor1() { doTest(true); }
+  public void testRecordTypeInOlderJava() {
+    setLanguageLevel(LanguageLevel.JDK_13);
+    doTest(true);
+  }
 }
