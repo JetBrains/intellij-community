@@ -513,7 +513,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         IdeRootPaneNorthExtension toRemove = myNorthExtensions.get(each);
         myNorthPanel.remove(toRemove.getComponent());
         existing.remove();
-        Disposer.dispose(toRemove);
+        if (toRemove instanceof Disposable) {
+          Disposer.dispose((Disposable)toRemove);
+        }
       }
 
       myNorthPanel.revalidate();
@@ -537,7 +539,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myWindows.remove(myContainer);
 
       for (IdeRootPaneNorthExtension each : myNorthExtensions.values()) {
-        Disposer.dispose(each);
+        if (each instanceof Disposable) {
+          Disposer.dispose((Disposable)each);
+        }
       }
       myNorthExtensions.clear();
     }
