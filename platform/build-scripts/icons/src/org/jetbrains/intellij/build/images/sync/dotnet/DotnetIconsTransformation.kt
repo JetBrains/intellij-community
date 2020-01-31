@@ -44,10 +44,17 @@ internal object DotnetIconsTransformation {
     icons.filterOnly(dotnetLightSuffices).minWith(dotnetLightComparator)?.changeSuffix("")?.also {
       transformed += it
     }
-    icons.filterOnly(dotnetDarkSuffices).minWith(dotnetDarkComparator)?.changeSuffix(ideaDarkSuffix)?.also {
-      transformed += it
+    if (hasRiderDarkPart(icons)) {
+        icons.filterOnly(dotnetDarkSuffices).minWith(dotnetDarkComparator)?.changeSuffix(ideaDarkSuffix)?.also {
+            transformed += it
+        }
     }
     (icons - transformed).forEach(DotnetIcon::delete)
+  }
+
+  private fun hasRiderDarkPart(icons: List<DotnetIcon>): Boolean {
+      return icons.any { it.suffix == "RiderLight" }.not()
+          || (icons.any { it.suffix == "RiderLight" } && icons.any { it.suffix == "RiderDark" })
   }
 
   private fun comparator(suffices: List<String>) = Comparator<DotnetIcon> { i1, i2 ->
