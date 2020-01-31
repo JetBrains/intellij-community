@@ -25,7 +25,7 @@ public final class CommonBundle extends BundleBase {
     if (!bundle.containsKey(key)) {
       return UtilBundle.message(key, params);
     }
-    return message(bundle, key, params);
+    return AbstractBundle.message(bundle, key, params);
   }
 
   @NotNull
@@ -34,31 +34,35 @@ public final class CommonBundle extends BundleBase {
     return ourBundle = ResourceBundle.getBundle(BUNDLE);
   }
 
+  /**
+   * @deprecated use {@link AbstractBundle#messageOrDefault(ResourceBundle, String, String, Object...)} instead
+   */
+  @Deprecated
   @Contract("null, _, _, _ -> param3")
   public static String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
                                         @Nullable String defaultValue,
                                         Object @NotNull ... params) {
-    if (bundle == null) {
-      return defaultValue;
-    }
-    else if (!bundle.containsKey(key)) {
-      return postprocessValue(bundle, useDefaultValue(bundle, key, defaultValue), params);
-    }
-    return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
+    return AbstractBundle.messageOrDefault(bundle, key, defaultValue, params);
   }
 
+  /**
+   * @deprecated use {@link AbstractBundle#message(ResourceBundle, String, Object...)} instead
+   */
+  @Deprecated
   @Nls
   @NotNull
   public static String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
-    return BundleBase.message(bundle, key, params);
+    return AbstractBundle.message(bundle, key, params);
   }
 
+  /**
+   * @deprecated use {@link AbstractBundle#messageOrNull(ResourceBundle, String, Object...)}
+   */
+  @Deprecated
   @Nullable
   public static String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
-    String value = messageOrDefault(bundle, key, key, params);
-    if (key.equals(value)) return null;
-    return value;
+    return AbstractBundle.messageOrNull(bundle, key, params);
   }
 
   @NotNull

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
@@ -50,10 +50,10 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
 
       final String[] keys = categoryKey.split("/");
       if (keys.length > 1) {
-        return ContainerUtil.map2Array(keys, String.class, s -> CommonBundle.message(bundle, s));
+        return ContainerUtil.map2Array(keys, String.class, s -> AbstractBundle.message(bundle, s));
       }
 
-      category = CommonBundle.message(bundle, categoryKey);
+      category = AbstractBundle.message(bundle, categoryKey);
     }
     return category == null ? null : category.split("/");
   }

@@ -15,7 +15,7 @@
  */
 package org.netbeans.lib.cvsclient;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
 public class SmartCvsSrcBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
-    return CommonBundle.message(getBundle(), key, params);
+    return AbstractBundle.message(getBundle(), key, params);
   }
 
   private static Reference<ResourceBundle> ourBundle;
