@@ -153,17 +153,12 @@ public class SerializedStubTree {
 
   // willIndexStub is one time optimization hint, once can safely pass false
   @NotNull
-  public Stub getStub(boolean willIndexStub) throws SerializerNotFoundException {
-    return getStub(willIndexStub, mySerializationManager);
+  public Stub getStub() throws SerializerNotFoundException {
+    return getStub(mySerializationManager);
   }
 
   @NotNull
-  public Stub getStub(boolean willIndexStub, @NotNull SerializationManagerEx serializationManager) throws SerializerNotFoundException {
-    return retrieveStubFromBytes(serializationManager);
-  }
-
-  @NotNull
-  Stub retrieveStubFromBytes(@NotNull SerializationManagerEx serializationManager) throws SerializerNotFoundException {
+  public Stub getStub(@NotNull SerializationManagerEx serializationManager) throws SerializerNotFoundException {
     return serializationManager.deserialize(new UnsyncByteArrayInputStream(myTreeBytes, 0, myTreeByteLength));
   }
 
@@ -206,7 +201,7 @@ public class SerializedStubTree {
   private String dumpStub() {
     String deserialized;
     try {
-      deserialized = "stub: " + DebugUtil.stubTreeToString(getStub(true));
+      deserialized = "stub: " + DebugUtil.stubTreeToString(getStub());
     }
     catch (SerializerNotFoundException e) {
       LOG.error(e);
