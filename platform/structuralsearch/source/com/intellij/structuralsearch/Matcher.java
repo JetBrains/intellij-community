@@ -56,7 +56,6 @@ public class Matcher {
 
   // visitor to delegate the real work
   private final GlobalMatchingVisitor visitor = new GlobalMatchingVisitor();
-  ProgressIndicator progress;
   private final TaskScheduler scheduler = new TaskScheduler();
 
   int totalFilesToScan;
@@ -162,10 +161,6 @@ public class Matcher {
     return !sink.getMatches().isEmpty();
   }
 
-  public void clearContext() {
-    matchContext.clear();
-  }
-
   private void configureOptions(MatchContext context,
                                 Configuration configuration,
                                 PsiElement psiFile,
@@ -216,7 +211,6 @@ public class Matcher {
 
     matchContext.getSink().setMatchingProcess( scheduler );
     scheduler.init();
-    progress = matchContext.getSink().getProgressIndicator();
 
     if (isTesting) {
       // testing mode;
@@ -266,8 +260,9 @@ public class Matcher {
         return true;
       };
 
+      final ProgressIndicator progress = matchContext.getSink().getProgressIndicator();
       ReadAction.run(() -> FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress));
-      progress.setText2("");
+      if (progress != null) progress.setText2("");
     }
     else {
       final LocalSearchScope scope = (LocalSearchScope)searchScope;
@@ -600,9 +595,8 @@ public class Matcher {
     public void run() {
       final List<PsiElement> files = getPsiElementsToProcess();
 
-      if (progress!=null) {
-        progress.setFraction((double)scannedFilesCount/totalFilesToScan);
-      }
+      final ProgressIndicator progress = matchContext.getSink().getProgressIndicator();
+      if (progress != null) progress.setFraction((double)scannedFilesCount/totalFilesToScan);
 
       ++scannedFilesCount;
 
