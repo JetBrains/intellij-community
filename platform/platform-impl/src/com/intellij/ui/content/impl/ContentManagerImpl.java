@@ -43,7 +43,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final List<Content> mySelection = new ArrayList<>();
   private final boolean myCanCloseContents;
 
-  private MyNonOpaquePanel myComponent;
+  private JPanel myComponent;
 
   private final Set<Content> myContentWithChangedComponent = new HashSet<>();
 

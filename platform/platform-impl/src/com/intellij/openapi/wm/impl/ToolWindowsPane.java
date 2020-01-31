@@ -835,15 +835,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private void removeSlidingComponent(@NotNull Component component, @NotNull WindowInfo info, boolean dirtyMode) {
     UISettings uiSettings = UISettings.getInstance();
     if (!dirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
-      final Rectangle bounds = component.getBounds();
+      Rectangle bounds = component.getBounds();
       // Prepare top image. This image is scrolling over bottom image. It contains
       // picture of component is being removed.
-      final Image topImage = layeredPane.getTopImage();
+      Image topImage = layeredPane.getTopImage();
       useSafely(topImage.getGraphics(), topGraphics -> component.paint(topGraphics));
 
       // Prepare bottom image. This image contains picture of component that is located
       // under the component to is being removed.
-      final Image bottomImage = layeredPane.getBottomImage();
+      Image bottomImage = layeredPane.getBottomImage();
 
       Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane);
       useSafely(bottomImage.getGraphics(), bottomGraphics -> {
@@ -854,8 +854,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       });
 
       // Remove component from the layered pane and start animation.
-      final Surface surface =
-        new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, info.getAnchor(), UISettings.ANIMATION_DURATION);
+      Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, info.getAnchor(), UISettings.ANIMATION_DURATION);
       layeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
       surface.setBounds(bounds);
       layeredPane.validate();
