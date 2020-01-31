@@ -107,8 +107,9 @@ internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File = when {
   else -> error("No git repo found in $dir")
 }
 
-internal fun resetToPreviousCommit(repo: File) {
-  execute(repo, GIT, "reset", "--hard", "HEAD^")
+internal fun cleanup(repo: File) {
+  execute(repo, GIT, "reset", "--hard")
+  execute(repo, GIT, "clean", "-xfd")
 }
 
 internal fun stageFiles(files: List<String>, repo: File) {
@@ -319,23 +320,12 @@ internal fun head(repo: File): String {
   return heads.getValue(repo)
 }
 
-internal fun commitInfo(repo: File, vararg args: String) = gitLog(repo, 1, *args).singleOrNull()
-private fun pathInfo(repo: File, vararg args: String): CommitInfo? {
-  var log: List<CommitInfo>
-  var i = 1
-  do {
-    log = gitLog(repo, i++, "--follow", *args)
-  }
-  while (log.isNotEmpty() && Context.globallyExcludedCommits.containsAll(log))
-  return log.firstOrNull {
-    !Context.globallyExcludedCommits.contains(it)
-  }
-}
-
-private fun gitLog(repo: File, count: Int, vararg args: String): List<CommitInfo> =
+internal fun commitInfo(repo: File, vararg args: String) = gitLog(repo, *args).singleOrNull()
+private fun pathInfo(repo: File, vararg args: String) = gitLog(repo, "--follow", *args).singleOrNull()
+private fun gitLog(repo: File, vararg args: String): List<CommitInfo> =
   execute(
     repo, GIT, "log",
-    "--max-count", count.toString(),
+    "--max-count", "1",
     "--format=%H/%cd/%P/%cn/%ce/%s",
     "--date=raw", *args
   ).lineSequence().mapNotNull {

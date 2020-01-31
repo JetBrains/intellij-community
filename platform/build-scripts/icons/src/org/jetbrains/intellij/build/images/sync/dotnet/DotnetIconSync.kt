@@ -21,10 +21,9 @@ internal object DotnetIconSync {
 
   private val committer by lazy(::triggeredBy)
   private val context = Context().apply {
-    doPush = false
     iconsFilter = { file ->
       // need to filter designers' icons using developers' icon-robots.txt
-      Icon(file).isValid && file.toRelativeString(iconsRepoDir)
+      file.toRelativeString(iconsRepoDir)
         .let(devRepoDir::resolve)
         .let(IconRobotsDataReader::isSyncSkipped)
         .not()
@@ -47,26 +46,23 @@ internal object DotnetIconSync {
   private fun step(msg: String) = println("\n** $msg")
 
   fun sync() {
-    transformIconsToIdeaFormat()
     try {
-      syncPaths.forEach {
-        context.devRepoDir = context.devRepoRoot.resolve(it.devPath)
-        context.iconsRepoDir = context.iconsRepo.resolve(it.iconsPath)
-        step("Syncing icons for ${it.devPath}..")
-        checkIcons(context)
-      }
+      transformIconsToIdeaFormat()
+      syncPaths.forEach(this::sync)
       generateClasses()
-      if (isUnderTeamCity()) {
-        createBranchForMerge()
-        val changes = commitChanges()
-        if (changes != null) {
-          pushBranchForMerge()
-          triggerMerge()
-        }
+      if (stageChanges().isEmpty()) {
+        println("Nothing to commit")
       }
+      else if (isUnderTeamCity()) {
+        createBranchForMerge()
+        commitChanges()
+        pushBranchForMerge()
+        triggerMerge()
+      }
+      println("Done.")
     }
     finally {
-      resetToPreviousCommit(context.iconsRepo)
+      cleanup(context.iconsRepo)
     }
   }
 
@@ -76,13 +72,22 @@ internal object DotnetIconSync {
       val path = context.iconsRepo.resolve(it.iconsPath).toPath()
       DotnetIconsTransformation.transformToIdeaFormat(path)
     }
-    muteStdOut {
-      val tmpCommit = context.iconsRepo.commit(
-        "temporary commit, shouldn't be pushed",
-        "DotnetIconSyncRobot",
-        "dotnet-icon-sync-robot-no-reply@jetbrains.com"
-      ) ?: error("Unable to make a commit")
-      context.excludeGlobally(tmpCommit)
+  }
+
+  private fun sync(path: SyncPath) {
+    step("Syncing icons for ${path.devPath}..")
+    context.devRepoDir = context.devRepoRoot.resolve(path.devPath)
+    context.iconsRepoDir = context.iconsRepo.resolve(path.iconsPath)
+    context.devRepoDir.walkTopDown().forEach {
+      if (isImage(it)) {
+        it.delete() || error("Unable to delete $it")
+      }
+    }
+    context.iconsRepoDir.walkTopDown().forEach {
+      if (isImage(it) && context.iconsFilter(it)) {
+        val target = context.devRepoDir.resolve(it.toRelativeString(context.iconsRepoDir))
+        it.copyTo(target, overwrite = true)
+      }
     }
   }
 
@@ -91,33 +96,24 @@ internal object DotnetIconSync {
     generateIconsClasses(DotnetIconsClasses(context.devRepoDir.absolutePath))
   }
 
-  private fun commitChanges(): CommitInfo? {
-    step("Committing changes..")
-    val changes = context.iconsCommitsToSync.commitMessage(context.iconsRepo)
-    val commit = context.devRepoRoot.commit(changes, committer.name, committer.email) {
-      it.fileName.toString().endsWith(".java")
+  private fun stageChanges(): Collection<String> {
+    step("Staging changes..")
+    val changes = gitStatus(context.devRepoRoot, includeUntracked = true).all().filter {
+      val file = context.devRepoRoot.resolve(it)
+      isImage(file) || file.extension == "java"
     }
-    if (commit != null) {
-      println("Committed ${commit.hash} '${commit.subject}'")
+    if (changes.isNotEmpty()) {
+      stageFiles(changes, context.devRepoRoot)
     }
-    else {
-      println("Nothing to commit")
-    }
-    return commit
+    return changes
   }
 
-  private fun File.commit(message: String, user: String, email: String, filter: (Path) -> Boolean = { false }) =
-    gitStatus(this, includeUntracked = true).all().filter {
-      val path = toPath().resolve(it)
-      isImage(path) || filter(path)
-    }.let {
-      if (it.isNotEmpty()) {
-        stageFiles(it, this)
-        commit(this, message, user, email)
-        commitInfo(this)
-      }
-      else null
-    }
+  private fun commitChanges() {
+    step("Committing changes..")
+    commit(context.devRepoRoot, "Synced from ${getOriginUrl(context.iconsRepo)}", committer.name, committer.email)
+    val commit = commitInfo(context.devRepoRoot) ?: error("Unable to perform commit")
+    println("Committed ${commit.hash} '${commit.subject}'")
+  }
 
   private fun createBranchForMerge() {
     step("Creating branch $branchForMerge..")

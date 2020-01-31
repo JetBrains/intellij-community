@@ -45,11 +45,8 @@ internal fun findCommitsToSync(context: Context) {
   }
 }
 
-internal fun Map<File, Collection<CommitInfo>>.commitMessage(repo: File? = null) =
-  if (flatMap { it.value }.isEmpty()) {
-    "Synced from ${getOriginUrl(repo ?: error("Unable to form commit message"))}"
-  }
-  else entries.joinToString("\n\n") { entry ->
+internal fun Map<File, Collection<CommitInfo>>.commitMessage() =
+  entries.joinToString("\n\n") { entry ->
     entry.value.joinToString("\n") {
       "'${it.subject}' from ${it.hash.substring(0..8)}"
     } + " from ${getOriginUrl(entry.key)}"
