@@ -15,13 +15,10 @@ import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import java.awt.Rectangle
 import java.util.*
-import javax.swing.JComponent
-import javax.swing.JFrame
-import javax.swing.JPanel
-import javax.swing.SwingUtilities
+import javax.swing.*
 import javax.swing.event.ChangeListener
 
-class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
+class MainFrameHeader(frame: JFrame, menuBar: IdeMenuBar?) : FrameHeader(frame){
   private val mySelectedEditorFilePath: CustomDecorationPath
   private val myIdeMenu: IdeMenuBar
   private val menuHolder: JComponent
@@ -38,7 +35,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     productIcon.border = empty
     add(productIcon)
 
-    myIdeMenu = CustomHeaderMenuBar()
+    myIdeMenu = CustomHeaderMenuBar(menuBar)
 
     changeListener = ChangeListener {
       updateCustomDecorationHitTestSpots()

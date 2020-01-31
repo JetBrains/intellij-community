@@ -30,7 +30,6 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
 
   LightEditFrameWrapper(@NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
     super(frame, null);
-    getFrame().setJMenuBar(new LightEditMenuBar());
     myCloseHandler = closeHandler;
   }
 
@@ -106,6 +105,11 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
     @Override
     public ToolWindowsPane getToolWindowPane() {
       throw new IllegalStateException("Tool windows are unavailable in LightEdit");
+    }
+
+    @Override
+    protected @NotNull IdeMenuBar createMenuBar() {
+      return new LightEditMenuBar();
     }
 
     @NotNull

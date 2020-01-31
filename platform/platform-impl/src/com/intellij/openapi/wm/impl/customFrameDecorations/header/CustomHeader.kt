@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.WindowsRegistryUtil
+import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
@@ -62,7 +63,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
                 if(window.rootPane is IdeRootPane) {
-                    createMainFrameHeader(window)
+                    createMainFrameHeader(window, null)
                 } else {
                     createFrameHeader(window)
                 }
@@ -73,7 +74,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         private fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
         @JvmStatic
-        fun createMainFrameHeader(frame: JFrame): MainFrameHeader = MainFrameHeader(frame)
+        fun createMainFrameHeader(frame: JFrame, delegatingMenuBar: IdeMenuBar?): MainFrameHeader = MainFrameHeader(frame, delegatingMenuBar)
     }
 
     private var windowListener: WindowAdapter

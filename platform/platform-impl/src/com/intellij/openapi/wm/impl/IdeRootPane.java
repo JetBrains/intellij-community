@@ -83,7 +83,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
     });
 
-    IdeMenuBar menu = IdeMenuBar.createMenuBar();
+    IdeMenuBar menu = createMenuBar();
     myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive();
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
@@ -93,7 +93,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       if (isDecoratedMenu()) {
         JdkEx.setHasCustomDecoration(frame);
 
-        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame);
+        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame, menu);
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
         menu.setVisible(false);
       }
@@ -121,6 +121,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateMainMenuVisibility();
 
     myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
+  }
+
+  @NotNull
+  protected IdeMenuBar createMenuBar() {
+    return IdeMenuBar.createMenuBar();
   }
 
   @NotNull

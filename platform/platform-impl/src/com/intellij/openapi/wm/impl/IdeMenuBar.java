@@ -425,7 +425,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   private void expandActionGroup(final DataContext context, final List<? super AnAction> newVisibleActions, ActionManager actionManager) {
-    final ActionGroup mainActionGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
+    final ActionGroup mainActionGroup = getMainMenuActionGroup();
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);
     for (final AnAction action : children) {
@@ -440,6 +440,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         newVisibleActions.add(action);
       }
     }
+  }
+
+  @Nullable
+  public ActionGroup getMainMenuActionGroup() {
+    return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
   }
 
   @Override
