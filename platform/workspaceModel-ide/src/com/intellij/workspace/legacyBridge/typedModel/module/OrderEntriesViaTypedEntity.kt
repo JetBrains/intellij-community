@@ -259,6 +259,8 @@ internal class LibraryOrderEntryViaTypedEntity(
       val disposable = LegacyBridgeModuleRootComponent.getInstance(rootModel.module)
       LegacyBridgeLibraryImpl(libraryTable, rootModel.project, libraryId, rootModel.module.entityStore, disposable)
     }
+
+    rootModel.registerLibraryTableListener(moduleLibraryCopy?.table)
     return LibraryOrderEntryViaTypedEntity(currentModel, index, libraryDependencyItemCopy, moduleLibraryCopy, null)
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.*
@@ -17,12 +18,15 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.legacyBridge.libraries.libraries.*
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryModifiableModelImpl
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEntryImpl
-import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
@@ -42,6 +46,7 @@ class LegacyBridgeModifiableRootModel(
   override fun getModificationCount(): Long = diff.modificationCount
 
   private val extensionsDisposable = Disposer.newDisposable()
+  private val listenerDisposables = MultiMap<LibraryTable, Disposable>()
 
   private val extensionsDelegate = lazy {
     RootModelViaTypedEntityImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
@@ -177,8 +182,18 @@ class LegacyBridgeModifiableRootModel(
 
     updateDependencies { it + libraryDependency }
 
-    return orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
-           ?: error("Unable to find library orderEntry after adding")
+
+    val libraryOrderEntry = (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
+                             ?: error("Unable to find library orderEntry after adding"))
+    registerLibraryTableListener(library.table)
+    return libraryOrderEntry
+  }
+
+  fun registerLibraryTableListener(libraryTable: LibraryTable?) {
+    if (libraryTable == null) return
+    (ProjectRootManagerImpl.getInstanceImpl(project) as? LegacyBridgeProjectRootManager)?.addListenerForTable(libraryTable)?.let {
+      listenerDisposables.putValue(libraryTable, it)
+    }
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
@@ -253,6 +268,21 @@ class LegacyBridgeModifiableRootModel(
 
     if (assertChangesApplied && orderEntriesImpl.any { it.item == item })
       error("removeOrderEntry: removed order entry $item still exists after removing")
+
+    if (orderEntry is LibraryOrderEntry) {
+      unregisterLibraryTableListener(orderEntry.library)
+    }
+  }
+
+  private fun unregisterLibraryTableListener(library: Library?) {
+    if (library == null) return
+    val disposables = listenerDisposables.getModifiable(library.table)
+    val iterator = disposables.iterator()
+    if (iterator.hasNext()) {
+      val disposable = iterator.next()
+      Disposer.dispose(disposable)
+      iterator.remove()
+    }
   }
 
   override fun rearrangeOrderEntries(newOrder: Array<out OrderEntry>) {
@@ -361,6 +391,9 @@ class LegacyBridgeModifiableRootModel(
   override fun dispose() {
     if (!modelIsCommittedOrDisposed) {
       Disposer.dispose(extensionsDisposable)
+
+      listenerDisposables.values().forEach { Disposer.dispose(it) }
+      listenerDisposables.clear()
 
       moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
       moduleLibraryTable.librariesToRemove.clear()
