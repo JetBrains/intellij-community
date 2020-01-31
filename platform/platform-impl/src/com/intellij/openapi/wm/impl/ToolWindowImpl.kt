@@ -29,10 +29,10 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
@@ -122,18 +122,22 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       }
     }))
 
-    val decorator = InternalDecorator(this, contentUi!!)
-    this.decorator = decorator
-
     var decoratorChild = contentManager.component
     if (!dumbAware) {
       decoratorChild = DumbService.getInstance(toolWindowManager.project).wrapGently(decoratorChild, parentDisposable)
     }
-    decorator.add(decoratorChild, BorderLayout.CENTER)
+
+    val decorator = InternalDecorator(this, contentUi!!, decoratorChild)
+    this.decorator = decorator
+
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
+      private val alarm = SingleAlarm(Runnable {
+        toolWindowManager.resized(decorator)
+      }, 100, disposable)
+
       override fun componentResized(e: ComponentEvent) {
-        toolWindowManager.resized(e.component as InternalDecorator)
+        alarm.cancelAndRequest()
       }
     })
 

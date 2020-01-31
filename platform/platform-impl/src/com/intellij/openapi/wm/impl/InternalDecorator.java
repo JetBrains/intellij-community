@@ -43,6 +43,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   @Nullable
   private JPanel divider;
 
+  private final JPanel dividerAndHeader = new JPanel(new BorderLayout());
+
   private Disposable disposable;
 
   /**
@@ -57,7 +59,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   private final ToolWindowHeader header;
 
-  InternalDecorator(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi) {
+  InternalDecorator(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi, @NotNull JComponent decoratorChild) {
     super(new BorderLayout());
 
     this.toolWindow = toolWindow;
@@ -80,12 +82,22 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
 
     installFocusTraversalPolicy(this, new LayoutFocusTraversalPolicy());
-    add(header, BorderLayout.NORTH);
+
+    dividerAndHeader.setOpaque(false);
+    dividerAndHeader.add(header, BorderLayout.SOUTH);
+    add(dividerAndHeader, BorderLayout.NORTH);
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 
+    add(decoratorChild, BorderLayout.CENTER);
+
     setBorder(new InnerPanelBorder(toolWindow));
+  }
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    super.setBounds(x, y, width, height);
   }
 
   @Override
@@ -123,7 +135,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         add(divider, BorderLayout.EAST);
       }
       else if (anchor == ToolWindowAnchor.BOTTOM) {
-        add(divider, BorderLayout.NORTH);
+        dividerAndHeader.add(divider, BorderLayout.NORTH);
       }
       else if (anchor == ToolWindowAnchor.RIGHT) {
         add(divider, BorderLayout.WEST);
@@ -132,7 +144,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
     else if (divider != null) {
       // docked and floating windows don't have divider
-      remove(divider);
+      divider.getParent().remove(divider);
       divider = null;
     }
 
