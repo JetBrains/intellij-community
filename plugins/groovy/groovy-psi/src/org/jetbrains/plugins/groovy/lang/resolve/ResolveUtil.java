@@ -338,12 +338,6 @@ public class ResolveUtil {
   }
 
   @Nullable
-  public static PsiClass resolveClass(GroovyPsiElement place, String name) {
-    ClassResolverProcessor processor = new ClassResolverProcessor(name, place);
-    return resolveExistingElement(place, processor, PsiClass.class);
-  }
-
-  @Nullable
   public static <T> T resolveExistingElement(PsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
     treeWalkUp(place, processor, true);
     final GroovyResolveResult[] candidates = processor.getCandidates();
