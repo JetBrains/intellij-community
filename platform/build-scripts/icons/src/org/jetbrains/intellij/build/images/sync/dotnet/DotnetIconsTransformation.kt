@@ -15,11 +15,11 @@ internal object DotnetIconsTransformation {
   /**
    * First icon with one of the suffices (according to order) corresponds to Idea light icon
    */
-  internal val dotnetLightSuffices = listOf("RiderLight", "Gray", "Color", "")
+  internal val dotnetLightSuffices = listOf("RiderLight", "Gray", "Color", "SymbolsVs11Gray", "")
   /**
    * First icon with one of the suffices (according to order) corresponds to Idea dark icon
    */
-  internal val dotnetDarkSuffices = listOf("RiderDark", "GrayDark")
+  internal val dotnetDarkSuffices = listOf("RiderDark", "GrayDark", "SymbolsVs11GrayDark")
   private val dotnetLightComparator = comparator(dotnetLightSuffices)
   private val dotnetDarkComparator = comparator(dotnetDarkSuffices)
 
