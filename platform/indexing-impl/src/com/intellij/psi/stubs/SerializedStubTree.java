@@ -182,10 +182,8 @@ public class SerializedStubTree {
       return false;
     }
 
-    final byte[] thisBytes = myTreeBytes;
-    final byte[] thatBytes = thatTree.myTreeBytes;
     for (int i = 0; i < length; i++) {
-      if (thisBytes[i] != thatBytes[i]) {
+      if (myTreeBytes[i] != thatTree.myTreeBytes[i]) {
         return false;
       }
     }
@@ -195,9 +193,6 @@ public class SerializedStubTree {
 
   @Override
   public int hashCode() {
-    if (myTreeBytes == null) {
-      return 0;
-    }
 
     int result = 1;
     for (int i = 0; i < myTreeByteLength; i++) {
