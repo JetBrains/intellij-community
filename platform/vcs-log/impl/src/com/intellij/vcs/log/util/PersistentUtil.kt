@@ -104,7 +104,7 @@ class StorageId(private val subdirName: String,
         function(f)
       }
 
-      for (i in 0 until features.size) {
+      for (i in features.indices) {
         if (!f[i]) {
           f[i] = true
           continue@mainLoop
