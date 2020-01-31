@@ -15,11 +15,11 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DnDSupport implements DnDTarget, DnDSource, Disposable {
+public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResult, Disposable {
   private final JComponent myComponent;
   private final Function<? super DnDActionInfo, ? extends DnDDragStartBean> myBeanProvider;
   private final Function<? super DnDActionInfo, ? extends DnDImage> myImageProvider;
-  private final @Nullable DnDDropHandler myHandler;
+  private final @Nullable DnDDropHandler.WithResult myHandler;
   private final @Nullable DnDTargetChecker myChecker;
   private final Runnable myDropEndedCallback;
   private final DnDDropActionHandler myDropActionHandler;
@@ -30,7 +30,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   private DnDSupport(JComponent component,
                      Function<? super DnDActionInfo, ? extends DnDDragStartBean> beanProvider,
                      Function<? super DnDActionInfo, ? extends DnDImage> imageProvider,
-                     DnDDropHandler handler,
+                     DnDDropHandler.WithResult handler,
                      DnDTargetChecker checker,
                      Runnable dropEndedCallback,
                      Disposable parent,
@@ -109,10 +109,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   }
 
   @Override
-  public void drop(DnDEvent aEvent) {
-    if (myHandler != null) {
-      myHandler.drop(aEvent);
-    }
+  public boolean possiblyDrop(DnDEvent aEvent) {
+    return myHandler == null || myHandler.possiblyDrop(aEvent);
   }
 
   @Override
@@ -132,10 +130,10 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     }
   }
 
-  private static class DnDNativeTargetWrapper implements DnDNativeTarget {
-    @NotNull private final DnDTarget myTarget;
+  private static class DnDNativeTargetWrapper implements DnDNativeTarget, DnDDropHandler.WithResult {
+    @NotNull private final DnDSupport myTarget;
 
-    private DnDNativeTargetWrapper(@NotNull DnDTarget target) {
+    private DnDNativeTargetWrapper(@NotNull DnDSupport target) {
       myTarget = target;
     }
 
@@ -150,8 +148,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     }
 
     @Override
-    public void drop(DnDEvent event) {
-      myTarget.drop(event);
+    public boolean possiblyDrop(DnDEvent event) {
+      return myTarget.possiblyDrop(event);
     }
 
     @Override
@@ -170,7 +168,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     final Ref<Function<DnDActionInfo, DnDDragStartBean>> beanProvider = Ref.create(null);
     final Ref<Runnable> dropEnded = Ref.create(null);
     final Ref<Disposable> disposable = Ref.create(null);
-    final Ref<DnDDropHandler> dropHandler = Ref.create(null);
+    final Ref<DnDDropHandler.WithResult> dropHandler = Ref.create(null);
     final Ref<DnDTargetChecker> targetChecker = Ref.create(null);
     final Ref<DnDDropActionHandler> dropActionHandler = Ref.create(null);
     final Ref<Runnable> cleanUp = Ref.create(null);
@@ -208,6 +206,15 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
 
       @Override
       public DnDSupportBuilder setDropHandler(DnDDropHandler handler) {
+        dropHandler.set(e -> {
+          handler.drop(e);
+          return true;
+        });
+        return this;
+      }
+
+      @Override
+      public DnDSupportBuilder setDropHandlerWithResult(DnDDropHandler.WithResult handler) {
         dropHandler.set(handler);
         return this;
       }

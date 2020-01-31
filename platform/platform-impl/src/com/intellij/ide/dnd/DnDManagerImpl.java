@@ -617,12 +617,12 @@ public final class DnDManagerImpl extends DnDManager {
           dtde.acceptDrop(dtde.getDropAction());
 
           // do not wrap this into WriteAction!
-          doDrop(component, event);
+          boolean success = doDrop(component, event);
 
           if (event.shouldRemoveHighlighting()) {
             hideCurrentHighlighter();
           }
-          dtde.dropComplete(true);
+          dtde.dropComplete(success);
         }
         else {
           dtde.rejectDrop();
@@ -637,18 +637,26 @@ public final class DnDManagerImpl extends DnDManager {
       }
     }
 
-    private void doDrop(Component component, DnDEventImpl currentEvent) {
+    private boolean doDrop(Component component, DnDEventImpl currentEvent) {
+      boolean success = true;
       if (currentEvent.canHandleDrop()) {
         currentEvent.handleDrop();
       }
       else {
-        getTarget(component).drop(currentEvent);
+        DnDTarget target = getTarget(component);
+        if (target instanceof DnDDropHandler.WithResult) {
+          success = ((DnDDropHandler.WithResult)target).possiblyDrop(currentEvent);
+        }
+        else {
+          target.drop(currentEvent);
+        }
       }
 
       cleanTargetComponent(component);
       setLastDropHandler(component);
 
       myCurrentDragContext = null;
+      return success;
     }
 
     @Override

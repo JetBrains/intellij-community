@@ -211,24 +211,26 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
         return null;
       })
-      .setDropHandler(e -> {
-        final Object attachedObject = e.getAttachedObject();
-        if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject)) {
-          final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
-          if (draggableObject != null) {
-            final int line = convertPointToLineNumber(e.getPoint());
-            if (line != -1) {
-              draggableObject.copy(line, myEditor.getVirtualFile(), e.getAction().getActionId());
+      .setDropHandlerWithResult(e -> {
+          boolean success = true;
+          final Object attachedObject = e.getAttachedObject();
+          if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject)) {
+            final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
+            if (draggableObject != null) {
+              final int line = convertPointToLineNumber(e.getPoint());
+              if (line != -1) {
+                draggableObject.copy(line, myEditor.getVirtualFile(), e.getAction().getActionId());
+              }
             }
           }
-        }
-        else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
-          Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
-          if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            EditorImpl.handleDrop(myEditor, transferable, e.getAction().getActionId());
+          else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
+            Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
+            if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+              success = EditorImpl.handleDrop(myEditor, transferable, e.getAction().getActionId());
+            }
           }
-        }
-        myDnDInProgress = false;
+          myDnDInProgress = false;
+          return success;
       })
       .setTargetChecker(e -> {
         final Object attachedObject = e.getAttachedObject();
