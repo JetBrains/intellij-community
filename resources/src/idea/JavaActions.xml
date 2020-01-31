@@ -436,6 +436,10 @@
 
       <action id="InspectStubIndex" internal="true" class="com.intellij.internal.InspectStubIndexAction"/>
 
+      <separator/>
+
+      <action id="DownloadJdkSharedIndex" internal="true" class="com.intellij.internal.DownloadJdkSharedIndexAction" />
+
       <add-to-group group-id="Internal"/>
     </group>
 

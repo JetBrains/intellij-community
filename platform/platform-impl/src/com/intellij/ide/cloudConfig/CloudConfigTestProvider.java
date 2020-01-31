@@ -25,6 +25,8 @@ public abstract class CloudConfigTestProvider {
 
   public abstract @NotNull String getStatusInfo();
 
+  public abstract @NotNull String getPluginsInfo();
+
   public abstract @NotNull String getActions(@NotNull StatusBar statusBar);
 
   public abstract void runAction(@NotNull StatusBar statusBar, @NotNull String name);

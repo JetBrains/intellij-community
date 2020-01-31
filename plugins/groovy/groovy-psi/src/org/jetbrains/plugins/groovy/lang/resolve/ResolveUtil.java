@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
+import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 
 import java.util.*;
 
@@ -334,12 +335,6 @@ public class ResolveUtil {
   public static GroovyPsiElement resolveProperty(GroovyPsiElement place, String name) {
     PropertyResolverProcessor processor = new PropertyResolverProcessor(name, place);
     return resolveExistingElement(place, processor, GrVariable.class, GrReferenceExpression.class);
-  }
-
-  @Nullable
-  public static PsiClass resolveClass(GroovyPsiElement place, String name) {
-    ClassResolverProcessor processor = new ClassResolverProcessor(name, place);
-    return resolveExistingElement(place, processor, PsiClass.class);
   }
 
   @Nullable
@@ -734,7 +729,12 @@ public class ResolveUtil {
   }
 
   private static boolean isApplicableClosureType(@Nullable PsiType type, PsiType @Nullable [] argTypes, @NotNull PsiElement place) {
-    if (!(type instanceof GrClosureType)) return false;
+    if (!(type instanceof GrClosureType)) {
+      if (type instanceof GroovyClosureType) {
+        throw new RuntimeException();
+      }
+      return false;
+    }
     if (argTypes == null) return true;
 
     final List<GrSignature> signature = ((GrClosureType)type).getSignatures();

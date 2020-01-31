@@ -153,6 +153,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Property(externalName = "imports_layout")
   public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
+
+  @WrapConstant
+  public int RECORD_COMPONENTS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean ALIGN_MULTILINE_RECORDS = true;
+  public boolean NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false;
+  public boolean RPAREN_ON_NEW_LINE_IN_RECORD_HEADER = false;
+
+
   // region JavaDoc
   @Property(externalName = "doc_enable_formatting")
   public boolean ENABLE_JAVADOC_FORMATTING = true;

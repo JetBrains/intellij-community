@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -351,7 +351,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
               }
             }.apply(myNameEditor, item.parameter.getName());
 
-            if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
+            if (!item.isEllipsisType() && item.parameter.isNew()) {
               final JPanel additionalPanel = new JPanel(new BorderLayout());
               final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
               myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
@@ -361,7 +361,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
               additionalPanel.add(createLabeledPanel("Default value:", myDefaultValueEditor), BorderLayout.WEST);
 
               if (!isGenerateDelegate()) {
-                myAnyVar = new JCheckBox("&Use Any Var");
+                myAnyVar = new JCheckBox(RefactoringBundle.message("change.signature.use.any.checkbox"));
                 UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myAnyVar);
                 DialogUtil.registerMnemonic(myAnyVar, '&');
                 myAnyVar.addActionListener(new ActionListener() {
@@ -691,7 +691,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       for (final ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
         if (item.parameter.oldParameterIndex < 0) {
           if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText()))
-            return new ValidationInfo("Default value is missing. Method calls will contain blanks instead of the new parameter value.");
+            return new ValidationInfo(RefactoringBundle.message("change.signature.default.value.missing.warning.message"));
         }
       }
     }

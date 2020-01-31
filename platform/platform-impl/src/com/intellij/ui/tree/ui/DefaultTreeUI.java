@@ -9,10 +9,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -34,6 +34,7 @@ import java.util.Collection;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;
+import static com.intellij.ui.paint.RectanglePainter.DRAW;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
@@ -108,10 +109,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   private static int getExpandedRow(@NotNull JTree tree) {
-    if (tree instanceof Tree) {
-      Tree custom = (Tree)tree;
-      Collection<Integer> items = custom.getExpandableItemsHandler().getExpandedItems();
-      if (!items.isEmpty()) return items.iterator().next();
+    if (tree instanceof ComponentWithExpandableItems) {
+      ComponentWithExpandableItems<?> component = (ComponentWithExpandableItems<?>)tree;
+      Collection<?> items = component.getExpandableItemsHandler().getExpandedItems();
+      Object item = items.isEmpty() ? null : items.iterator().next();
+      if (item instanceof Integer) return (Integer)item;
     }
     return -1;
   }
@@ -213,7 +215,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           boolean expanded = !leaf && cache.getExpandedState(path);
           boolean selected = tree.isRowSelected(row);
           boolean focused = tree.hasFocus();
-          boolean lead = focused && row == getLeadSelectionRow();
+          boolean lead = row == getLeadSelectionRow();
 
           Color background = getBackground(tree, path, row, selected);
           if (background != null) {
@@ -227,7 +229,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             int width = viewportX + viewportWidth - insets.left - offset - vsbWidth;
             if (width > 0) {
               Object value = path.getLastPathComponent();
-              Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
+              Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead && focused);
               if (component != null) {
                 if (width < bounds.width && (expandedRow == row || hsbVisible && !UIUtil.isClientPropertyTrue(component, SHRINK_LONG_RENDERER))) {
                   width = bounds.width; // disable shrinking a long nodes
@@ -235,6 +237,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 setBackground(tree, component, background, false);
                 rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
               }
+            }
+            if (!selected && lead && focused && g instanceof Graphics2D) {
+              g.setColor(getBackground(tree, path, row, true));
+              DRAW.paint((Graphics2D)g, viewportX, bounds.y, viewportWidth, bounds.height, 0);
             }
           }
           if ((bounds.y + bounds.height) >= maxPaintY) break;

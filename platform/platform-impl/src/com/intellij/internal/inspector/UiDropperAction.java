@@ -1210,7 +1210,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
         int first = text.indexOf("at com.intellij", text.indexOf("at java.awt"));
         int last = text.indexOf("at java.awt.EventQueue");
         if (last == -1) last = text.length();
-        String val = last > first && first > 0 ? text.substring(first, last) : null;
+        String val = last > first && first > 0 ? text.substring(first, last).trim() : null;
         ((JComponent)child).putClientProperty("uiInspector.addedAt", val);
       }
     }

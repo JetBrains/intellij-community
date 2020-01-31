@@ -49,7 +49,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
       typeElement = PsiTreeUtil.getParentOfType(parent, PsiTypeElement.class, false);
     }
     CommonRefactoringUtil.showErrorHint(project, editor,
-                                        "The caret should be positioned on type of field, variable, method or method parameter to be refactored",
+                                        RefactoringBundle.message("caret.position.warning.message"),
                                         REFACTORING_NAME, "refactoring.migrateType");
   }
 

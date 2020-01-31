@@ -135,7 +135,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
     def parse_args(self, *, namespace: _N) -> _N: ...
 
     if sys.version_info >= (3, 7):
-        def add_subparsers(self, title: str = ...,
+        def add_subparsers(self, *, title: str = ...,
                            description: Optional[str] = ...,
                            prog: str = ...,
                            parser_class: Type[ArgumentParser] = ...,
@@ -146,7 +146,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
                            help: Optional[str] = ...,
                            metavar: Optional[str] = ...) -> _SubParsersAction: ...
     else:
-        def add_subparsers(self, title: Text = ...,
+        def add_subparsers(self, *, title: Text = ...,
                            description: Optional[Text] = ...,
                            prog: Text = ...,
                            parser_class: Type[ArgumentParser] = ...,
@@ -379,14 +379,23 @@ class _SubParsersAction(Action):
     _name_parser_map: Dict[_Text, ArgumentParser]
     choices: Dict[_Text, ArgumentParser]
     _choices_actions: List[Action]
-    def __init__(self,
-                 option_strings: Sequence[Text],
-                 prog: Text,
-                 parser_class: Type[ArgumentParser],
-                 dest: Text = ...,
-                 required: bool = ...,
-                 help: Optional[Text] = ...,
-                 metavar: Optional[Union[Text, Tuple[Text, ...]]] = ...) -> None: ...
+    if sys.version_info >= (3, 7):
+        def __init__(self,
+                     option_strings: Sequence[Text],
+                     prog: Text,
+                     parser_class: Type[ArgumentParser],
+                     dest: Text = ...,
+                     required: bool = ...,
+                     help: Optional[Text] = ...,
+                     metavar: Optional[Union[Text, Tuple[Text, ...]]] = ...) -> None: ...
+    else:
+        def __init__(self,
+                     option_strings: Sequence[Text],
+                     prog: Text,
+                     parser_class: Type[ArgumentParser],
+                     dest: Text = ...,
+                     help: Optional[Text] = ...,
+                     metavar: Optional[Union[Text, Tuple[Text, ...]]] = ...) -> None: ...
     # TODO: Type keyword args properly.
     def add_parser(self, name: Text, **kwargs: Any) -> ArgumentParser: ...
     def _get_subactions(self) -> List[Action]: ...

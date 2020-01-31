@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -22,11 +20,10 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLoadHelper;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -257,37 +254,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
-  public final void registerComponents() {
-    String activityNamePrefix = activityNamePrefix();
-    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX);
-    //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-    //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
-    if (activity != null) {
-      activity = activity.endAndStart("projectComponentRegistered");
-    }
-
-    ProjectServiceContainerCustomizer.getEp().processWithPluginDescriptor((customizer, pluginDescriptor) -> {
-      if (pluginDescriptor.getPluginId() != PluginManagerCore.CORE_ID) {
-        LOG.error("Plugin " + pluginDescriptor + " is not approved to add ProjectServiceContainerCustomizer");
-      }
-
-      try {
-        customizer.serviceContainerInitialized(this);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    });
-
-    if (activity != null) {
-      activity.end();
-    }
-  }
-
   public void init(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
 
@@ -311,7 +277,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
-    application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
+
+    ProjectLoadHelper.notifyThatComponentCreated(this);
   }
 
   @Override

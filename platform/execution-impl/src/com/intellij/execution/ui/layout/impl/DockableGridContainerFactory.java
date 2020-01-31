@@ -5,12 +5,14 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockContainerFactory;
 import com.intellij.ui.docking.DockableContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class DockableGridContainerFactory implements DockContainerFactory {
   public static final String TYPE = "runner-grid";
 
+  @NotNull
   @Override
-  public DockContainer createContainer(@NotNull DockableContent content) {
+  public DockContainer createContainer(@Nullable DockableContent content) {
     RunnerContentUi.DockableGrid dockableGrid = (RunnerContentUi.DockableGrid)content;
     return new RunnerContentUi(dockableGrid.getRunnerUi(), dockableGrid.getOriginalRunnerUi(), dockableGrid.getWindow());
   }

@@ -2223,6 +2223,7 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     @NotNull
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     String getDoNotShowMessage();
   }
 

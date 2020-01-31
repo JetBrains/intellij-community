@@ -164,7 +164,12 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
 
       boolean reachedBounds = false;
       data.moreRect = null;
+      boolean toDrawTabs = isToDrawTabs();
       for (ContentTabLabel each : data.toLayout) {
+        if (!toDrawTabs) {
+          each.setBounds(0,0, 0, 0);
+          continue;
+        }
         data.eachY = 0;
         final Dimension eachSize = each.getPreferredSize();
         if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {

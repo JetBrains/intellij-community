@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -110,7 +109,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private final ActionButtonLook myMinimalButtonLook = ActionButtonLook.INPLACE_LOOK;
   private final DataManager myDataManager;
-  protected final ActionManagerEx myActionManager;
 
   private Rectangle myAutoPopupRec;
 
@@ -151,13 +149,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            final boolean decorateButtons,
                            boolean updateActionsNow) {
     super(null);
-    myActionManager = ActionManagerEx.getInstanceEx();
+
     myPlace = place;
     myActionGroup = actionGroup;
     myVisibleActions = new ArrayList<>();
     myDataManager = DataManager.getInstance();
     myDecorateButtons = decorateButtons;
-    myUpdater = new ToolbarUpdater(KeymapManagerEx.getInstanceEx(), this) {
+    myUpdater = new ToolbarUpdater(this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
         if (!ApplicationManager.getApplication().isDisposed()) {
@@ -1237,7 +1235,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       location.y = location.y + getHeight() - popupToolbar.getPreferredSize().height;
     }
 
-
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(popupToolbar, null);
     builder.setResizable(false)
       .setMovable(true) // fit the screen automatically
@@ -1246,17 +1244,19 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       .setCancelOnClickOutside(true)
       .setCancelOnOtherWindowOpen(true)
       .setCancelCallback(() -> {
-        final boolean toClose = myActionManager.isActionPopupStackEmpty();
+        final boolean toClose = actionManager.isActionPopupStackEmpty();
         if (toClose) {
           myUpdater.updateActions(false, true);
         }
         return toClose;
       })
-      .setCancelOnMouseOutCallback(event -> myAutoPopupRec != null &&
-                                        myActionManager.isActionPopupStackEmpty() &&
-                                        !new RelativeRectangle(this, myAutoPopupRec).contains(new RelativePoint(event)));
+      .setCancelOnMouseOutCallback(event -> {
+        return myAutoPopupRec != null &&
+               actionManager.isActionPopupStackEmpty() &&
+               !new RelativeRectangle(this, myAutoPopupRec).contains(new RelativePoint(event));
+      });
 
-    builder.addListener(new JBPopupAdapter() {
+    builder.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         processClosed();
@@ -1267,34 +1267,35 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     myPopup.showInScreenCoordinates(this, location);
 
-    final Window window = SwingUtilities.getWindowAncestor(this);
-    if (window != null) {
-      final ComponentAdapter componentAdapter = new ComponentAdapter() {
-        @Override
-        public void componentResized(final ComponentEvent e) {
-          hidePopup();
-        }
-
-        @Override
-        public void componentMoved(final ComponentEvent e) {
-          hidePopup();
-        }
-
-        @Override
-        public void componentShown(final ComponentEvent e) {
-          hidePopup();
-        }
-
-        @Override
-        public void componentHidden(final ComponentEvent e) {
-          hidePopup();
-        }
-      };
-      window.addComponentListener(componentAdapter);
-      Disposer.register(popupToolbar, () -> window.removeComponentListener(componentAdapter));
+    Window window = SwingUtilities.getWindowAncestor(this);
+    if (window == null) {
+      return;
     }
-  }
 
+    ComponentAdapter componentAdapter = new ComponentAdapter() {
+      @Override
+      public void componentResized(final ComponentEvent e) {
+        hidePopup();
+      }
+
+      @Override
+      public void componentMoved(final ComponentEvent e) {
+        hidePopup();
+      }
+
+      @Override
+      public void componentShown(final ComponentEvent e) {
+        hidePopup();
+      }
+
+      @Override
+      public void componentHidden(final ComponentEvent e) {
+        hidePopup();
+      }
+    };
+    window.addComponentListener(componentAdapter);
+    Disposer.register(popupToolbar, () -> window.removeComponentListener(componentAdapter));
+  }
 
   private boolean isPopupShowing() {
     return myPopup != null && !myPopup.isDisposed();

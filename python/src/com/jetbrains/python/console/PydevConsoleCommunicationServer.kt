@@ -22,7 +22,9 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class PydevConsoleCommunicationServer(project: Project, port: Int) : PydevConsoleCommunication(project) {
+class PydevConsoleCommunicationServer(project: Project,
+                                      host: String,
+                                      port: Int) : PydevConsoleCommunication(project) {
   private val serverTransport: TNettyServerTransport
 
   /**
@@ -69,7 +71,7 @@ class PydevConsoleCommunicationServer(project: Project, port: Int) : PydevConsol
     val serverHandler = createPythonConsoleFrontendHandler()
     val serverProcessor = PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface>(serverHandler)
     //noinspection IOResourceOpenedButNotSafelyClosed
-    serverTransport = TNettyServerTransport(port)
+    serverTransport = TNettyServerTransport(host, port)
     server = TNettyServer(serverTransport, serverProcessor)
   }
 

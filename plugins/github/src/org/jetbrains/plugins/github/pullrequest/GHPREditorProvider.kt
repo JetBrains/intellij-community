@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.ide.DataManager
@@ -130,21 +130,19 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         layout = MigLayout(LC().gridGap("0", "0")
                              .insets("0", "0", "0", "0")
                              .fillX()
-                             .flowY()).apply {
-          columnConstraints = AC().fill().size("0:$maxWidth:$maxWidth")
-        }
+                             .flowY(),
+                           AC().size(":$maxWidth:$maxWidth").gap("push"))
 
         emptyText.clear()
 
-        add(header, CC().width("0:$maxWidth:$maxWidth"))
-        add(timeline, CC().width("0:$maxWidth:$maxWidth"))
-        add(loadingIcon, CC().width("0:$maxWidth:$maxWidth").hideMode(2).alignX("center"))
+        add(header)
+        add(timeline, CC().growX().minWidth(""))
+        add(loadingIcon, CC().hideMode(2).alignX("center"))
 
         with(context.commentService) {
           if (canComment()) {
             val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
-            add(createCommentField(project, commentServiceAdapter, avatarIconsProvider, context.currentUser),
-                CC().width("0:$maxWidth:$maxWidth"))
+            add(createCommentField(project, commentServiceAdapter, avatarIconsProvider, context.currentUser), CC().growX())
           }
         }
       }

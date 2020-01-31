@@ -12,6 +12,7 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +34,11 @@ public abstract class ServerType<C extends ServerConfiguration> {
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getPresentableName();
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getDeploymentConfigurationTypePresentableName() {
     return getPresentableName() + " Deployment";
   }

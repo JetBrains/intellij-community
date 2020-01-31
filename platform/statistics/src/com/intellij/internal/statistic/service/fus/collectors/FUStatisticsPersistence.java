@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.openapi.application.PathManager;
@@ -40,12 +40,12 @@ public class FUStatisticsPersistence {
     }
   }
 
-  @Nullable
+  @NotNull
   public static File getStatisticsCacheDirectory() {
-    return Paths.get(PathManager.getConfigPath()).resolve(FUS_CACHE_PATH + "/").toFile();
+    return PathManager.getConfigDir().resolve(FUS_CACHE_PATH + "/").toFile();
   }
 
-  @Nullable
+  @NotNull
   public static File getStatisticsLegacyCacheDirectory() {
     return Paths.get(PathManager.getSystemPath()).resolve(FUS_CACHE_PATH).toFile();
   }

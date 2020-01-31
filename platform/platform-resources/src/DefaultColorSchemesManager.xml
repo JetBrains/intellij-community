@@ -1187,6 +1187,24 @@
             <option name="EFFECT_TYPE" value="0"/>
           </value>
         </option>
+      <option name="XPATH.KEYWORD">
+        <value>
+          <option name="FOREGROUND" value="0000FF" />
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="XPATH.XPATH_NAME">
+        <value>
+          <option name="FOREGROUND" value="80" />
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="XPATH.FUNCTION">
+        <value>
+          <option name="FOREGROUND" value="0000FF" />
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
     </attributes>
 
   </scheme>

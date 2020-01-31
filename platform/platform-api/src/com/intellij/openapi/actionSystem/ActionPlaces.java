@@ -144,6 +144,14 @@ public abstract class ActionPlaces {
 
   public static final String NOTIFICATION = "Notification";
 
+  /* Rider */
+  public static final String RIDER_UNIT_TESTS_LEFT_TOOLBAR = "UnitTests.LeftToolbar";
+  public static final String RIDER_UNIT_TESTS_TOP_TOOLBAR = "UnitTests.TopToolbar";
+  public static final String RIDER_UNIT_TESTS_SESSION_POPUP = "UnitTests.SessionPopup";
+  public static final String RIDER_UNIT_TESTS_EXPLORER_POPUP = "UnitTests.ExplorerPopup";
+  public static final String RIDER_UNIT_TESTS_PROGRESSBAR_POPUP = "UnitTests.ProgressBarPopup";
+  public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
+
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||
            KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
@@ -160,7 +168,9 @@ public abstract class ActionPlaces {
     ACTION_PLACE_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_TOOLBAR, DOCK_MENU, PHING_MESSAGES_TOOLBAR, DIFF_TOOLBAR,
     ANALYZE_STACKTRACE_PANEL_TOOLBAR, TOUCHBAR_GENERAL, COMPOSER_EDITOR_NOTIFICATION_PANEL, COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA,
     COMPOSER_LOG_RERUN, EDITOR_GUTTER, TOOLWINDOW_CONTENT, SERVICES_TOOLBAR, REFACTORING_QUICKLIST, INTENTION_MENU,
-    TEXT_EDITOR_WITH_PREVIEW, NOTIFICATION
+    TEXT_EDITOR_WITH_PREVIEW, NOTIFICATION,
+    RIDER_UNIT_TESTS_LEFT_TOOLBAR, RIDER_UNIT_TESTS_TOP_TOOLBAR, RIDER_UNIT_TESTS_SESSION_POPUP, RIDER_UNIT_TESTS_EXPLORER_POPUP,
+    RIDER_UNIT_TESTS_PROGRESSBAR_POPUP, RIDER_UNIT_TESTS_QUICKLIST
   );
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(

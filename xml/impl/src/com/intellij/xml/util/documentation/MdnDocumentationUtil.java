@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -116,7 +116,7 @@ public class MdnDocumentationUtil {
       }
     }
     if (url == null) return null;
-    File targetDir = new File(PathManager.getConfigPath(), "mdn");
+    File targetDir = PathManager.getConfigDir().resolve("mdn").toFile();
     File targetFile = new File(targetDir, makeUniqueFileName(url));
     try {
       String text = defaultDocProducer.get();

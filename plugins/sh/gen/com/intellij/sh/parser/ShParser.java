@@ -2459,7 +2459,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE) | RAW_STRING
+  // OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE | RAW_STRING
   public static boolean string(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "string")) return false;
     if (!nextTokenIs(b, "<string>", OPEN_QUOTE, RAW_STRING)) return false;

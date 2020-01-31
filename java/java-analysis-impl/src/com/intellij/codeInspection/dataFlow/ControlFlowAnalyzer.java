@@ -61,6 +61,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final Map<String, ExceptionTransfer> myExceptionCache;
   private ExpressionBlockContext myExpressionBlockContext;
 
+  /**
+   * @param valueFactory factory to create values
+   * @param codeFragment code fragment to analyze:
+   *                     normally a PsiCodeBlock or PsiExpression. 
+   *                     If PsiWhileStatement or PsiDoWhileStatement then only one loop iteration will be analyzed 
+   *                     (similar to analyzing the loop body, but condition is analyzed as well).
+   *                     If PsiClass then class initializers + field initializers will be analyzed
+   * @param inlining if true inlining is performed for known method calls
+   */
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean inlining) {
     myInlining = inlining;
     myFactory = valueFactory;
@@ -429,7 +438,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
     startElement(statement);
     PsiStatement continuedStatement = statement.findContinuedStatement();
-    if (continuedStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(myCodeFragment, continuedStatement, false)) {
+    if (continuedStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(myCodeFragment, continuedStatement, true)) {
       PsiStatement body = ((PsiLoopStatement)continuedStatement).getBody();
       controlTransfer(new InstructionTransfer(getEndOffset(body), getVariablesInside(body)), getTrapsInsideElement(body));
     } else {
@@ -449,7 +458,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (condition != null) {
         condition.accept(this);
         generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-        addInstruction(new ConditionalGotoInstruction(getStartOffset(statement), false, condition));
+        if (statement == myCodeFragment) {
+          addInstruction(new PopInstruction());
+        } else {
+          addInstruction(new ConditionalGotoInstruction(getStartOffset(statement), false, condition));
+        }
       }
     }
 
@@ -1172,7 +1185,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       body.accept(this);
     }
 
-    addInstruction(new GotoInstruction(getStartOffset(statement)));
+    if (statement != myCodeFragment) {
+      addInstruction(new GotoInstruction(getStartOffset(statement)));
+    }
 
     finishElement(statement);
   }

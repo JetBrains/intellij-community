@@ -11,7 +11,6 @@ public interface ShLiteral extends ShSimpleCommandElement {
   @Nullable
   PsiElement getWord();
 
-  @NotNull
   PsiReference[] getReferences();
 
 }

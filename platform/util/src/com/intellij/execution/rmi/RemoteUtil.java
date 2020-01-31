@@ -70,8 +70,9 @@ public class RemoteUtil {
   }
 
   @Nullable
-  public static <T> T castToRemote(Object object, Class<T> clazz) {
-    if (!Proxy.isProxyClass(object.getClass())) return null;
+  public static <T> T castToRemote(@Nullable Object object, @NotNull Class<T> clazz) {
+    if (object == null || !Proxy.isProxyClass(object.getClass())) return null;
+    if (clazz.isInstance(object)) return (T)object;
     final InvocationHandler handler = Proxy.getInvocationHandler(object);
     if (handler instanceof RemoteInvocationHandler) {
       final RemoteInvocationHandler rih = (RemoteInvocationHandler)handler;
@@ -83,7 +84,8 @@ public class RemoteUtil {
   }
 
   @NotNull
-  public static <T> T castToLocal(Object remote, Class<T> clazz) {
+  public static <T> T castToLocal(@Nullable Object remote, @NotNull Class<T> clazz) {
+    if (clazz.isInstance(remote)) return (T)remote;
     ClassLoader loader = clazz.getClassLoader();
     //noinspection unchecked
     return (T)Proxy.newProxyInstance(loader, new Class[]{clazz}, new RemoteInvocationHandler(remote, clazz, loader));

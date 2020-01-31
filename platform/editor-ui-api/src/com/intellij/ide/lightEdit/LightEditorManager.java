@@ -7,6 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 @ApiStatus.Experimental
 public interface LightEditorManager {
   void addListener(@NotNull LightEditorListener listener);
@@ -24,4 +26,7 @@ public interface LightEditorManager {
   boolean containsUnsavedDocuments();
 
   boolean isImplicitSaveAllowed(@NotNull Document document);
+
+  @NotNull
+  Collection<VirtualFile> getOpenFiles();
 }

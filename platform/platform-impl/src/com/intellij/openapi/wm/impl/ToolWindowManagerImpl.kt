@@ -49,7 +49,6 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.commands.RequestFocusInToolWindowCommand
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.GuiUtils
@@ -549,7 +548,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       // when the user switched to another application. So we just need to bring
       // tool window's window to front.
       if (autoFocusContents && !entry.toolWindow.hasFocus) {
-        RequestFocusInToolWindowCommand(entry.toolWindow).run()
+        requestFocusInToolWindow(entry.toolWindow)
       }
 
       return
@@ -560,7 +559,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     if (autoFocusContents && ApplicationManager.getApplication().isActive) {
-      RequestFocusInToolWindowCommand(entry.toolWindow).run()
+      requestFocusInToolWindow(entry.toolWindow)
     }
     else {
       activeStack.push(entry)
@@ -961,7 +960,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
         // do not activate tool window that is the part of project frame - default component should be focused
         if (info.isActiveOnStart && (info.type == ToolWindowType.WINDOWED || info.type == ToolWindowType.FLOATING) && ApplicationManager.getApplication().isActive) {
-          RequestFocusInToolWindowCommand(entry.toolWindow).run()
+          requestFocusInToolWindow(entry.toolWindow)
         }
       }
 
@@ -1314,7 +1313,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
       showToolWindowImpl(entry, layoutInfo, false)
       if (wasFocused) {
-        RequestFocusInToolWindowCommand(entry.toolWindow).run()
+        requestFocusInToolWindow(entry.toolWindow)
       }
     }
   }
@@ -1403,7 +1402,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       entry.applyWindowInfo(infoSnapshot)
       doShowWindow(entry, infoSnapshot, dirtyMode = true)
       if (wasFocused) {
-        RequestFocusInToolWindowCommand.getShowingComponentToRequestFocus(entry.toolWindow)?.requestFocusInWindow()
+        getShowingComponentToRequestFocus(entry.toolWindow)?.requestFocusInWindow()
       }
     }
 
@@ -1463,7 +1462,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     doShowWindow(entry, newInfo, dirtyMode)
 
     if (ApplicationManager.getApplication().isActive) {
-      RequestFocusInToolWindowCommand(entry.toolWindow).run()
+      requestFocusInToolWindow(entry.toolWindow)
     }
 
     val frame = frame!!

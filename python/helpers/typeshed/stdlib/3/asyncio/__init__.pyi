@@ -125,9 +125,10 @@ if sys.version_info >= (3, 8):
         TimeoutError as TimeoutError,
     )
 else:
-    from asyncio.events import (
-        SendfileNotAvailableError as SendfileNotAvailableError
-    )
+    if sys.version_info >= (3, 7):
+        from asyncio.events import (
+            SendfileNotAvailableError as SendfileNotAvailableError
+        )
     from asyncio.futures import (
         CancelledError as CancelledError,
         TimeoutError as TimeoutError,

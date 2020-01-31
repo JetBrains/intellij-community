@@ -26,7 +26,7 @@ private class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActi
     terminalWidget.listener = TerminalEditorWidgetListener(project, file)
 
     terminalWidget.moveDisposable(fileEditor)
-    terminalView.detachWidgetAndRemoveContent(toolWindow, selectedContent)
+    terminalView.detachWidgetAndRemoveContent(selectedContent)
 
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
   }

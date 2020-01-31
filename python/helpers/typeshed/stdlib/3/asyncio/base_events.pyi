@@ -90,7 +90,7 @@ class BaseEventLoop(AbstractEventLoop, metaclass=ABCMeta):
             proto: int = ...,
             flags: int = ...,
             sock: None = ...,
-            local_addr: Optional[str] = ...,
+            local_addr: Optional[Tuple[str, int]] = ...,
             server_hostname: Optional[str] = ...,
             ssl_handshake_timeout: Optional[float] = ...,
             happy_eyeballs_delay: Optional[float] = ...,
@@ -118,7 +118,7 @@ class BaseEventLoop(AbstractEventLoop, metaclass=ABCMeta):
         @overload
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: str = ..., port: int = ..., *,
                                     ssl: _SSLContext = ..., family: int = ..., proto: int = ..., flags: int = ...,
-                                    sock: None = ..., local_addr: Optional[str] = ..., server_hostname: Optional[str] = ...,
+                                    sock: None = ..., local_addr: Optional[Tuple[str, int]] = ..., server_hostname: Optional[str] = ...,
                                     ssl_handshake_timeout: Optional[float] = ...) -> _TransProtPair: ...
         @overload
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: None = ..., port: None = ..., *,
@@ -129,7 +129,7 @@ class BaseEventLoop(AbstractEventLoop, metaclass=ABCMeta):
         @overload
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: str = ..., port: int = ..., *,
                                     ssl: _SSLContext = ..., family: int = ..., proto: int = ..., flags: int = ..., sock: None = ...,
-                                    local_addr: Optional[str] = ..., server_hostname: Optional[str] = ...) -> _TransProtPair: ...
+                                    local_addr: Optional[Tuple[str, int]] = ..., server_hostname: Optional[str] = ...) -> _TransProtPair: ...
         @overload
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: None = ..., port: None = ..., *,
                                     ssl: _SSLContext = ..., family: int = ..., proto: int = ..., flags: int = ..., sock: socket,

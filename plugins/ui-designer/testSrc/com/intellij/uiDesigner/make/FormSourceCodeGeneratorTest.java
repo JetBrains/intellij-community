@@ -14,6 +14,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ThrowableRunnable;
 
 import java.io.IOException;
 
@@ -85,9 +86,7 @@ public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
   }
 
   public void testTitledBorderInternal() throws IOException {
-    setInternal(true);
-    doTest();
-    setInternal(false);
+    inInternalMode(() -> doTest());
   }
 
   public void testTitleFromBundle() throws IOException {
@@ -117,7 +116,12 @@ public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
     assertEquals(expectedText, text);
   }
 
-  private static void setInternal(boolean value) {
-    System.getProperties().setProperty("idea.is.internal", Boolean.toString(value));
+  private static void inInternalMode(ThrowableRunnable<IOException> runnable) throws IOException {
+    System.getProperties().setProperty("idea.is.internal", "true");
+    try {
+      runnable.run();
+    } finally {
+      System.getProperties().setProperty("idea.is.internal", "false");
+    }
   }
 }

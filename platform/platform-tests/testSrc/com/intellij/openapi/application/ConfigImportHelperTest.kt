@@ -20,7 +20,6 @@ import org.junit.Test
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.attribute.FileTime
 import java.util.function.Predicate
 
@@ -36,7 +35,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       useAppConfigDir {
         runBlocking { ApplicationManager.getApplication().stateStore.save(forceSavingAllSettings = true) }
 
-        assertThat(Paths.get(PathManager.getConfigPath()))
+        assertThat(PathManager.getConfigDir())
           .isNotEmptyDirectory()
           .satisfies(Condition(Predicate<Path> { ConfigImportHelper.isConfigDirectory(it) }, "A valid config directory"))
       }

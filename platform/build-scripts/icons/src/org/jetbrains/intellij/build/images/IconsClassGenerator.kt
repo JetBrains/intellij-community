@@ -117,7 +117,7 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
         if (Files.exists(outFile)) {
           obsoleteClasses.add(outFile)
         }
-        return
+        continue
       }
 
       processedClasses.incrementAndGet()
@@ -125,7 +125,7 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
       val newLines = newText.lines()
       val oldLines = oldText?.lines() ?: emptyList()
       if (oldLines == newLines) {
-        return
+        continue
       }
 
       if (writeChangesToDisk) {

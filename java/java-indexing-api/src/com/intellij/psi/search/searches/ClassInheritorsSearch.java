@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
-  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
+  public static final ExtensionPointName<QueryExecutor<PsiClass, ClassInheritorsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
   public static class SearchParameters implements QueryParameters {
@@ -125,7 +125,9 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     }
   }
 
-  private ClassInheritorsSearch() {}
+  private ClassInheritorsSearch() {
+    super(EP_NAME);
+  }
 
   @NotNull
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {

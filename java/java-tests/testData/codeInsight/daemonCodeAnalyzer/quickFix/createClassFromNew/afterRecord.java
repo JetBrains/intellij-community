@@ -5,5 +5,5 @@ class Test {
   }
 }
 
-public record MyRecord(int i,int i1) {
+public record MyRecord(int i, int i1) {
 }

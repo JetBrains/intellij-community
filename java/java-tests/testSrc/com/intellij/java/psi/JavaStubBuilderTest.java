@@ -531,6 +531,59 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
   }
 
+  public void testLocalRecord() {
+    doTest("class A {\n" +
+           "  void test() {\n" +
+           "    record A(String s) { }\n" +
+           "  }\n" +
+           "}\n",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[test:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROW" +
+           "S_LIST:]\n" +
+           "      CLASS:PsiClassStub[record name=A fqn=null]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "        RECORD_HEADER:PsiRecordHeaderStub\n" +
+           "          RECORD_COMPONENT:PsiRecordComponentStub[s:String]\n" +
+           "            MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+
+
+  public void testLocalRecordIncorrect() {
+    doTest("class A {\n" +
+           "  void test() {\n" +
+           "    record A { }\n" +
+           "  }\n" +
+           "}\n",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[test:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROW" +
+           "S_LIST:]\n");
+  }
+
   public void testSOEProof() {
     StringBuilder sb = new StringBuilder();
     SecureRandom random = new SecureRandom();

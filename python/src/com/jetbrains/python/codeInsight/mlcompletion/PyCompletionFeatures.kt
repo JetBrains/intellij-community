@@ -1,32 +1,73 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.mlcompletion
 
+import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 object PyCompletionFeatures {
-  fun isDirectlyInArgumentsContext(locationPsi: PsiElement): Boolean {
-    // for zero prefix
-    if (locationPsi.parent is PyArgumentList) return true
-
-    // for non-zero prefix
-    if (locationPsi.parent !is PyReferenceExpression) return false
-    if (locationPsi.parent.parent !is PyArgumentList) return false
-
-    return true
+  fun isDictKey(element: LookupElement): Boolean {
+    val presentation = LookupElementPresentation.renderElement(element)
+    return ("dict key" == presentation.typeText)
   }
 
-  private fun isAfterColon(locationPsi: PsiElement): Boolean {
-    val prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(locationPsi)
-    return (prevVisibleLeaf != null && prevVisibleLeaf.elementType == PyTokenTypes.COLON)
+  fun isTheSameFile(element: LookupElement, location: CompletionLocation): Boolean {
+    val psiFile = location.completionParameters.originalFile
+    val elementPsiFile = element.psiElement?.containingFile ?: return false
+    return psiFile == elementPsiFile
+  }
+
+  fun isTakesParameterSelf(element: LookupElement): Boolean {
+    val presentation = LookupElementPresentation.renderElement(element)
+    return presentation.tailText == "(self)"
+  }
+
+  enum class ElementNameUnderscoreType {NO_UNDERSCORE, TWO_START_END, TWO_START, ONE_START}
+  fun getElementNameUnderscoreType(name: String): ElementNameUnderscoreType {
+    return when {
+      name.startsWith("__") && name.endsWith("__") -> ElementNameUnderscoreType.TWO_START_END
+      name.startsWith("__") -> ElementNameUnderscoreType.TWO_START
+      name.startsWith("_") -> ElementNameUnderscoreType.ONE_START
+      else -> ElementNameUnderscoreType.NO_UNDERSCORE
+    }
+  }
+
+  fun isPsiElementIsPyFile(element: LookupElement) = element.psiElement is PyFile
+
+  fun isPsiElementIsPsiDirectory(element: LookupElement) = element.psiElement is PsiDirectory
+
+  data class ElementModuleCompletionFeatures(val isFromStdLib: Boolean, val canFindModule: Boolean)
+  fun getElementModuleCompletionFeatures(element: LookupElement): ElementModuleCompletionFeatures? {
+    val psiElement = element.psiElement ?: return null
+    var vFile: VirtualFile? = null
+    var sdk: Sdk? = null
+    val containingFile = psiElement.containingFile
+    if (psiElement is PsiDirectory) {
+      vFile = psiElement.virtualFile
+      sdk = PythonSdkUtil.findPythonSdk(psiElement)
+    }
+    else if (containingFile != null) {
+      vFile = containingFile.virtualFile
+      sdk = PythonSdkUtil.findPythonSdk(containingFile)
+    }
+    if (vFile != null) {
+      val isFromStdLib = PythonSdkUtil.isStdLib(vFile, sdk)
+      val canFindModule = ModuleUtilCore.findModuleForFile(vFile, psiElement.project) != null
+      return ElementModuleCompletionFeatures(isFromStdLib, canFindModule)
+    }
+    return null
   }
 
   fun isInCondition(locationPsi: PsiElement): Boolean {
@@ -90,11 +131,9 @@ object PyCompletionFeatures {
     fun isInDocstring(element: PsiElement) = element.parent is StringLiteralExpression
 
     val res = ArrayList<Int>()
-    val whitespaceElem = when {
-      isIndentElement(locationPsi) -> locationPsi
-      locationPsi.prevSibling != null && isIndentElement(locationPsi.prevSibling) -> locationPsi.prevSibling
-      else -> return res
-    }
+
+    val whitespaceElem = PsiTreeUtil.prevLeaf(locationPsi) ?: return res
+    if (!whitespaceElem.text.contains('\n')) return res
     val caretIndent = getIndent(whitespaceElem)
 
     var stepsCounter = 0
@@ -126,8 +165,7 @@ object PyCompletionFeatures {
     when (kind) {
       in arrayOf(PyCompletionMlElementKind.FUNCTION,
                  PyCompletionMlElementKind.TYPE_OR_CLASS,
-                 PyCompletionMlElementKind.FROM_TARGET) ->
-      {
+                 PyCompletionMlElementKind.FROM_TARGET) -> {
         val statementList = PsiTreeUtil.getParentOfType(locationPsi, PyStatementList::class.java, PyFile::class.java) ?: return null
         val children = PsiTreeUtil.collectElementsOfType(statementList, PyReferenceExpression::class.java)
         return children.count { it.textOffset < locationPsi.textOffset && it.textMatches(lookupString) }
@@ -152,18 +190,20 @@ object PyCompletionFeatures {
     }
   }
 
-  fun getImportPopularityFeature(locationPsi: PsiElement, lookupString: String): Int? {
-    if (locationPsi.parent !is PyReferenceExpression) return null
-    if (locationPsi.parent.parent !is PyImportElement) return null
-    if (locationPsi.parent.parent.parent !is PyImportStatement) return null
-    return PyMlCompletionHelpers.importPopularity[lookupString]
-  }
-
   fun getBuiltinPopularityFeature(lookupString: String, isBuiltins: Boolean): Int? =
     if (isBuiltins) PyMlCompletionHelpers.builtinsPopularity[lookupString] else null
 
   fun getKeywordId(lookupString: String): Int? = PyMlCompletionHelpers.getKeywordId(lookupString)
 
-  fun getPyLookupElementInfo(element: LookupElement): PyCompletionMlElementInfo? = element.getUserData(
-    PyCompletionMlElementInfo.key)
+  fun getPyLookupElementInfo(element: LookupElement): PyCompletionMlElementInfo? = element.getUserData(PyCompletionMlElementInfo.key)
+
+  fun getNumberOfQualifiersInExpresionFeature(element: PsiElement): Int {
+    if (element !is PyQualifiedExpression) return 1
+    return element.asQualifiedName()?.components?.size ?: 1
+  }
+
+  private fun isAfterColon(locationPsi: PsiElement): Boolean {
+    val prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(locationPsi)
+    return (prevVisibleLeaf != null && prevVisibleLeaf.elementType == PyTokenTypes.COLON)
+  }
 }

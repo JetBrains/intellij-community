@@ -6,11 +6,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 
 public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
-  public static final String TOOL_WINDOW_ID = "Terminal";
+  @NonNls public static final String TOOL_WINDOW_ID = "Terminal";
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -21,9 +22,7 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     TerminalView terminalView = TerminalView.getInstance(project);
     terminalView.initToolWindow(toolWindow);
     TerminalArrangementManager terminalArrangementManager = TerminalArrangementManager.getInstance(project);
-    if (toolWindow.isAvailable()) {
-      terminalView.restoreTabs(toolWindow, terminalArrangementManager.getArrangementState());
-    }
+    terminalView.restoreTabs(terminalArrangementManager.getArrangementState());
     // allow to save tabs after the tabs are restored
     terminalArrangementManager.setToolWindow(toolWindow);
   }

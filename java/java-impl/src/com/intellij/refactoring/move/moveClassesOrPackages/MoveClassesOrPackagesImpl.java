@@ -296,7 +296,7 @@ public class MoveClassesOrPackagesImpl {
     final Runnable analyzeConflicts = () -> ApplicationManager.getApplication().runReadAction(() -> RefactoringConflictsUtil
       .analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts));
     if (!ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(analyzeConflicts, "Analyze Module Conflicts...", true, project)) {
+      .runProcessWithProgressSynchronously(analyzeConflicts, RefactoringBundle.message("analyze.module.conflicts"), true, project)) {
       return;
     }
     if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;

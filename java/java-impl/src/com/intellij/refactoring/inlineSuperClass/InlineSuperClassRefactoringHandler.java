@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.JavaInlineActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
   public void inlineElement(final Project project, final Editor editor, final PsiElement element) {
     PsiClass superClass = (PsiClass) element;
     if (!superClass.getManager().isInProject(superClass)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline non-project class", REFACTORING_NAME, null);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("inline.super.non.project.class.warning.message"), REFACTORING_NAME, null);
       return;
     }
 

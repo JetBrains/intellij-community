@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
   @Nullable
   @Override
   public String getActionName(PsiElement @NotNull [] elements) {
-    return "Move Members...";
+    return RefactoringBundle.message("move.members.action.name");
   }
 
   @Override

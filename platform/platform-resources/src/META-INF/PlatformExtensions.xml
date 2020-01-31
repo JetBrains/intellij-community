@@ -533,6 +533,7 @@
 
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
+    <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="last"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
@@ -750,7 +751,20 @@
 
     <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
 
+    <applicationService
+      serviceInterface="com.intellij.openapi.projectRoots.JdkFinder"
+      serviceImplementation="com.intellij.openapi.projectRoots.impl.JdkFinderImpl"/>
+
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
+
+    <registryKey key="java.detector.enabled" defaultValue="true" description="Toggles JDK detection features" />
+    <registryKey key="java.detector.include.embedded" defaultValue="false" description="Include embedded JetBrains Runtime" />
+
+    <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader" />
+    <unknownSdkResolver implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto"/>
+    <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
+    <registryKey key="jdk.downloader" defaultValue="true" description="Suggest JDK downloads"/>
+    <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
 
     <runDashboardCustomizer implementation="com.intellij.execution.testframework.sm.runner.SMTRunnerRunDashboardCustomizer"
                             order="first" id="smtRunnerCustomizer"/>
@@ -900,5 +914,9 @@
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductVersionTitleInfoProvider"/>
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.SuperUserSuffixTitleInfoProvider"/>
 
+    <vfs.asyncListener implementation="com.intellij.ide.plugins.DynamicPluginVfsListener"/>
   </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
+  </applicationListeners>
 </idea-plugin>

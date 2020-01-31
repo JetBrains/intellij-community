@@ -758,46 +758,23 @@ class JsonSchemaAnnotatorChecker {
 
     Number exclusiveMaximumNumber = schema.getExclusiveMaximumNumber();
     if (exclusiveMaximumNumber != null) {
-      if (JsonSchemaType._integer.equals(propValueType)) {
-        final int intValue = exclusiveMaximumNumber.intValue();
-        if (value.intValue() >= intValue) {
-          error("Greater than an exclusive maximum " + intValue, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
-      }
-      else {
-        final double doubleValue = exclusiveMaximumNumber.doubleValue();
-        if (value.doubleValue() >= doubleValue) {
-          error("Greater than an exclusive maximum " + exclusiveMaximumNumber, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
+      final double doubleValue = exclusiveMaximumNumber.doubleValue();
+      if (value.doubleValue() >= doubleValue) {
+        error("Greater than an exclusive maximum " + exclusiveMaximumNumber, propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
     Number maximum = schema.getMaximum();
     if (maximum == null) return;
     boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMaximum());
-    if (JsonSchemaType._integer.equals(propValueType)) {
-      final int intValue = maximum.intValue();
-      if (isExclusive) {
-        if (value.intValue() >= intValue) {
-          error("Greater than an exclusive maximum " + intValue, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
-      }
-      else {
-        if (value.intValue() > intValue) {
-          error("Greater than a maximum " + intValue, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
+    final double doubleValue = maximum.doubleValue();
+    if (isExclusive) {
+      if (value.doubleValue() >= doubleValue) {
+        error("Greater than an exclusive maximum " + maximum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
     else {
-      final double doubleValue = maximum.doubleValue();
-      if (isExclusive) {
-        if (value.doubleValue() >= doubleValue) {
-          error("Greater than an exclusive maximum " + maximum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
-      }
-      else {
-        if (value.doubleValue() > doubleValue) {
-          error("Greater than a maximum " + maximum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
+      if (value.doubleValue() > doubleValue) {
+        error("Greater than a maximum " + maximum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
   }
@@ -807,47 +784,24 @@ class JsonSchemaAnnotatorChecker {
     // schema v6 - exclusiveMinimum is numeric now
     Number exclusiveMinimumNumber = schema.getExclusiveMinimumNumber();
     if (exclusiveMinimumNumber != null) {
-      if (JsonSchemaType._integer.equals(schemaType)) {
-        final int intValue = exclusiveMinimumNumber.intValue();
-        if (value.intValue() <= intValue) {
-          error("Less than an exclusive minimum" + intValue, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
-      }
-      else {
-        final double doubleValue = exclusiveMinimumNumber.doubleValue();
-        if (value.doubleValue() <= doubleValue) {
-          error("Less than an exclusive minimum " + exclusiveMinimumNumber, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
+      final double doubleValue = exclusiveMinimumNumber.doubleValue();
+      if (value.doubleValue() <= doubleValue) {
+        error("Less than an exclusive minimum " + exclusiveMinimumNumber, propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
 
     Number minimum = schema.getMinimum();
     if (minimum == null) return;
     boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMinimum());
-    if (JsonSchemaType._integer.equals(schemaType)) {
-      final int intValue = minimum.intValue();
-      if (isExclusive) {
-        if (value.intValue() <= intValue) {
-          error("Less than an exclusive minimum " + intValue, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
-      }
-      else {
-        if (value.intValue() < intValue) {
-          error("Less than a minimum " + intValue, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
+    final double doubleValue = minimum.doubleValue();
+    if (isExclusive) {
+      if (value.doubleValue() <= doubleValue) {
+        error("Less than an exclusive minimum " + minimum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
     else {
-      final double doubleValue = minimum.doubleValue();
-      if (isExclusive) {
-        if (value.doubleValue() <= doubleValue) {
-          error("Less than an exclusive minimum " + minimum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
-      }
-      else {
-        if (value.doubleValue() < doubleValue) {
-          error("Less than a minimum " + minimum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
-        }
+      if (value.doubleValue() < doubleValue) {
+        error("Less than a minimum " + minimum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
   }

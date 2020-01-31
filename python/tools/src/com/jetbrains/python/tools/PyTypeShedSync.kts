@@ -24,29 +24,48 @@ println("Bundled: ${bundled.abs()}")
 println("Syncing")
 sync(repo, bundled)
 
-val whiteList = setOf(
+val whiteList = sequenceOf(
   "__builtin__",
   "__future__",
+  "_codecs",
+  "_csv",
+  "_curses",
   "_importlib_modulespec",
   "_io",
+  "_operator",
+  "_thread",
   "abc",
   "argparse",
   "asyncio",
   "attr",
+  "audioop",
   "builtins",
+  "cmath",
   "collections",
   "concurrent",
+  "configparser",
   "contextvars",
   "cPickle",
   "crypt",
+  "Crypto",
+  "csv",
   "ctypes",
   "datetime",
+  "dbm",
+  "decimal",
+  "difflib",
+  "distutils",
   "email",
   "exceptions",
   "functools",
   "genericpath",
+  "gflags",
+  "hashlib",
+  "heapq",
+  "http",
   "io",
   "itertools",
+  "json",
   "logging",
   "macpath",
   "math",
@@ -54,12 +73,16 @@ val whiteList = setOf(
   "multiprocessing",
   "ntpath",
   "numbers",
-  "pathlib",
-  "queue",
+  "operator",
   "os",
   "os2emxpath",
+  "pathlib",
+  "pickle",
   "posix",
   "posixpath",
+  "pprint",
+  "pyexpat",
+  "queue",
   "re",
   "shutil",
   "signal",
@@ -71,15 +94,17 @@ val whiteList = setOf(
   "sys",
   "threading",
   "time",
+  "turtle",
   "types",
   "typing",
   "typing_extensions",
   "unittest",
   "urllib",
   "uuid",
+  "webbrowser",
   "werkzeug",
   "xml"
-)
+).mapTo(hashSetOf()) { it.toLowerCase() }
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, whiteList)
@@ -102,9 +127,9 @@ fun sync(repo: Path, bundled: Path) {
                         ".gitignore",
                         ".travis.yml",
                         "CONTRIBUTING.md",
-                        "README.md",
                         "LICENSE",
-                        "requirements-tests-py2.txt",
+                        "pyproject.toml",
+                        "README.md",
                         "requirements-tests-py3.txt")
 
   Files
@@ -127,7 +152,7 @@ fun cleanTopLevelPackages(typeshed: Path, whiteList: Set<String>) {
     .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("third_party")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
-    .filter { it.nameWithoutExtension() !in whiteList }
+    .filter { it.nameWithoutExtension().toLowerCase() !in whiteList }
     .forEach { it.delete() }
 }
 

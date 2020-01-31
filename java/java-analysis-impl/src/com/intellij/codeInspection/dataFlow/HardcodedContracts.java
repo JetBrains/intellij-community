@@ -218,7 +218,8 @@ public class HardcodedContracts {
     else if (isJunit(className) || isTestng(className) ||
              className.startsWith("com.google.common.truth.") ||
              className.startsWith("org.assertj.core.api.") ||
-             className.equals("org.hamcrest.MatcherAssert")) {
+             className.equals("org.hamcrest.MatcherAssert") ||
+             className.equals("org.hamcrest.junit.MatcherAssert")) {
       return handleTestFrameworks(method, paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {

@@ -190,8 +190,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private boolean applyEnableDisablePlugins(JComponent parentComponent, Map<PluginId, Boolean> enabledMap) {
-    List<IdeaPluginDescriptorImpl> pluginDescriptorsToDisable = new ArrayList<>();
-    List<IdeaPluginDescriptorImpl> pluginDescriptorsToEnable = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
 
     int rowCount = getRowCount();
     for (int i = 0; i < rowCount; i++) {
@@ -202,55 +202,16 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       boolean enabled = isEnabled(descriptor.getPluginId());
       if (enabled != descriptor.isEnabled()) {
-        // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
-        IdeaPluginDescriptorImpl fullDescriptor = PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
-        if (fullDescriptor == null) {
-          LOG.error("Could not load full descriptor for plugin " + descriptor.getPath());
-          fullDescriptor = (IdeaPluginDescriptorImpl)descriptor;
-        }
         if (!enabled) {
-          pluginDescriptorsToDisable.add(fullDescriptor);
+          pluginDescriptorsToDisable.add(descriptor);
         }
         else {
-          pluginDescriptorsToEnable.add(fullDescriptor);
+          pluginDescriptorsToEnable.add(descriptor);
         }
       }
-      descriptor.setEnabled(enabled);
     }
 
-    List<PluginId> disableIds = new ArrayList<>();
-    for (Map.Entry<PluginId, Boolean> entry : enabledMap.entrySet()) {
-      Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled) {
-        disableIds.add(entry.getKey());
-      }
-    }
-
-    try {
-      PluginManagerCore.saveDisabledPlugins(disableIds, false);
-    }
-    catch (IOException e) {
-      PluginManagerMain.LOG.error(e);
-    }
-
-    if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) &&
-        ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin))) {
-      boolean needRestart = false;
-      for (IdeaPluginDescriptor descriptor : pluginDescriptorsToDisable) {
-        if (!DynamicPlugins.unloadPluginWithProgress(parentComponent, (IdeaPluginDescriptorImpl)descriptor, true)) {
-          needRestart = true;
-          break;
-        }
-      }
-
-      if (!needRestart) {
-        for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
-          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor, true);
-        }
-        return true;
-      }
-    }
-    return false;
+    return PluginEnabler.updatePluginEnabledState(pluginDescriptorsToDisable, pluginDescriptorsToEnable, parentComponent);
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {

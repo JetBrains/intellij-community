@@ -3,7 +3,6 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.DynamicBundle;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public final class FormSourceCodeGenerator {
@@ -62,8 +59,6 @@ public final class FormSourceCodeGenerator {
   @NonNls private static final TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<>();
 
   private boolean myNeedGetMessageFromBundle;
-  private static final String getMessageFromBundleMethod = "$$$getMessageFromBundle$$$";
-  private static final String cachedGetBundleMethodField = "$$$cachedGetBundleMethod$$$";
 
   private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
     PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
@@ -516,11 +511,13 @@ public final class FormSourceCodeGenerator {
   private void generateGetMessageFromBundle(PsiClass aClass, PsiMethod anchor, PsiElementFactory elementFactory, boolean condition) {
     String dynamicBundleClassName = DynamicBundle.class.getName();
 
-    for (PsiMethod oldMethod : aClass.findMethodsByName(getMessageFromBundleMethod, false)) {
+    String methodName = AsmCodeGenerator.GET_MESSAGE_FROM_BUNDLE;
+    for (PsiMethod oldMethod : aClass.findMethodsByName(methodName, false)) {
       oldMethod.delete();
     }
 
-    PsiField oldField = aClass.findFieldByName(cachedGetBundleMethodField, false);
+    String fieldName = AsmCodeGenerator.CACHED_GET_BUNDLE_METHOD;
+    PsiField oldField = aClass.findFieldByName(fieldName, false);
     if (oldField != null) {
       oldField.delete();
     }
@@ -531,19 +528,19 @@ public final class FormSourceCodeGenerator {
 
     PsiField cachedMethodField =
       elementFactory.createFieldFromText(
-        "private static java.lang.reflect.Method " + cachedGetBundleMethodField + " = null;",
+        "private static java.lang.reflect.Method " + fieldName + " = null;",
         null);
 
     String methodText =
-      "private String " + getMessageFromBundleMethod + "(String path, String key) {\n" +
+      "private String " + methodName + "(String path, String key) {\n" +
       " ResourceBundle bundle;\n" +
       "try {\n" +
       "    Class<?> thisClass = this.getClass();\n" +
-      "    if (" + cachedGetBundleMethodField + " == null) {\n" +
+      "    if (" + fieldName + " == null) {\n" +
       "        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass(\"" + dynamicBundleClassName + "\");\n" +
-      "        " + cachedGetBundleMethodField + " = dynamicBundleClass.getMethod(\"getBundle\", String.class, Class.class);\n" +
+      "        " + fieldName + " = dynamicBundleClass.getMethod(\"getBundle\", String.class, Class.class);\n" +
       "    }\n" +
-      "    bundle = (ResourceBundle)" + cachedGetBundleMethodField + ".invoke(null, path, thisClass);\n" +
+      "    bundle = (ResourceBundle)" + fieldName + ".invoke(null, path, thisClass);\n" +
       "} catch (Exception e) {\n" +
       "    bundle = ResourceBundle.getBundle(path);\n" +
       "}\n" +
@@ -885,70 +882,88 @@ public final class FormSourceCodeGenerator {
 
     final boolean borderNone = borderType.equals(BorderType.NONE);
     if (!borderNone || borderTitle != null) {
-
-      if (Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) {
-        generateIdeaTitledBorder(variable, borderTitle);
-        return;
-      }
-
       startMethodCall(variable, "setBorder");
 
-      startStaticMethodCall(BorderFactory.class, "createTitledBorder");
+      String borderFactoryName = borderFactoryClassName(container, borderTitle);
+
+      startStaticMethodCall(borderFactoryName, "createTitledBorder");
 
       if (!borderNone) {
-        startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
-        if (borderType.equals(BorderType.LINE)) {
-          if (container.getBorderColor() == null) {
-            pushVar("java.awt.Color.black");
-          }
-          else {
-            pushColor(container.getBorderColor());
-          }
-        }
-        else if (borderType.equals(BorderType.EMPTY) && borderSize != null) {
-          push(borderSize.top);
-          push(borderSize.left);
-          push(borderSize.bottom);
-          push(borderSize.right);
-        }
-        endMethod();
+        pushBorderFactoryMethod(container, borderType, borderSize, borderFactoryMethodName);
       }
-      else if (isCustomBorder(container)) {
-        push((String) null);
+      else {
+        push("null");
       }
-
-      push(borderTitle);
-
-      if (isCustomBorder(container)) {
-        push(container.getBorderTitleJustification(), ourTitleJustificationMap);
-        push(container.getBorderTitlePosition(), ourTitlePositionMap);
-        if (container.getBorderTitleFont() != null || container.getBorderTitleColor() != null) {
-          if (container.getBorderTitleFont() == null) {
-            push((String) null);
-          }
-          else {
-            pushFont(variable, container.getBorderTitleFont(), "getFont");
-          }
-          if (container.getBorderTitleColor() != null) {
-            pushColor(container.getBorderTitleColor());
-          }
-        }
-      }
+      pushBorderProperties(container, variable, borderTitle);
 
       endMethod(); // createTitledBorder
-
       endMethod(); // setBorder
     }
   }
 
-  private void generateIdeaTitledBorder(String variable, StringDescriptor borderTitle) {
-    startMethodCall(variable, "setBorder");
-    startStaticMethodCall(IdeBorderFactory.class, "createTitledBorder");
-    push(borderTitle);
-    endMethod();
-    endMethod();
+  @NotNull
+  private String borderFactoryClassName(LwContainer container, StringDescriptor borderTitle) {
+    StringDescriptor titledBorderFactoryDescriptor =
+      (StringDescriptor)container.getDelegeeClientProperties().get(AsmCodeGenerator.ourBorderFactoryClientProperty);
+
+    boolean useIdeBorderFactory =
+      borderTitle != null && Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue();
+
+    if (titledBorderFactoryDescriptor == null && useIdeBorderFactory) {
+      titledBorderFactoryDescriptor  = StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      container.getDelegeeClientProperties().put(AsmCodeGenerator.ourBorderFactoryClientProperty, titledBorderFactoryDescriptor);
+    }
+    boolean isCustomFactory = titledBorderFactoryDescriptor != null && !titledBorderFactoryDescriptor.getValue().isEmpty();
+
+    return isCustomFactory ?
+           titledBorderFactoryDescriptor.getValue().replace('$', '.') :
+           BorderFactory.class.getName();
   }
 
+  private void pushBorderProperties(LwContainer container, String variable, StringDescriptor borderTitle) {
+    push(borderTitle);
+    push(container.getBorderTitleJustification(), ourTitleJustificationMap);
+    push(container.getBorderTitlePosition(), ourTitlePositionMap);
+    pushFont(container, variable);
+    pushColor(container);
+  }
+
+  private void pushColor(LwContainer container) {
+    if (container.getBorderTitleColor() == null) {
+      push((String) null);
+    }
+    else {
+      pushColor(container.getBorderTitleColor());
+    }
+  }
+
+  private void pushFont(LwContainer container, String variable) {
+    if (container.getBorderTitleFont() == null) {
+      push((String) null);
+    }
+    else {
+      pushFont(variable, container.getBorderTitleFont(), "getFont");
+    }
+  }
+
+  private void pushBorderFactoryMethod(LwContainer container, BorderType borderType, Insets borderSize, String borderFactoryMethodName) {
+    startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
+    if (borderType.equals(BorderType.LINE)) {
+      if (container.getBorderColor() == null) {
+        pushVar("java.awt.Color.black");
+      }
+      else {
+        pushColor(container.getBorderColor());
+      }
+    }
+    else if (borderType.equals(BorderType.EMPTY) && borderSize != null) {
+      push(borderSize.top);
+      push(borderSize.left);
+      push(borderSize.bottom);
+      push(borderSize.right);
+    }
+    endMethod();
+  }
 
   private static boolean isCustomBorder(final LwContainer container) {
     return container.getBorderTitleJustification() != 0 || container.getBorderTitlePosition() != 0 ||
@@ -1098,7 +1113,7 @@ public final class FormSourceCodeGenerator {
     }
     else {
       myNeedGetMessageFromBundle = true;
-      startMethodCall("this", getMessageFromBundleMethod);
+      startMethodCall("this", AsmCodeGenerator.GET_MESSAGE_FROM_BUNDLE);
       push(descriptor.getBundleName());
       push(descriptor.getKey());
       endMethod();
@@ -1271,15 +1286,19 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack.push(Boolean.TRUE);
   }
 
-  private void startStaticMethodCall(final Class aClass, @NonNls final String methodName) {
+  private void startStaticMethodCall(final String fullClassName, @NonNls final String methodName) {
     checkParameter();
 
-    myBuffer.append(aClass.getName());
+    myBuffer.append(fullClassName);
     myBuffer.append('.');
     myBuffer.append(methodName);
     myBuffer.append('(');
 
     myIsFirstParameterStack.push(Boolean.TRUE);
+  }
+
+  private void startStaticMethodCall(final Class aClass, @NonNls final String methodName) {
+    startStaticMethodCall(aClass.getCanonicalName(), methodName);
   }
 
   void endMethod() {

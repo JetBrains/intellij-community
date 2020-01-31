@@ -105,6 +105,12 @@ import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.re
  * @author traff, oleg
  */
 public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
+  /**
+   * The address that IDE uses to listen for incoming connections from Python
+   * Console script started in the "client mode".
+   */
+  private static final String LOCALHOST = "localhost";
+
   public static final String WORKING_DIR_AND_PYTHON_PATHS = "WORKING_DIR_AND_PYTHON_PATHS";
   public static final String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                      "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
@@ -404,7 +410,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       Map<String, String> envs = generalCommandLine.getEnvironment();
       EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
 
-      PydevConsoleCommunicationServer communicationServer = new PydevConsoleCommunicationServer(myProject, port);
+      PydevConsoleCommunicationServer communicationServer = new PydevConsoleCommunicationServer(myProject, LOCALHOST, port);
       myPydevConsoleCommunication = communicationServer;
       try {
         communicationServer.serve();

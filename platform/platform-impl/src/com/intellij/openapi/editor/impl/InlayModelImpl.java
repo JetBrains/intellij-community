@@ -213,7 +213,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
   @Override
   public List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above) {
     int visibleLineCount = myEditor.getVisibleLineCount();
-    if (visualLine < 0 || visualLine >= visibleLineCount) return Collections.emptyList();
+    if (visualLine < 0 || visualLine >= visibleLineCount || myBlockElementsTree.size() == 0) return Collections.emptyList();
     List<BlockInlayImpl> result = new ArrayList<>();
     int startOffset = myEditor.visualLineStartOffset(visualLine);
     int endOffset = visualLine == visibleLineCount - 1 ? myEditor.getDocument().getTextLength()

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyUnresolvedAccessChecker")
 
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
@@ -13,6 +13,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
@@ -26,9 +28,11 @@ fun checkUnresolvedReference(
   val referenceNameElement = expression.referenceNameElement ?: return
   val referenceName = expression.referenceName ?: return
 
-  val resolveResult = GrUnresolvedAccessChecker.getBestResolveResult(expression)
-  if (resolveResult.element != null) {
-    if (!GrUnresolvedAccessChecker.isStaticOk(resolveResult)) {
+  val parent = expression.parent
+  val results: Collection<GroovyResolveResult> = getBestResolveResults(expression)
+  if (results.isNotEmpty()) {
+    val staticsOk = results.all(GrUnresolvedAccessChecker::isStaticOk)
+    if (!staticsOk) {
       highlightSink.registerProblem(referenceNameElement, LIKE_UNKNOWN_SYMBOL, message("cannot.reference.non.static", referenceName))
     }
     return
@@ -42,7 +46,6 @@ fun checkUnresolvedReference(
   if (!highlightIfMissingMethodsDeclared && GrUnresolvedAccessChecker.areMissingMethodsDeclared(expression)) return
 
   val actions = ArrayList<IntentionAction>()
-  val parent = expression.parent
   if (parent is GrMethodCall) {
     actions += GroovyQuickFixFactory.getInstance().createGroovyStaticImportMethodFix(parent)
   }
@@ -63,4 +66,18 @@ fun checkUnresolvedReference(
   UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, registrar)
   QuickFixFactory.getInstance().registerOrderEntryFixes(registrar, expression)
   highlightSink.registerProblem(referenceNameElement, LIKE_UNKNOWN_SYMBOL, message("cannot.resolve", referenceName), actions)
+}
+
+private fun getBestResolveResults(ref: GroovyReference): Collection<GroovyResolveResult> = getBestResolveResults(ref.resolve(false))
+
+private fun getBestResolveResults(results: Collection<GroovyResolveResult>): Collection<GroovyResolveResult> {
+  val staticsOk: Collection<GroovyResolveResult> = results.filter(GroovyResolveResult::isStaticsOK)
+  if (staticsOk.isEmpty()) {
+    return results
+  }
+  val accessibleStaticsOk: Collection<GroovyResolveResult> = staticsOk.filter(GroovyResolveResult::isAccessible)
+  if (accessibleStaticsOk.isEmpty()) {
+    return staticsOk
+  }
+  return accessibleStaticsOk
 }

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -238,7 +239,7 @@ public class NullityInferrer {
     }
   }
 
-  public void collect(List<? super UsageInfo> usages) {
+  void collect(List<? super UsageInfo> usages) {
     collect(usages, true);
     collect(usages, false);
   }
@@ -246,10 +247,12 @@ public class NullityInferrer {
   private void collect(List<? super UsageInfo> usages, boolean nullable) {
     final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> set = nullable ? myNullableSet : myNotNullSet;
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> elementPointer : set) {
-      final PsiModifierListOwner element = elementPointer.getElement();
-      if (element != null && !shouldIgnore(element)) {
-        usages.add(nullable ? new NullableUsageInfo(element) : new NotNullUsageInfo(element));
-      }
+      ReadAction.run(() -> {
+        PsiModifierListOwner element = elementPointer.getElement();
+        if (element != null && !shouldIgnore(element)) {
+          usages.add(nullable ? new NullableUsageInfo(element) : new NotNullUsageInfo(element));
+        }
+      });
     }
   }
 

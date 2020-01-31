@@ -68,15 +68,26 @@ def create_default_context(
     cadata: Union[Text, bytes, None] = ...,
 ) -> SSLContext: ...
 
-def _create_unverified_context(protocol: int = ..., *,
-                               cert_reqs: int = ...,
-                               check_hostname: bool = ...,
-                               purpose: Any = ...,
-                               certfile: Optional[str] = ...,
-                               keyfile: Optional[str] = ...,
-                               cafile: Optional[str] = ...,
-                               capath: Optional[str] = ...,
-                               cadata: Union[Text, bytes, None] = ...) -> SSLContext: ...
+if sys.version_info >= (3, 7):
+    def _create_unverified_context(protocol: int = ..., *,
+                                   cert_reqs: int = ...,
+                                   check_hostname: bool = ...,
+                                   purpose: Any = ...,
+                                   certfile: Optional[str] = ...,
+                                   keyfile: Optional[str] = ...,
+                                   cafile: Optional[str] = ...,
+                                   capath: Optional[str] = ...,
+                                   cadata: Union[Text, bytes, None] = ...) -> SSLContext: ...
+else:
+    def _create_unverified_context(protocol: int = ..., *,
+                                   cert_reqs: Optional[int] = ...,
+                                   check_hostname: bool = ...,
+                                   purpose: Any = ...,
+                                   certfile: Optional[str] = ...,
+                                   keyfile: Optional[str] = ...,
+                                   cafile: Optional[str] = ...,
+                                   capath: Optional[str] = ...,
+                                   cadata: Union[Text, bytes, None] = ...) -> SSLContext: ...
 _create_default_https_context: Callable[..., SSLContext]
 
 if sys.version_info >= (3, 3):
@@ -267,8 +278,10 @@ class SSLContext:
         sni_callback: Optional[Callable[[SSLObject, str, SSLContext], Union[None, int]]]
         sslobject_class: Type[SSLObject]
     def set_npn_protocols(self, protocols: List[str]) -> None: ...
-    def set_servername_callback(self,
-                                server_name_callback: Optional[_SrvnmeCbType]) -> None: ...
+    if sys.version_info >= (3, 7):
+        def set_servername_callback(self, server_name_callback: Optional[_SrvnmeCbType]) -> None: ...
+    else:
+        def set_servername_callback(self, __method: Optional[_SrvnmeCbType]) -> None: ...
     def load_dh_params(self, dhfile: str) -> None: ...
     def set_ecdh_curve(self, curve_name: str) -> None: ...
     def wrap_socket(self, sock: socket.socket, server_side: bool = ...,

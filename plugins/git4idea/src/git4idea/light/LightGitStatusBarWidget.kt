@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.light
 
-import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.*
 import com.intellij.util.Consumer
 import java.awt.Component
@@ -18,7 +16,6 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
         statusBar?.updateWidget(ID())
       }
     }, this)
-    Disposer.register(this, lightGitTracker)
   }
 
   override fun ID(): String = "light.edit.git"
@@ -44,9 +41,9 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
   override fun dispose() = Unit
 }
 
-class LightGitStatusBarWidgetProvider: StatusBarWidgetProvider {
+class LightGitStatusBarWidgetProvider : StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? {
-    return LightGitStatusBarWidget(LightGitTracker(LightEditService.getInstance()))
+    return LightGitStatusBarWidget(LightGitTracker.getInstance())
   }
 
   override fun isCompatibleWith(frame: IdeFrame): Boolean = frame is LightEditFrame

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -68,7 +69,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
 
     if (manager.isSubCoverageActive()) {
-      return coverageInfo.coveredLineCount > 0 ? "covered" : null;
+      return coverageInfo.coveredLineCount > 0 ? ExecutionBundle.message("coverage.view.text.covered") : null;
     }
 
     final String filesCoverageInfo = getFilesCoverageInformationString(coverageInfo);
@@ -118,7 +119,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
 
     if (manager.isSubCoverageActive()) {
-      return coverageInfo.coveredLineCount > 0 ? "covered" : null;
+      return coverageInfo.coveredLineCount > 0 ? ExecutionBundle.message("coverage.view.text.covered") : null;
     }
 
     return getLinesCoverageInformationString(coverageInfo);
@@ -398,7 +399,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
   @Nullable
   protected String getLinesCoverageInformationString(@NotNull final FileCoverageInfo info) {
-    return calcCoveragePercentage(info) + "% lines covered";
+    return ExecutionBundle.message("coverage.view.text.lines.covered", calcCoveragePercentage(info));
   }
 
   protected static int calcCoveragePercentage(FileCoverageInfo info) {
@@ -411,7 +412,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
   @Nullable
   protected String getFilesCoverageInformationString(@NotNull final DirCoverageInfo info) {
-    return calcPercent(info.coveredFilesCount, info.totalFilesCount) + "% files";
+    return ExecutionBundle.message("coverage.view.text.files.covered", calcPercent(info.coveredFilesCount, info.totalFilesCount));
   }
 
   @Nullable

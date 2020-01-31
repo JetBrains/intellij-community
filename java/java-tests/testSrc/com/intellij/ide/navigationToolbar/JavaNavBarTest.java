@@ -32,6 +32,11 @@ public class JavaNavBarTest extends LightJavaCodeInsightFixtureTestCase {
     assertNavBarModel("src", "LambdaExpression", "foo", "Lambda");
   }
 
+  public void testMultipleClasses() {
+    myFixture.configureByFile("multipleClasses.java");
+    assertNavBarModel("src", "multipleClasses.java", "Bar");
+  }
+
   public void assertNavBarModel(String... expectedItems) {
     NavBarModel model = new NavBarModel(myFixture.getProject());
     model.updateModel(((EditorEx)myFixture.getEditor()).getDataContext());

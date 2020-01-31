@@ -213,8 +213,27 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 ApplicationBundle.message("wrapping.text.blocks") );
 
       String groupName = ApplicationBundle.message("wrapping.fields.annotation");
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION",
-                                ApplicationBundle.message("checkbox.do.not.wrap.after.single.annotation"), groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", ApplicationBundle.message("checkbox.do.not.wrap.after.single.annotation"), groupName);
+
+      // Record components
+      String recordComponentsGroup = ApplicationBundle.message("wrapping.record.components");
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "RECORD_COMPONENTS_WRAP",
+                                recordComponentsGroup,
+                                null,
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_MULTILINE_RECORDS",
+                                ApplicationBundle.message("wrapping.align.when.multiline"),
+                                recordComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                recordComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "RPAREN_ON_NEW_LINE_IN_RECORD_HEADER",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                recordComponentsGroup);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();

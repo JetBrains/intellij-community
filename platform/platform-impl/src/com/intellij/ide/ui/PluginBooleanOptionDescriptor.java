@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -47,12 +47,14 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   @Override
   public void setOptionState(boolean enabled) {
     Collection<IdeaPluginDescriptor> autoSwitchedIds = enabled ? getPluginsIdsToEnable(plugin) : getPluginsIdsToDisable(plugin);
-    PluginManager.getInstance().enablePlugins(autoSwitchedIds, enabled);
+    boolean enabledWithoutRestart = PluginEnabler.enablePlugins(autoSwitchedIds, enabled);
     if (autoSwitchedIds.size() > 1) {
       showAutoSwitchNotification(autoSwitchedIds, enabled);
     }
 
-    ourRestartNeededNotifier.showNotification();
+    if (!enabledWithoutRestart) {
+      ourRestartNeededNotifier.showNotification();
+    }
   }
 
   private void showAutoSwitchNotification(@NotNull Collection<IdeaPluginDescriptor> autoSwitchedPlugins, boolean enabled) {

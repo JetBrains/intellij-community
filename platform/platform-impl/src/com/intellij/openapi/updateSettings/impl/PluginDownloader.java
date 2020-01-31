@@ -327,15 +327,16 @@ public final class PluginDownloader {
   }
 
   // creators-converters
-
   public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor) throws IOException {
     return createDownloader(descriptor, null, null);
   }
 
   @NotNull
-  public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
-                                                  @Nullable String host,
-                                                  @Nullable BuildNumber buildNumber) throws IOException {
+  public static PluginDownloader createDownloader(
+    @NotNull IdeaPluginDescriptor descriptor,
+    @Nullable String host,
+    @Nullable BuildNumber buildNumber
+  ) throws IOException {
     String url;
     try {
       if (host != null && descriptor instanceof PluginNode) {
@@ -345,26 +346,29 @@ public final class PluginDownloader {
         }
       }
       else {
-        Application app = ApplicationManager.getApplication();
-        ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-
-        String buildNumberAsString = buildNumber != null ? buildNumber.asString() :
-                                     app != null ? ApplicationInfo.getInstance().getApiVersion() :
-                                     appInfo.getBuild().asString();
-
-        Map<String, String> parameters = new LinkedHashMap<>();
-        parameters.put("action", "download");
+        final Map<String, String> parameters = new HashMap<>();
         parameters.put("id", descriptor.getPluginId().getIdString());
-        parameters.put("build", buildNumberAsString);
+        parameters.put("build", getBuildNumberForDownload(buildNumber));
         parameters.put("uuid", PermanentInstallationID.get());
-        url = Urls.newFromEncoded(appInfo.getPluginsDownloadUrl()).addParameters(parameters).toExternalForm();
+        url = Urls
+          .newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
+          .addParameters(parameters)
+          .toExternalForm();
       }
     }
     catch (URISyntaxException e) {
       throw new IOException(e);
     }
-
     return new PluginDownloader(descriptor, url, buildNumber);
+  }
+
+  @NotNull
+  public static String getBuildNumberForDownload(@Nullable BuildNumber buildNumber) {
+    Application app = ApplicationManager.getApplication();
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    return buildNumber != null ? buildNumber.asString() :
+           app != null ? ApplicationInfo.getInstance().getApiVersion() :
+           appInfo.getBuild().asString();
   }
 
   @NotNull

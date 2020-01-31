@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.MouseListener;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+// used externally - cannot be final
 public class JBTabsPaneImpl implements TabbedPane {
   private final JBEditorTabsBase myTabs;
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
@@ -232,10 +233,5 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   public JBTabs getTabs() {
     return myTabs;
-  }
-
-  @Override
-  public boolean isDisposed() {
-    return myTabs.isDisposed();
   }
 }

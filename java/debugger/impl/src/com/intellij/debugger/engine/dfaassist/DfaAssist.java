@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -87,7 +88,10 @@ public class DfaAssist implements DebuggerContextListener {
     if (event == DebuggerSession.Event.DETACHED || event == DebuggerSession.Event.DISPOSE) {
       cleanUp();
     }
-    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) return;
+    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
+      cancelComputation();
+      return;
+    }
     SourcePosition sourcePosition = newContext.getSourcePosition();
     if (sourcePosition == null) {
       cleanUp();
@@ -134,11 +138,15 @@ public class DfaAssist implements DebuggerContextListener {
     });
   }
 
-  private void cleanUp() {
+  private void cancelComputation() {
     CancellablePromise<?> promise = myPromise;
     if (promise != null) {
       promise.cancel();
     }
+  }
+
+  private void cleanUp() {
+    cancelComputation();
     ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myInlays));
   }
 
@@ -185,7 +193,7 @@ public class DfaAssist implements DebuggerContextListener {
     if (!locationMatches(element, frame.location())) return null;
     PsiStatement statement = getAnchorStatement(element);
     if (statement == null) return null;
-    PsiCodeBlock body = getCodeBlock(statement);
+    PsiElement body = getCodeBlock(statement);
     if (body == null) return null;
     DebuggerDfaRunner runner = new DebuggerDfaRunner(body, statement, frame);
     return runner.isValid() ? runner : null;
@@ -233,7 +241,10 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   @Nullable
-  private static PsiCodeBlock getCodeBlock(@NotNull PsiStatement statement) {
+  private static PsiElement getCodeBlock(@NotNull PsiStatement statement) {
+    if (statement instanceof PsiWhileStatement || statement instanceof PsiDoWhileStatement) {
+      return statement;
+    }
     PsiElement e = statement;
     while (e != null && !(e instanceof PsiClass) && !(e instanceof PsiFileSystemItem)) {
       e = e.getParent();
@@ -243,8 +254,14 @@ public class DfaAssist implements DebuggerContextListener {
             // We cannot properly restore context if we started from finally, so let's analyze just finally block
             parent instanceof PsiTryStatement && ((PsiTryStatement)parent).getFinallyBlock() == e ||
             parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiLoopStatement) {
-          return (PsiCodeBlock)e;
+          if (parent.getParent() instanceof PsiDoWhileStatement) {
+            return parent.getParent();
+          }
+          return e;
         }
+      }
+      if (e instanceof PsiDoWhileStatement) {
+        return e;
       }
     }
     return null;
@@ -254,7 +271,8 @@ public class DfaAssist implements DebuggerContextListener {
     private final DebuggerContextImpl myContext;
 
     private TurnOffDfaProcessorAction(DebuggerContextImpl context) {
-      super("Turn Off Dataflow Assist", "Switch off dataflow aided debugging for this session", AllIcons.Actions.Cancel);
+      super(DebuggerBundle.message("action.TurnOffDfaAssist.text"),
+            DebuggerBundle.message("action.TurnOffDfaAssist.description"), AllIcons.Actions.Cancel);
       myContext = context;
     }
     @Override

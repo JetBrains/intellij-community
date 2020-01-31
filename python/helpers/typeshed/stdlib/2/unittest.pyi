@@ -207,12 +207,11 @@ class TestCase(Testable):
     def _formatMessage(self, msg: Optional[Text], standardMsg: Text) -> str: ...  # undocumented
     def _getAssertEqualityFunc(self, first: Any, second: Any) -> Callable[..., None]: ...  # undocumented
 
-class FunctionTestCase(Testable):
+class FunctionTestCase(TestCase):
     def __init__(self, testFunc: Callable[[], None],
                  setUp: Optional[Callable[[], None]] = ...,
                  tearDown: Optional[Callable[[], None]] = ...,
                  description: Optional[str] = ...) -> None: ...
-    def run(self, result: TestResult) -> None: ...
     def debug(self) -> None: ...
     def countTestCases(self) -> int: ...
 

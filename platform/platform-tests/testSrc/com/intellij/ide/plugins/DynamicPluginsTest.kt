@@ -32,12 +32,10 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.*
-import org.junit.Assume.assumeFalse
 import java.io.File
 
 @RunsInEdt
@@ -52,12 +50,6 @@ class DynamicPluginsTest {
     val projectRule = ProjectRule()
 
     val receivedNotifications = mutableListOf<UISettings>()
-
-    @JvmStatic
-    @BeforeClass
-    fun check() {
-      assumeFalse(SystemProperties.getBooleanProperty("skip.DynamicPluginsTest", true))
-    }
   }
 
   @Rule
@@ -358,6 +350,31 @@ class DynamicPluginsTest {
 
     UIUtil.dispatchAllInvocationEvents()
     disposable = loadExtensionWithText(textToLoad, DynamicPlugins::class.java.classLoader)
+    Disposer.dispose(disposable)
+  }
+
+  @Test
+  fun disableWithoutRestart() {
+    val pluginId = "disableWithoutRestart" + System.currentTimeMillis()
+    val disposable = loadPluginWithText("""
+      <idea-plugin>
+         <id>$pluginId</id>
+         <extensions defaultExtensionNs="com.intellij">
+           <applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>
+         </extensions>
+      </idea-plugin>""".trimIndent(), DynamicPlugins::class.java.classLoader)
+    assertThat(ServiceManager.getService(MyPersistentComponent::class.java)).isNotNull()
+
+    val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(pluginId))!!
+    val success = PluginEnabler.updatePluginEnabledState(emptyList(), listOf(pluginDescriptor), null)
+    assertThat(success).isTrue()
+    assertThat(pluginDescriptor.isEnabled).isFalse()
+    assertThat(ServiceManager.getService(MyPersistentComponent::class.java)).isNull()
+
+    assertThat(PluginEnabler.updatePluginEnabledState(listOf(pluginDescriptor), emptyList(), null)).isTrue()
+    assertThat(pluginDescriptor.isEnabled).isTrue()
+    assertThat(ServiceManager.getService(MyPersistentComponent::class.java)).isNotNull()
+
     Disposer.dispose(disposable)
   }
 

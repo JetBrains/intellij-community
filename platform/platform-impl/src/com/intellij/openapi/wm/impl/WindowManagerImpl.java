@@ -519,8 +519,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   public void assignFrame(@NotNull ProjectFrameHelper frameHelper, @NotNull Project project) {
     LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
-    frameHelper.setProject(project);
     myProjectToFrame.put(project, frameHelper);
+    frameHelper.setProject(project);
 
     IdeFrameImpl frame = frameHelper.getFrame();
     frame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(project));

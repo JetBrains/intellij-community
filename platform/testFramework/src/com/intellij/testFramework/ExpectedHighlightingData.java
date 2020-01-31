@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -388,7 +388,7 @@ public class ExpectedHighlightingData {
     assertTrue("messageBundles must be provided for bundleMsg tags in test data", bundles.length > 0);
     Object[] params = split.stream().skip(1).toArray();
     for (ResourceBundle bundle : bundles) {
-      String message = CommonBundle.messageOrDefault(bundle, key, null, params);
+      String message = AbstractBundle.messageOrDefault(bundle, key, null, params);
       if (message != null) {
         if (descr != null) fail("Key " + key + " is not unique in bundles for expected highlighting data");
         descr = message;

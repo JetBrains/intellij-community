@@ -134,17 +134,7 @@ public final class NewProjectUtil {
       }
 
       String compileOutput = wizard.getNewCompileOutput();
-      CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        CompilerProjectExtension extension = CompilerProjectExtension.getInstance(newProject);
-        if (extension != null) {
-          String canonicalPath = compileOutput;
-          try {
-            canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
-          }
-          catch (IOException ignored) { }
-          extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
-        }
-      }), null, null);
+      setCompilerOutputPath(newProject, compileOutput);
 
       if (projectBuilder != null) {
         // validate can require project on disk
@@ -192,6 +182,20 @@ public final class NewProjectUtil {
         projectBuilder.cleanup();
       }
     }
+  }
+
+  public static void setCompilerOutputPath(@NotNull Project project, @NotNull String path) {
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
+      if (extension != null) {
+        String canonicalPath = path;
+        try {
+          canonicalPath = FileUtil.resolveShortWindowsName(path);
+        }
+        catch (IOException ignored) { }
+        extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+      }
+    }), null, null);
   }
 
   public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {

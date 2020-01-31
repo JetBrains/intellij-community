@@ -10,7 +10,9 @@ class NullArgumentMapping<out P : CallParameter>(parameter: P) : ArgumentMapping
 
   override val arguments: Arguments = singleNullArgumentList
 
-  override val expectedTypes: List<Pair<PsiType, Argument>> = listOf(Pair(parameter.type, singleNullArgument))
+  override val expectedTypes: List<Pair<PsiType, Argument>> = parameter.type?.let { expectedType ->
+    listOf(Pair(expectedType, singleNullArgument))
+  } ?: emptyList()
 
   override fun targetParameter(argument: Argument): P? = null
 
@@ -18,7 +20,7 @@ class NullArgumentMapping<out P : CallParameter>(parameter: P) : ArgumentMapping
 
   // call `def foo(String a) {}` with `foo()` is actually `foo(null)`
   // Also see https://issues.apache.org/jira/browse/GROOVY-8248
-  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability = Applicability.applicable
+  override fun applicability(): Applicability = Applicability.applicable
 
   private companion object {
     private val singleNullArgument = JustTypeArgument(PsiType.NULL)

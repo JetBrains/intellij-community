@@ -119,7 +119,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
             .icon(Messages.getWarningIcon())
             .yesText(DebuggerBundle.message("button.execute.finally"))
             .noText(DebuggerBundle.message("button.drop.anyway"))
-            .cancelText(CommonBundle.message("button.cancel"))
+            .cancelText(CommonBundle.getCancelButtonText())
             .doNotAsk(
               new DialogWrapper.DoNotAskOption() {
                 @Override

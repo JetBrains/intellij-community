@@ -24,6 +24,7 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,6 @@ public class MoveAnonymousToInnerHandler extends MoveHandlerDelegate {
   @Nullable
   @Override
   public String getActionName(PsiElement @NotNull [] elements) {
-    return "Convert Anonymous to Inner...";
+    return RefactoringBundle.message("convert.anonymous.to.inner.action.name");
   }
 }

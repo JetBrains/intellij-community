@@ -85,7 +85,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
             break;
           }
         }
-      }), "Check if Inline Is Possible...", true, project)) {
+      }), RefactoringBundle.message("inline.conflicts.progress"), true, project)) {
         return;
       }
       if (hasWriteUsages.get()) {

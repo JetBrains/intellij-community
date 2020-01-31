@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import gnu.trove.THashMap;
@@ -31,7 +32,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,24 +46,23 @@ import java.util.Map;
  */
 public class ID<K, V> extends IndexId<K,V> {
   private static final Logger LOG = Logger.getInstance(ID.class);
-  private static final IntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
+  private static final IntObjectMap<ID<?, ?>> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<>();
 
-  private static final Map<ID, PluginId> ourIdToPluginId = Collections.synchronizedMap(new THashMap<>());
+  private static final Map<ID<?, ?>, PluginId> ourIdToPluginId = Collections.synchronizedMap(new THashMap<>());
+  private static final Map<ID<?, ?>, Throwable> ourIdToRegistrationStackTrace = Collections.synchronizedMap(new THashMap<>());
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final short myUniqueId;
 
   static {
-    final File indices = getEnumFile();
+    Path indices = getEnumFile();
     try {
       TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<>();
-      try (BufferedReader reader = new BufferedReader(new FileReader(indices))) {
-        for (int cnt = 1; ; cnt++) {
-          final String name = reader.readLine();
-          if (name == null) break;
-          nameToIdRegistry.put(name, cnt);
-        }
+      List<String> lines = Files.readAllLines(indices, Charset.defaultCharset());
+      for (int i = 0; i < lines.size(); i++) {
+        String name = lines.get(i);
+        nameToIdRegistry.put(name, i + 1);
       }
 
       synchronized (ourNameToIdRegistry) {
@@ -76,9 +82,8 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @NotNull
-  private static File getEnumFile() {
-    final File indexFolder = PathManager.getIndexRoot();
-    return new File(indexFolder, "indices.enum");
+  private static Path getEnumFile() {
+    return PathManager.getIndexRoot().toPath().resolve("indices.enum");
   }
 
   @ApiStatus.Internal
@@ -91,6 +96,8 @@ public class ID<K, V> extends IndexId<K,V> {
 
     PluginId oldPluginId = ourIdToPluginId.put(this, pluginId);
     assert oldPluginId == null : "ID with name '" + name + "' is already registered in " + oldPluginId + " but current caller is " + pluginId;
+
+    ourIdToRegistrationStackTrace.put(this, new Throwable());
   }
 
   private static short stringToId(@NotNull String name) {
@@ -116,20 +123,13 @@ public class ID<K, V> extends IndexId<K,V> {
 
   private static void writeEnumFile() {
     try {
-      final File f = getEnumFile();
-      try (BufferedWriter w = new BufferedWriter(new FileWriter(f))) {
-        final String[] names = new String[ourNameToIdRegistry.size()];
+      final String[] names = new String[ourNameToIdRegistry.size()];
+      ourNameToIdRegistry.forEachEntry((key, value) -> {
+        names[value - 1] = key;
+        return true;
+      });
 
-        ourNameToIdRegistry.forEachEntry((key, value) -> {
-          names[value - 1] = key;
-          return true;
-        });
-
-        for (String name : names) {
-          w.write(name);
-          w.newLine();
-        }
-      }
+      Files.write(getEnumFile(), Arrays.asList(names), Charset.defaultCharset());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -160,9 +160,16 @@ public class ID<K, V> extends IndexId<K,V> {
       String actualPluginIdStr = actualPluginId == null ? null : actualPluginId.getIdString();
       String requiredPluginIdStr = requiredPluginId == null ? null : requiredPluginId.getIdString();
 
-
       if (!Comparing.equal(actualPluginIdStr, requiredPluginIdStr)) {
-        throw new AssertionError("ID with name '" + name + "' requested for plugin " + requiredPluginIdStr + " but registered for " + actualPluginIdStr);
+        Throwable registrationStackTrace = ourIdToRegistrationStackTrace.get(id);
+        String message = "ID with name '" + name +
+                         "' requested for plugin " + requiredPluginIdStr +
+                         " but registered for " + actualPluginIdStr + (registrationStackTrace == null ? " registration stack trace: " : "");
+        if (registrationStackTrace != null) {
+          throw new AssertionError(message, registrationStackTrace);
+        } else {
+          throw new AssertionError(message);
+        }
       }
     }
     return id;
@@ -191,6 +198,7 @@ public class ID<K, V> extends IndexId<K,V> {
   public synchronized static void unloadId(@NotNull ID<?, ?> id) {
     LOG.assertTrue(id.equals(ourRegistry.remove(id.getUniqueId())));
     ourIdToPluginId.remove(id);
+    ourIdToRegistrationStackTrace.remove(id);
   }
 
   public static void dump() {

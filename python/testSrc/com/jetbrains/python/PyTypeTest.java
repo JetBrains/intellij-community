@@ -2315,14 +2315,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-24323
   public void testMethodQualifiedWithUnknownGenericsInstance() {
-    doTest("(object: Any) -> int",
+    doTest("(__value: Any) -> int",
            "my_list = []\n" +
            "expr = my_list.count");
   }
 
   // PY-24323
   public void testMethodQualifiedWithKnownGenericsInstance() {
-    doTest("(object: int) -> int",
+    doTest("(__value: int) -> int",
            "my_list = [1, 2, 2, 3, 3]\n" +
            "expr = my_list.count");
   }

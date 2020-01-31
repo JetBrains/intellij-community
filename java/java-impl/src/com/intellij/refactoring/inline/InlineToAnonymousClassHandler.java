@@ -16,6 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -86,7 +87,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
           inheritors.add(functionalExpression);
         }
       }
-    }), "Searching for class \"" + element.getQualifiedName() + "\" inheritors ...", true, element.getProject())) return false;
+    }), RefactoringBundle.message("inline.anonymous.conflict.progress", element.getQualifiedName()), true, element.getProject())) return false;
     return inheritors.isEmpty();
   }
 
@@ -112,12 +113,13 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
 
     final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(psiClass);
     if (superType == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "java.lang.Object is not found", RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, ExecutionBundle.message("class.not.found.error.message", CommonClassNames.JAVA_LANG_OBJECT), RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;
     }
 
     final Ref<String> errorMessage = new Ref<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))), "Check if inline is possible...", true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))), RefactoringBundle.message(
+      "inline.conflicts.progress"), true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;

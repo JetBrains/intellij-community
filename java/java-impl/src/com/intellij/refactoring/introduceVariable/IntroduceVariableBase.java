@@ -180,7 +180,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                 invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
               }
             },
-            new PsiExpressionTrimRenderer.RenderFunction(), "Expressions", preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
+            new PsiExpressionTrimRenderer.RenderFunction(), RefactoringBundle.message("introduce.target.chooser.expressions.title"), preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
           return;
         }
       }

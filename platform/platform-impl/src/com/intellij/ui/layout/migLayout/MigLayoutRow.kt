@@ -427,6 +427,18 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
     return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
   }
+
+  override fun onGlobalApply(callback: () -> Unit): Row = apply {
+    builder.applyCallbacks.putValue(null, callback)
+  }
+
+  override fun onGlobalReset(callback: () -> Unit): Row = apply {
+    builder.resetCallbacks.putValue(null, callback)
+  }
+
+  override fun onGlobalIsModified(callback: () -> Boolean): Row = apply {
+    builder.isModifiedCallbacks.putValue(null, callback)
+  }
 }
 
 class CellBuilderImpl<T : JComponent> internal constructor(
@@ -464,17 +476,17 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun onApply(callback: () -> Unit): CellBuilder<T> {
-    builder.applyCallbacks.add(callback)
+    builder.applyCallbacks.putValue(component, callback)
     return this
   }
 
   override fun onReset(callback: () -> Unit): CellBuilder<T> {
-    builder.resetCallbacks.add(callback)
+    builder.resetCallbacks.putValue(component, callback)
     return this
   }
 
   override fun onIsModified(callback: () -> Boolean): CellBuilder<T> {
-    builder.isModifiedCallbacks.add(callback)
+    builder.isModifiedCallbacks.putValue(component, callback)
     return this
   }
 

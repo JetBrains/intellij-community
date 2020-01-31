@@ -34,6 +34,7 @@ internal fun isIcon(file: Path): Boolean {
 }
 
 internal fun isImage(file: Path) = ImageExtension.fromName(file.fileName.toString()) != null
+internal fun isImage(file: File) = ImageExtension.fromName(file.name) != null
 
 internal fun imageSize(file: Path): Dimension? {
   val image = loadImage(file)

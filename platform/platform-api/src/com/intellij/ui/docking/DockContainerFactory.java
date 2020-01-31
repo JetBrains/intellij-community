@@ -2,9 +2,12 @@
 package com.intellij.ui.docking;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface DockContainerFactory {
-  DockContainer createContainer(DockableContent<?> content);
+  @NotNull
+  DockContainer createContainer(@Nullable DockableContent<?> content);
 
   interface Persistent extends DockContainerFactory {
     DockContainer loadContainerFrom(Element element);

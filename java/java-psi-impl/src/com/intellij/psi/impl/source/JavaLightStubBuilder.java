@@ -156,6 +156,11 @@ public class JavaLightStubBuilder extends LightStubBuilder {
                || type == JavaTokenType.INTERFACE_KEYWORD) {
         return (result = false);
       }
+      // if record is inside lazy parseable element, tokens are not remapped and record token is still identifier
+      // This token combination may be "record RecordName ("
+      else if (preLast == JavaTokenType.IDENTIFIER && last == JavaTokenType.IDENTIFIER && type == JavaTokenType.LPARENTH) {
+        return (result = false);
+      }
 
       preLast = last;
       last = type;

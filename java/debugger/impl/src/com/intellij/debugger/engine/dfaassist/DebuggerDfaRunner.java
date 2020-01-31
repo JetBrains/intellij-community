@@ -40,14 +40,14 @@ class DebuggerDfaRunner extends DataFlowRunner {
                                CommonClassNames.JAVA_UTIL_LINKED_LIST,
                                CommonClassNames.JAVA_UTIL_HASH_MAP,
                                "java.util.TreeMap");
-  private final @NotNull PsiCodeBlock myBody;
+  private final @NotNull PsiElement myBody;
   private final @NotNull PsiStatement myStatement;
   private final @NotNull Project myProject;
   private final @Nullable ControlFlow myFlow;
   private final @Nullable DfaInstructionState myStartingState;
   private final long myModificationStamp;
 
-  DebuggerDfaRunner(@NotNull PsiCodeBlock body, @NotNull PsiStatement statement, @NotNull StackFrame frame) {
+  DebuggerDfaRunner(@NotNull PsiElement body, @NotNull PsiStatement statement, @NotNull StackFrame frame) {
     super(body.getProject(), body.getParent() instanceof PsiClassInitializer ? ((PsiClassInitializer)body.getParent()).getContainingClass() : body);
     myBody = body;
     myStatement = statement;

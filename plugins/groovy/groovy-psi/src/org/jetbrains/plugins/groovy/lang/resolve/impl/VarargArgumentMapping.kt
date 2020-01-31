@@ -5,6 +5,7 @@ import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.containers.ComparatorUtil.min
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.ArgumentApplicability
@@ -55,20 +56,27 @@ class VarargArgumentMapping<out P : CallParameter>(
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() {
       val (positional, varargs) = mapping ?: return emptyList()
-      val positionalSequence = positional.asSequence().map { (argument, parameter) -> Pair(parameter.type, argument) }
-      val varargsSequence = varargs.asSequence().map { Pair(varargType, it) }
-      return (positionalSequence + varargsSequence).asIterable()
+      val result = ArrayList<Pair<PsiType, Argument>>()
+      positional.mapNotNullTo(result) { (argument, parameter) ->
+        parameter.type?.let { expectedType ->
+          Pair(expectedType, argument)
+        }
+      }
+      varargs.mapTo(result) {
+        Pair(varargType, it)
+      }
+      return result
     }
 
-  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability {
+  override fun applicability(): Applicability {
     val (positional, varargs) = mapping ?: return Applicability.inapplicable
 
-    val mapApplicability = mapApplicability(positional, substitutor, erase, context)
+    val mapApplicability = mapApplicability(positional, context)
     if (mapApplicability === Applicability.inapplicable) {
       return Applicability.inapplicable
     }
 
-    val varargApplicability = varargApplicability(parameterType(varargType, substitutor, erase), varargs, context)
+    val varargApplicability = varargApplicability(varargs, context)
     if (varargApplicability === Applicability.inapplicable) {
       return Applicability.inapplicable
     }
@@ -76,7 +84,8 @@ class VarargArgumentMapping<out P : CallParameter>(
     return min(mapApplicability, varargApplicability)
   }
 
-  private fun varargApplicability(parameterType: PsiType?, varargs: Collection<Argument>, context: PsiElement): Applicability {
+  private fun varargApplicability(varargs: Collection<Argument>, context: PsiElement): Applicability {
+    val parameterType = TypeConversionUtil.erasure(varargType)
     for (vararg in varargs) {
       val argumentAssignability = argumentApplicability(parameterType, vararg.runtimeType, context)
       if (argumentAssignability != Applicability.applicable) {

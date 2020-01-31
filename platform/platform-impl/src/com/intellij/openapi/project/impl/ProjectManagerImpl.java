@@ -308,7 +308,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     boolean succeed = false;
     try {
-      project.registerComponents();
+      ProjectLoadHelper.registerComponents(project);
       project.getStateStore().setPath(file, isRefreshVfsNeeded, template);
       project.init(indicator);
       succeed = true;
@@ -676,9 +676,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           ProjectImpl projectImpl = (ProjectImpl)project;
           projectImpl.stopServicePreloading();
           projectImpl.disposeEarlyDisposable();
-          projectImpl.startDispose();
         }
-        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (project instanceof ProjectImpl) {
+            ((ProjectImpl)project).startDispose();
+          }
+          Disposer.dispose(project);
+        });
       }
       return true;
     }

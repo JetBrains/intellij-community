@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.AbstractJavaMemberCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMemberNode;
@@ -40,7 +41,7 @@ abstract class SafeDeleteJavaCalleeChooser extends AbstractJavaMemberCallerChoos
   SafeDeleteJavaCalleeChooser(PsiMember member,
                                      Project project,
                                      ArrayList<UsageInfo> result) {
-    super(member, project, "Select Members To Cascade Safe Delete", null, members -> result.addAll(ContainerUtil.map(members, m -> {
+    super(member, project, RefactoringBundle.message("safe.delete.select.members.to.propagate.dialog.title"), null, members -> result.addAll(ContainerUtil.map(members, m -> {
       return new SafeDeleteReferenceJavaDeleteUsageInfo(m, m, true);
     })));
     myProject = project;

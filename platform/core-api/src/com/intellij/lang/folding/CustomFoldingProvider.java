@@ -3,6 +3,7 @@ package com.intellij.lang.folding;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public abstract class CustomFoldingProvider {
   /**
    * @return A description string shown in "Surround With" action.
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getDescription();
 
   public abstract String getStartString();

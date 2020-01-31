@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -11,7 +12,6 @@ import com.intellij.openapi.preview.PreviewPanelProvider;
 import com.intellij.openapi.preview.PreviewProviderId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
@@ -31,9 +31,9 @@ public final class FilePreviewPanelProvider extends PreviewPanelProvider<Virtual
 
   public FilePreviewPanelProvider(@NotNull Project project) {
     super(ID);
+
     myProject = project;
-    myEditorsSplitters = new MyEditorsSplitters((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project), false);
-    Disposer.register(this, myEditorsSplitters);
+    myEditorsSplitters = new MyEditorsSplitters((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project), false, this);
     myEditorsSplitters.createCurrentWindow();
     myWindow = myEditorsSplitters.getCurrentWindow();
     myWindow.setTabsPlacement(UISettings.TABS_NONE);
@@ -103,8 +103,8 @@ public final class FilePreviewPanelProvider extends PreviewPanelProvider<Virtual
   }
 
   private final class MyEditorsSplitters extends EditorsSplitters {
-    private MyEditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer) {
-      super(manager, createOwnDockableContainer);
+    private MyEditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer, @NotNull Disposable parentDisposable) {
+      super(manager, createOwnDockableContainer, parentDisposable);
     }
 
     @Override
@@ -115,7 +115,7 @@ public final class FilePreviewPanelProvider extends PreviewPanelProvider<Virtual
     @NotNull
     @Override
     protected EditorWindow createEditorWindow() {
-      return new EditorWindow(this) {
+      return new EditorWindow(this, parentDisposable) {
         @Override
         protected void onBeforeSetEditor(VirtualFile file) {
           for (EditorWithProviderComposite composite : getEditorComposites()) {

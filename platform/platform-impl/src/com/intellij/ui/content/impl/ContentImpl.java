@@ -14,6 +14,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private long myExecutionId;
   private String myHelpId;
 
-  public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
+  public ContentImpl(JComponent component, @Nls(capitalization = Nls.Capitalization.Title) String displayName, boolean isPinnable) {
     myComponent = component;
     myDisplayName = displayName;
     myPinnable = isPinnable;

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.components.ComponentConfig;
@@ -194,6 +194,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       if (LOG.isDebugEnabled()) {
         LOG.debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
       }
+      List<Element> dependsElements = element.getChildren("depends");
+      for (Element dependsElement : dependsElements) {
+        readPluginDependency(basePath, context, dependsElement);
+      }
+      if (myPluginDependencies != null) {
+        int size = XmlReader.collapseDuplicateDependencies(myPluginDependencies);
+        XmlReader.collectDependentPluginIds(this, size);
+      }
       return false;
     }
 
@@ -265,44 +273,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           break;
 
         case "depends":
-          String dependencyIdString = child.getTextTrim();
-          if (!dependencyIdString.isEmpty()) {
-            PluginId dependencyId = PluginId.getId(dependencyIdString);
-            boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
-            boolean isAvailable = true;
-            IdeaPluginDescriptorImpl dependencyDescriptor = null;
-            if (context.isPluginDisabled(dependencyId) || context.isPluginIncomplete(dependencyId)) {
-              if (!isOptional) {
-                markAsIncomplete(context);
-              }
-
-              isAvailable = false;
-            }
-            else {
-              dependencyDescriptor = context.parentContext.result.idMap.get(dependencyId);
-              if (dependencyDescriptor != null && context.isBroken(dependencyDescriptor)) {
-                if (!isOptional) {
-                  context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
-                  markAsIncomplete(context);
-                  return false;
-                }
-
-                isAvailable = false;
-              }
-            }
-
-            if (myPluginDependencies == null) {
-              myPluginDependencies = new ArrayList<>();
-            }
-
-            PluginDependency dependency = new PluginDependency();
-            dependency.pluginId = dependencyId;
-            dependency.optional = isOptional;
-            dependency.available = isAvailable;
-            dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
-            dependency.dependency = dependencyDescriptor;
-            myPluginDependencies.add(dependency);
-          }
+          if (!readPluginDependency(basePath, context, child)) return false;
           break;
 
         case "category":
@@ -361,9 +332,52 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     if (myPluginDependencies != null) {
-      XmlReader.readDependencies(rootDescriptor, this, myPluginDependencies, context, pathResolver);
+      XmlReader.readDependencies(rootDescriptor, this, context, pathResolver);
     }
 
+    return true;
+  }
+
+  private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorLoadingContext context, Element child) {
+    String dependencyIdString = child.getTextTrim();
+    if (dependencyIdString.isEmpty()) {
+      return true;
+
+    }
+    PluginId dependencyId = PluginId.getId(dependencyIdString);
+    boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
+    boolean isAvailable = true;
+    IdeaPluginDescriptorImpl dependencyDescriptor = null;
+    if (context.isPluginDisabled(dependencyId) || context.isPluginIncomplete(dependencyId)) {
+      if (!isOptional) {
+        markAsIncomplete(context);
+      }
+
+      isAvailable = false;
+    }
+    else {
+      dependencyDescriptor = context.parentContext.result.idMap.get(dependencyId);
+      if (dependencyDescriptor != null && context.isBroken(dependencyDescriptor)) {
+        if (!isOptional) {
+          context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
+          markAsIncomplete(context);
+          return false;
+        }
+
+        isAvailable = false;
+      }
+    }
+
+    PluginDependency dependency = new PluginDependency();
+    dependency.pluginId = dependencyId;
+    dependency.optional = isOptional;
+    dependency.available = isAvailable;
+    dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
+    dependency.dependency = dependencyDescriptor;
+    if (myPluginDependencies == null) {
+      myPluginDependencies = new ArrayList<>();
+    }
+    myPluginDependencies.add(dependency);
     return true;
   }
 
@@ -686,7 +700,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       result = myDescriptionChildText;
     }
     else {
-      result = CommonBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
+      result = AbstractBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
     }
     myDescription = result;
     return result;
@@ -1130,14 +1144,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       }
     }
 
-    static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                     @NotNull IdeaPluginDescriptorImpl descriptor,
-                                     @NotNull List<PluginDependency> dependencies,
-                                     @NotNull DescriptorLoadingContext context,
-                                     @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver) {
-      List<String> visitedFiles = null;
-
-      // https://youtrack.jetbrains.com/issue/IDEA-206274
+    static int collapseDuplicateDependencies(List<PluginDependency> dependencies) {
       int size = 0;
       for (int i = 0, n = dependencies.size(); i < n; i++) {
         PluginDependency dependency = dependencies.get(i);
@@ -1155,6 +1162,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
             break;
           }
         }
+      }
+      return size;
+    }
+
+    static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                     @NotNull IdeaPluginDescriptorImpl descriptor,
+                                     @NotNull DescriptorLoadingContext context,
+                                     @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver) {
+      List<String> visitedFiles = null;
+      List<PluginDependency> dependencies = descriptor.myPluginDependencies;
+
+      // https://youtrack.jetbrains.com/issue/IDEA-206274
+      int size = collapseDuplicateDependencies(dependencies);
+
+      for (PluginDependency dependency : dependencies) {
+        if (dependency == null) continue;
 
         // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
         String configFile = dependency.configFile;
@@ -1202,7 +1225,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         }
       }
 
-      PluginId[] dependentPlugins = new PluginId[size];
+      collectDependentPluginIds(descriptor, size);
+    }
+
+    static void collectDependentPluginIds(@NotNull IdeaPluginDescriptorImpl descriptor, int dependencyListSize) {
+      List<PluginDependency> dependencies = descriptor.myPluginDependencies;
+      PluginId[] dependentPlugins = new PluginId[dependencyListSize];
       int optionalSize = 0;
       int index = 0;
       for (PluginDependency dependency : dependencies) {

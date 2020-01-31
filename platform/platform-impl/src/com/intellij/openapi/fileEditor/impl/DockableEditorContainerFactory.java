@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
@@ -15,6 +14,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
   public static final String TYPE = "file-editors";
@@ -27,14 +27,15 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
     myFileEditorManager = fileEditorManager;
   }
 
+  @NotNull
   @Override
-  public DockContainer createContainer(DockableContent content) {
+  public DockContainer createContainer(@Nullable DockableContent content) {
     return createContainer(false);
   }
 
   private DockContainer createContainer(boolean loadingState) {
     Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
-    EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, false) {
+    EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, false, myProject) {
       @Override
       protected void afterFileClosed(@NotNull VirtualFile file) {
         containerRef.get().fireContentClosed(file);
@@ -59,8 +60,8 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
     if (!loadingState) {
       splitters.createCurrentWindow();
     }
-    final DockableEditorTabbedContainer container = new DockableEditorTabbedContainer(myProject, splitters, true);
-    Disposer.register(container, splitters);
+
+    DockableEditorTabbedContainer container = new DockableEditorTabbedContainer(myProject, splitters, true);
     containerRef.set(container);
     container.getSplitters().startListeningFocus();
     return container;

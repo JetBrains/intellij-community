@@ -190,11 +190,6 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-19522
-  public void testCsvRegisterDialect() {
-    doMultiFileTest("b.py");
-  }
-
   // PY-21083
   public void testFloatFromhex() {
     doTest();

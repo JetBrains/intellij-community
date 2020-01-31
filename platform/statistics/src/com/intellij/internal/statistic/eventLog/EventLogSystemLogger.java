@@ -17,10 +17,10 @@ public class EventLogSystemLogger {
     logEvent(recorderId, "whitelist.updated", data);
   }
 
-  public static void logFilesSend(@NotNull String recorderId, int total, int send, int failed) {
+  public static void logFilesSend(@NotNull String recorderId, int total, int succeed, int failed) {
     final FeatureUsageData data = new FeatureUsageData().
       addData("total", total).
-      addData("send", send).
+      addData("send", succeed + failed).
       addData("failed", failed);
     logEvent(recorderId, "logs.send", data);
   }

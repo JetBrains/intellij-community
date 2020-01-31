@@ -131,7 +131,10 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       int[] i = {0};
-      List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(method.getParameterList().getParameters(), p -> new ParameterInfoImpl(i[0]++, p.getName(), p.getType()));
+      List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(method.getParameterList().getParameters(),
+                                                                 p -> ParameterInfoImpl.create(i[0]++)
+                                                                   .withName(p.getName())
+                                                                   .withType(p.getType()));
       int index = method.getParameterList().getParameterIndex(candidate.methodParameter);
       if (index == -1) return;
 
@@ -142,9 +145,10 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         candidate = candidate.getSuperMethodVarianceCandidate(superMethod);
         clone = suggestMethodParameterType(candidate, isExtends);
         i[0] = 0;
-        parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(), p -> new ParameterInfoImpl(i[0]++, p.getName(), p.getType()));
+        parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(), 
+                                           p -> ParameterInfoImpl.create(i[0]++).withName(p.getName()).withType(p.getType()));
       }
-      parameterInfos.set(index, new ParameterInfoImpl(index, candidate.methodParameter.getName(), clone));
+      parameterInfos.set(index, ParameterInfoImpl.create(index).withName(candidate.methodParameter.getName()).withType(clone));
 
       JavaChangeSignatureDialog
         dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, false, null/*todo?*/);

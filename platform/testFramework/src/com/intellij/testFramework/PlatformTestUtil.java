@@ -1078,8 +1078,7 @@ public class PlatformTestUtil {
   }
 
   public static void useAppConfigDir(ThrowableRunnable<? extends Exception> task) throws Exception {
-    Path configDir = Paths.get(PathManager.getConfigPath());
-
+    Path configDir = PathManager.getConfigDir();
     Path configCopy;
     if (Files.exists(configDir)) {
       configCopy = Files.move(configDir, Paths.get(configDir + "_bak"), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);

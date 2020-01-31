@@ -142,13 +142,8 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     configureSoftWraps(2);
     verifySoftWrapPositions(4, 5);
 
-    RangeHighlighter topHighlighter = addRangeHighlighter(4, 4, 0, null);
-    topHighlighter.setLineSeparatorColor(Color.red);
-    topHighlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
-
-    RangeHighlighter bottomHighlighter = addRangeHighlighter(4, 4, 0, null);
-    bottomHighlighter.setLineSeparatorColor(Color.blue);
-    bottomHighlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
+    addLineSeparator(4, SeparatorPlacement.TOP, Color.red);
+    addLineSeparator(4, SeparatorPlacement.BOTTOM, Color.blue);
 
     checkResult();
   }
@@ -186,9 +181,49 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testLineSeparatorRepaint() throws Exception {
+    initText("a\nb");
+    addLineSeparator(3, SeparatorPlacement.TOP, Color.red);
+    checkPartialRepaint(0);
+  }
+
+  public void testLineSeparatorNearBlockInlay() throws Exception {
+    initText("a\nb");
+    addBlockInlay(2, true);
+    addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
+    checkResult();
+  }
+
+  public void testLineSeparatorNearBlockInlay2() throws Exception {
+    initText("a\nb");
+    addBlockInlay(2, true);
+    addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
+    checkResult();
+  }
+
+  public void testLineSeparatorNearBlockInlay3() throws Exception {
+    initText("a\nb");
+    addBlockInlay(1, false);
+    addLineSeparator(2, SeparatorPlacement.TOP, Color.red);
+    checkResult();
+  }
+
+  public void testLineSeparatorNearBlockInlay4() throws Exception {
+    initText("a\nb");
+    addBlockInlay(1, false);
+    addLineSeparator(1, SeparatorPlacement.BOTTOM, Color.red);
+    checkResult();
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
     indentsPass.doApplyInformationToEditor();
+  }
+
+  private void addLineSeparator(int offset, SeparatorPlacement placement, Color color) {
+    RangeHighlighter highlighter = addRangeHighlighter(offset, offset, 0, null);
+    highlighter.setLineSeparatorColor(color);
+    highlighter.setLineSeparatorPlacement(placement);
   }
 }

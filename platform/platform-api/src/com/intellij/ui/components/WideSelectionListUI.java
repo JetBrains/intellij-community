@@ -13,6 +13,8 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
 
+import static com.intellij.ui.paint.RectanglePainter.DRAW;
+
 /**
  * @noinspection ALL
  */
@@ -35,9 +37,9 @@ public final class WideSelectionListUI extends BasicListUI {
                            ListSelectionModel selectionModel,
                            int leadSelectionIndex) {
     if (!(0 <= row && row < model.getSize())) return;
+    boolean selected = selectionModel.isSelectedIndex(row);
     Rectangle paintBounds = myPaintBounds;
     if (paintBounds != null) {
-      boolean selected = selectionModel.isSelectedIndex(row);
       boolean focused = row == leadSelectionIndex && (!list.isFocusable() || list.hasFocus());
       Object value = model.getElementAt(row);
       Color background = getBackground(list, value, row);
@@ -54,6 +56,22 @@ public final class WideSelectionListUI extends BasicListUI {
       }
     }
     super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
+    if (!selected && row == leadSelectionIndex && g instanceof Graphics2D && list.hasFocus()) {
+      g.setColor(UIUtil.getListSelectionBackground(true));
+      if (JList.VERTICAL == list.getLayoutOrientation()) {
+        int viewportX = 0;
+        int viewportWidth = list.getWidth();
+        Container parent = list.getParent();
+        if (parent instanceof JViewport) {
+          viewportX = -list.getX();
+          viewportWidth = parent.getWidth();
+        }
+        DRAW.paint((Graphics2D)g, viewportX, rowBounds.y, viewportWidth, rowBounds.height, 0);
+      }
+      else {
+        DRAW.paint((Graphics2D)g, rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height, 0);
+      }
+    }
   }
 
   @Nullable

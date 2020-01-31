@@ -164,6 +164,14 @@ internal class LegacyBridgeModifiableModuleModel(
     myNewNameToModule.isNotEmpty()
 
   override fun commit() {
+    val diff = collectChanges()
+
+    WorkspaceModel.getInstance(project).updateProjectModel {
+      it.addDiff(diff)
+    }
+  }
+
+  fun collectChanges(): TypedEntityStorageBuilder {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     val storage = entityStoreOnDiff.current
@@ -184,9 +192,7 @@ internal class LegacyBridgeModifiableModuleModel(
       }
     }
 
-    WorkspaceModel.getInstance(project).updateProjectModel {
-      it.addDiff(diff)
-    }
+    return diff
   }
 
   override fun renameModule(module: Module, newName: String) {

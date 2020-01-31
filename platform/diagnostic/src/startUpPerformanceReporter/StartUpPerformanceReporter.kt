@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -40,7 +40,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "15"
+    internal const val VERSION = "16"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -197,18 +197,23 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     lastReport = currentReport
     lastMetrics = w.publicStatMetrics
 
-    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
+    val perfFilePath = System.getProperty("idea.log.perf.stats.file")
+    val traceFilePath = System.getProperty("idea.log.perf.trace.file")
+    val mayLogReport = SystemProperties.getBooleanProperty("idea.log.perf.stats",
+                                                           ApplicationManager.getApplication().isInternal
+                                                           || ApplicationInfoEx.getInstanceEx().build.isSnapshot)
+
+    if (!perfFilePath.isNullOrBlank() && !ApplicationManager.getApplication().isUnitTestMode && mayLogReport) {
       w.writeToLog(LOG)
     }
 
-    val perfFilePath = System.getProperty("idea.log.perf.stats.file")
     if (!perfFilePath.isNullOrBlank()) {
       LOG.info("StartUp Measurement report was written to: ${perfFilePath}")
       Paths.get(perfFilePath).write(currentReport)
     }
 
-    val traceFilePath = System.getProperty("idea.log.perf.trace.file")
     if (!traceFilePath.isNullOrBlank()) {
+      LOG.info("StartUp trace report was written to: ${traceFilePath}")
       val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
       Paths.get(traceFilePath).outputStream().writer().use {
         traceEventFormat.write(items, activities, services, it)

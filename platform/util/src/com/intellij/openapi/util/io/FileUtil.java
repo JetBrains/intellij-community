@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.intellij.CommonBundle;
+import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
@@ -23,7 +23,9 @@ import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
@@ -493,8 +495,8 @@ public class FileUtil extends FileUtilRt {
       return;
     }
     File[] files = fromDir.listFiles();
-    if (files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
-    if (!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
+    if (files == null) throw new IOException(UtilBundle.message("exception.directory.is.invalid", fromDir.getPath()));
+    if (!fromDir.canRead()) throw new IOException(UtilBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     for (File file : files) {
       if (filter != null && !filter.accept(file)) {
         continue;
@@ -510,7 +512,7 @@ public class FileUtil extends FileUtilRt {
 
   public static void ensureExists(@NotNull File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
-      throw new IOException(CommonBundle.message("exception.directory.can.not.create", dir.getPath()));
+      throw new IOException(UtilBundle.message("exception.directory.can.not.create", dir.getPath()));
     }
   }
 
@@ -801,7 +803,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String resolveShortWindowsName(@NotNull String path) throws IOException {
-    return SystemInfo.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
+    return SystemInfo.isWindows && containsWindowsShortName(path) ? Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString() : path;
   }
 
   public static boolean containsWindowsShortName(@NotNull String path) {

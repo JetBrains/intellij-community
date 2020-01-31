@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -321,6 +322,7 @@ object DynamicPlugins {
           }
           jdomSerializer.clearSerializationCaches()
           BeanBinding.clearSerializationCaches()
+          TypeFactory.defaultInstance().clearCache()
           Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
 
           if (disable) {
@@ -345,6 +347,9 @@ object DynamicPlugins {
     } finally {
       IdeEventQueue.getInstance().flushQueue()
 
+      if (ApplicationManager.getApplication().isUnitTestMode && !(loadedPluginDescriptor.pluginClassLoader is PluginClassLoader)) {
+        return true
+      }
       val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
       if (!classLoaderUnloaded) {
         if (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable() && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -352,14 +357,17 @@ object DynamicPlugins {
           val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
           val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
           MemoryDumpHelper.captureMemoryDump(snapshotPath)
-          GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath",
-                                   NotificationType.WARNING).notify(null)
+          notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
         }
         LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
       }
 
       return classLoaderUnloaded
     }
+  }
+
+  internal fun notify(text: String, notificationType: NotificationType) {
+    GROUP.createNotification(text, notificationType).notify(null)
   }
 
   private fun unloadPluginDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl,
@@ -392,6 +400,7 @@ object DynamicPlugins {
       for (point in it) {
         val rootArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
         rootArea.unregisterExtensionPoint(point.name)
+        point.clearExtensionClass()
       }
     }
     pluginDescriptor.project.extensionPoints?.let {
@@ -400,7 +409,14 @@ object DynamicPlugins {
         for (openProject in openProjects) {
           openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
         }
+        point.clearExtensionClass()
       }
+    }
+    loadedPluginDescriptor.app.extensionPoints?.forEach {
+      it.clearExtensionClass()
+    }
+    loadedPluginDescriptor.project.extensionPoints?.forEach {
+      it.clearExtensionClass()
     }
 
     val appServiceInstances = application.unloadServices(pluginDescriptor.app)

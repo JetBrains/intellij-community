@@ -101,8 +101,18 @@ public class GitExecutableManager {
   @CalledInAny
   @NotNull
   public GitVersion getVersion(@NotNull Project project) {
-    String projectExecutablePath = getPathToGit(project);
-    CachingFileTester<GitVersion>.TestResult result = myVersionCache.getCachedResultForFile(projectExecutablePath);
+    return getVersion(getPathToGit(project));
+  }
+
+  /**
+   * Get version of git executable
+   *
+   * @return actual version or {@link GitVersion#NULL} if version could not be identified or was not identified yet
+   */
+  @CalledInAny
+  @NotNull
+  public GitVersion getVersion(@NotNull String executable) {
+    CachingFileTester<GitVersion>.TestResult result = myVersionCache.getCachedResultForFile(executable);
     if (result == null || result.getResult() == null) {
       return GitVersion.NULL;
     }

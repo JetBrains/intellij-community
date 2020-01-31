@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,24 +68,23 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
     ResourceBundle resourceBundle = findBundle();
     if (resourceBundle == null || key == null) {
-      if (providerClass == null) {
-        displayName = instanceClass == null ? implementationClass : instanceClass;
-      }
-      else {
-        displayName = providerClass;
-      }
-
       if (key == null) {
         LOG.warn("Bundle key missed for " + displayName);
       }
       else {
         LOG.warn("Bundle missed for " + displayName);
       }
+
+      if (providerClass == null) {
+        return instanceClass == null ? implementationClass : instanceClass;
+      }
+      else {
+        return providerClass;
+      }
     }
     else {
-      displayName = CommonBundle.message(resourceBundle, key);
+      return AbstractBundle.message(resourceBundle, key);
     }
-    return displayName;
   }
 
   /**

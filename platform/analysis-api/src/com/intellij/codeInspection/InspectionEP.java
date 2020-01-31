@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.diagnostic.PluginException;
@@ -122,6 +122,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   /**
    * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Attribute("groupPath")
   public String groupPath;
 
@@ -188,7 +189,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
       return null;
     }
     ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getLoaderForClass());
-    return CommonBundle.message(resourceBundle, key);
+    return AbstractBundle.message(resourceBundle, key);
   }
 
   @NotNull

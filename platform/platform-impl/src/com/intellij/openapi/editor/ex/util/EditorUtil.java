@@ -836,6 +836,24 @@ public final class EditorUtil {
     return sum;
   }
 
+  public static int getInlaysHeight(@NotNull Editor editor, int visualLine, boolean above) {
+    return getTotalInlaysHeight(editor.getInlayModel().getBlockElementsForVisualLine(visualLine, above));
+  }
+
+  /**
+   * Returns top Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
+   */
+  public static int getVisualLineAreaStartY(@NotNull Editor editor, int visualLine) {
+    return editor.visualLineToY(visualLine) - getInlaysHeight(editor, visualLine, true);
+  }
+
+  /**
+   * Returns bottom Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
+   */
+  public static int getVisualLineAreaEndY(@NotNull Editor editor, int visualLine) {
+    return editor.visualLineToY(visualLine) + editor.getLineHeight() + getInlaysHeight(editor, visualLine, false);
+  }
+
   /**
    * This is similar to {@link SelectionModel#addSelectionListener(SelectionListener, Disposable)}, but when selection changes happen within
    * the scope of {@link CaretModel#runForEachCaret(CaretAction)} call, there will be only one notification at the end of iteration over

@@ -3,6 +3,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ public abstract class ExecutionTarget {
   public abstract String getId();
 
   @NotNull
+  @Nls
   public abstract String getDisplayName();
 
   @Nullable

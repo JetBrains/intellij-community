@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.colors;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +26,7 @@ public abstract class AbstractKeyDescriptor<T> {
   private final String myDisplayName;
   private final T myKey;
 
-  protected AbstractKeyDescriptor(@NotNull String displayName, @NotNull T key) {
+  protected AbstractKeyDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String displayName, @NotNull T key) {
     myKey = key;
     myDisplayName = displayName;
   }

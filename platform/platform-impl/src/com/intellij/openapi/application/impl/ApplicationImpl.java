@@ -723,7 +723,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt", name);
       int result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message)
         .yesText(ApplicationBundle.message("command.exit"))
-        .noText(CommonBundle.message("button.cancel"))
+        .noText(CommonBundle.getCancelButtonText())
         .doNotAsk(option).show();
       if (alreadyGone.getAndSet(true)) {
         if (!option.isToBeShown()) {
@@ -732,7 +732,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
                                             ApplicationBundle.message("exit.confirm.prompt", name))
           .yesText(ApplicationBundle.message("command.exit"))
-          .noText(CommonBundle.message("button.cancel"))
+          .noText(CommonBundle.getCancelButtonText())
           .doNotAsk(option).show();
       }
       if (result != Messages.YES) {

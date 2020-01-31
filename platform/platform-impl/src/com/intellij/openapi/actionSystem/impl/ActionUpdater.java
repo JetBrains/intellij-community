@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -42,7 +42,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-class ActionUpdater {
+final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
 
@@ -129,7 +129,9 @@ class ActionUpdater {
   }
 
   private static <T> T callAction(AnAction action, String operation, Supplier<T> call) {
-    if (action instanceof UpdateInBackground || ApplicationManager.getApplication().isDispatchThread()) return call.get();
+    if (action instanceof UpdateInBackground || ApplicationManager.getApplication().isDispatchThread()) {
+      return call.get();
+    }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressManager.getInstance().getProgressIndicator());
 

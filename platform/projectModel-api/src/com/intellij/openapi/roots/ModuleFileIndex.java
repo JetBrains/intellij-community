@@ -16,11 +16,13 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Provides information about files contained in a module. Should be used from a read action.
@@ -50,4 +52,13 @@ public interface ModuleFileIndex extends FileIndex {
    * @return the list of order entries to which the file or directory belongs.
    */
   @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir);
+
+  /**
+   * Returns content roots of the module (skipping excluded and ignored files and directories)
+   * that will be recursively iterated when one of the iterate methods is called.
+   *
+   * @see #iterateContent(ContentIterator)
+   * @see #iterateContent(ContentIterator, VirtualFileFilter)
+   */
+  @NotNull Set<VirtualFile> getModuleRootsToIterate();
 }

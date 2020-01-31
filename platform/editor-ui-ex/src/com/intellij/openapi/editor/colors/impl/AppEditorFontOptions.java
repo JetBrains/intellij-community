@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@State(name = "DefaultFont", storages = @Storage("editor.xml"))
+@State(name = "DefaultFont", storages = @Storage("editor.xml"), reportStatistic = true)
 public class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
 
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();

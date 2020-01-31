@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.ProjectLoadHelper;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -21,8 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
-class LightEditProject extends ProjectImpl {
-
+final class LightEditProject extends ProjectImpl {
   private static final Logger LOG = Logger.getInstance(LightEditProject.class);
   private static final String NAME = "LightEditProject";
   private static final Set<String> ALLOWED_CLASSES = ContainerUtil.newHashSet(
@@ -38,7 +38,8 @@ class LightEditProject extends ProjectImpl {
 
   private LightEditProject(@NotNull Path projectPath) {
     super(projectPath, NAME);
-    registerComponents();
+
+    ProjectLoadHelper.registerComponents(this);
     customizeRegisteredComponents();
     getStateStore().setPath(projectPath, false, null);
     init(null);

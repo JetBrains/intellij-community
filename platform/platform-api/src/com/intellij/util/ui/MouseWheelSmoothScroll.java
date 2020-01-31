@@ -154,6 +154,9 @@ public class MouseWheelSmoothScroll {
   }
 
   private static int getRoundedAtLeastToOne(double value) {
+    if (value == 0.0) {
+      return 0;
+    }
     if (abs(value) < 1) {
       return value > 0 ? 1 : -1;
     }
@@ -248,6 +251,7 @@ public class MouseWheelSmoothScroll {
 
     public void registerBegin() {
       beginTime = System.currentTimeMillis();
+      lastDelta = 0;
     }
 
     public void registerUpdate(int delta) {

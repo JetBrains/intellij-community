@@ -4,6 +4,7 @@ package com.intellij.coverage;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.CoverageViewSuiteListener;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -67,10 +68,6 @@ import java.util.*;
  * @author ven
  */
 public class CoverageDataManagerImpl extends CoverageDataManager {
-  private static final String REPLACE_ACTIVE_SUITES = "&Replace active suites";
-  private static final String ADD_TO_ACTIVE_SUITES = "&Add to active suites";
-  private static final String DO_NOT_APPLY_COLLECTED_COVERAGE = "Do not apply &collected coverage";
-
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(CoverageDataManagerImpl.class);
   @NonNls
@@ -388,8 +385,13 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
           }
         };
         final String[] options = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine() ?
-                                 new String[] {REPLACE_ACTIVE_SUITES, ADD_TO_ACTIVE_SUITES, DO_NOT_APPLY_COLLECTED_COVERAGE} :
-                                 new String[] {REPLACE_ACTIVE_SUITES, DO_NOT_APPLY_COLLECTED_COVERAGE};
+                                 new String[] {
+                                   ExecutionBundle.message("coverage.replace.active.suites"),
+                                   ExecutionBundle.message("coverage.add.to.active.suites"),
+                                   ExecutionBundle.message("coverage.do.not.apply.collected.coverage")} :
+                                 new String[] {
+                                   ExecutionBundle.message("coverage.replace.active.suites"),
+                                   ExecutionBundle.message("coverage.do.not.apply.collected.coverage")};
         final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CodeInsightBundle.message("code.coverage"),
                                                                               options, 1, Messages.getQuestionIcon(),
                                                                               doNotAskOption) : coverageOptionsProvider.getOptionToReplace();

@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
@@ -19,7 +19,7 @@ import javax.swing.event.ListDataListener
 
 class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
                             private val itemComponentFactory: GHPRTimelineItemComponentFactory)
-  : JPanel(VerticalLayout(20)), ComponentWithEmptyText {
+  : JPanel(VerticalLayout(UI.scale(20))), ComponentWithEmptyText {
 
   private val emptyText = object : StatusText(this) {
     override fun isStatusVisible() = model.size == 0
@@ -46,7 +46,7 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
 
       override fun intervalAdded(e: ListDataEvent) {
         for (i in e.index0..e.index1) {
-          add(itemComponentFactory.createComponent(model.getElementAt(i)), i)
+          add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
         }
         revalidate()
         repaint()
@@ -59,7 +59,7 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
     })
 
     for (i in 0 until model.size) {
-      add(itemComponentFactory.createComponent(model.getElementAt(i)), i)
+      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
     }
   }
 

@@ -125,7 +125,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
             proto: int = ...,
             flags: int = ...,
             sock: None = ...,
-            local_addr: Optional[str] = ...,
+            local_addr: Optional[Tuple[str, int]] = ...,
             server_hostname: Optional[str] = ...,
             ssl_handshake_timeout: Optional[float] = ...,
             happy_eyeballs_delay: Optional[float] = ...,
@@ -155,7 +155,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
         @abstractmethod
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: str = ..., port: int = ..., *,
                                     ssl: _SSLContext = ..., family: int = ..., proto: int = ..., flags: int = ...,
-                                    sock: None = ..., local_addr: Optional[str] = ..., server_hostname: Optional[str] = ...,
+                                    sock: None = ..., local_addr: Optional[Tuple[str, int]] = ..., server_hostname: Optional[str] = ...,
                                     ssl_handshake_timeout: Optional[float] = ...) -> _TransProtPair: ...
         @overload
         @abstractmethod
@@ -168,7 +168,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
         @abstractmethod
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: str = ..., port: int = ..., *,
                                     ssl: _SSLContext = ..., family: int = ..., proto: int = ..., flags: int = ..., sock: None = ...,
-                                    local_addr: Optional[str] = ..., server_hostname: Optional[str] = ...) -> _TransProtPair: ...
+                                    local_addr: Optional[Tuple[str, int]] = ..., server_hostname: Optional[str] = ...) -> _TransProtPair: ...
         @overload
         @abstractmethod
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: None = ..., port: None = ..., *,
@@ -335,6 +335,5 @@ def _get_running_loop() -> AbstractEventLoop: ...
 
 if sys.version_info >= (3, 7):
     def get_running_loop() -> AbstractEventLoop: ...
-
-if sys.version_info < (3, 8):
-    class SendfileNotAvailableError(RuntimeError): ...
+    if sys.version_info < (3, 8):
+        class SendfileNotAvailableError(RuntimeError): ...

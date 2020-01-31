@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
 
 package com.intellij.ide.plugins
@@ -23,11 +23,12 @@ import org.junit.Test
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 class PluginDescriptorTest {
   @Rule
@@ -368,6 +369,14 @@ class PluginDescriptorTest {
     TestCase.assertEquals(impl1.hashCode(), impl2.hashCode())
     TestCase.assertNotSame(impl1.name, impl2.name)
   }
+
+  @Test
+  fun testLoadDisabledPlugin() {
+    val descriptor = loadDescriptorInTest("disabled", setOf(PluginId.getId("com.intellij.disabled")))
+    assertFalse(descriptor.isEnabled)
+    assertEquals("This is a disabled plugin", descriptor.description)
+    UsefulTestCase.assertOrderedEquals(arrayOf(PluginId.getId("com.intellij.modules.lang")), *descriptor.dependentPluginIds)
+  }
 }
 
 private fun writeDescriptor(id: String, pluginDir: Path, @Language("xml") data: String) {
@@ -377,6 +386,6 @@ private fun writeDescriptor(id: String, pluginDir: Path, @Language("xml") data: 
 private val testDataPath: String
   get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor"
 
-private fun loadDescriptorInTest(dirName: String): IdeaPluginDescriptorImpl {
-  return loadDescriptorInTest(Paths.get(testDataPath, dirName))
+private fun loadDescriptorInTest(dirName: String, disabledPlugins: Set<PluginId> = emptySet()): IdeaPluginDescriptorImpl {
+  return loadDescriptorInTest(Paths.get(testDataPath, dirName), disabledPlugins)
 }

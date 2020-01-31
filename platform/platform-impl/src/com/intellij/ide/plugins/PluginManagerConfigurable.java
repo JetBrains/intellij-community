@@ -266,7 +266,6 @@ public class PluginManagerConfigurable
             return new SeparatorWithText() {
               {
                 setTextForeground(JBColor.BLACK);
-                setFont(UIUtil.getLabelFont());
                 setCaptionCentered(false);
               }
 
@@ -274,6 +273,11 @@ public class PluginManagerConfigurable
               protected void paintLine(Graphics g, int x, int y, int width) {
               }
             };
+          }
+
+          @Override
+          protected void setSeparatorFont(Font font) {
+            mySeparatorComponent.setFont(font);
           }
 
           @Override

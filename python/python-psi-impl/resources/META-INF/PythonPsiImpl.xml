@@ -148,7 +148,6 @@
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictOverridingTypeProvider"/>
-    <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyForwardReferenceResolveProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>

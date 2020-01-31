@@ -3,19 +3,19 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.*
-import com.intellij.psi.impl.PsiClassImplUtil.correctType
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
+import org.jetbrains.plugins.groovy.lang.resolve.api.DelegateArgumentMapping
 
 fun <X : CallParameter> compare(left: ArgumentMapping<X>, right: ArgumentMapping<X>): Int {
-  if (left is GdkArgumentMapping) {
-    return compare(left.original, right)
+  if (left is DelegateArgumentMapping) {
+    return compare(left.delegate, right)
   }
-  else if (right is GdkArgumentMapping) {
-    return compare(left, right.original)
+  else if (right is DelegateArgumentMapping) {
+    return compare(left, right.delegate)
   }
 
   if (left is NullArgumentMapping && right is NullArgumentMapping) {
@@ -55,7 +55,7 @@ fun positionalParametersDistance(map: Map<Argument, CallParameter>, context: Psi
   var result = 0L
   for ((argument, parameter) in map) {
     val runtimeType = argument.runtimeType ?: continue
-    val parameterType = correctType(parameter.type, context.resolveScope) ?: continue
+    val parameterType = parameter.type ?: continue
     result += parameterDistance(runtimeType, parameterType, context)
   }
   return result

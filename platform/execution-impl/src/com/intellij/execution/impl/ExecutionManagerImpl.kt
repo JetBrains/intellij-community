@@ -672,7 +672,7 @@ private fun userApprovesStopForSameTypeConfigurations(project: Project, configNa
     ExecutionBundle.message("rerun.singleton.confirmation.message", configName, instancesCount),
     ExecutionBundle.message("process.is.running.dialog.title", configName),
     ExecutionBundle.message("rerun.confirmation.button.text"),
-    CommonBundle.message("button.cancel"),
+    CommonBundle.getCancelButtonText(),
     Messages.getQuestionIcon(), option) == Messages.OK
 }
 
@@ -718,7 +718,7 @@ private fun userApprovesStopForIncompatibleConfigurations(project: Project,
       configName, names.toString(), runningIncompatibleDescriptors.size),
     ExecutionBundle.message("incompatible.configuration.is.running.dialog.title", runningIncompatibleDescriptors.size),
     ExecutionBundle.message("stop.incompatible.confirmation.button.text"),
-    CommonBundle.message("button.cancel"),
+    CommonBundle.getCancelButtonText(),
     Messages.getQuestionIcon(), option) == Messages.OK
 }
 

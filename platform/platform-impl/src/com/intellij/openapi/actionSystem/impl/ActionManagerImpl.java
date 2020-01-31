@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.AbstractBundle;
 import com.intellij.BundleBase;
-import com.intellij.CommonBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
@@ -303,7 +303,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static String computeDescription(ResourceBundle bundle, String id, String elementType, String descriptionValue) {
     if (bundle != null) {
       final String key = elementType + "." + id + ".description";
-      return CommonBundle.messageOrDefault(bundle, key, StringUtil.notNullize(descriptionValue));
+      return AbstractBundle.messageOrDefault(bundle, key, StringUtil.notNullize(descriptionValue));
     }
     else {
       return descriptionValue;
@@ -311,7 +311,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private static String computeActionText(ResourceBundle bundle, String id, String elementType, String textValue) {
-    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, StringUtil.notNullize(textValue));
+    return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, StringUtil.notNullize(textValue));
   }
 
   private static boolean checkRelativeToAction(String relativeToActionId,
@@ -1232,8 +1232,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
         return;
       }
-      AnAction oldValue = myId2Action.remove(actionId);
-      myAction2Id.remove(oldValue);
+      AnAction actionToRemove = myId2Action.remove(actionId);
+      myAction2Id.remove(actionToRemove);
       myId2Index.remove(actionId);
 
       for (final Map.Entry<PluginId, Collection<String>> entry : myPlugin2Id.entrySet()) {
@@ -1247,10 +1247,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
             customActionSchema.invalidateCustomizedActionGroup(groupId);
           }
           DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
-          group.remove(oldValue, actionId);
+          group.remove(actionToRemove, actionId);
+          if (!(group instanceof ActionGroupStub)) {
+            //group can be used as a stub in other actions
+            for (String parentOfGroup : myId2GroupId.get(groupId)) {
+              DefaultActionGroup parentOfGroupAction = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(parentOfGroup));
+              for (AnAction stub : parentOfGroupAction.getChildActionsOrStubs()) {
+                if (stub instanceof ActionGroupStub && ((ActionGroupStub)stub).getId() == groupId) {
+                  ((ActionGroupStub)stub).remove(actionToRemove, actionId);
+                }
+              }
+            }
+          }
         }
       }
-      if (oldValue instanceof ActionGroup) {
+      if (actionToRemove instanceof ActionGroup) {
         myId2GroupId.values().remove(actionId);
       }
     }

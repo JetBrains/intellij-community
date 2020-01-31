@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -164,23 +163,6 @@ public class GrUnresolvedAccessChecker {
     LOG.assertTrue(resolved instanceof PsiModifierListOwner, resolved + " : " + resolved.getText());
 
     return ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  @NotNull
-  static GroovyResolveResult getBestResolveResult(GrReferenceExpression ref) {
-    GroovyResolveResult[] results = ref.multiResolve(false);
-    if (results.length == 0) return EmptyGroovyResolveResult.INSTANCE;
-    if (results.length == 1) return results[0];
-
-    for (GroovyResolveResult result : results) {
-      if (result.isAccessible() && result.isStaticsOK()) return result;
-    }
-
-    for (GroovyResolveResult result : results) {
-      if (result.isStaticsOK()) return result;
-    }
-
-    return results[0];
   }
 
   static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {

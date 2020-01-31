@@ -32,6 +32,18 @@ public class E {
     testAnnotations(text)
   }
 
+  fun `test no parameters have no parens`() {
+    val text = """
+public class E {
+<# block [[@ Contract [( [[pure  =  true]] )]] [@ Nullable]] #>
+  static Boolean foo(E e) {
+    if (true) return false;
+    return null;
+  }
+}"""
+    testAnnotations(text)
+  }
+
   private fun testAnnotations(
     text: String,
     settings: AnnotationInlayProvider.Settings = AnnotationInlayProvider.Settings(showInferred = true, showExternal = true)

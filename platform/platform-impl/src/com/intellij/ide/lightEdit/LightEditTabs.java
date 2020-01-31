@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tabs.TabInfo;
@@ -36,11 +37,12 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
   private final LightEditorManagerImpl myEditorManager;
   private final ExecutorService myTabUpdateExecutor;
 
-  LightEditTabs(@NotNull Disposable parent, LightEditorManagerImpl editorManager) {
-    super(LightEditUtil.getProject(), null, parent);
+  LightEditTabs(@NotNull Disposable parentDisposable, @NotNull LightEditorManagerImpl editorManager) {
+    super(LightEditUtil.getProject(), null, parentDisposable);
 
     myEditorManager = editorManager;
     myTabUpdateExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Light Edit Tabs Update", 1);
+    Disposer.register(parentDisposable, () -> myTabUpdateExecutor.shutdown());
     addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
@@ -49,7 +51,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
         onSelectionChange(newSelection);
       }
     });
-    myEditorManager.addListener(this, this);
+    myEditorManager.addListener(this, parentDisposable);
   }
 
   void addEditorTab(@NotNull LightEditorInfo editorInfo) {
@@ -276,12 +278,5 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
         asyncUpdateTabs(tabEditorPairs);
       }
     });
-  }
-
-  @Override
-  public void dispose() {
-    myTabUpdateExecutor.shutdown();
-
-    super.dispose();
   }
 }

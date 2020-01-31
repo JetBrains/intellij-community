@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.introduceParameter;
 
@@ -22,8 +22,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
@@ -206,7 +206,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox superMethod = new JCheckBox("Refactor super method", true);
+    final JCheckBox superMethod = new JCheckBox(RefactoringBundle.message("introduce.parameter.super.method.checkbox"), true);
     superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList<PsiMethod> list = new JBList<>(validEnclosingMethods.toArray(PsiMethod.EMPTY_ARRAY));
@@ -244,7 +244,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setKeyboardActions(keyboardActions).addListener(new JBPopupAdapter() {
+      .setKeyboardActions(keyboardActions).addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters(highlighters);

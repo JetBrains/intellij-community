@@ -100,7 +100,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       if (injected != null && !injected.isEmpty()) continue;
       String expected = getConcatenationText(operands);
       if (expected == null || countNewLines(expected) < 2) continue;
-      expected = expected.replaceAll("\\\\040", " ");
+      expected = replaceUnescapedSpaces(expected);
 
       Computable<PsiElement> replaceAction = () -> {
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
@@ -120,6 +120,34 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       String actual = Objects.requireNonNull(getConcatenationText(after.getOperands()));
       assertEquals("concatenation content", expected, actual);
     }
+  }
+
+  @NotNull
+  private static String replaceUnescapedSpaces(@NotNull String text) {
+    if (!text.contains("040")) return text;
+    StringBuilder result = new StringBuilder();
+    int i = 0;
+    int length = text.length();
+    while (i < length) {
+      int nSlashes = 0;
+      int next;
+      while (i < length && (next = PsiLiteralUtil.parseBackSlash(text, i)) != -1) {
+        nSlashes++;
+        i = next;
+      }
+      if (i >= length) {
+        result.append(StringUtil.repeatSymbol('\\', nSlashes));
+        break;
+      }
+      if (nSlashes % 2 != 0 && StringUtil.startsWith(text, i, "040")) {
+        result.append(StringUtil.repeatSymbol('\\', nSlashes - 1)).append(" ");
+        i += 3;
+        continue;
+      }
+      result.append(StringUtil.repeatSymbol('\\', nSlashes)).append(text.charAt(i));
+      i++;
+    }
+    return result.toString();
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -30,7 +30,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     fun enabled(project: Project) = ModuleManager.getInstance(project) is LegacyBridgeModuleManagerComponent
   }
 
-  override fun serviceContainerInitialized(project: Project) {
+  override fun serviceRegistered(project: Project) {
     val enabled = Registry.`is`(ENABLED_REGISTRY_KEY) || WorkspaceModelInitialTestContent.peek() != null
     if (!enabled) {
       LOG.info("Using legacy project model to open project")

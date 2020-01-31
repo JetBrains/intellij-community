@@ -31,7 +31,7 @@ public class StatisticsConnectionService extends SettingsConnectionService {
   }
 
   public StatisticsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
-    super(settingsUrl, defaultServiceUrl);
+    super(settingsUrl, defaultServiceUrl, "IntelliJ", null);
   }
 
   @Override

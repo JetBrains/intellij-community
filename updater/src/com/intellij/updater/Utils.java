@@ -280,14 +280,14 @@ public class Utils {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
         if (dir != root) {
-          result.add(root.relativize(dir).toString() + '/');
+          result.add(root.relativize(dir).toString().replace('\\', '/') + '/');
         }
         return FileVisitResult.CONTINUE;
       }
 
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-        result.add(root.relativize(file).toString());
+        result.add(root.relativize(file).toString().replace('\\', '/'));
         return FileVisitResult.CONTINUE;
       }
     });

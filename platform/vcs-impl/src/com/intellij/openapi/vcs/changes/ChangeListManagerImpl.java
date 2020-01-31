@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.highlighter.WorkspaceFileType;
@@ -1096,19 +1096,28 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     });
   }
 
+  @NotNull
+  public FileStatus getStatus(@NotNull FilePath path) {
+    return getStatus(path, path.getVirtualFile());
+  }
+
   @Override
   @NotNull
   public FileStatus getStatus(@NotNull VirtualFile file) {
+    return getStatus(VcsUtil.getFilePath(file), file);
+  }
+
+  @NotNull
+  private FileStatus getStatus(@NotNull FilePath path, @Nullable VirtualFile file) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        FilePath filePath = VcsUtil.getFilePath(file);
-        if (myComposite.getUnversionedFileHolder().containsFile(filePath)) return FileStatus.UNKNOWN;
-        if (myComposite.getModifiedWithoutEditingFileHolder().containsFile(file)) return FileStatus.HIJACKED;
-        if (myComposite.getIgnoredFileHolder().containsFile(filePath)) return FileStatus.IGNORED;
+        if (myComposite.getUnversionedFileHolder().containsFile(path)) return FileStatus.UNKNOWN;
+        if (file != null && myComposite.getModifiedWithoutEditingFileHolder().containsFile(file)) return FileStatus.HIJACKED;
+        if (myComposite.getIgnoredFileHolder().containsFile(path)) return FileStatus.IGNORED;
 
-        final FileStatus status = ObjectUtils.notNull(myWorker.getStatus(file), FileStatus.NOT_CHANGED);
+        FileStatus status = ObjectUtils.notNull(myWorker.getStatus(path), FileStatus.NOT_CHANGED);
 
-        if (FileStatus.NOT_CHANGED.equals(status)) {
+        if (file != null && FileStatus.NOT_CHANGED.equals(status)) {
           boolean switched = myComposite.getSwitchedFileHolder().containsFile(file);
           if (switched) return FileStatus.SWITCHED;
         }

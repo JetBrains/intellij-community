@@ -2,6 +2,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -103,8 +104,10 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
       if (!chainingConstructor) {
         InlineObjectProcessor processor = InlineObjectProcessor.create(reference, method);
         if (processor != null) {
-          if (Messages.showOkCancelDialog("Do you want to inline the object and the subsequent call?", "Inline Object", "Inline", "Cancel",
-                                      Messages.getQuestionIcon()) == Messages.OK) {
+          if (Messages.showOkCancelDialog(RefactoringBundle.message("inline.method.object.suggestion.message"),
+                                          RefactoringBundle.message("inline.method.object.action.name"),
+                                          RefactoringBundle.message("inline.action.name"), CommonBundle.getCancelButtonText(),
+                                          Messages.getQuestionIcon()) == Messages.OK) {
             processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
             processor.run();
           }

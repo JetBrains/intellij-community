@@ -242,9 +242,17 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
       return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + (pluginDescriptor == null ? pluginId.getIdString() : pluginDescriptor.getName());
     }, "<br>");
-    String beginS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
-    String middleS = descriptorsWithChangedEnabledState.length == 1 ? "s" : "";
-    String endS = deps.size() == 1 ? "" : "s";
+    String beginS, middleS, endS;
+    if (newEnabledState) {
+      beginS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
+      middleS = descriptorsWithChangedEnabledState.length == 1 ? "s" : "";
+      endS = deps.size() == 1 ? "" : "s";
+    }
+    else {
+      beginS = deps.size() == 1 ? "" : "s";
+      middleS = deps.size() == 1 ? "s" : "";
+      endS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
+    }
     String message = newEnabledState ?
                       "<html>The enabled plugin" + beginS + " depend" + middleS + " on the following plugin" + endS + ":<br>" + listOfDependencies + "</html>"
                       : "<html>The following plugin" + beginS + " depend" + middleS + " on the disabled plugin" + endS + ":<br>" + listOfDependencies + "</html>";

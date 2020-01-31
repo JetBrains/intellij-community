@@ -9,6 +9,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +82,7 @@ public class DfaBinOpValue extends DfaValue {
 
   @NotNull
   public DfaValue tryReduceOnCast(DfaMemoryState state, PsiPrimitiveType type) {
+    if (!TypeConversionUtil.isIntegralNumberType(type)) return this;
     if ((myOp == BinOp.PLUS || myOp == BinOp.MINUS) &&
         DfLongType.extractRange(state.getDfType(myRight)).castTo(type).equals(LongRangeSet.point(0))) {
       return myLeft;

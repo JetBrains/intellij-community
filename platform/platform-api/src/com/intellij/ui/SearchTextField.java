@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -147,7 +148,7 @@ public class SearchTextField extends JPanel {
 
     if (historyPopupEnabled) {
       myNativeSearchPopup = new JBPopupMenu();
-      myNoItems = new JBMenuItem("No recent searches");
+      myNoItems = new JBMenuItem(IdeBundle.message("no.recent.searches"));
       myNoItems.setEnabled(false);
 
       updateMenu();
@@ -325,7 +326,7 @@ public class SearchTextField extends JPanel {
   protected void setEmptyHistory() {
   }
 
-  public class MyModel extends AbstractListModel {
+  public class MyModel extends AbstractListModel<String> {
     private List<String> myFullList = new ArrayList<>();
 
     private String mySelectedItem;
@@ -416,7 +417,7 @@ public class SearchTextField extends JPanel {
   protected void showPopup() {
     addCurrentTextToHistory();
     if (myPopup == null || !myPopup.isVisible()) {
-      final JList list = new JBList(myModel);
+      final JList<String> list = new JBList<>(myModel);
       final Runnable chooseRunnable = createItemChosenCallback(list);
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)

@@ -21,7 +21,6 @@ import com.intellij.util.text.nullize
 import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
 import java.io.File
-import java.util.zip.ZipFile
 import kotlin.system.exitProcess
 
 class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
@@ -31,7 +30,6 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val jdkHomeKey = "jdk-home"
     val tempKey = "temp"
     val outputKey = "output"
-    val baseUrlKey = "base-url"
 
     println("")
     println("  [idea] ${commandName} ... (see keys below)")
@@ -42,20 +40,18 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     println("                                         (!) it will be cleared by the tool")
     println("       --$outputKey=<output path>     --- location of the indexes CDN image,")
     println("                                         it will be updated with new data")
-    println("       [--$baseUrlKey=<URL>]          --- CDN base URL for index.json files")
     println("")
     println("")
     println("")
 
     val nameHint = args.arg(nameHintKey, "").nullize(true)
-    val baseUrl = args.arg(baseUrlKey, "").nullize(true)?.trim()?.trimEnd('/')
     val jdkHome = args.argFile(jdkHomeKey, System.getProperty("java.home"))
     val tempDir = args.argFile(tempKey).recreateDir()
     val outputDir = args.argFile(outputKey).apply { mkdirs() }
-    val projectDir = File(tempDir, "project").recreateDir()
-    val zipsDir = File(tempDir, "zips").recreateDir()
-    val indexZip = File(zipsDir, "index.zip")
-    val indexZipXZ = File(zipsDir, "index.zip.xz")
+    val projectDir = (tempDir / "project").recreateDir()
+    val zipsDir = (tempDir / "zips").recreateDir()
+    val indexZip = zipsDir / "index.zip"
+    val indexZipXZ = zipsDir / "index.zip.xz"
 
     LOG.info("Resolved jdkHome = $jdkHome")
     LOG.info("Resolved outputDir = $outputDir")
@@ -116,12 +112,12 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val allRoots = (classesRoot + sourcesRoot).toSet()
 
     LOG.info("Collected ${allRoots.size} SDK roots...")
-    val indexChunk = IndexChunk(allRoots, "jdk-$jdkVersion-${os.osName}${nameHint?.let {"-$it"} ?: ""}")
-    indexChunk.contentsHash = hash
-    indexChunk.kind = "jdk"
+    val indexName = "jdk-$jdkVersion-${os.osName}${nameHint?.let { "-$it" } ?: ""}"
+    val indexKind = "jdk"
+    val indexChunk = IndexChunk(allRoots, indexName)
 
     LOG.info("Indexing...")
-    val indexerInfra = IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath())
+    val infraVersion = IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath())
 
     LOG.info("Packing the indexes to XZ...")
     xz(indexZip, indexZipXZ)
@@ -135,11 +131,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     LOG.info("Generated index in $indexZip")
 
     val indexMetadata = runAndCatchNotNull("extract JSON metadata from $indexZip"){
-      ZipFile(indexZip).use { zipFile ->
-        val entry = zipFile.getEntry("metadata.json") ?: error("metadata.json is not found")
-        val data = zipFile.getInputStream(entry) ?: error("metadata.json is not found")
-        data.readBytes()
-      }
+      SharedIndexMetadata.writeIndexMetadata(indexName, indexKind, hash, infraVersion)
     }
 
     //we generate production layout here:
@@ -154,15 +146,12 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     //       | <entry>.sha256 // hashcode of the entry
     //
 
-    val indexDir = File(File(outputDir, indexChunk.kind!!), indexChunk.contentsHash!!).apply { mkdirs() }
-    fun indexFile(nameSuffix: String) = File(indexDir, indexChunk.name + "-${indexerInfra.weakVersionHash}" + nameSuffix)
+    val indexDir = (outputDir / indexKind / hash).apply { mkdirs() }
+    fun indexFile(nameSuffix: String) = indexDir / "${indexChunk.name}-${infraVersion.weakVersionHash}$nameSuffix"
 
-    FileUtil.copy(indexZipXZ, indexFile(".ijx"))
+    FileUtil.copy(indexZipXZ, indexFile(".ijx.xz"))
     FileUtil.writeToFile(indexFile(".json"), indexMetadata)
     FileUtil.writeToFile(indexFile(".sha256"), indexZipXZ.sha256())
-    if (baseUrl != null) {
-      UpdateIndexesLayoutStarter.rebuildIndexForHashDir(indexDir, baseUrl)
-    }
 
     exitProcess(0)
   }
@@ -181,5 +170,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
       LOG.error("Failed to generate index.zip.xz package from $file to $output. ${e.message}", e)
     }
   }
+
+  private operator fun File.div(x: String) = File(this, x)
 }
 

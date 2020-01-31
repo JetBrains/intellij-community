@@ -7,6 +7,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ public interface CodeStyleSettingsModifier {
   /**
    * @return The name of the modifier to be shown in UI.
    */
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getName();
 
   /**

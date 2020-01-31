@@ -926,25 +926,25 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           dialogBuilder.setOkOperation(() -> {
             final String name = component.getNameValue();
             if (name.isEmpty()) {
-              Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.message("title.error"));
+              Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.getErrorTitle());
               return;
             }
             if (getModule(name) != null) {
               Messages
-                .showErrorDialog(ProjectBundle.message("module.0.already.exists.error.message", name), CommonBundle.message("title.error"));
+                .showErrorDialog(ProjectBundle.message("module.0.already.exists.error.message", name), CommonBundle.getErrorTitle());
               return;
             }
 
             if (component.getPath().isEmpty()) {
               Messages.showErrorDialog(IdeBundle.message("prompt.enter.project.file.location", modulePresentation),
-                                       CommonBundle.message("title.error"));
+                                       CommonBundle.getErrorTitle());
               return;
             }
             if (!ProjectWizardUtil
               .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
                                           true)) {
               Messages.showErrorDialog(ProjectBundle.message("path.0.is.invalid.error.message", component.getPath()),
-                                       CommonBundle.message("title.error"));
+                                       CommonBundle.getErrorTitle());
               return;
             }
             dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);

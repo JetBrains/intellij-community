@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -137,6 +138,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
     if (elem instanceof PsiMethod) {
       PsiMethod actualMethod = (PsiMethod) elem;
+      if (actualMethod instanceof LightRecordMethod) return;
       if (!methodAndOverriders.contains(actualMethod)) {
         PsiClass outerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
         while (outerClass != null) {
@@ -327,6 +329,10 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         return element;
       }
     }
+    PsiRecordComponent recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor(psiMethod);
+    if (recordComponent != null) {
+      return recordComponent;
+    }
     return SuperMethodWarningUtil.checkSuperMethod(psiMethod, RefactoringBundle.message("to.rename"));
   }
 
@@ -345,6 +351,11 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       super.substituteElementToRename(element, editor, renameCallback);
     }
     else {
+      PsiRecordComponent recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor(psiMethod);
+      if (recordComponent != null) {
+        renameCallback.pass(recordComponent);
+        return;
+      }
       SuperMethodWarningUtil.checkSuperMethod(psiMethod, "Rename", new PsiElementProcessor<PsiMethod>() {
         @Override
         public boolean execute(@NotNull PsiMethod method) {

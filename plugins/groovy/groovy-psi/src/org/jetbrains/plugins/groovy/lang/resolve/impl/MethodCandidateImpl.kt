@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
@@ -21,8 +20,7 @@ class MethodCandidateImpl(
 
   override val argumentMapping: ArgumentMapping<PsiCallParameter>? by recursionAwareLazy {
     arguments?.let {
-      val parameters = method.parameterList.parameters.map { PsiCallParameterImpl(it, erasureSubstitutor) }
-      argumentMapping(parameters, method.isEffectivelyVarArgs, it, erasureSubstitutor, context)
+      MethodSignature(method, erasureSubstitutor, context).applyTo(it, context)
     }
   }
 }

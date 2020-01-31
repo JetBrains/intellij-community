@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
@@ -37,13 +37,16 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
     // heavy to prevent storages from flushing and blocking FS
     HeavyProcessLatch.INSTANCE.processStarted(implementationClassName).use {
-      if (ProgressManager.getGlobalProgressIndicator() == null) {
+      if (indicator == null) {
         return createAndInitialize(componentManager, implementationClass)
       }
       else {
-        return ProgressManager.getInstance().computeInNonCancelableSection<T, RuntimeException> {
-          createAndInitialize(componentManager, implementationClass)
+        // don't use here computeInNonCancelableSection - it is kotlin and no need of such awkward and stack-trace unfriendly methods
+        var instance: T? = null
+        ProgressManager.getInstance().executeNonCancelableSection {
+          instance = createAndInitialize(componentManager, implementationClass)
         }
+        return instance!!
       }
     }
   }

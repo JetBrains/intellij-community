@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
@@ -14,7 +15,7 @@ interface StatisticsEventLogger {
   fun log(group: EventLogGroup, eventId: String, isState: Boolean)
   fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean)
   fun getActiveLogFile(): EventLogFile?
-  fun getLogFiles(): List<EventLogFile>
+  fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
   fun rollOver()
 }
@@ -32,8 +33,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     return logger.getActiveLogFile()
   }
 
-  fun getLogFiles(): List<EventLogFile> {
-    return logger.getLogFiles()
+  fun getLogFilesProvider(): EventLogFilesProvider {
+    return logger.getLogFilesProvider()
   }
 
   private fun createLogger(): StatisticsEventLogger {
@@ -62,9 +63,15 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
   override fun getActiveLogFile(): EventLogFile? = null
-  override fun getLogFiles(): List<EventLogFile> = emptyList()
+  override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
+}
+
+object EmptyEventLogFilesProvider: EventLogFilesProvider {
+  override fun getLogFilesDir(): Path? = null
+
+  override fun getLogFiles(): List<EventLogFile> = emptyList()
 }
 
 fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {

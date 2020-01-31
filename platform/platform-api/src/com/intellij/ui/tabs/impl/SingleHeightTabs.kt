@@ -10,8 +10,7 @@ import java.awt.Dimension
 
 open class SingleHeightTabs(project: Project?, focusManager: IdeFocusManager?, parent: Disposable) : JBEditorTabs(project, focusManager, parent) {
   companion object {
-    @JvmStatic
-    val UNSCALED_PREF_HEIGHT = 28
+    const val UNSCALED_PREF_HEIGHT = 28
   }
 
   constructor(project: Project?, parent: Disposable) : this(project, if (project == null) null else IdeFocusManager.getInstance(project), parent)

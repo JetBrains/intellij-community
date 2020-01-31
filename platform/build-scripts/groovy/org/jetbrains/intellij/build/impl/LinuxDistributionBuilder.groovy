@@ -143,6 +143,10 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     ] + customizer.extraExecutables
     if (includeJre) {
       patterns += "jbr/bin/*"
+      patterns += "jbr/lib/jexec"
+      patterns += "jbr/lib/jcef_helper"
+      patterns += "jbr/lib/jspawnhelper"
+      patterns += "jbr/lib/chrome-sandbox"
     }
     return patterns
   }

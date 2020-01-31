@@ -9,6 +9,7 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,10 +45,14 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setIcon(Icon icon);
   Icon getIcon();
 
-  void setDisplayName(String displayName);
+  void setDisplayName(@Nls(capitalization = Nls.Capitalization.Title) String displayName);
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getDisplayName();
 
-  void setTabName(String tabName);
+  void setTabName(@Nls(capitalization = Nls.Capitalization.Title)String tabName);
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getTabName();
 
   String getToolwindowTitle();
@@ -60,8 +65,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setShouldDisposeContent(boolean value);
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getDescription();
-  void setDescription(String description);
+  void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
 

@@ -346,7 +346,9 @@
     <extensionPoint name="editorFactoryMouseMotionListener" interface="com.intellij.openapi.editor.event.EditorMouseMotionListener" dynamic="true"/>
 
     <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler"/>
-    <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.ProjectServiceContainerCustomizer"/>
+
+    <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.ProjectServiceContainerCustomizer" dynamic="true"/>
+    <extensionPoint name="projectServiceContainerInitializedListener" interface="com.intellij.openapi.project.ProjectServiceContainerInitializedListener" dynamic="true"/>
 
     <extensionPoint name="actionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer" dynamic="false"/>
 

@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEventDispatcherLoadingModel
 import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
@@ -57,15 +56,14 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
       loading = true
       error = null
 
-      updateFuture = dataProvider.changesProviderRequest.successOnEdt {
+      updateFuture = dataProvider.changesProviderRequest.handleOnEdt { result, error ->
 
-        if (zipChanges) changesModel.changes = it.changes
-        else changesModel.commits = it.changesByCommits
+        if (result != null) {
+          if (zipChanges) changesModel.changes = result.changes
+          else changesModel.commits = result.changesByCommits
 
-        diffHelper.setUp(dataProvider, it)
-
-      }.handleOnEdt { _, error: Throwable? ->
-
+          diffHelper.setUp(dataProvider, result)
+        }
         if (error != null) this.error = error
         loading = false
         eventDispatcher.multicaster.onLoadingCompleted()

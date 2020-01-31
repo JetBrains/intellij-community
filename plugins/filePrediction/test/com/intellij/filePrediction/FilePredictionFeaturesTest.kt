@@ -51,8 +51,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     doTestGeneralFeatures(
       "prevFile.txt", "nextFile.txt",
       ConstFileFeaturesProducer(
-        "name_prefix" to FilePredictionFeature.numerical(0),
-        "relative_path_prefix" to FilePredictionFeature.numerical(0)
+        "name_prefix" to FilePredictionFeature.numerical(0)
       )
     )
   }
@@ -62,8 +61,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     doTestGeneralFeatures(
       "myPrevFile.txt", "myNextFile.txt",
       ConstFileFeaturesProducer(
-        "name_prefix" to FilePredictionFeature.numerical(2),
-        "relative_path_prefix" to FilePredictionFeature.numerical(2)
+        "name_prefix" to FilePredictionFeature.numerical(2)
       )
     )
   }
@@ -73,8 +71,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     doTestGeneralFeatures(
       "file.txt", "src/file.txt",
       ConstFileFeaturesProducer(
-        "name_prefix" to FilePredictionFeature.numerical(4),
-        "relative_path_prefix" to FilePredictionFeature.numerical(0)
+        "name_prefix" to FilePredictionFeature.numerical(4)
       )
     )
   }
@@ -84,8 +81,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     doTestGeneralFeatures(
       "someFile.txt", "src/file.txt",
       ConstFileFeaturesProducer(
-        "name_prefix" to FilePredictionFeature.numerical(0),
-        "relative_path_prefix" to FilePredictionFeature.numerical(1)
+        "name_prefix" to FilePredictionFeature.numerical(0)
       )
     )
   }
@@ -95,8 +91,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     doTestGeneralFeatures(
       "src/someFile.txt", "src/file.txt",
       ConstFileFeaturesProducer(
-        "name_prefix" to FilePredictionFeature.numerical(0),
-        "relative_path_prefix" to FilePredictionFeature.numerical(4)
+        "name_prefix" to FilePredictionFeature.numerical(0)
       )
     )
   }
@@ -106,8 +101,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     doTestGeneralFeatures(
       "src/com/site/ui/someFile.txt", "src/com/site/component/file.txt",
       ConstFileFeaturesProducer(
-        "name_prefix" to FilePredictionFeature.numerical(0),
-        "relative_path_prefix" to FilePredictionFeature.numerical(13)
+        "name_prefix" to FilePredictionFeature.numerical(0)
       )
     )
   }

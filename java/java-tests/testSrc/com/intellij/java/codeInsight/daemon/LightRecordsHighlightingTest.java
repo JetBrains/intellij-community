@@ -34,6 +34,28 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
     doTest();
   }
 
+  public void testRenameOnRecordComponent() {
+    doTestRename();
+  }
+
+  public void testRenameOnCompactConstructorReference() {
+    doTestRename();
+  }
+
+  public void testRenameOnExplicitGetter() {
+    doTestRename();
+  }
+
+  public void testRenameWithCanonicalConstructor() {
+    doTestRename();
+  }
+
+  private void doTestRename() {
+    doTest();
+    myFixture.renameElementAtCaret("baz");
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   private void doTest() {
     myFixture.addClass("package java.lang; public abstract class Record {" +
                        "public abstract boolean equals(Object obj);" +

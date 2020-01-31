@@ -769,4 +769,19 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "    case 4: yield ;\n" +
                  "}");
   }
+
+  public void testSpaceAfterCommaInRecordHeader() {
+    getSettings().SPACE_AFTER_COMMA = true;
+    doMethodTest("record R(String s,int i){}",
+                 "record R(String s, int i) {\n" +
+                 "}");
+  }
+
+  public void testSpaceBeforeCommaInRecordHeader() {
+    getSettings().SPACE_AFTER_COMMA = false;
+    getSettings().SPACE_BEFORE_COMMA = true;
+    doMethodTest("record R(String s,int i){}",
+                 "record R(String s ,int i) {\n" +
+                 "}");
+  }
 }

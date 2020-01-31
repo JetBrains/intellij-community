@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
-import com.intellij.CommonBundle
+import com.intellij.UtilBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -77,8 +77,8 @@ object GithubUIUtil {
 
   fun formatActionDate(date: Date): String {
     val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
-    val datePrefix = if (prettyDate.equals(CommonBundle.message("date.format.today"), true) ||
-                         prettyDate.equals(CommonBundle.message("date.format.yesterday"), true)) ""
+    val datePrefix = if (prettyDate.equals(UtilBundle.message("date.format.today"), true) ||
+                         prettyDate.equals(UtilBundle.message("date.format.yesterday"), true)) ""
     else "on "
     return datePrefix + prettyDate
   }

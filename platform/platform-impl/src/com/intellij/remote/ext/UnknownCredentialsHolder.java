@@ -15,6 +15,7 @@
  */
 package com.intellij.remote.ext;
 
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public class UnknownCredentialsHolder {
 
   public void save(@NotNull Element element) {
     if (myElement != null) {
-      ElementUtil.copyMissingContent(myElement, element);
+      JDOMUtil.copyMissingContent(myElement, element);
     }
   }
 

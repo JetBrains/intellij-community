@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.psi.PsiElement
@@ -18,6 +18,10 @@ open class KindsResolverProcessor(
 ) : ProcessorWithHints(),
     NameHint,
     GroovyResolveKind.Hint {
+
+  companion object {
+    private val propertyKinds = setOf(GroovyResolveKind.VARIABLE, GroovyResolveKind.BINDING, GroovyResolveKind.FIELD, GroovyResolveKind.PROPERTY)
+  }
 
   init {
     @Suppress("LeakingThis") hint(NameHint.KEY, this)
@@ -49,7 +53,10 @@ open class KindsResolverProcessor(
       }
     }
     else if (kind !in candidates) {
-      candidates[kind] = BaseGroovyResolveResult(element, place, state)
+      val invokedOnProperty = kind in propertyKinds
+      candidates[kind] = object : BaseGroovyResolveResult<PsiElement>(element, place, state) {
+        override fun isInvokedOnProperty(): Boolean = invokedOnProperty
+      }
     }
   }
 

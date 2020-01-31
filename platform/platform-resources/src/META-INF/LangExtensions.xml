@@ -1,5 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <projectServiceContainerInitializedListener implementation="com.intellij.openapi.module.impl.ModuleManagerComponent$MyProjectServiceContainerInitializedListener" order="first"/>
+
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
                         overrides="true"/>
@@ -112,9 +114,6 @@
 
     <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
                     serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="await"/>
-
-    <projectService serviceInterface="com.intellij.util.indexing.FileBasedIndexScanRunnableCollector"
-                    serviceImplementation="com.intellij.util.indexing.FileBasedIndexScanRunnableCollectorImpl"/>
 
     <projectService serviceInterface="com.intellij.pom.references.PomService"
                     serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>

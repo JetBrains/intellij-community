@@ -5,7 +5,7 @@ import com.intellij.psi.PsiType
 
 interface CallParameter {
 
-  val type: PsiType
+  val type: PsiType?
 
   val parameterName: String?
 

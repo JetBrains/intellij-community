@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.TimerListener;
@@ -24,8 +24,6 @@ import java.lang.ref.WeakReference;
  * @author Konstantin Bulenkov
  */
 public abstract class ToolbarUpdater implements Activatable {
-  private final ActionManagerEx myActionManager;
-  private final KeymapManagerEx myKeymapManager;
   private final JComponent myComponent;
 
   private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
@@ -35,12 +33,6 @@ public abstract class ToolbarUpdater implements Activatable {
   private boolean myListenersArmed;
 
   public ToolbarUpdater(@NotNull JComponent component) {
-    this(KeymapManagerEx.getInstanceEx(), component);
-  }
-
-  public ToolbarUpdater(@NotNull KeymapManagerEx keymapManager, @NotNull JComponent component) {
-    myActionManager = ActionManagerEx.getInstanceEx();
-    myKeymapManager = keymapManager;
     myComponent = component;
     myWeakTimerListener = new WeakTimerListener(myTimerListener);
     new UiNotifyConnector(component, this);
@@ -48,54 +40,48 @@ public abstract class ToolbarUpdater implements Activatable {
 
   @Override
   public void showNotify() {
-    if (myListenersArmed) return;
+    if (myListenersArmed) {
+      return;
+    }
+
     myListenersArmed = true;
-    myActionManager.addTimerListener(500, myWeakTimerListener);
-    myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
-    myKeymapManager.addWeakListener(myKeymapManagerListener);
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    actionManager.addTimerListener(500, myWeakTimerListener);
+    actionManager.addTransparentTimerListener(500, myWeakTimerListener);
+    KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener);
     updateActionTooltips();
   }
 
   @Override
   public void hideNotify() {
-    if (!myListenersArmed) return;
+    if (!myListenersArmed) {
+      return;
+    }
+
     myListenersArmed = false;
-    myActionManager.removeTimerListener(myWeakTimerListener);
-    myActionManager.removeTransparentTimerListener(myWeakTimerListener);
-    myKeymapManager.removeWeakListener(myKeymapManagerListener);
-  }
-
-  @NotNull
-  public KeymapManagerEx getKeymapManager() {
-    return myKeymapManager;
-  }
-
-  @NotNull
-  public ActionManagerEx getActionManager() {
-    return myActionManager;
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    actionManager.removeTimerListener(myWeakTimerListener);
+    actionManager.removeTransparentTimerListener(myWeakTimerListener);
+    KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener);
   }
 
   public void updateActions(boolean now, boolean forced) {
     updateActions(now, false, forced);
   }
 
-  private void updateActions(boolean now, final boolean transparentOnly, final boolean forced) {
-    final Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced);
-    final Application app = ApplicationManager.getApplication();
-
+  private void updateActions(boolean now, boolean transparentOnly, boolean forced) {
+    Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced);
+    Application app = ApplicationManager.getApplication();
     if (now || (app.isUnitTestMode() && app.isDispatchThread())) {
       updateRunnable.run();
     }
-    else {
-      final IdeFocusManager fm = IdeFocusManager.getInstance(null);
-
-      if (!app.isHeadlessEnvironment()) {
-        if (app.isDispatchThread() && myComponent.isShowing()) {
-          fm.doWhenFocusSettlesDown(updateRunnable);
-        }
-        else {
-          UiNotifyConnector.doWhenFirstShown(myComponent, () -> fm.doWhenFocusSettlesDown(updateRunnable));
-        }
+    else if (!app.isHeadlessEnvironment()) {
+      IdeFocusManager focusManager = IdeFocusManager.getInstance(null);
+      if (app.isDispatchThread() && myComponent.isShowing()) {
+        focusManager.doWhenFocusSettlesDown(updateRunnable);
+      }
+      else {
+        UiNotifyConnector.doWhenFirstShown(myComponent, () -> focusManager.doWhenFocusSettlesDown(updateRunnable));
       }
     }
   }
@@ -141,15 +127,16 @@ public abstract class ToolbarUpdater implements Activatable {
         return;
       }
 
-      updateActions(false, myActionManager.isTransparentOnlyActionsUpdateNow(), false);
+      updateActions(false, ActionManagerEx.getInstanceEx().isTransparentOnlyActionsUpdateNow(), false);
     }
   }
 
-  private static class MyUpdateRunnable implements Runnable {
+  private static final class MyUpdateRunnable implements Runnable {
     private final boolean myTransparentOnly;
     private final boolean myForced;
 
-    @NotNull private final WeakReference<ToolbarUpdater> myUpdaterRef;
+    @NotNull
+    private final WeakReference<ToolbarUpdater> myUpdaterRef;
     private final int myHash;
 
     MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean transparentOnly, boolean forced) {
@@ -163,9 +150,7 @@ public abstract class ToolbarUpdater implements Activatable {
     @Override
     public void run() {
       ToolbarUpdater updater = myUpdaterRef.get();
-      if (updater == null) return;
-
-      if (!updater.myComponent.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (updater == null || (!updater.myComponent.isVisible() && !ApplicationManager.getApplication().isUnitTestMode())) {
         return;
       }
 

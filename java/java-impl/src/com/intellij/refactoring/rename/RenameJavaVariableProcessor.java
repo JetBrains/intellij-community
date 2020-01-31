@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -27,6 +28,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,6 +130,28 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<PsiElement, String> allRenames) {
     if (element instanceof PsiField && JavaLanguage.INSTANCE.equals(element.getLanguage())) {
       prepareFieldRenaming((PsiField)element, newName, allRenames);
+    }
+    if (element instanceof PsiRecordComponent) {
+      PsiClass containingClass = ((PsiRecordComponent)element).getContainingClass();
+      if (containingClass != null) {
+        String name = ((PsiRecordComponent)element).getName();
+        if (name != null) {
+          PsiMethod explicitGetter = ContainerUtil
+            .find(containingClass.findMethodsByName(name, false), m -> m.getParameters().length == 0);
+
+          if (explicitGetter != null) {
+            addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()), allRenames);
+          }
+
+          PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
+          if (canonicalConstructor != null) {
+            PsiParameter parameter = ContainerUtil.find(canonicalConstructor.getParameterList().getParameters(), p -> name.equals(p.getName()));
+            if (parameter != null) {
+              allRenames.put(parameter, newName);
+            }
+          }
+        }
+      }
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
@@ -40,7 +41,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
   private final Project myProject;
 
   MakeStaticJavaCallerChooser(PsiMethod method, Project project, Consumer<Set<PsiMethod>> consumer) {
-    super(method, project, "Select Methods To Propagate Static", null, consumer);
+    super(method, project, RefactoringBundle.message("make.static.methods.to.propagate.dialog.title"), null, consumer);
     myProject = project;
   }
 

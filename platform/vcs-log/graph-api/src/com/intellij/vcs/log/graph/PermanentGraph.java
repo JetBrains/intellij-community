@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,8 @@ public interface PermanentGraph<Id> {
     @NotNull private final String myPresentation;
     @NotNull private final String myDescription;
 
-    SortType(@NotNull String presentation, @NotNull String description) {
+    SortType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentation,
+             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String description) {
       myPresentation = presentation;
       myDescription = description;
     }

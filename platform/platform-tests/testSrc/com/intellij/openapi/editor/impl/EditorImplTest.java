@@ -572,6 +572,12 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("some t<caret>ext");
   }
 
+  public void testRightClickOutsideButVeryCloseToSelectionDoesNotRemoveIt() {
+    initText("<selection>some<caret></selection> text");
+    mouse().right().clickAtXY(42, 5);
+    checkResultByText("<selection>some<caret></selection> text");
+  }
+
   public void testDragStartingBeyondSelectedLineEnd() {
     initText("<selection>line1</selection>\nline2");
     setEditorVisibleSize(100, 100);

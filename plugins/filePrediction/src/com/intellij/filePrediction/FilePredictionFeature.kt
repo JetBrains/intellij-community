@@ -2,6 +2,7 @@
 package com.intellij.filePrediction
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import kotlin.math.round
 
 sealed class FilePredictionFeature {
   companion object {
@@ -53,7 +54,12 @@ sealed class FilePredictionFeature {
 
   private class DoubleValue(override val value: Double) : FilePredictionFeature() {
     override fun addToEventData(key: String, data: FeatureUsageData) {
-      data.addData(key, value)
+      data.addData(key, process(value))
+    }
+
+    private fun process(value: Double): Double {
+      if (!value.isFinite()) return -1.0
+      return round(value * 100000) / 100000
     }
   }
 }
