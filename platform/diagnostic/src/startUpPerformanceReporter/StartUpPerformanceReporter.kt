@@ -197,18 +197,23 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     lastReport = currentReport
     lastMetrics = w.publicStatMetrics
 
-    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
+    val perfFilePath = System.getProperty("idea.log.perf.stats.file")
+    val traceFilePath = System.getProperty("idea.log.perf.trace.file")
+    val mayLogReport = SystemProperties.getBooleanProperty("idea.log.perf.stats",
+                                                           ApplicationManager.getApplication().isInternal
+                                                           || ApplicationInfoEx.getInstanceEx().build.isSnapshot)
+
+    if (!perfFilePath.isNullOrBlank() && !ApplicationManager.getApplication().isUnitTestMode && mayLogReport) {
       w.writeToLog(LOG)
     }
 
-    val perfFilePath = System.getProperty("idea.log.perf.stats.file")
     if (!perfFilePath.isNullOrBlank()) {
       LOG.info("StartUp Measurement report was written to: ${perfFilePath}")
       Paths.get(perfFilePath).write(currentReport)
     }
 
-    val traceFilePath = System.getProperty("idea.log.perf.trace.file")
     if (!traceFilePath.isNullOrBlank()) {
+      LOG.info("StartUp trace report was written to: ${traceFilePath}")
       val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
       Paths.get(traceFilePath).outputStream().writer().use {
         traceEventFormat.write(items, activities, services, it)
