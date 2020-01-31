@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -65,10 +64,8 @@ object GHPRReviewThreadComponent {
           toggleModel.value = false
         }
       }.apply {
-        executeCommand {
-          runWriteAction {
-            document.setText(text)
-          }
+        runWriteAction {
+          document.setText(text)
         }
       }
       GHPRSubmittableTextField.create(model, avatarIconsProvider, author, "Reply") {

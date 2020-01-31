@@ -6,7 +6,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -201,10 +200,8 @@ object GHPRSubmittableTextField {
 
       isSubmitting = true
       submitter(document.text).handleOnEdt { _, _ ->
-        executeCommand {
-          runWriteAction {
-            document.setText("")
-          }
+        runWriteAction {
+          document.setText("")
         }
         isSubmitting = false
       }
