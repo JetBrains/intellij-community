@@ -60,13 +60,13 @@ open class HashCodeExternalizers : DataExternalizer<HashCode> {
   }
 }
 
-class FullStubExternalizer : SerializedStubTreeDataExternalizer(true, SerializationManagerEx.getInstanceEx(), StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer.INSTANCE)
+private val IDE_SERIALIZATION_MANAGER = SerializationManagerEx.getInstanceEx()
+
+class FullStubExternalizer : SerializedStubTreeDataExternalizer(true, IDE_SERIALIZATION_MANAGER, StubForwardIndexExternalizer.createFileLocalExternalizer(IDE_SERIALIZATION_MANAGER))
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubTree>(), PrebuiltStubsProvider {
 
   private var mySerializationManager: SerializationManagerImpl? = null
-  private val myIdeSerializationManager = SerializationManager.getInstance() as SerializationManagerImpl
-  private val myIndexedStubsSerializer = StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer.INSTANCE
 
   protected abstract val stubVersion: Int
 
@@ -114,7 +114,10 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
     try {
       val stubTree = get(fileContent)
       if (stubTree != null) {
-        return stubTree.reSerialize(mySerializationManager!!, myIdeSerializationManager, myIndexedStubsSerializer, SerializedStubTree.IDE_USED_EXTERNALIZER)
+        val newSerializationManager = IDE_SERIALIZATION_MANAGER
+        val newForwardIndexSerializer = StubForwardIndexExternalizer.getIdeUsedExternalizer(newSerializationManager)
+        val indexedStubsSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer(mySerializationManager!!)
+        return stubTree.reSerialize(mySerializationManager!!, newSerializationManager, indexedStubsSerializer, newForwardIndexSerializer)
       }
     }
     catch (e: IOException) {

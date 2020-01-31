@@ -20,9 +20,6 @@ import java.security.MessageDigest;
 import java.util.Map;
 
 public class SerializedStubTree {
-  static final StubForwardIndexExternalizer<?> IDE_USED_EXTERNALIZER = System.getProperty("idea.uses.shareable.serialized.stubs") == null
-                                                              ? new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer()
-                                                              : new StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer();
 
   private static final MessageDigest HASHER = DigestUtil.sha256();
 
@@ -86,8 +83,8 @@ public class SerializedStubTree {
   }
 
   @NotNull
-  public SerializedStubTree reSerialize(@NotNull SerializationManagerImpl currentSerializationManager,
-                                        @NotNull SerializationManagerImpl newSerializationManager,
+  public SerializedStubTree reSerialize(@NotNull SerializationManagerEx currentSerializationManager,
+                                        @NotNull SerializationManagerEx newSerializationManager,
                                         @NotNull StubForwardIndexExternalizer currentForwardIndexSerializer,
                                         @NotNull StubForwardIndexExternalizer newForwardIndexSerializer) throws IOException {
     BufferExposingByteArrayOutputStream outStub = new BufferExposingByteArrayOutputStream();

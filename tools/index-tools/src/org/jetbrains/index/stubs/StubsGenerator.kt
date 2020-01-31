@@ -23,11 +23,6 @@ import java.nio.file.Paths
 import java.util.*
 import kotlin.system.exitProcess
 
-/**
- * Generates stubs and stores them in one persistent hash map
- */
-private val STUB_EXTERNALIZER = StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer()
-
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
   IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
@@ -55,7 +50,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
       return null
     }
 
-    return SerializedStubTree.serializeStub(stub, serializationManager, STUB_EXTERNALIZER)
+    return SerializedStubTree.serializeStub(stub, serializationManager, StubForwardIndexExternalizer.createFileLocalExternalizer(serializationManager))
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
@@ -112,14 +107,16 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
         val value = fromStorage.get(key)
 
         // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-        val newStubTree = value.reSerialize(serializationManager, newSerializationManager, STUB_EXTERNALIZER, STUB_EXTERNALIZER)
+        val oldForwardIndexSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer(serializationManager)
+        val newForwardIndexSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer(newSerializationManager)
+        val newStubTree = value.reSerialize(serializationManager, newSerializationManager, oldForwardIndexSerializer, newForwardIndexSerializer)
 
         if (storage.containsMapping(key)) {
           if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
             storage.get(key).getStub(newSerializationManager)
 
             val stub = value.getStub(serializationManager)
-            val newStubTree2 = SerializedStubTree.serializeStub(stub, newSerializationManager, STUB_EXTERNALIZER)
+            val newStubTree2 = SerializedStubTree.serializeStub(stub, newSerializationManager, newForwardIndexSerializer)
 
             TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
           }

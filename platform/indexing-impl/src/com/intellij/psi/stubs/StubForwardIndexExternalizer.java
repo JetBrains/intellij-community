@@ -18,7 +18,34 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 public abstract class StubForwardIndexExternalizer<StubKeySerializationState> implements DataExternalizer<Map<StubIndexKey, Map<Object, StubIdList>>> {
-  private volatile boolean myEnsuredStubElementTypesLoaded;
+
+  private final SerializationManagerEx myManagerToInitialize;
+
+  protected StubForwardIndexExternalizer(SerializationManagerEx managerToInitialize) {
+    myManagerToInitialize = managerToInitialize;
+  }
+
+  @NotNull
+  public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer(@NotNull SerializationManagerEx managerToInitialize) {
+    if (System.getProperty("idea.uses.shareable.serialized.stubs") == null) {
+      return new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer(managerToInitialize);
+    }
+    return new FileLocalStubForwardIndexExternalizer(managerToInitialize);
+  }
+
+  @NotNull
+  public static StubForwardIndexExternalizer<?> createFileLocalExternalizer(@NotNull SerializationManagerEx serializationManager) {
+    return new FileLocalStubForwardIndexExternalizer(serializationManager);
+  }
+
+  private static void initializeSerializationManager(@NotNull SerializationManagerEx serializationManager) {
+    //TODO: consider initializing the serialization manager in another place.
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      serializationManager.initSerializers();
+      StubIndexEx.initExtensions();
+    });
+    ((StubIndexEx)StubIndex.getInstance()).ensureLoaded();
+  }
 
   protected abstract StubKeySerializationState createStubIndexKeySerializationState(@NotNull DataOutput out, @NotNull Set<StubIndexKey> set) throws IOException;
 
@@ -50,14 +77,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   }
 
   <K> Map<StubIndexKey, Map<Object, StubIdList>> doRead(@NotNull DataInput in, @Nullable StubIndexKey<K, ?> requestedIndex, @Nullable K requestedKey) throws IOException {
-    if (!myEnsuredStubElementTypesLoaded) {
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        SerializationManager.getInstance().initSerializers();
-        StubIndexEx.initExtensions();
-      });
-      ((StubIndexEx)StubIndex.getInstance()).ensureLoaded();
-      myEnsuredStubElementTypesLoaded = true;
-    }
+    initializeSerializationManager(myManagerToInitialize);
     int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);
     if (stubIndicesValueMapSize > 0) {
       THashMap<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = requestedIndex != null ? null : new THashMap<>(stubIndicesValueMapSize);
@@ -84,7 +104,11 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     return Collections.emptyMap();
   }
 
-  static final class IdeStubForwardIndexesExternalizer extends StubForwardIndexExternalizer<Void> {
+  private static final class IdeStubForwardIndexesExternalizer extends StubForwardIndexExternalizer<Void> {
+    private IdeStubForwardIndexesExternalizer(@NotNull SerializationManagerEx managerToInitialize) {
+      super(managerToInitialize);
+    }
+
     @Override
     protected void writeStubIndexKey(@NotNull DataOutput out, @NotNull StubIndexKey key, Void aVoid) throws IOException {
       DataInputOutputUtil.writeINT(out, key.getUniqueId());
@@ -107,7 +131,9 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   }
 
   public static final class FileLocalStubForwardIndexExternalizer extends StubForwardIndexExternalizer<FileLocalStringEnumerator> {
-    public static final FileLocalStubForwardIndexExternalizer INSTANCE = new FileLocalStubForwardIndexExternalizer();
+    private FileLocalStubForwardIndexExternalizer(SerializationManagerEx managerToInitialize) {
+      super(managerToInitialize);
+    }
 
     @Override
     protected FileLocalStringEnumerator createStubIndexKeySerializationState(@NotNull DataOutput out, @NotNull Set<StubIndexKey> set) throws IOException {
