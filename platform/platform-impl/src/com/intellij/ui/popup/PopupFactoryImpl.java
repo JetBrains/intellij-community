@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -216,7 +216,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       setMaxRowCount(maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      myActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
+      myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.POPUP);
 
       registerAction("handleActionToggle1", KeyEvent.VK_SPACE, 0, new AbstractAction() {
         @Override
