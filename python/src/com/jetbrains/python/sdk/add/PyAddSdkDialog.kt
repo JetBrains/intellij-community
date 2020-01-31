@@ -192,7 +192,6 @@ class PyAddSdkDialog private constructor(private val project: Project?,
           selectedPanel = selectedValue
           cardLayout.show(cardPanel, selectedValue.panelName)
 
-          setErrorText(null)
           southPanel?.let {
             if (selectedValue.actions.containsKey(NEXT)) {
               navigationPanelCardLayout?.show(it, WIZARD_CARD_PANE)
