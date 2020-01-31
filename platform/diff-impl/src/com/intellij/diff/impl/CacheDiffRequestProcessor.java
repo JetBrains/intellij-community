@@ -120,6 +120,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   }
 
   protected int getFastLoadingTimeMillis() {
+    if (getActiveRequest() instanceof MessageDiffRequest) return 0;
     return ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   }
 

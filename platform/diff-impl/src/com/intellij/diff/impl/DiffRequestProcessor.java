@@ -540,6 +540,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   @NotNull
+  public DiffRequest getActiveRequest() {
+    return myActiveRequest;
+  }
+
+  @NotNull
   protected DiffSettings getSettings() {
     return mySettings;
   }
