@@ -54,6 +54,10 @@ public class ThrowableInterner {
     if (message != null) {
       return message.hashCode();
     }
+    return computeTraceHashCode(throwable);
+  }
+
+  public static int computeTraceHashCode(@NotNull Throwable throwable) {
     Object[] backtrace = getBacktrace(throwable);
     if (backtrace != null) {
       Object[] stack = ContainerUtil.findInstance(backtrace, Object[].class);

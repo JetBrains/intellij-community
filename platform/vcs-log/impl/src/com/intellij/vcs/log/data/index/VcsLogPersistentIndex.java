@@ -9,12 +9,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -70,6 +72,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = new HashMap<>();
   @NotNull private final Map<VirtualFile, AtomicLong> myIndexingTime = new HashMap<>();
   @NotNull private final Map<VirtualFile, AtomicInteger> myIndexingLimit = new HashMap<>();
+  @NotNull private final Map<VirtualFile, ConcurrentIntObjectMap<Integer>> myIndexingErrors = new HashMap<>();
 
   @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -105,6 +108,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myNumberOfTasks.put(root, new AtomicInteger());
       myIndexingTime.put(root, new AtomicLong());
       myIndexingLimit.put(root, new AtomicInteger(getIndexingLimit()));
+      myIndexingErrors.put(root, ContainerUtil.createConcurrentIntObjectMap());
     }
 
     mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);
@@ -442,6 +446,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   private class IndexingRequest {
     private static final int BATCH_SIZE = 20000;
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
+    private static final int LOGGED_ERRORS_COUNT = 10;
+    private static final int STOPPING_ERROR_COUNT = 100;
     @NotNull private final VirtualFile myRoot;
     @NotNull private final TIntHashSet myCommits;
     @NotNull private final VcsLogIndexer.PathsEncoder myPathsEncoder;
@@ -500,7 +506,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
           throw e;
         }
         catch (VcsException e) {
-          LOG.error(e);
+          processException(e);
           scheduleReindex();
         }
       }
@@ -517,6 +523,20 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         report();
 
         flush();
+      }
+    }
+
+    private void processException(@NotNull VcsException e) {
+      int errorHash = ThrowableInterner.computeTraceHashCode(e);
+      int errors = myIndexingErrors.get(myRoot).cacheOrGet(errorHash, 0);
+      myIndexingErrors.get(myRoot).put(errorHash, errors + 1);
+
+      if (errors <= LOGGED_ERRORS_COUNT) {
+        LOG.error(e);
+      }
+      else if (errors >= STOPPING_ERROR_COUNT) {
+        myBigRepositoriesList.addRepository(myRoot);
+        LOG.error("Stopping indexing of " + myRoot.getName() + " due to the large amount of exceptions.", e);
       }
     }
 
