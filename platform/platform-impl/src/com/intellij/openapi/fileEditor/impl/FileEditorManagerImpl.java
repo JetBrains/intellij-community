@@ -408,7 +408,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   /**
    * Updates tab title and tab tool tip for the specified {@code file}
    */
-  void updateFileName(@Nullable final VirtualFile file) {
+  void updateFileName(@Nullable VirtualFile file) {
     // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
     // only the last event makes sense to handle
     myQueue.queue(new Update("UpdateFileName " + (file == null ? "" : file.getPath())) {
@@ -419,24 +419,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
       @Override
       public void run() {
-        Set<EditorsSplitters> all = getAllSplitters();
-        for (EditorsSplitters each : all) {
+        for (EditorsSplitters each : getAllSplitters()) {
           each.updateFileName(file);
         }
       }
     });
   }
 
-  //-------------------------------------------------------
-
-
   @Override
-  public VirtualFile getFile(@NotNull final FileEditor editor) {
-    final EditorComposite editorComposite = getEditorComposite(editor);
-    if (editorComposite != null) {
-      return editorComposite.getFile();
-    }
-    return null;
+  public VirtualFile getFile(@NotNull FileEditor editor) {
+    EditorComposite editorComposite = getEditorComposite(editor);
+    return editorComposite == null ? null : editorComposite.getFile();
   }
 
   @Override
@@ -1508,7 +1501,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
-  public void fireSelectionChanged(final EditorComposite newSelectedComposite) {
+  public void fireSelectionChanged(@Nullable EditorComposite newSelectedComposite) {
     final Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(SoftReference.dereference(myLastSelectedComposite));
     final Trinity<VirtualFile, FileEditor, FileEditorProvider> newData = extract(newSelectedComposite);
     myLastSelectedComposite = newSelectedComposite == null ? null : new WeakReference<>(newSelectedComposite);

@@ -416,6 +416,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
+  @Nullable
   protected IdeFrameEx getFrame(@NotNull Project project) {
     ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(project);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || frame != null);
@@ -614,8 +615,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @param window a window to be set as current
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
-  void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
-    final EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
+  void setCurrentWindow(@Nullable EditorWindow window, boolean requestFocus) {
+    EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
 
     Runnable fireRunnable = () -> getManager().fireSelectionChanged(newEditor);
 
@@ -624,7 +625,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     getManager().updateFileName(window == null ? null : window.getSelectedFile());
 
     if (window != null) {
-      final EditorWithProviderComposite selectedEditor = window.getSelectedEditor();
+      EditorWithProviderComposite selectedEditor = window.getSelectedEditor();
       if (selectedEditor != null) {
         fireRunnable.run();
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.TimerListener;
@@ -79,23 +79,19 @@ public abstract class ToolbarUpdater implements Activatable {
     updateActions(now, false, forced);
   }
 
-  private void updateActions(boolean now, final boolean transparentOnly, final boolean forced) {
-    final Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced);
-    final Application app = ApplicationManager.getApplication();
-
+  private void updateActions(boolean now, boolean transparentOnly, boolean forced) {
+    Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced);
+    Application app = ApplicationManager.getApplication();
     if (now || (app.isUnitTestMode() && app.isDispatchThread())) {
       updateRunnable.run();
     }
-    else {
-      final IdeFocusManager fm = IdeFocusManager.getInstance(null);
-
-      if (!app.isHeadlessEnvironment()) {
-        if (app.isDispatchThread() && myComponent.isShowing()) {
-          fm.doWhenFocusSettlesDown(updateRunnable);
-        }
-        else {
-          UiNotifyConnector.doWhenFirstShown(myComponent, () -> fm.doWhenFocusSettlesDown(updateRunnable));
-        }
+    else if (!app.isHeadlessEnvironment()) {
+      IdeFocusManager focusManager = IdeFocusManager.getInstance(null);
+      if (app.isDispatchThread() && myComponent.isShowing()) {
+        focusManager.doWhenFocusSettlesDown(updateRunnable);
+      }
+      else {
+        UiNotifyConnector.doWhenFirstShown(myComponent, () -> focusManager.doWhenFocusSettlesDown(updateRunnable));
       }
     }
   }
@@ -145,11 +141,12 @@ public abstract class ToolbarUpdater implements Activatable {
     }
   }
 
-  private static class MyUpdateRunnable implements Runnable {
+  private static final class MyUpdateRunnable implements Runnable {
     private final boolean myTransparentOnly;
     private final boolean myForced;
 
-    @NotNull private final WeakReference<ToolbarUpdater> myUpdaterRef;
+    @NotNull
+    private final WeakReference<ToolbarUpdater> myUpdaterRef;
     private final int myHash;
 
     MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean transparentOnly, boolean forced) {
