@@ -39,28 +39,29 @@ public class SerializedStubTree {
   final int myIndexedStubByteLength;
   private Map<StubIndexKey, Map<Object, StubIdList>> myIndexedStubs;
 
-  private volatile SerializationManagerEx mySerializationManager;
+  private final SerializationManagerEx mySerializationManager;
 
   @NotNull
   private volatile StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
-
-  public void setSerializationManager(@NotNull SerializationManagerEx serializationManager) {
-    mySerializationManager = serializationManager;
-  }
 
   private void setStubIndexesExternalizer(@NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
     myStubIndexesExternalizer = stubIndexesExternalizer;
   }
 
-  public SerializedStubTree(byte @NotNull [] treeBytes, int treeByteLength,
-                            byte @NotNull [] indexedStubBytes, int indexedStubByteLength, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs,
-                            @NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
+  public SerializedStubTree(byte @NotNull [] treeBytes,
+                            int treeByteLength,
+                            byte @NotNull [] indexedStubBytes,
+                            int indexedStubByteLength,
+                            @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs,
+                            @NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer,
+                            @NotNull SerializationManagerEx serializationManager) {
     myTreeBytes = treeBytes;
     myTreeByteLength = treeByteLength;
     myIndexedStubBytes = indexedStubBytes;
     myIndexedStubByteLength = indexedStubByteLength;
     myIndexedStubs = indexedStubs;
     myStubIndexesExternalizer = stubIndexesExternalizer;
+    mySerializationManager = serializationManager;
   }
 
   @NotNull
@@ -83,7 +84,8 @@ public class SerializedStubTree {
       indexedStubBytes,
       indexedStubByteLength,
       indexedStubs,
-      forwardIndexExternalizer
+      forwardIndexExternalizer,
+      serializationManager
     );
   }
 
@@ -120,7 +122,8 @@ public class SerializedStubTree {
       reSerializedIndexBytes,
       reSerializedIndexByteLength,
       myIndexedStubs,
-      newForwardIndexSerializer
+      newForwardIndexSerializer,
+      newSerializationManager
     );
   }
 
@@ -151,11 +154,7 @@ public class SerializedStubTree {
   // willIndexStub is one time optimization hint, once can safely pass false
   @NotNull
   public Stub getStub(boolean willIndexStub) throws SerializerNotFoundException {
-    SerializationManagerEx manager = mySerializationManager;
-    if (manager == null) {
-      manager = SerializationManagerEx.getInstanceEx();
-    }
-    return getStub(willIndexStub, manager);
+    return getStub(willIndexStub, mySerializationManager);
   }
 
   @NotNull

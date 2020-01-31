@@ -14,6 +14,7 @@ import java.io.IOException;
 
 public class SerializedStubTreeDataExternalizer implements DataExternalizer<SerializedStubTree> {
   private final boolean myIncludeInputs;
+  @NotNull
   private final SerializationManagerEx mySerializationManager;
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
@@ -42,7 +43,6 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
   @NotNull
   @Override
   public final SerializedStubTree read(@NotNull final DataInput in) throws IOException {
-    SerializedStubTree tree;
     if (PersistentHashMapValueStorage.COMPRESSION_ENABLED) {
       int serializedStubsLength = DataInputOutputUtil.readINT(in);
       byte[] bytes = new byte[serializedStubsLength];
@@ -57,14 +57,14 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
         indexedStubByteLength = 0;
         indexedStubBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
       }
-      tree = new SerializedStubTree(bytes, bytes.length, indexedStubBytes, indexedStubByteLength, null, myStubIndexesExternalizer);
+      return new SerializedStubTree(bytes, bytes.length, indexedStubBytes, indexedStubByteLength,
+                                    null, myStubIndexesExternalizer, mySerializationManager);
     }
     else {
       byte[] treeBytes = CompressionUtil.readCompressed(in);
       byte[] indexedStubBytes = myIncludeInputs ? CompressionUtil.readCompressed(in) : ArrayUtil.EMPTY_BYTE_ARRAY;
-      tree = new SerializedStubTree(treeBytes, treeBytes.length, indexedStubBytes, indexedStubBytes.length, null, myStubIndexesExternalizer);
+      return new SerializedStubTree(treeBytes, treeBytes.length, indexedStubBytes, indexedStubBytes.length,
+                                    null, myStubIndexesExternalizer, mySerializationManager);
     }
-    tree.setSerializationManager(mySerializationManager);
-    return tree;
   }
 }
