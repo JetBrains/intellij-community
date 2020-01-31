@@ -17,7 +17,7 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
   private final SerializationManagerEx mySerializationManager;
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
-  public SerializedStubTreeDataExternalizer(boolean inputs, SerializationManagerEx manager, @NotNull StubForwardIndexExternalizer<?> externalizer) {
+  public SerializedStubTreeDataExternalizer(boolean inputs, @NotNull SerializationManagerEx manager, @NotNull StubForwardIndexExternalizer<?> externalizer) {
     myIncludeInputs = inputs;
     mySerializationManager = manager;
     myStubIndexesExternalizer = externalizer;
@@ -64,7 +64,7 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
       byte[] indexedStubBytes = myIncludeInputs ? CompressionUtil.readCompressed(in) : ArrayUtil.EMPTY_BYTE_ARRAY;
       tree = new SerializedStubTree(treeBytes, treeBytes.length, indexedStubBytes, indexedStubBytes.length, null, myStubIndexesExternalizer);
     }
-    if (mySerializationManager != null) tree.setSerializationManager(mySerializationManager);
+    tree.setSerializationManager(mySerializationManager);
     return tree;
   }
 }

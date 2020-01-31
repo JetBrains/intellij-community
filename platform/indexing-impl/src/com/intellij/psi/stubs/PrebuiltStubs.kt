@@ -60,7 +60,7 @@ open class HashCodeExternalizers : DataExternalizer<HashCode> {
   }
 }
 
-class FullStubExternalizer : SerializedStubTreeDataExternalizer(true, null, StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer.INSTANCE)
+class FullStubExternalizer : SerializedStubTreeDataExternalizer(true, SerializationManagerEx.getInstanceEx(), StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer.INSTANCE)
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubTree>(), PrebuiltStubsProvider {
 
