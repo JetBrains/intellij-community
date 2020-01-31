@@ -61,12 +61,12 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
         indexedStubByteLength = 0;
         indexedStubBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
       }
-      tree = new SerializedStubTree(bytes, bytes.length, null, indexedStubBytes, indexedStubByteLength, null);
+      tree = new SerializedStubTree(bytes, bytes.length, indexedStubBytes, indexedStubByteLength, null);
     }
     else {
       byte[] treeBytes = CompressionUtil.readCompressed(in);
       byte[] indexedStubBytes = myIncludeInputs ? CompressionUtil.readCompressed(in) : ArrayUtil.EMPTY_BYTE_ARRAY;
-      tree = new SerializedStubTree(treeBytes, treeBytes.length, null, indexedStubBytes, indexedStubBytes.length, null);
+      tree = new SerializedStubTree(treeBytes, treeBytes.length, indexedStubBytes, indexedStubBytes.length, null);
     }
     if (mySerializationManager != null) tree.setSerializationManager(mySerializationManager);
     tree.setStubIndexesExternalizer(myStubIndexesExternalizer);

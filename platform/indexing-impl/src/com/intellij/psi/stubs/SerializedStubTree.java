@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -33,7 +33,6 @@ public class SerializedStubTree {
   // serialized tree
   final byte[] myTreeBytes;
   final int myTreeByteLength;
-  private Stub myStubElement;
 
   // stub forward indexes
   final byte[] myIndexedStubBytes;
@@ -51,11 +50,10 @@ public class SerializedStubTree {
     myStubIndexesExternalizer = stubIndexesExternalizer;
   }
 
-  public SerializedStubTree(byte @NotNull [] treeBytes, int treeByteLength, @Nullable Stub stubElement,
+  public SerializedStubTree(byte @NotNull [] treeBytes, int treeByteLength,
                             byte @NotNull [] indexedStubBytes, int indexedStubByteLength, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs) {
     myTreeBytes = treeBytes;
     myTreeByteLength = treeByteLength;
-    myStubElement = stubElement;
 
     myIndexedStubBytes = indexedStubBytes;
     myIndexedStubByteLength = indexedStubByteLength;
@@ -106,12 +104,12 @@ public class SerializedStubTree {
     }
 
     SerializedStubTree tree = new SerializedStubTree(
-            outStub.getInternalBuffer(),
-            outStub.size(),
-            null,
-            reSerializedIndexBytes,
-            reSerializedIndexByteLength,
-            myIndexedStubs);
+      outStub.getInternalBuffer(),
+      outStub.size(),
+      reSerializedIndexBytes,
+      reSerializedIndexByteLength,
+      myIndexedStubs
+    );
     tree.setStubIndexesExternalizer(newForwardIndexSerializer);
     return tree;
   }
@@ -152,13 +150,6 @@ public class SerializedStubTree {
 
   @NotNull
   public Stub getStub(boolean willIndexStub, @NotNull SerializationManagerEx serializationManager) throws SerializerNotFoundException {
-    Stub stubElement = myStubElement;
-    if (stubElement != null) {
-      // not null myStubElement means we just built SerializedStubTree for indexing,
-      // if we request stub for indexing we can safely use it
-      myStubElement = null;
-      if (willIndexStub) return stubElement;
-    }
     return retrieveStubFromBytes(serializationManager);
   }
 
