@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import com.google.common.io.Files
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -269,20 +268,27 @@ class CommunityRepositoryModules {
       withModule("intellij.android.databinding", "android.jar")
       withModule("intellij.android.debuggers", "android.jar")
       withModule("intellij.android.lang", "android.jar")
+      withModule("intellij.android.lang-databinding", "android.jar")
+      withModule("intellij.android.room", "android.jar")
       withModule("intellij.android.plugin", "android.jar")
       withModule("intellij.android.artwork")
+      withModule("intellij.android.build-attribution", "android.jar")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
       withModuleLibrary("precompiled-flags", "android.sdktools.flags", "")
-      withModule("intellij.android.propertyEditor", "android.jar")
-      withModule("intellij.android.layoutInspector", "android.jar")
+      withModule("intellij.android.layout-inspector", "android.jar")
+      withModule("intellij.android.layout-ui", "android.jar")
       withModule("intellij.android.transport", "android.jar")
       withModule("intellij.android.designer", "android.jar")
+      withModule("intellij.android.compose-designer", "android.jar")
       withModule("intellij.android.naveditor", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.wizard.model", "android.jar")
+      withModuleLibrary("precompiled-intellij.android.wizardTemplate.plugin", "android.sdktools.wizardTemplate.plugin", "")
+      withModuleLibrary("precompiled-intellij.android.wizardTemplate.impl", "android.sdktools.wizardTemplate.impl", "")
       withModule("intellij.android.profilersAndroid", "android.jar")
+      withModule("intellij.android.gameToolsStarter", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
@@ -291,12 +297,14 @@ class CommunityRepositoryModules {
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("intellij.android.profilers.atrace", "android-profilers.jar")
-      withModule("intellij.android.nativeSymbolizer", "android.jar")
+      withModule("intellij.android.native-symbolizer", "android.jar")
       withModule("intellij.android.apkanalyzer", "android.jar")
       withModule("intellij.android.projectSystem", "android.jar")
       withModule("intellij.android.projectSystem.gradle", "android.jar")
-      withModule("intellij.android.resourcesAar", "android.jar")
-      withModule("intellij.android.androidLayoutInspector", "android.jar")
+      withModule("intellij.android.gradle-tooling", "android.jar")
+      withModule("intellij.android.gradle-tooling.impl", "android.jar")
+      withModule("intellij.android.resources-base", "android.jar")
+      withModule("intellij.android.android-layout-inspector", "android.jar")
       /* do not put into IJ android plugin: assistant, connection-assistant, whats-new-assistant */
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
@@ -309,19 +317,27 @@ class CommunityRepositoryModules {
 
       withModuleLibrary("precompiled-sdklib", "android.sdktools.sdklib", "")
       withModuleLibrary("precompiled-sdk-common", "android.sdktools.sdk-common", "")
+
+      withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
+
+      // from AOSP's plugin("intellij.android.layoutlib"). Force layoutlib-standard. //
       withModuleLibrary("precompiled-layoutlib-api", "android.sdktools.layoutlib-api", "")
-      withModule("intellij.android.layoutlibLoader", "layoutlib-loader.jar")
-      withModuleLibrary("layoutlib", "intellij.android.layoutlib", "")
+      withModuleLibrary("layoutlib-jre11-26.6.0.1.jar", "intellij.android.layoutlib", "")
+      //////////////////////////////////////////////////////
+
       withModuleLibrary("precompiled-manifest-merger", "android.sdktools.manifest-merger", "")
+      withModuleLibrary("precompiled-chunkio", "android.sdktools.chunkio", "")
       withModuleLibrary("precompiled-pixelprobe", "android.sdktools.pixelprobe", "")
+
       withModuleLibrary("precompiled-binary-resources", "android.sdktools.binary-resources", "")
       withModuleLibrary("precompiled-analyzer", "android.sdktools.analyzer", "")
       withModuleLibrary("precompiled-ddmlib", "android.sdktools.ddmlib", "")
       withModuleLibrary("precompiled-dvlib", "android.sdktools.dvlib", "")
       withModuleLibrary("precompiled-deployer", "android.sdktools.deployer", "")
-      withModuleLibrary("deploy-java-proto", "android.sdktools.deployer", "")
-      withModuleLibrary("deploy-java-version", "android.sdktools.deployer", "")
-      withModuleLibrary("r8-master", "android.sdktools.deployer", "")
+      withModuleLibrary("deploy-java-proto", "android.sdktools.deployer", "") // exported module library
+      withModuleLibrary("deploy-java-version", "android.sdktools.deployer", "") // exported module library
+      withModuleLibrary("r8-master", "android.sdktools.deployer", "") // exported module library
+
       withModuleLibrary("precompiled-tracer", "android.sdktools.tracer", "")
       withModuleLibrary("precompiled-draw9patch", "android.sdktools.draw9patch", "")
       withModuleLibrary("precompiled-lint-api", "android.sdktools.lint-api", "")
@@ -332,8 +348,7 @@ class CommunityRepositoryModules {
       withModuleLibrary("precompiled-builder-test-api", "android.sdktools.builder-test-api", "")
       withModuleLibrary("precompiled-android-annotations", "android.sdktools.android-annotations", "")
       withModuleLibrary("precompiled-layoutinspector", "android.sdktools.layoutinspector", "")
-      withModuleLibrary("precompiled-java-lib-model", "android.sdktools.java-lib-model", "")
-      withModuleLibrary("precompiled-java-lib-model-builder", "android.sdktools.java-lib-model-builder", "")
+
       withModuleLibrary("precompiled-usb-devices", "android.sdktools.usb-devices", "")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
@@ -350,41 +365,62 @@ class CommunityRepositoryModules {
       withResourceFromModule("intellij.android.core", "lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("intellij.android.core", "lib/sampleData", "lib/sampleData")
+      withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
+
       withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
       withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/mac", "lib/libwebp/mac")
       withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/win", "lib/libwebp/win")
-      withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout
-      withResource("../tools-base/layoutlib","lib/layoutlib") // todo replace this with runtime downloading
-      withResource("../tools-base/templates", "lib/templates")
+      def getSingleFile = { BuildContext context, String projectLibName ->
+        List<File> libFiles = context.project.libraryCollection
+          .findLibrary(projectLibName)
+          .getFiles(JpsOrderRootType.COMPILED)
+        assert libFiles.size() == 1: "Exactly one file is expected in project library ${projectLibName}"
+        return libFiles[0]
+      }
 
+      def unzipProjectLib = { BuildContext context, String projectLibName, String dstFileName ->
+        File dstFile = new File(dstFileName)
+        context.ant.invokeMethod("unzip", [
+            src: getSingleFile(context, projectLibName),
+            dest: dstFile
+          ]
+        )
+        return dstFile
+      }
 
-      withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
+      withGeneratedResources(new ResourcesGenerator() {
+        @Override
+        File generateResources(BuildContext context) {
+          return unzipProjectLib(
+            context, "org.jetbrains.intellij.deps.android.tools.base:layoutlib-resources", "$context.paths.temp/andorid-plugin/layoutlib-resources"
+          )
+        }
+      }, "lib/layoutlib")
+
+      withGeneratedResources(new ResourcesGenerator() {
+        @Override
+        File generateResources(BuildContext context) {
+          return unzipProjectLib(
+            context, "org.jetbrains.intellij.deps.android.tools.base:templates", "$context.paths.temp/andorid-plugin/templates"
+          )
+        }
+      }, "lib/templates")
+
+      withProjectLibrary("transport-proto")
+      withProjectLibrary("perfetto-proto")
+      withProjectLibrary("studio-proto")
+      withProjectLibrary("studio-grpc")
       // Profiler downloader will download all the other profiler libraries: profilers-transform.jar, perfa_okhttp.dex, perfa, perfd, simpleperf
       // Profiler downloader will also download instant run installers: /resources/installer
       // Profiler downloader will also download instant run transport: /resources/transport
 
       withModuleLibrary("precompiled-common", "android.sdktools.common", "")
+      withModuleLibrary("precompiled-android-annotations", "android.sdktools.android-annotations", "")
       withModuleLibrary("precompiled-analytics-crash", "android.sdktools.analytics-crash", "")
       withModuleLibrary("precompiled-analytics-shared", "android.sdktools.analytics-shared", "")
       withModuleLibrary("precompiled-analytics-tracker", "android.sdktools.analytics-tracker", "")
-      withGeneratedResources(new ResourcesGenerator() {
-        @Override
-        // Sole purpose of this method is to rename resources-aar-<version>.jar into framework_res.jar and put it into lib/layoutlib/data
-        File generateResources(BuildContext context) {
-          def frameworkResJar = new File("$context.paths.temp/andorid-plugin/resources-aar/framework_res.jar")
-          List<File> files= context.project.libraryCollection
-            .findLibrary("org.jetbrains.intellij.deps.android.tools:resources-aar")
-            .getFiles(JpsOrderRootType.COMPILED)
-          assert files.size() == 1: "Exactly one file (resources-aar-<version>.jar) is expected"
-          assert files[0].name.endsWith(".jar") : "JAR file is expected, but ${files[0]} was found"
-
-          Files.createParentDirs(frameworkResJar)
-          Files.copy(files[0], frameworkResJar)
-          return frameworkResJar
-        }
-      }, "lib/layoutlib/data")
       // FIXME-ank: add "analytics-publisher"?
 
       additionalModulesToJars.entrySet().each {
