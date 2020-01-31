@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.CommonBundle;
+import com.intellij.UtilBundle;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
@@ -91,7 +91,7 @@ public abstract class ComparisonPolicy {
 
   private static class DefaultPolicy extends ComparisonPolicy {
     DefaultPolicy() {
-      super(CommonBundle.message("comparison.policy.default.name"));
+      super(UtilBundle.message("comparison.policy.default.name"));
     }
 
     @Override
@@ -118,7 +118,7 @@ public abstract class ComparisonPolicy {
 
   private static class TrimSpacePolicy extends ComparisonPolicy {
     TrimSpacePolicy() {
-      super(CommonBundle.message("comparison.policy.trim.space.name"));
+      super(UtilBundle.message("comparison.policy.trim.space.name"));
     }
 
     @Override
@@ -166,7 +166,7 @@ public abstract class ComparisonPolicy {
   private static class IgnoreSpacePolicy extends ComparisonPolicy
     implements DiffCorrection.FragmentProcessor<DiffCorrection.FragmentsCollector> {
     IgnoreSpacePolicy() {
-      super(CommonBundle.message("comparison.policy.ignore.spaces.name"));
+      super(UtilBundle.message("comparison.policy.ignore.spaces.name"));
     }
 
     @Override

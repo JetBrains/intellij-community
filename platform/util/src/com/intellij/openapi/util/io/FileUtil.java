@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.intellij.CommonBundle;
+import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
@@ -495,8 +495,8 @@ public class FileUtil extends FileUtilRt {
       return;
     }
     File[] files = fromDir.listFiles();
-    if (files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
-    if (!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
+    if (files == null) throw new IOException(UtilBundle.message("exception.directory.is.invalid", fromDir.getPath()));
+    if (!fromDir.canRead()) throw new IOException(UtilBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     for (File file : files) {
       if (filter != null && !filter.accept(file)) {
         continue;
@@ -512,7 +512,7 @@ public class FileUtil extends FileUtilRt {
 
   public static void ensureExists(@NotNull File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
-      throw new IOException(CommonBundle.message("exception.directory.can.not.create", dir.getPath()));
+      throw new IOException(UtilBundle.message("exception.directory.can.not.create", dir.getPath()));
     }
   }
 

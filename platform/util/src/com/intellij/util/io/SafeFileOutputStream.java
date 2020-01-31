@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.CommonBundle;
+import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -113,7 +113,7 @@ public class SafeFileOutputStream extends OutputStream {
       throw new IllegalStateException(e);
     }
     catch (ExecutionException e) {
-      throw new IOException(CommonBundle.message("safe.write.backup", myTarget, myTarget.getFileName() + myBackupExt), e.getCause());
+      throw new IOException(UtilBundle.message("safe.write.backup", myTarget, myTarget.getFileName() + myBackupExt), e.getCause());
     }
   }
 
@@ -122,7 +122,7 @@ public class SafeFileOutputStream extends OutputStream {
       return Files.newOutputStream(myTarget, MAIN_WRITE);
     }
     catch (IOException e) {
-      throw new IOException(CommonBundle.message("safe.write.open", myTarget), e);
+      throw new IOException(UtilBundle.message("safe.write.open", myTarget), e);
     }
   }
 
@@ -145,7 +145,7 @@ public class SafeFileOutputStream extends OutputStream {
 
   private void restoreFromBackup(@Nullable Path backup, IOException e) throws IOException {
     if (backup == null) {
-      throw new IOException(CommonBundle.message("safe.write.junk", myTarget), e);
+      throw new IOException(UtilBundle.message("safe.write.junk", myTarget), e);
     }
 
     boolean restored = true;
@@ -157,10 +157,10 @@ public class SafeFileOutputStream extends OutputStream {
       e.addSuppressed(ex);
     }
     if (restored) {
-      throw new IOException(CommonBundle.message("safe.write.restored", myTarget), e);
+      throw new IOException(UtilBundle.message("safe.write.restored", myTarget), e);
     }
     else {
-      throw new IOException(CommonBundle.message("safe.write.junk.backup", myTarget, backup.getFileName()), e);
+      throw new IOException(UtilBundle.message("safe.write.junk.backup", myTarget, backup.getFileName()), e);
     }
   }
 }

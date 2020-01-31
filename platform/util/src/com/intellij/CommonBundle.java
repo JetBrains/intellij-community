@@ -21,7 +21,11 @@ public final class CommonBundle extends BundleBase {
   @Nls
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return message(getCommonBundle(), key, params);
+    ResourceBundle bundle = getCommonBundle();
+    if (!bundle.containsKey(key)) {
+      return UtilBundle.message(key, params);
+    }
+    return message(bundle, key, params);
   }
 
   @NotNull
