@@ -13,6 +13,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionSpecialty
+import java.awt.Color
 
 const val NUL = "\u0000"
 private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
@@ -51,13 +52,14 @@ private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
  */
 
 @Throws(VcsException::class)
-fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): FileStatus {
+fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): GitFileStatus {
   val h = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root), executable, GitCommand.STATUS, emptyList())
   h.setSilent(true)
   h.addParameters("--porcelain", "-z", "--no-renames")
   if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(GitExecutableManager.getInstance().getVersion(executable))) {
     h.addParameters("--ignored=matching")
-  } else {
+  }
+  else {
     h.addParameters("--ignored")
   }
   h.endOptions()
@@ -66,14 +68,14 @@ fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): Fi
   val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
   if (output.isNotBlank()) {
     val gitStatusOutput = parseGitStatusOutput(output)
-    return gitStatusOutput.firstOrNull()?.getStatus() ?: FileStatus.NOT_CHANGED
+    return gitStatusOutput.firstOrNull() ?: GitFileStatus.Blank
   }
-  return FileStatus.NOT_CHANGED
+  return GitFileStatus.Blank
 }
 
 @Throws(VcsException::class)
-fun parseGitStatusOutput(output: String): List<StatusOutputLine> {
-  val result = mutableListOf<StatusOutputLine>()
+fun parseGitStatusOutput(output: String): List<GitFileStatus.StatusRecord> {
+  val result = mutableListOf<GitFileStatus.StatusRecord>()
 
   val split = output.split(NUL).toTypedArray()
   for (line in split) {
@@ -87,14 +89,14 @@ fun parseGitStatusOutput(output: String): List<StatusOutputLine> {
     val yStatus = line[1]
     val pathPart = line.substring(3) // skipping the space
 
-    result.add(StatusOutputLine(xStatus, yStatus, pathPart))
+    result.add(GitFileStatus.StatusRecord(xStatus, yStatus, pathPart))
   }
 
   return result;
 }
 
 @Throws(VcsException::class)
-private fun getStatus(status: Char): FileStatus? {
+private fun getFileStatus(status: StatusCode): FileStatus? {
   return when (status) {
     ' ' -> null
     'M', 'R', 'C', 'T' -> FileStatus.MODIFIED
@@ -107,11 +109,27 @@ private fun getStatus(status: Char): FileStatus? {
   }
 }
 
-data class StatusOutputLine(val xStatus: Char, val yStatus: Char, val path: String, val origPath: String? = null) {
-  fun getStatus(): FileStatus {
-    if ((xStatus == 'D' && yStatus == 'D') ||
-        (xStatus == 'A' && yStatus == 'A') ||
-        (xStatus == 'U' || yStatus == 'U')) return FileStatus.MERGED_WITH_CONFLICTS
-    return getStatus(xStatus) ?: getStatus(yStatus) ?: FileStatus.NOT_CHANGED
+typealias StatusCode = Char
+
+sealed class GitFileStatus {
+  internal abstract fun getFileStatus(): FileStatus
+
+  object Blank : GitFileStatus() {
+    override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
+  }
+
+  data class StatusRecord(val index: StatusCode,
+                          val workTree: StatusCode,
+                          val path: String,
+                          val origPath: String? = null) : GitFileStatus() {
+    override fun getFileStatus(): FileStatus {
+      if ((index == 'D' && workTree == 'D') ||
+          (index == 'A' && workTree == 'A') ||
+          (index == 'U' || workTree == 'U')) return FileStatus.MERGED_WITH_CONFLICTS
+      return getFileStatus(index) ?: getFileStatus(workTree) ?: FileStatus.NOT_CHANGED
+    }
   }
 }
+
+val GitFileStatus.color: Color?
+  get() = getFileStatus().color

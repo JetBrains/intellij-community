@@ -8,7 +8,6 @@ import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -20,6 +19,7 @@ import com.intellij.vcs.log.runInEdt
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionIdentificationException
+import git4idea.index.GitFileStatus
 import git4idea.index.getFileStatus
 import java.util.*
 
@@ -40,7 +40,7 @@ internal class LightGitTracker : Disposable {
   private var state: State = State.Blank
   val currentLocation: String?
     get() = state.location
-  val statuses: Map<VirtualFile, FileStatus>
+  val statuses: Map<VirtualFile, GitFileStatus>
     get() = state.statuses
 
   init {
@@ -53,15 +53,15 @@ internal class LightGitTracker : Disposable {
     singleTaskController.request(Request.CheckGit)
   }
 
-  fun getFileStatus(file: VirtualFile): FileStatus {
-    return state.statuses[file] ?: FileStatus.NOT_CHANGED
+  fun getFileStatus(file: VirtualFile): GitFileStatus {
+    return state.statuses[file] ?: GitFileStatus.Blank
   }
 
   private fun updateCurrentState(updater: StateUpdater) {
     when (updater) {
       StateUpdater.Clear -> {
         val previousStatuses = state.statuses
-        val statusesChanged = previousStatuses.isNotEmpty() && previousStatuses.values.any { it != FileStatus.NOT_CHANGED }
+        val statusesChanged = previousStatuses.isNotEmpty() && previousStatuses.values.any { it != GitFileStatus.Blank }
         val changed = statusesChanged || !(state.location.isNullOrBlank())
 
         state = State.Blank
@@ -72,7 +72,7 @@ internal class LightGitTracker : Disposable {
       is StateUpdater.Update -> {
         val newState = updater.state
         val statusesMap = lightEditorManager.openFiles.associateWith {
-          newState.statuses[it] ?: state.statuses[it] ?: FileStatus.NOT_CHANGED
+          newState.statuses[it] ?: state.statuses[it] ?: GitFileStatus.Blank
         }
         val location = if (updater.updateLocation) newState.location else state.location
 
@@ -175,7 +175,7 @@ internal class LightGitTracker : Disposable {
       else previousResult?.state?.location
       val updateLocation = locationFile != null || (previousResult as? StateUpdater.Update)?.updateLocation ?: false
 
-      val statuses = mutableMapOf<VirtualFile, FileStatus>()
+      val statuses = mutableMapOf<VirtualFile, GitFileStatus>()
       previousResult?.state?.statuses?.let { statuses.putAll(it) }
       for (file in files) {
         try {
@@ -191,7 +191,7 @@ internal class LightGitTracker : Disposable {
     }
   }
 
-  private data class State(val location: String?, val statuses: Map<VirtualFile, FileStatus>) {
+  private data class State(val location: String?, val statuses: Map<VirtualFile, GitFileStatus>) {
     private constructor() : this(null, emptyMap())
 
     companion object {
