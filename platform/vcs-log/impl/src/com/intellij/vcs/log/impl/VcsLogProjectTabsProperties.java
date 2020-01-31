@@ -7,6 +7,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   @Override
   @NotNull
   public MainVcsLogUiProperties createProperties(@NotNull final String id) {
-    myState.TAB_STATES.putIfAbsent(id, new VcsLogUiPropertiesImpl.State());
+    myState.TAB_STATES.putIfAbsent(id, new MyState());
     return new MyVcsLogUiPropertiesImpl(id);
   }
 
@@ -94,7 +95,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   }
 
   public static class State {
-    public Map<String, VcsLogUiPropertiesImpl.State> TAB_STATES = new TreeMap<>();
+    public Map<String, MyState> TAB_STATES = new TreeMap<>();
     @Deprecated
     public LinkedHashSet<String> OPEN_TABS = new LinkedHashSet<>();
     public LinkedHashMap<String, VcsLogManager.LogWindowKind> OPEN_GENERIC_TABS = new LinkedHashMap<>();
@@ -126,7 +127,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     }
   }
 
-  private class MyVcsLogUiPropertiesImpl extends VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State> {
+  private class MyVcsLogUiPropertiesImpl extends VcsLogUiPropertiesImpl<MyState> {
     private final String myId;
 
     MyVcsLogUiPropertiesImpl(String id) {
@@ -136,18 +137,46 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
 
     @NotNull
     @Override
-    public State getState() {
-      State state = myState.TAB_STATES.get(myId);
+    public MyState getState() {
+      MyState state = myState.TAB_STATES.get(myId);
       if (state == null) {
-        state = new State();
+        state = new MyState();
         myState.TAB_STATES.put(myId, state);
       }
       return state;
     }
 
     @Override
-    public void loadState(@NotNull State state) {
+    public void loadState(@NotNull MyState state) {
       myState.TAB_STATES.put(myId, state);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> @NotNull T get(@NotNull VcsLogUiProperty<T> property) {
+      if (property instanceof CustomBooleanTabProperty) {
+        Boolean value = getState().CUSTOM_BOOLEAN_PROPERTIES.get(property.getName());
+        if (value == null) {
+          value = ((CustomBooleanTabProperty)property).defaultValue(myId);
+        }
+        return (T)value;
+      }
+      return super.get(property);
+    }
+
+    @Override
+    public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
+      if (property instanceof CustomBooleanTabProperty) {
+        getState().CUSTOM_BOOLEAN_PROPERTIES.put(property.getName(), (Boolean)value);
+        onPropertyChanged(property);
+        return;
+      }
+      super.set(property, value);
+    }
+
+    @Override
+    public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
+      return super.exists(property) || property instanceof CustomBooleanTabProperty;
     }
 
     @Override
@@ -159,6 +188,22 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     @Override
     public List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
       return getRecentGroup(myState.RECENT_FILTERS, filterName);
+    }
+  }
+
+  @Tag("State")
+  private static class MyState extends VcsLogUiPropertiesImpl.State {
+    public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();
+  }
+
+  public static class CustomBooleanTabProperty extends VcsLogUiProperties.VcsLogUiProperty<Boolean> {
+    public CustomBooleanTabProperty(@NotNull String name) {
+      super(name);
+    }
+
+    @NotNull
+    public Boolean defaultValue(@NotNull String logId) {
+      return Boolean.FALSE;
     }
   }
 }
