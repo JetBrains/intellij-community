@@ -2,6 +2,8 @@
 package git4idea.rebase.interactive
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -65,6 +67,7 @@ internal class GitInteractiveRebaseDialog(
   companion object {
     private const val DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion"
     private const val DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
+    internal const val PLACE = "Git.Interactive.Rebase.Dialog"
 
     private const val DIALOG_HEIGHT = 450
     private const val DIALOG_WIDTH = 800
@@ -107,14 +110,14 @@ internal class GitInteractiveRebaseDialog(
       return CommittedChangesTreeBrowser.zipChanges(changes)
     }
   }
-  private val pickAction = ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable)
-  private val actions = listOf<AnAction>(
-    ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable),
+  private val pickAction = ChangeEntryStateSimpleAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable)
+  private val actions = listOf<AnActionButton>(
+    RewordAction(commitsTable),
     FixupAction(commitsTable),
-    RewordAction(commitsTable)
+    ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, commitsTable)
   )
   private val contextMenuOnlyActions = listOf<AnAction>(
-    ChangeEntryStateAction(
+    ChangeEntryStateSimpleAction(
       GitRebaseEntry.Action.EDIT,
       GitBundle.getString("rebase.interactive.dialog.stop.to.edit.text"),
       GitBundle.getString("rebase.interactive.dialog.stop.to.edit.text"),
@@ -140,7 +143,7 @@ internal class GitInteractiveRebaseDialog(
         addSeparator()
         addAll(contextMenuOnlyActions)
       },
-      "Git.Interactive.Rebase.Dialog",
+      PLACE,
       ActionManager.getInstance()
     )
 
@@ -157,10 +160,10 @@ internal class GitInteractiveRebaseDialog(
       .setPanelBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
       .disableAddAction()
       .disableRemoveAction()
-      .addExtraAction(AnActionButton.fromAction(pickAction))
+      .addExtraAction(pickAction)
       .addExtraAction(AnActionButtonSeparator())
     actions.forEach {
-      decorator.addExtraAction(AnActionButton.fromAction(it))
+      decorator.addExtraAction(it)
     }
 
     val tablePanel = decorator.createPanel()
@@ -168,7 +171,6 @@ internal class GitInteractiveRebaseDialog(
       border = JBUI.Borders.emptyRight(10)
     }
     decorator.actionsPanel.apply {
-      border = JBUI.Borders.empty(2, 0)
       add(BorderLayout.EAST, resetEntriesLabelPanel)
     }
 
@@ -668,13 +670,13 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
   }
 }
 
-private open class ChangeEntryStateAction(
+private open class ChangeEntryStateSimpleAction(
   protected val action: GitRebaseEntry.Action,
   title: String,
   description: String,
   icon: Icon?,
   protected val table: CommitsTable
-) : DumbAwareAction(title, description, icon) {
+) : AnActionButton(title, description, icon), DumbAware {
 
   constructor(action: GitRebaseEntry.Action, icon: Icon?, table: CommitsTable) :
     this(action, action.name.capitalize(), action.name.capitalize(), icon, table)
@@ -694,25 +696,58 @@ private open class ChangeEntryStateAction(
     }
   }
 
-  override fun update(e: AnActionEvent) {
-    super.update(e)
+  override fun updateButton(e: AnActionEvent) {
+    super.updateButton(e)
+    actionIsEnabled(e, true)
     if (table.editingRow != -1 || table.selectedRowCount == 0) {
-      e.presentation.isEnabled = false
+      actionIsEnabled(e, false)
     }
+  }
+
+  protected open fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
+    e.presentation.isEnabled = isEnabled
   }
 }
 
-private class FixupAction(table: CommitsTable) : ChangeEntryStateAction(GitRebaseEntry.Action.FIXUP, AllIcons.Vcs.Merge, table) {
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.text = when (table.selectedRowCount) {
-      0 -> "Fixup"
-      1 -> "Fixup with Previous"
-      else -> "Fixup Selected"
-    }
-    e.presentation.description = e.presentation.text
+private open class ChangeEntryStateButtonAction(
+  action: GitRebaseEntry.Action,
+  table: CommitsTable
+) : ChangeEntryStateSimpleAction(action, null, table), CustomComponentAction, DumbAware {
+  companion object {
+    private val BUTTON_HEIGHT = JBUI.scale(28)
   }
 
+  protected val button = object : JButton(action.name.capitalize()) {
+    init {
+      preferredSize = Dimension(preferredSize.width, BUTTON_HEIGHT)
+      border = object : DarculaButtonPainter() {
+        override fun getBorderInsets(c: Component?): Insets {
+          return JBUI.emptyInsets()
+        }
+      }
+      isFocusable = false
+      displayedMnemonicIndex = 0
+      addActionListener {
+        val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, this)
+        val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(this)
+        actionPerformed(
+          AnActionEvent.createFromAnAction(this@ChangeEntryStateButtonAction, null, GitInteractiveRebaseDialog.PLACE, dataContext)
+        )
+      }
+    }
+  }
+
+  override fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
+    super.actionIsEnabled(e, isEnabled)
+    button.isEnabled = isEnabled
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String) = BorderLayoutPanel().addToCenter(button).apply {
+    border = JBUI.Borders.emptyLeft(6)
+  }
+}
+
+private class FixupAction(table: CommitsTable) : ChangeEntryStateButtonAction(GitRebaseEntry.Action.FIXUP, table) {
   override fun actionPerformed(e: AnActionEvent) {
     val selectedRows = table.selectedRows
     if (selectedRows.size == 1) {
@@ -726,17 +761,11 @@ private class FixupAction(table: CommitsTable) : ChangeEntryStateAction(GitRebas
   }
 }
 
-private class RewordAction(table: CommitsTable) :
-  ChangeEntryStateAction(GitRebaseEntry.Action.REWORD, TITLE, TITLE, AllIcons.Actions.Edit, table) {
-
-  companion object {
-    private const val TITLE = "Edit Message"
-  }
-
-  override fun update(e: AnActionEvent) {
-    super.update(e)
+private class RewordAction(table: CommitsTable) : ChangeEntryStateButtonAction(GitRebaseEntry.Action.REWORD, table) {
+  override fun updateButton(e: AnActionEvent) {
+    super.updateButton(e)
     if (table.selectedRowCount != 1) {
-      e.presentation.isEnabled = false
+      actionIsEnabled(e, false)
     }
   }
 
