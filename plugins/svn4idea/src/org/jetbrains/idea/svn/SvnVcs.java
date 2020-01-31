@@ -94,6 +94,7 @@ public final class SvnVcs extends AbstractVcs {
 
   @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
+  private SvnFileSystemListener myFileOperationsHandler;
 
   private CheckinEnvironment myCheckinEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
@@ -310,7 +311,7 @@ public final class SvnVcs extends AbstractVcs {
       });
     }
 
-    SvnApplicationSettings.getInstance().svnActivated();
+    myFileOperationsHandler = new SvnFileSystemListener(this);
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
     }
@@ -378,7 +379,10 @@ public final class SvnVcs extends AbstractVcs {
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     }
-    SvnApplicationSettings.getInstance().svnDeactivated();
+    if (myFileOperationsHandler != null) {
+      Disposer.dispose(myFileOperationsHandler);
+      myFileOperationsHandler = null;
+    }
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
     }
