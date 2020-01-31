@@ -55,7 +55,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
       return null
     }
 
-    return SerializedStubTree(stub, serializationManager, STUB_EXTERNALIZER)
+    return SerializedStubTree.serializeStub(stub, serializationManager, STUB_EXTERNALIZER)
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
@@ -119,7 +119,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
             storage.get(key).getStub(false, newSerializationManager)
 
             val stub = value.getStub(false, serializationManager)
-            val newStubTree2 = SerializedStubTree(stub, newSerializationManager, STUB_EXTERNALIZER)
+            val newStubTree2 = SerializedStubTree.serializeStub(stub, newSerializationManager, STUB_EXTERNALIZER)
 
             TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
           }

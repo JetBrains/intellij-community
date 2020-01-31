@@ -46,34 +46,43 @@ public class SerializedStubTree {
     mySerializationManager = serializationManager;
   }
 
-  public void setStubIndexesExternalizer(@NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
+  private void setStubIndexesExternalizer(@NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
     myStubIndexesExternalizer = stubIndexesExternalizer;
   }
 
   public SerializedStubTree(byte @NotNull [] treeBytes, int treeByteLength,
-                            byte @NotNull [] indexedStubBytes, int indexedStubByteLength, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs) {
+                            byte @NotNull [] indexedStubBytes, int indexedStubByteLength, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs,
+                            @Nullable StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
     myTreeBytes = treeBytes;
     myTreeByteLength = treeByteLength;
-
     myIndexedStubBytes = indexedStubBytes;
     myIndexedStubByteLength = indexedStubByteLength;
     myIndexedStubs = indexedStubs;
+    myStubIndexesExternalizer = stubIndexesExternalizer;
   }
 
-  public SerializedStubTree(@NotNull Stub rootStub,
-                            @NotNull SerializationManagerEx serializationManager,
-                            @NotNull StubForwardIndexExternalizer<?> forwardIndexExternalizer) throws IOException {
+  @NotNull
+  public static SerializedStubTree serializeStub(@NotNull Stub rootStub,
+                                                 @NotNull SerializationManagerEx serializationManager,
+                                                 @NotNull StubForwardIndexExternalizer<?> forwardIndexExternalizer) throws IOException {
     final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     serializationManager.serialize(rootStub, bytes);
-    myTreeBytes = bytes.getInternalBuffer();
-    myTreeByteLength = bytes.size();
+    byte[] treeBytes = bytes.getInternalBuffer();
+    int treeByteLength = bytes.size();
     ObjectStubBase root = (ObjectStubBase)rootStub;
-    myIndexedStubs = indexTree(root);
+    Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs = indexTree(root);
     final BufferExposingByteArrayOutputStream indexBytes = new BufferExposingByteArrayOutputStream();
-    forwardIndexExternalizer.save(new DataOutputStream(indexBytes), myIndexedStubs);
-    myIndexedStubBytes = indexBytes.getInternalBuffer();
-    myIndexedStubByteLength = indexBytes.size();
-    myStubIndexesExternalizer = forwardIndexExternalizer;
+    forwardIndexExternalizer.save(new DataOutputStream(indexBytes), indexedStubs);
+    byte[] indexedStubBytes = indexBytes.getInternalBuffer();
+    int indexedStubByteLength = indexBytes.size();
+    return new SerializedStubTree(
+      treeBytes,
+      treeByteLength,
+      indexedStubBytes,
+      indexedStubByteLength,
+      indexedStubs,
+      forwardIndexExternalizer
+    );
   }
 
   @NotNull
@@ -103,15 +112,14 @@ public class SerializedStubTree {
       reSerializedIndexByteLength = reSerializedStubIndices.size();
     }
 
-    SerializedStubTree tree = new SerializedStubTree(
+    return new SerializedStubTree(
       outStub.getInternalBuffer(),
       outStub.size(),
       reSerializedIndexBytes,
       reSerializedIndexByteLength,
-      myIndexedStubs
+      myIndexedStubs,
+      newForwardIndexSerializer
     );
-    tree.setStubIndexesExternalizer(newForwardIndexSerializer);
-    return tree;
   }
 
   void restoreIndexedStubs() throws IOException {
