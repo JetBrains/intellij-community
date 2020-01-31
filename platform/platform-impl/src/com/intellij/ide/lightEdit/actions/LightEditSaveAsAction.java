@@ -5,8 +5,8 @@ import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class LightEditSaveAsAction extends DumbAwareAction {
@@ -16,9 +16,9 @@ public class LightEditSaveAsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (editor != null) {
-      LightEditService.getInstance().saveToAnotherFile(editor);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (file != null) {
+      LightEditService.getInstance().saveToAnotherFile(file);
     }
   }
 

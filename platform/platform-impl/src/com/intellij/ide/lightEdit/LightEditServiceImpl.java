@@ -12,7 +12,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -186,6 +185,7 @@ public class LightEditServiceImpl implements LightEditService,
         disposeFrameWrapper();
         LOG.info("No open projects or welcome frame, exiting");
         try {
+          Disposer.dispose(myEditorManager);
           myLightEditProjectManager.close();
           ApplicationManager.getApplication().exit();
         }
@@ -278,8 +278,8 @@ public class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public void saveToAnotherFile(@NotNull Editor editor) {
-    LightEditorInfo editorInfo = myEditorManager.getEditorInfo(editor);
+  public void saveToAnotherFile(@NotNull VirtualFile file) {
+    LightEditorInfo editorInfo = myEditorManager.getEditorInfo(file);
     if (editorInfo != null) {
       VirtualFile targetFile = LightEditUtil.chooseTargetFile(myFrameWrapper.getLightEditPanel(), editorInfo);
       if (targetFile != null) {

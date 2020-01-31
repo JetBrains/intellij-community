@@ -21,7 +21,7 @@ public interface LightEditService {
 
   void createNewFile();
 
-  void saveToAnotherFile(@NotNull Editor editor);
+  void saveToAnotherFile(@NotNull VirtualFile file);
 
   Project getProject();
 

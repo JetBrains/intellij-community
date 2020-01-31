@@ -3,18 +3,22 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -26,9 +30,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class LightEditorManagerImpl implements LightEditorManager, Disposable {
+  private static final Logger LOG = Logger.getInstance(LightEditorManagerImpl.class);
+
   private final List<LightEditorInfo>                myEditors         = new ArrayList<>();
   private final EventDispatcher<LightEditorListener> myEventDispatcher =
     EventDispatcher.create(LightEditorListener.class);
@@ -44,14 +51,31 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
   }
 
   @NotNull
-  private LightEditorInfo createEditor(@NotNull Document document, @NotNull VirtualFile file) {
-    Editor editor = EditorFactory.getInstance().createEditor(
-      document, LightEditUtil.getProject(), EditorKind.MAIN_EDITOR);
-    ObjectUtils.consumeIfCast(editor, EditorImpl.class,
+  private LightEditorInfo doCreateEditor(@NotNull VirtualFile file) {
+    Project project = Objects.requireNonNull(LightEditUtil.getProject());
+    Pair<FileEditorProvider, FileEditor> pair = createFileEditor(project, file);
+    if (pair == null) {
+      TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
+      FileEditor fileEditor = textEditorProvider.createEditor(project, file);
+      pair = Pair.create(textEditorProvider, fileEditor);
+    }
+    LightEditorInfo editorInfo = new LightEditorInfoImpl(pair.first, pair.second, file);
+    ObjectUtils.consumeIfCast(LightEditorInfoImpl.getEditor(editorInfo), EditorImpl.class,
                               editorImpl -> editorImpl.setDropHandler(new LightEditDropHandler()));
-    final LightEditorInfo editorInfo = new LightEditorInfoImpl(editor, file);
     myEditors.add(editorInfo);
     return editorInfo;
+  }
+
+  @Nullable
+  private static Pair<FileEditorProvider, FileEditor> createFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
+    for (FileEditorProvider provider : providers) {
+      if (provider.accept(project, file)) {
+        FileEditor editor = provider.createEditor(project, file);
+        return Pair.create(provider, editor);
+      }
+    }
+    return null;
   }
 
   /**
@@ -61,10 +85,9 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
    */
   @NotNull
   public LightEditorInfo createEditor() {
-    Document document = new DocumentImpl("");
     LightVirtualFile file = new LightVirtualFile(getUniqueName());
     file.setFileType(PlainTextFileType.INSTANCE);
-    return createEditor(document, file);
+    return doCreateEditor(file);
   }
 
   @Override
@@ -74,8 +97,8 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       document.putUserData(NO_IMPLICIT_SAVE, true);
-      LightEditorInfo editorInfo = createEditor(document, file);
-      Editor editor = editorInfo.getEditor();
+      LightEditorInfo editorInfo = doCreateEditor(file);
+      Editor editor = LightEditorInfoImpl.getEditor(editorInfo);
       if (editor instanceof EditorEx) ((EditorEx)editor).setHighlighter(getHighlighter(file, editor));
       return editorInfo;
     }
@@ -90,19 +113,14 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
 
   @TestOnly
   public void releaseEditors() {
-    myEditors.stream()
-      .filter(editorInfo -> !editorInfo.getEditor().isDisposed())
-      .forEach(editorInfo -> EditorFactory.getInstance().releaseEditor(editorInfo.getEditor()));
+    myEditors.forEach(editorInfo -> ((LightEditorInfoImpl)editorInfo).disposeEditor());
     myEditors.clear();
   }
 
   @Override
   public void closeEditor(@NotNull LightEditorInfo editorInfo) {
-    Editor editor = editorInfo.getEditor();
     myEditors.remove(editorInfo);
-    if (!editor.isDisposed()) {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
+    ((LightEditorInfoImpl)editorInfo).disposeEditor();
     myEventDispatcher.getMulticaster().afterClose(editorInfo);
   }
 
@@ -176,8 +194,19 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
     LightEditorInfo newInfo = createEditor(targetFile);
     if (newInfo != null) {
       ApplicationManager.getApplication().runWriteAction(() -> {
-        newInfo.getEditor().getDocument().setText(info.getEditor().getDocument().getCharsSequence());
-        FileDocumentManager.getInstance().saveDocument(newInfo.getEditor().getDocument());
+        FileDocumentManager manager = FileDocumentManager.getInstance();
+        Document source = manager.getDocument(info.getFile());
+        Document target = manager.getDocument(targetFile);
+        if (source == null) {
+          LOG.error("Cannot save to " + targetFile + ": no document found for " + info.getFile());
+          return;
+        }
+        if (target == null) {
+          LOG.error("Cannot save to " + targetFile + ": no document found for " + targetFile);
+          return;
+        }
+        target.setText(source.getCharsSequence());
+        manager.saveDocument(target);
       });
       return newInfo;
     }
@@ -185,7 +214,7 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
   }
 
   @Nullable
-  LightEditorInfo getEditorInfo(@NotNull Editor editor) {
-    return myEditors.stream().filter(editorInfo -> editor == editorInfo.getEditor()).findFirst().orElse(null);
+  LightEditorInfo getEditorInfo(@NotNull VirtualFile file) {
+    return myEditors.stream().filter(editorInfo -> file.equals(editorInfo.getFile())).findFirst().orElse(null);
   }
 }

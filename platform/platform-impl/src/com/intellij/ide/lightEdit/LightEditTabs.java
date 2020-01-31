@@ -8,10 +8,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -59,7 +60,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
   }
 
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
-    TabInfo tabInfo = new TabInfo(new EditorContainer(editorInfo.getEditor()))
+    TabInfo tabInfo = new TabInfo(new EditorContainer(editorInfo.getFileEditor()))
       .setText(editorInfo.getFile().getPresentableName())
       .setIcon(getFileTypeIcon(editorInfo));
 
@@ -170,7 +171,10 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
       }
     }
     else {
-      FileDocumentManager.getInstance().saveDocument(editorInfo.getEditor().getDocument());
+      Document document = FileDocumentManager.getInstance().getDocument(editorInfo.getFile());
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
+      }
     }
   }
 
@@ -199,7 +203,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
 
   private class EditorContainer extends JPanel implements DataProvider {
 
-    private EditorContainer(Editor editor) {
+    private EditorContainer(@NotNull FileEditor editor) {
       super(new BorderLayout());
       add(editor.getComponent(), BorderLayout.CENTER);
     }

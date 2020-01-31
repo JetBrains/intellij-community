@@ -29,7 +29,8 @@ final class LightEditProject extends ProjectImpl {
     "com.intellij.ui.EditorNotifications",
     "com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager",
     "com.intellij.openapi.command.undo.UndoManager",
-    "com.intellij.openapi.fileEditor.FileEditorManager"
+    "com.intellij.openapi.fileEditor.FileEditorManager",
+    "com.intellij.dvcs.repo.VcsRepositoryManager"
   );
 
   LightEditProject() {

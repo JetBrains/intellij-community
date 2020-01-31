@@ -30,7 +30,7 @@ public class LightEditPositionWidget extends PositionPanel implements LightEdito
 
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
-    myEditor = editorInfo != null ? editorInfo.getEditor() : null;
+    myEditor = LightEditorInfoImpl.getEditor(editorInfo);
   }
 
   @Nullable
