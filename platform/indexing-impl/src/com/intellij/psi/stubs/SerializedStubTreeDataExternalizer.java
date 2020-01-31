@@ -17,7 +17,7 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
   private final SerializationManagerEx mySerializationManager;
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
-  public SerializedStubTreeDataExternalizer(boolean inputs, SerializationManagerEx manager, StubForwardIndexExternalizer<?> externalizer) {
+  public SerializedStubTreeDataExternalizer(boolean inputs, SerializationManagerEx manager, @NotNull StubForwardIndexExternalizer<?> externalizer) {
     myIncludeInputs = inputs;
     mySerializationManager = manager;
     myStubIndexesExternalizer = externalizer;

@@ -40,6 +40,8 @@ public class SerializedStubTree {
   private Map<StubIndexKey, Map<Object, StubIdList>> myIndexedStubs;
 
   private volatile SerializationManagerEx mySerializationManager;
+
+  @NotNull
   private volatile StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
   public void setSerializationManager(@NotNull SerializationManagerEx serializationManager) {
@@ -52,7 +54,7 @@ public class SerializedStubTree {
 
   public SerializedStubTree(byte @NotNull [] treeBytes, int treeByteLength,
                             byte @NotNull [] indexedStubBytes, int indexedStubByteLength, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs,
-                            @Nullable StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
+                            @NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
     myTreeBytes = treeBytes;
     myTreeByteLength = treeByteLength;
     myIndexedStubBytes = indexedStubBytes;
