@@ -60,9 +60,10 @@ public abstract class PyInspectionExtension {
 
   /**
    * Enable "unresolved reference" inspection regardless of IDE type and initialized SDK.
+   * @return true -- Enable forcibly, false -- disable forcibly, null -- act as usual.
    */
-  public boolean forciblyEnabledUnresolvedReferenceInspection(@NotNull PsiFile file) {
-    return false;
+  public Boolean overrideUnresolvedReferenceInspection(@NotNull PsiFile file) {
+    return null;
   }
 
   /**
