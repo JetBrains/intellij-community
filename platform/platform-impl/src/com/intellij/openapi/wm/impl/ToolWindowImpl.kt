@@ -574,6 +574,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
         ActionManager.getInstance().getAction("MaximizeToolWindow")
       )
     }
+
     override fun getChildren(e: AnActionEvent?) = children
 
     override fun isDumbAware() = true
