@@ -4,7 +4,6 @@ import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.api.*
 import circlet.pipelines.config.dsl.script.exec.common.*
 import circlet.plugins.pipelines.services.*
-import circlet.plugins.pipelines.ui.*
 import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
@@ -15,9 +14,6 @@ import kotlin.test.*
 class SmokeTest : HeavyPlatformTestCase() {
 
     private var testLifetimeImpl: LifetimeSource? = null
-
-    private val testLifetime: Lifetime
-        get() = testLifetimeImpl!!
 
     override fun setUp() {
         testLifetimeImpl = Lifetime.Eternal.nested()
@@ -32,53 +28,50 @@ class SmokeTest : HeavyPlatformTestCase() {
     // dsl exists on start
     fun testBuildModelWhenDslExistsFromBeginning() {
         addSpaceKts()
+        val modelBuilder = project.service<SpaceKtsModelBuilder>()
+        val script = modelBuilder.script.value
 
-        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
-        val viewModel = circletModelStore.viewModel
-
-        var script = viewModel.script.value
         assertNotNull(script, "script should be not null at init")
-        assertTrue(script.isScriptEmpty(), "script should be empty at init")
-        assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
 
-        val view = CircletScriptsViewFactory().createView(testLifetime, project, viewModel)
+        assertFalse(script.isScriptEmpty(), "script should be empty at init")
+        assertFalse(script.isScriptBuilding(), "model build should not be started until view is shown")
 
-        assertNotNull(view, "view should not be null")
-        assertFalse(viewModel.modelBuildIsRunning.value, "test run in sync mode. so model build should be finished")
-        val newScript = viewModel.script.value
+        modelBuilder.requestModel()
+
+        assertFalse(script.isScriptBuilding(), "test run in sync mode. so model build should be finished")
+
+        val newScript = modelBuilder.script.value
         assertNotNull(newScript, "script should be not null after build")
-        assertNotSame(script, newScript, "new instance of script should be created")
-        script = newScript
-        assertFalse(script.isScriptEmpty(), "script should not be empty after build")
+        assertFalse(newScript.isScriptEmpty(), "script should not be empty after build")
 
-        assertEquals(createGoldModel(), script.config)
+        assertEquals(createGoldModel(), newScript.config.value)
+
     }
 
     // dsl doesnt exist on start and added later
     @Test
     fun testBuildModelWhenDslDoesnotExistFromBeginning() {
-        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
-        val viewModel = circletModelStore.viewModel
+        val modelBuilder = project.service<SpaceKtsModelBuilder>()
 
-        var script = viewModel.script.value
-        assertNull(script, "script should be null without dsl file")
-        assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
-
+        assertNull(modelBuilder.script.value, "script should be null without dsl file")
         addSpaceKts()
-        val newScript = viewModel.script.value
-        assertNotSame(script, newScript, "new instance of script should be created")
-        script = newScript
-        assertNotNull(script, "script should be not null after added dsl")
-        assertTrue(script.isScriptEmpty(), "script should be empty after added dsl")
+
+        val scriptModel = modelBuilder.script.value
+        assertNotNull(scriptModel, "script should be not null after added dsl")
+        assertFalse(scriptModel.isScriptEmpty(), "script dsl should not be empty")
     }
 
     private fun addSpaceKts() {
         project.guessProjectDir()!!.writeChild(".space.kts", myTask)
     }
 
-    private fun ScriptViewModel.isScriptEmpty(): Boolean {
-        val config = this.config
-        return config.pipelines.isEmpty() && config.targets.isEmpty() && config.jobs.isEmpty()
+    private fun ScriptModel.isScriptEmpty(): Boolean {
+        val config = this.config.value
+        return config != null && config.pipelines.isEmpty() && config.targets.isEmpty() && config.jobs.isEmpty()
+    }
+
+    private fun ScriptModel.isScriptBuilding(): Boolean {
+        return this.state.value == ScriptState.Building
     }
 
     private fun createGoldModel(): ScriptConfig {

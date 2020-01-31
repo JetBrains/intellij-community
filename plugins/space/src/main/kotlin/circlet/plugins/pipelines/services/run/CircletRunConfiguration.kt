@@ -7,7 +7,7 @@ import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 
 class CircletRunConfiguration(project: Project, factory: ConfigurationFactory)
-    : LocatableConfigurationBase<CircletRunTaskConfigurationOptions>(project, factory, "Run")  {
+    : LocatableConfigurationBase<CircletRunTaskConfigurationOptions>(project, factory, "Run") {
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> {
         return CircletRunTaskConfigurationEditor()

@@ -7,12 +7,11 @@ import circlet.pipelines.engine.api.storage.*
 
 class CircletIdeaAutomationBootstrapper : AutomationBootstrapper {
     override fun createBootstrapStep(execution: AGraphExecutionEntity, projectId: Long, repository: RepositoryData, orgUrl: String): ScriptStep.Process.Container {
-        val container = ScriptStep.Process.Container(
+        return ScriptStep.Process.Container(
             "imageForBootstrapJob",
             ScriptStep.ProcessData(
                 exec = ScriptStep.ProcessExecutable.ContainerExecutable.DefaultCommand(emptyList())
             )
         )
-        return container
     }
 }

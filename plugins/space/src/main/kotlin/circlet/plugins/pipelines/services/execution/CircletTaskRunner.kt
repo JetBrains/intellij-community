@@ -1,9 +1,14 @@
 package circlet.plugins.pipelines.services.execution
 
+import circlet.pipelines.common.api.*
 import circlet.pipelines.engine.*
 import circlet.pipelines.engine.api.*
+import circlet.pipelines.engine.api.storage.*
+import circlet.pipelines.provider.*
+import circlet.pipelines.provider.io.*
+import circlet.pipelines.provider.local.*
+import circlet.pipelines.provider.local.docker.*
 import circlet.plugins.pipelines.services.*
-import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.execution.process.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
@@ -11,61 +16,113 @@ import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
 import java.io.*
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.process.ProcessHandler
+import kotlinx.coroutines.*
+import libraries.io.*
+import libraries.io.random.*
+import libraries.process.*
+import java.nio.file.*
+import java.util.concurrent.*
 
 class CircletTaskRunner(val project: Project) {
 
+    val ideaLocalRunnerLabel = "CircletTaskRunner_${Random.nextString(10)}"
+
     companion object : KLogging()
 
-    fun run(lifetime: Lifetime, taskName: String): ProcessHandler {
-        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
-        val viewModel = circletModelStore.viewModel
-        val logData = LogData("")
-        viewModel.logRunData.value = logData
-        val script = viewModel.script.value
-        if (script == null) {
-            //logData.add("Script is null")
-            throw com.intellij.execution.ExecutionException("Script is null")
-        }
-
-        val config = script.config
-        val task = script.config.jobs.firstOrNull { x -> x.name == taskName }
-        if (task == null) {
-            //logData.add("Task $taskName doesn't exist")
-            throw com.intellij.execution.ExecutionException("Task $taskName doesn't exist")
-        }
+    fun run(taskName: String): ProcessHandler {
 
         logger.info("Run task $taskName")
 
-        val processHandler = object : ProcessHandler() {
-            override fun getProcessInput(): OutputStream? {
-                return null
-            }
+        // todo: terminate lifetime.
+        val lifetime = LifetimeSource()
 
-            override fun detachIsDefault(): Boolean {
-                return false
-            }
+        val config = project.service<SpaceKtsModelBuilder>().script.value?.config?.value ?: throw ExecutionException("Script is null")
 
-            override fun detachProcessImpl() {
-                logger.info("detachProcessImpl for task $taskName")
-            }
+        val task = config.jobs.firstOrNull { x -> x.name == taskName } ?: throw ExecutionException("Task $taskName doesn't exist")
 
-            override fun destroyProcessImpl() {
-                logger.info("destroyProcessImpl for task $taskName")
-                notifyProcessTerminated(0)
+        val processHandler = TaskProcessHandler(taskName)
+
+        val storage = CircletIdeaExecutionProviderStorage()
+
+        val orgInfo = OrgInfo("jetbrains.team")
+
+        val paths = DockerInDockerPaths(
+            CommonFile(Files.createTempDirectory("circlet")),
+            CommonFile(Files.createTempDirectory("circlet"))
+        )
+
+        val volumeProvider = LocalVolumeProvider(paths)
+
+        val orgUrlWrappedForDocker = {
+            ""
+        }
+
+        val dockerEventsListener = LocalDockerEventListenerImpl(lifetime)
+
+        val processes = OSProcesses("Space")
+
+        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, ideaLocalRunnerLabel, volumeProvider, dockerEventsListener, processes)
+
+        val batchSize = 1
+
+        val logMessageSink = object : LogMessagesSink {
+            override fun invoke(stepExecutionData: StepExecutionData<*>, batchIndex: Int, data: List<String>) {
+                data.forEach {
+                    processHandler.message(it, TraceLevel.INFO)
+                }
             }
         }
 
-        val storage = CircletIdeaExecutionProviderStorage(task)
-        val orgInfo = OrgInfo("jetbrains.team")
-        val provider = CircletIdeaStepExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
-        val tracer = CircletIdeaAutomationTracer()
+        val reporting = LocalReportingImpl(lifetime, processes, LocalReporting.Settings(batchSize), logMessageSink)
+
+        val dispatcher = Ui
+
+        val tracer = CircletIdeaAutomationTracer(processHandler)
+
+        val failureChecker = object : FailureChecker {
+            override fun check(tx: AutomationStorageTransaction, updates: Set<StepExecutionStatusUpdate>) {
+            }
+        }
+
+        val stepExecutionProvider = CircletIdeaStepExecutionProvider(lifetime, storage, volumeProvider, dockerFacade, reporting, dispatcher, tracer, failureChecker)
+
+        val executionScheduler = object : StepExecutionScheduler {
+
+            private val jobsSchedulingDispatcher = Executors.newFixedThreadPool(1, DaemonThreadFactory("Space Automation")).asCoroutineDispatcher()
+
+            override fun scheduleExecution(stepExecs: Iterable<StepExecutionData<*>>) {
+                launch(lifetime, jobsSchedulingDispatcher, "ServerJobExecutionScheduler:scheduleExecution") {
+                    logger.catch {
+                        stepExecs.forEach {
+                            logger.info { "scheduleExecution ${it.meta.data.exec}" }
+                            stepExecutionProvider.startExecution(it)
+                        }
+                    }
+                }
+            }
+
+            override fun scheduleTermination(stepExecs: Iterable<StepExecutionData<*>>) {
+                launch(lifetime, jobsSchedulingDispatcher, "ServerJobExecutionScheduler:scheduleTermination") {
+                    logger.catch {
+                        stepExecs.forEach {
+                            stepExecutionProvider.startTermination(it)
+                        }
+                    }
+                }
+            }
+        }
+
+
         val automationGraphEngineCommon = AutomationGraphEngineImpl(
-            provider,
+            stepExecutionProvider,
             storage,
-            provider,
+            executionScheduler,
             SystemTimeTicker(),
             tracer,
-            listOf(provider))
+            listOf(stepExecutionProvider))
+
         val automationStarterCommon = AutomationGraphManagerImpl(
             storage,
             automationGraphEngineCommon,
@@ -75,30 +132,56 @@ class CircletTaskRunner(val project: Project) {
 
         val repositoryData = RepositoryData("repoId", null)
 
-        async(lifetime, Ui) {
-            storage("run-graph") {
-                val graph = automationStarterCommon.createGraph(this, task) { graphExecution ->
-                    bootstraper.createBootstrapStep(graphExecution, 0L, repositoryData, orgInfo.url) //something definitely wrong with this fake project/repo/branch/commit
+        val branch = "myBranch"
+
+        val commit = "myCommit"
+
+        // todo: start asynchronous task. what is multi-threading policy?
+        // todo: better lifetime
+        launch(Lifetime.Eternal, Ui) {
+            try {
+                storage("run-graph") {
+                    val graph = automationStarterCommon.createGraph(this, task) { graphExecution ->
+                        bootstraper.createBootstrapStep(graphExecution, 0L, repositoryData, orgInfo.url) //something definitely wrong with this fake project/repo/branch/commit
+                    }
+                    automationStarterCommon.startGraph(this, graph)
                 }
-                automationStarterCommon.startGraph(this, graph)
-            }
-        }.invokeOnCompletion {
-            if (it != null) {
-                processHandler.notifyTextAvailable("Run task failed. ${it.message}$newLine", ProcessOutputTypes.STDERR)
+            } catch (th: Throwable) {
+                logger.error(th)
+                processHandler.notifyTextAvailable("Run task failed. ${th.message}$newLine", ProcessOutputTypes.STDERR)
             }
         }
 
-        viewModel.taskIsRunning.value = true
-        logData.add("Run task $taskName")
-        processHandler.println("Run task $taskName")
-        viewModel.taskIsRunning.value = false
         return processHandler
     }
 
     private val newLine: String = System.getProperty("line.separator", "\n")
+}
 
-    private fun ProcessHandler.println(text: String) {
-        this.notifyTextAvailable("$text$newLine", ProcessOutputTypes.SYSTEM)
+class TaskProcessHandler(private val taskName: String) : ProcessHandler() {
 
+    companion object : KLogging()
+
+    override fun getProcessInput(): OutputStream? {
+        return null
     }
+
+    override fun detachIsDefault(): Boolean {
+        return false
+    }
+
+    override fun detachProcessImpl() {
+        logger.info("detachProcessImpl for task $taskName")
+    }
+
+    override fun destroyProcessImpl() {
+        logger.info("destroyProcessImpl for task $taskName")
+        notifyProcessTerminated(0)
+    }
+
+    fun dispose() {
+        notifyProcessTerminated(0)
+    }
+
+
 }

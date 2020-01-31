@@ -10,9 +10,12 @@ import circlet.ui.*
 import circlet.ui.AccountMenuItem
 import circlet.ui.AccountMenuPopupStep
 import circlet.ui.AccountsMenuListPopup
+import circlet.vcs.*
 import com.intellij.dvcs.*
 import com.intellij.dvcs.repo.*
 import com.intellij.dvcs.ui.*
+import com.intellij.icons.*
+import com.intellij.ide.*
 import com.intellij.openapi.*
 import com.intellij.openapi.fileChooser.*
 import com.intellij.openapi.project.*
@@ -25,6 +28,7 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
+import com.intellij.ui.components.labels.*
 import com.intellij.ui.components.panels.*
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.*
@@ -144,12 +148,10 @@ internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExten
 private class CloneView(
     private val lifetime: Lifetime,
     private val project: Project,
-    private val dialogStateListener: VcsCloneDialogComponentStateListener,
+    dialogStateListener: VcsCloneDialogComponentStateListener,
     private val st: CircletLoginState.Connected
 ) {
     val settings = CircletSettings.getInstance()
-
-    val selectedUrl = mutableProperty<String?>(null)
 
     val listModel: CollectionListModel<CircletCloneListItem> = object : CollectionListModel<CircletCloneListItem>() {
         init {
@@ -202,24 +204,26 @@ private class CloneView(
 
     val accountLabel = JLabel()
 
-    val cloneViewModel = CircletCloneComponentViewModel(
-        lifetime,
-        st.workspace,
-        client.pr,
-        client.repoService,
-        client.star
-    )
+    private val passwordStatus: SimpleColoredComponent = SimpleColoredComponent().apply {
+        isVisible = false
+    }
+
+    val cloneViewModel = CircletCloneComponentViewModel(lifetime, st.workspace)
+
+    private val linkLabel: LinkLabel<*> = LinkLabel.create("Set password...", null).apply {
+        horizontalTextPosition = SwingConstants.LEFT
+        iconTextGap = 0
+    }
 
     var createDirectoryError: ValidationInfo? = null
 
     init {
+        cloneViewModel.readyToClone.forEach(lifetime, dialogStateListener::onOkActionEnabled)
 
-        selectedUrl.forEach(lifetime) { su ->
-            dialogStateListener.onOkActionEnabled(su != null)
-            if (su != null) {
-                val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, su), GitUtil.DOT_GIT)
-                directoryField.trySetChildPath(path)
-            }
+        cloneViewModel.selectedUrl.forEach(lifetime) { su ->
+            su ?: return@forEach
+            val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, su), GitUtil.DOT_GIT)
+            directoryField.trySetChildPath(path)
         }
 
         cloneViewModel.me.forEach(lifetime) { profile ->
@@ -241,6 +245,32 @@ private class CloneView(
         }
 
         cloneViewModel.isLoading.forEach(lifetime, list::setPaintBusy)
+
+        cloneViewModel.circletHttpPasswordState.forEach(lifetime) {
+            if (cloneViewModel.cloneType.value == CloneType.HTTP) {
+                passwordStatus.clear()
+                passwordStatus.append("Git HTTP password not set", SimpleTextAttributes.ERROR_ATTRIBUTES)
+                linkLabel.setListener({ _, _ -> setGitHttpPassword() }, null)
+                linkLabel.text = "Set Git HTTP password..."
+                linkLabel.icon = null
+
+                passwordStatus.isVisible = it is CircletHttpPasswordState.NotSet
+                linkLabel.isVisible = it is CircletHttpPasswordState.NotSet
+            }
+        }
+
+        cloneViewModel.circletKeysState.forEach(lifetime) {
+            if (cloneViewModel.cloneType.value == CloneType.SSH) {
+                passwordStatus.clear()
+                passwordStatus.append("SSH keys are not configured", SimpleTextAttributes.ERROR_ATTRIBUTES)
+                linkLabel.setListener({ _, _ -> openSshKeysPage() }, null)
+                linkLabel.text = "Configure..."
+                linkLabel.icon = AllIcons.Ide.External_link_arrow
+
+                passwordStatus.isVisible = it is CircletKeysState.NotSet
+                linkLabel.isVisible = it is CircletKeysState.NotSet
+            }
+        }
 
         accountLabel.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent?) {
@@ -271,6 +301,19 @@ private class CloneView(
         })
     }
 
+    private fun setGitHttpPassword() {
+        val dialog = CircletSetGitHttpPasswordDialog(st.workspace.me.value, client.td, client.repoService)
+        if (dialog.showAndGet()) {
+            cloneViewModel.circletHttpPasswordState.value = dialog.result
+        }
+    }
+
+    private fun openSshKeysPage() {
+        val profile = st.workspace.me.value
+        val gitConfigPage = Navigator.m.member(profile.username).git.absoluteHref(st.server)
+        BrowserUtil.browse(gitConfigPage)
+    }
+
     fun getView(): DialogPanel {
         return panel {
             val gapLeft = JBUI.scale(VcsCloneDialogUiSpec.Components.innerHorizontalGap)
@@ -293,6 +336,12 @@ private class CloneView(
             }
             row("Directory:") {
                 directoryField(growX, pushX)
+            }
+            row {
+                cell(isFullWidth = true) {
+                    passwordStatus()
+                    linkLabel()
+                }
             }
         }
     }
@@ -345,14 +394,16 @@ private class CloneView(
     }
 
     fun updateSelectedUrl() {
+        cloneViewModel.cloneType.value = settings.cloneType
+
         val repositoryUrls = list.selectedValue?.repoDetails?.value?.urls
-        selectedUrl.value = when (settings.cloneType) {
+        cloneViewModel.selectedUrl.value = when (settings.cloneType) {
             CloneType.SSH -> repositoryUrls?.sshUrl
             CloneType.HTTP -> repositoryUrls?.httpUrl
         }
     }
 
-    fun getUrl(): String? = selectedUrl.value
+    fun getUrl(): String? = cloneViewModel.selectedUrl.value
 
     fun getDirectory(): String = directoryField.text
 

@@ -9,7 +9,9 @@ import platform.common.*
 
 class CircletRunConfigurationType : SimpleConfigurationType(
     "CircletRunConfiguration",
-    "$ProductName Task", "Run $ProductName Task", NotNullLazyValue.createValue { CircletIcons.mainIcon }) {
+    "$ProductName Task",
+    "Run $ProductName Task",
+    NotNullLazyValue.createValue { CircletIcons.mainIcon }) {
 
     override fun createTemplateConfiguration(project: Project): RunConfiguration {
         return CircletRunConfiguration(project, this)
