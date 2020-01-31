@@ -78,7 +78,7 @@ internal class GitInteractiveRebaseDialog(
       GitRebaseEntryWithDetails(GitRebaseEntry(it.action, it.commit, it.subject), it.commitDetails)
     )
   })
-  private val resetEntriesLabel = LinkLabel<Any?>("Reset", null).apply {
+  private val resetEntriesLabel = LinkLabel<Any?>(GitBundle.getString("rebase.interactive.dialog.reset.link.text"), null).apply {
     isVisible = false
     setListener(
       LinkListener { _, _ ->
