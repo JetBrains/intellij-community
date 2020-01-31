@@ -45,6 +45,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
 
   @Override
   public void update() {
+    updateValidators();
   }
 
   public void updateValidators() {
