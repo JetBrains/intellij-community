@@ -20,7 +20,11 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
 
   private Sdk myInternalJdk;
 
+  /**
+   * @deprecated Bundled JDK must not be used. See IDEA-225960"
+   */
   @NotNull
+  @Deprecated
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
       File javaHome = new File(SystemProperties.getJavaHome());
