@@ -199,31 +199,66 @@ public class CacheUpdateRunner {
                                          @NotNull ProgressIndicatorBase innerIndicator,
                                          @NotNull AtomicBoolean isFinished,
                                          @NotNull Consumer<? super FileContent> fileProcessor) {
-    return ConcurrencyUtil.underThreadNameRunnable("Indexing", () -> {
+    Runnable runnable = new UpdateWorker(project, queue, progressUpdater, suspendableIndicator, innerIndicator, isFinished, fileProcessor);
+    return ConcurrencyUtil.underThreadNameRunnable("Indexing", runnable);
+  }
+
+  private static void handleIndexingException(@NotNull VirtualFile file, @NotNull Throwable e) {
+    file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
+    LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
+  }
+
+  private static class UpdateWorker implements Runnable {
+    private final Project myProject;
+    private final FileContentQueue myQueue;
+    private final ProgressUpdater myProgressUpdater;
+    private final ProgressIndicator mySuspendableIndicator;
+    private final ProgressIndicatorBase myInnerIndicator;
+    private final AtomicBoolean myIsFinished;
+    private final Consumer<? super FileContent> myFileProcessor;
+
+    UpdateWorker(@NotNull Project project,
+                 @NotNull FileContentQueue queue,
+                 @NotNull ProgressUpdater progressUpdater,
+                 @NotNull ProgressIndicator suspendableIndicator,
+                 @NotNull ProgressIndicatorBase innerIndicator,
+                 @NotNull AtomicBoolean isFinished,
+                 @NotNull Consumer<? super FileContent> fileProcessor) {
+      myProject = project;
+      myQueue = queue;
+      myProgressUpdater = progressUpdater;
+      mySuspendableIndicator = suspendableIndicator;
+      myInnerIndicator = innerIndicator;
+      myIsFinished = isFinished;
+      myFileProcessor = fileProcessor;
+    }
+
+    @Override
+    public void run() {
       while (true) {
-        if (project.isDisposed() || innerIndicator.isCanceled()) {
+        if (myProject.isDisposed() || myInnerIndicator.isCanceled()) {
           return;
         }
 
         try {
-          suspendableIndicator.checkCanceled();
+          mySuspendableIndicator.checkCanceled();
 
-          final FileContent fileContent = queue.take(innerIndicator);
+          final FileContent fileContent = myQueue.take(myInnerIndicator);
           if (fileContent == null) {
-            isFinished.set(true);
+            myIsFinished.set(true);
             return;
           }
 
           final Runnable action = () -> {
-            innerIndicator.checkCanceled();
-            if (!project.isDisposed()) {
+            myInnerIndicator.checkCanceled();
+            if (!myProject.isDisposed()) {
               final VirtualFile file = fileContent.getVirtualFile();
               try {
-                progressUpdater.processingStarted(file);
+                myProgressUpdater.processingStarted(file);
                 if (!file.isDirectory() && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
-                  fileProcessor.consume(fileContent);
+                  myFileProcessor.consume(fileContent);
                 }
-                progressUpdater.processingSuccessfullyFinished(file);
+                myProgressUpdater.processingSuccessfullyFinished(file);
               }
               catch (ProcessCanceledException e) {
                 throw e;
@@ -240,25 +275,20 @@ public class CacheUpdateRunner {
               if (app.isDisposed() || !app.tryRunReadAction(action)) {
                 throw new ProcessCanceledException();
               }
-            }, ProgressWrapper.wrap(innerIndicator));
+            }, ProgressWrapper.wrap(myInnerIndicator));
           }
           catch (ProcessCanceledException e) {
-            queue.pushBack(fileContent);
+            myQueue.pushBack(fileContent);
             return;
           }
           finally {
-            queue.release(fileContent);
+            myQueue.release(fileContent);
           }
         }
         catch (ProcessCanceledException e) {
           return;
         }
       }
-    });
-  }
-
-  private static void handleIndexingException(@NotNull VirtualFile file, @NotNull Throwable e) {
-    file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
-    LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
+    }
   }
 }
