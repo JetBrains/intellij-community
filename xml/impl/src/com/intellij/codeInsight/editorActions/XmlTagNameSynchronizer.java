@@ -38,6 +38,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,10 +78,10 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
 
     Language language = findXmlLikeLanguage(psiFile);
     if (language != null) {
-      List<XmlTagNameSynchronizerBehaviour> behaviours = ContainerUtil.filter(
-        XmlTagNameSynchronizerBehaviour.EP_NAME.getExtensions(),
-        behaviour -> behaviour.isApplicable(psiFile));
-      new TagNameSynchronizer((EditorImpl)editor, project, language, behaviours).listenForDocumentChanges();
+      List<XmlExtension> extensions = ContainerUtil.filter(
+        XmlExtension.EP_NAME.getExtensions(),
+        extension -> extension.isAvailable(psiFile));
+      new TagNameSynchronizer((EditorImpl)editor, project, language, extensions).listenForDocumentChanges();
     }
   }
 
@@ -123,16 +124,16 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     private static final Key<Couple<RangeMarker>> MARKERS_KEY = Key.create("tag.name.synchronizer.markers");
     private static final TagNameSynchronizer[] EMPTY = new TagNameSynchronizer[0];
     private final PsiDocumentManagerBase myDocumentManager;
-    private final List<XmlTagNameSynchronizerBehaviour> myBehaviours;
+    private final List<XmlExtension> myExtensions;
     private final Language myLanguage;
     private final EditorImpl myEditor;
     private boolean myApplying;
 
-    private TagNameSynchronizer(EditorImpl editor, Project project, Language language, List<XmlTagNameSynchronizerBehaviour> behaviours) {
+    private TagNameSynchronizer(EditorImpl editor, Project project, Language language, List<XmlExtension> extensions) {
       myEditor = editor;
       myLanguage = language;
       myDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-      myBehaviours = behaviours;
+      myExtensions = extensions;
     }
 
     private void listenForDocumentChanges() {
@@ -311,8 +312,8 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     private boolean isInvalidTagNameChar(char c) {
       if (XmlUtil.isValidTagNameChar(c)) return false;
 
-      for (XmlTagNameSynchronizerBehaviour behaviour : myBehaviours) {
-        if (behaviour.isValidTagNameChar(c)) return false;
+      for (XmlExtension extension : myExtensions) {
+        if (extension.isValidTagNameChar(c)) return false;
       }
 
       return true;
