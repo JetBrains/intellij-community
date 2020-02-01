@@ -280,55 +280,12 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position pos, @NotNull String anchor) {
     myOrderedWidgets.add(widget.ID());
-
-    JPanel panel;
-    if (pos == Position.RIGHT) {
-      if (myRightPanel == null) {
-        myRightPanel = new JPanel();
-        myRightPanel.setBorder(JBUI.Borders.emptyLeft(1));
-        myRightPanel.setLayout(new BoxLayout(myRightPanel, BoxLayout.X_AXIS) {
-          @Override
-          public void layoutContainer(Container target) {
-            super.layoutContainer(target);
-            for (Component component : target.getComponents()) {
-              if (component instanceof MemoryUsagePanel) {
-                Rectangle r = component.getBounds();
-                r.y = 0;
-                r.width += SystemInfo.isMac ? 4 : 0;
-                r.height = target.getHeight();
-                component.setBounds(r);
-              }
-            }
-          }
-        });
-        myRightPanel.setOpaque(false);
-        add(myRightPanel, BorderLayout.EAST);
-      }
-
-      panel = myRightPanel;
-    }
-    else if (pos == Position.LEFT) {
-      if (myLeftPanel == null) {
-        myLeftPanel = new JPanel();
-        myLeftPanel.setBorder(JBUI.Borders.empty(0, 4, 0, 1));
-        myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
-        myLeftPanel.setOpaque(false);
-        add(myLeftPanel, BorderLayout.WEST);
-      }
-
-      panel = myLeftPanel;
-    }
-    else {
-      if (myCenterPanel == null) {
-        myCenterPanel = JBUI.Panels.simplePanel().andTransparent();
-        myCenterPanel.setBorder(JBUI.Borders.empty(0, 1));
-        add(myCenterPanel, BorderLayout.CENTER);
-      }
-
-      panel = myCenterPanel;
-    }
-
     JComponent c = wrap(widget);
+    JPanel panel = getTargetPanel(pos);
+    if (Position.LEFT == pos && panel.getComponentCount() == 0) {
+      c.setBorder(SystemInfo.isMac ? JBUI.Borders.empty(2, 0, 2, 4) : JBUI.Borders.empty());
+    }
+
     if (Position.RIGHT == pos && panel.getComponentCount() > 0) {
       String widgetId;
       boolean before;
@@ -373,10 +330,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       }
     }
 
-    if (Position.LEFT == pos && panel.getComponentCount() == 0) {
-      c.setBorder(SystemInfo.isMac ? JBUI.Borders.empty(2, 0, 2, 4) : JBUI.Borders.empty());
-    }
-
     panel.add(c);
     installWidget(widget, pos, c, anchor);
 
@@ -384,6 +337,65 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       StatusBarWidget.Multiframe multiFrameWidget = (StatusBarWidget.Multiframe)widget;
       updateChildren(child -> child.addWidget(multiFrameWidget.copy(), pos, anchor));
     }
+  }
+
+  @NotNull
+  private JPanel getTargetPanel(@NotNull IdeStatusBarImpl.Position position) {
+    if (position == Position.RIGHT) {
+      return rightPanel();
+    }
+    if (position == Position.LEFT) {
+      return leftPanel();
+    }
+    return centerPanel();
+  }
+
+  @NotNull
+  private JPanel centerPanel() {
+    if (myCenterPanel == null) {
+      myCenterPanel = JBUI.Panels.simplePanel().andTransparent();
+      myCenterPanel.setBorder(JBUI.Borders.empty(0, 1));
+      add(myCenterPanel, BorderLayout.CENTER);
+    }
+    return myCenterPanel;
+  }
+
+  @NotNull
+  private JPanel rightPanel() {
+    if (myRightPanel == null) {
+      myRightPanel = new JPanel();
+      myRightPanel.setBorder(JBUI.Borders.emptyLeft(1));
+      myRightPanel.setLayout(new BoxLayout(myRightPanel, BoxLayout.X_AXIS) {
+        @Override
+        public void layoutContainer(Container target) {
+          super.layoutContainer(target);
+          for (Component component : target.getComponents()) {
+            if (component instanceof MemoryUsagePanel) {
+              Rectangle r = component.getBounds();
+              r.y = 0;
+              r.width += SystemInfo.isMac ? 4 : 0;
+              r.height = target.getHeight();
+              component.setBounds(r);
+            }
+          }
+        }
+      });
+      myRightPanel.setOpaque(false);
+      add(myRightPanel, BorderLayout.EAST);
+    }
+    return myRightPanel;
+  }
+
+  @NotNull
+  private JPanel leftPanel() {
+    if (myLeftPanel == null) {
+      myLeftPanel = new JPanel();
+      myLeftPanel.setBorder(JBUI.Borders.empty(0, 4, 0, 1));
+      myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
+      myLeftPanel.setOpaque(false);
+      add(myLeftPanel, BorderLayout.WEST);
+    }
+    return myLeftPanel;
   }
 
   @Override
@@ -565,17 +577,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     myOrderedWidgets.remove(id);
     WidgetBean bean = myWidgetMap.remove(id);
     if (bean != null) {
-      if (Position.LEFT == bean.position) {
-        myLeftPanel.remove(bean.component);
-      }
-      else if (Position.RIGHT == bean.position) {
-        myRightPanel.remove(bean.component);
-      }
-      else {
-        myCenterPanel.remove(bean.component);
-      }
-      Disposer.dispose(bean.widget);
+      getTargetPanel(bean.position).remove(bean.component);
       repaint();
+      Disposer.dispose(bean.widget);
     }
     updateChildren(child -> child.removeWidget(id));
   }
