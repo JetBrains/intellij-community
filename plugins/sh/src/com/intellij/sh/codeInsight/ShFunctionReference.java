@@ -4,7 +4,9 @@ package com.intellij.sh.codeInsight;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.sh.codeInsight.processor.ShFunctionNewProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +20,9 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
   @Nullable
   @Override
   public PsiElement resolve() {
-    return ResolveCache.getInstance(myElement.getProject()).resolveWithCaching(this, RESOLVER, false, false);
+    ShFunctionNewProcessor functionProcessor = new ShFunctionNewProcessor(myElement.getText());
+    PsiTreeUtil.treeWalkUp(functionProcessor, myElement , null, ResolveState.initial());
+    return functionProcessor.getFunction();
   }
 
   @Override

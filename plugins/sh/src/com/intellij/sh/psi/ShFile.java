@@ -5,6 +5,7 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -38,11 +39,20 @@ public class ShFile extends PsiFileBase {
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    SyntaxTraverser.psiTraverser(this)
-      .filter(Conditions.instanceOf(ShFunctionDefinition.class))
-      .traverse()
-      .forEach(psiElement -> processor.execute(psiElement, state));
+    return lool(this, place.getTextRange(), processor, state);
+  }
+
+  private boolean lool(@Nullable PsiElement element, TextRange lastParent, @NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
+    if (element == null) return true;
+    for (PsiElement e = element; e != null; e = e.getPrevSibling()) {
+      if (!e.getTextRange().contains(lastParent) && e.getTextRange().getEndOffset() > lastParent.getStartOffset()) continue;
+      if (!processor.execute(e, state) || (shouldGoDeeper(e) && !lool(e.getLastChild(), lastParent, processor, state))) return false;
+    }
     return true;
+  }
+
+  private static boolean shouldGoDeeper(@NotNull PsiElement element) {
+    return !(element instanceof ShFunctionDefinition);
   }
 
   public Map<PsiElement, MultiMap<String, ShFunctionName>> getFunctionsDeclarationWithScope() {
