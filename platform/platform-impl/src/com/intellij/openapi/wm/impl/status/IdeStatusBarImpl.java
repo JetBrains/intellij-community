@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.*;
 import gnu.trove.THashSet;
@@ -278,65 +279,40 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     addWidget(widget, Position.RIGHT, anchor);
   }
 
-  private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position pos, @NotNull String anchor) {
+  private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position position, @NotNull String anchor) {
     myOrderedWidgets.add(widget.ID());
     JComponent c = wrap(widget);
-    JPanel panel = getTargetPanel(pos);
-    if (Position.LEFT == pos && panel.getComponentCount() == 0) {
+    JPanel panel = getTargetPanel(position);
+    if (position == Position.LEFT && panel.getComponentCount() == 0) {
       c.setBorder(SystemInfo.isMac ? JBUI.Borders.empty(2, 0, 2, 4) : JBUI.Borders.empty());
     }
-
-    if (Position.RIGHT == pos && panel.getComponentCount() > 0) {
-      String widgetId;
-      boolean before;
-      if (anchor.equals("__AUTODETECT__")) {
-        widgetId = IdeNotificationArea.WIDGET_ID;
-        before = true;
-      }
-      else {
-        final List<String> parts = StringUtil.split(anchor, " ");
-        if (parts.size() < 2 || !myWidgetMap.containsKey(parts.get(1))) {
-          widgetId = IdeNotificationArea.WIDGET_ID;
-          before = true;
-        }
-        else {
-          widgetId = parts.get(1);
-          before = "before".equalsIgnoreCase(parts.get(0));
-        }
-      }
-
-      for (String id : myWidgetMap.keySet()) {
-        if (!id.equalsIgnoreCase(widgetId)) {
-          continue;
-        }
-
-        WidgetBean bean = myWidgetMap.get(id);
-        int i = 0;
-        for (Component component : myRightPanel.getComponents()) {
-          if (component == bean.component) {
-            if (before) {
-              panel.add(c, i);
-            }
-            else {
-              panel.add(c, i + 1);
-            }
-
-            installWidget(widget, pos, c, anchor);
-            return;
-          }
-
-          i++;
-        }
-      }
-    }
-
-    panel.add(c);
-    installWidget(widget, pos, c, anchor);
-
+    panel.add(c, getPositionIndex(position, anchor));
+    installWidget(widget, position, c, anchor);
     if (widget instanceof StatusBarWidget.Multiframe) {
       StatusBarWidget.Multiframe multiFrameWidget = (StatusBarWidget.Multiframe)widget;
-      updateChildren(child -> child.addWidget(multiFrameWidget.copy(), pos, anchor));
+      updateChildren(child -> child.addWidget(multiFrameWidget.copy(), position, anchor));
     }
+  }
+
+  private int getPositionIndex(@NotNull IdeStatusBarImpl.Position position, @NotNull String anchor) {
+    if (Position.RIGHT == position && myRightPanel.getComponentCount() > 0) {
+      WidgetBean widgetAnchor = null;
+      boolean before = false;
+      List<String> parts = StringUtil.split(anchor, " ");
+      if (parts.size() > 1) {
+        widgetAnchor = myWidgetMap.get(parts.get(1));
+        before = "before".equalsIgnoreCase(parts.get(0));
+      }
+      if (widgetAnchor == null) {
+        widgetAnchor = myWidgetMap.get(IdeNotificationArea.WIDGET_ID);
+        before = true;
+      }
+      if (widgetAnchor != null) {
+        int anchorIndex = ArrayUtil.indexOf(myRightPanel.getComponents(), widgetAnchor.component);
+        return before ? anchorIndex : anchorIndex + 1;
+      }
+    }
+    return -1;
   }
 
   @NotNull
@@ -488,7 +464,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
                                                                             : StatusBarWidget.WidgetBorder.INSTANCE);
       }
       if (component instanceof JLabel) {
-        // wrap with panel so it will fill entire status bar height
+        // wrap with a panel, so it will fill entire status bar height
         return UI.Panels.simplePanel(component);
       }
       return component;
@@ -586,10 +562,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   @Override
   public void updateWidgets() {
-    for (final String s : myWidgetMap.keySet()) {
+    for (String s : myWidgetMap.keySet()) {
       updateWidget(s);
     }
-
     updateChildren(IdeStatusBarImpl::updateWidgets);
   }
 
