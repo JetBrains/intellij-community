@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -22,12 +21,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,6 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
@@ -462,25 +462,8 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       }
       return component;
     }
-    StatusBarWidget.WidgetPresentation presentation = widget.getPresentation();
-    assert presentation != null : "Presentation should not be null!";
 
-    JComponent wrapper;
-    if (presentation instanceof StatusBarWidget.IconPresentation) {
-      wrapper = new IconPresentationWrapper((StatusBarWidget.IconPresentation)presentation);
-      wrapper.setBorder(StatusBarWidget.WidgetBorder.ICON);
-    }
-    else if (presentation instanceof StatusBarWidget.TextPresentation) {
-      wrapper = new TextPresentationWrapper((StatusBarWidget.TextPresentation)presentation);
-      wrapper.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
-    }
-    else if (presentation instanceof StatusBarWidget.MultipleTextValuesPresentation) {
-      wrapper = new MultipleTextValuesPresentationWrapper((StatusBarWidget.MultipleTextValuesPresentation)presentation);
-      wrapper.setBorder(StatusBarWidget.WidgetBorder.WIDE);
-    }
-    else {
-      throw new IllegalArgumentException("Unable to find a wrapper for presentation: " + presentation.getClass().getSimpleName());
-    }
+    JComponent wrapper = StatusBarWidgetWrapper.wrap(Objects.requireNonNull(widget.getPresentation()));
     wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
     return wrapper;
   }
@@ -536,10 +519,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
   }
 
-  public StatusBarUI getUI() {
-    return (StatusBarUI)ui;
-  }
-
   @Override
   public void removeWidget(@NotNull String id) {
     assert EventQueue.isDispatchThread() : "Must be EDT";
@@ -566,8 +545,14 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     UIUtil.invokeLaterIfNeeded(() -> {
       final WidgetBean bean = myWidgetMap.get(id);
       if (bean != null) {
-        if (bean.component instanceof StatusBarWrapper) {
-          ((StatusBarWrapper)bean.component).beforeUpdate();
+        if (bean.component instanceof StatusBarWidgetWrapper) {
+          ((StatusBarWidgetWrapper)bean.component).beforeUpdate();
+
+          StatusBarWidget.WidgetPresentation presentation = ((StatusBarWidgetWrapper)bean.component).getPresentation();
+          bean.component.setToolTipText(presentation.getTooltipText());
+          if (Registry.is("ide.helptooltip.enabled")) {
+            bean.component.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, presentation.getShortcutText());
+          }
         }
 
         bean.component.repaint();
@@ -588,110 +573,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   public JComponent getWidgetComponent(@NotNull String id) {
     WidgetBean bean = myWidgetMap.get(id);
     return bean == null ? null : bean.component;
-  }
-
-  @FunctionalInterface
-  public interface StatusBarWrapper {
-    void beforeUpdate();
-  }
-
-  private static void initTooltip(JComponent component, StatusBarWidget.WidgetPresentation presentation) {
-    component.setToolTipText(presentation.getTooltipText());
-
-    if (Registry.is("ide.helptooltip.enabled")) {
-      component.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, presentation.getShortcutText());
-    }
-  }
-
-  private static final class MultipleTextValuesPresentationWrapper extends TextPanel.WithIconAndArrows implements StatusBarWrapper {
-    private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
-
-    private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
-      myPresentation = presentation;
-      setVisible(StringUtil.isNotEmpty(myPresentation.getSelectedValue()));
-      setTextAlignment(Component.CENTER_ALIGNMENT);
-      new ClickListener() {
-        @Override
-        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-          final ListPopup popup = myPresentation.getPopupStep();
-          if (popup == null) return false;
-          final Dimension dimension = popup.getContent().getPreferredSize();
-          final Point at = new Point(0, -dimension.height);
-          popup.show(new RelativePoint(e.getComponent(), at));
-          return true;
-        }
-      }.installOn(this);
-    }
-
-    @Override
-    public Font getFont() {
-      return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label();
-    }
-
-    @Override
-    public void beforeUpdate() {
-      String value = myPresentation.getSelectedValue();
-      setText(value);
-      setIcon(myPresentation.getIcon());
-      setVisible(StringUtil.isNotEmpty(value));
-      initTooltip(this, myPresentation);
-    }
-  }
-
-  private static final class TextPresentationWrapper extends TextPanel implements StatusBarWrapper {
-    private final StatusBarWidget.TextPresentation myPresentation;
-    private final com.intellij.util.Consumer<MouseEvent> myClickConsumer;
-
-    private TextPresentationWrapper(@NotNull final StatusBarWidget.TextPresentation presentation) {
-      myPresentation = presentation;
-      myClickConsumer = myPresentation.getClickConsumer();
-      setTextAlignment(presentation.getAlignment());
-      setVisible(!myPresentation.getText().isEmpty());
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(final MouseEvent e) {
-          if (myClickConsumer != null && !e.isPopupTrigger() && MouseEvent.BUTTON1 == e.getButton()) {
-            myClickConsumer.consume(e);
-          }
-        }
-      });
-    }
-
-    @Override
-    public void beforeUpdate() {
-      String text = myPresentation.getText();
-      setText(text);
-      setVisible(!text.isEmpty());
-      initTooltip(this, myPresentation);
-    }
-  }
-
-  private static final class IconPresentationWrapper extends TextPanel.WithIconAndArrows implements StatusBarWrapper {
-    private final StatusBarWidget.IconPresentation myPresentation;
-    private final com.intellij.util.Consumer<MouseEvent> myClickConsumer;
-
-    private IconPresentationWrapper(@NotNull final StatusBarWidget.IconPresentation presentation) {
-      myPresentation = presentation;
-      myClickConsumer = myPresentation.getClickConsumer();
-      setTextAlignment(Component.CENTER_ALIGNMENT);
-      setIcon(myPresentation.getIcon());
-      setVisible(hasIcon());
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(final MouseEvent e) {
-          if (myClickConsumer != null && !e.isPopupTrigger() && MouseEvent.BUTTON1 == e.getButton()) {
-            myClickConsumer.consume(e);
-          }
-        }
-      });
-    }
-
-    @Override
-    public void beforeUpdate() {
-      setIcon(myPresentation.getIcon());
-      setVisible(hasIcon());
-      initTooltip(this, myPresentation);
-    }
   }
 
   @NotNull
