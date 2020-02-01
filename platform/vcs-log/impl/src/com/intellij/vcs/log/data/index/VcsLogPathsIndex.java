@@ -33,10 +33,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.ObjIntConsumer;
 
 public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeKind>, VcsLogIndexer.CompressedDetails> {
@@ -122,21 +124,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       }
     }
     return null;
-  }
-
-  @NotNull
-  public Set<FilePath> getPathsChangedInCommit(int commit) throws IOException {
-    Collection<Integer> keysForCommit = getKeysForCommit(commit);
-    if (keysForCommit == null) return Collections.emptySet();
-
-    Set<FilePath> paths = new HashSet<>();
-    for (Integer pathId : keysForCommit) {
-      LightFilePath lightFilePath = myPathsIndexer.getPathsEnumerator().valueOf(pathId);
-      if (lightFilePath.isDirectory()) continue;
-      paths.add(toFilePath(lightFilePath));
-    }
-
-    return paths;
   }
 
   public void iterateCommits(@NotNull FilePath path,
