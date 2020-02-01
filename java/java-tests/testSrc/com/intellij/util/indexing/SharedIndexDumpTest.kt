@@ -5,40 +5,38 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.hash.ContentHashEnumerator
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
+import com.intellij.util.indexing.snapshot.IndexedHashesSupport
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystem
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystemProvider
+import junit.framework.TestCase
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.stream.Collectors
 
 @SkipSlowTestLocally
 class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
 
+  fun testSharedIndexHashes() {
+    val indexZipPath = generateTestSharedIndex()
+    val indexFs = UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider())
+
+    val hashEnumerator = indexFs.getPath("source", "hashes")
+
+    val content = FileContentImpl.createByFile(myFixture.findClass("A").containingFile.virtualFile, project) as FileContentImpl
+    val hash = IndexedHashesSupport.getOrInitIndexedHash(content, false)
+
+    val hashId = ContentHashEnumerator(hashEnumerator).use {
+      it.tryEnumerate(hash)
+    }
+
+    assertTrue(hashId > 0)
+  }
+
   fun testSharedIndexLayout() {
-    val file = myFixture.configureByText("A.java", """
-      public class A { 
-        public void foo() {
-          //Comment
-          methodCall(null)
-        }
-        
-        public String getName() {
-          return name;
-        }
-      }
-    """.trimIndent()).virtualFile
-
-    val tempDir = FileUtil.createTempDirectory("shared-indexes-test", "").toPath()
-    val indexZipPath = tempDir.resolve("shared-index.zip")
-
-    val chunks = arrayListOf<IndexChunk>()
-    chunks += IndexChunk(setOf(file), "source")
-
-    IndexesExporter
-      .getInstance(project)
-      .exportIndices(chunks, indexZipPath, EmptyProgressIndicator())
-
+    val indexZipPath = generateTestSharedIndex()
     val indexFs = UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider())
 
     val root = indexFs.rootDirectories.first()
@@ -137,5 +135,31 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       source/trigram.index/Trigram.Index.storage_i
       source/trigram.index/Trigram.Index.storage_i.len
     """.trimIndent())
+  }
+
+  private fun generateTestSharedIndex(): Path {
+    val file = myFixture.configureByText("A.java", """
+        public class A { 
+          public void foo() {
+            //Comment
+            methodCall(null)
+          }
+          
+          public String getName() {
+            return name;
+          }
+        }
+      """.trimIndent()).virtualFile
+
+    val tempDir = FileUtil.createTempDirectory("shared-indexes-test", "").toPath()
+    val indexZipPath = tempDir.resolve("shared-index.zip")
+
+    val chunks = arrayListOf<IndexChunk>()
+    chunks += IndexChunk(setOf(file), "source")
+
+    IndexesExporter
+      .getInstance(project)
+      .exportIndices(chunks, indexZipPath, EmptyProgressIndicator())
+    return indexZipPath
   }
 }
