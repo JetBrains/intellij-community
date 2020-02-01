@@ -2,9 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -222,16 +220,16 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
   @Override
   public void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @VirtualFile.PropName @NotNull String property, Object oldValue, Object newValue) {
     Application app = ApplicationManager.getApplication();
-    app.invokeLater(() -> {
-      if (virtualFile.isValid() && !app.isDisposed()) {
-        app.runWriteAction(() -> {
+    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).expireWith(app).submit(() -> {
+      if (virtualFile.isValid()) {
+        WriteAction.run(() -> {
           List<VFileEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
           BulkFileListener listener = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
           listener.before(events);
           listener.after(events);
         });
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   @Override

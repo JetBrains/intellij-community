@@ -315,7 +315,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     finally {
       if (!succeed) {
-        ApplicationManager.getApplication().invokeLater(() -> {
+        WriteThread.submit(() -> {
           WriteAction.run(() -> Disposer.dispose(project));
         });
       }

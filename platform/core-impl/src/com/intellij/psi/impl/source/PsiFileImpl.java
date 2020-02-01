@@ -6,6 +6,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.*;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -965,7 +966,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   final void rebuildStub() {
-    ApplicationManager.getApplication().invokeLater(() -> {
+    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).submit(() -> {
       if (!myManager.isDisposed()) {
         myManager.dropPsiCaches();
       }
@@ -980,7 +981,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         FileContentUtilCore.reparseFiles(vFile);
         StubTreeLoader.getInstance().rebuildStubTree(vFile);
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   @Override

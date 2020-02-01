@@ -232,7 +232,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final int semaphoreTimeoutInMs = 50;
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
-      application.invokeLater(() -> {
+      AppUIExecutor.onWriteThread().submit(() -> {
         PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
           semaphore.up();
         });
@@ -549,7 +549,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
       ModalityState modality = ModalityState.defaultModalityState();
       Semaphore semaphore = new Semaphore(1);
-      application.invokeLater(() -> {
+      AppUIExecutor.onWriteThread(ModalityState.any()).submit(() -> {
         if (myProject.isDisposed()) {
           // committedness doesn't matter anymore; give clients a chance to do checkCanceled
           semaphore.up();
@@ -557,7 +557,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         }
 
         performWhenAllCommitted(() -> semaphore.up(), modality);
-      }, ModalityState.any());
+      });
 
       while (!semaphore.waitFor(10)) {
         ProgressManager.checkCanceled();

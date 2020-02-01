@@ -10,6 +10,7 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteThread;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -400,7 +401,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                                       @Nullable final Runnable runnable,
                                       final List<? extends SmartPsiElementPointer<PsiElement>> elements,
                                       @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    ApplicationManager.getApplication().invokeLater(() -> {
+    WriteThread.submit(() -> {
       final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {
         PsiElement psiElement = element.getElement();

@@ -5,7 +5,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
 import com.intellij.openapi.application.constraints.Expiration;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -15,7 +17,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -94,7 +99,7 @@ public class NonBlockingReadActionImpl<T>
 
   @Override
   public void dispatchLaterUnconstrained(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, ModalityState.any());
   }
 
   @Override
