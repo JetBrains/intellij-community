@@ -18,6 +18,7 @@ import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -54,7 +55,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   init {
     val containerFactory = DockableGridContainerFactory()
     DockManager.getInstance(project).register(DockableGridContainerFactory.TYPE, containerFactory, project)
-    AppUIUtil.invokeOnEdt(Runnable { init() }, project.disposed)
+    AppUIExecutor.onUiThread().expireWith(project).submit { init() }
   }
 
   companion object {

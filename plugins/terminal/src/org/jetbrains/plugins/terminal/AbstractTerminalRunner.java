@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +29,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ui.UIUtil;
@@ -262,11 +262,11 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
     writeString(terminalWidget.getTerminal(), message.toString());
     terminalWidget.getTerminal().writeCharacters("See your idea.log (Help | " + ShowLogAction.getActionName() + ") for the details.");
-    AppUIUtil.invokeOnEdt(() -> {
+    AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> {
       if (!Disposer.isDisposed(terminalWidget)) {
         terminalWidget.getTerminalPanel().setCursorVisible(false);
       }
-    }, myProject.getDisposed());
+    });
   }
 
   private static void writeString(@NotNull Terminal terminal, @NotNull String message) {

@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -25,7 +26,6 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,7 +182,7 @@ public class SendEventLogAction extends AnAction {
         .compute(computable);
 
       if (psiElement != null) {
-        AppUIUtil.invokeOnEdt(() -> psiElement.navigate(true), project.getDisposed());
+        AppUIExecutor.onUiThread().expireWith(project).submit(() -> psiElement.navigate(true));
         return true;
       }
     }

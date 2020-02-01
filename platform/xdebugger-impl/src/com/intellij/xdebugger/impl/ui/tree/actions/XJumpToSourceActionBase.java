@@ -16,10 +16,10 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
@@ -34,12 +34,12 @@ public abstract class XJumpToSourceActionBase extends XDebuggerTreeActionBase {
     XNavigatable navigatable = sourcePosition -> {
       if (sourcePosition != null) {
         final Project project = node.getTree().getProject();
-        AppUIUtil.invokeOnEdt(() -> {
+        AppUIExecutor.onUiThread().expireWith(project).submit(() -> {
           sourcePosition.createNavigatable(project).navigate(true);
           if (dialog != null && Registry.is("debugger.close.dialog.on.navigate")) {
             dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
           }
-        }, project.getDisposed());
+        });
       }
     };
     startComputingSourcePosition(value, navigatable);

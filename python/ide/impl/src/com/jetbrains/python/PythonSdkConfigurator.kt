@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.Module
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
-import com.intellij.ui.AppUIUtil
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
 
@@ -64,7 +64,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return ProgressManager.getInstance().runProcess(computable, SensitiveProgressWrapper(indicator))
     }
 
-    private fun onEdt(project: Project, runnable: () -> Unit) = AppUIUtil.invokeOnEdt(Runnable { runnable() }, project.disposed)
+    private fun onEdt(project: Project, runnable: () -> Unit) = AppUIExecutor.onUiThread().expireWith(project).submit { runnable() }
 
     private fun notifyAboutConfiguredSdk(project: Project, module: Module, sdk: Sdk) {
       BALLOON_NOTIFICATIONS.createNotification(

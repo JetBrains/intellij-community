@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -215,6 +216,11 @@ public final class AppUIUtil {
     invokeOnEdt(runnable, null);
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.application.AppUIExecutor#expireWith(Disposable)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static void invokeOnEdt(@NotNull Runnable runnable, @Nullable Condition<?> expired) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
