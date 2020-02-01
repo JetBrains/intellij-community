@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.structuralsearch.PatternContext;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -25,7 +26,11 @@ public class MatcherImplUtil {
                                                       boolean physical) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(fileType.getLanguage());
     if (profile != null) {
-      return profile.createPatternTree(text, context, fileType, fileType.getLanguage(), null, project, physical);
+      final PsiElement[] tree = profile.createPatternTree(text, context, fileType, fileType.getLanguage(), null, project, physical);
+      for (PsiElement branch : tree) {
+        System.out.println(DebugUtil.psiToString(branch, false));
+      }
+      return tree;
     }
     return PsiElement.EMPTY_ARRAY;
   }
@@ -43,7 +48,11 @@ public class MatcherImplUtil {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
     if (profile != null) {
       final String contextId = patternContext == null ? null : patternContext.getId();
-      return profile.createPatternTree(text, context, fileType, language, contextId, project, physical);
+      final PsiElement[] tree = profile.createPatternTree(text, context, fileType, language, contextId, project, physical);
+      for (PsiElement branch : tree) {
+        System.out.println(DebugUtil.psiToString(branch, false));
+      }
+      return tree;
     }
     return PsiElement.EMPTY_ARRAY;
   }

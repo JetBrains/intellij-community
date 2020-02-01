@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindManager;
@@ -166,7 +166,7 @@ public class SearchCommand {
     };
 
     try {
-      new Matcher(mySearchContext.getProject()).findMatches(sink, myConfiguration.getMatchOptions());
+      new Matcher(mySearchContext.getProject(), myConfiguration.getMatchOptions()).findMatches(sink);
     }
     catch (StructuralSearchException e) {
       myProcessPresentation.setShowNotFoundMessage(false);

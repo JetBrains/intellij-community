@@ -877,7 +877,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
     try {
-      new Matcher(project).findMatches(sink, matchOptions);
+      new Matcher(project, matchOptions).findMatches(sink);
       final List<MatchResult> matches = sink.getMatches();
       removeMatchHighlights();
       addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");

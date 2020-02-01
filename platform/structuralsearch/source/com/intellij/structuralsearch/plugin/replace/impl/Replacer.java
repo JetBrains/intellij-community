@@ -82,7 +82,7 @@ public class Replacer {
     checkReplacementPattern(project, replaceOptions);
 
     final Replacer replacer = new Replacer(project, replaceOptions);
-    final Matcher matcher = new Matcher(project);
+    final Matcher matcher = new Matcher(project, matchOptions);
     try {
       final PsiElement firstElement, lastElement, parent;
 
@@ -107,7 +107,7 @@ public class Replacer {
       }
 
       final CollectingMatchResultSink sink = new CollectingMatchResultSink();
-      matcher.testFindMatches(sink, matchOptions);
+      matcher.testFindMatches(sink);
 
       final List<ReplacementInfo> replacements = new SmartList<>();
       for (final MatchResult result : sink.getMatches()) {

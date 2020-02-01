@@ -17,11 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.Matcher;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchException;
-import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
@@ -32,6 +28,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -113,42 +110,47 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       configurations = myConfigurations;
     }
 
-    final Matcher matcher = new Matcher(project);
-    final Map<Configuration, MatchContext> compiledOptions =
-      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, matcher);
+    final Map<Configuration, Matcher> compiledOptions =
+      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, project);
     if (compiledOptions.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
+    final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
+      final PsiElement element = matchResult.getMatch();
+      final String name = ObjectUtils.notNull(configuration.getProblemDescriptor(), configuration.getName());
+      final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
+      final ProblemDescriptor descriptor =
+        holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+      if (Registry.is("ssr.separate.inspections")) {
+        holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
+      }
+      else {
+        holder.registerProblem(descriptor);
+      }
+      return true;
+    };
+    for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
+      final Configuration configuration = entry.getKey();
+      final Matcher matcher = entry.getValue();
+      matcher.getMatchContext().setSink(new DuplicateFilteringResultSink(new InspectionResultSink(processor, configuration)));
+    }
+
     return new PsiElementVisitor() {
-      final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
-        final PsiElement element = matchResult.getMatch();
-        final String name = ObjectUtils.notNull(configuration.getProblemDescriptor(), configuration.getName());
-        final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
-        final ProblemDescriptor descriptor =
-          holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-        if (Registry.is("ssr.separate.inspections")) {
-          holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
-        }
-        else {
-          holder.registerProblem(descriptor);
-        }
-        return true;
-      };
 
       @Override
       public void visitElement(@NotNull PsiElement element) {
         if (LexicalNodesFilter.getInstance().accepts(element)) return;
         synchronized (LOCK) {
           final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
-          for (Map.Entry<Configuration, MatchContext> entry : compiledOptions.entrySet()) {
+          for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
             final Configuration configuration = entry.getKey();
-            final MatchContext context = entry.getValue();
-            if (context == null) continue;
+            final Matcher matcher = entry.getValue();
+            if (matcher == null) continue;
 
-            if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes) &&
+            if (matcher.checkIfShouldAttemptToMatch(matchedNodes) &&
                 (profile == null || profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element))) {
-              final int nodeCount = context.getPattern().getNodeCount();
+              final int nodeCount = matcher.getMatchContext().getPattern().getNodeCount();
               try {
-                matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
+                matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
               }
               catch (StructuralSearchException e) {
                 if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
@@ -244,5 +246,25 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   public void removeConfigurationWithUuid(@NotNull UUID uuid) {
     myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+  }
+
+  private static class InspectionResultSink extends DefaultMatchResultSink {
+    private final Configuration myConfiguration;
+    private PairProcessor<? super MatchResult, ? super Configuration> myProcessor;
+
+    InspectionResultSink(PairProcessor<? super MatchResult, ? super Configuration> processor, Configuration configuration) {
+      myProcessor = processor;
+      myConfiguration = configuration;
+    }
+
+    @Override
+    public void newMatch(MatchResult result) {
+      myProcessor.process(result, myConfiguration);
+    }
+
+    @Override
+    public void matchingFinished() {
+      myProcessor = null;
+    }
   }
 }

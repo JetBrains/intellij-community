@@ -18,8 +18,8 @@ public class SSRCodeInsightTest extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
+    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
     myInspection = new SSBasedInspection();
@@ -60,6 +60,10 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     doTest("int i(", "semicolon expected");
   }
 
+  public void testAnnotation() {
+    doTest("@'Anno:[regex( Nullable|NotNull )] '_Type:[regex( .*(\\[\\])+ )] '_x;", "report annotation only once");
+  }
+
   private void doTest(final String searchPattern, final String patternName) {
     final SearchConfiguration configuration = new SearchConfiguration();
     //display name
@@ -67,7 +71,7 @@ public class SSRCodeInsightTest extends UsefulTestCase {
 
     final MatchOptions options = configuration.getMatchOptions();
     options.setFileType(StdFileTypes.JAVA);
-    options.setSearchPattern(searchPattern);
+    options.fillSearchCriteria(searchPattern);
 
     myInspection.setConfigurations(Collections.singletonList(configuration));
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");

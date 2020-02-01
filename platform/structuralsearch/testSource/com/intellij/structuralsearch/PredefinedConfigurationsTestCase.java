@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -26,7 +26,8 @@ public abstract class PredefinedConfigurationsTestCase extends StructuralSearchT
     if (!(template instanceof SearchConfiguration)) fail();
     final SearchConfiguration searchConfiguration = (SearchConfiguration)template;
     options = searchConfiguration.getMatchOptions();
-    final List<MatchResult> matches = testMatcher.testFindMatches(source, options, true, fileType, false);
+    final Matcher matcher = new Matcher(getProject(), options);
+    final List<MatchResult> matches = matcher.testFindMatches(source, true, fileType, false);
     assertEquals(template.getName(), expectedResults.length, matches.size());
     final String[] actualResults = matches.stream().map(MatchResult::getMatch).map(resultConverter).toArray(String[]::new);
     for (int i = 0; i < actualResults.length; i++) {
