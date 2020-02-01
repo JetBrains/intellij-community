@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.EDT;
 import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
         session.fireEvents(session.getEvents(), null);
       }
       else {
-        if (((ApplicationEx)app).holdsReadLock()) {
+        if (((ApplicationEx)app).holdsReadLock() || EDT.isCurrentThreadEdt()) {
           LOG.error("Do not perform a synchronous refresh under read lock (except from EDT) - causes deadlocks if there are events to fire.");
           return;
         }

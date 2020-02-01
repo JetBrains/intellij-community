@@ -58,10 +58,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.PositionTracker
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.intellij.lang.annotations.JdkConstants
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -615,7 +612,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   override val activeToolWindowId: String?
     get() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      EDT.assertIsEdt()
       val frame = frame?.frame ?: return null
       if (frame.isActive) {
         val focusOwner = focusManager.getLastFocusedFor(frame) ?: return null
@@ -644,7 +641,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun getLastActiveToolWindowId(condition: Condition<in JComponent>?): String? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     for (i in 0 until activeStack.persistentSize) {
       val toolWindow = activeStack.peekPersistent(i).toolWindow
       if (toolWindow.isAvailable && (condition == null || condition.value(toolWindow.component))) {
@@ -729,7 +726,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   fun showToolWindow(id: String) {
     LOG.debug { "enter: showToolWindow($id)" }
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     val info = layout.getInfo(id) ?: throw IllegalThreadStateException("window with id=\"$id\" is unknown")
     val entry = idToEntry.get(id)!!
     if (!entry.readOnlyWindowInfo.isVisible && showToolWindowImpl(entry, info, dirtyMode = false)) {
@@ -759,7 +756,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   fun hideToolWindow(id: String, hideSide: Boolean, moveFocus: Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
 
     val entry = idToEntry.get(id)!!
     if (!entry.readOnlyWindowInfo.isVisible) {

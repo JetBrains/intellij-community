@@ -11,7 +11,6 @@ import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -29,6 +28,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.EDT
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
@@ -201,7 +201,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun isActive(): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
 
@@ -220,13 +220,13 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun show(runnable: Runnable?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     toolWindowManager.showToolWindow(id)
     callLater(runnable)
   }
 
   override fun hide(runnable: Runnable?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     toolWindowManager.hideToolWindow(id, false)
     callLater(runnable)
   }
@@ -236,7 +236,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   override fun getAnchor() = windowInfo.anchor
 
   override fun setAnchor(anchor: ToolWindowAnchor, runnable: Runnable?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     toolWindowManager.setToolWindowAnchor(id, anchor)
     callLater(runnable)
   }
@@ -244,7 +244,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   override fun isSplitMode() = windowInfo.isSplit
 
   override fun setContentUiType(type: ToolWindowContentUiType, runnable: Runnable?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     toolWindowManager.setContentUiType(id, type)
     callLater(runnable)
   }
@@ -256,7 +256,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   override fun getContentUiType() = windowInfo.contentUiType
 
   override fun setSplitMode(isSideTool: Boolean, runnable: Runnable?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     toolWindowManager.setSideTool(id, isSideTool)
     callLater(runnable)
   }
@@ -270,7 +270,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   override fun getType() = windowInfo.type
 
   override fun setType(type: ToolWindowType, runnable: Runnable?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     toolWindowManager.setToolWindowType(id, type)
     callLater(runnable)
   }
@@ -306,7 +306,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun setAvailable(available: Boolean, runnable: Runnable?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     isAvailable = available
     toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
     callLater(runnable)
@@ -361,22 +361,22 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   fun canCloseContents() = canCloseContent
 
   override fun getIcon(): Icon? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     return icon
   }
 
   override fun getTitle(): String? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     return contentManager.value.selectedContent?.displayName
   }
 
   override fun getStripeTitle(): String {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     return stripeTitle ?: id
   }
 
   override fun setIcon(newIcon: Icon) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     doSetIcon(newIcon)
     toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
   }
@@ -394,7 +394,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun setTitle(title: String) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     val selected = contentManager.value.selectedContent
     if (selected != null) {
       selected.displayName = title
@@ -403,7 +403,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun setStripeTitle(value: String) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
     stripeTitle = value
     toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.STRIPE_TITLE)
   }

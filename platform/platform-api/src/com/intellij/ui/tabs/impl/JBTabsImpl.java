@@ -5,7 +5,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -468,7 +467,7 @@ public class JBTabsImpl extends JComponent
   }
 
   void resetTabsCache() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EDT.assertIsEdt();
     myAllTabs = null;
   }
 
@@ -1341,7 +1340,7 @@ public class JBTabsImpl extends JComponent
   @Override
   @NotNull
   public List<TabInfo> getTabs() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EDT.assertIsEdt();
     if (myAllTabs != null) return myAllTabs;
 
     ArrayList<TabInfo> result = new ArrayList<>(myVisibleInfos);
