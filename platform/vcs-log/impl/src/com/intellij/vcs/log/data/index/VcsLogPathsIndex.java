@@ -4,20 +4,12 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.InputData;
-import com.intellij.util.indexing.impl.forward.ForwardIndex;
-import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
-import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
-import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.history.EdgeData;
@@ -36,7 +28,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.ObjIntConsumer;
@@ -56,25 +47,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
     myPathsIndexer = (PathsIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));
-  }
-
-  @Nullable
-  @Override
-  protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, List<ChangeKind>>> createdForwardIndex() throws IOException {
-    if (!isPathsForwardIndexRequired()) return null;
-    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), false),
-                       new KeyCollectionForwardIndexAccessor<Integer, List<ChangeKind>>(new IntCollectionDataExternalizer()) {
-                         @Nullable
-                         @Override
-                         public Collection<Integer> convertToDataType(@NotNull InputData<Integer, List<ChangeKind>> data) {
-                           Map<Integer, List<ChangeKind>> map = data.getKeyValues();
-                           if (!map.isEmpty()) {
-                             List<ChangeKind> changesToParents = ContainerUtil.getFirstItem(map.values());
-                             if (changesToParents.size() > 1) return Collections.emptySet();
-                           }
-                           return super.convertToDataType(data);
-                         }
-                       });
   }
 
   @NotNull
@@ -166,10 +138,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   private static FilePath toFilePath(@Nullable LightFilePath lightFilePath) {
     if (lightFilePath == null) return null;
     return VcsUtil.getFilePath(lightFilePath.getPath(), lightFilePath.isDirectory());
-  }
-
-  public static boolean isPathsForwardIndexRequired() {
-    return Registry.is("vcs.log.index.paths.forward.index.on");
   }
 
   private static class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {

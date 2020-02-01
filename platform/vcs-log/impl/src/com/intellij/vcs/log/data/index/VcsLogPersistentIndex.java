@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -310,8 +309,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       Disposer.register(parentDisposable, this);
 
       try {
-        boolean forwardIndexRequired = VcsLogPathsIndex.isPathsForwardIndexRequired();
-        StorageId storageId = new StorageId(INDEX, logId, getVersion(), new boolean[]{forwardIndexRequired});
+        StorageId storageId = new StorageId(INDEX, logId, getVersion(), new boolean[]{false});
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);
