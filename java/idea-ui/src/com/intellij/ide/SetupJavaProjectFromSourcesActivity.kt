@@ -173,8 +173,10 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
   }
 
   private fun notifyAboutAutomaticProjectStructure(project: Project) {
-    val message = "<b>${JavaUiBundle.message("project.structure.automatically.detected.notification")}</b>"
+    val message = JavaUiBundle.message("project.structure.automatically.detected.notification")
     val notification = NOTIFICATION_GROUP.createNotification("", message, NotificationType.INFORMATION, null)
+    notification.addAction(NotificationAction.createSimpleExpiring(
+      JavaUiBundle.message("project.structure.automatically.detected.notification.gotit.action")) {})
     notification.addAction(NotificationAction.createSimpleExpiring(
       JavaUiBundle.message("project.structure.automatically.detected.notification.configure.action")) {
       ProjectSettingsService.getInstance(project).openProjectSettings()
