@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.HelpTooltipManager;
@@ -562,32 +562,22 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @Override
   public void removeWidget(@NotNull String id) {
     assert EventQueue.isDispatchThread() : "Must be EDT";
-    final WidgetBean bean = myWidgetMap.get(id);
+    myOrderedWidgets.remove(id);
+    WidgetBean bean = myWidgetMap.remove(id);
     if (bean != null) {
       if (Position.LEFT == bean.position) {
         myLeftPanel.remove(bean.component);
       }
       else if (Position.RIGHT == bean.position) {
-        final Component[] components = myRightPanel.getComponents();
-        for (final Component c : components) {
-          if (c == bean.component) break;
-        }
-
         myRightPanel.remove(bean.component);
       }
       else {
         myCenterPanel.remove(bean.component);
       }
-
-      myWidgetMap.remove(bean.widget.ID());
       Disposer.dispose(bean.widget);
-
       repaint();
     }
-
     updateChildren(child -> child.removeWidget(id));
-
-    myOrderedWidgets.remove(id);
   }
 
   @Override
