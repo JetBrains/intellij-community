@@ -287,7 +287,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       c.setBorder(SystemInfo.isMac ? JBUI.Borders.empty(2, 0, 2, 4) : JBUI.Borders.empty());
     }
     panel.add(c, getPositionIndex(position, anchor));
-    installWidget(widget, position, c, anchor);
+    myWidgetMap.put(widget.ID(), WidgetBean.create(widget, position, c, anchor));
+    widget.install(this);
+    Disposer.register(this, widget);
     if (widget instanceof StatusBarWidget.Multiframe) {
       StatusBarWidget.Multiframe multiFrameWidget = (StatusBarWidget.Multiframe)widget;
       updateChildren(child -> child.addWidget(multiFrameWidget.copy(), position, anchor));
@@ -445,15 +447,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @Override
   public void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor) {
     new NotificationPopup(this, content, backgroundColor);
-  }
-
-  private void installWidget(@NotNull StatusBarWidget widget,
-                             @NotNull Position pos,
-                             @NotNull JComponent c,
-                             @NotNull String anchor) {
-    myWidgetMap.put(widget.ID(), WidgetBean.create(widget, pos, c, anchor));
-    widget.install(this);
-    Disposer.register(this, widget);
   }
 
   public static JComponent wrap(@NotNull final StatusBarWidget widget) {
