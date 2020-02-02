@@ -21,8 +21,8 @@ public class DeployAction extends DumbAwareAction {
     presentation.setVisible(visible);
     presentation.setEnabled(visible && node.isDeployActionEnabled());
     if (node != null && node.isDeployed()) {
-      presentation.setText(() -> CloudBundle.message("action.presentation.DeployAction.text"));
-      presentation.setDescription(() -> CloudBundle.message("action.presentation.DeployAction.description"));
+      presentation.setText(CloudBundle.lazyMessage("action.presentation.DeployAction.text"));
+      presentation.setDescription(CloudBundle.lazyMessage("action.presentation.DeployAction.description"));
     }
     else {
       presentation.setText(getTemplatePresentation().getText());

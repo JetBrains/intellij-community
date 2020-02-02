@@ -92,7 +92,7 @@ public class InterruptThreadAction extends DebuggerAction{
       }
     }
     final Presentation presentation = e.getPresentation();
-    presentation.setText(() -> DebuggerBundle.message("action.interrupt.thread.text"));
+    presentation.setText(DebuggerBundle.lazyMessage("action.interrupt.thread.text"));
     presentation.setEnabledAndVisible(visible && enabled);
   }
 }

@@ -629,7 +629,7 @@ public final class Switcher extends AnAction implements DumbAware {
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
       if (!myPinned) {
-        new DumbAwareAction(() -> IdeBundle.message("action.AnActionButton.text.suppress.all.actions.to.activate.a.toolwindow")) {
+        new DumbAwareAction(IdeBundle.lazyMessage("action.AnActionButton.text.suppress.all.actions.to.activate.a.toolwindow")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             //suppress all actions to activate a toolwindow : IDEA-71277

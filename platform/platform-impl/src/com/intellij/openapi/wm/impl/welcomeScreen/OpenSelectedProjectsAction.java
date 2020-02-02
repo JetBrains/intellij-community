@@ -68,9 +68,9 @@ public class OpenSelectedProjectsAction extends RecentProjectsWelcomeScreenActio
     if (ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
       presentation.setEnabledAndVisible(true);
       if (selectedElements.size() == 1 && selectedElements.get(0) instanceof ProjectGroupActionGroup) {
-        presentation.setText(() -> IdeBundle.message("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group"));
+        presentation.setText(IdeBundle.lazyMessage("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group"));
       } else {
-        presentation.setText(() -> IdeBundle.message("action.presentation.OpenSelectedProjectsAction.text.open.selected"));
+        presentation.setText(IdeBundle.lazyMessage("action.presentation.OpenSelectedProjectsAction.text.open.selected"));
       }
     } else {
       presentation.setEnabledAndVisible(false);

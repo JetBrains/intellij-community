@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightEditExitAction extends DumbAwareAction {
   public LightEditExitAction() {
-    super(() -> ActionsBundle.message("action.LightEditExitAction.text"));
+    super(ActionsBundle.lazyMessage("action.LightEditExitAction.text"));
   }
 
   @Override

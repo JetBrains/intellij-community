@@ -98,7 +98,7 @@ public class JpsOutputLoaderManager {
         Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
                                                                                  NotificationType.INFORMATION, null);
         notification
-          .addAction(NotificationAction.createSimple(() -> IdeBundle.message(
+          .addAction(NotificationAction.createSimple(IdeBundle.lazyMessage(
             "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
           notification.expire();
           load(false);

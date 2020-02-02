@@ -20,5 +20,5 @@ final class FormUsageTypeProvider implements UsageTypeProvider {
     return null;
   }
 
-  private static final UsageType FORM_USAGE_TYPE = new UsageType(() -> UIDesignerBundle.message("form.usage.type"));
+  private static final UsageType FORM_USAGE_TYPE = new UsageType(UIDesignerBundle.lazyMessage("form.usage.type"));
 }

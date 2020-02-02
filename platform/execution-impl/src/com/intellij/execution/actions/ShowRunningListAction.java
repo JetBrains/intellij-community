@@ -44,8 +44,8 @@ import java.util.Set;
 
 public final class ShowRunningListAction extends AnAction {
   public ShowRunningListAction() {
-    super(() -> ExecutionBundle.message("show.running.list.action.name"),
-          () -> ExecutionBundle.message("show.running.list.action.description"), null);
+    super(ExecutionBundle.lazyMessage("show.running.list.action.name"),
+          ExecutionBundle.lazyMessage("show.running.list.action.description"), null);
   }
 
   @Override

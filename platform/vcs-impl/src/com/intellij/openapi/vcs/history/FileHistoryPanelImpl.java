@@ -949,7 +949,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
 
   private class MyShowAsTreeAction extends ToggleAction implements DumbAware {
     MyShowAsTreeAction() {
-      super(() -> VcsBundle.message("action.name.show.files.as.tree"), PlatformIcons.SMALL_VCS_CONFIGURABLE);
+      super(VcsBundle.lazyMessage("action.name.show.files.as.tree"), PlatformIcons.SMALL_VCS_CONFIGURABLE);
     }
 
     @Override
@@ -967,8 +967,8 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
   private class MyShowDetailsAction extends ToggleAction implements DumbAware {
 
     MyShowDetailsAction() {
-      super(() -> VcsBundle.message("action.ToggleAction.text.show.details"),
-            () -> VcsBundle.message("action.ToggleAction.description.show.details"), AllIcons.Actions.PreviewDetailsVertically);
+      super(VcsBundle.lazyMessage("action.ToggleAction.text.show.details"),
+            VcsBundle.lazyMessage("action.ToggleAction.description.show.details"), AllIcons.Actions.PreviewDetailsVertically);
     }
 
     @Override

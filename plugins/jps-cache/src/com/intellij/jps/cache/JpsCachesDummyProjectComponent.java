@@ -33,13 +33,13 @@ public class JpsCachesDummyProjectComponent implements ProjectComponent {
                                                                                "Make project automatically enabled, it can affect portable caches",
                                                                                NotificationType.WARNING, null);
       notification.addAction(
-        NotificationAction.createSimple(() -> IdeBundle.message(
+        NotificationAction.createSimple(IdeBundle.lazyMessage(
           "action.NotificationAction.JpsCachesDummyProjectComponent.text.disable.property"), () -> {
         myWorkspaceConfiguration.MAKE_PROJECT_ON_SAVE = false;
         BuildManager.getInstance().clearState(myProject);
         notification.expire();
       }));
-      notification.addAction(NotificationAction.createSimple(() -> IdeBundle.message(
+      notification.addAction(NotificationAction.createSimple(IdeBundle.lazyMessage(
         "action.NotificationAction.JpsCachesDummyProjectComponent.text.dont.ask"), () -> {
         myPropertiesComponent.setValue(NOT_ASK_AGAIN, true);
         notification.expire();

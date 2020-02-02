@@ -45,7 +45,7 @@ public class InsertPathAction extends AnAction {
   protected static final Key INSERT_PATH_ACTION= Key.create("insertPathAction");
 
   private InsertPathAction(JTextComponent textField, FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
-    super(() -> UIBundle.message("insert.file.path.to.text.action.name"));
+    super(UIBundle.lazyMessage("insert.file.path.to.text.action.name"));
     myTextField = textField;
     myInsertSystemDependentPaths = insertSystemDependentPaths;
     registerCustomShortcutSet(CTRL_F, myTextField);

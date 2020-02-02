@@ -196,8 +196,8 @@ public class RunContentExecutor implements Disposable {
 
   private class StopAction extends AnAction implements DumbAware {
   StopAction() {
-    super(() -> ExecutionBundle.message("action.AnAction.text.stop"),
-          () -> ExecutionBundle.message("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
+    super(ExecutionBundle.lazyMessage("action.AnAction.text.stop"),
+          ExecutionBundle.lazyMessage("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
   }
 
     @Override

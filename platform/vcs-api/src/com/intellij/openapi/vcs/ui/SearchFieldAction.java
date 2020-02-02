@@ -26,7 +26,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
   private final SearchTextField myField;
 
   public SearchFieldAction(String text) {
-    super(() -> VcsBundle.message("action.SearchFieldAction.text.find"));
+    super(VcsBundle.lazyMessage("action.SearchFieldAction.text.find"));
     myField = new SearchTextField(true) {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent e) {

@@ -428,7 +428,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
   private class ShowHideUnversionedFilesAction extends ToggleAction implements DumbAware {
     private ShowHideUnversionedFilesAction() {
-      super(() -> VcsBundle.message("action.ToggleAction.text.show.unversioned.files"), Presentation.NULL_STRING,
+      super(VcsBundle.lazyMessage("action.ToggleAction.text.show.unversioned.files"), Presentation.NULL_STRING,
             AllIcons.Vcs.ShowUnversionedFiles);
     }
 

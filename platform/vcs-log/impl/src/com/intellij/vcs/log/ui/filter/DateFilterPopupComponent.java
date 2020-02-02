@@ -82,7 +82,7 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
   private class SelectAction extends DumbAwareAction {
 
     SelectAction() {
-      super(() -> ActionsBundle.message("action.SelectAction.text"));
+      super(ActionsBundle.lazyMessage("action.SelectAction.text"));
     }
 
     @Override

@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class DataSharingOptionsAction extends DumbAwareAction {
   public DataSharingOptionsAction() {
-    super(() -> IdeBundle.message("action.DataSharingOptionsAction.text"),
-          () -> IdeBundle.message("action.DataSharingOptionsAction.description"), null);
+    super(IdeBundle.lazyMessage("action.DataSharingOptionsAction.text"),
+          IdeBundle.lazyMessage("action.DataSharingOptionsAction.description"), null);
   }
 
   @Override

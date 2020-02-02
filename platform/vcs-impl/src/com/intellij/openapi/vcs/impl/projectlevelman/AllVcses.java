@@ -191,11 +191,11 @@ public final class AllVcses implements AllVcsesI, Disposable {
     String message = "The " + vcs + " plugin was unbundled and needs to be installed manually";
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("", message, NotificationType.WARNING, null);
     notification
-      .addAction(NotificationAction.createSimple(() -> VcsBundle.message("action.NotificationAction.AllVcses.text.install"), () -> {
+      .addAction(NotificationAction.createSimple(VcsBundle.lazyMessage("action.NotificationAction.AllVcses.text.install"), () -> {
       notification.expire();
       installPlugin(vcs);
     }));
-    notification.addAction(NotificationAction.createSimple(() -> VcsBundle.message("action.NotificationAction.AllVcses.text.read.more"), () -> {
+    notification.addAction(NotificationAction.createSimple(VcsBundle.lazyMessage("action.NotificationAction.AllVcses.text.read.more"), () -> {
       BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
     }));
     VcsNotifier.getInstance(myProject).notify(notification);
@@ -230,7 +230,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
         String title = "Failed to Install Plugin";
         Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
         notification.addAction(
-          NotificationAction.createSimple(() -> VcsBundle.message("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
+          NotificationAction.createSimple(VcsBundle.lazyMessage("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
           BrowserUtil.browse(vcs.pluginUrl);
         }));
         VcsNotifier.getInstance(myProject).notify(notification);

@@ -219,7 +219,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class RenameAction extends DumbAwareAction {
     RenameAction() {
-      super(() -> ActionsBundle.message("action.RenameAction.text"));
+      super(ActionsBundle.lazyMessage("action.RenameAction.text"));
     }
 
     @Override

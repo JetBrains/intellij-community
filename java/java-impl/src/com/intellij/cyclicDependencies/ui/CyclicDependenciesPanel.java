@@ -392,7 +392,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class CloseAction extends AnAction implements DumbAware {
     CloseAction() {
-      super(() -> CommonBundle.message("action.close"), () -> AnalysisScopeBundle.message("action.close.dependency.description"),
+      super(CommonBundle.lazyMessage("action.close"), AnalysisScopeBundle.lazyMessage("action.close.dependency.description"),
             AllIcons.Actions.Cancel);
     }
 

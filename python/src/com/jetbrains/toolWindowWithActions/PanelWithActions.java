@@ -104,7 +104,7 @@ final class PanelWithActions extends JPanel {
     @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setText(() -> PyBundle.message("windowWithActions.closeWindow"));
+      e.getPresentation().setText(PyBundle.lazyMessage("windowWithActions.closeWindow"));
     }
 
     @Override

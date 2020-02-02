@@ -180,7 +180,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
     myAddExcludedRootActionButton = new AddExcludedRootActionButton();
     toolbarDecorator.addExtraAction(myAddExcludedRootActionButton);
-    toolbarDecorator.addExtraAction(new AnActionButton(() -> IdeBundle.message("action.AnActionButton.text.remove"), IconUtil.getRemoveIcon()) {
+    toolbarDecorator.addExtraAction(new AnActionButton(IdeBundle.lazyMessage("action.AnActionButton.text.remove"), IconUtil.getRemoveIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final List<Object> selectedElements = getSelectedElements();

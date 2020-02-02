@@ -135,7 +135,7 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
 
   AnAction[] createActions() {
     AnAction expandAll =
-      new AnAction(() -> UIBundle.message("action.DesignerToolWindow.Anonymous.text.expand.all"), AllIcons.Actions.Expandall) {
+      new AnAction(UIBundle.lazyMessage("action.DesignerToolWindow.Anonymous.text.expand.all"), AllIcons.Actions.Expandall) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (myTreeBuilder != null) {
@@ -145,7 +145,7 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
     };
 
     AnAction collapseAll =
-      new AnAction(() -> UIBundle.message("action.DesignerToolWindow.Anonymous.text.collapse.all"), AllIcons.Actions.Collapseall) {
+      new AnAction(UIBundle.lazyMessage("action.DesignerToolWindow.Anonymous.text.collapse.all"), AllIcons.Actions.Collapseall) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (myTreeBuilder != null) {

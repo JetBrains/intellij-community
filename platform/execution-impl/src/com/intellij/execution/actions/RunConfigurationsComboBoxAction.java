@@ -48,7 +48,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      presentation.setDescription(() -> ExecutionBundle.message("choose.run.configuration.action.description"));
+      presentation.setDescription(ExecutionBundle.lazyMessage("choose.run.configuration.action.description"));
     }
     try {
       if (project == null || project.isDisposed() || !project.isOpen()) {
@@ -91,7 +91,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
     else {
       presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
-      presentation.setText(() -> ExecutionBundle.message("action.presentation.RunConfigurationsComboBoxAction.text"));
+      presentation.setText(ExecutionBundle.lazyMessage("action.presentation.RunConfigurationsComboBoxAction.text"));
       presentation.setDescription(ActionsBundle.actionDescription(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
       if (ActionPlaces.TOUCHBAR_GENERAL.equals(actionPlace))
         presentation.setIcon(AllIcons.General.Add);
@@ -254,7 +254,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
       }
       else {
-        presentation.setText(() -> ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
+        presentation.setText(ExecutionBundle.lazyMessage("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
       }

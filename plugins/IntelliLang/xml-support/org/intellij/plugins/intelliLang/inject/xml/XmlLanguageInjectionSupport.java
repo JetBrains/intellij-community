@@ -325,7 +325,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   @Override
   public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
-      new AnAction(() -> IntelliLangBundle.message("action.XmlLanguageInjectionSupport.Anonymous.xml.tag.injection"),
+      new AnAction(IntelliLangBundle.lazyMessage("action.XmlLanguageInjectionSupport.Anonymous.xml.tag.injection"),
                    Presentation.NULL_STRING, PlatformIcons.XML_TAG_ICON) {
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -333,7 +333,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
           if (newInjection != null) consumer.consume(newInjection);
         }
       },
-      new AnAction(() -> IntelliLangBundle.message("action.XmlLanguageInjectionSupport.Anonymous.xml.attribute.injection"), Presentation.NULL_STRING, PlatformIcons.ANNOTATION_TYPE_ICON) {
+      new AnAction(IntelliLangBundle.lazyMessage("action.XmlLanguageInjectionSupport.Anonymous.xml.attribute.injection"), Presentation.NULL_STRING, PlatformIcons.ANNOTATION_TYPE_ICON) {
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new XmlAttributeInjection());

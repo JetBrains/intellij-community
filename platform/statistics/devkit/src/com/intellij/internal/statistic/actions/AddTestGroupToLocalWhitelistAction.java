@@ -27,8 +27,8 @@ import java.io.IOException;
  */
 public class AddTestGroupToLocalWhitelistAction extends AnAction {
   public AddTestGroupToLocalWhitelistAction() {
-    super(() -> ActionsBundle.message("action.AddTestGroupToLocalWhitelistAction.text"),
-          () -> ActionsBundle.message("action.AddTestGroupToLocalWhitelistAction.description"), ICON);
+    super(ActionsBundle.lazyMessage("action.AddTestGroupToLocalWhitelistAction.text"),
+          ActionsBundle.lazyMessage("action.AddTestGroupToLocalWhitelistAction.description"), ICON);
   }
 
   private static final LayeredIcon ICON = new LayeredIcon(AllIcons.General.Add, AllIcons.Actions.Scratch);

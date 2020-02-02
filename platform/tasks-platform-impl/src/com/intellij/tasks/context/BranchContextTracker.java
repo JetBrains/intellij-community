@@ -65,7 +65,7 @@ public class BranchContextTracker implements BranchChangeListener {
     Notification notification =
       NOTIFICATION.createNotification("Workspace associated with branch '" + branchName + "' has been restored", NotificationType.INFORMATION);
     if (myLastBranch != null && contextManager.hasContext(getContextName(myLastBranch))) {
-      notification.addAction(new NotificationAction(() -> TaskBundle.message("action.Anonymous.text.rollback")) {
+      notification.addAction(new NotificationAction(TaskBundle.lazyMessage("action.Anonymous.text.rollback")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
           contextManager.clearContext();
@@ -73,13 +73,13 @@ public class BranchContextTracker implements BranchChangeListener {
         }
       });
     }
-    notification.addAction(new NotificationAction(() -> TaskBundle.message("action.Anonymous.text.configure.tree.dots")) {
+    notification.addAction(new NotificationAction(TaskBundle.lazyMessage("action.Anonymous.text.configure.tree.dots")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         new ConfigureBranchContextDialog(myProject).show();
       }
-    }).setContextHelpAction(new AnAction(() -> TaskBundle.message("action.BranchContextTracker.Anonymous.text.what.is.a.workspace"),
-                                         () -> TaskBundle.message("action.BranchContextTracker.Anonymous.description"), null) {
+    }).setContextHelpAction(new AnAction(TaskBundle.lazyMessage("action.BranchContextTracker.Anonymous.text.what.is.a.workspace"),
+                                         TaskBundle.lazyMessage("action.BranchContextTracker.Anonymous.description"), null) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
 

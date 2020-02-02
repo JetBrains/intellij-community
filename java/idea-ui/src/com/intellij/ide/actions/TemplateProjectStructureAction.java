@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 public class TemplateProjectStructureAction extends ShowStructureSettingsAction {
   public TemplateProjectStructureAction() {
     String projectConceptName = StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName());
-    getTemplatePresentation().setText(() -> ActionsBundle.message("action.TemplateProjectStructure.text.template", projectConceptName));
-    getTemplatePresentation().setDescription(() -> ActionsBundle.message("action.TemplateProjectStructure.description.template", projectConceptName));
+    getTemplatePresentation().setText(ActionsBundle.lazyMessage("action.TemplateProjectStructure.text.template", projectConceptName));
+    getTemplatePresentation().setDescription(ActionsBundle.lazyMessage("action.TemplateProjectStructure.description.template", projectConceptName));
   }
 
   @Override

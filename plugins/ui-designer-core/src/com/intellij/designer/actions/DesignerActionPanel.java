@@ -103,8 +103,8 @@ public class DesignerActionPanel implements DataProvider {
   private ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
     final DefaultActionGroup group = new DefaultActionGroup("_Select", true);
 
-    AnAction selectParent = new AnAction(() -> UIBundle.message("action.DesignerActionPanel.Anonymous.text.select.parent"),
-                                         () -> UIBundle.message("action.DesignerActionPanel.Anonymous.description.select.parent"), null) {
+    AnAction selectParent = new AnAction(UIBundle.lazyMessage("action.DesignerActionPanel.Anonymous.text.select.parent"),
+                                         UIBundle.lazyMessage("action.DesignerActionPanel.Anonymous.description.select.parent"), null) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myDesigner.getToolProvider().processKeyEvent(new KeyEvent(myDesigner.getSurfaceArea().getNativeComponent(),

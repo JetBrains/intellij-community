@@ -74,7 +74,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
           (bundledJdk = JdkBundle.createBundled()) != null &&
           bundledJdk.isOperational();
 
-        NotificationAction switchAction = new NotificationAction(() -> IdeBundle.message("action.Anonymous.text.switch")) {
+        NotificationAction switchAction = new NotificationAction(IdeBundle.lazyMessage("action.Anonymous.text.switch")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             notification.expire();

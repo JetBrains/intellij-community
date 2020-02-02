@@ -64,7 +64,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
 
         List<MyToggleAction> tagActions =
           ContainerUtil.map(tagManager.getAllTags(), tag -> new MyToggleAction(view, new TagFilter(tag, tagManager)));
-        group.add(new AnAction(() -> IdeBundle.message("action.Anonymous.text.all")) {
+        group.add(new AnAction(IdeBundle.lazyMessage("action.Anonymous.text.all")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
                 for (MyToggleAction tagAction : tagActions) {

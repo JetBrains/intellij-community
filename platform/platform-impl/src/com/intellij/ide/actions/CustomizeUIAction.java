@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CustomizeUIAction extends AnAction {
   public CustomizeUIAction() {
-    super(() -> ActionsBundle.message("action.CustomizeUIAction.text"));
+    super(ActionsBundle.lazyMessage("action.CustomizeUIAction.text"));
   }
 
   @Override

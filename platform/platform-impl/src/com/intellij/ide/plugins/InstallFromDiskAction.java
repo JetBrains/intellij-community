@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class InstallFromDiskAction extends DumbAwareAction {
   public InstallFromDiskAction() {
-    super(() -> IdeBundle.message("action.InstallFromDiskAction.text"), AllIcons.Nodes.Plugin);
+    super(IdeBundle.lazyMessage("action.InstallFromDiskAction.text"), AllIcons.Nodes.Plugin);
   }
 
   @Override

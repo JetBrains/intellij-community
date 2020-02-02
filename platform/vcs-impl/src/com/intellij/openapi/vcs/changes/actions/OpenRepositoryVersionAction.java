@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class OpenRepositoryVersionAction extends AnAction implements DumbAware {
   public OpenRepositoryVersionAction() {
-    super(() -> VcsBundle.message("open.repository.version.text"), () -> VcsBundle.message("open.repository.version.description"), null);
+    super(VcsBundle.lazyMessage("open.repository.version.text"), VcsBundle.lazyMessage("open.repository.version.description"), null);
   }
 
   @Override

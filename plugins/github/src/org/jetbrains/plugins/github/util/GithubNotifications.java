@@ -174,7 +174,7 @@ public class GithubNotifications {
 
   @NotNull
   public static AnAction getConfigureAction(@NotNull Project project) {
-    return NotificationAction.createSimple(() -> GitBundle.message("action.NotificationAction.GithubNotifications.text.configure"),
+    return NotificationAction.createSimple(GitBundle.lazyMessage("action.NotificationAction.GithubNotifications.text.configure"),
                                            () -> ShowSettingsUtil.getInstance()
                                              .showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME));
   }

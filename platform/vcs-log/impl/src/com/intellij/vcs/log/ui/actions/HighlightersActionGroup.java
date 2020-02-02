@@ -26,7 +26,7 @@ public class HighlightersActionGroup extends ActionGroup implements DumbAware {
 
     if (e != null) {
       if (e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES) != null) {
-        actions.add(new Separator(() -> IdeBundle.message("action.Anonymous.text.highlight")));
+        actions.add(new Separator(IdeBundle.lazyMessage("action.Anonymous.text.highlight")));
         for (VcsLogHighlighterFactory factory : AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(e.getProject())) {
           if (factory.showMenuItem()) {
             actions.add(new EnableHighlighterAction(factory));

@@ -18,7 +18,7 @@ public class RefreshDirDiffAction extends DirDiffAction {
 
   public RefreshDirDiffAction(DirDiffTableModel model) {
     super(model);
-    getTemplatePresentation().setText(() -> DiffBundle.message("action.presentation.RefreshDirDiffAction.text"));
+    getTemplatePresentation().setText(DiffBundle.lazyMessage("action.presentation.RefreshDirDiffAction.text"));
     getTemplatePresentation().setIcon(PlatformIcons.SYNCHRONIZE_ICON);
   }
 

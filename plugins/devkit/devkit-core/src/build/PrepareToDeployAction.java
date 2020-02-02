@@ -335,7 +335,7 @@ public class PrepareToDeployAction extends AnAction {
     boolean enabled = module != null && PluginModuleType.isOfType(module);
     e.getPresentation().setEnabledAndVisible(enabled);
     if (enabled) {
-      e.getPresentation().setText(() -> DevKitBundle.message("prepare.for.deployment", module.getName()));
+      e.getPresentation().setText(DevKitBundle.lazyMessage("prepare.for.deployment", module.getName()));
     }
   }
 }

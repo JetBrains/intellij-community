@@ -361,7 +361,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
     if (myViewActions.getChildrenCount() > 0) {
       DefaultActionGroup layoutGroup = new DefaultActionGroup(myViewActions.getChildren(null));
-      layoutGroup.getTemplatePresentation().setText(() -> ExecutionBundle.message("action.presentation.RunnerContentUi.text"));
+      layoutGroup.getTemplatePresentation().setText(ExecutionBundle.lazyMessage("action.presentation.RunnerContentUi.text"));
       layoutGroup.setPopup(true);
       group.addSeparator();
       group.addAction(layoutGroup);
@@ -1974,7 +1974,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myContentUi != null && myContentUi.getPopupContents().size() > 1);
-      e.getPresentation().setText(() -> ExecutionBundle.message("action.presentation.RunnerContentUi.text.show.list.of.tabs"));
+      e.getPresentation().setText(ExecutionBundle.lazyMessage("action.presentation.RunnerContentUi.text.show.list.of.tabs"));
     }
 
     @Override

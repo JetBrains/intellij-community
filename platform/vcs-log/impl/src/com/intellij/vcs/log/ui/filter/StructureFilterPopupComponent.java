@@ -188,12 +188,12 @@ public class StructureFilterPopupComponent
 
     if (roots.size() > 15) {
       return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
-                                    new Separator(() -> VcsBundle.message("action.Anonymous.text.recent")), new DefaultActionGroup(structureActions),
-                                    new Separator(() -> VcsBundle.message("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions));
+                                    new Separator(VcsBundle.lazyMessage("action.Anonymous.text.recent")), new DefaultActionGroup(structureActions),
+                                    new Separator(VcsBundle.lazyMessage("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions));
     }
     return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
-                                  new Separator(() -> VcsBundle.message("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions),
-                                  new Separator(() -> VcsBundle.message("action.Anonymous.text.recent")), new DefaultActionGroup(structureActions));
+                                  new Separator(VcsBundle.lazyMessage("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions),
+                                  new Separator(VcsBundle.lazyMessage("action.Anonymous.text.recent")), new DefaultActionGroup(structureActions));
   }
 
   @NotNull

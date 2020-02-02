@@ -45,7 +45,7 @@ public class TopAnomaliesAction extends ActionGroup {
       return Integer.compare(o1.hashCode(), o2.hashCode());
     };
 
-    private static final ResettableAction TOP_PARENTS = new ResettableAction(() -> IdeBundle.message("action.Anonymous.text.parents")) {
+    private static final ResettableAction TOP_PARENTS = new ResettableAction(IdeBundle.lazyMessage("action.Anonymous.text.parents")) {
       final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
       TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
@@ -93,7 +93,7 @@ public class TopAnomaliesAction extends ActionGroup {
       }
     };
 
-    private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction(() -> IdeBundle.message("action.Anonymous.text.clientproperties")) {
+    private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction(IdeBundle.lazyMessage("action.Anonymous.text.clientproperties")) {
       final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
       TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 

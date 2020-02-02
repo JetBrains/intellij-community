@@ -26,7 +26,7 @@ public class FakeRerunAction extends AnAction  {
     Presentation presentation = event.getPresentation();
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
-      presentation.setText(() -> ExecutionBundle.message("rerun.configuration.action.name",
+      presentation.setText(ExecutionBundle.lazyMessage("rerun.configuration.action.name",
                                                    StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
       presentation.setIcon(
         ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || ExecutionManagerImpl.isProcessRunning(getDescriptor(event)) ?

@@ -44,7 +44,7 @@ import java.util.*;
 public class CombinePropertiesFilesAction extends AnAction {
 
   public CombinePropertiesFilesAction() {
-    super(() -> PropertiesBundle.message("combine.properties.files.title"), AllIcons.FileTypes.Properties);
+    super(PropertiesBundle.lazyMessage("combine.properties.files.title"), AllIcons.FileTypes.Properties);
   }
 
   @Override

@@ -852,7 +852,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
         group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
         group.addSeparator();
-        group.add(new AnAction(() -> EditorBundle.message("action.ResourceBundleEditor.Anonymous.text.propagate.value.across.of.resource.bundle")) {
+        group.add(new AnAction(EditorBundle.lazyMessage("action.ResourceBundleEditor.Anonymous.text.propagate.value.across.of.resource.bundle")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             final String valueToPropagate = editor.getDocument().getText();

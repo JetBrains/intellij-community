@@ -161,8 +161,8 @@ public abstract class ReloadablePanel<T> {
 
   private final class ReloadAction extends AnAction {
   ReloadAction() {
-    super(() -> IdeBundle.message("action.AnAction.text.reload.list"),
-          () -> IdeBundle.message("action.AnAction.description.reload.list"), AllIcons.Actions.Refresh);
+    super(IdeBundle.lazyMessage("action.AnAction.text.reload.list"),
+          IdeBundle.lazyMessage("action.AnAction.description.reload.list"), AllIcons.Actions.Refresh);
   }
 
     @Override

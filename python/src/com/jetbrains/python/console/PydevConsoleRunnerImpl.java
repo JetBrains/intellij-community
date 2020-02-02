@@ -664,8 +664,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private AnAction createStopAction() {
-    return new DumbAwareAction(() -> PyBundle.message("action.DumbAware.PydevConsoleRunnerImpl.text.stop.console"),
-                               () -> PyBundle.message("action.DumbAware.PydevConsoleRunnerImpl.description.stop.python.console"),
+    return new DumbAwareAction(PyBundle.lazyMessage("action.DumbAware.PydevConsoleRunnerImpl.text.stop.console"),
+                               PyBundle.lazyMessage("action.DumbAware.PydevConsoleRunnerImpl.description.stop.python.console"),
                                AllIcons.Actions.Suspend) {
       @Override
       public void update(@NotNull AnActionEvent e) {

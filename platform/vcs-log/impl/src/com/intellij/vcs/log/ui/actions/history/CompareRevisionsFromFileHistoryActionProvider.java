@@ -37,12 +37,12 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
     }
 
     if (log.getSelectedCommits().size() >= 2) {
-      e.getPresentation().setText(() -> VcsBundle.message("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
-      e.getPresentation().setDescription(() -> VcsBundle.message("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
+      e.getPresentation().setText(VcsBundle.lazyMessage("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
+      e.getPresentation().setDescription(VcsBundle.lazyMessage("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
     }
     else {
-      e.getPresentation().setText(() -> VcsBundle.message("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
-      e.getPresentation().setDescription(() -> VcsBundle.message("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
+      e.getPresentation().setText(VcsBundle.lazyMessage("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
+      e.getPresentation().setDescription(VcsBundle.lazyMessage("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
     }
     e.getPresentation().setVisible(true);
 

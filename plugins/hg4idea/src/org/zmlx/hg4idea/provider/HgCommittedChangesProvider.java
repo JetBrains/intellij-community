@@ -164,8 +164,8 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   @NotNull
   public VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
     AnAction copyHashAction = new DumbAwareAction(
-      () -> HgBundle.message("action.DumbAware.HgCommittedChangesProvider.text.copy.hash"),
-      () -> HgBundle.message("action.DumbAware.HgCommittedChangesProvider.description.copy.hash.to.clipboard"),
+      HgBundle.lazyMessage("action.DumbAware.HgCommittedChangesProvider.text.copy.hash"),
+      HgBundle.lazyMessage("action.DumbAware.HgCommittedChangesProvider.description.copy.hash.to.clipboard"),
       PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

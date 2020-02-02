@@ -160,7 +160,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   private static class ShowMoreInfoAction extends DumbAwareAction {
     ShowMoreInfoAction() {
-      super(() -> IdeBundle.message("action.ProjectCodeStyleSettingsManager.ShowMoreInfoAction.text.more.info"));
+      super(IdeBundle.lazyMessage("action.ProjectCodeStyleSettingsManager.ShowMoreInfoAction.text.more.info"));
     }
 
     @Override

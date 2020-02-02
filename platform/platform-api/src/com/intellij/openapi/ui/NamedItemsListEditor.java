@@ -270,8 +270,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
   private class CopyAction extends DumbAwareAction {
     CopyAction() {
-      super(() -> IdeBundle.message("action.NamedItemsListEditor.CopyAction.text.copy"),
-            () -> IdeBundle.message("action.NamedItemsListEditor.CopyAction.description.copy"), MasterDetailsComponent.COPY_ICON);
+      super(IdeBundle.lazyMessage("action.NamedItemsListEditor.CopyAction.text.copy"),
+            IdeBundle.lazyMessage("action.NamedItemsListEditor.CopyAction.description.copy"), MasterDetailsComponent.COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
 
@@ -300,8 +300,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
   private class AddAction extends DumbAwareAction {
     AddAction() {
-      super(() -> IdeBundle.message("action.NamedItemsListEditor.AddAction.text.add"),
-            () -> IdeBundle.message("action.NamedItemsListEditor.AddAction.description.add"), IconUtil.getAddIcon());
+      super(IdeBundle.lazyMessage("action.NamedItemsListEditor.AddAction.text.add"),
+            IdeBundle.lazyMessage("action.NamedItemsListEditor.AddAction.description.add"), IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 

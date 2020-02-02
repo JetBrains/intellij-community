@@ -307,8 +307,8 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
 
   private class MoveToStandardViewAction extends AnAction {
   MoveToStandardViewAction() {
-    super(() -> IdeBundle.message("action.AnAction.text.move.to.standard.view"),
-          () -> IdeBundle.message("action.AnAction.description.move.to.standard.view"), AllIcons.Actions.MoveTo2);
+    super(IdeBundle.lazyMessage("action.AnAction.text.move.to.standard.view"),
+          IdeBundle.lazyMessage("action.AnAction.description.move.to.standard.view"), AllIcons.Actions.MoveTo2);
   }
 
     @Override

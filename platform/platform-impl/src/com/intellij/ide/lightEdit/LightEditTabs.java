@@ -118,7 +118,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
       e.getPresentation().setIcon(getIcon());
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
-      e.getPresentation().setText(() -> IdeBundle.message("action.presentation.LightEditTabs.text"));
+      e.getPresentation().setText(IdeBundle.lazyMessage("action.presentation.LightEditTabs.text"));
     }
 
     private Icon getIcon() {

@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class RemoveSelectedProjectsFromGroupsAction extends RecentProjectsWelcomeScreenActionBase {
   public RemoveSelectedProjectsFromGroupsAction() {
-    getTemplatePresentation().setText(() -> IdeBundle.message("action.presentation.RemoveSelectedProjectsFromGroupsAction.text"));
+    getTemplatePresentation().setText(IdeBundle.lazyMessage("action.presentation.RemoveSelectedProjectsFromGroupsAction.text"));
   }
 
   @Override

@@ -83,7 +83,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   private class ShowReadAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowReadAccessUsagesAction() {
-      super(() -> UsageViewBundle.message("action.show.read.access"), AllIcons.Actions.ShowReadAccess);
+      super(UsageViewBundle.lazyMessage("action.show.read.access"), AllIcons.Actions.ShowReadAccess);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   private class ShowWriteAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowWriteAccessUsagesAction() {
-      super(() -> UsageViewBundle.message("action.show.write.access"), AllIcons.Actions.ShowWriteAccess);
+      super(UsageViewBundle.lazyMessage("action.show.write.access"), AllIcons.Actions.ShowWriteAccess);
     }
 
     @Override

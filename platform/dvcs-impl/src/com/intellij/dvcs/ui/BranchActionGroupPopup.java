@@ -89,7 +89,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     AnAction restoreSizeButton =
-      new AnAction(() -> DvcsBundle.message("action.BranchActionGroupPopup.Anonymous.text.restore.size"), CollapseComponentHover) {
+      new AnAction(DvcsBundle.lazyMessage("action.BranchActionGroupPopup.Anonymous.text.restore.size"), CollapseComponentHover) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);

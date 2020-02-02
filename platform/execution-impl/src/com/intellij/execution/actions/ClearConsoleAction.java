@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClearConsoleAction extends DumbAwareAction {
   public ClearConsoleAction() {
-    super(() -> ExecutionBundle.message("clear.all.from.console.action.name"),
-          () -> ExecutionBundle.message("clear.all.from.console.action.description"), AllIcons.Actions.GC);
+    super(ExecutionBundle.lazyMessage("clear.all.from.console.action.name"),
+          ExecutionBundle.lazyMessage("clear.all.from.console.action.description"), AllIcons.Actions.GC);
   }
 
   @Override

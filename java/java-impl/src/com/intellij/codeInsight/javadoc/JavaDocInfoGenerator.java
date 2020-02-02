@@ -1377,7 +1377,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateDeprecatedSection(StringBuilder buffer, PsiDocComment comment) {
-    generateSingleTagSection(buffer, comment, "deprecated", () -> CodeInsightBundle.message("javadoc.deprecated"));
+    generateSingleTagSection(buffer, comment, "deprecated", CodeInsightBundle.lazyMessage("javadoc.deprecated"));
   }
 
   private void generateSingleTagSection(StringBuilder buffer,
@@ -1393,7 +1393,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateSinceSection(StringBuilder buffer, PsiDocComment comment) {
-    generateSingleTagSection(buffer, comment, "since", () -> CodeInsightBundle.message("javadoc.since"));
+    generateSingleTagSection(buffer, comment, "since", CodeInsightBundle.lazyMessage("javadoc.since"));
   }
 
   protected void generateSeeAlsoSection(StringBuilder buffer, PsiDocComment comment) {

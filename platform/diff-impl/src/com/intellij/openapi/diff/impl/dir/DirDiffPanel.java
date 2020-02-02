@@ -141,7 +141,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     if (model.isOperationsEnabled()) {
-      new DumbAwareAction(() -> DiffBundle.message("action.Anonymous.text.change.diff.operation")) {
+      new DumbAwareAction(DiffBundle.lazyMessage("action.Anonymous.text.change.diff.operation")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           changeOperationForSelection();

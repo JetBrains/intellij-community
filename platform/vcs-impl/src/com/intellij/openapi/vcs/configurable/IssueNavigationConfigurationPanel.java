@@ -100,7 +100,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
             myModel.fireTableDataChanged();
           }
         }
-      }).addExtraAction(new DumbAwareActionButton(() -> VcsBundle.message("action.AnActionButton.text.add.jira.pattern"), IconUtil.getAddJiraPatternIcon()) {
+      }).addExtraAction(new DumbAwareActionButton(VcsBundle.lazyMessage("action.AnActionButton.text.add.jira.pattern"), IconUtil.getAddJiraPatternIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter JIRA installation URL:",
@@ -114,7 +114,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
           myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
           myModel.fireTableDataChanged();
         }
-      }).addExtraAction(new DumbAwareActionButton(() -> VcsBundle.message("action.AnActionButton.text.add.youtrack.pattern"),
+      }).addExtraAction(new DumbAwareActionButton(VcsBundle.lazyMessage("action.AnActionButton.text.add.youtrack.pattern"),
                                                   IconUtil.getAddYouTrackPatternIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

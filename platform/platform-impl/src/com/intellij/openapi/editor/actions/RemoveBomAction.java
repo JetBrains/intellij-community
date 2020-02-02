@@ -34,7 +34,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
 
   public RemoveBomAction() {
-    super(() -> IdeBundle.message("remove.byte.order.mark"));
+    super(IdeBundle.lazyMessage("remove.byte.order.mark"));
   }
 
   @Override
@@ -63,7 +63,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     String finalFromWhere = fromWhere;
-    e.getPresentation().setDescription(() -> IdeBundle.message("remove.byte.order.mark.from", finalFromWhere));
+    e.getPresentation().setDescription(IdeBundle.lazyMessage("remove.byte.order.mark.from", finalFromWhere));
   }
 
   @Override

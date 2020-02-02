@@ -376,7 +376,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   private class CopyArtifactAction extends AnAction {
    private CopyArtifactAction() {
-      super(() -> CommonBundle.message("button.copy"), () -> CommonBundle.message("button.copy"), COPY_ICON);
+      super(CommonBundle.lazyMessage("button.copy"), CommonBundle.lazyMessage("button.copy"), COPY_ICON);
     }
 
     @Override

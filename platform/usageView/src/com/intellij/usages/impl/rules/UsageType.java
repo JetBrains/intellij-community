@@ -11,33 +11,33 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Supplier;
 
 public final class UsageType {
-  public static final UsageType CLASS_INSTANCE_OF = new UsageType(() -> UsageViewBundle.message("usage.type.instanceof"));
-  public static final UsageType CLASS_IMPORT = new UsageType(() -> UsageViewBundle.message("usage.type.import"));
-  public static final UsageType CLASS_CAST_TO = new UsageType(() -> UsageViewBundle.message("usage.type.cast.target"));
-  public static final UsageType CLASS_EXTENDS_IMPLEMENTS_LIST = new UsageType(() -> UsageViewBundle.message("usage.type.extends"));
-  public static final UsageType CLASS_STATIC_MEMBER_ACCESS = new UsageType(() -> UsageViewBundle.message("usage.type.static.member"));
-  public static final UsageType CLASS_NESTED_CLASS_ACCESS = new UsageType(() -> UsageViewBundle.message("usage.type.nested.class"));
-  public static final UsageType CLASS_METHOD_THROWS_LIST = new UsageType(() -> UsageViewBundle.message("usage.type.throws.list"));
-  public static final UsageType CLASS_CLASS_OBJECT_ACCESS = new UsageType(() -> UsageViewBundle.message("usage.type.class.object"));
-  public static final UsageType CLASS_FIELD_DECLARATION = new UsageType(() -> UsageViewBundle.message("usage.type.field.declaration"));
-  public static final UsageType CLASS_LOCAL_VAR_DECLARATION = new UsageType(() -> UsageViewBundle.message("usage.type.local.declaration"));
-  public static final UsageType CLASS_METHOD_PARAMETER_DECLARATION = new UsageType(() -> UsageViewBundle.message("usage.type.parameter.declaration"));
-  public static final UsageType CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION = new UsageType(() -> UsageViewBundle.message("usage.type.catch.declaration"));
-  public static final UsageType CLASS_METHOD_RETURN_TYPE = new UsageType(() -> UsageViewBundle.message("usage.type.return"));
-  public static final UsageType CLASS_NEW_OPERATOR = new UsageType(() -> UsageViewBundle.message("usage.type.new"));
-  public static final UsageType CLASS_ANONYMOUS_NEW_OPERATOR = new UsageType(() -> UsageViewBundle.message("usage.type.new.anonymous"));
-  public static final UsageType CLASS_NEW_ARRAY = new UsageType(() -> UsageViewBundle.message("usage.type.new.array"));
-  public static final UsageType ANNOTATION = new UsageType(() -> UsageViewBundle.message("usage.type.annotation"));
-  public static final UsageType TYPE_PARAMETER = new UsageType(() -> UsageViewBundle.message("usage.type.type.parameter"));
+  public static final UsageType CLASS_INSTANCE_OF = new UsageType(UsageViewBundle.lazyMessage("usage.type.instanceof"));
+  public static final UsageType CLASS_IMPORT = new UsageType(UsageViewBundle.lazyMessage("usage.type.import"));
+  public static final UsageType CLASS_CAST_TO = new UsageType(UsageViewBundle.lazyMessage("usage.type.cast.target"));
+  public static final UsageType CLASS_EXTENDS_IMPLEMENTS_LIST = new UsageType(UsageViewBundle.lazyMessage("usage.type.extends"));
+  public static final UsageType CLASS_STATIC_MEMBER_ACCESS = new UsageType(UsageViewBundle.lazyMessage("usage.type.static.member"));
+  public static final UsageType CLASS_NESTED_CLASS_ACCESS = new UsageType(UsageViewBundle.lazyMessage("usage.type.nested.class"));
+  public static final UsageType CLASS_METHOD_THROWS_LIST = new UsageType(UsageViewBundle.lazyMessage("usage.type.throws.list"));
+  public static final UsageType CLASS_CLASS_OBJECT_ACCESS = new UsageType(UsageViewBundle.lazyMessage("usage.type.class.object"));
+  public static final UsageType CLASS_FIELD_DECLARATION = new UsageType(UsageViewBundle.lazyMessage("usage.type.field.declaration"));
+  public static final UsageType CLASS_LOCAL_VAR_DECLARATION = new UsageType(UsageViewBundle.lazyMessage("usage.type.local.declaration"));
+  public static final UsageType CLASS_METHOD_PARAMETER_DECLARATION = new UsageType(UsageViewBundle.lazyMessage("usage.type.parameter.declaration"));
+  public static final UsageType CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION = new UsageType(UsageViewBundle.lazyMessage("usage.type.catch.declaration"));
+  public static final UsageType CLASS_METHOD_RETURN_TYPE = new UsageType(UsageViewBundle.lazyMessage("usage.type.return"));
+  public static final UsageType CLASS_NEW_OPERATOR = new UsageType(UsageViewBundle.lazyMessage("usage.type.new"));
+  public static final UsageType CLASS_ANONYMOUS_NEW_OPERATOR = new UsageType(UsageViewBundle.lazyMessage("usage.type.new.anonymous"));
+  public static final UsageType CLASS_NEW_ARRAY = new UsageType(UsageViewBundle.lazyMessage("usage.type.new.array"));
+  public static final UsageType ANNOTATION = new UsageType(UsageViewBundle.lazyMessage("usage.type.annotation"));
+  public static final UsageType TYPE_PARAMETER = new UsageType(UsageViewBundle.lazyMessage("usage.type.type.parameter"));
 
-  public static final UsageType READ = new UsageType(() -> UsageViewBundle.message("usage.type.read"));
-  public static final UsageType WRITE = new UsageType(() -> UsageViewBundle.message("usage.type.write"));
+  public static final UsageType READ = new UsageType(UsageViewBundle.lazyMessage("usage.type.read"));
+  public static final UsageType WRITE = new UsageType(UsageViewBundle.lazyMessage("usage.type.write"));
 
-  public static final UsageType LITERAL_USAGE = new UsageType(() -> UsageViewBundle.message("usage.type.string.constant"));
-  public static final UsageType COMMENT_USAGE = new UsageType(() -> UsageViewBundle.message("usage.type.comment"));
+  public static final UsageType LITERAL_USAGE = new UsageType(UsageViewBundle.lazyMessage("usage.type.string.constant"));
+  public static final UsageType COMMENT_USAGE = new UsageType(UsageViewBundle.lazyMessage("usage.type.comment"));
 
   @SuppressWarnings("UnresolvedPropertyKey")
-  public static final UsageType UNCLASSIFIED = new UsageType(() -> UsageViewBundle.message("usage.type.unclassified"));
+  public static final UsageType UNCLASSIFIED = new UsageType(UsageViewBundle.lazyMessage("usage.type.unclassified"));
 
   public static final UsageType RECURSION = new UsageType("Recursion");
   public static final UsageType DELEGATE_TO_SUPER = new UsageType("Delegate to super method");

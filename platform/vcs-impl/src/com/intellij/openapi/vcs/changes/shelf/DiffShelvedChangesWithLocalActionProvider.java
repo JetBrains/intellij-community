@@ -29,7 +29,7 @@ public class DiffShelvedChangesWithLocalActionProvider implements AnActionExtens
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setDescription(() -> VcsBundle.message("action.presentation.DiffShelvedChangesWithLocalActionProvider.description"));
+    e.getPresentation().setDescription(VcsBundle.lazyMessage("action.presentation.DiffShelvedChangesWithLocalActionProvider.description"));
     e.getPresentation().setEnabled(DiffShelvedChangesActionProvider.isEnabled(e.getDataContext()));
   }
 

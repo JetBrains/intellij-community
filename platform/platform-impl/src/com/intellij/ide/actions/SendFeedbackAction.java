@@ -29,7 +29,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     boolean isSupportedOS = SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows;
     if (info != null && info.getFeedbackUrl() != null && isSupportedOS) {
       String feedbackSite = getFeedbackHost(info.getFeedbackUrl(), info.getCompanyName());
-      e.getPresentation().setDescription(() -> ActionsBundle.message("action.SendFeedback.detailed.description", feedbackSite));
+      e.getPresentation().setDescription(ActionsBundle.lazyMessage("action.SendFeedback.detailed.description", feedbackSite));
       e.getPresentation().setEnabledAndVisible(true);
     }
     else {

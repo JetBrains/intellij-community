@@ -332,7 +332,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       e.getPresentation().setIcon(AllIcons.Actions.Close);
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
-      e.getPresentation().setText(() -> IdeBundle.message("action.presentation.EditorTabbedContainer.text"));
+      e.getPresentation().setText(IdeBundle.lazyMessage("action.presentation.EditorTabbedContainer.text"));
     }
 
     @Override

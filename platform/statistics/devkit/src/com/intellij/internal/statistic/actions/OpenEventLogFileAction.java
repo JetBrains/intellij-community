@@ -53,7 +53,7 @@ public class OpenEventLogFileAction extends AnAction {
     String title = StatisticsBundle.message("stats.feature.usage.statistics");
     final Notification notification = new Notification("FeatureUsageStatistics", title, message, type);
     notification.addAction(NotificationAction.createSimple(
-      () -> StatisticsBundle.message("action.NotificationAction.OpenEventLogFileAction.text.enable.event.log"), () -> {
+      StatisticsBundle.lazyMessage("action.NotificationAction.OpenEventLogFileAction.text.enable.event.log"), () -> {
       final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, new ConsentConfigurable());
       editor.show();
     }));

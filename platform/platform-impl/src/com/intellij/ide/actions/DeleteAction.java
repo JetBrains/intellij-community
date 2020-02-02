@@ -49,10 +49,10 @@ public class DeleteAction extends AnAction implements DumbAware {
     Presentation presentation = e.getPresentation();
 
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      presentation.setText(() -> IdeBundle.message("action.delete.ellipsis"));
+      presentation.setText(IdeBundle.lazyMessage("action.delete.ellipsis"));
     }
     else {
-      presentation.setText(() -> IdeBundle.message("action.delete"));
+      presentation.setText(IdeBundle.lazyMessage("action.delete"));
     }
     if (e.isFromActionToolbar() && e.getPresentation().getIcon() == null) {
       e.getPresentation().setIcon(IconUtil.getRemoveIcon());

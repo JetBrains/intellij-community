@@ -30,7 +30,7 @@ public class ExpandAllAction extends AnAction implements DumbAware {
   protected JTree myTree;
 
   public ExpandAllAction(JTree tree) {
-    super(() -> IdeBundle.message("action.ExpandAllAction.text.expand.all"), () -> "", AllIcons.Actions.Expandall);
+    super(IdeBundle.lazyMessage("action.ExpandAllAction.text.expand.all"), () -> "", AllIcons.Actions.Expandall);
     myTree = tree;
   }
 

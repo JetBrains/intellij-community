@@ -73,7 +73,7 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
                                                          "Finished collecting and recording events", NotificationType.INFORMATION);
             if (logVFile != null) {
               notification.addAction(NotificationAction.createSimple(
-                () -> StatisticsBundle.message("action.NotificationAction.RecordStateStatisticsEventLogAction.text.show.log.file"), () -> {
+                StatisticsBundle.lazyMessage("action.NotificationAction.RecordStateStatisticsEventLogAction.text.show.log.file"), () -> {
                 FileEditorManager.getInstance(project).openFile(logVFile, true);
               }));
             }

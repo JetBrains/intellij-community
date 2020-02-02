@@ -196,7 +196,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected ToggleActionButton @NotNull [] getExtraActions() {
-    final ToggleActionButton useCondaButton = new DumbAwareToggleActionButton(() -> PyBundle.message("action.AnActionButton.text.use.conda.package.manager"), PythonIcons.Python.Anaconda) {
+    final ToggleActionButton useCondaButton = new DumbAwareToggleActionButton(PyBundle.lazyMessage("action.AnActionButton.text.use.conda.package.manager"), PythonIcons.Python.Anaconda) {
       @Override
       public boolean isSelected(AnActionEvent e) {
         final Sdk sdk = getSelectedSdk();
@@ -223,7 +223,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     };
 
     final ToggleActionButton showEarlyReleasesButton =
-      new DumbAwareToggleActionButton(() -> PyBundle.message("action.AnActionButton.text.show.early.releases"), AllIcons.Actions.Show) {
+      new DumbAwareToggleActionButton(PyBundle.lazyMessage("action.AnActionButton.text.show.early.releases"), AllIcons.Actions.Show) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return PyPackagingSettings.getInstance(myProject).earlyReleasesAsUpgrades;

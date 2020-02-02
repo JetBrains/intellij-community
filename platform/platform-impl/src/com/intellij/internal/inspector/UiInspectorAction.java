@@ -162,7 +162,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (location != null) setLocation(location);
 
       DefaultActionGroup actions = new DefaultActionGroup();
-      actions.addAction(new MyTextAction(() -> IdeBundle.message("action.Anonymous.text.highlight")) {
+      actions.addAction(new MyTextAction(IdeBundle.lazyMessage("action.Anonymous.text.highlight")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myIsHighlighted = !myIsHighlighted;
@@ -178,7 +178,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       actions.addSeparator();
 
-      actions.add(new MyTextAction(() -> IdeBundle.message("action.Anonymous.text.refresh")) {
+      actions.add(new MyTextAction(IdeBundle.lazyMessage("action.Anonymous.text.refresh")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

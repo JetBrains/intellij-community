@@ -114,7 +114,7 @@ public class AnnotationsPanel {
     }
 
     final AnActionButton selectButton =
-      new AnActionButton(() -> CodeInsightBundle.message("action.AnActionButton.text.select.annotation.used.for.code.generation"),
+      new AnActionButton(CodeInsightBundle.lazyMessage("action.AnActionButton.text.select.annotation.used.for.code.generation"),
                          AllIcons.Actions.Checked) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

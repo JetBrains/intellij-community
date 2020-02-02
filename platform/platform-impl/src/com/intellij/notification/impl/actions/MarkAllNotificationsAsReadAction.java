@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MarkAllNotificationsAsReadAction extends DumbAwareAction {
   public MarkAllNotificationsAsReadAction() {
-    super(() -> VcsBundle.message("action.MarkAllNotificationsAsReadAction.text"),
-          () -> VcsBundle.message("action.MarkAllNotificationsAsReadAction.description"), AllIcons.Actions.Selectall);
+    super(VcsBundle.lazyMessage("action.MarkAllNotificationsAsReadAction.text"),
+          VcsBundle.lazyMessage("action.MarkAllNotificationsAsReadAction.description"), AllIcons.Actions.Selectall);
   }
 
   @Override

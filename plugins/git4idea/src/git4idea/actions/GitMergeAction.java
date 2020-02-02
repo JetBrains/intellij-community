@@ -205,7 +205,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           String content = getBodyForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount(),
                                                         notificationData.getFilteredCommitsCount());
           notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
-          notification.addAction(NotificationAction.createSimple(() -> GitBundle.message(
+          notification.addAction(NotificationAction.createSimple(GitBundle.lazyMessage(
             "action.NotificationAction.GitMergeAction.text.view.commits"),
                                                                  notificationData.getViewCommitAction()));
         }

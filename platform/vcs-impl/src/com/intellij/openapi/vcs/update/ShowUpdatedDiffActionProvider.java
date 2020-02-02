@@ -56,7 +56,7 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     final DataContext dc = e.getDataContext();
 
     final Presentation presentation = e.getPresentation();
-    presentation.setDescription(() -> VcsBundle.message("action.presentation.ShowUpdatedDiffActionProvider.description"));
+    presentation.setDescription(VcsBundle.lazyMessage("action.presentation.ShowUpdatedDiffActionProvider.description"));
 
     //presentation.setVisible(isVisible(dc));
     presentation.setEnabled(isVisible(dc) && isEnabled(dc));

@@ -69,8 +69,8 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
       }
     }
 
-    group.add(new AnAction(() -> XmlBundle.message("action.OpenUrlHyperlinkInfo.Anonymous.text.copy.url"),
-                           () -> XmlBundle.message("action.OpenUrlHyperlinkInfo.Anonymous.description.copy.url.to.clipboard"),
+    group.add(new AnAction(XmlBundle.lazyMessage("action.OpenUrlHyperlinkInfo.Anonymous.text.copy.url"),
+                           XmlBundle.lazyMessage("action.OpenUrlHyperlinkInfo.Anonymous.description.copy.url.to.clipboard"),
                            PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

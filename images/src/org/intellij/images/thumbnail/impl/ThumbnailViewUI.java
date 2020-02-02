@@ -731,7 +731,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
           };
         }
-        actions[tagsNumber] = new AnAction(() -> IdeBundle.message("action.Anonymous.text.new.tag")) {
+        actions[tagsNumber] = new AnAction(IdeBundle.lazyMessage("action.Anonymous.text.new.tag")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);

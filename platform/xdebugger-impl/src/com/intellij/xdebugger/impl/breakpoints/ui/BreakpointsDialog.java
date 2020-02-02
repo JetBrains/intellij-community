@@ -287,7 +287,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
-    new AnAction(() -> IdeBundle.message("action.Anonymous.text.breakpointdialog.gotosource")) {
+    new AnAction(IdeBundle.lazyMessage("action.Anonymous.text.breakpointdialog.gotosource")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
@@ -295,7 +295,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree, myDisposable);
 
-    new AnAction(() -> IdeBundle.message("action.Anonymous.text.breakpointdialog.showsource")) {
+    new AnAction(IdeBundle.lazyMessage("action.Anonymous.text.breakpointdialog.showsource")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);

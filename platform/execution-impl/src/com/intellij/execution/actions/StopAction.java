@@ -57,7 +57,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         icon = IconUtil.addText(icon, String.valueOf(stopCount));
       }
       else if (stopCount == 1) {
-          presentation.setText(() -> ExecutionBundle.message("stop.configuration.action.name",
+          presentation.setText(ExecutionBundle.lazyMessage("stop.configuration.action.name",
                                                        StringUtil.escapeMnemonics(
                                                          StringUtil.notNullize(stoppableDescriptors.get(0).getDisplayName()))));
       }
@@ -81,7 +81,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         presentation.setText(getTemplatePresentation().getText());
       }
       else {
-        presentation.setText(() -> ExecutionBundle.message("stop.configuration.action.name",
+        presentation.setText(ExecutionBundle.lazyMessage("stop.configuration.action.name",
                                                      StringUtil.escapeMnemonics(runProfile == null
                                                                                 ? StringUtil.notNullize(contentDescriptor.getDisplayName())
                                                                                 : runProfile.getName())));

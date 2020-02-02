@@ -345,7 +345,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     });
 
     myShowOnlyConflictsButton =
-      new ToggleActionButton(() -> KeyMapBundle.message("action.AnActionButton.text.show.conflicts.with.system.shortcuts"),
+      new ToggleActionButton(KeyMapBundle.lazyMessage("action.AnActionButton.text.show.conflicts.with.system.shortcuts"),
                              AllIcons.General.ShowWarning) {
       @Override
       public boolean isSelected(AnActionEvent e) {
@@ -674,7 +674,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     DefaultActionGroup group = new DefaultActionGroup();
     final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getInstance().getForActionId(actionId);
     if (restrictions.allowKeyboardShortcut) {
-      group.add(new DumbAwareAction(() -> IdeBundle.message("action.Anonymous.text.add.keyboard.shortcut")) {
+      group.add(new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.add.keyboard.shortcut")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           addKeyboardShortcut(actionId, restrictions, selectedKeymap, KeymapPanel.this, null, SystemShortcuts.getInstance(), myQuickLists);
@@ -684,7 +684,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     if (restrictions.allowMouseShortcut) {
-      group.add(new DumbAwareAction(() -> IdeBundle.message("action.Anonymous.text.add.mouse.shortcut")) {
+      group.add(new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.add.mouse.shortcut")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           addMouseShortcut(actionId, restrictions, selectedKeymap, KeymapPanel.this, myQuickLists);
@@ -694,7 +694,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     if (Registry.is("actionSystem.enableAbbreviations") && restrictions.allowAbbreviation) {
-      group.add(new DumbAwareAction(() -> IdeBundle.message("action.Anonymous.text.add.abbreviation")) {
+      group.add(new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.add.abbreviation")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           String abbr = Messages.showInputDialog("Enter new abbreviation:", "Abbreviation", null);
@@ -735,7 +735,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
     if (myManager.canResetActionInKeymap(selectedKeymap, actionId)) {
       group.add(new Separator());
-      group.add(new DumbAwareAction(() -> IdeBundle.message("action.Anonymous.text.reset.shortcuts")) {
+      group.add(new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.reset.shortcuts")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent event) {
           myManager.resetActionInKeymap(selectedKeymap, actionId);

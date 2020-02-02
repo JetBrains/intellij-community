@@ -138,8 +138,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.duplicate"),
-                                                       () -> DebuggerBundle.message("action.AnActionButton.description.duplicate"),
+    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.duplicate"),
+                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.duplicate"),
                                                        PlatformIcons.COPY_ICON) {
       @Override
       public boolean isEnabled() {
@@ -160,8 +160,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.enable.selected"),
-                                                       () -> DebuggerBundle.message("action.AnActionButton.description.enable.selected"),
+    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.enable.selected"),
+                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.enable.selected"),
                                                        PlatformIcons.SELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
@@ -174,8 +174,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         table.repaint();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.disable.selected"),
-                                                       () -> DebuggerBundle.message("action.AnActionButton.description.disable.selected"),
+    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.disable.selected"),
+                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.disable.selected"),
                                                        PlatformIcons.UNSELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
@@ -202,8 +202,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
 
-    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.import"),
-                                                       () -> DebuggerBundle.message("action.AnActionButton.description.import"),
+    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.import"),
+                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.import"),
                                                        AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -241,8 +241,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         }
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(() -> DebuggerBundle.message("action.AnActionButton.text.export"),
-                                                       () -> DebuggerBundle.message("action.AnActionButton.description.export"),
+    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.export"),
+                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.export"),
                                                        AllIcons.ToolbarDecorator.Export) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {

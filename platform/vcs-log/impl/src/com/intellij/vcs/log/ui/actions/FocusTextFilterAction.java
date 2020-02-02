@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class FocusTextFilterAction extends DumbAwareAction {
   public FocusTextFilterAction() {
-    super(() -> VcsBundle.message("action.FocusTextFilterAction.text"),
-          () -> VcsBundle.message("action.FocusTextFilterAction.description"), null);
+    super(VcsBundle.lazyMessage("action.FocusTextFilterAction.text"),
+          VcsBundle.lazyMessage("action.FocusTextFilterAction.description"), null);
   }
 
   @Override

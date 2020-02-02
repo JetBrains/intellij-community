@@ -67,7 +67,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Add);
-    presentation.setText(() -> SSRBundle.message("add.inspection.button"));
+    presentation.setText(SSRBundle.lazyMessage("add.inspection.button"));
     return Arrays.asList(actionGroup, new RemoveTemplateAction(panel));
   }
 

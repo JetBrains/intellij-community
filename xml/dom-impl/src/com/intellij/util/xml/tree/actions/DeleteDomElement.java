@@ -84,7 +84,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
       e.getPresentation().setText(getPresentationText(selectedNode, ApplicationBundle.message("action.remove")));
     }
     else {
-      e.getPresentation().setText(() -> ApplicationBundle.message("action.remove"));
+      e.getPresentation().setText(ApplicationBundle.lazyMessage("action.remove"));
     }
 
     e.getPresentation().setIcon(AllIcons.General.Remove);

@@ -178,7 +178,7 @@ public class LoadContextAction extends BaseTaskAction {
     if (!StringUtil.isEmpty(comment)) {
       text = comment + " (" + text + ")";
     }
-    final AnAction loadAction = new AnAction(() -> TaskBundle.message("action.LoadContextAction.Anonymous.text.load")) {
+    final AnAction loadAction = new AnAction(TaskBundle.lazyMessage("action.LoadContextAction.Anonymous.text.load")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         holder.load(!shiftPressed.get());
@@ -193,7 +193,7 @@ public class LoadContextAction extends BaseTaskAction {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return new AnAction[]{loadAction,
-          new AnAction(() -> TaskBundle.message("action.LoadContextAction.Anonymous.text.remove")) {
+          new AnAction(TaskBundle.lazyMessage("action.LoadContextAction.Anonymous.text.remove")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
               holder.remove();

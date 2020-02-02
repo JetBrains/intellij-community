@@ -865,10 +865,10 @@ public class CustomizableActionsPanel {
       Pair<TreeSet<String>, List<ActionUrl>> selection = findActionsUnderSelection();
       e.getPresentation().setEnabled(!selection.second.isEmpty());
       if (selection.first.size() != 1) {
-        e.getPresentation().setText(() -> IdeBundle.message("button.restore.selected.groups"));
+        e.getPresentation().setText(IdeBundle.lazyMessage("button.restore.selected.groups"));
       }
       else {
-        e.getPresentation().setText(() -> IdeBundle.message("button.restore.selection", selection.first.iterator().next()));
+        e.getPresentation().setText(IdeBundle.lazyMessage("button.restore.selection", selection.first.iterator().next()));
       }
     }
   }

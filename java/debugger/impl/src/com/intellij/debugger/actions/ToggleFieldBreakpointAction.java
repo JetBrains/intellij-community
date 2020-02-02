@@ -92,7 +92,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
       presentation.setVisible(toEnable);
     }
     else if(DebuggerAction.isContextView(event)) {
-      presentation.setText(() -> DebuggerBundle.message("action.add.field.watchpoint.text"));
+      presentation.setText(DebuggerBundle.lazyMessage("action.add.field.watchpoint.text"));
       Project project = event.getData(CommonDataKeys.PROJECT);
       if(project != null && place != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());

@@ -294,8 +294,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     ShowSchemesActionsListAction(@NotNull Collection<? extends AnAction> actions) {
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
-      getTemplatePresentation().setText(() -> IdeBundle.message("action.presentation.AbstractSchemesPanel.text"));
-      getTemplatePresentation().setDescription(() -> IdeBundle.message("action.presentation.AbstractSchemesPanel.description"));
+      getTemplatePresentation().setText(IdeBundle.lazyMessage("action.presentation.AbstractSchemesPanel.text"));
+      getTemplatePresentation().setDescription(IdeBundle.lazyMessage("action.presentation.AbstractSchemesPanel.description"));
       addAll(actions);
     }
 

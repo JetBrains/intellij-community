@@ -160,7 +160,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
         "",
         VcsBundle.message("ignored.file.manage.message",
                           ApplicationNamesInfo.getInstance().getFullProductName(), ignoredFileContentProvider.getFileName()),
-        NotificationAction.create(() -> VcsBundle.message("ignored.file.manage.this.project"), (event, notification) -> {
+        NotificationAction.create(VcsBundle.lazyMessage("ignored.file.manage.this.project"), (event, notification) -> {
           writeToIgnoreFile.run();
           propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true);
           propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
@@ -169,7 +169,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
             myIgnoreFileRootNotificationShowFor = null;
           }
         }),
-        NotificationAction.create(() -> VcsBundle.message("ignored.file.manage.all.project"), (event, notification) -> {
+        NotificationAction.create(VcsBundle.lazyMessage("ignored.file.manage.all.project"), (event, notification) -> {
           writeToIgnoreFile.run();
           applicationSettings.MANAGE_IGNORE_FILES = true;
           propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
@@ -178,7 +178,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
             myIgnoreFileRootNotificationShowFor = null;
           }
         }),
-        NotificationAction.create(() -> VcsBundle.message("ignored.file.manage.notmanage"), (event, notification) -> {
+        NotificationAction.create(VcsBundle.lazyMessage("ignored.file.manage.notmanage"), (event, notification) -> {
           propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
           synchronized (myNotificationLock) {
             notification.expire();

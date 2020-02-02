@@ -84,7 +84,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
   protected void notifySuccess() {
     String message = "<b>Deleted Tag:</b> " + myTagName;
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
-    notification.addAction(NotificationAction.createSimple(() -> GitBundle.message(
+    notification.addAction(NotificationAction.createSimple(GitBundle.lazyMessage(
       "action.NotificationAction.GitDeleteTagOperation.text.restore"), () -> restoreInBackground(notification)));
 
     int remotes = 0;

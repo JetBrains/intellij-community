@@ -121,7 +121,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private JComponent createListPanel() {
     final AnActionButton duplicateButton =
-      new DumbAwareActionButton(() -> CvsBundle.message("action.name.copy"), PlatformIcons.COPY_ICON) {
+      new DumbAwareActionButton(CvsBundle.lazyMessage("action.name.copy"), PlatformIcons.COPY_ICON) {
 
         @Override
         public void updateButton(@NotNull AnActionEvent e) {

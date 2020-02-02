@@ -454,7 +454,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
     private ApplySelectedChangesAction() {
-      getTemplatePresentation().setText(() -> VcsBundle.message("action.presentation.ApplySelectedChangesAction.text"));
+      getTemplatePresentation().setText(VcsBundle.lazyMessage("action.presentation.ApplySelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Actions.Checked);
       copyShortcutFrom(ActionManager.getInstance().getAction("Diff.ApplyRightSide"));
     }
@@ -474,7 +474,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
     private IgnoreSelectedChangesAction() {
-      getTemplatePresentation().setText(() -> VcsBundle.message("action.presentation.IgnoreSelectedChangesAction.text"));
+      getTemplatePresentation().setText(VcsBundle.lazyMessage("action.presentation.IgnoreSelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
       setShortcutSet(new CompositeShortcutSet(ActionManager.getInstance().getAction("Diff.IgnoreRightSide").getShortcutSet(),
                                               ActionManager.getInstance().getAction("Diff.ApplyLeftSide").getShortcutSet()));
@@ -623,7 +623,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ShowDiffWithLocalAction extends DumbAwareAction {
     ShowDiffWithLocalAction() {
-      super(() -> VcsBundle.message("action.DumbAwareAction.text.compare.with.local.content"), AllIcons.Actions.Diff);
+      super(VcsBundle.lazyMessage("action.DumbAwareAction.text.compare.with.local.content"), AllIcons.Actions.Diff);
     }
 
     @Override

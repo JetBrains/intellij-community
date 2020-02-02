@@ -23,6 +23,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 
 public abstract class ShowDiffPreviewAction extends ToggleAction implements DumbAware {
   public ShowDiffPreviewAction() {
-    super(() -> VcsBundle.message("action.ToggleAction.text.preview.diff"), Presentation.NULL_STRING, AllIcons.Actions.PreviewDetails);
+    super(VcsBundle.lazyMessage("action.ToggleAction.text.preview.diff"), Presentation.NULL_STRING, AllIcons.Actions.PreviewDetails);
   }
 }

@@ -127,7 +127,7 @@ public class CardActionsPanel extends JPanel {
       setBackground(WelcomeScreenColors.CAPTION_BACKGROUND);
 
       if (parentId != null) {
-        AnAction back = new AnAction(() -> IdeBundle.message("action.Anonymous.text.back"), AllIcons.Actions.Back) {
+        AnAction back = new AnAction(IdeBundle.lazyMessage("action.Anonymous.text.back"), AllIcons.Actions.Back) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             myLayout.swipe(myContent, parentId, JBCardLayout.SwipeDirection.BACKWARD);

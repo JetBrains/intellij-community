@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightEditNewFileAction extends DumbAwareAction {
   public LightEditNewFileAction() {
-    super(() -> ActionsBundle.message("action.LightEditNewFileAction.text"));
+    super(ActionsBundle.lazyMessage("action.LightEditNewFileAction.text"));
   }
 
   @Override

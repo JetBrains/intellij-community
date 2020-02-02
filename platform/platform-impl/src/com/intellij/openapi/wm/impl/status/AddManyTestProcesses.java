@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddManyTestProcesses extends DumbAwareAction {
   public AddManyTestProcesses() {
-    super(() -> ActionsBundle.message("action.AddManyTestProcesses.text"));
+    super(ActionsBundle.lazyMessage("action.AddManyTestProcesses.text"));
   }
 
   @Override
