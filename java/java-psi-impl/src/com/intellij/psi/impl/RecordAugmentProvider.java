@@ -124,16 +124,10 @@ public class RecordAugmentProvider extends PsiAugmentProvider implements DumbAwa
 
   @Nullable
   private static String getTypeText(@NotNull PsiRecordComponent component) {
+    PsiType type = component.getType();
+    if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     PsiTypeElement typeElement = component.getTypeElement();
     if (typeElement == null) return null;
-    StringBuilder sb = new StringBuilder(); // not allowed to use types because of dumb mode
-    for (PsiElement child : typeElement.getChildren()) {
-      if (child.getNode().getElementType() != JavaTokenType.ELLIPSIS) {
-        sb.append(child.getText());
-      } else {
-        sb.append("[]");
-      }
-    }
-    return sb.toString();
+    return type.getCanonicalText();
   }
 }

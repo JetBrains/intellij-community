@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.util.CachedValueProvider;
@@ -60,7 +59,6 @@ public class LightRecordMethod extends LightMethod implements LightRecordMember 
 
   @Override
   public PsiType getReturnType() {
-    if (DumbService.isDumb(myRecordComponent.getProject())) return myRecordComponent.getType();
     return CachedValuesManager.getCachedValue(this, () -> {
       PsiType type = myRecordComponent.getType()
         .annotate(() -> Arrays.stream(myRecordComponent.getAnnotations())
