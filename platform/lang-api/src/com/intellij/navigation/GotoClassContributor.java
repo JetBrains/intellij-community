@@ -19,8 +19,11 @@ package com.intellij.navigation;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Consider implementing {@link ChooseByNameContributorEx} additionally for better performance.
@@ -44,6 +47,14 @@ public interface GotoClassContributor extends ChooseByNameContributor {
   @NotNull
   default String getElementKind() {
     return IdeBundle.message("go.to.class.kind.text");
+  }
+
+  /**
+   * Pluralized {@link #getElementKind()}
+   */
+  @NotNull
+  default List<String> getElementKindsPluralized() {
+    return ContainerUtil.newArrayList(IdeBundle.message("go.to.class.kind.text.pluralized"));
   }
 
   /**
