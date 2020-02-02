@@ -4,6 +4,7 @@ package org.editorconfig.language.messages
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import java.util.function.Supplier
 
 @NonNls
 private const val BUNDLE_NAME: String = "messages.EditorConfigBundle"
@@ -22,4 +23,7 @@ object EditorConfigBundle : DynamicBundle(BUNDLE_NAME) {
 
   @JvmStatic
   fun message(key: String, param: String) = get(key, param)
+
+  @JvmStatic
+  fun lazyMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<String> = getLazyMessage(key, *params)
 }
