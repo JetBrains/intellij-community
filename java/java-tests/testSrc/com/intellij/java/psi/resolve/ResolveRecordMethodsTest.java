@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.resolve;
 
 import com.intellij.lang.jvm.JvmParameter;
@@ -44,8 +44,7 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiField);
     PsiField targetField = (PsiField)target;
-    PsiType type = targetField.getType();
-    assertEquals(PsiType.INT, type);
+    assertEquals(PsiType.INT, targetField.getType());
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 
