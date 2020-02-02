@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class PsiBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.PsiBundle";
   private static final PsiBundle INSTANCE = new PsiBundle();
@@ -30,7 +32,12 @@ public class PsiBundle extends DynamicBundle {
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
-  
+
+  @NotNull
+  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
+  }
+
   @NotNull
   public static String visibilityPresentation(@NotNull String modifier) {
     return message(modifier + ".visibility.presentation");

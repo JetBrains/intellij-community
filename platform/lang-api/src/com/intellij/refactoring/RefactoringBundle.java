@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class RefactoringBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.RefactoringBundle";
   private static final RefactoringBundle INSTANCE = new RefactoringBundle();
@@ -32,7 +34,12 @@ public class RefactoringBundle extends DynamicBundle {
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
-  
+
+  @NotNull
+  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
+  }
+
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return INSTANCE.getMessage(key);

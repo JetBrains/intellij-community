@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class JavaCoreBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.JavaCoreBundle";
   private static final JavaCoreBundle INSTANCE = new JavaCoreBundle();
@@ -30,7 +32,12 @@ public class JavaCoreBundle extends DynamicBundle {
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
-  
+
+  @NotNull
+  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
+  }
+
   public static boolean contains(String key) {
     return INSTANCE.containsKey(key);
   }

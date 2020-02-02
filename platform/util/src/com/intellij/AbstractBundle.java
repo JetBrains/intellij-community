@@ -45,7 +45,7 @@ public abstract class AbstractBundle {
   }
 
   @NotNull
-  public Supplier<String> localizedMessage(@NotNull String key, Object @NotNull ... params) {
+  public Supplier<String> getLazyMessage(@NotNull String key, Object @NotNull ... params) {
     return () -> getMessage(key, params);
   }
 

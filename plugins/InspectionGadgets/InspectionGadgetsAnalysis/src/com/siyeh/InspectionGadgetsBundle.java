@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class InspectionGadgetsBundle extends DynamicBundle {
   @NonNls public static final String BUNDLE = "messages.InspectionGadgetsBundle";
   private static final InspectionGadgetsBundle INSTANCE = new InspectionGadgetsBundle();
@@ -15,5 +17,10 @@ public class InspectionGadgetsBundle extends DynamicBundle {
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }
