@@ -2,7 +2,6 @@
 package com.intellij.java.parser.declarationParsing;
 
 import com.intellij.java.parser.JavaParsingTestCase;
-import com.intellij.pom.java.LanguageLevel;
 
 public class ClassParsingTest extends JavaParsingTestCase {
   public ClassParsingTest() {
@@ -56,8 +55,4 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testLocalRecordWithoutParens() { doTest(true); }
   public void testCompactConstructor0() { doTest(true); }
   public void testCompactConstructor1() { doTest(true); }
-  public void testRecordTypeInOlderJava() {
-    setLanguageLevel(LanguageLevel.JDK_13);
-    doTest(true);
-  }
 }
