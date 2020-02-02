@@ -124,7 +124,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                             @NotNull String projectName, @NotNull String logId, @NotNull VcsUserRegistry registry) {
     try {
       return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(projectName, logId, myStorage, registry,
-                                                                  fatalErrorHandler, this),
+                                                                  myRoots, fatalErrorHandler, this),
                                            () -> IndexStorage.cleanup(projectName, logId));
     }
     catch (IOException e) {
@@ -309,6 +309,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                  @NotNull String logId,
                  @NotNull VcsLogStorage storage,
                  @NotNull VcsUserRegistry userRegistry,
+                 @NotNull Set<VirtualFile> roots,
                  @NotNull FatalErrorHandler fatalErrorHandler,
                  @NotNull Disposable parentDisposable)
       throws IOException {
@@ -331,7 +332,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
         trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
         users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(storageId, storage, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(storageId, storage, roots, fatalErrorHandler, this);
 
         Path parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
