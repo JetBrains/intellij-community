@@ -2,12 +2,12 @@
 package com.intellij.ui;
 
 import com.intellij.AbstractBundle;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
 import static com.intellij.BundleUtil.loadLanguageBundle;
 
@@ -15,10 +15,13 @@ public class UIBundle {
   private static final String BUNDLE = "messages.UIBundle";
   private static ResourceBundle ourBundle;
 
-  @Nls
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return AbstractBundle.message(getBundle(), key, params);
+  }
+
+  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return () -> message(key, params);
   }
 
   private UIBundle() { }

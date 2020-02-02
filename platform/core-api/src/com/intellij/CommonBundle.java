@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.*;
 
 import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
 import static com.intellij.BundleUtil.loadLanguageBundle;
 
@@ -18,7 +19,6 @@ public final class CommonBundle extends BundleBase {
 
   private CommonBundle() { }
 
-  @Nls
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     ResourceBundle bundle = getCommonBundle();
@@ -26,6 +26,10 @@ public final class CommonBundle extends BundleBase {
       return UtilBundle.message(key, params);
     }
     return AbstractBundle.message(bundle, key, params);
+  }
+
+  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return () -> message(key, params);
   }
 
   @NotNull
