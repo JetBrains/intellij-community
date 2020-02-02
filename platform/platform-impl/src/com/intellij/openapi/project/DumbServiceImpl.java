@@ -134,7 +134,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     myUpdatesQueue.clear();
     myQueuedEquivalences.clear();
     synchronized (myRunWhenSmartQueue) {
@@ -329,7 +329,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     myProgresses.put(task, new ProgressIndicatorBase());
     Disposer.register(task, () -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
       myProgresses.remove(task);
     });
     myUpdatesQueue.addLast(task);
@@ -535,7 +535,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void attachDialogIndicatorToCurrentProgress() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     ProgressIndicatorEx dialogIndicator = myDialogIndicator;
     if (dialogIndicator == null || myCurrentProgress == null) return;
 
@@ -634,7 +634,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void completeJustSubmittedTasks() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     assert myProject.isInitialized();
     if (myState.get() != State.SCHEDULED_TASKS) {
       return;

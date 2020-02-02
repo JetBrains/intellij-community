@@ -728,7 +728,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun beforeTreeDispose() {
     stopServicePreloading()
 
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
 
     if (!containerState.compareAndSet(ContainerState.ACTIVE, ContainerState.DISPOSE_IN_PROGRESS)) {
       // disposed in a recommended way using ProjectManager

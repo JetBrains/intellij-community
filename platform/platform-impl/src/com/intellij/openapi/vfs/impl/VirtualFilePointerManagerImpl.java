@@ -605,7 +605,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                      long prepareElapsedMs,
                      int eventsSize) {
     long start = System.currentTimeMillis();
-    ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
+    ApplicationManager.getApplication().assertIsWriteThread(); // guarantees no attempts to get read action lock under "this" lock
     incModificationCount();
 
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();

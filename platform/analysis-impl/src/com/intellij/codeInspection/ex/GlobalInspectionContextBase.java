@@ -202,7 +202,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   protected void launchInspections(@NotNull final AnalysisScope scope) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     LOG.info("Code inspection started");

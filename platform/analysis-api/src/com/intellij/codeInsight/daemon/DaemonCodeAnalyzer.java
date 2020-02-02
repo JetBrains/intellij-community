@@ -3,7 +3,6 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,6 @@ public abstract class DaemonCodeAnalyzer {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion="2020.2")
   public void updateVisibleHighlighters(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     DeprecatedMethodException.report("Please remove usages of this method deprecated eons ago");
     // no need, will not work anyway
   }

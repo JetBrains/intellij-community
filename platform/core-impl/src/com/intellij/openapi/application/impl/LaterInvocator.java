@@ -289,14 +289,14 @@ public class LaterInvocator {
   }
 
   public static Object @NotNull [] getCurrentModalEntities() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     return ArrayUtil.toObjectArray(ourModalEntities);
   }
 
   @NotNull
   public static ModalityStateEx getCurrentModalityState() {
     if (!SwingUtilities.isEventDispatchThread()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
     synchronized (ourModalityStack) {
       return ourModalityStack.peek();

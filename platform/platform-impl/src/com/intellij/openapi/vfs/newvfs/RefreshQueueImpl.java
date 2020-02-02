@@ -45,7 +45,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
     else {
       Application app = ApplicationManager.getApplication();
-      if (app.isDispatchThread()) {
+      if (app.isWriteThread()) {
         ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
         doScan(session);
         session.fireEvents(session.getEvents(), null);

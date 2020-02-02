@@ -18,7 +18,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -151,7 +154,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       }
       PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
       if (documentManager.isEventSystemEnabled(document)) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        ApplicationManager.getApplication().assertIsWriteThread();
       }
       boolean success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors,
                                                                          synchronously, task.reason);
@@ -194,7 +197,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   @TestOnly
   // NB: failures applying EDT tasks are not handled - i.e. failed documents are added back to the queue and the method returns
   public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
     UIUtil.dispatchAllInvocationEvents();

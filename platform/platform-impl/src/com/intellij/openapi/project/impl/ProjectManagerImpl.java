@@ -655,7 +655,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       throw new IllegalStateException(
         "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
     }
-    app.assertIsDispatchThread();
+    app.assertIsWriteThread();
 
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed;

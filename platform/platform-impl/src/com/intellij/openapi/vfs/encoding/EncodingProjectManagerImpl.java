@@ -267,7 +267,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new THashMap<>(mapping.size());
     final Map<VirtualFilePointer, Charset> oldMap = new THashMap<>(myMapping);

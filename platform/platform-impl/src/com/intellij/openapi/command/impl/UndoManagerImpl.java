@@ -269,14 +269,14 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   @Override
   public void nonundoableActionPerformed(@NotNull final DocumentReference ref, final boolean isGlobal) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     if (myProject != null && myProject.isDisposed()) return;
     undoableActionPerformed(new NonUndoableAction(ref, isGlobal));
   }
 
   @Override
   public void undoableActionPerformed(@NotNull UndoableAction action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     if (myProject != null && myProject.isDisposed()) return;
 
     if (myCurrentOperationState != OperationState.NONE) return;
@@ -328,7 +328,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   public void invalidateActionsFor(@NotNull DocumentReference ref) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     myMerger.invalidateActionsFor(ref);
     if (myCurrentMerger != null) myCurrentMerger.invalidateActionsFor(ref);
     myUndoStacksHolder.invalidateActionsFor(ref);
@@ -337,14 +337,14 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   @Override
   public void undo(@Nullable FileEditor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     LOG.assertTrue(isUndoAvailable(editor));
     undoOrRedo(editor, true);
   }
 
   @Override
   public void redo(@Nullable FileEditor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     LOG.assertTrue(isRedoAvailable(editor));
     undoOrRedo(editor, false);
   }
@@ -393,7 +393,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   boolean isUndoOrRedoAvailable(@Nullable FileEditor editor, boolean undo) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
 
     Collection<DocumentReference> refs = getDocRefs(editor);
     return refs != null && isUndoOrRedoAvailable(refs, undo);

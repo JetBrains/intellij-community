@@ -198,7 +198,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void commitAllDocuments() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     if (myUncommittedDocuments.isEmpty()) return;
@@ -278,7 +278,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    * @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
   public boolean cancelAndRunWhenAllCommitted(@NonNls @NotNull Object key, @NotNull final Runnable action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     if (myProject.isDisposed()) {
       action.run();
       return true;
@@ -345,7 +345,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                        @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     if (isEventSystemEnabled(document)) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
     final boolean[] ok = {true};
     Runnable runnable = new DocumentRunnable(document, myProject) {
@@ -377,7 +377,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                               final boolean synchronously,
                                               boolean forceNoPsiCommit) {
     if (isEventSystemEnabled(document)) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
     if (myProject.isDisposed()) return false;
     assert !(document instanceof DocumentWindow);
@@ -576,7 +576,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean performWhenAllCommitted(@NotNull Runnable action, @NotNull ModalityState modality) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     checkWeAreOutsideAfterCommitHandler();
 
     assert !myProject.isDisposed() : "Already disposed: " + myProject;
@@ -666,7 +666,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private void runActionsWhenAllCommitted() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     List<Runnable> actions = new ArrayList<>(actionsWhenAllDocumentsAreCommitted.values());
     beforeCommitHandler();
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
@@ -1110,7 +1110,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void reparseFileFromText(@NotNull PsiFileImpl file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     if (isCommitInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
 
     FileElement node = file.calcTreeElement();

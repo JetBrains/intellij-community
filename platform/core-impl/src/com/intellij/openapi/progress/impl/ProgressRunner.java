@@ -314,7 +314,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
     };
 
     if (shouldWaitForModality) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
+      if (ApplicationManager.getApplication().isWriteThread()) {
         modalityRunnable.run();
       }
       else {
@@ -334,7 +334,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
       }
 
       if (shouldWaitForModality) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
+        if (ApplicationManager.getApplication().isWriteThread()) {
           LaterInvocator.leaveModal(progressIndicator);
         }
         else {
@@ -345,7 +345,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
     });
 
     if (isSync) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
+      if (ApplicationManager.getApplication().isWriteThread()) {
         ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
           while (true) {
             try {

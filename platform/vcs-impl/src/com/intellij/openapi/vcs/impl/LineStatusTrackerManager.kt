@@ -150,7 +150,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @CalledInAwt
   override fun requestTrackerFor(document: Document, requester: Any) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
       val multiset = forcedDocuments.computeIfAbsent(document) { HashMultiset.create<Any>() }
       multiset.add(requester)
@@ -164,7 +164,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @CalledInAwt
   override fun releaseTrackerFor(document: Document, requester: Any) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
       val multiset = forcedDocuments[document]
       if (multiset == null || !multiset.contains(requester)) {
@@ -234,7 +234,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @CalledInAwt
   private fun onEverythingChanged() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
       if (isDisposed) return
       log("onEverythingChanged", null)
@@ -385,7 +385,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @CalledInAwt
   private fun doInstallTracker(virtualFile: VirtualFile, document: Document): LineStatusTracker<*>? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
       if (isDisposed) return null
       if (trackers[document] != null) return null
@@ -415,7 +415,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @CalledInAwt
   private fun releaseTracker(document: Document) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
       if (isDisposed) return
       val data = trackers.remove(document) ?: return
@@ -883,7 +883,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @CalledInAwt
   fun resetExcludedFromCommitMarkers() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
       val documents = mutableListOf<Document>()
 
@@ -904,7 +904,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @CalledInAwt
   internal fun collectPartiallyChangedFilesStates(): List<ChangelistsLocalLineStatusTracker.FullState> {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
     val result = mutableListOf<ChangelistsLocalLineStatusTracker.FullState>()
     synchronized(LOCK) {
       for (data in trackers.values) {
@@ -992,7 +992,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @CalledInAwt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertIsWriteThread()
     if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManagerEx.getInstanceEx(project).currentFile) {
       return
     }

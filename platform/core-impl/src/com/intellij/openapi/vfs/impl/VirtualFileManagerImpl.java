@@ -127,7 +127,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
 
   protected long doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
     if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
 
     for (VirtualFileSystem fileSystem : myPhysicalFileSystems) {
@@ -142,7 +142,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
   @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
 
     for (VirtualFileSystem fileSystem : myPhysicalFileSystems) {

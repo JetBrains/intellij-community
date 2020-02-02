@@ -111,7 +111,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
 
     if (allowWriting) {
-      LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
     else if (!EventQueue.isDispatchThread()) {
       LOG.error("must be swing thread");
@@ -131,7 +131,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   public void assertWriteActionAllowed() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     if (!myWritingAllowed && areAssertionsEnabled() && !myErrorReported) {
       // please assign exceptions here to Peter
       LOG.error(reportWriteUnsafeContext(ModalityState.current()));
@@ -191,7 +191,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       return new Runnable() {
         @Override
         public void run() {
-          LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
+          ApplicationManager.getApplication().assertIsWriteThread();
           final boolean prev = myWritingAllowed;
           myWritingAllowed = true;
           try {

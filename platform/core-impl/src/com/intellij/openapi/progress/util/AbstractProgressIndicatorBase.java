@@ -251,7 +251,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     ModalityState modalityState = ModalityState.defaultModalityState();
 
     if (modalityProgress != null) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
       modalityState = ((ModalityStateEx)modalityState).appendProgress(modalityProgress);
       ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(modalityState);
     }

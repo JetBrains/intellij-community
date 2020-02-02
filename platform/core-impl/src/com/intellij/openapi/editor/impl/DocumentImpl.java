@@ -1076,7 +1076,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public final void setInBulkUpdate(boolean value) {
     if (myAssertThreading) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
     if (myUpdatingBulkModeStatus) {
       throw new IllegalStateException("Detected bulk mode status update from DocumentBulkUpdateListener");
