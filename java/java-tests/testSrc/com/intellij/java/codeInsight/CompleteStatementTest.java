@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorActionTestCase;
@@ -32,6 +33,11 @@ public class CompleteStatementTest extends EditorActionTestCase {
     super.setUp();
     mySettings = CodeStyle.getSettings(getProject());
     myJavaSettings = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_14_PREVIEW;
   }
 
   public void testAddMissingSemicolon() { doTest(); }

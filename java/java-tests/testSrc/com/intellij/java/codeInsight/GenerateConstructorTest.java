@@ -45,7 +45,7 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_14;
   }
 
   @Override
