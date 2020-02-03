@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -71,9 +70,9 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     String logId = PersistentUtil.calcLogId(project, logProviders);
 
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
-    Path hashesStorageFile = new StorageId(HASHES_STORAGE, logId, VERSION).getStorageFile();
-    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageFile, commitIdKeyDescriptor),
-                                                         hashesStorageFile.toFile());
+    StorageId hashesStorageId = new StorageId(HASHES_STORAGE, logId, VERSION);
+    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageId, commitIdKeyDescriptor),
+                                                         hashesStorageId.getStorageFile().toFile());
 
     VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
     StorageId refsStorageId = new StorageId(REFS_STORAGE, logId, VERSION + REFS_VERSION);
@@ -320,8 +319,8 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   private static class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
-    MyPersistentBTreeEnumerator(Path storageFile, MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
-      super(storageFile, commitIdKeyDescriptor, Page.PAGE_SIZE, null, VERSION);
+    MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
+      super(storageId.getStorageFile(), commitIdKeyDescriptor, Page.PAGE_SIZE, null, storageId.getVersion());
     }
 
     public boolean contains(@NotNull CommitId id) throws IOException {
