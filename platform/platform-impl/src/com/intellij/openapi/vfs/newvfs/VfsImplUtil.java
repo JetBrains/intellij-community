@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -23,6 +23,8 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 public class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance(VfsImplUtil.class);
@@ -87,10 +89,10 @@ public class VfsImplUtil {
         file = file.findChildIfCached(pathElement);
       }
 
-      if (file == null) return Pair.pair(null, last);
+      if (file == null) return pair(null, last);
     }
 
-    return Pair.pair(file, null);
+    return pair(file, null);
   }
 
   @Nullable
@@ -140,7 +142,7 @@ public class VfsImplUtil {
     }
 
     Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
-    return Pair.create(root, parts);
+    return pair(root, parts);
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {
@@ -193,7 +195,7 @@ public class VfsImplUtil {
 
       if (record == null) {
         handler = producer.fun(localPath);
-        record = Pair.create(vfs, handler);
+        record = pair(vfs, handler);
         ourHandlers.put(localPath, record);
 
         forEachDirectoryComponent(localPath, containingDirectoryPath -> {
