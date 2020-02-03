@@ -1,36 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("UastReferenceRegistrar")
 
 package com.intellij.psi
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.ElementPatternCondition
-import com.intellij.patterns.InitialPatternCondition
 import com.intellij.patterns.StandardPatterns
+import com.intellij.patterns.uast.UElementPattern
+import com.intellij.patterns.uast.capture
+import com.intellij.patterns.uast.literalExpression
+import com.intellij.psi.impl.search.LowLevelSearchUtil
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.ULiteralExpression
+import com.intellij.util.SmartList
+import com.intellij.util.text.StringSearcher
+import com.siyeh.ig.psiutils.TypeUtils
+import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.toUElement
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
@@ -45,15 +34,6 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
   this.registerReferenceProvider(adaptPattern(pattern::accepts, provider.supportedUElementTypes),
                                  UastReferenceProviderAdapter(provider), priority)
-}
-
-abstract class UastReferenceProvider(open val supportedUElementTypes: List<Class<out UElement>> = listOf(UElement::class.java)) {
-
-  constructor(cls: Class<out UElement>) : this(listOf(cls))
-
-  abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>
-
-  open fun acceptsTarget(target: PsiElement): Boolean = true
 }
 
 fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
@@ -78,14 +58,14 @@ inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, P
 
 private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
 internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("REQUESTED_PSI_ELEMENT")
+internal val USAGE_PSI_ELEMENT = Key.create<PsiElement>("USAGE_PSI_ELEMENT")
 
-private fun getOrCreateCachedElement(element: PsiElement,
-                                     context: ProcessingContext?,
-                                     supportedUElementTypes: List<Class<out UElement>>): UElement? =
+internal fun getOrCreateCachedElement(element: PsiElement,
+                                      context: ProcessingContext?,
+                                      supportedUElementTypes: List<Class<out UElement>>): UElement? =
   element as? UElement ?: context?.get(cachedUElement) ?: supportedUElementTypes.asSequence().mapNotNull {
     element.toUElement(it)
   }.firstOrNull()?.also { context?.put(cachedUElement, it) }
-
 
 private fun adaptPattern(
   predicate: (UElement, ProcessingContext) -> Boolean,
@@ -101,50 +81,117 @@ private fun adaptPattern(
   return uastPatternAdapter
 }
 
-private class UastPatternAdapter(
-  val predicate: (UElement, ProcessingContext) -> Boolean,
-  val supportedUElementTypes: List<Class<out UElement>>
-) : ElementPattern<PsiElement> {
-
-  override fun accepts(o: Any?): Boolean = accepts(o, null)
-
-  override fun accepts(o: Any?, context: ProcessingContext?): Boolean = when (o) {
-    is PsiElement -> RecursionManager.doPreventingRecursion(this, false) {
-      getOrCreateCachedElement(o, context, supportedUElementTypes)
-        ?.let { predicate(it, (context ?: ProcessingContext()).apply { put(REQUESTED_PSI_ELEMENT, o) }) }
-      ?: false
-    } ?: false
-    else -> false
-  }
-
-  private val condition = ElementPatternCondition(object : InitialPatternCondition<PsiElement>(PsiElement::class.java) {
-    override fun accepts(o: Any?, context: ProcessingContext?): Boolean = this@UastPatternAdapter.accepts(o, context)
-  })
-
-  override fun getCondition(): ElementPatternCondition<PsiElement> = condition
-}
-
 fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Class<out UElement>): ElementPattern<PsiElement> = UastPatternAdapter(
   this::accepts,
   if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java)
 )
 
-private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) : PsiReferenceProvider() {
-  override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
-    val uElement = getOrCreateCachedElement(element, context, provider.supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
-    val references = provider.getReferencesByElement(uElement, context)
-    if (ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isInternal) {
-      for (reference in references) {
-        if (reference.element !== element)
-          throw AssertionError(
-            """reference $reference was created for $element but targets ${reference.element}, provider $provider"""
-          )
-      }
+/**
+ * Creates UAST reference provider that may use additional usage PSI element to compute references. This element either is the same as
+ * target PSI for references or reference element that is used in the same file and satisfy usage pattern.
+ *
+ * @see registerByUsageReferenceProvider
+ */
+fun uastByUsageReferenceProvider(provider: (expression: UExpression, targetPsi: PsiElement, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  object : UastReferenceProvider(UExpression::class.java) {
+    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+      val usagePsi = context[USAGE_PSI_ELEMENT] ?: context[REQUESTED_PSI_ELEMENT]
+
+      return provider(UExpression::class.java.cast(element), context[REQUESTED_PSI_ELEMENT], usagePsi)
     }
-    return references
+
+    override fun toString(): String {
+      return "uastByUsageReferenceProvider($provider)"
+    }
   }
 
-  override fun toString(): String = "UastReferenceProviderAdapter($provider)"
+/**
+ * Registers two UAST reference providers: simple with [usagePattern] and an additional reference provider that will inject references to
+ * expressions with [expressionPattern] that have direct usages in the same file. References will be injected to expressions if at least one
+ * usage place satisfies [usagePattern]. If you need to perform computations with usage PSI use [uastByUsageReferenceProvider].
+ *
+ * @param expressionPattern usage search performed only for expressions that satisfy this pattern
+ * @param usagePattern      usage pattern
+ * @param provider          reference provider
+ * @param priority          priority
+ *
+ * @see uastByUsageReferenceProvider
+ */
+fun PsiReferenceRegistrar.registerByUsageReferenceProvider(expressionPattern: UElementPattern<*, *>,
+                                                           usagePattern: UElementPattern<*, *>,
+                                                           provider: UastReferenceProvider,
+                                                           priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
+  this.registerUastReferenceProvider(usagePattern, provider, priority)
 
-  override fun acceptsTarget(target: PsiElement): Boolean = provider.acceptsTarget(target)
+  val patternWithVariableParent = expressionPattern.withUastParent(capture(UVariable::class.java))
+  this.registerUastReferenceProvider(patternWithVariableParent, object : UastReferenceProvider(UExpression::class.java) {
+    override fun acceptsTarget(target: PsiElement): Boolean {
+      return !target.project.isDefault && provider.acceptsTarget(target)
+    }
+
+    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+      val parentVariable = element.uastParent as? UVariable ?: return emptyArray()
+
+      val usage = getDirectVariableUsages(parentVariable).find { usage ->
+        usagePattern.accepts(usage, context)
+      }
+
+      if (usage == null) return emptyArray()
+
+      context.put(USAGE_PSI_ELEMENT, usage)
+
+      return provider.getReferencesByElement(element, context)
+    }
+
+    override fun toString(): String {
+      return "uastReferenceByUsageAdapter($provider)"
+    }
+  }, priority)
+}
+
+/**
+ * Registers UAST reference providers by usage for [literalExpression].
+ *
+ * @see registerByUsageReferenceProvider
+ */
+fun PsiReferenceRegistrar.registerByUsageLiteralReferenceProvider(usagePattern: UElementPattern<*, *>,
+                                                                  provider: UastReferenceProvider,
+                                                                  priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
+  this.registerByUsageReferenceProvider(literalExpression(), usagePattern, provider, priority)
+}
+
+private fun getDirectVariableUsages(uVar: UVariable): List<PsiElement> {
+  val variablePsi = uVar.sourcePsi ?: return emptyList()
+  return CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
+    Result.createSingleDependency(findDirectVariableUsages(variablePsi),
+                                  PsiModificationTracker.MODIFICATION_COUNT)
+  })
+}
+
+private fun findDirectVariableUsages(variablePsi: PsiElement): List<PsiElement> {
+  val uVariable = variablePsi.toUElementOfType<UVariable>() ?: return emptyList()
+  val variableName = uVariable.name ?: return emptyList()
+  val file = variablePsi.containingFile ?: return emptyList()
+
+  val fileContent = file.viewProvider.contents
+  val searcher = StringSearcher(variableName, true, true)
+  val usages = SmartList<PsiElement>()
+
+  LowLevelSearchUtil.processTextOccurrences(fileContent, 0, fileContent.length, searcher) { offset ->
+    val element = file.findElementAt(offset)
+    if (element != null) {
+      // we get identifiers and need to process their parents
+      val uRef = element.getUastParentOfType<UReferenceExpression>(true)
+      val expressionType = uRef?.getExpressionType()
+      if (expressionType != null && TypeUtils.isJavaLangString(expressionType)) {
+        val named = uRef.tryResolveNamed()
+        if (PsiManager.getInstance(element.project).areElementsEquivalent(named, variablePsi)) {
+          usages.add(uRef.sourcePsi)
+        }
+      }
+    }
+    true
+  }
+
+  return usages
 }
