@@ -399,6 +399,7 @@
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
 
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>

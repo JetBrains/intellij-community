@@ -76,6 +76,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -732,7 +733,7 @@ public class MavenUtil {
     if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
-                                                resolveGlobalSettingsFile(overriddenMavenHome));
+                                        resolveGlobalSettingsFile(overriddenMavenHome));
     }
     try {
       return result.getCanonicalFile();
@@ -780,17 +781,88 @@ public class MavenUtil {
     }
   }
 
-  private static Element getRepositoryElement(File file) throws JDOMException, IOException {
-    Element fileElement = JDOMUtil.load(file);
+  public static String getMirroredUrl(final File settingsFile, String url, String id) throws JDOMException, IOException {
+    Element mirrorParent = getElementWithRegardToNamespace(JDOMUtil.load(settingsFile), "mirrors");
+    if (mirrorParent == null) {
+      return url;
+    }
+    List<Element> mirrors = getElementsWithRegardToNamespace(mirrorParent, "mirror");
+    for (Element el : mirrors) {
+      Element mirrorOfElement = getElementWithRegardToNamespace(el, "mirrorOf");
+      Element mirrorUrlElement = getElementWithRegardToNamespace(el, "url");
+      if (mirrorOfElement == null) continue;
+      if (mirrorUrlElement == null) continue;
 
-    Element repository = fileElement.getChild("localRepository");
-    if (repository == null) {
-      repository = fileElement.getChild("localRepository", Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0"));
+      String mirrorOf = mirrorOfElement.getTextTrim();
+      String mirrorUrl = mirrorUrlElement.getTextTrim();
+
+      if (StringUtil.isEmptyOrSpaces(mirrorOf) || StringUtil.isEmptyOrSpaces(mirrorUrl)) {
+        continue;
+      }
+
+      if (isMirrorApplicable(mirrorOf, url, id)) {
+        return mirrorUrl;
+      }
     }
-    if (repository == null) {
-      repository = fileElement.getChild("localRepository", Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
+    return url;
+  }
+
+  private static boolean isMirrorApplicable(String mirrorOf, String url, String id) {
+    HashSet<String> patterns = new HashSet<>(split(mirrorOf, ","));
+
+    if (patterns.contains("!" + id)) {
+      return false;
     }
-    return repository;
+
+    if (patterns.contains("*")) {
+      return true;
+    }
+    if (patterns.contains(id)) {
+      return true;
+    }
+    if (patterns.contains("external:*")) {
+      try {
+        URI uri = URI.create(url);
+        if ("file".equals(uri.getScheme())) return false;
+        if ("localhost".equals(uri.getHost())) return false;
+        if ("127.0.0.1".equals(uri.getHost())) return false;
+        return true;
+      }
+      catch (IllegalArgumentException e) {
+        MavenLog.LOG.warn("cannot parse uri " + url, e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static Element getRepositoryElement(File file) throws JDOMException, IOException {
+    return getElementWithRegardToNamespace(JDOMUtil.load(file), "localRepository");
+  }
+
+  @Nullable
+  private static Element getElementWithRegardToNamespace(@NotNull Element parent, String childName) {
+
+    Element element = parent.getChild(childName);
+    if (element == null) {
+      element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0"));
+    }
+    if (element == null) {
+      element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
+    }
+    return element;
+  }
+
+  private static List<Element> getElementsWithRegardToNamespace(@NotNull Element parent, String childrenName) {
+    List<Element> elements = parent.getChildren(childrenName);
+    if (elements.isEmpty()) {
+      elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0"));
+    }
+    if (elements.isEmpty()) {
+      elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
+    }
+    return elements;
   }
 
   public static String expandProperties(String text, Properties props) {

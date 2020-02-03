@@ -36,19 +36,7 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
                           mavenProject: MavenProject?,
                           changes: MavenProjectChanges?,
                           modifiableModelsProvider: IdeModifiableModelsProvider?) {
-    if (module == null
-        || mavenProject == null
-        || !MavenProjectsManager.getInstance(module.project).importingSettings.isDownloadAnnotationsAutomatically) {
-      return
-    }
-
-    val repoConfig = RemoteRepositoriesConfiguration.getInstance(module.project)
-    val repositories: MutableCollection<RemoteRepositoryDescription> =
-      hashSetOf<RemoteRepositoryDescription>().apply { addAll(repoConfig.repositories) }
-
-    mavenProject.remoteRepositories.mapTo(repositories) { RemoteRepositoryDescription(it.id, it.name ?: it.id, it.url) }
-
-    repoConfig.repositories = repositories.toMutableList()
+    //do nothing
   }
 
   override fun postProcess(module: Module,
