@@ -313,7 +313,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       Disposer.register(parentDisposable, this);
 
       try {
-        StorageId storageId = new StorageId(INDEX, logId, getVersion(), new boolean[]{false});
+        StorageId storageId = new StorageId(INDEX, logId, getVersion());
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);

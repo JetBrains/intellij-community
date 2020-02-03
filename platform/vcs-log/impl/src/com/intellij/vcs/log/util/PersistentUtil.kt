@@ -64,46 +64,18 @@ object PersistentUtil {
 
 class StorageId(private val subdirName: String,
                 private val logId: String,
-                val version: Int,
-                private val features: BooleanArray) {
+                val version: Int) {
   private val safeLogId = PathUtilRt.suggestFileName(logId, true, true)
-
-  constructor(subdirName: String, logId: String, version: Int) : this(subdirName, logId, version, booleanArrayOf())
 
   fun subdir() = File(LOG_CACHE, subdirName)
 
-  private fun featuresSuffix(): String {
-    if (features.isEmpty()) return ""
-    return "." + features.map { if (it) 1 else 0 }.joinToString { it.toString() }
-  }
-
   private fun getFile(kind: String = ""): File {
     val name: String = if (kind.isEmpty()) "$safeLogId.$version" else "$safeLogId.$kind.$version"
-    return File(subdir(), "$name${featuresSuffix()}")
+    return File(subdir(), name)
   }
 
   private fun getFileForMapIndexStorage(kind: String = ""): File {
     return MapIndexStorage.getIndexStorageFile(getFile(kind).toPath()).toFile()
-  }
-
-  private fun iterateOverOtherFeatures(function: (BooleanArray) -> Unit) {
-    if (features.isEmpty()) return
-
-    val f = BooleanArray(features.size) { false }
-    mainLoop@ while (true) {
-      if (!features.contentEquals(f)) {
-        function(f)
-      }
-
-      for (i in features.indices) {
-        if (!f[i]) {
-          f[i] = true
-          continue@mainLoop
-        }
-        f[i] = false
-      }
-      break@mainLoop
-    }
   }
 
   fun getStorageFile(): Path {
@@ -121,9 +93,6 @@ class StorageId(private val subdirName: String,
     if (!storageFile.exists()) {
       for (oldVersion in 0 until version) {
         StorageId(subdirName, logId, oldVersion).cleanupStorageFiles(kind, forMapIndexStorage)
-      }
-      iterateOverOtherFeatures {
-        StorageId(subdirName, logId, version, it).cleanupStorageFiles(kind, forMapIndexStorage)
       }
     }
     return getFile(kind).toPath()
