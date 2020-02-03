@@ -57,11 +57,11 @@ public interface VcsShowConfirmationOption {
   static String getConfirmationOptionText(@NotNull VcsShowConfirmationOption.Value value) {
     switch (value) {
       case SHOW_CONFIRMATION:
-        return VcsBundle.getString("settings.commit.confirmation.option.text.ask");
+        return VcsBundle.getString("settings.confirmation.option.text.ask");
       case DO_NOTHING_SILENTLY:
-        return VcsBundle.getString("settings.commit.confirmation.option.text.no");
+        return VcsBundle.getString("settings.confirmation.option.text.no");
       case DO_ACTION_SILENTLY:
-        return VcsBundle.getString("settings.commit.confirmation.option.text.yes");
+        return VcsBundle.getString("settings.confirmation.option.text.yes");
     }
     throw new IllegalArgumentException("Unknown confirmation option " + value);
   }

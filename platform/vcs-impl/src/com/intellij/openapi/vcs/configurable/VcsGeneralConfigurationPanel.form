@@ -189,11 +189,7 @@
               <component id="aec57" class="javax.swing.JComboBox" binding="myOnPatchCreation">
                 <constraints/>
                 <properties>
-                  <model>
-                    <item value="Ask"/>
-                    <item value="Yes"/>
-                    <item value="No"/>
-                  </model>
+                  <model/>
                 </properties>
               </component>
             </children>
