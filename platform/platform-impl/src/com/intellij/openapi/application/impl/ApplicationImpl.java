@@ -261,7 +261,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isDispatchThread() {
-    return isWriteThread() && SwingUtilities.isEventDispatchThread();
+    return isWriteThread() && EDT.isCurrentThreadEdt();
   }
 
   @Override
