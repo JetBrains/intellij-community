@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.Binding;
@@ -33,16 +33,21 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class DependentGroovycRunner {
   public static final String TEMP_RESOURCE_SUFFIX = "___" + new Random().nextInt() + "_neverHappen";
-  public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
+  public static final String[] RESOURCES_TO_MASK = {
+    "META-INF/services/org.codehaus.groovy.transform.ASTTransformation",
+    "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"
+  };
   private static final String STUB_DIR = "stubDir";
 
   @SuppressWarnings("unused")
   public static boolean runGroovyc(boolean forStubs, String argsPath,
                                    @Nullable String configScript,
-                                   @Nullable String targetBytecode, @Nullable Queue mailbox) {
+                                   @Nullable String targetBytecode,
+                                   @Nullable Queue<? super Object> mailbox) {
     File argsFile = new File(argsPath);
     CompilerConfiguration config = createCompilerConfiguration(targetBytecode);
     config.setClasspath("");
+    //noinspection deprecation,ImplicitDefaultCharsetUsage
     config.setOutput(new PrintWriter(System.err));
     config.setWarningLevel(WarningMessage.PARANOIA);
 
@@ -174,21 +179,27 @@ public class DependentGroovycRunner {
       for (String res : RESOURCES_TO_MASK) {
         File file = new File(output, res + removeSuffix);
         if (file.exists()) {
+          //noinspection ResultOfMethodCallIgnored
           file.renameTo(new File(output, res + addSuffix));
         }
       }
     }
   }
 
-  private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List<? super CompilationUnitPatcher> patchers, List<? super CompilerMessage> compilerMessages,
-                                         List<? super File> srcFiles, Map<String, File> class2File, String[] finalOutputs) {
-    String moduleClasspath = null;
-
+  private static void fillFromArgsFile(File argsFile,
+                                       CompilerConfiguration compilerConfiguration,
+                                       List<? super CompilationUnitPatcher> patchers,
+                                       List<? super CompilerMessage> compilerMessages,
+                                       List<? super File> srcFiles,
+                                       Map<String, File> class2File,
+                                       String[] finalOutputs) {
     BufferedReader reader = null;
     FileInputStream stream;
 
     try {
+      //noinspection IOResourceOpenedButNotSafelyClosed
       stream = new FileInputStream(argsFile);
+      //noinspection IOResourceOpenedButNotSafelyClosed
       reader = new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
 
       reader.readLine(); // skip classpath
@@ -241,7 +252,6 @@ public class DependentGroovycRunner {
 
         line = reader.readLine();
       }
-
     }
     catch (FileNotFoundException e) {
       e.printStackTrace();
@@ -257,10 +267,10 @@ public class DependentGroovycRunner {
         e.printStackTrace();
       }
       finally {
+        //noinspection ResultOfMethodCallIgnored
         argsFile.delete();
       }
     }
-    return moduleClasspath;
   }
 
   private static void addSources(boolean forStubs, List<? extends File> srcFiles, final CompilationUnit unit) {
@@ -273,7 +283,11 @@ public class DependentGroovycRunner {
     }
   }
 
-  private static void runPatchers(List<? extends CompilationUnitPatcher> patchers, List<? super CompilerMessage> compilerMessages, CompilationUnit unit, final AstAwareResourceLoader loader, List<File> srcFiles) {
+  private static void runPatchers(List<? extends CompilationUnitPatcher> patchers,
+                                  List<? super CompilerMessage> compilerMessages,
+                                  CompilationUnit unit,
+                                  final AstAwareResourceLoader loader,
+                                  List<File> srcFiles) {
     if (!patchers.isEmpty()) {
       for (CompilationUnitPatcher patcher : patchers) {
         try {
@@ -289,10 +303,10 @@ public class DependentGroovycRunner {
   private static void reportCompiledItems(List<? extends GroovyCompilerWrapper.OutputItem> compiledFiles) {
     for (GroovyCompilerWrapper.OutputItem compiledFile : compiledFiles) {
       /*
-      * output path
-      * source file
-      * output root directory
-      */
+       * output path
+       * source file
+       * output root directory
+       */
       System.out.print(GroovyRtConstants.COMPILED_START);
       System.out.print(compiledFile.getOutputPath());
       System.out.print(GroovyRtConstants.SEPARATOR);
@@ -327,7 +341,8 @@ public class DependentGroovycRunner {
   private static CompilationUnit createCompilationUnit(final boolean forStubs,
                                                        final CompilerConfiguration config,
                                                        final GroovyClassLoader classLoader,
-                                                       Queue mailbox, GroovyCompilerWrapper wrapper) {
+                                                       Queue<? super Object> mailbox,
+                                                       GroovyCompilerWrapper wrapper) {
 
     final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader);
 
@@ -371,7 +386,7 @@ public class DependentGroovycRunner {
   private static CompilationUnit createStubGenerator(final CompilerConfiguration config,
                                                      final GroovyClassLoader classLoader,
                                                      final GroovyClassLoader transformLoader,
-                                                     final Queue<Object> mailbox,
+                                                     final Queue<? super Object> mailbox,
                                                      final GroovyCompilerWrapper wrapper) {
     final JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
       private boolean annoRemovedAdded;
@@ -447,7 +462,6 @@ public class DependentGroovycRunner {
 
         super.gotoPhase(phase);
       }
-
     };
     unit.setCompilerFactory(new JavaCompilerFactory() {
       public JavaCompiler createCompiler(final CompilerConfiguration config) {
@@ -458,7 +472,7 @@ public class DependentGroovycRunner {
               System.out.flush();
               System.err.flush();
 
-              pauseAndWaitForJavac((LinkedBlockingQueue<Object>)mailbox);
+              pauseAndWaitForJavac(mailbox);
               wrapper.onContinuation();
             }
           }
@@ -469,7 +483,7 @@ public class DependentGroovycRunner {
     return unit;
   }
 
-  private static void pauseAndWaitForJavac(LinkedBlockingQueue<Object> mailbox) {
+  private static void pauseAndWaitForJavac(Queue<? super Object> mailbox) {
     LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<String>();
     mailbox.offer(fromJps); // signal that stubs are generated
     while (true) {
@@ -477,9 +491,11 @@ public class DependentGroovycRunner {
         Object response = fromJps.poll(1, TimeUnit.MINUTES);
         if (GroovyRtConstants.BUILD_ABORTED.equals(response)) {
           throw new RuntimeException(GroovyRtConstants.BUILD_ABORTED);
-        } else if (GroovyRtConstants.JAVAC_COMPLETED.equals(response)) {
+        }
+        else if (GroovyRtConstants.JAVAC_COMPLETED.equals(response)) {
           return; // stop waiting and continue compiling
-        } else if (response != null) {
+        }
+        else if (response != null) {
           throw new RuntimeException("Unknown response: " + response);
         }
       }
@@ -489,7 +505,8 @@ public class DependentGroovycRunner {
     }
   }
 
-  static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration, final AstAwareResourceLoader resourceLoader) {
+  static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration,
+                                               final AstAwareResourceLoader resourceLoader) {
     final ClassDependencyLoader checkWellFormed = new ClassDependencyLoader() {
       @Override
       protected void loadClassDependencies(Class aClass) throws ClassNotFoundException {
@@ -502,9 +519,9 @@ public class DependentGroovycRunner {
       public GroovyClassLoader run() {
         return new GroovyClassLoader(Thread.currentThread().getContextClassLoader(), compilerConfiguration) {
           @Override
-          public Class loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
+          public Class<?> loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
             throws ClassNotFoundException, CompilationFailedException {
-            Class aClass;
+            Class<?> aClass;
             try {
               aClass = super.loadClass(name, lookupScriptFiles, preferClassOverScript);
             }
