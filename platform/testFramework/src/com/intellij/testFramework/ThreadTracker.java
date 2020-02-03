@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -275,7 +275,7 @@ public class ThreadTracker {
     }
     //noinspection UnnecessaryLocalVariable
     boolean insideCpuWorkerIdle = ContainerUtil.exists(stackTrace,
-          element -> element.getMethodName().equals("cpuWorkerIdle")
+          element -> element.getMethodName().equals("park")
                      && element.getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"));
     return insideCpuWorkerIdle;
   }
