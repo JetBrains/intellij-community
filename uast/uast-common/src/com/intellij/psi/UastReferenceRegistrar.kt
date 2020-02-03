@@ -132,7 +132,8 @@ fun PsiReferenceRegistrar.registerByUsageReferenceProvider(expressionPattern: UE
       val parentVariable = element.uastParent as? UVariable ?: return emptyArray()
 
       val usage = getDirectVariableUsages(parentVariable).find { usage ->
-        usagePattern.accepts(usage, context)
+        val refExpression = usage.toUElementOfType<UReferenceExpression>()
+        refExpression != null && usagePattern.accepts(refExpression, context)
       }
 
       if (usage == null) return emptyArray()
@@ -192,5 +193,5 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): List<PsiElement> 
     true
   }
 
-  return usages
+  return if (usages.isEmpty()) emptyList() else usages
 }
