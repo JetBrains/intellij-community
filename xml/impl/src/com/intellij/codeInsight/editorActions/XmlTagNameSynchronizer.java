@@ -44,7 +44,6 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -78,10 +77,8 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
 
     Language language = findXmlLikeLanguage(psiFile);
     if (language != null) {
-      List<XmlExtension> extensions = ContainerUtil.filter(
-        XmlExtension.EP_NAME.getExtensions(),
-        extension -> extension.isAvailable(psiFile));
-      new TagNameSynchronizer((EditorImpl)editor, project, language, extensions).listenForDocumentChanges();
+      XmlExtension extension = XmlExtension.getExtension(psiFile);
+      new TagNameSynchronizer((EditorImpl)editor, project, language, extension).listenForDocumentChanges();
     }
   }
 
@@ -124,16 +121,16 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     private static final Key<Couple<RangeMarker>> MARKERS_KEY = Key.create("tag.name.synchronizer.markers");
     private static final TagNameSynchronizer[] EMPTY = new TagNameSynchronizer[0];
     private final PsiDocumentManagerBase myDocumentManager;
-    private final List<XmlExtension> myExtensions;
+    private final XmlExtension myExtension;
     private final Language myLanguage;
     private final EditorImpl myEditor;
     private boolean myApplying;
 
-    private TagNameSynchronizer(EditorImpl editor, Project project, Language language, List<XmlExtension> extensions) {
+    private TagNameSynchronizer(EditorImpl editor, Project project, Language language, XmlExtension extension) {
       myEditor = editor;
       myLanguage = language;
       myDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-      myExtensions = extensions;
+      myExtension = extension;
     }
 
     private void listenForDocumentChanges() {
@@ -169,7 +166,7 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       Caret caret = myEditor.getCaretModel().getCurrentCaret();
 
       for (int i = 0; i < newLength; i++) {
-        if (isInvalidTagNameChar(fragment.charAt(i))) {
+        if (!isValidTagNameChar(fragment.charAt(i))) {
           clearMarkers(caret);
           return;
         }
@@ -230,7 +227,7 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
             start = i + 1;
             break;
           }
-          if (isInvalidTagNameChar(c)) break;
+          if (!isValidTagNameChar(c)) break;
           seenColon |= c == ':';
         }
         catch (IndexOutOfBoundsException e) {
@@ -242,7 +239,7 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       int end = -1;
       for (int i = offset; i < Math.min(document.getTextLength(), offset + 50); i++) {
         final char c = sequence.charAt(i);
-        if (isInvalidTagNameChar(c) || seenColon && c == ':') {
+        if (!isValidTagNameChar(c) || seenColon && c == ':') {
           end = i;
           break;
         }
@@ -309,14 +306,8 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       return document.createRangeMarker(realRange.getStartOffset(), realRange.getEndOffset(), true);
     }
 
-    private boolean isInvalidTagNameChar(char c) {
-      if (XmlUtil.isValidTagNameChar(c)) return false;
-
-      for (XmlExtension extension : myExtensions) {
-        if (extension.isValidTagNameChar(c)) return false;
-      }
-
-      return true;
+    private boolean isValidTagNameChar(char c) {
+      return XmlUtil.isValidTagNameChar(c) || myExtension.isValidTagNameChar(c);
     }
 
     private static RangeMarker findSupportForTagList(RangeMarker leader, PsiElement element, Document document) {
