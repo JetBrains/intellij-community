@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -121,7 +122,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
           List<Pair<VirtualFile, DownloadableFileDescription>>
             list = downloader.downloadWithProgress(tempDir.toString(), myProject, myErrorPanel);
           if (list == null || list.isEmpty()) {
-            myErrorLabel.setHyperlinkText("Failed to download Scene Builder Kit", "","");
+            myErrorLabel.setHyperlinkText(IdeBundle.message("failed.to.download.scene.builder.kit"), "", "");
             myErrorLabel.setIcon(Messages.getErrorIcon());
             return;
           }
@@ -136,7 +137,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
           LOG.warn("Can't download SceneBuilderKit", e2);
          }
       });
-      myErrorLabel.setHyperlinkText("Failed to open the file in the Scene Builder. ",
+      myErrorLabel.setHyperlinkText(IdeBundle.message("failed.to.open.the.file.in.the.scene.builder"),
                                     "Download Scene Builder Kit", "");
       myErrorLabel.setIcon(Messages.getErrorIcon());
       myLayout.show(myPanel, ERROR_CARD);
@@ -162,7 +163,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       description = "Unknown error occurred";
     }
 
-    myErrorLabel.setHyperlinkText("Failed to open the file in the Scene Builder", "", "");
+    myErrorLabel.setHyperlinkText(IdeBundle.message("failed.to.open.the.file.in.the.scene.builder"), "", "");
     myErrorLabel.setIcon(Messages.getErrorIcon());
     myErrorStack.setText(description);
     myErrorStack.setVisible(true);
@@ -198,7 +199,9 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
           // XXX: strange behavior with undo/redo
 
-          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> myDocument.setText(content), "JavaFX Scene Builder edit operation", null));
+          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> myDocument.setText(content),
+                                                                                                                 IdeBundle.message(
+                                                                                                                   "javafx.scene.builder.edit.operation"), null));
         }
         finally {
           myChangeListener.setRunState(true);

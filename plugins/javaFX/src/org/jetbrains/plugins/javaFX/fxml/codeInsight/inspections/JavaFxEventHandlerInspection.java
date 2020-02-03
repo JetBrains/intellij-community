@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -55,7 +56,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
         final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
         if (eventHandlerMethods.size() == 0) return;
         if (eventHandlerMethods.size() != 1) {
-          holder.registerProblem(xmlAttributeValue, "Ambiguous event handler name: more than one matching method found");
+          holder.registerProblem(xmlAttributeValue, IdeBundle.message("ambiguous.event.handler.name.more.than.one.matching.method.found"));
         }
 
         if (myDetectNonVoidReturnType) {
@@ -63,7 +64,8 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
             .map(PsiMethod::getReturnType)
             .filter(returnType -> !PsiType.VOID.equals(returnType))
             .findAny()
-            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, "Return type of event handler should be void"));
+            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue,
+                                                         IdeBundle.message("return.type.of.event.handler.should.be.void")));
         }
 
         final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
@@ -83,14 +85,15 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
                   quickFixes.add(parameterTypeFix);
                   collectFieldTypeFixes(attribute, (PsiClassType)actualType, quickFixes);
                   holder.registerProblem(xmlAttributeValue,
-                                         "Incompatible generic parameter of event handler argument: " + actualType.getCanonicalText() +
-                                         " is not assignable from " + declaredType.getCanonicalText(),
+                                         IdeBundle
+                                           .message("incompatible.generic.parameter.of.event.handler.argument.0.is.not.assignable.from.1",
+                                                    actualType.getCanonicalText(), declaredType.getCanonicalText()),
                                          quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
                 }
                 else {
                   holder.registerProblem(xmlAttributeValue,
-                                         "Incompatible event handler argument: " + actualRawType.getCanonicalText() +
-                                         " is not assignable from " + expectedRawType.getCanonicalText(),
+                                         IdeBundle.message("incompatible.event.handler.argument.0.is.not.assignable.from.1",
+                                                           actualRawType.getCanonicalText(), expectedRawType.getCanonicalText()),
                                          parameterTypeFix);
                 }
               }
@@ -125,7 +128,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Detect event handler method having non-void return type", this, "myDetectNonVoidReturnType");
+    return new SingleCheckboxOptionsPanel(IdeBundle.message("detect.event.handler.method.having.non.void.return.type"), this, "myDetectNonVoidReturnType");
   }
 
   private static void collectFieldTypeFixes(@NotNull XmlAttribute attribute,
@@ -193,7 +196,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Change parameter type of event handler method";
+      return IdeBundle.message("change.parameter.type.of.event.handler.method");
     }
 
     @Override

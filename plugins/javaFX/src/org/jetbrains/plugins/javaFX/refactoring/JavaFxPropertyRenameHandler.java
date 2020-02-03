@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.refactoring;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +65,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     if (reference == null) return;
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase &&
         ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", "Cannot rename", null);
+      CommonRefactoringUtil.showErrorHint(project, editor, IdeBundle.message("cannot.rename.built.in.property"),
+                                          IdeBundle.message("cannot.rename"), null);
       return;
     }
     if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {

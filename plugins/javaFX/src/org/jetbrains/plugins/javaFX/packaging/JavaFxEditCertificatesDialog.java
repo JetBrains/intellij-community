@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,7 +38,7 @@ public class JavaFxEditCertificatesDialog extends DialogWrapper {
 
   protected JavaFxEditCertificatesDialog(JComponent parent, JavaFxArtifactProperties properties, Project project) {
     super(parent, true);
-    setTitle("Choose Certificate");
+    setTitle(IdeBundle.message("choose.certificate"));
     init();
     final ActionListener actionListener = new ActionListener() {
       @Override
@@ -58,28 +59,29 @@ public class JavaFxEditCertificatesDialog extends DialogWrapper {
     myPanel.myKeypassTF.setText(keypass != null ? new String(Base64.getDecoder().decode(keypass), StandardCharsets.UTF_8) : "");
     final String storepass = properties.getStorepass();
     myPanel.myStorePassTF.setText(storepass != null ? new String(Base64.getDecoder().decode(storepass), StandardCharsets.UTF_8) : "");
-    myPanel.myKeystore.addBrowseFolderListener("Choose Keystore File", "Select file containing generated keys", project, BrowseFilesListener.SINGLE_FILE_DESCRIPTOR);
+    myPanel.myKeystore.addBrowseFolderListener(IdeBundle.message("choose.keystore.file"),
+                                               IdeBundle.message("select.file.containing.generated.keys"), project, BrowseFilesListener.SINGLE_FILE_DESCRIPTOR);
   }
 
   @Override
   protected void doOKAction() {
     if (myPanel.mySignedByKeyRadioButton.isSelected()) {
       if (StringUtil.isEmptyOrSpaces(myPanel.myAliasTF.getText())) {
-        Messages.showErrorDialog(myPanel.myWholePanel, "Alias should be non-empty");
+        Messages.showErrorDialog(myPanel.myWholePanel, IdeBundle.message("alias.should.be.non.empty"));
         return;
       }
       final String keystore = myPanel.myKeystore.getText();
       if (StringUtil.isEmptyOrSpaces(keystore)) {
-        Messages.showErrorDialog(myPanel.myWholePanel, "Path to the keystore file should be set");
+        Messages.showErrorDialog(myPanel.myWholePanel, IdeBundle.message("path.to.the.keystore.file.should.be.set"));
         return;
       }
       if (!new File(keystore).isFile()) {
-        Messages.showErrorDialog(myPanel.myWholePanel, "Keystore file should exist");
+        Messages.showErrorDialog(myPanel.myWholePanel, IdeBundle.message("keystore.file.should.exist"));
         return;
       }
       if (StringUtil.isEmptyOrSpaces(String.valueOf(myPanel.myKeypassTF.getPassword())) || 
           StringUtil.isEmptyOrSpaces(String.valueOf(myPanel.myStorePassTF.getPassword()))) {
-        Messages.showErrorDialog(myPanel.myWholePanel, "Passwords should be set");
+        Messages.showErrorDialog(myPanel.myWholePanel, IdeBundle.message("passwords.should.be.set"));
         return;
       }
     }

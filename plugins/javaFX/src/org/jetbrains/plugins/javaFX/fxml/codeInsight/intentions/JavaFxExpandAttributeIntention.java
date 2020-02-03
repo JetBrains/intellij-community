@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -62,7 +63,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
           }
           PsiClass tagClass = PsiUtil.resolveClassInType(tagType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)tagType).getBoxedType(parent) : tagType);
           if ((tagClass != null && JavaFxPsiUtil.isAbleToInstantiate(tagClass)) || descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {
-            setText("Expand '" + ((XmlAttribute)parent).getName() + "' to tag");
+            setText(IdeBundle.message("expand.0.to.tag", ((XmlAttribute)parent).getName()));
             return true;
           }
         }
@@ -74,6 +75,6 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Expand attribute to tag";
+    return IdeBundle.message("expand.attribute.to.tag");
   }
 }
