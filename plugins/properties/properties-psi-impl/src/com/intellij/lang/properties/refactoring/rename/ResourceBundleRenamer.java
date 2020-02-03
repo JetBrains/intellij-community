@@ -62,9 +62,12 @@ public class ResourceBundleRenamer extends AutomaticRenamer {
   protected String suggestNameForElement(PsiNamedElement element, NameSuggester suggester, String newClassName, String oldClassName) {
     final String elementName = element.getName();
     if (elementName == null) {
-      return null;
+      return newClassName;
     }
     final String baseClassNameSuffix = oldClassName.substring(myOldBaseName.length());
+    if (baseClassNameSuffix.length() >= newClassName.length()) {
+      return newClassName;
+    }
     final String newBaseName = newClassName.substring(0, newClassName.length() - baseClassNameSuffix.length());
     return newBaseName + elementName.substring(myOldBaseName.length());
   }
