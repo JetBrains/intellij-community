@@ -20,6 +20,7 @@ iml_module(
     },
     resources = ["resources"],
     test_srcs = ["testInternalSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
