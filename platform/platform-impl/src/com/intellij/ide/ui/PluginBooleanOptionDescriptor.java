@@ -3,7 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.NotABooleanOptionDescription;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 /**
  * @author Konstantin Bulenkov
  */
-final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
+final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription {
   private static final NotificationGroup PLUGINS_LIST_CHANGED_GROUP =
     new NotificationGroup("Plugins updates", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup PLUGINS_AUTO_SWITCH_GROUP =
