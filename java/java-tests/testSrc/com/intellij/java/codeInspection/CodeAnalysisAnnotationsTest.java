@@ -102,7 +102,7 @@ public class CodeAnalysisAnnotationsTest extends LightJavaCodeInsightFixtureTest
         .mapKeys(e -> e.getTextRange().getStartOffset())
         .mapValues(v -> "/*" + v + "*/")
         .grouping(Collectors.joining());
-      return StreamEx.ofKeys(map).prepend(0).append(stripped.length())
+      return StreamEx.ofKeys(map).sorted().prepend(0).append(stripped.length())
         .pairMap((prev, next) -> stripped.substring(prev, next) + map.getOrDefault(next, ""))
         .joining();
     }
