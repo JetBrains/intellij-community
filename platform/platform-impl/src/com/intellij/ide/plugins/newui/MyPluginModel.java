@@ -216,7 +216,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
-    return PluginEnabler.updatePluginEnabledState(pluginDescriptorsToDisable, pluginDescriptorsToEnable, parentComponent);
+    return PluginEnabler.updatePluginEnabledState(pluginDescriptorsToEnable, pluginDescriptorsToDisable, parentComponent);
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
