@@ -10,9 +10,10 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.PlatformUtils;
+import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.PySdkExtKt;
@@ -47,10 +48,12 @@ public class PyInterpreterInspection extends PyInspection {
     @Override
     public void visitPyFile(PyFile node) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-      if (module == null || isFileIgnored(node)) return;
+      if (module == null ||
+          isFileIgnored(node) ||
+          !UnknownSdkEditorNotification.getInstance(node.getProject()).allowProjectSdkNotifications()) return;
       final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
-      final boolean pyCharm = PlatformUtils.isPyCharm();
+      final boolean pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde();
 
       final String interpreterOwner = pyCharm ? "project" : "module";
       final List<LocalQuickFix> fixes = new ArrayList<>();
