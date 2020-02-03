@@ -31,7 +31,9 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Example"/>
+        <border type="none" title-resource-bundle="messages/VcsBundle" title-key="add.issue.dialog.issue.example.border.title">
+          <font/>
+        </border>
         <children>
           <component id="9b96a" class="javax.swing.JLabel">
             <constraints>
@@ -39,7 +41,7 @@
             </constraints>
             <properties>
               <labelFor value="b14a"/>
-              <text value="Issue ID:"/>
+              <text resource-bundle="messages/VcsBundle" key="add.issue.dialog.issue.id.label"/>
             </properties>
           </component>
           <component id="c12fe" class="javax.swing.JLabel">
@@ -48,7 +50,7 @@
             </constraints>
             <properties>
               <labelFor value="fbf3b"/>
-              <text value="Issue link:"/>
+              <text resource-bundle="messages/VcsBundle" key="add.issue.dialog.issue.link.label"/>
             </properties>
           </component>
           <component id="b14a" class="javax.swing.JTextField" binding="myExampleIssueIDTextField">
@@ -85,7 +87,7 @@
             </constraints>
             <properties>
               <labelFor value="c0b2d"/>
-              <text value="Issue ID (regular expression):"/>
+              <text resource-bundle="messages/VcsBundle" key="add.issue.dialog.issue.id.regular.expression"/>
             </properties>
           </component>
           <component id="c5953" class="javax.swing.JLabel">
@@ -94,7 +96,7 @@
             </constraints>
             <properties>
               <labelFor value="aa9b9"/>
-              <text value="Issue link (replacement expression):"/>
+              <text resource-bundle="messages/VcsBundle" key="add.issue.dialog.issue.link.replacement.expression"/>
             </properties>
           </component>
           <component id="c0b2d" class="javax.swing.JTextField" binding="myIssueIDTextField">

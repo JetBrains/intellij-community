@@ -4,12 +4,14 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.IssueNavigationLink;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,12 +53,12 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
           myExampleIssueLinkTextField.setText(matcher.replaceAll(myIssueLinkTextField.getText()));
         }
         else {
-          myExampleIssueLinkTextField.setText("<no match>");
+          myExampleIssueLinkTextField.setText(VcsBundle.getString("add.issue.dialog.issue.no.match"));
         }
       }
     }
     catch(Exception ex) {
-      myErrorLabel.setText("Invalid regular expression: " + ex.getMessage());
+      myErrorLabel.setText(MessageFormat.format(VcsBundle.getString("add.issue.dialog.invalid.regular.expression"), ex.getMessage()));
       myExampleIssueLinkTextField.setText("");
     }
     setOKActionEnabled(myErrorLabel.getText().equals(" "));
