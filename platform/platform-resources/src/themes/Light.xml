@@ -9,6 +9,8 @@
   <colors>
     <option name="CARET_ROW_COLOR" value="fcfaed" />
     <option name="LINE_NUMBERS_COLOR" value="adadad" />
+    <option name="SELECTION_BACKGROUND" value="b9d7fb" />
+    <option name="SELECTION_FOREGROUND" value="" />
     <option name="TEARLINE_COLOR" value="d4d4d4" />
     <option name="GUTTER_BACKGROUND" value="f2f2f2" />
   </colors>
@@ -288,6 +290,11 @@
     <option name="List/map to object conversion">
       <value>
         <option name="FOREGROUND" value="ff" />
+      </value>
+    </option>
+    <option name="MATCHED_BRACE_ATTRIBUTES">
+      <value>
+        <option name="BACKGROUND" value="d6d3d0" />
       </value>
     </option>
     <option name="PROPERTIES.KEY">
