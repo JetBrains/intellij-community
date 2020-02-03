@@ -115,7 +115,5 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   @Override
   protected void postProcess(PsiClass createdElement, String templateName, Map<String, String> customProperties) {
     super.postProcess(createdElement, templateName, customProperties);
-
-    moveCaretAfterNameIdentifier(createdElement);
   }
 }
