@@ -106,9 +106,8 @@ class StorageId(private val subdirName: String,
     }
   }
 
-  @JvmOverloads
-  fun getStorageFile(kind: String = ""): Path {
-    val storageFile = getFile(kind)
+  fun getStorageFile(): Path {
+    val storageFile = getFile()
     if (!storageFile.exists()) {
       IOUtil.deleteAllFilesStartingWith(File(subdir(), safeLogId))
     }
@@ -116,7 +115,8 @@ class StorageId(private val subdirName: String,
   }
 
   // do not forget to change cleanupStorageFiles method when editing this one
-  fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): File {
+  @JvmOverloads
+  fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): Path {
     val storageFile = if (forMapIndexStorage) getFileForMapIndexStorage(kind) else getFile(kind)
     if (!storageFile.exists()) {
       for (oldVersion in 0 until version) {
@@ -126,7 +126,7 @@ class StorageId(private val subdirName: String,
         StorageId(subdirName, logId, version, it).cleanupStorageFiles(kind, forMapIndexStorage)
       }
     }
-    return getFile(kind)
+    return getFile(kind).toPath()
   }
 
   private fun cleanupStorageFiles(kind: String, forMapIndexStorage: Boolean) {
