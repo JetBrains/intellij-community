@@ -19,6 +19,7 @@
  */
 package org.jetbrains.java.generate.view;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -103,9 +104,8 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(component, BorderLayout.CENTER);
       JLabel label =
-        new JLabel("<html>" +
-                   (!availableImplicits.isEmpty() ? "Available implicit variables:<br/>" + StringUtil.join(availableImplicits, ", ") + "<br/>": "") +
-                   (myHint != null ? myHint : "") + "</html>");
+        new JLabel(IdeBundle.message("html.0.1.html", !availableImplicits.isEmpty() ? "Available implicit variables:<br/>" + StringUtil.join(availableImplicits, ", ") + "<br/>" : "",
+                                     myHint != null ? myHint : ""));
       panel.add(label, BorderLayout.SOUTH);
       return panel;
     }

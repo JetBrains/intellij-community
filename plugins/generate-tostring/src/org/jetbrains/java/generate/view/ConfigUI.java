@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.generate.view;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LanguageTextField;
@@ -38,24 +39,26 @@ import java.awt.event.ActionListener;
  */
 public class ConfigUI extends JPanel {
 
-    private final JCheckBox fullyQualifiedName = new JCheckBox("Use fully qualified class name in code generation ($classname)");
-    private final JCheckBox enableMethods = new JCheckBox("Enable getters in code generation ($methods)");
-    private final JCheckBox moveCaretToMethod = new JCheckBox("Move caret to generated method");
+    private final JCheckBox fullyQualifiedName = new JCheckBox(
+      IdeBundle.message("use.fully.qualified.class.name.in.code.generation.classname"));
+    private final JCheckBox enableMethods = new JCheckBox(IdeBundle.message("enable.getters.in.code.generation.methods"));
+    private final JCheckBox moveCaretToMethod = new JCheckBox(IdeBundle.message("move.caret.to.generated.method"));
 
     private JRadioButton[] initialValueForReplaceDialog;
     private JRadioButton[] initialValueForNewMethodDialog;
 
-    private final JCheckBox filterConstant = new JCheckBox("Exclude constant fields");
-    private final JCheckBox filterEnum = new JCheckBox("Exclude enum fields");
-    private final JCheckBox filterStatic = new JCheckBox("Exclude static fields");
-    private final JCheckBox filterTransient = new JCheckBox("Exclude transient fields");
-    private final JCheckBox filterLoggers = new JCheckBox("Exclude logger fields (Log4j, JDK Logging, Jakarta Commons Logging)");
+    private final JCheckBox filterConstant = new JCheckBox(IdeBundle.message("exclude.constant.fields"));
+    private final JCheckBox filterEnum = new JCheckBox(IdeBundle.message("exclude.enum.fields"));
+    private final JCheckBox filterStatic = new JCheckBox(IdeBundle.message("exclude.static.fields"));
+    private final JCheckBox filterTransient = new JCheckBox(IdeBundle.message("exclude.transient.fields"));
+    private final JCheckBox filterLoggers = new JCheckBox(
+      IdeBundle.message("exclude.logger.fields"));
     private final LanguageTextField filterFieldName;
     private final LanguageTextField filterFieldType;
     private final LanguageTextField filterMethodName;
     private final LanguageTextField filterMethodType;
     private final JComboBox sortElementsComboBox = new JComboBox();
-    private final JCheckBox sortElements = new JCheckBox("Sort elements");
+    private final JCheckBox sortElements = new JCheckBox(IdeBundle.message("sort.elements"));
 
     /**
      * Constructor.
@@ -115,9 +118,9 @@ public class ConfigUI extends JPanel {
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(sortElementsComboBox);
         panel.add(innerPanel);
-        sortElementsComboBox.addItem("Ascending");
-        sortElementsComboBox.addItem("Descending");
-        sortElementsComboBox.addItem("Super class members first");
+        sortElementsComboBox.addItem(IdeBundle.message("ascending"));
+        sortElementsComboBox.addItem(IdeBundle.message("descending"));
+        sortElementsComboBox.addItem(IdeBundle.message("super.class.members.first"));
         constraint.gridwidth = GridBagConstraints.REMAINDER;
         constraint.fill = GridBagConstraints.BOTH;
         constraint.gridx = 0;
@@ -187,25 +190,25 @@ public class ConfigUI extends JPanel {
         innerPanel.add(Box.createHorizontalGlue());
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
-        innerPanel.add(new JLabel("Exclude fields by name (reg exp)"));
+        innerPanel.add(new JLabel(IdeBundle.message("exclude.fields.by.name.reg.exp")));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterFieldName);
         filterFieldName.setMinimumSize(JBUI.size(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
-        innerPanel.add(new JLabel("Exclude fields by type name (reg exp)"));
+        innerPanel.add(new JLabel(IdeBundle.message("exclude.fields.by.type.name.reg.exp")));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterFieldType);
         filterFieldType.setMinimumSize(JBUI.size(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
-        innerPanel.add(new JLabel("Exclude methods by name (reg exp)"));
+        innerPanel.add(new JLabel(IdeBundle.message("exclude.methods.by.name.reg.exp")));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterMethodName);
         filterMethodName.setMinimumSize(JBUI.size(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
-        innerPanel.add(new JLabel("Exclude methods by return type name (reg exp)"));
+        innerPanel.add(new JLabel(IdeBundle.message("exclude.methods.by.return.type.name.reg.exp")));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterMethodType);
         filterMethodType.setMinimumSize(JBUI.size(100, 20)); // avoid input field to small
