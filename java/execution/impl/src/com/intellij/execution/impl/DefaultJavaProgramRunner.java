@@ -60,6 +60,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.jetbrains.concurrency.Promises.resolvedPromise;
+
 public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<RunnerSettings> {
   private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
   private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
@@ -85,9 +87,17 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
   @Override
   public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
-    ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, state -> {
-      return doExecute(state, environment);
-    });
+    RunProfileState currentState = environment.getState();
+    if (currentState == null) return;
+
+    ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
+    executionManager
+      .executePreparationTasks(environment, currentState)
+      .onSuccess(preparedEnvironment -> {
+        executionManager.startRunProfile(environment, () -> {
+          return resolvedPromise(doExecute(currentState, environment));
+        });
+      });
   }
 
   // cannot be final - overridden in YourKit plugin

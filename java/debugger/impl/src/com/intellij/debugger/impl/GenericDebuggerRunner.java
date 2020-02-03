@@ -27,9 +27,10 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promises;
 
 import java.util.Objects;
+
+import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericDebuggerRunnerSettings> {
   @Override
@@ -51,9 +52,14 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       return;
     }
 
-    ExecutionManager.getInstance(environment.getProject()).startRunProfile(environment, () -> {
-      return Promises.resolvedPromise(doExecute(state, environment));
-    });
+    ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
+    executionManager
+      .executePreparationTasks(environment, state)
+      .onSuccess(preparedEnvironment -> {
+        executionManager.startRunProfile(environment, () -> {
+          return resolvedPromise(doExecute(state, environment));
+        });
+      });
   }
 
   // used externally

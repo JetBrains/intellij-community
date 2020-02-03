@@ -16,6 +16,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,12 +28,13 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
-  extends JavaCommandLineState implements RemoteConnectionCreator {
+  extends JavaCommandLineState implements RemoteConnectionCreator, TargetEnvironmentAwareRunProfileState {
 
   @NotNull protected final T myConfiguration;
 
   @Nullable private TargetEnvironmentFactory myTargetEnvironmentFactory;
   @Nullable private RemoteConnection myRemoteConnection;
+  private TargetEnvironment myPreparedRemoteEnvironment;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
     super(environment);
@@ -101,8 +103,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    TargetEnvironmentFactory runner = getTargetEnvironmentFactory(getEnvironment());
-    TargetEnvironmentRequest request = runner.createRequest();
+    TargetEnvironmentRequest request = getPreparedRemoteEnvironment().getRequest();
     if (myRemoteConnection != null) {
       final int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationAddress(), -1);
       if (remotePort > 0) {
@@ -113,11 +114,10 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
       }
     }
 
-    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, runner.getTargetConfiguration());
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, getTargetEnvironmentFactory(getEnvironment()).getTargetConfiguration());
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
-    EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-    TargetEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
-    Process process = remoteEnvironment.createProcess(targetedCommandLine, indicator);
+    TargetEnvironment remoteEnvironment = getPreparedRemoteEnvironment();
+    Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
 
     Map<String, String> content = targetedCommandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
@@ -132,6 +132,20 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
+  }
+
+  @Override
+  public TargetEnvironment prepareEnvironment(final ProgressIndicator progressIndicator) {
+    TargetEnvironmentFactory factory = getTargetEnvironmentFactory(getEnvironment());
+    return myPreparedRemoteEnvironment = factory.prepareRemoteEnvironment(factory.createRequest(), progressIndicator);
+  }
+
+  protected TargetEnvironment getPreparedRemoteEnvironment() {
+    if (myPreparedRemoteEnvironment != null) {
+      return myPreparedRemoteEnvironment;
+    }
+    TargetEnvironmentFactory factory = getTargetEnvironmentFactory(getEnvironment());
+    return myPreparedRemoteEnvironment = factory.prepareRemoteEnvironment(factory.createRequest(), new EmptyProgressIndicator());
   }
 
   @NotNull

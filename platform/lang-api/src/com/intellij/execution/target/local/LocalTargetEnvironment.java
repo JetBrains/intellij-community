@@ -21,6 +21,11 @@ public class LocalTargetEnvironment implements TargetEnvironment {
     myRequest = request;
   }
 
+  @Override
+  public TargetEnvironmentRequest getRequest() {
+    return myRequest;
+  }
+
   @NotNull
   @Override
   public TargetPlatform getRemotePlatform() {

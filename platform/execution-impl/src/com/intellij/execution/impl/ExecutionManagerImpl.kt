@@ -7,15 +7,18 @@ import com.intellij.execution.configuration.CompatibilityAwareRunProfile
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfiguration.RestartSingletonResult
 import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -23,11 +26,14 @@ import com.intellij.internal.statistic.IdeActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -43,7 +49,10 @@ import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
+import java.io.OutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
@@ -505,6 +514,65 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     }, 50)
   }
 
+  override fun executePreparationTasks(environment: ExecutionEnvironment,
+                                       currentState: RunProfileState): Promise<TargetEnvironment?> {
+    if (!(currentState is TargetEnvironmentAwareRunProfileState &&
+          environment.runProfile is TargetEnvironmentAwareRunProfile &&
+          Experiments.getInstance().isFeatureEnabled("runtime.environments"))) {
+      return resolvedPromise()
+    }
+    class MyProcessHandler : ProcessHandler() {
+      override fun destroyProcessImpl() {}
+      override fun detachProcessImpl() {}
+      override fun detachIsDefault(): Boolean {
+        return false
+      }
+
+      override fun getProcessInput(): OutputStream? {
+        return null
+      }
+
+      public override fun notifyProcessTerminated(exitCode: Int) {
+        super.notifyProcessTerminated(exitCode)
+      }
+    }
+
+    val processHandler = MyProcessHandler()
+    val consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(environment.project).console
+    ProcessTerminatedListener.attach(processHandler)
+    consoleView.attachToProcess(processHandler)
+    val executionResult = DefaultExecutionResult(consoleView, processHandler)
+    val descriptor = RunContentDescriptor(executionResult.executionConsole, executionResult.processHandler,
+                                          executionResult.executionConsole.component,
+                                          "Prepare " + environment.executionTarget.displayName)
+    val promise = AsyncPromise<TargetEnvironment>()
+    ApplicationManager.getApplication().executeOnPooledThread {
+      try {
+        executionResult.processHandler.startNotify()
+        val progressIndicator: ProgressIndicator = object : ProgressIndicatorBase() {
+          override fun setText(text: String) {
+            processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
+          }
+  
+          override fun setText2(text: String) {
+            processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
+          }
+        }
+        promise.setResult(currentState.prepareEnvironment(progressIndicator))
+      }
+      catch (t: Throwable) {
+        promise.setError(t)
+        processHandler.notifyTextAvailable(t.localizedMessage, ProcessOutputType.STDERR)
+      }
+      finally {
+        val exitCode = if (promise.isSucceeded) 0 else -1
+        processHandler.notifyProcessTerminated(exitCode)
+      }
+    }
+    RunContentManager.getInstance(environment.project).showRunContent(environment.executor, descriptor)
+    return promise
+  }
+  
   @ApiStatus.Internal
   fun executeConfiguration(environment: ExecutionEnvironment, showSettings: Boolean, assignNewId: Boolean = true) {
     val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
