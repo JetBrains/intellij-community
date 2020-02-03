@@ -11,6 +11,7 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -30,7 +31,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
     myBuilder = new JavaLightStubBuilder();
   }
 
@@ -630,6 +631,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   private void doTest(@Language("JAVA") String source, @Language("TEXT") String expected) {
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW);
     FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);
     assertFalse(fileNode.isParsed());
