@@ -30,7 +30,6 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
@@ -319,23 +318,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return template
   }
 
-  internal fun reloadRunConfigsFromArbitraryFile(file: VirtualFile) {
-    lock.write {
-      val oldSelectedId = selectedConfigurationId
-      val deletedAndAddedRunConfigs = rcInArbitraryFileManager.reloadRunConfigsFromFile(this, file)
-
-      removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs)
-
-      for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
-        addConfiguration(runConfig)
-
-        if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
-          selectedConfigurationId = oldSelectedId
-        }
-      }
-    }
-  }
-
   internal fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
     lock.write {
       val deletedConfigs = rcInArbitraryFileManager.deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
@@ -346,10 +328,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   // Paths in <code>deletedFilePaths</code> and <code>updatedFilePaths</code> may be not related to the project, use ProjectIndex.isInContent() when needed
   internal fun updateRunConfigsFromArbitraryFiles(deletedFilePaths: Collection<String>, updatedFilePaths: Collection<String>) {
     lock.write {
+      val oldSelectedId = selectedConfigurationId
+
       val deletedRunConfigs = rcInArbitraryFileManager.deleteRunConfigsFromFiles(deletedFilePaths)
       removeConfigurations(deletedRunConfigs)
 
-      val oldSelectedId = selectedConfigurationId
       for (filePath in updatedFilePaths) {
         val deletedAndAddedRunConfigs = rcInArbitraryFileManager.reloadRunConfigsFromFile(this, filePath)
 

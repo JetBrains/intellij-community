@@ -52,12 +52,7 @@ internal class RCInArbitraryFileManager(val project: Project) {
       }
       return DeletedAndAddedRunConfigs(emptyList(), emptyList())
     }
-    else {
-      return reloadRunConfigsFromFile(runManager, file)
-    }
-  }
 
-  internal fun reloadRunConfigsFromFile(runManager: RunManagerImpl, file: VirtualFile): DeletedAndAddedRunConfigs {
     if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
       return DeletedAndAddedRunConfigs(emptyList(), emptyList())
     }

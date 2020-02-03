@@ -20,7 +20,7 @@ class RCInArbitraryFileScanner : FilePropertyPusher<Nothing> {
 
   override fun acceptsFile(file: VirtualFile, project: Project): Boolean {
     if (isFileWithRunConfigs(file.path)) {
-      RunManagerImpl.getInstanceImpl(project).reloadRunConfigsFromArbitraryFile(file)
+      RunManagerImpl.getInstanceImpl(project).updateRunConfigsFromArbitraryFiles(emptyList(), listOf(file.path))
     }
     return false
   }
