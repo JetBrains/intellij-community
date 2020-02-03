@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -20,7 +21,7 @@ class VcsCloneComponentStub(private val checkoutProvider: CheckoutProvider,
     }
     // todo: replace with better help text
     // todo: or add additional button closer to vcs combo
-    panel.add(JLabel("Click \"$primaryActionText\" to continue"), BorderLayout.NORTH)
+    panel.add(JLabel(VcsBundle.message("action.clone.dialog.stub.click.to.continue", primaryActionText)), BorderLayout.NORTH)
     return panel
   }
 

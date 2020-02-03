@@ -552,7 +552,7 @@ public abstract class AbstractVcs extends StartedActivated {
     return VcsSynchronousProgressWrapper.compute(() -> {
       final Pair<CommittedChangeList, FilePath> pair = getCommittedChangesProvider().getOneList(vf, number);
       return pair != null ? pair.getFirst() : null;
-    }, getProject(), "Load Revision Contents");
+    }, getProject(), VcsBundle.message("title.load.revision.contents"));
   }
 
   @Override
