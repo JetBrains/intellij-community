@@ -153,7 +153,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (BoolUtils.isBooleanLiteral(condition)) {
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
-          holder.registerProblem(condition, "Condition is always " + condition.getText(), fix);
+          holder.registerProblem(condition, InspectionsBundle
+            .message("dataflow.message.constant.no.ref", condition.textMatches(PsiKeyword.TRUE) ? 1 : 0), fix);
         }
       }
 
@@ -175,7 +176,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       private void checkLoopCondition(PsiExpression condition) {
         condition = PsiUtil.skipParenthesizedExprDown(condition);
         if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
-          holder.registerProblem(condition, "Condition is always false", createSimplifyBooleanExpressionFix(condition, false));
+          holder.registerProblem(condition, InspectionsBundle.message("dataflow.message.constant.no.ref", 0), createSimplifyBooleanExpressionFix(condition, false));
         }
       }
     };
@@ -374,7 +375,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (chunk.myRange != null) {
         if (result.value() instanceof Boolean) {
           // report rare cases like a == b == c where "a == b" part is constant
-          String message = InspectionsBundle.message("dataflow.message.constant.condition", result.toString());
+          String message = InspectionsBundle.message("dataflow.message.constant.condition", 
+                                                     ((Boolean)result.value()).booleanValue() ? 1 : 0);
           reporter.registerProblem(expression, chunk.myRange, message);
           // do not add to reported anchors if only part of expression was reported
         }
@@ -776,7 +778,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
     String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
                                                "dataflow.message.constant.condition.when.reached" :
-                                               "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+                                               "dataflow.message.constant.condition", evaluatesToTrue ? 1 : 0);
     reporter.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
