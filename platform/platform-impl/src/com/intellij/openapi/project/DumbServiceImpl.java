@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -52,10 +51,7 @@ import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.DeprecationStripePanel;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Async;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -487,6 +483,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
       }
     };
+    task.setCancelText(createCancelButtonText(actionNames));
     ProgressManager.getInstance().run(task);
     myDialogIndicator = null;
     myDialogRequested = false;
@@ -496,10 +493,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return dialogCancelled.get();
   }
 
+  @Nls
   @NotNull
   private static String createDialogTitle(@NotNull List<String> actionNames) {
     if (actionNames.isEmpty()) {
-      return "Action";
+      return IdeBundle.message("dumb.dialog.action");
     }
     else if (actionNames.size() == 1) {
       return StringUtil.trimEnd(actionNames.get(0), "...");
@@ -519,6 +517,20 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
       }
       return result.toString();
+    }
+  }
+
+  @Nls
+  @NotNull
+  private static String createCancelButtonText(@NotNull List<String> actionNames) {
+    if (actionNames.isEmpty()) {
+      return IdeBundle.message("dumb.dialog.cancel.action");
+    }
+    else if (actionNames.size() == 1) {
+      return IdeBundle.message("dumb.dialog.cancel.0", StringUtil.trimEnd(actionNames.get(0), "..."));
+    }
+    else {
+      return IdeBundle.message("dumb.dialog.cancel.actions");
     }
   }
 
