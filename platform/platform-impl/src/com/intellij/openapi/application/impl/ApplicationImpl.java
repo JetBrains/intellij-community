@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.ApplicationLoader;
 import com.intellij.idea.Main;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -26,6 +27,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressResult;
 import com.intellij.openapi.progress.impl.ProgressRunner;
+import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -59,6 +61,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
+
+  /**
+   * This boolean controls whether to use thread(s) other than EDT for acquiring IW lock (i.e. running write actions) or not.
+   * If value is {@code false}, IW lock will be granted on EDT at all times, guaranteeing the same execution model as before
+   * IW lock introduction.
+   */
+  public static final boolean USE_NEW_THREADING_MODEL = Boolean.getBoolean(StartupUtil.USE_NEW_THREADING_MODEL_KEY);
 
   final ReadMostlyRWLock myLock;
 
@@ -137,6 +146,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     };
     EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
     myLock = new ReadMostlyRWLock();
+    // Acquire IW lock on EDT indefinitely in legacy mode
+    if (!USE_NEW_THREADING_MODEL) {
+      EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(() -> myLock.writeIntentLock());
+    }
+    else if (isUnitTestMode) {
+      myLock.writeIntentLock();
+    }
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
@@ -763,7 +779,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
-    LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), modal, expired, null, false);
+    // EDT == Write Thread in legacy mode
+    LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), modal, expired, null, !USE_NEW_THREADING_MODEL);
   }
 
   @Override
@@ -803,7 +820,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
-    if (myLock.isWriteIntendedByThisThread()) {
+    // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
+    if (myLock.isWriteIntendedByThisThread() && USE_NEW_THREADING_MODEL) {
       myLock.writeIntentUnlock();
       try {
         return action.compute();
@@ -892,6 +910,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable JComponent parentComponent,
                                             @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
                                             @NotNull Consumer<? super ProgressIndicator> action) {
+    if (!USE_NEW_THREADING_MODEL) {
+      // Use Potemkin progress in legacy mode; in the new model such execution will always move to a separate thread.
+      return runWriteActionWithClass(action.getClass(), ()->{
+        PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+        indicator.runInSwingThread(() -> action.consume(indicator));
+        return !indicator.isCanceled();
+      });
+    }
+
     final ProgressWindow progress = new ProgressWindow(cancelText != null, false, project, parentComponent, cancelText);
     // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
     // does not have a chance to run, and as a result the progress won't be disposed

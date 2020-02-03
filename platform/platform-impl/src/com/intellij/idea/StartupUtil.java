@@ -75,6 +75,8 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 
 public final class StartupUtil {
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
+  // See ApplicationImpl.USE_NEW_THREADING_MODEL
+  public static final String USE_NEW_THREADING_MODEL_KEY = "idea.use.new.model";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
@@ -308,16 +310,21 @@ public final class StartupUtil {
     }
 
     CompletableFuture<Void> instrumentationFuture = new CompletableFuture<>();
-    executor.execute(() -> {
-      Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading");
-      try {
-        WriteIntentLockInstrumenter.instrument();
-      }
-      finally {
-        activity.end();
-        instrumentationFuture.complete(null);
-      }
-    });
+    if (Boolean.getBoolean(USE_NEW_THREADING_MODEL_KEY)) {
+      executor.execute(() -> {
+        Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading");
+        try {
+          WriteIntentLockInstrumenter.instrument();
+        }
+        finally {
+          activity.end();
+          instrumentationFuture.complete(null);
+        }
+      });
+    }
+    else {
+      instrumentationFuture.complete(null);
+    }
 
     return CompletableFuture.allOf(initUiFuture, instrumentationFuture);
   }
