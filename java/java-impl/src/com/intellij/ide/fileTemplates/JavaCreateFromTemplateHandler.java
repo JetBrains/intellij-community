@@ -16,6 +16,7 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -24,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +43,9 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
                                                 String extension) throws IncorrectOperationException {
     if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
     final String name = "myClass" + "." + extension;
-    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, StdFileTypes.JAVA, content);
+    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, JavaLanguage.INSTANCE, content, false, false);
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW);
+
     if (!(psiFile instanceof PsiJavaFile)){
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
