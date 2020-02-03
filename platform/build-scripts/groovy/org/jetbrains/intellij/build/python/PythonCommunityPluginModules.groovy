@@ -19,12 +19,14 @@ class PythonCommunityPluginModules {
     "intellij.python.terminal",
     "intellij.python.reStructuredText",
   ]
+  static String pythonCommunityName = "python-ce"
+
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     def communityOnlyModules = [
       "intellij.python.community.plugin",
       "intellij.python.community.plugin.minor",
     ]
-    pythonPlugin("intellij.python.community.plugin", "python-ce", COMMUNITY_MODULES + communityOnlyModules) {
+    pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) {
       body.delegate = delegate
       body()
     }
