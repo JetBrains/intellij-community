@@ -316,7 +316,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
     Project project = refResult.get().first;
     if (project == null) {
-      if (options.showWelcomeScreen) {
+      if (options.getShowWelcomeScreen()) {
         WelcomeFrame.showIfNoProjectOpened();
       }
       return null;

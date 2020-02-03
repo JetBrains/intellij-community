@@ -15,7 +15,9 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                             */
                            val project: Project? = null,
                            val projectName: String? = null,
-                           val isDummyProject: Boolean = false) {
+                           val isDummyProject: Boolean = false,
+                           val sendFrameBack: Boolean = false,
+                           val showWelcomeScreen: Boolean = true) {
   constructor(project: Project) : this(false, project = project)
 
   constructor(forceOpenInNewFrame: Boolean = false, projectToClose: Project?) : this(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = true)
@@ -32,12 +34,6 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
 
   @JvmField
   var projectWorkspaceId: String? = null
-
-  @JvmField
-  var showWelcomeScreen = true
-
-  @JvmField
-  var sendFrameBack = false
 
   /** Used only by [ProjectUtil.openOrImport] */
   @JvmField

@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
 import org.jetbrains.annotations.ApiStatus
@@ -80,7 +81,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
           }
 
           task.run()
-        }, "Loading ${projectFile.fileName} Project", true, null, frame.rootPane)
+        }, IdeUICustomization.getInstance().projectMessage("project.loading.name", projectFile.fileName), true, null, frame.rootPane)
       }
     }
     return completed

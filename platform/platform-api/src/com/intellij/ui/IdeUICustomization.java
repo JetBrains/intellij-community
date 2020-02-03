@@ -28,8 +28,8 @@ public class IdeUICustomization {
   }
 
   @NotNull
-  public String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectBundle.BUNDLE) String key) {
-    return ProjectBundle.message(key);
+  public String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectBundle.BUNDLE) String key, Object @NotNull ... params) {
+    return ProjectBundle.message(key, params);
   }
 
   /**
