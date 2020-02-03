@@ -215,7 +215,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final JPanel rightTopPanel = new JPanel(new BorderLayout());
     final JPanel labelPanel = new JPanel();
     labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
-    labelPanel.add(new JLabel("Available Elements "));
+    labelPanel.add(new JLabel(ProjectBundle.message("available.elements")));
     final HyperlinkLabel link = new HyperlinkLabel("");
     link.setIcon(AllIcons.General.ContextHelp);
     link.setUseIconAsLink(true);

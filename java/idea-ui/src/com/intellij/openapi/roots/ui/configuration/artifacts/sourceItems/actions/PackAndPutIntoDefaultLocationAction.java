@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.action
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
@@ -38,7 +39,7 @@ public class PackAndPutIntoDefaultLocationAction extends PutIntoDefaultLocationA
     final String pathForJars = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.JAR_FILES);
     final Presentation presentation = e.getPresentation();
     if (jarName != null && pathForJars != null) {
-      presentation.setText("Pack Into " + DeploymentUtil.appendToPath(pathForJars, jarName + ".jar"));
+      presentation.setText(ProjectBundle.message("pack.into.0", DeploymentUtil.appendToPath(pathForJars, jarName + ".jar")));
       presentation.setVisible(true);
     }
     else {
