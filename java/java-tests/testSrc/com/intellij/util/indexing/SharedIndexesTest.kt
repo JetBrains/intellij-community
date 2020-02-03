@@ -4,7 +4,15 @@ package com.intellij.util.indexing
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.FileAttribute
+import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.GlobalSearchScope
@@ -12,32 +20,103 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.Processor
+import com.intellij.util.hash.ContentHashEnumerator
+import com.intellij.util.indexing.hash.FileContentHashIndex
+import com.intellij.util.indexing.hash.FileContentHashIndexExtension
+import com.intellij.util.indexing.hash.HashBasedMapReduceIndex
+import com.intellij.util.indexing.hash.SharedIndexChunkConfiguration
+import com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
+import com.intellij.util.indexing.impl.IndexStorage
+import com.intellij.util.indexing.impl.UpdatableValueContainer
+import com.intellij.util.indexing.impl.ValueContainerImpl
+import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage
+import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import java.nio.file.Path
 
+// please contact with Dmitry Batkovich in case of any problems
 @SkipSlowTestLocally
 class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
 
   private val tempDirPath: Path by lazy { FileUtil.createTempDirectory("shared-indexes-test", "").toPath() }
 
-  fun _testSharedIndexesForProject() {
+  fun testSharedFileContentHashIndex() {
+    val internalHashId = 123
+    val indexId = 456
+    val inputId = 100
+
+    val extension = FileContentHashIndexExtension(object : SharedIndexChunkConfiguration {
+      override fun tryEnumerateContentHash(hash: ByteArray?): Long {
+
+        return FileContentHashIndexExtension.getHashId(internalHashId, indexId)
+      }
+
+      override fun locateIndexes(project: Project, entry: MutableSet<OrderEntry>, indicator: ProgressIndicator) {
+        throw AssertionFailedError()
+      }
+
+      override fun <Value : Any?, Key : Any?> getChunk(indexId: ID<Key, Value>, chunkId: Int): HashBasedMapReduceIndex<Key, Value>? {
+        throw AssertionFailedError()
+      }
+
+      override fun <Value : Any?, Key : Any?> processChunks(indexId: ID<Key, Value>,
+                                                            processor: Processor<HashBasedMapReduceIndex<Key, Value>>) {
+        throw AssertionFailedError()
+      }
+
+      override fun closeEnumerator(enumerator: ContentHashEnumerator?, chunkId: Int) {
+        throw AssertionFailedError()
+      }
+    })
+    val index = FileContentHashIndex(extension, object : IndexStorage<Long?, Void?> {
+      val map: MutableMap<Long, UpdatableValueContainer<Void?>> = HashMap()
+
+      override fun clear() = map.clear()
+
+      override fun clearCaches() = Unit
+
+      override fun removeAllValues(key: Long, inputId: Int) {
+        map[key]!!.removeAssociatedValue(inputId)
+      }
+
+      override fun flush() = Unit
+
+      override fun addValue(key: Long?, inputId: Int, value: Void?) {
+        map.computeIfAbsent(key!!) { ValueContainerImpl() }.addValue(inputId, value)
+      }
+
+      override fun close() {}
+
+      override fun read(key: Long?): ValueContainer<Void?> {
+        return map[key] ?: SnapshotSingleValueIndexStorage.empty()
+      }
+    })
+
+    val virtualFile = myFixture.addFileToProject("A.java", "").virtualFile
+    index.update(inputId, FileContentImpl.createByFile(virtualFile)).compute()
+    assertEquals(internalHashId, FileContentHashIndexExtension.getInternalHashId(index.getHashId(inputId)))
+    assertEquals(indexId, FileContentHashIndexExtension.getIndexId(index.getHashId(inputId)))
+    assertEquals(inputId, index.toHashIdToFileIdFunction(indexId).`fun`(internalHashId))
+    index.dispose()
+  }
+
+  fun testSharedIndexesForProject() {
     try {
-      val javaPsiFile = myFixture.configureByText("A.java", """
+      val virtualFile = myFixture.configureByText("A.java", """
       public class A { 
         public void foo() {
           //Comment
         }
       }
-    """.trimIndent())
-
-      val virtualFile = javaPsiFile.virtualFile
+    """.trimIndent()).virtualFile
 
       val indexZip = tempDirPath.resolve(tempDirPath.fileName.toString() + ".zip")
 
       val chunks = arrayListOf<IndexChunk>()
-      chunks += IndexChunk(setOf(virtualFile), "source")
+      chunks += IndexChunk(setOf(virtualFile), "test-shared-index.ijx")
 
       IndexesExporter
         .getInstance(project)
@@ -52,9 +131,16 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
 
       val values = fileBasedIndex.getValues(IdIndex.NAME, IdIndexEntry("Comment", true), GlobalSearchScope.allScope(project))
       TestCase.assertEquals(UsageSearchContext.IN_COMMENTS.toInt(), values.single())
+      assertHashIndexContainsProperData((virtualFile as VirtualFileWithId).id)
     } finally {
       restartFileBasedIndex(null)
     }
+  }
+
+  private fun assertHashIndexContainsProperData(fileId: Int) {
+    val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
+    val hashId = index.getOrCreateFileContentHashIndex().getHashId(fileId)
+    assertTrue(hashId != FileContentHashIndexExtension.NULL_HASH_ID)
   }
 
   private fun restartFileBasedIndex(indexZip: Path?) {
@@ -64,11 +150,27 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     FileUtil.delete(PathManager.getIndexRoot())
-    System.setProperty("prebuilt.hash.index.zip", indexZip?.toAbsolutePath().toString())
+    val rootProp = indexZip?.toAbsolutePath()?.toString()
+    if (rootProp == null) {
+      System.clearProperty(OnDiskSharedIndexChunkLocator.ROOT_PROP)
+    } else {
+      System.setProperty(OnDiskSharedIndexChunkLocator.ROOT_PROP, rootProp)
+    }
 
     ApplicationManager.getApplication().runWriteAction {
+      IndexingStamp.flushCaches()
+      FileBasedIndex.getInstance().iterateIndexableFilesConcurrently({
+                                                                       dropIndexingStampsRecursively(it)
+                                                                       true
+                                                                     }, project, EmptyProgressIndicator())
       indexSwitcher.turnOn()
     }
+  }
+
+  private fun dropIndexingStampsRecursively(file: VirtualFile) {
+    file as VirtualFileSystemEntry
+    file.isFileIndexed = false;
+    IndexingStamp.dropIndexingTimeStamps(file.id)
   }
 
 }

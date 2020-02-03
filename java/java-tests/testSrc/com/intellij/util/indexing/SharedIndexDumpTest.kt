@@ -1,32 +1,83 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.index.SharedIndexExtensions
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.impl.cache.impl.id.IdIndex
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.hash.ContentHashEnumerator
+import com.intellij.util.indexing.hash.FileContentHashIndex
+import com.intellij.util.indexing.hash.FileContentHashIndexExtension
+import com.intellij.util.indexing.hash.SharedIndexChunk
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
+import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.snapshot.IndexedHashesSupport
+import com.intellij.util.indexing.snapshot.OneRecordValueContainer
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystem
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystemProvider
+import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
 
+private const val CHUNK_NAME = "source"
+
 @SkipSlowTestLocally
 class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
+  fun testOpenSharedIndexes() {
+    val indexZipPath = generateTestSharedIndex()
+    val chunkId = 1
+    val sourceFileId = (getSourceFile() as VirtualFileWithId).id
+
+    val hashIndex = FileContentHashIndex(FileContentHashIndexExtension(), object : IndexStorage<Long?, Void?> {
+      override fun clear() = throw AssertionFailedError()
+
+      override fun clearCaches() = throw AssertionFailedError()
+
+      override fun removeAllValues(key: Long, inputId: Int) = throw AssertionFailedError()
+
+      override fun flush() = throw AssertionFailedError()
+
+      override fun addValue(key: Long?, inputId: Int, value: Void?) = throw AssertionFailedError()
+
+      override fun close() = throw AssertionFailedError()
+
+      override fun read(key: Long?): ValueContainer<Void?> {
+        return OneRecordValueContainer(sourceFileId, null)
+      }
+    })
+
+    var readFileId: Int? = null
+    UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider()).use { zipFs ->
+      return ContentHashEnumerator(zipFs.getPath(CHUNK_NAME, "hashes")).use { hashEnumerator ->
+        val idIndexChunk = SharedIndexChunk(zipFs.getPath(CHUNK_NAME), IdIndex.NAME, chunkId, hashEnumerator, 0)
+        val findExtension = SharedIndexExtensions.findExtension(IdIndex.NAME.getExtension())
+        val extension = IdIndex.NAME.getExtension()
+        val index = idIndexChunk.open(findExtension, extension, hashIndex)
+        index.getData(IdIndexEntry("methodCall", true)).forEach { id, _ ->
+          readFileId = id
+          true
+        }
+
+        assertNotNull(readFileId)
+        assertEquals(sourceFileId, readFileId)
+      }
+    }
+  }
 
   fun testSharedIndexHashes() {
     val indexZipPath = generateTestSharedIndex()
     val indexFs = UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider())
 
-    val hashEnumerator = indexFs.getPath("source", "hashes")
+    val hashEnumerator = indexFs.getPath(CHUNK_NAME, "hashes")
 
-    val content = FileContentImpl.createByFile(myFixture.findClass("A").containingFile.virtualFile, project) as FileContentImpl
-    val hash = IndexedHashesSupport.getOrInitIndexedHash(content, false)
+    val hash = getSourceFileHash()
 
     val hashId = ContentHashEnumerator(hashEnumerator).use {
       it.tryEnumerate(hash)
@@ -37,11 +88,10 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testSharedIndexLayout() {
     val indexZipPath = generateTestSharedIndex()
-    val indexFs = UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider())
-
-    val root = indexFs.rootDirectories.first()
-
-    val actualFiles = Files.walk(root).map { it.toString() }.sorted().collect(Collectors.joining("\n")).trimStart()
+    val actualFiles = UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider()).use {
+      val root = it.rootDirectories.first()
+      Files.walk(root).map { p -> p.toString() }.sorted().collect(Collectors.joining("\n")).trimStart()
+    }
 
     assertEquals(actualFiles, """
       source
@@ -137,6 +187,18 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
+  @Suppress("UNCHECKED_CAST")
+  private fun <K, V> ID<K, V>.getExtension(): FileBasedIndexExtension<K, V> {
+    return FileBasedIndexExtension.EXTENSION_POINT_NAME.findFirstSafe{ it.name == this } as FileBasedIndexExtension<K, V>
+  }
+
+  private fun getSourceFileHash(): ByteArray {
+    val content = FileContentImpl.createByFile(getSourceFile(), project) as FileContentImpl
+    return IndexedHashesSupport.getOrInitIndexedHash(content, false)
+  }
+
+  private fun getSourceFile() = myFixture.findClass("A").containingFile.virtualFile
+
   private fun generateTestSharedIndex(): Path {
     val file = myFixture.configureByText("A.java", """
         public class A { 
@@ -155,7 +217,7 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
     val indexZipPath = tempDir.resolve("shared-index.zip")
 
     val chunks = arrayListOf<IndexChunk>()
-    chunks += IndexChunk(setOf(file), "source")
+    chunks += IndexChunk(setOf(file), CHUNK_NAME)
 
     IndexesExporter
       .getInstance(project)

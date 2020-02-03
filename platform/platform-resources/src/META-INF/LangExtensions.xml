@@ -1233,6 +1233,11 @@
     <editorFactoryListener implementation="com.intellij.internal.statistic.fileTypes.UpdateComponentEditorListener"/>
 
     <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
+
+    <applicationService serviceInterface="com.intellij.util.indexing.hash.SharedIndexChunkConfiguration"
+                        serviceImplementation="com.intellij.util.indexing.hash.SharedIndexChunkConfigurationImpl"/>
+    <sharedIndexChunkLocator implementation="com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator"/>
+    <sharedIndexLoader implementation="com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator"/>
   </extensions>
 </idea-plugin>
 
