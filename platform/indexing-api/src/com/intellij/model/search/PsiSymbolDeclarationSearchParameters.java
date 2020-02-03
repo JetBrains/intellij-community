@@ -2,11 +2,11 @@
 package com.intellij.model.search;
 
 import com.intellij.model.Symbol;
-import com.intellij.model.SymbolDeclaration;
+import com.intellij.model.psi.PsiSymbolDeclaration;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-public interface SymbolDeclarationSearchParameters extends SearchParameters<SymbolDeclaration> {
+public interface PsiSymbolDeclarationSearchParameters extends SearchParameters<PsiSymbolDeclaration> {
 
   /**
    * @return target symbol to search for declarations

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
 import com.intellij.util.Query;
@@ -16,7 +16,8 @@ import java.util.Collection;
  * <p/>
  * It's highly advised to use {@link SearchService} methods to build additional queries.
  *
- * @see SymbolReferenceSearcher
+ * @see PsiSymbolReferenceSearcher
+ * @see PsiSymbolDeclarationSearcher
  */
 public interface Searcher<P extends SearchParameters<R>, R> {
 

@@ -3,8 +3,8 @@ package com.intellij.model.search.impl
 
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.model.SymbolDeclaration
-import com.intellij.model.SymbolReference
+import com.intellij.model.psi.PsiSymbolDeclaration
+import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.search.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
@@ -17,12 +17,12 @@ class SearchServiceImpl : SearchService {
 
   override fun searchWord(project: Project, word: String): SearchWordQueryBuilder = SearchWordQueryBuilderImpl(project, word)
 
-  override fun searchSymbolReferences(project: Project, symbol: Symbol, searchScope: SearchScope): Query<SymbolReference> {
-    return searchParameters(DefaultSymbolReferenceSearchParameters(project, symbol.createPointer(), searchScope))
+  override fun searchPsiSymbolReferences(project: Project, symbol: Symbol, searchScope: SearchScope): Query<PsiSymbolReference> {
+    return searchParameters(DefaultPsiSymbolReferenceSearchParameters(project, symbol.createPointer(), searchScope))
   }
 
-  override fun searchSymbolDeclarations(project: Project, symbol: Symbol, searchScope: SearchScope): Query<SymbolDeclaration> {
-    return searchParameters(DefaultSymbolDeclarationSearchParameters(project, symbol.createPointer(), searchScope))
+  override fun searchPsiSymbolDeclarations(project: Project, symbol: Symbol, searchScope: SearchScope): Query<PsiSymbolDeclaration> {
+    return searchParameters(DefaultPsiSymbolDeclarationSearchParameters(project, symbol.createPointer(), searchScope))
   }
 
   private open class DefaultSymbolSearchParameters(
@@ -36,19 +36,19 @@ class SearchServiceImpl : SearchService {
     fun getSearchScope(): SearchScope = searchScope
   }
 
-  private class DefaultSymbolReferenceSearchParameters(
+  private class DefaultPsiSymbolReferenceSearchParameters(
     project: Project,
     pointer: Pointer<out Symbol>,
     searchScope: SearchScope
   ) : DefaultSymbolSearchParameters(project, pointer, searchScope),
-      SymbolReferenceSearchParameters
+      PsiSymbolReferenceSearchParameters
 
-  private class DefaultSymbolDeclarationSearchParameters(
+  private class DefaultPsiSymbolDeclarationSearchParameters(
     project: Project,
     pointer: Pointer<out Symbol>,
     searchScope: SearchScope
   ) : DefaultSymbolSearchParameters(project, pointer, searchScope),
-      SymbolDeclarationSearchParameters
+      PsiSymbolDeclarationSearchParameters
 
   override fun <T : Any?> merge(queries: List<Query<out T>>): Query<out T> {
     return when (queries.size) {

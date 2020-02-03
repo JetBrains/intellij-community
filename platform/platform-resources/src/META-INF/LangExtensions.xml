@@ -19,7 +19,7 @@
 
     <psi.declarationProvider implementation="com.intellij.model.psi.impl.DefaultPsiSymbolDeclarationProvider" order="last"/>
 
-    <searcher forClass="com.intellij.model.search.SymbolReferenceSearchParameters"
+    <searcher forClass="com.intellij.model.search.PsiSymbolReferenceSearchParameters"
               implementationClass="com.intellij.model.search.impl.PsiToSymbolSearcher"
               order="last"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SearcherQueryExecutor"/>
