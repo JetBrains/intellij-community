@@ -123,9 +123,9 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     // make SPACE check/uncheck selected rows
     @NonNls InputMap inputMap = myTable.getInputMap();
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), RefactoringBundle.message("enable.disable"));
     @NonNls final ActionMap actionMap = myTable.getActionMap();
-    actionMap.put("enable_disable", new AbstractAction() {
+    actionMap.put(RefactoringBundle.message("enable.disable"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;

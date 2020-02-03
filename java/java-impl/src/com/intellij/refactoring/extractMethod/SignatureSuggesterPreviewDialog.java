@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
@@ -52,17 +53,18 @@ class SignatureSuggesterPreviewDialog extends DialogWrapper {
     myOldCall = oldMethodCall;
     myNewCall = newMethodCall;
     myDuplicatesNumber = duplicatesNumber;
-    setTitle("Extract Parameters to Replace Duplicates");
-    setOKButtonText("Accept Signature Change");
-    setCancelButtonText("Keep Original Signature");
+    setTitle(RefactoringBundle.message("extract.parameters.to.replace.duplicates"));
+    setOKButtonText(RefactoringBundle.message("accept.signature.change"));
+    setCancelButtonText(RefactoringBundle.message("keep.original.signature"));
     init();
   }
 
   @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    return new JLabel("<html><b>No exact method duplicates were found</b>, though changed method as shown below has " +
-                      myDuplicatesNumber + " duplicate" + (myDuplicatesNumber > 1 ? "s" : "") + " </html>");
+    return new JLabel(RefactoringBundle.message(
+      "no.exact.method.duplicates.were.found", myDuplicatesNumber,
+      myDuplicatesNumber > 1 ? "s" : ""));
   }
 
   @Nullable

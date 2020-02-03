@@ -129,8 +129,8 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
       return;
     }
     if (Messages.showYesNoDialog(myProject,
-                                 "Project files have been changed.\nWould you like to to re-run the refactoring?",
-                                 "Re-Run Refactoring", null) == Messages.YES) {
+                                 RefactoringBundle.message("project.files.have.been.changed"),
+                                 RefactoringBundle.message("re.run.refactoring"), null) == Messages.YES) {
       close();
       myDiffPanel.tryExtractAgain();
     }

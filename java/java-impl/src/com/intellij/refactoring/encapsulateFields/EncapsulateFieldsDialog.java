@@ -392,9 +392,9 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     );
     // make SPACE check/uncheck selected rows
     @NonNls InputMap inputMap = myTable.getInputMap();
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), RefactoringBundle.message("enable.disable"));
     @NonNls ActionMap actionMap = myTable.getActionMap();
-    actionMap.put("enable_disable", new AbstractAction() {
+    actionMap.put(RefactoringBundle.message("enable.disable"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
@@ -417,8 +417,8 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
     );
     // make ENTER work when the table has focus
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "invokeImpl");
-    actionMap.put("invokeImpl", new AbstractAction() {
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), RefactoringBundle.message("invoke.impl"));
+    actionMap.put(RefactoringBundle.message("invoke.impl"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         TableCellEditor editor = myTable.getCellEditor();
