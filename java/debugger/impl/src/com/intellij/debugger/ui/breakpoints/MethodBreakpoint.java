@@ -134,7 +134,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     ApplicationManager.getApplication().invokeAndWait(
       () -> {
         ProgressWindow progress =
-          new ProgressWindow(true, false, debugProcess.getProject(), "Cancel emulation");
+          new ProgressWindow(true, false, debugProcess.getProject(), DebuggerBundle.message("cancel.emulation"));
         progress.setDelayInMillis(2000);
         indicatorRef.set(progress);
       });

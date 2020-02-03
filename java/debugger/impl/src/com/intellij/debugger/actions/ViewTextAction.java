@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.idea.ActionsBundle;
@@ -93,8 +94,8 @@ public class ViewTextAction extends XFetchValueActionBase {
       super(project, false);
       myStringNode = stringNode;
       setModal(false);
-      setCancelButtonText("Close");
-      setOKButtonText("Set");
+      setCancelButtonText(DebuggerBundle.message("close"));
+      setOKButtonText(DebuggerBundle.message("set"));
       getOKAction().setEnabled(false);
       setCrossClosesWindow(true);
 

@@ -189,7 +189,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    new DumbAwareAction("Toggle") {
+    new DumbAwareAction(DebuggerBundle.message("toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(table.getSelectedRowCount() == 1 && !table.isEditing());
@@ -219,8 +219,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
             return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
-        descriptor.setDescription("Please select a file to import.");
-        descriptor.setTitle("Import Capture Points");
+        descriptor.setDescription(DebuggerBundle.message("please.select.a.file.to.import"));
+        descriptor.setTitle(DebuggerBundle.message("import.capture.points"));
 
         VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
         if (ArrayUtil.isEmpty(files)) return;
@@ -236,7 +236,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
-            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+                                     DebuggerBundle.message("export.failed"));
           }
         }
       }
@@ -247,7 +248,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
-          .createSaveFileDialog(new FileSaverDescriptor("Export Selected Capture Points to File...", "", "xml"), e.getProject())
+          .createSaveFileDialog(new FileSaverDescriptor(DebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"), e.getProject())
           .save(null, null);
         if (wrapper == null) return;
 
@@ -267,7 +268,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+                                   DebuggerBundle.message("export.failed"));
         }
       }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -69,7 +70,7 @@ class InstancesView extends InstancesViewBase {
   private final MyNodeManager myNodeManager;
   private final Consumer<? super String> myWarningMessageConsumer;
 
-  private final JButton myFilterButton = new JButton("Filter");
+  private final JButton myFilterButton = new JButton(DebuggerBundle.message("filter"));
   private final FilteringProgressView myProgress = new FilteringProgressView();
 
   private final Object myFilteringTaskLock = new Object();

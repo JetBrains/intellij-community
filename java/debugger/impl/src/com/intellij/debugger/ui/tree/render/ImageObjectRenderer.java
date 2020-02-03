@@ -48,7 +48,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
   }
 
   static JComponent createIconViewer(@Nullable Icon icon) {
-    if (icon == null) return new JLabel("No data", SwingConstants.CENTER);
+    if (icon == null) return new JLabel(DebuggerBundle.message("no.data"), SwingConstants.CENTER);
     final int w = icon.getIconWidth();
     final int h = icon.getIconHeight();
     final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
