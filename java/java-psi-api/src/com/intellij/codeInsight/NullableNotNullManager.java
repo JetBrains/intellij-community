@@ -5,20 +5,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
 
@@ -326,8 +320,19 @@ public abstract class NullableNotNullManager {
       if (annotation != memberAnno && !qualifiedNames.contains(annotation.getQualifiedName())) return null;
       return annotation;
     }
-    if (type != null) {
-      return ContainerUtil.find(type.getAnnotations(), a -> qualifiedNames.contains(a.getQualifiedName()));
+    if (type != null && !(type instanceof PsiPrimitiveType)) {
+      Ref<PsiAnnotation> result = Ref.create(null);
+      InheritanceUtil.processSuperTypes(type, true, eachType -> {
+        for (PsiAnnotation annotation : eachType.getAnnotations()) {
+          String qualifiedName = annotation.getQualifiedName();
+          if (qualifiedNames.contains(qualifiedName)) {
+            result.set(annotation);
+            return false;
+          }
+        }
+        return !(type instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter;
+      });
+      return result.get();
     }
     return null;
   }
