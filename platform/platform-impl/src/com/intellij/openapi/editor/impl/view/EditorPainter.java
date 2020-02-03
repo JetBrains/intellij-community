@@ -29,6 +29,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.text.CharArrayUtil;
@@ -129,6 +130,7 @@ public class EditorPainter implements TextDrawingCallback {
     private final Color myBackgroundColor;
     private final int myMarginColumns;
     private final List<Consumer<Graphics2D>> myTextDrawingTasks = new ArrayList<>();
+    private final List<RangeHighlighter> myForegroundCustomHighlighters = new SmartList<>();
     private MarginPositions myMarginPositions;
 
     private Session(EditorView view, Graphics2D g) {
@@ -183,6 +185,7 @@ public class EditorPainter implements TextDrawingCallback {
       paintBorderEffect(myEditor.getHighlighter());
       paintBorderEffect(myDocMarkup);
       paintBorderEffect(myEditorMarkup);
+      paintForegroundCustomRenderers();
       paintBlockInlays();
       paintCaret();
       paintComposedTextDecoration();
@@ -556,12 +559,30 @@ public class EditorPainter implements TextDrawingCallback {
           int highlighterEnd = highlighter.getEndOffset();
           if (highlighterStart <= myEndOffset && highlighterEnd >= myStartOffset &&
               myClipDetector.rangeCanBeVisible(highlighterStart, highlighterEnd)) {
-            customRenderer.paint(myEditor, highlighter, myGraphics);
+            if (customRenderer.isForeground()) {
+              myForegroundCustomHighlighters.add(highlighter);
+            }
+            else {
+              customRenderer.paint(myEditor, highlighter, myGraphics);
+            }
           }
         }
         return true;
       });
       myGraphics.translate(0, -myYShift);
+    }
+
+    private void paintForegroundCustomRenderers() {
+      if (!myForegroundCustomHighlighters.isEmpty()) {
+        myGraphics.translate(0, myYShift);
+        for (RangeHighlighter highlighter : myForegroundCustomHighlighters) {
+          CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
+          if (customRenderer != null) {
+            customRenderer.paint(myEditor, highlighter, myGraphics);
+          }
+        }
+        myGraphics.translate(0, -myYShift);
+      }
     }
 
     private void paintLineMarkersSeparators(MarkupModelEx markupModel) {
