@@ -114,7 +114,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
   public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
   public void testPrimitivesInMethodReturningClass() { doTest(3, "byte", "boolean", "void"); }
-  public void testPrimitivesInRecordHeader() { doTest(2, "byte", "boolean"); }
+  public void testPrimitivesInRecordHeader() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW); doTest(2, "byte", "boolean"); }
 
   public void testNoClassKeywordsInLocalArrayInitializer() { doTest(0, "class", "interface", "enum"); }
   public void testNoClassKeywordsInFieldArrayInitializer() { doTest(0, "class", "interface", "enum"); }

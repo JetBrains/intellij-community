@@ -12,12 +12,16 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.security.SecureRandom;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class JavaStubBuilderTest extends LightIdeaTestCase {
@@ -34,6 +38,11 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   protected void tearDown() throws Exception {
     myBuilder = null;
     super.tearDown();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
   }
 
   public void testEmpty() {

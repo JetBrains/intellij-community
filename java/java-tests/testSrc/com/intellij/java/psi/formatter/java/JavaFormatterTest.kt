@@ -14,12 +14,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.util.IncorrectOperationException
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.LightProjectDescriptor
 
 /**
  * **Note:** this class is too huge and hard to use. It's tests are intended to be split in multiple more fine-grained
  * java formatting test classes.
  */
 class JavaFormatterTest : AbstractJavaFormatterTest() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_14
+  }
+
   fun testPaymentManager() {
     settings.KEEP_LINE_BREAKS = false
     doTest("paymentManager.java", "paymentManager_after.java")

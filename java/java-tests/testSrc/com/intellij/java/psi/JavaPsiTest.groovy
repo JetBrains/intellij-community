@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.IdempotenceChecker
@@ -14,6 +15,11 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14
+  }
+
   void testEmptyImportList() {
     assert configureFile("").importList != null
     assert configureFile("class C { }").importList != null

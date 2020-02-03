@@ -35,6 +35,6 @@ public class RemoveUnusedAssignmentTest extends LightQuickFixParameterizedTestCa
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_5;
+    return LanguageLevel.JDK_14_PREVIEW;
   }
 }

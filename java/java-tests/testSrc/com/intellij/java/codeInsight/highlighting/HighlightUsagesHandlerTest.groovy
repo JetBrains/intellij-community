@@ -9,6 +9,7 @@ import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -16,6 +17,11 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
  */
 class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = JavaTestUtil.relativeJavaTestDataPath
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14
+  }
 
   void testHighlightImport() {
     configureFile()

@@ -16,10 +16,19 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
 public class ConvertCompactConstructorToCanonicalActionTest extends LightIntentionActionTestCase {
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/compactToCanonical";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
   }
 }
