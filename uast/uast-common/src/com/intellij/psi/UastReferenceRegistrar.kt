@@ -130,6 +130,7 @@ fun PsiReferenceRegistrar.registerByUsageReferenceProvider(expressionPattern: UE
 
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
       val parentVariable = element.uastParent as? UVariable ?: return emptyArray()
+      if (!parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return emptyArray()
 
       val usage = getDirectVariableUsages(parentVariable).find { usage ->
         val refExpression = usage.toUElementOfType<UReferenceExpression>()
