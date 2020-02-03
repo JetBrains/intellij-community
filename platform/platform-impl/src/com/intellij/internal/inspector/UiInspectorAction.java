@@ -73,6 +73,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.font.TextAttribute;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -1012,6 +1013,19 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (Font.BOLD == (Font.BOLD & value.getStyle())) sb.append(" bold");
       if (Font.ITALIC == (Font.ITALIC & value.getStyle())) sb.append(" italic");
       if (value instanceof UIResource) sb.append(" UIResource");
+
+      Map<TextAttribute, ?> attributes = value.getAttributes();
+      StringBuilder attrs = new StringBuilder();
+      for (Map.Entry<TextAttribute, ?> entry : attributes.entrySet()) {
+        if (entry.getKey() == TextAttribute.FAMILY || entry.getKey() == TextAttribute.SIZE || entry.getValue() == null) continue;
+        if (attrs.length() > 0) attrs.append(",");
+        String name = ReflectionUtil.getField(TextAttribute.class, entry.getKey(), String.class, "name");
+        attrs.append(name != null ? name : entry.getKey()).append("=").append(entry.getValue());
+      }
+      if (attrs.length() > 0) {
+        sb.append(" {").append(attrs).append("}");
+      }
+
       setText(sb.toString());
     }
   }
