@@ -662,7 +662,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       finally {
         myInsideChange = false;
       }
-    }), "UI Designer Save", myNextSaveGroupId);
+    }), UIDesignerBundle.message("ui.designer.save"), myNextSaveGroupId);
     myNextSaveGroupId = new Object();
 
     fireHierarchyChanged();
@@ -1014,7 +1014,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
       DialogBuilder dialog = new DialogBuilder(myProject);
 
-      dialog.title("Form - " + myFile.getPresentableName()).dimensionKey("GuiDesigner.FormSource.Dialog");
+      dialog.title(UIDesignerBundle.message("form.0", myFile.getPresentableName())).dimensionKey(
+        UIDesignerBundle.message("gui.designer.form.source.dialog"));
       dialog.centerPanel(component).setPreferredFocusComponent(editor.getContentComponent());
       dialog.addOkAction();
 

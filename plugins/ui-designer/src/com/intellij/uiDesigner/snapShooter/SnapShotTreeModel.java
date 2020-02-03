@@ -3,6 +3,7 @@
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.openapi.ui.Messages;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
@@ -46,7 +47,8 @@ public class SnapShotTreeModel implements TreeModel {
   }
 
   private static void reportDisconnection(final SnapShotClient client) {
-    Messages.showMessageDialog("Disconnected from remote application", "Create Form Snapshot",
+    Messages.showMessageDialog(UIDesignerBundle.message("disconnected.from.remote.application"),
+                               UIDesignerBundle.message("create.form.snapshot"),
                                Messages.getErrorIcon());
     client.setDisconnected();
   }

@@ -118,7 +118,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     final TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
     if (defaultRenderer instanceof JComponent) {
       final JComponent component = (JComponent)defaultRenderer;
-      component.putClientProperty("html.disable", Boolean.TRUE);
+      component.putClientProperty(UIDesignerBundle.message("html.disable"), Boolean.TRUE);
     }
     selectKey(keyToPreselect);
 

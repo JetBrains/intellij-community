@@ -35,7 +35,7 @@ public class GuiFormFileType implements /*UIBased*/FileType {
   @Override
   @NotNull
   public String getName() {
-    return "GUI_DESIGNER_FORM";
+    return UIDesignerBundle.message("gui.designer.form");
   }
 
   @Override
