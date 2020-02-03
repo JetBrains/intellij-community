@@ -11,17 +11,17 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.unused.UnusedPropertyInspection;
+import com.intellij.codeInspection.unused.UnusedPropertyUtil;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.InspectedPropertyProblems;
-import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
+import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.function.Function;
 
 public class ResourceBundleEditorHighlighter implements BackgroundEditorHighlighter {
-  private final static Logger LOG = Logger.getInstance(ResourceBundleEditorHighlighter.class);
 
   private final ResourceBundleEditor myEditor;
 
@@ -67,20 +66,23 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
       ResourceBundle rb = myEditor.getResourceBundle();
       if (!rb.isValid()) return;
       final PsiFile containingFile = rb.getDefaultPropertiesFile().getContainingFile();
-      final InspectionVisitorWrapper[] visitors =
-        Arrays.stream(profileToUse.getInspectionTools(containingFile))
-          .filter(t -> profileToUse.isToolEnabled(HighlightDisplayKey.find(t.getShortName()), containingFile))
-          .map(InspectionToolWrapper::getTool)
-          .filter(ResourceBundleEditorInspection.class::isInstance)
-          .map(ResourceBundleEditorInspection.class::cast)
-          .map(i -> {
-            final HighlightDisplayKey key = HighlightDisplayKey.find(((InspectionProfileEntry)i).getShortName());
-            return new InspectionVisitorWrapper(i.buildPropertyGroupVisitor(rb),
-                                                profileToUse.getErrorLevel(key, containingFile).getSeverity(),
-                                                key);
-          })
-          .toArray(InspectionVisitorWrapper[]::new);
-
+      List<InspectionVisitorWrapper> visitors = new ArrayList<>();
+      HighlightDisplayKey unusedKey = HighlightDisplayKey.find(UnusedPropertyInspection.SHORT_NAME);
+      if (profileToUse.isToolEnabled(unusedKey, containingFile)) {
+        visitors.add(new InspectionVisitorWrapper(
+          UnusedPropertyUtil.buildPropertyGroupVisitor(rb),
+          profileToUse.getErrorLevel(unusedKey, containingFile).getSeverity(),
+          unusedKey));
+      }
+      HighlightDisplayKey incompleteKey = HighlightDisplayKey.find(IncompletePropertyInspection.TOOL_KEY);
+      if (profileToUse.isToolEnabled(incompleteKey, containingFile)) {
+        InspectionProfileEntry unwrappedTool = profileToUse.getUnwrappedTool(IncompletePropertyInspection.TOOL_KEY, containingFile);
+        assert unwrappedTool != null;
+        visitors.add(new InspectionVisitorWrapper(
+          ((IncompletePropertyInspection)unwrappedTool).buildPropertyGroupVisitor(rb),
+          profileToUse.getErrorLevel(incompleteKey, containingFile).getSeverity(),
+          incompleteKey));
+      }
       final List<PropertiesFile> files = rb.getPropertiesFiles();
       final Project project = rb.getProject();
 
@@ -89,8 +91,8 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
       queue.addLast(model.getRoot());
       while (!queue.isEmpty()) {
         final TreeElement treeElement = queue.pullFirst();
-        if (treeElement instanceof PropertyStructureViewElement) {
-          IProperty property = ((PropertyStructureViewElement)treeElement).getProperty();
+        if (treeElement instanceof PropertyBundleEditorStructureViewElement) {
+          IProperty property = ((PropertyBundleEditorStructureViewElement)treeElement).getProperty();
           if (property == null) continue;
           final String key = property.getKey();
           if (key == null) continue;
@@ -114,7 +116,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
                 }
               }
             }
-            ((PropertyStructureViewElement)treeElement).setInspectedPropertyProblems(allDescriptors.isEmpty()
+            ((PropertyBundleEditorStructureViewElement)treeElement).setInspectedPropertyProblems(allDescriptors.isEmpty()
                                               ? null
                                               : new InspectedPropertyProblems(allDescriptors.toArray(new Pair[0]),
                                                                               highlightTypes));

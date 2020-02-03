@@ -4,19 +4,14 @@
 
 package com.intellij.lang.properties.editor;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesHighlighter;
-import com.intellij.lang.properties.editor.inspections.InspectedPropertyProblems;
-import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
-import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +36,6 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     groupKeyTextAttributes.setFontType(Font.ITALIC);
     GROUP_KEY = TextAttributesKey.createTextAttributesKey("GROUP_KEY", groupKeyTextAttributes);
   }
-
-  private volatile InspectedPropertyProblems myInspectedPropertyProblems;
 
   public PropertyStructureViewElement(@NotNull IProperty property, @NotNull BooleanSupplier grouped) {
     myProperty = property;
@@ -90,18 +83,14 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     return EMPTY_ARRAY;
   }
 
-  public Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey> @NotNull [] getProblemDescriptors() {
-    return myInspectedPropertyProblems == null ? new Pair[0] : myInspectedPropertyProblems.getDescriptors();
-  }
-
-  public void setInspectedPropertyProblems(InspectedPropertyProblems inspectedPropertyProblems) {
-    myInspectedPropertyProblems = inspectedPropertyProblems;
+  protected TextAttributes getErrorTextAttributes(EditorColorsScheme colorsScheme) {
+    return null;
   }
 
   @Override
   @NotNull
   public ItemPresentation getPresentation() {
-    return new ResourceBundleEditorRenderer.TextAttributesPresentation() {
+    return new TextAttributesPresentation() {
 
       @Nullable
       @Override
@@ -132,11 +121,9 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
           (getPresentableName() != null && getPresentableName().isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
         if (getPsiElement() != null) {
-          if (myInspectedPropertyProblems != null) {
-            TextAttributes highlightingAttributes = myInspectedPropertyProblems.getTextAttributes(colorsScheme);
-            if (highlightingAttributes != null) {
-              return TextAttributes.merge(baseAttrs, highlightingAttributes);
-            }
+          TextAttributes highlightingAttributes = getErrorTextAttributes(colorsScheme);
+          if (highlightingAttributes != null) {
+            return TextAttributes.merge(baseAttrs, highlightingAttributes);
           }
         }
         return baseAttrs;

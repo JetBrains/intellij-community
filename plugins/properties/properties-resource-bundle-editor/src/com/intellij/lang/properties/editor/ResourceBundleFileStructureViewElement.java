@@ -64,7 +64,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
         remains.remove(propKey);
       }
       final IProperty representative = properties.iterator().next();
-      myElements.put(propKey, new PropertyStructureViewElement(representative, myGrouped));
+      myElements.put(propKey, new PropertyBundleEditorStructureViewElement(representative, myGrouped));
     }
 
     for (String remain : remains) {

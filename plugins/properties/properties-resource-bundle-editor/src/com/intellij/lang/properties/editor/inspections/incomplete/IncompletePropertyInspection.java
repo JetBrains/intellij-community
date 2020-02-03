@@ -23,7 +23,6 @@ import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
@@ -47,10 +46,9 @@ import java.util.function.Function;
 /**
  * @author Dmitry Batkovich
  */
-public class IncompletePropertyInspection extends LocalInspectionTool implements ResourceBundleEditorInspection,
-                                                                                 UnfairLocalInspectionTool {
+public class IncompletePropertyInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
   private static final String SUFFIXES_TAG_NAME = "suffixes";
-  private static final String TOOL_KEY = "IncompleteProperty";
+  public static final String TOOL_KEY = "IncompleteProperty";
 
   SortedSet<String> mySuffixes = new TreeSet<>();
 
@@ -77,7 +75,6 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   }
 
   @NotNull
-  @Override
   public Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
     return properties -> !isPropertyComplete(properties, resourceBundle)
     ? new ResourceBundleEditorProblemDescriptor[]{new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.GENERIC_ERROR_OR_WARNING,

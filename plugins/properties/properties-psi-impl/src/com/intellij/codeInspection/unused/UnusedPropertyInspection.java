@@ -1,13 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unused;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
-import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -17,29 +16,29 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
-import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * @author cdr
  */
-public class UnusedPropertyInspection extends PropertiesInspectionBase implements ResourceBundleEditorInspection {
+public class UnusedPropertyInspection extends PropertiesInspectionBase {
+  public static final String SHORT_NAME = "UnusedProperty";
   private static final Logger LOG = Logger.getInstance(UnusedPropertyInspection.class);
 
   @Override
   @NotNull
   public String getShortName() {
-    return "UnusedProperty";
+    return SHORT_NAME;
   }
 
   @Nullable
@@ -91,20 +90,7 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
     };
   }
 
-  @NotNull
-  @Override
-  public Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(resourceBundle.getDefaultPropertiesFile().getContainingFile());
-    if (module == null) return x -> null;
-    final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
-
-    return properties -> !isPropertyUsed((Property)properties[0], helper, true) ? new ResourceBundleEditorProblemDescriptor[]{
-      new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                                PropertiesBundle.message("unused.property.problem.descriptor.name"),
-                                                new RemovePropertiesFromAllLocalesFix((Property)properties[0]))} : null;
-  }
-
-  private static boolean isPropertyUsed(@NotNull Property property, @NotNull UnusedPropertiesSearchHelper helper, boolean isOnTheFly) {
+  public static boolean isPropertyUsed(@NotNull Property property, @NotNull UnusedPropertiesSearchHelper helper, boolean isOnTheFly) {
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
     if (original != null) {
       if (original.isCanceled()) return true;
@@ -159,7 +145,7 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
     };
   }
 
-  private static class UnusedPropertiesSearchHelper {
+  public static class UnusedPropertiesSearchHelper {
     private final GlobalSearchScope myOwnUseScope;
     private final Module myModule;
     private final PsiSearchHelper mySearchHelper;
@@ -180,39 +166,6 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
 
     PsiSearchHelper getSearchHelper() {
       return mySearchHelper;
-    }
-  }
-
-  private static class RemovePropertiesFromAllLocalesFix implements QuickFix<ResourceBundleEditorProblemDescriptor> {
-    private final SmartPsiElementPointer<Property> myRepresentativePointer;
-
-    private RemovePropertiesFromAllLocalesFix(Property property) {
-      myRepresentativePointer = SmartPointerManager.getInstance(property.getProject()).createSmartPsiElementPointer(property);
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return PropertiesBundle.message("remove.property.intention.text");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ResourceBundleEditorProblemDescriptor descriptor) {
-      final Property element = myRepresentativePointer.getElement();
-      if (element == null) return;
-      final String key = element.getKey();
-      if (key == null) return;
-      final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(myRepresentativePointer.getContainingFile());
-      LOG.assertTrue(file != null);
-      file.getResourceBundle()
-        .getPropertiesFiles()
-        .stream()
-        .flatMap(f -> f.findPropertiesByKey(key).stream())
-        .filter(Objects::nonNull)
-        .map(IProperty::getPsiElement)
-        .filter(FileModificationService.getInstance()::preparePsiElementForWrite)
-        .forEach(PsiElement::delete);
     }
   }
 }
