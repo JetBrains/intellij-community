@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ide.actions.project
 
@@ -31,7 +31,9 @@ internal class ModuleNamesListInspection : LocalInspectionTool() {
     return problems.toTypedArray()
   }
 
-  override fun getDisplayName() = ProjectBundle.message("module.name.inspection.display.name")
+  override fun getGroupDisplayName() = ProjectBundle.message("convert.module.groups.inspection.group.name")
+
+  override fun getDisplayName() = ProjectBundle.message("convert.module.groups.inspection.display.name")
 
   override fun getStaticDescription() = ""
 
