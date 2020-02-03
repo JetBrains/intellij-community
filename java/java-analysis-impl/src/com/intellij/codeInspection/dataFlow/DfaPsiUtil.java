@@ -283,16 +283,7 @@ public class DfaPsiUtil {
   }
 
   private static boolean isEnumPredefinedMethod(PsiMethod method) {
-    String methodName = method.getName();
-    if (("valueOf".equals(methodName) || "values".equals(methodName)) && method.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && containingClass.isEnum()) {
-        PsiParameter[] parameters = method.getParameterList().getParameters();
-        if ("values".equals(methodName)) return parameters.length == 0;
-        return parameters.length == 1 && parameters[0].getType().equalsToText(JAVA_LANG_STRING);
-      }
-    }
-    return false;
+    return CallMatcher.enumValueOf().methodMatches(method) || CallMatcher.enumValues().methodMatches(method);
   }
 
   public static boolean isInitializedNotNull(PsiField field) {
