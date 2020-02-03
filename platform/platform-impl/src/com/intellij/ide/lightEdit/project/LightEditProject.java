@@ -63,7 +63,6 @@ final class LightEditProject extends ProjectImpl {
   @Override
   public void init(@Nullable ProgressIndicator indicator) {
     createComponents(indicator);
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
   }
 
   @Override
