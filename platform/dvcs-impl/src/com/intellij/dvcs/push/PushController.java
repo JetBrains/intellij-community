@@ -4,7 +4,6 @@ package com.intellij.dvcs.push;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -21,6 +20,7 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +37,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -411,26 +410,6 @@ public final class PushController implements Disposable {
     @NotNull
     public List<String> getSkippedHandlers() {
       return mySkippedHandlers;
-    }
-  }
-
-  private static class StepsProgressIndicator extends DelegatingProgressIndicator {
-    private final int myTotalSteps;
-    private final AtomicInteger myFinishedTasks = new AtomicInteger();
-
-    StepsProgressIndicator(@NotNull ProgressIndicator indicator, int totalSteps) {
-      super(indicator);
-      myTotalSteps = totalSteps;
-    }
-
-    public void nextStep() {
-      myFinishedTasks.incrementAndGet();
-      setFraction(0);
-    }
-
-    @Override
-    public void setFraction(double fraction) {
-      super.setFraction((myFinishedTasks.get() + fraction) / (double) myTotalSteps);
     }
   }
 
