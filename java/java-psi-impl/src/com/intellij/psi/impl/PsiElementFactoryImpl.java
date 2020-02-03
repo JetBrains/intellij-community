@@ -113,18 +113,6 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @NotNull
   @Override
-  public PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
-    PsiUtil.checkIsIdentifier(myManager, name);
-    PsiJavaFile aFile = createDummyJavaFile("public record " + name + "() { }", LanguageLevel.JDK_14_PREVIEW);
-    PsiClass[] classes = aFile.getClasses();
-    if (classes.length != 1) {
-      throw new IncorrectOperationException("Incorrect record name \"" + name + "\".");
-    }
-    return classes[0];
-  }
-
-  @NotNull
-  @Override
   public PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException {
     return createClassInner("@interface", name);
   }

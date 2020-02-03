@@ -2,7 +2,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
@@ -140,29 +139,30 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return classes[0];
   }
 
+
+  @NotNull
+  public PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
+    return createRecordFromText("public record " + name + "() { }");
+  }
+
   @NotNull
   @Override
   public PsiRecordHeader createRecordHeaderFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
-    PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("record Record("+text+"){}"), LanguageLevel.JDK_14_PREVIEW);
-    PsiClass[] classes = aFile.getClasses();
-    if (classes.length != 1) {
-      throw new IncorrectOperationException("Incorrect record component '" + text + "'");
-    }
-    PsiRecordHeader header = classes[0].getRecordHeader();
+    PsiRecordHeader header = createRecordFromText("public record Record(" + text + ") { }").getRecordHeader();
     if (header == null) {
       throw new IncorrectOperationException("Incorrect record component '" + text + "'");
     }
     return header;
   }
 
-  @NotNull
-  protected PsiJavaFile createDummyJavaFile(String text, LanguageLevel level) {
-    PsiJavaFile aFile = (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject())
-      .createFileFromText("__dummy.java", JavaLanguage.INSTANCE, text, false, false);
-
-    aFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, level);
-    PsiFileFactoryImpl.markGenerated(aFile);
-    return aFile;
+  private @NotNull PsiClass createRecordFromText(@NotNull String text) {
+    JavaDummyElement dummyElement = new JavaDummyElement(text, DECLARATION, LanguageLevel.JDK_14_PREVIEW);
+    DummyHolder holder = DummyHolderFactory.createHolder(myManager, dummyElement, null);
+    PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiClass)) {
+      throw newException("Incorrect class '" + text + "'", holder);
+    }
+    return (PsiClass)element;
   }
 
   @NotNull
