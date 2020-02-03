@@ -26,7 +26,3 @@ class UnsupportedFeatures {
     String spaceEscapeSeq = <error descr="'\s' and '\' escape sequences are not supported at language level '1.4'">"\s"</error>;
   }
 }
-
-<error descr="Records are not supported at language level '1.4'">record</error> UnsuportedRecord(String s) {
-
-}
