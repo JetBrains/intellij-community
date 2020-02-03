@@ -223,6 +223,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return info.isInModuleSource(fileOrDir) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
   }
 
+  @Nullable
+  @Override
   public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return myDirectoryIndex.getSourceRootFolder(getInfoForFileOrDirectory(fileOrDir));
   }
