@@ -62,22 +62,17 @@ class LegacyModelRootsFilePointers(val project: Project) {
     )
   )
 
-  fun onVfsChange(oldUrl: String, newUrl: String?) {
-    // Here the workspace model updates it's state without notification to the message bus
+  fun onVfsChange(oldUrl: String, newUrl: String) {
+    // Here the workspace model updates its state without notification to the message bus
     //   because in the original implementation moving of roots doesn't fire any events.
     WorkspaceModel.getInstance(project).updateProjectModelSilent { diff ->
       for (i in pointers.indices) {
-        if (newUrl != null) {
-          val updateChain: Map<out TypedEntity, TypedEntity> = pointers[i].onVfsChange(oldUrl, newUrl, diff)
-          pointers.forEach {
-            // Update stored entities to the last snapshot
-            if (it.entityClass == pointers[i].entityClass) {
-              it.update(updateChain)
-            }
+        val updateChain: Map<out TypedEntity, TypedEntity> = pointers[i].onVfsChange(oldUrl, newUrl, diff)
+        pointers.forEach {
+          // Update stored entities to the last snapshot
+          if (it.entityClass == pointers[i].entityClass) {
+            it.update(updateChain)
           }
-        }
-        else {
-          pointers[i].removeUrls(oldUrl)
         }
       }
     }
@@ -133,17 +128,6 @@ private open class LegacyFilePointer<T, E : TypedEntity, M : ModifiableTypedEnti
   val modificator: M.(T, T) -> Unit
 ) {
   private val savedContainers = ArrayListMultimap.create<T, E>()
-
-  fun removeUrls(urlToRemove: String) {
-    val toRemove = mutableListOf<Pair<T, E>>()
-    savedContainers.forEach { existingUrlContainer, entity ->
-      val savedUrl = containerToUrl(existingUrlContainer)
-      if (FileUtil.startsWith(savedUrl, urlToRemove)) {
-        toRemove.add(existingUrlContainer to entity)
-      }
-    }
-    toRemove.forEach { savedContainers.remove(it.first, it.second) }
-  }
 
   fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<E, E> {
     val toAdd = mutableListOf<Pair<T, E>>()

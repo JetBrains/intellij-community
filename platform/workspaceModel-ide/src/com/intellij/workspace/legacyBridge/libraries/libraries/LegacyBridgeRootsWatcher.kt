@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
@@ -93,24 +92,18 @@ class LegacyBridgeRootsWatcher(
         updateRoots(currentRecursiveJarDirectories, oldUrl, newUrl)
       }
 
-      private fun updateRoots(map: MutableMap<VirtualFileUrl, Disposable>, oldUrl: String, newUrl: String?) {
+      private fun updateRoots(map: MutableMap<VirtualFileUrl, Disposable>, oldUrl: String, newUrl: String) {
         map.filter { it.key.url == oldUrl }.forEach { (url, disposable) ->
           map.remove(url)
-          if (newUrl != null) {
-            map[VirtualFileUrlManager.fromUrl(newUrl)] = disposable
-          }
+          map[VirtualFileUrlManager.fromUrl(newUrl)] = disposable
         }
       }
 
       /** Update stored urls after folder movement */
-      private fun getUrls(event: VFileEvent): Pair<String, String?>? {
+      private fun getUrls(event: VFileEvent): Pair<String, String>? {
         val oldUrl: String
-        val newUrl: String?
+        val newUrl: String
         when (event) {
-          is VFileDeleteEvent -> {
-            oldUrl = VfsUtilCore.pathToUrl(event.path)
-            newUrl = null
-          }
           is VFilePropertyChangeEvent -> {
             oldUrl = VfsUtilCore.pathToUrl(event.oldPath)
             newUrl = VfsUtilCore.pathToUrl(event.newPath)
