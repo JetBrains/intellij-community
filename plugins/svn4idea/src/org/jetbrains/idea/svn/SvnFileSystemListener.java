@@ -11,7 +11,6 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
@@ -29,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.Functions;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,12 +65,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   private static class MovedFileInfo {
-    private final Project myProject;
     private final File mySrc;
     private final File myDst;
 
-    private MovedFileInfo(@NotNull Project project, @NotNull File src, @NotNull File dst) {
-      myProject = project;
+    private MovedFileInfo(@NotNull File src, @NotNull File dst) {
       mySrc = src;
       myDst = dst;
     }
@@ -80,10 +76,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   @NotNull private final SvnVcs myVcs;
 
-  private final MultiMap<Project, AddedFileInfo> myAddedFiles = new MultiMap<>();
-  private final MultiMap<Project, File> myDeletedFiles = new MultiMap<>();
+  private final List<AddedFileInfo> myAddedFiles = new ArrayList<>();
+  private final List<File> myDeletedFiles = new ArrayList<>();
   private final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
-  private final Map<Project, List<VcsException>> myMoveExceptions = new HashMap<>();
+  private final List<VcsException> myMoveExceptions = new ArrayList<>();
   private final List<VirtualFile> myFilesToRefresh = new ArrayList<>();
   @Nullable private File myStorageForUndo;
   private final List<Couple<File>> myUndoStorageContents = new ArrayList<>();
@@ -106,15 +102,6 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private boolean isMyVcs(@NotNull VirtualFile file) {
     return VcsUtil.isFileForVcs(file, myVcs.getProject(), myVcs);
-  }
-
-  private void addToMoveExceptions(@NotNull VcsException e) {
-    List<VcsException> exceptionList = myMoveExceptions.get(myVcs.getProject());
-    if (exceptionList == null) {
-      exceptionList = new ArrayList<>();
-      myMoveExceptions.put(myVcs.getProject(), exceptionList);
-    }
-    exceptionList.add(handleMoveException(e));
   }
 
   @NotNull
@@ -141,22 +128,22 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
 
     if (!SvnUtil.isSvnVersioned(myVcs, srcFile.getParentFile())) {
-      myAddedFiles.putValue(myVcs.getProject(), new AddedFileInfo(toDir, copyName, null, false));
+      myAddedFiles.add(new AddedFileInfo(toDir, copyName, null, false));
       return null;
     }
 
     final Status fileStatus = getFileStatus(srcFile);
     if (fileStatus != null && fileStatus.is(StatusType.STATUS_ADDED)) {
-      myAddedFiles.putValue(myVcs.getProject(), new AddedFileInfo(toDir, copyName, null, false));
+      myAddedFiles.add(new AddedFileInfo(toDir, copyName, null, false));
       return null;
     }
 
     if (sameRoot(file.getParent(), toDir)) {
-      myAddedFiles.putValue(myVcs.getProject(), new AddedFileInfo(toDir, copyName, srcFile, false));
+      myAddedFiles.add(new AddedFileInfo(toDir, copyName, srcFile, false));
       return null;
     }
 
-    myAddedFiles.putValue(myVcs.getProject(), new AddedFileInfo(toDir, copyName, null, false));
+    myAddedFiles.add(new AddedFileInfo(toDir, copyName, null, false));
     return null;
   }
 
@@ -213,7 +200,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     // these leads to psi invalidation during refactoring inside write action
     // FileDocumentManager.getInstance().saveAllDocuments();
     if (isPendingAdd(toDir)) {
-      myMovedFiles.add(new MovedFileInfo(myVcs.getProject(), srcFile, dstFile));
+      myMovedFiles.add(new MovedFileInfo(srcFile, dstFile));
       return true;
     }
     else {
@@ -261,7 +248,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       }
     }
     catch (VcsException e) {
-      addToMoveExceptions(e);
+      myMoveExceptions.add(handleMoveException(e));
       return false;
     }
     return true;
@@ -445,7 +432,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
     else {
       if (isAboveSourceOfCopyOrMove(ioFile)) {
-        myDeletedFiles.putValue(myVcs.getProject(), ioFile);
+        myDeletedFiles.add(ioFile);
         return true;
       }
       if (status.is(StatusType.STATUS_ADDED)) {
@@ -457,7 +444,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
         }
       }
       else {
-        myDeletedFiles.putValue(myVcs.getProject(), ioFile);
+        myDeletedFiles.add(ioFile);
         // packages deleted from disk should not be deleted from svn (IDEADEV-16066)
         if (file.isDirectory() || isUndo()) return true;
       }
@@ -489,7 +476,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     for (MovedFileInfo file : myMovedFiles) {
       if (FileUtil.isAncestor(ioFile, file.mySrc, false)) return true;
     }
-    for (AddedFileInfo info : myAddedFiles.get(myVcs.getProject())) {
+    for (AddedFileInfo info : myAddedFiles) {
       if (info.myCopyFrom != null && FileUtil.isAncestor(ioFile, info.myCopyFrom, false)) return true;
     }
     return false;
@@ -539,7 +526,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     Status status = getFileStatus(targetFile);
 
     if (status == null || status.is(StatusType.STATUS_NONE, StatusType.STATUS_UNVERSIONED)) {
-      myAddedFiles.putValue(myVcs.getProject(), new AddedFileInfo(dir, name, null, recursive));
+      myAddedFiles.add(new AddedFileInfo(dir, name, null, recursive));
       return false;
     }
     else if (status.is(StatusType.STATUS_MISSING)) {
@@ -556,7 +543,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
           createRevertAction(targetFile, false).execute();
           return true;
         }
-        myAddedFiles.putValue(myVcs.getProject(), new AddedFileInfo(dir, name, null, recursive));
+        myAddedFiles.add(new AddedFileInfo(dir, name, null, recursive));
         return false;
       }
       catch (VcsException e) {
@@ -568,8 +555,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   private boolean isPendingAdd(final VirtualFile dir) {
-    final Collection<AddedFileInfo> addedFileInfos = myAddedFiles.get(myVcs.getProject());
-    for (AddedFileInfo i : addedFileInfos) {
+    for (AddedFileInfo i : myAddedFiles) {
       if (Comparing.equal(i.myDir, dir.getParent()) && i.myName.equals(dir.getName())) {
         return true;
       }
@@ -588,7 +574,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private void commandStarted() {
     myUndoingMove = false;
-    myMoveExceptions.remove(myVcs.getProject());
+    myMoveExceptions.clear();
   }
 
   @Override
@@ -601,17 +587,16 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private void commandFinished() {
     checkOverwrites();
-    if (myAddedFiles.containsKey(myVcs.getProject())) {
+    if (!myAddedFiles.isEmpty()) {
       processAddedFiles();
     }
     processMovedFiles();
-    if (myDeletedFiles.containsKey(myVcs.getProject())) {
+    if (!myDeletedFiles.isEmpty()) {
       processDeletedFiles();
     }
 
-    final List<VcsException> exceptionList = myMoveExceptions.get(myVcs.getProject());
-    if (exceptionList != null && !exceptionList.isEmpty()) {
-      AbstractVcsHelper.getInstance(myVcs.getProject()).showErrors(exceptionList, SvnBundle.message("move.files.errors.title"));
+    if (!myMoveExceptions.isEmpty()) {
+      AbstractVcsHelper.getInstance(myVcs.getProject()).showErrors(myMoveExceptions, SvnBundle.message("move.files.errors.title"));
     }
 
     if (!myFilesToRefresh.isEmpty()) {
@@ -620,14 +605,12 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   private void checkOverwrites() {
-    final Collection<AddedFileInfo> addedFileInfos = myAddedFiles.get(myVcs.getProject());
-    final Collection<File> deletedFiles = myDeletedFiles.get(myVcs.getProject());
-    if (addedFileInfos.isEmpty() || deletedFiles.isEmpty()) return;
-    final Iterator<AddedFileInfo> iterator = addedFileInfos.iterator();
+    if (myAddedFiles.isEmpty() || myDeletedFiles.isEmpty()) return;
+    final Iterator<AddedFileInfo> iterator = myAddedFiles.iterator();
     while (iterator.hasNext()) {
       AddedFileInfo addedFileInfo = iterator.next();
       final File ioFile = new File(addedFileInfo.myDir.getPath(), addedFileInfo.myName);
-      if (deletedFiles.remove(ioFile)) {
+      if (myDeletedFiles.remove(ioFile)) {
         iterator.remove();
       }
     }
@@ -788,8 +771,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   private void fillAddedFiles(List<? super VirtualFile> addedVFiles,
                               Map<VirtualFile, File> copyFromMap,
                               Set<? super VirtualFile> recursiveItems) {
-    final Collection<AddedFileInfo> addedFileInfos = myAddedFiles.remove(myVcs.getProject());
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myVcs.getProject());
+    final Collection<AddedFileInfo> addedFileInfos = new ArrayList<>(myAddedFiles);
+    myAddedFiles.clear();
 
     for (AddedFileInfo addedFileInfo : addedFileInfos) {
       final File ioFile = new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName);
@@ -800,7 +783,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       if (addedFile != null) {
         final Status fileStatus = getFileStatus(ioFile);
         if (fileStatus == null || !fileStatus.is(StatusType.STATUS_IGNORED)) {
-          boolean isIgnored = changeListManager.isIgnoredFile(addedFile);
+          boolean isIgnored = ChangeListManager.getInstance(myVcs.getProject()).isIgnoredFile(addedFile);
           if (!isIgnored) {
             addedVFiles.add(addedFile);
             copyFromMap.put(addedFile, addedFileInfo.myCopyFrom);
@@ -905,7 +888,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private void fillDeletedFiles(List<? super Pair<FilePath, WorkingCopyFormat>> deletedFiles, Collection<? super FilePath> deleteAnyway)
     throws VcsException {
-    final Collection<File> files = myDeletedFiles.remove(myVcs.getProject());
+    Collection<File> files = new ArrayList<>(myDeletedFiles);
+    myDeletedFiles.clear();
+
     for (final File file : files) {
       final Status status = new RepeatSvnActionThroughBusy() {
         @Override
@@ -930,10 +915,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     final Runnable runnable = () -> {
       for (Iterator<MovedFileInfo> iterator = myMovedFiles.iterator(); iterator.hasNext(); ) {
         MovedFileInfo movedFileInfo = iterator.next();
-        if (movedFileInfo.myProject == myVcs.getProject()) {
-          doMove(movedFileInfo.mySrc, movedFileInfo.myDst);
-          iterator.remove();
-        }
+        doMove(movedFileInfo.mySrc, movedFileInfo.myDst);
+        iterator.remove();
       }
     };
     runInBackground("Moving files in Subversion", runnable);
