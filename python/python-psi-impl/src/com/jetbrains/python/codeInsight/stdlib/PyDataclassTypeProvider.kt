@@ -148,9 +148,15 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         }
 
         val current = currentType.pyClass
-        if (PyKnownDecoratorUtil.hasUnknownDecorator(current, context)) break
+        val parameters = parseDataclassParameters(current, context)
 
-        val parameters = parseDataclassParameters(current, context) ?: continue
+        if (parameters == null) {
+          if (PyKnownDecoratorUtil.hasUnknownDecorator(current, context)) break else continue
+        }
+        else if (parameters.type.asPredefinedType == null) {
+          break
+        }
+
         seenInit = seenInit || parameters.init
         seenKeywordOnlyClass = seenKeywordOnlyClass || parameters.kwOnly
 
