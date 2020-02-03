@@ -44,6 +44,8 @@ public class StructureFilterPopupComponent
   private static final FileByNameComparator FILE_BY_NAME_COMPARATOR = new FileByNameComparator();
   private static final FilePathByPathComparator FILE_PATH_BY_PATH_COMPARATOR = new FilePathByPathComparator();
 
+  static final String STRUCTURE_FILTER_TEXT = VcsBundle.getString("vcs.log.filter.select.folders");
+
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogColorManager myColorManager;
 
@@ -342,7 +344,6 @@ public class StructureFilterPopupComponent
   }
 
   private class SelectFoldersAction extends DumbAwareAction {
-    static final String STRUCTURE_FILTER_TEXT = "Select Folders...";
 
     SelectFoldersAction() {
       super(STRUCTURE_FILTER_TEXT);

@@ -15,7 +15,10 @@
  */
 package git4idea.config;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import static git4idea.i18n.GitBundle.message;
 
 /**
  * The type of update to perform
@@ -24,20 +27,20 @@ public enum UpdateMethod {
   /**
    * Use default specified in the config file for the branch
    */
-  BRANCH_DEFAULT("Branch Default", "Branch Default"),
+  BRANCH_DEFAULT(message("settings.git.update.method.branch.default"), message("settings.git.update.method.branch.default")),
   /**
    * Merge fetched commits with local branch
    */
-  MERGE("Merge", "Merge incoming changes into the current branch"),
+  MERGE(message("settings.git.update.method.merge"), message("settings.git.update.method.merge.description")),
   /**
    * Rebase local commits upon the fetched branch
    */
-  REBASE("Rebase", "Rebase the current branch on top of incoming changes");
+  REBASE(message("settings.git.update.method.rebase"), message("settings.git.update.method.rebase.description"));
 
   @NotNull private final String myName;
   @NotNull private final String myPresentation;
 
-  UpdateMethod(@NotNull String name, @NotNull String presentation) {
+  UpdateMethod(@NotNull @Nls String name, @NotNull @Nls String presentation) {
     myName = name;
     myPresentation = presentation;
   }
