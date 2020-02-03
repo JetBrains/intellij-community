@@ -127,19 +127,36 @@ private open class LegacyFilePointer<T, E : TypedEntity, M : ModifiableTypedEnti
   val containerListGetter: E.() -> List<T>,
   val modificator: M.(T, T) -> Unit
 ) {
+  // A multimap the associates the "url container" to the typed entity
   private val savedContainers = ArrayListMultimap.create<T, E>()
 
   fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<E, E> {
     val toAdd = mutableListOf<Pair<T, E>>()
     val toRemove = mutableListOf<Pair<T, E>>()
+
+    // The updateChain is a map "TypedEntity to TypedEntity". It contains the association of the entity before the update
+    //   to the updated version. E.g.: let's say we're updating `MyEntity v.1` and we'll get `MyEntity v.2`. We should put these two
+    //   entities to the map (`MyEntity v.1` -> `MyEntity v.2`). So, when the next time (e.g. on the next iteration) `MyEntity` should be
+    //   updated, we search in the map the latest version of `MyEntity` and work with it. After the next update we put the updated version
+    //   back to the map (`MyEntity v.1` -> `MyEntity v.3`).
+    // This chain is created because in case [savedContainers] contains two instances of `MyEntity`, the second one won't be updated after
+    //   the first update. Of course, we can search in the EntityStore for the latest version, but it can take some time since not every
+    //   TypedEntity has an id.
     val updateChain = mutableMapOf<E, E>()
+
     savedContainers.forEach { existingUrlContainer, entity ->
-      val updatedEntity: E = updateChain[entity] ?: entity
-      val savedUrl = containerToUrl(existingUrlContainer)
-      if (FileUtil.startsWith(savedUrl, oldUrl)) {
+      val entityCurrentVersion: E = updateChain[entity] ?: entity
+      val savedUrl = containerToUrl(existingUrlContainer)   // Get the url as a String
+      if (FileUtil.startsWith(savedUrl, oldUrl)) {     // Check if the tracked url contains the updated file
         toRemove.add(existingUrlContainer to entity)
-        val newContainer = urlToContainer(existingUrlContainer, newUrl + savedUrl.substring(oldUrl.length))
-        val modifiedEntity = diff.modifyEntity(modifiableEntityClass, updatedEntity) {
+
+        // Take newUrl as a base and add the rest of the path
+        // So, if we rename `/root/myPath` to `/root/myNewPath`, the [savedUrl] would be `/root/myPath/contentFile` and
+        //   the [newTrackedUrl] - `/root/myNewPath/contentFile`
+        val newTrackedUrl = newUrl + savedUrl.substring(oldUrl.length)
+
+        val newContainer = urlToContainer(existingUrlContainer, newTrackedUrl)
+        val modifiedEntity = diff.modifyEntity(modifiableEntityClass, entityCurrentVersion) {
           this.modificator(existingUrlContainer, newContainer)
         }
         updateChain[entity] = modifiedEntity
@@ -160,6 +177,7 @@ private open class LegacyFilePointer<T, E : TypedEntity, M : ModifiableTypedEnti
     }
   }
 
+  /** See the comments in [onVfsChange] for the information about updateChain */
   fun update(chain: Map<*, *>) {
     val toAdd = mutableListOf<Pair<T, E>>()
     val toRemove = mutableListOf<Pair<T, E>>()
