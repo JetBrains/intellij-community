@@ -2005,12 +2005,12 @@ public final class UIUtil {
   }
 
   public static void layoutRecursively(@NotNull Component component) {
-    if (component instanceof JComponent) {
-      component.doLayout();
-      for (Component child : ((JComponent)component).getComponents()) {
-        layoutRecursively(child);
-      }
+    if (!(component instanceof JComponent)) {
+      return;
     }
+    forEachComponentInHierarchy(component, c -> {
+      component.doLayout();
+    });
   }
 
   @NotNull
@@ -2821,19 +2821,27 @@ public final class UIUtil {
   }
 
   public static void setNotOpaqueRecursively(@NotNull Component component) {
-    if (component instanceof JComponent) {
-      ((JComponent)component).setOpaque(false);
-      for (Component c : ((JComponent)component).getComponents()) {
-        setNotOpaqueRecursively(c);
-      }
+    if (!(component instanceof JComponent)) {
+      return;
     }
+    forEachComponentInHierarchy(component, c -> {
+      if (c instanceof JComponent) {
+        ((JComponent)c).setOpaque(false);
+      }
+    });
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
-    component.setBackground(bg);
+    forEachComponentInHierarchy(component, c -> {
+      c.setBackground(bg);
+    });
+  }
+
+  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<Component> action) {
+    action.consume(component);
     if (component instanceof Container) {
       for (Component c : ((Container)component).getComponents()) {
-        setBackgroundRecursively(c, bg);
+        forEachComponentInHierarchy(c, action);
       }
     }
   }
