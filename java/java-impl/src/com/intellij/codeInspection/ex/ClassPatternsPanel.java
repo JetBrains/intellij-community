@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -102,7 +103,7 @@ class ClassPatternsPanel extends JPanel {
                                                      int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         if (value instanceof String && ((String)value).isEmpty()) {
-          setText("constructors");
+          setText(InspectionsBundle.message("constructors"));
           setForeground(UIUtil.getInactiveTextColor());
         }
         else if (value instanceof String) {

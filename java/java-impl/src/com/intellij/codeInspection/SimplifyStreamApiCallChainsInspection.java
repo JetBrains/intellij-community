@@ -186,7 +186,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
                   if (startElement != null) {
                     holder.registerProblem(methodCall, new TextRange(startElement.getTextOffset() - methodCall.getTextOffset(),
                                                                      methodCall.getTextLength()),
-                                           "Can be replaced with '" + replacement + "' constructor",
+                                           InspectionsBundle.message("can.be.replaced.with.0.constructor", replacement),
                                            new SimplifyCallChainFix(new SimplifyCollectionCreationFix(replacement)));
                   }
                 }
@@ -285,7 +285,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify stream call chain";
+      return InspectionsBundle.message("simplify.stream.call.chain");
     }
 
     @Override
@@ -342,7 +342,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getName() {
-      return "Replace " + myQualifierCall + ".stream() with " + ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
+      return InspectionsBundle.message("replace.0.stream.with.1.2", myQualifierCall, ClassUtil.extractClassName(myClassName), myMethodName);
     }
 
     @Nullable
@@ -465,9 +465,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getName() {
-      return "Replace 'stream()." + myStreamMethod +
-             "()' with '" + myReplacementMethod + "()'" +
-             (myChangeSemantics ? " (may change semantics)" : "");
+      return InspectionsBundle
+        .message("replace.stream.0.with.1.2", myStreamMethod, myReplacementMethod, myChangeSemantics ? " (may change semantics)" : "");
     }
 
     @Override
@@ -533,9 +532,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getName() {
-      return "Replace 'collect(" + myCollector +
-             "())' with '" + myStreamSequenceStripped + "'" +
-             (myChangeSemantics ? " (may change semantics when result is null)" : "");
+      return InspectionsBundle.message("replace.collect.0.with.1.2", myCollector, myStreamSequenceStripped,
+                                       myChangeSemantics ? " (may change semantics when result is null)" : "");
     }
 
     @Override
@@ -606,7 +604,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getName() {
-      return "Replace 'filter()." + myFindMethodName + "().isPresent()' with 'anyMatch()'";
+      return InspectionsBundle.message("replace.filter.0.ispresent.with.anymatch", myFindMethodName);
     }
 
     @Override

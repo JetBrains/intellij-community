@@ -74,7 +74,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
                                                InspectionsBundle.message("inspection.notnull.field.not.initialized.option.setup"), true));
         }
         if (ownAnnotation) {
-          fixes.add(new DeleteElementFix(annotation, "Remove not-null annotation"));
+          fixes.add(new DeleteElementFix(annotation, InspectionsBundle.message("remove.not.null.annotation")));
         }
         if (isOnTheFly) {
           fixes.add(new InitializeFinalFieldInConstructorFix(field));

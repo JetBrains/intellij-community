@@ -79,11 +79,12 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Ignore simple setters", "IGNORE_BUILDER_PATTERN");
+    panel.addCheckbox(InspectionsBundle.message("ignore.simple.setters"), "IGNORE_BUILDER_PATTERN");
     LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
-                                                                                    "Maximal reported method visibility:",
+                                                                                    InspectionsBundle
+                                                                                      .message("maximal.reported.method.visibility"),
                                                                                     BorderLayout.WEST);
     panel.addComponent(component);
     return panel;

@@ -49,7 +49,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
            IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
            if (variable.getType().equals(getNormalizedType(copyVariable))) {
              holder.registerProblem(element2Highlight,
-                                    "Explicit type of local variable can be omitted",
+                                    InspectionsBundle.message("explicit.type.of.local.variable.can.be.omitted"),
                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                     new ReplaceWithVarFix());
            }
@@ -72,7 +72,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace explicit type with 'var'";
+      return InspectionsBundle.message("replace.explicit.type.with.var");
     }
 
     @Override

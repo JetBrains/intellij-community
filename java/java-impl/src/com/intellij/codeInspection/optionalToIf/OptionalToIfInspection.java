@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.optionalToIf;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamToLoop.ChainVariable;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
@@ -43,7 +40,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         if (operations == null || operations.size() < 1 || !(operations.get(0) instanceof SourceOperation)) return;
         OptionalToIfContext context = OptionalToIfContext.create(terminalCall);
         if (context == null) return;
-        holder.registerProblem(terminalCall, "Replace Optional with if statements", new ReplaceOptionalWithIfFix());
+        holder.registerProblem(terminalCall, InspectionsBundle.message("replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());
       }
     };
   }
@@ -168,7 +165,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Optional chain with if statements";
+      return InspectionsBundle.message("replace.optional.chain.with.if.statements");
     }
 
     @Override
