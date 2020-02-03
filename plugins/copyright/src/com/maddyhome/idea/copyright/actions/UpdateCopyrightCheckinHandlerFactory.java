@@ -4,6 +4,7 @@ package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
@@ -30,7 +31,7 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
     return new CheckinHandler() {
       @Override
       public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-        return new BooleanCommitOption(panel, "Update copyright", false, () -> getSettings().UPDATE_COPYRIGHT,
+        return new BooleanCommitOption(panel, VcsBundle.getString("before.checkin.update.copyright"), false, () -> getSettings().UPDATE_COPYRIGHT,
                                        value -> getSettings().UPDATE_COPYRIGHT = value);
       }
 

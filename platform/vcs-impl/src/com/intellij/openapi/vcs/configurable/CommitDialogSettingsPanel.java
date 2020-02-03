@@ -42,7 +42,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
     myProject = project;
     myMoveToFailedCommitChangeListModel = new EnumComboBoxModel<>(VcsShowConfirmationOption.Value.class);
     myMoveToFailedCommitChangeList.setRenderer(
-      SimpleListCellRenderer.create("", CommitDialogSettingsPanel::getConfirmationOptionText));
+      SimpleListCellRenderer.create("", VcsShowConfirmationOption::getConfirmationOptionText));
     myMoveToFailedCommitChangeList.setModel(myMoveToFailedCommitChangeListModel);
   }
 
@@ -118,16 +118,5 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
     Disposer.dispose(myCommitOptions);
   }
 
-  @NotNull
-  private static String getConfirmationOptionText(@NotNull VcsShowConfirmationOption.Value value) {
-    switch (value) {
-      case SHOW_CONFIRMATION:
-        return "Ask";
-      case DO_NOTHING_SILENTLY:
-        return "No";
-      case DO_ACTION_SILENTLY:
-        return "Yes";
-    }
-    throw new IllegalArgumentException("Unknown confirmation option " + value);
-  }
+
 }
