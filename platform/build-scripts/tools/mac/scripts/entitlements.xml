@@ -12,5 +12,13 @@
         <true/>
         <key>com.apple.security.cs.disable-executable-page-protection</key>
         <true/>
+        <key>com.apple.security.device.camera</key>
+        <true/>
+        <key>com.apple.security.device.microphone</key>
+        <true/>
+        <key>com.apple.security.device.usb</key>
+        <true/>
+        <key>com.apple.security.device.bluetooth</key>
+        <true/>
     </dict>
 </plist>
