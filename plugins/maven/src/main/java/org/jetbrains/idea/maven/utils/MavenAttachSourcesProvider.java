@@ -80,7 +80,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
             message.append("</html>");
 
             Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                                                      "Cannot download sources",
+                                                      MavenProjectBundle.message("cannot.download.sources"),
                                                       message.toString(),
                                                       NotificationType.WARNING),
                                      psiFile.getProject());

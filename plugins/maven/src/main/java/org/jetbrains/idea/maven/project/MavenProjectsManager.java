@@ -232,12 +232,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             else if ("#disable".equals(e.getDescription())) {
               final int result = Messages.showYesNoDialog(
                 myProject,
-                "Notification will be disabled for all projects.\n\n" +
-                "Settings | Appearance & Behavior | Notifications | " +
-                NON_MANAGED_POM_NOTIFICATION_GROUP_ID +
-                "\ncan be used to configure the notification.",
-                "Non-Managed Maven Project Detection",
-                "Disable Notification", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
+                MavenProjectBundle.message(
+                  "notification.will.be.disabled",
+                  NON_MANAGED_POM_NOTIFICATION_GROUP_ID),
+                MavenProjectBundle.message("non.managed.maven.project.detection"),
+                MavenProjectBundle.message("disable.notification"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
               if (result == Messages.YES) {
                 NotificationsConfigurationImpl.getInstanceImpl().changeSettings(
                   NON_MANAGED_POM_NOTIFICATION_GROUP_ID, NotificationDisplayType.NONE, false, false);

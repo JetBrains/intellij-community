@@ -21,9 +21,10 @@ package org.jetbrains.idea.maven.dom.model;
 
 import com.intellij.ide.presentation.Presentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.presentation.MavenDomRepositoryPresentationProvider;
 
-@Presentation(typeName = "Repository", icon = "MavenIcons.MavenPlugin", provider = MavenDomRepositoryPresentationProvider.class)
+@Presentation(typeName = MavenDomBundle.message("repository"), icon = "MavenIcons.MavenPlugin", provider = MavenDomRepositoryPresentationProvider.class)
 public interface MavenDomRepository extends MavenDomRepositoryBase {
   @NotNull
   MavenDomRepositoryPolicy getReleases();

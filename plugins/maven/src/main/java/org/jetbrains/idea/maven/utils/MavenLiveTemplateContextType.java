@@ -22,10 +22,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 public class MavenLiveTemplateContextType extends TemplateContextType {
   public MavenLiveTemplateContextType() {
-    super("MAVEN", "Maven");
+    super("MAVEN", MavenProjectBundle.message("maven"));
   }
 
   @Override

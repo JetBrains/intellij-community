@@ -31,14 +31,14 @@ public class MavenExecuteGoalDialog extends MavenEditGoalDialog {
   public MavenExecuteGoalDialog(@NotNull Project project, @Nullable Collection<String> history) {
     super(project, history);
 
-    setTitle("Execute Maven Goal");
+    setTitle(MavenRunnerBundle.message("execute.maven.goal"));
   }
 
   @NotNull
   @Override
   protected Action getOKAction() {
     Action action = super.getOKAction();
-    action.putValue(Action.NAME, "&Execute");
+    action.putValue(Action.NAME, MavenRunnerBundle.message("execute"));
     return action;
   }
 }

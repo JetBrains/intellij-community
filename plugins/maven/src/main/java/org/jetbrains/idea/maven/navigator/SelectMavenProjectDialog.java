@@ -20,6 +20,7 @@ import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -43,7 +44,7 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
 
   @Override
   protected Action @NotNull [] createActions() {
-    Action selectNoneAction = new AbstractAction("&None") {
+    Action selectNoneAction = new AbstractAction(MavenProjectBundle.message("none")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();

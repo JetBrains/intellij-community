@@ -34,7 +34,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
   private static void showUnsupportedNotification(@NotNull final Project project) {
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                     "Unsupported action",
+                     MavenProjectBundle.message("unsupported.action"),
                      "<html>Maven3 required to use Show Effective POM action. \n" +
                      "Please <a href='#'>select Maven3 home directory</a> or use \"Bundled (Maven 3)\"</html>",
                      NotificationType.ERROR,
@@ -59,7 +59,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
       if (s == null) { // null means UnsupportedOperationException
         new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                         "Error",
+                         MavenProjectBundle.message("error"),
                          "Failed to evaluate effective pom.",
                          NotificationType.ERROR).notify(project);
         return;

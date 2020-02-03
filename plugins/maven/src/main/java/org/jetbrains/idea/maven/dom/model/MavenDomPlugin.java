@@ -23,6 +23,7 @@ import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.model.presentation.MavenDomPluginPresentationProvider;
 
@@ -33,7 +34,7 @@ import org.jetbrains.idea.maven.dom.model.presentation.MavenDomPluginPresentatio
  * 4.0.0
  * </pre>
  */
-@Presentation(typeName = "Plugin", icon = "MavenIcons.MavenPlugin", provider = MavenDomPluginPresentationProvider.class)
+@Presentation(typeName = MavenDomBundle.message("plugin"), icon = "MavenIcons.MavenPlugin", provider = MavenDomPluginPresentationProvider.class)
 public interface MavenDomPlugin extends MavenDomElement, MavenDomArtifactCoordinates {
   @Override
   @Required(value = false, nonEmpty = true)

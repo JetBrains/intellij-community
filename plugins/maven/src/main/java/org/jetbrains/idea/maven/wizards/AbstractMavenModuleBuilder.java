@@ -81,7 +81,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public String getPresentableName() {
-    return "Maven";
+    return MavenWizardBundle.message("maven");
   }
 
   @Override
@@ -96,8 +96,8 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public String getDescription() {
-    return "Maven modules are used for developing <b>JVM-based</b> applications with dependencies managed by <b>Maven</b>. " +
-           "You can create either a blank Maven module or a module based on a <b>Maven archetype</b>.";
+    return MavenWizardBundle.message(
+      "maven.modules.are.used.for.developing");
   }
 
   @Override

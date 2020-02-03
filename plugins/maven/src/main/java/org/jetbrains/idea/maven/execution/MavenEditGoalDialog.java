@@ -43,7 +43,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
     myProject = project;
     myHistory = history;
 
-    setTitle("Edit Maven Goal");
+    setTitle(MavenRunnerBundle.message("edit.maven.goal"));
     setUpDialog();
     setModal(true);
     init();
@@ -95,7 +95,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
   @Override
   protected ValidationInfo doValidate() {
     if (workDirectoryField.getText().trim().isEmpty()) {
-      return new ValidationInfo("Working directory is empty", workDirectoryField);
+      return new ValidationInfo(MavenRunnerBundle.message("working.directory.is.empty"), workDirectoryField);
     }
 
     return null;

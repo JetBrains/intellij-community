@@ -182,7 +182,7 @@ public class MavenProjectsProcessor {
     }
     MavenLog.LOG.error(e);
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                     "Unable to import Maven project",
+                     MavenProjectBundle.message("unable.to.import.maven.project"),
                      "See logs for details",
                      NotificationType.ERROR
     ).addAction(ActionManager.getInstance().getAction("ShowLog")).notify(myProject);

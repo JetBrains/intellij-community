@@ -86,7 +86,7 @@ public class MavenResumeAction extends AnAction {
                            ProgramRunner runner,
                            ExecutionEnvironment environment,
                            MavenParsingContext context) {
-    super("Resume Build From Specified Module", null, AllIcons.RunConfigurations.RerunFailedTests);
+    super(MavenRunnerBundle.message("resume.build.from.specified.module"), null, AllIcons.RunConfigurations.RerunFailedTests);
     myRunner = runner;
     myEnvironment = environment;
     myContext = context;
@@ -208,7 +208,7 @@ public class MavenResumeAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     if (myResumeFromModuleName != null && myResumeModuleId != null) {
       e.getPresentation().setEnabled(true);
-      e.getPresentation().setText("Resume build from \"" + myResumeFromModuleName + "\"");
+      e.getPresentation().setText(MavenRunnerBundle.message("resume.build.from.0", myResumeFromModuleName));
     }
     else {
       e.getPresentation().setEnabled(false);
