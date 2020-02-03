@@ -67,7 +67,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val branchesTreeWithLogPanel = simplePanel()
   private val mainPanel = simplePanel().apply { DataManager.registerDataProvider(this, uiController) }
   private val branchesSearchFieldPanel = simplePanel()
-  private val branchesSearchField = Wrapper(tree.installSearchField(false, JBUI.Borders.emptyLeft(5)))
+  private val branchesSearchField = Wrapper(tree.installSearchField(JBUI.Borders.emptyLeft(5)))
 
   private val treeSelectionListener = TreeSelectionListener {
     if (!branchesTreeWithToolbarPanel.isVisible) return@TreeSelectionListener

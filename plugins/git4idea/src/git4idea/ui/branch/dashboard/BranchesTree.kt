@@ -168,8 +168,8 @@ internal class FilteringBranchesTree(project: Project,
     }
   }
 
-  override fun installSearchField(isOpaque: Boolean, textFieldBorder: Border?): SearchTextField {
-    val searchField = super.installSearchField(isOpaque, textFieldBorder)
+  override fun installSearchField(textFieldBorder: Border?): SearchTextField {
+    val searchField = super.installSearchField(textFieldBorder)
     component.searchField = searchField
     return searchField
   }

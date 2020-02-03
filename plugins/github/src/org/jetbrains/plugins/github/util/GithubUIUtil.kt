@@ -60,15 +60,6 @@ object GithubUIUtil {
 
   fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
 
-  fun setTransparentRecursively(component: Component) {
-    if (component is JComponent) {
-      component.isOpaque = false
-      for (c in component.components) {
-        setTransparentRecursively(c)
-      }
-    }
-  }
-
   fun getFontEM(component: JComponent): Float {
     val metrics = component.getFontMetrics(component.font)
     //em dash character

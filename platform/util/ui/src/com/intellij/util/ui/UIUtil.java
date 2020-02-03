@@ -2820,11 +2820,13 @@ public final class UIUtil {
     return maxWidthAnchor;
   }
 
-  /**
-   * @deprecated Not required.
-   */
-  @Deprecated
-  public static void setNotOpaqueRecursively(@SuppressWarnings("unused") @NotNull Component component) {
+  public static void setNotOpaqueRecursively(@NotNull Component component) {
+    if (component instanceof JComponent) {
+      ((JComponent)component).setOpaque(false);
+      for (Component c : ((JComponent)component).getComponents()) {
+        setNotOpaqueRecursively(c);
+      }
+    }
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {

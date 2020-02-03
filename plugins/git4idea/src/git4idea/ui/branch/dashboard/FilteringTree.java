@@ -37,12 +37,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
-import java.util.List;
 import java.util.*;
 
 public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
@@ -78,7 +76,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   }
 
   @NotNull
-  public SearchTextField installSearchField(boolean isOpaque, @Nullable Border textFieldBorder) {
+  public SearchTextField installSearchField(@Nullable Border textFieldBorder) {
     SearchTextField field = new SearchTextField(false) {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent e) {
@@ -97,19 +95,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       @Override
       public void updateUI() {
         super.updateUI();
-        setOpaqueRecursively(this, isOpaque);
+        UIUtil.setNotOpaqueRecursively(this);
         JBTextField editor = getTextEditor();
         if (textFieldBorder != null && editor !=null) {
           editor.setBorder(textFieldBorder);
-        }
-      }
-
-      private void setOpaqueRecursively(@NotNull Component component, boolean isOpaque) {
-        if (!(component instanceof JComponent)) return;
-        JComponent jComponent = (JComponent)component;
-        jComponent.setOpaque(isOpaque);
-        for (Component child : jComponent.getComponents()) {
-          setOpaqueRecursively(child, isOpaque);
         }
       }
     };
