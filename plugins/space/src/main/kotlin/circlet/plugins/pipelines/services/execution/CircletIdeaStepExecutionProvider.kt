@@ -16,17 +16,16 @@ class CircletIdeaStepExecutionProvider(
     reporting: LocalReporting,
     dockerEventsProcessContext: CoroutineContext,
     tracer: AutomationTracer,
-    failureChecker: FailureChecker
+    failureChecker: FailureChecker,
+    statusHub: StepExecutionStatusHub
 ) : StepExecutionProvider {
 
-    val local = LocalStepExecutionProviderImpl(lifetime, db, volumeProvider, docker, reporting, dockerEventsProcessContext, tracer, failureChecker)
+    val local = LocalStepExecutionProviderImpl(lifetime, db, volumeProvider, docker, reporting, dockerEventsProcessContext, tracer, failureChecker, statusHub)
 
     override suspend fun startExecution(stepExec: StepExecutionData<*>) {
         local.startExecution(stepExec)
     }
 
-    override fun subscribeIdempotently(handler: StepExecutionStatusUpdateHandler) {
-        local.subscribeIdempotently(handler)
-    }
-
 }
+
+

@@ -86,7 +86,9 @@ class CircletTaskRunner(val project: Project) {
             }
         }
 
-        val stepExecutionProvider = CircletIdeaStepExecutionProvider(lifetime, storage, volumeProvider, dockerFacade, reporting, dispatcher, tracer, failureChecker)
+        val statusHub = StepExecutionStatusHubImpl()
+
+        val stepExecutionProvider = CircletIdeaStepExecutionProvider(lifetime, storage, volumeProvider, dockerFacade, reporting, dispatcher, tracer, failureChecker, statusHub)
 
         val executionScheduler = object : StepExecutionScheduler {
 
@@ -116,7 +118,7 @@ class CircletTaskRunner(val project: Project) {
 
 
         val automationGraphEngineCommon = AutomationGraphEngineImpl(
-            stepExecutionProvider,
+            statusHub,
             storage,
             executionScheduler,
             SystemTimeTicker(),
