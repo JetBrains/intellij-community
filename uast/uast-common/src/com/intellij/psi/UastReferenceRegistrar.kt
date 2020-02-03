@@ -17,7 +17,6 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
 import com.intellij.util.text.StringSearcher
-import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
@@ -183,7 +182,7 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): List<PsiElement> 
       // we get identifiers and need to process their parents
       val uRef = element.getUastParentOfType<UReferenceExpression>(true)
       val expressionType = uRef?.getExpressionType()
-      if (expressionType != null && TypeUtils.isJavaLangString(expressionType)) {
+      if (expressionType != null && expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         val named = uRef.tryResolveNamed()
         if (PsiManager.getInstance(element.project).areElementsEquivalent(named, variablePsi)) {
           usages.add(uRef.sourcePsi)
