@@ -57,6 +57,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.beans.PropertyChangeListener;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -409,7 +410,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       Path ioFile = null;
       VirtualFile file = getCurrentFile();
       if (file != null) {
-        ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
+        try {
+          ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
+        }
+        catch (InvalidPathException error) {
+          // Sometimes presentable URLs, designed for showing texts in UI, aren't valid local filesystem paths.
+          // An error may happen not only for LightVirtualFile.
+          LOG.info(
+            String.format("Presentable URL %s of file %s can't be mapped on the local filesystem.", file.getPresentableUrl(), file),
+            error);
+        }
         fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
       frame.setFileTitle(fileTitle, ioFile);
