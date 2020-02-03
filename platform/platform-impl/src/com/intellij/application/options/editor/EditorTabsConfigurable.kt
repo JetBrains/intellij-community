@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.TABS_NONE
 import com.intellij.openapi.application.ApplicationBundle.message
-import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.layout.*
@@ -14,7 +14,11 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.math.max
 
-class EditorTabsConfigurable : BoundConfigurable(message("configurable.editor.tabs.display.name"), "reference.settingsdialog.IDE.editor.tabs"), EditorOptionsProvider {
+class EditorTabsConfigurable : BoundSearchableConfigurable(
+  message("configurable.editor.tabs.display.name"),
+  "reference.settingsdialog.IDE.editor.tabs",
+  ID
+), EditorOptionsProvider {
   private lateinit var myEditorTabPlacement: JComboBox<Int>
   private lateinit var myScrollTabLayoutInEditorCheckBox: JCheckBox
 
@@ -91,6 +95,4 @@ class EditorTabsConfigurable : BoundConfigurable(message("configurable.editor.ta
       UISettings.instance.fireUISettingsChanged()
     }
   }
-
-  override fun getId() = ID
 }

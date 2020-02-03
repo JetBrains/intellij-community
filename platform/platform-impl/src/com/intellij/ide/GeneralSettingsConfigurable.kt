@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.options.BoundCompositeConfigurable
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
@@ -43,7 +44,7 @@ internal val allOptionDescriptors = listOf(
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
-class GeneralSettingsConfigurable: BoundCompositeConfigurable<SearchableConfigurable>(
+class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<SearchableConfigurable>(
   IdeBundle.message("title.general"),
   "preferences.general"
 ), SearchableConfigurable {

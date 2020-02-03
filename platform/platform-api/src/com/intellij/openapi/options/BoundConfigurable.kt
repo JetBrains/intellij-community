@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options
 
 import com.intellij.openapi.Disposable
@@ -55,6 +55,11 @@ abstract class BoundConfigurable(@Nls private val displayName: String, @NonNls p
   override fun getHelpTopic(): String? = helpTopic
 }
 
+abstract class BoundSearchableConfigurable(displayName: String, helpTopic: String, private val _id: String = helpTopic)
+  : BoundConfigurable(displayName, helpTopic), SearchableConfigurable {
+  override fun getId(): String = _id
+}
+
 abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   displayName: String,
   helpTopic: String? = null
@@ -94,4 +99,9 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
       }
     }
   }
+}
+
+abstract class BoundCompositeSearchableConfigurable<T : UnnamedConfigurable>(displayName: String, helpTopic: String, private val _id: String = helpTopic)
+  : BoundCompositeConfigurable<T>(displayName, helpTopic), SearchableConfigurable {
+  override fun getId(): String = _id
 }
