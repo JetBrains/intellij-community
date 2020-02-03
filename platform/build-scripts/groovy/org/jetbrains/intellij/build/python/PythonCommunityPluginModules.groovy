@@ -18,6 +18,7 @@ class PythonCommunityPluginModules {
     "intellij.python.copyright",
     "intellij.python.terminal",
     "intellij.python.reStructuredText",
+    "intellij.python.sdk",
   ]
   static String pythonCommunityName = "python-ce"
 
