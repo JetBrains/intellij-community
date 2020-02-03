@@ -6,6 +6,7 @@ import com.intellij.DynamicBundle;
 import com.intellij.UtilBundle;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.UtilUiBundle;
 
 public class LanguageBundleListener implements ApplicationInitializedListener {
   @Override
@@ -17,5 +18,6 @@ public class LanguageBundleListener implements ApplicationInitializedListener {
     UtilBundle.loadBundleFromPlugin(pluginClassLoader);
     CommonBundle.loadBundleFromPlugin(pluginClassLoader);
     UIBundle.loadBundleFromPlugin(pluginClassLoader);
+    UtilUiBundle.loadBundleFromPlugin(pluginClassLoader);
   }
 }

@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/ui">
       <sourceFolder url="file://$MODULE_DIR$/ui/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ui/resources" type="java-resource" />
     </content>
     <orderEntry type="library" scope="PROVIDED" name="Mac" level="project" />
     <orderEntry type="inheritedJdk" />
