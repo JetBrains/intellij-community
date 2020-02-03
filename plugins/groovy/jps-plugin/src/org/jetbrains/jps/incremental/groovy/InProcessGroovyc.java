@@ -148,28 +148,30 @@ class InProcessGroovyc implements GroovycFlavor {
     PrintStream oldErr = System.err;
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
 
-    System.setOut(createStream(parser, ProcessOutputTypes.STDOUT, oldOut));
-    System.setErr(createStream(parser, ProcessOutputTypes.STDERR, oldErr));
+    PrintStream out = createStream(parser, ProcessOutputTypes.STDOUT, oldOut);
+    PrintStream err = createStream(parser, ProcessOutputTypes.STDERR, oldErr);
+    System.setOut(out);
+    System.setErr(err);
     Thread.currentThread().setContextClassLoader(loader);
     try {
       Class<?> runnerClass = loader.loadClass("org.jetbrains.groovy.compiler.rt.GroovycRunner");
       Method intMain = runnerClass.getDeclaredMethod("intMain2",
                                                      boolean.class, boolean.class, boolean.class,
                                                      String.class, String.class, String.class,
-                                                     Queue.class);
+                                                     Queue.class, PrintStream.class, PrintStream.class);
       JpsGroovySettings groovySettings = JpsGroovycRunner.getGroovyCompilerSettings(context);
       Integer exitCode = (Integer)intMain.invoke(null,
                                                  groovySettings.invokeDynamic, false, forStubs,
                                                  tempFile.getPath(), groovySettings.configScript, byteCodeTargetLevel,
-                                                 mailbox);
+                                                 mailbox, out, err);
       parser.notifyFinished(exitCode);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
     finally {
-      System.out.flush();
-      System.err.flush();
+      out.flush();
+      err.flush();
 
       System.setOut(oldOut);
       System.setErr(oldErr);
