@@ -321,12 +321,17 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   internal fun reloadRunConfigsFromArbitraryFile(file: VirtualFile) {
     lock.write {
+      val oldSelectedId = selectedConfigurationId
       val deletedAndAddedRunConfigs = rcInArbitraryFileManager.reloadRunConfigsFromFile(this, file)
 
       removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs)
 
       for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
         addConfiguration(runConfig)
+
+        if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
+          selectedConfigurationId = oldSelectedId
+        }
       }
     }
   }
@@ -344,6 +349,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       val deletedRunConfigs = rcInArbitraryFileManager.deleteRunConfigsFromFiles(deletedFilePaths)
       removeConfigurations(deletedRunConfigs)
 
+      val oldSelectedId = selectedConfigurationId
       for (filePath in updatedFilePaths) {
         val deletedAndAddedRunConfigs = rcInArbitraryFileManager.reloadRunConfigsFromFile(this, filePath)
 
@@ -351,6 +357,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
         for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
           addConfiguration(runConfig)
+
+          if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
+            selectedConfigurationId = oldSelectedId
+          }
         }
       }
     }
