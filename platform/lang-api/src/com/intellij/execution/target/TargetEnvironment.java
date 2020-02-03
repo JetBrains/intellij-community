@@ -34,7 +34,7 @@ public abstract class TargetEnvironment {
     return myRequest.getVolumes();
   }
 
-  protected final TargetEnvironmentRequest getRequest() {
+  public final TargetEnvironmentRequest getRequest() {
     return myRequest;
   }
 }
