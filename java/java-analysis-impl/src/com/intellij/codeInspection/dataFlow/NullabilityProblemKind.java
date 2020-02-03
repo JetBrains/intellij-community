@@ -179,7 +179,7 @@ public class NullabilityProblemKind<T extends PsiElement> {
     else if (parent instanceof PsiReturnStatement) {
       targetType = PsiTypesUtil.getMethodReturnType(parent);
     }
-    if (targetType != null && !PsiType.VOID.equals(targetType)) {
+    if (targetType != null && !PsiType.VOID.equals(targetType) && DfaPsiUtil.getTypeNullability(targetType) != Nullability.NULLABLE) {
       if (TypeConversionUtil.isPrimitiveAndNotNull(targetType)) {
         return createUnboxingProblem(context, expression);
       }
@@ -509,13 +509,13 @@ public class NullabilityProblemKind<T extends PsiElement> {
     }
     
     @NotNull
-    public String getMessage(Map<PsiExpression, DataFlowInstructionVisitor.ConstantResult> expressions) {
+    public String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
         throw new IllegalStateException("This problem kind has no message associated: " + myKind);
       }
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
       if (expression != null) {
-        if (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInstructionVisitor.ConstantResult.NULL) {
+        if (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInspectionBase.ConstantResult.NULL) {
           return myKind.myAlwaysNullMessage;
         }
       }

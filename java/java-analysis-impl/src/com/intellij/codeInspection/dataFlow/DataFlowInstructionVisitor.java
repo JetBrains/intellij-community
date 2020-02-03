@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.application.Application;
@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -387,44 +386,6 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     }
   }
 
-  enum ConstantResult {
-    TRUE, FALSE, NULL, UNKNOWN;
-
-    @NotNull
-    @Override
-    public String toString() {
-      return StringUtil.toLowerCase(name());
-    }
-
-    public Object value() {
-      switch (this) {
-        case TRUE:
-          return Boolean.TRUE;
-        case FALSE:
-          return Boolean.FALSE;
-        case NULL:
-          return null;
-        default:
-          throw new UnsupportedOperationException();
-      }
-    }
-
-    @NotNull
-    static ConstantResult fromDfType(@NotNull DfType dfType) {
-      if (dfType == DfTypes.NULL) return NULL;
-      if (dfType == DfTypes.TRUE) return TRUE;
-      if (dfType == DfTypes.FALSE) return FALSE;
-      return UNKNOWN;
-    }
-
-    @NotNull
-    static ConstantResult mergeValue(@Nullable ConstantResult state, @NotNull DfaMemoryState memState, @Nullable DfaValue value) {
-      if (state == UNKNOWN || value == null) return UNKNOWN;
-      ConstantResult nextState = fromDfType(memState.getUnboxedDfType(value));
-      return state == null || state == nextState ? nextState : UNKNOWN;
-    }
-  }
-  
   static class ExpressionChunk {
     final @NotNull PsiExpression myExpression;
     final @Nullable TextRange myRange;
