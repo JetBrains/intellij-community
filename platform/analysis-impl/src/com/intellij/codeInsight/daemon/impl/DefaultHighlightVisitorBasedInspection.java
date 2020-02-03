@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -62,7 +63,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     @NotNull
     @Override
     public String getDisplayName() {
-      return "Syntax error";
+      return IdeBundle.message("syntax.error");
     }
 
     @NotNull

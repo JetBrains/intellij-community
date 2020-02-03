@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeStyle.AbstractConvertLineSeparatorsAction;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,8 +51,8 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
           String presentableSeparators = StringUtil.join(allSorted, sep->StringUtil.escapeStringCharacters(sep), ", ");
           holder.registerProblem(
             file,
-            "Line separators in the current file (" + presentableSeparators + ") " +
-            "differ from the project defaults (" + StringUtil.escapeStringCharacters(projectLineSeparator) + ")",
+            IdeBundle.message("line.separators.in.the.current.file", presentableSeparators,
+                              StringUtil.escapeStringCharacters(projectLineSeparator)),
             new ChangeLineSeparatorFix());
         }
       }
@@ -62,7 +63,7 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Convert to project line separators";
+      return IdeBundle.message("convert.to.project.line.separators");
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -84,7 +85,7 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return myFix.getName() + (isShouldBeAppliedToInjectionHost() == ThreeState.NO ? " in injection" : "");
+    return myFix.getName() + (isShouldBeAppliedToInjectionHost() == ThreeState.NO ? IdeBundle.message("in.injection") : "");
   }
 
   @NotNull

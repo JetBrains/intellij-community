@@ -34,7 +34,7 @@ public class WorkspaceFileType implements InternalFileType {
   @Override
   @NotNull
   public String getName() {
-    return "IDEA_WORKSPACE";
+    return IdeBundle.message("idea.workspace");
   }
 
   @Override

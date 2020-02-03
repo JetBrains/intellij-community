@@ -116,7 +116,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
 
       if (!StartupUiUtil.isUnderDarcula()) {
-        myHelpButton.putClientProperty("JButton.buttonType", "help");
+        myHelpButton.putClientProperty(IdeBundle.message("jbutton.buttontype"), IdeBundle.message("help"));
       }
 
       int index = 0;

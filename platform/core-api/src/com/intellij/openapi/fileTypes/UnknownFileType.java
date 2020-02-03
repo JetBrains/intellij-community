@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,13 +30,13 @@ public class UnknownFileType implements FileType {
   @Override
   @NotNull
   public String getName() {
-    return "UNKNOWN";
+    return IdeBundle.message("unknown");
   }
 
   @Override
   @NotNull
   public String getDescription() {
-    return "Unknown";
+    return IdeBundle.message("unknown");
   }
 
   @Override
