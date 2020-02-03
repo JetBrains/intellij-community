@@ -7,9 +7,7 @@ import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.impl.ConsoleBuffer;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
@@ -123,7 +121,19 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull protected abstract String getForkMode();
 
-  @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
+  @NotNull
+  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+    appendForkInfo(executor);
+    appendRepeatMode();
+
+    OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(createCommandLine());
+    ProcessTerminatedListener.attach(processHandler);
+    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
+    if (searchForTestsTask != null) {
+      searchForTestsTask.attachTaskToProcess(processHandler);
+    }
+    return processHandler;
+  }
 
   public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;

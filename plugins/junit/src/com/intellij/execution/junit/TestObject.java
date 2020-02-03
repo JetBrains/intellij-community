@@ -8,11 +8,7 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit.testDiscovery.TestBySource;
 import com.intellij.execution.junit.testDiscovery.TestsByChanges;
-import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -407,20 +403,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getScopeForJUnit(configuration.getConfigurationModule().getModule(), configuration.getProject());
   }
 
-  @Override
-  @NotNull
-  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
-    appendForkInfo(executor);
-    appendRepeatMode();
-
-    OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(createCommandLine());
-    ProcessTerminatedListener.attach(processHandler);
-    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
-    if (searchForTestsTask != null) {
-      searchForTestsTask.attachTaskToProcess(processHandler);
-    }
-    return processHandler;
-  }
 
   @Override
   public void appendRepeatMode() throws ExecutionException {
