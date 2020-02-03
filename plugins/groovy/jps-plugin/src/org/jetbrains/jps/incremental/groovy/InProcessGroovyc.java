@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -28,10 +29,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
 /**
@@ -49,10 +47,13 @@ class InProcessGroovyc implements GroovycFlavor {
   private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
   private final Collection<String> myOutputs;
   private final boolean myHasStubExcludes;
+  private final boolean mySharedPool;
 
   InProcessGroovyc(Collection<String> outputs, boolean hasStubExcludes) {
     myOutputs = outputs;
     myHasStubExcludes = hasStubExcludes;
+    String sharedPool = System.getProperty("groovyc.in.process.shared.pool");
+    mySharedPool = sharedPool == null || Boolean.valueOf(sharedPool);
   }
 
   @Override
@@ -71,9 +72,10 @@ class InProcessGroovyc implements GroovycFlavor {
       return null;
     }
 
-    final Future<Void> future = ourExecutor.submit(() -> {
+    final ExecutorService executorService = mySharedPool ? SharedThreadPool.getInstance() : ourExecutor;
+    final Future<Void> future = executorService.submit(() -> {
       try {
-        runGroovycInThisProcess(loader, forStubs, context, tempFile, parser, byteCodeTargetLevel, mailbox);
+        runGroovycInThisProcess(loader, forStubs, context, tempFile, parser, byteCodeTargetLevel, mailbox, mySharedPool);
       }
       finally {
         if (mailbox != null) {
@@ -143,15 +145,18 @@ class InProcessGroovyc implements GroovycFlavor {
                                               File tempFile,
                                               final GroovycOutputParser parser,
                                               @Nullable String byteCodeTargetLevel,
-                                              @Nullable Queue<? super Object> mailbox) throws IOException {
-    PrintStream oldOut = System.out;
-    PrintStream oldErr = System.err;
+                                              @Nullable Queue<? super Object> mailbox,
+                                              boolean sharedPool) throws IOException {
+    PrintStream oldOut = sharedPool ? null : System.out;
+    PrintStream oldErr = sharedPool? null : System.err;
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
 
     PrintStream out = createStream(parser, ProcessOutputTypes.STDOUT, oldOut);
     PrintStream err = createStream(parser, ProcessOutputTypes.STDERR, oldErr);
-    System.setOut(out);
-    System.setErr(err);
+    if (!sharedPool) {
+      System.setOut(out);
+      System.setErr(err);
+    }
     Thread.currentThread().setContextClassLoader(loader);
     try {
       Class<?> runnerClass = loader.loadClass("org.jetbrains.groovy.compiler.rt.GroovycRunner");
@@ -173,8 +178,10 @@ class InProcessGroovyc implements GroovycFlavor {
       out.flush();
       err.flush();
 
-      System.setOut(oldOut);
-      System.setErr(oldErr);
+      if (!sharedPool) {
+        System.setOut(oldOut);
+        System.setErr(oldErr);
+      }
       Thread.currentThread().setContextClassLoader(oldLoader);
     }
   }
@@ -334,7 +341,9 @@ class InProcessGroovyc implements GroovycFlavor {
   }
 
   @NotNull
-  private static PrintStream createStream(GroovycOutputParser parser, Key<?> type, PrintStream overridden) throws IOException {
+  private static PrintStream createStream(@NotNull GroovycOutputParser parser,
+                                          @NotNull Key<?> type,
+                                          @Nullable("null means not overridden") PrintStream overridden) throws IOException {
     final Thread thread = Thread.currentThread();
     OutputStream out = new OutputStream() {
       ByteArrayOutputStream line = new ByteArrayOutputStream();
@@ -342,7 +351,7 @@ class InProcessGroovyc implements GroovycFlavor {
 
       @Override
       public void write(int b) throws IOException {
-        if (Thread.currentThread() != thread) {
+        if (overridden != null && Thread.currentThread() != thread) {
           overridden.write(b);
           return;
         }
@@ -362,7 +371,7 @@ class InProcessGroovyc implements GroovycFlavor {
 
       @Override
       public void flush() throws IOException {
-        if (Thread.currentThread() != thread) {
+        if (overridden != null && Thread.currentThread() != thread) {
           overridden.flush();
           return;
         }
