@@ -38,7 +38,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   private JCheckBox checkboxProduceExceptionErrorMessages;
   private JComboBox checksumPolicyCombo;
   private JComboBox failPolicyCombo;
-  private JComboBox pluginUpdatePolicyCombo;
   private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
@@ -56,8 +55,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     fillOutputLevelCombobox();
     fillChecksumPolicyCombobox();
     fillFailureBehaviorCombobox();
-    fillPluginUpdatePolicyCombobox();
-
     setAnchor(myMultiProjectBuildFailPolicyLabel);
   }
 
@@ -76,12 +73,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   private void fillChecksumPolicyCombobox() {
     ComboBoxUtil.setModel(checksumPolicyCombo, checksumPolicyComboModel,
                           Arrays.asList(MavenExecutionOptions.ChecksumPolicy.values()),
-                          each -> Pair.create(each.getDisplayString(), each));
-  }
-
-  private void fillPluginUpdatePolicyCombobox() {
-    ComboBoxUtil.setModel(pluginUpdatePolicyCombo, pluginUpdatePolicyComboModel,
-                          Arrays.asList(MavenExecutionOptions.PluginUpdatePolicy.values()),
                           each -> Pair.create(each.getDisplayString(), each));
   }
 

@@ -51,7 +51,7 @@
                 </constraints>
                 <properties>
                   <focusable value="false"/>
-                  <text value="&amp;Update"/>
+                  <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.repositories.update"/>
                 </properties>
               </component>
             </children>
