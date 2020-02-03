@@ -4,6 +4,7 @@ package com.intellij.refactoring.typeMigration.inspections;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -45,10 +46,10 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Report variables", "checkVariables");
-    panel.addCheckbox("Report method chains", "checkChains");
-    panel.addCheckbox("Report return types", "checkReturnTypes");
-    panel.addCheckbox("Erase @javax.annotations.Nullable from converted functions", "ignoreJavaxNullable");
+    panel.addCheckbox(JavaCoreBundle.message("report.variables"), "checkVariables");
+    panel.addCheckbox(JavaCoreBundle.message("report.method.chains"), "checkChains");
+    panel.addCheckbox(JavaCoreBundle.message("report.return.types"), "checkReturnTypes");
+    panel.addCheckbox(JavaCoreBundle.message("erase.javax.annotations.nullable.from.converted.functions"), "ignoreJavaxNullable");
     return panel;
   }
 
@@ -288,7 +289,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       else {
         presentation = TypeMigrationProcessor.getPresentation(element);
       }
-      return "Migrate " + presentation + " type to '" + myTargetType.getCanonicalText(false) + "'";
+      return JavaCoreBundle.message("migrate.0.type.to.1", presentation, myTargetType.getCanonicalText(false));
     }
 
     @Nls

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -92,6 +93,6 @@ public class ConvertAtomicToLongAdderIntention extends PsiElementBaseIntentionAc
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert to LongAdder";
+    return JavaCoreBundle.message("convert.to.long.adder");
   }
 }
