@@ -136,30 +136,38 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     private void closeAllTabsExceptCurrent() {
       getTabs().stream()
         .filter(tabInfo -> tabInfo != getSelectedInfo())
-        .forEach(this::closeTab);
+        .forEach(tabInfo -> closeTab(tabInfo));
     }
 
-    private void closeTab(@NotNull TabInfo tabInfo) {
-      Object data = tabInfo.getObject();
-      if (data instanceof LightEditorInfo) {
-        final LightEditorInfo editorInfo = (LightEditorInfo)data;
-        if (!myEditorInfo.isUnsaved() ||
-            autosaveDocument(editorInfo) ||
-            LightEditUtil.confirmClose(
-              ApplicationBundle.message("light.edit.close.message"),
-              ApplicationBundle.message("light.edit.close.title"),
-              () -> saveDocument(editorInfo))) {
-          removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(myEditorInfo));
-        }
+  }
+
+  private void closeTab(@NotNull TabInfo tabInfo) {
+    Object data = tabInfo.getObject();
+    if (data instanceof LightEditorInfo) {
+      final LightEditorInfo editorInfo = (LightEditorInfo)data;
+      if (!editorInfo.isUnsaved() ||
+          autosaveDocument(editorInfo) ||
+          LightEditUtil.confirmClose(
+            ApplicationBundle.message("light.edit.close.message"),
+            ApplicationBundle.message("light.edit.close.title"),
+            () -> saveDocument(editorInfo))) {
+        removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(editorInfo));
       }
     }
+  }
 
-    private boolean autosaveDocument(@NotNull LightEditorInfo editorInfo) {
-      if (LightEditService.getInstance().isAutosaveMode()) {
-        saveDocument(editorInfo);
-        return true;
-      }
-      return false;
+  private boolean autosaveDocument(@NotNull LightEditorInfo editorInfo) {
+    if (LightEditService.getInstance().isAutosaveMode()) {
+      saveDocument(editorInfo);
+      return true;
+    }
+    return false;
+  }
+
+  void closeTab(@NotNull LightEditorInfo editorInfo) {
+    TabInfo tabInfo = findInfo(editorInfo);
+    if (tabInfo != null) {
+      closeTab(tabInfo);
     }
   }
 

@@ -156,7 +156,7 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
   }
 
   @Nullable
-  LightEditorInfo findOpen(@NotNull VirtualFile file) {
+  public LightEditorInfo findOpen(@NotNull VirtualFile file) {
     return myEditors.stream()
       .filter(editorInfo -> file.getPath().equals(editorInfo.getFile().getPath()))
       .findFirst().orElse(null);

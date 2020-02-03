@@ -178,6 +178,15 @@ public class LightEditServiceImpl implements LightEditService,
     }
   }
 
+  public void closeEditor(@NotNull LightEditorInfo editorInfo) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      getEditPanel().getTabs().closeTab(editorInfo);
+      if (getEditPanel().getTabs().getTabCount() == 0) {
+        myFrameWrapper.getFrame().setVisible(false);
+      }
+    }
+  }
+
   @Override
   public void createNewFile() {
     showEditorWindow();
