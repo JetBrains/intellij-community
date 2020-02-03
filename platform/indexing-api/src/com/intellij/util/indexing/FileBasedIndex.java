@@ -221,7 +221,6 @@ public abstract class FileBasedIndex {
   @Deprecated
   public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 
-  // TODO we should rebuild index automatically if this option is changed
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
 

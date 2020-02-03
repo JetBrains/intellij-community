@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.java.index.StringIndex
@@ -72,6 +73,7 @@ import com.intellij.util.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
+import com.intellij.util.indexing.impl.forward.IntForwardIndex
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
@@ -1291,6 +1293,31 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     } finally {
       FileTypeManager.getInstance().removeAssociation(JavaFileType.INSTANCE, matcher)
     }
+  }
+
+  void "test composite index with snapshot mappings hash id"() {
+    def groovyFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.groovy", "class Foo {}").virtualFile).getId()
+    def javaFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.java", "class Foo {}").virtualFile).getId()
+
+    def fbi = FileBasedIndex.getInstance()
+    fbi.ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()))
+    fbi.ensureUpToDate(TrigramIndex.INDEX_ID, getProject(), GlobalSearchScope.allScope(getProject()))
+    def idIndex = ((FileBasedIndexImpl)fbi).getIndex(IdIndex.NAME)
+    def trigramIndex = ((FileBasedIndexImpl)fbi).getIndex(TrigramIndex.INDEX_ID)
+
+    assertTrue(FileBasedIndex.ourSnapshotMappingsEnabled)
+    def idIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)idIndex).getForwardIndex()
+    def trigramIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)trigramIndex).getForwardIndex()
+
+    // id index depends on file type
+    assertFalse(idIndexForwardIndex.getInt(javaFileId) == 0)
+    assertFalse(idIndexForwardIndex.getInt(groovyFileId) == 0)
+    assertFalse(idIndexForwardIndex.getInt(groovyFileId) == idIndexForwardIndex.getInt(javaFileId))
+
+    // trigram index is not a composite index
+    assertFalse(trigramIndexForwardIndex.getInt(javaFileId) == 0)
+    assertFalse(trigramIndexForwardIndex.getInt(groovyFileId) == 0)
+    assertEquals(trigramIndexForwardIndex.getInt(groovyFileId), trigramIndexForwardIndex.getInt(javaFileId))
   }
 
   private boolean findWordInDumbMode(String word, VirtualFile file, boolean inDumbMode) {
