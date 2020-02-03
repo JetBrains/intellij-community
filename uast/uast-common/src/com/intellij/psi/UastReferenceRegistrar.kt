@@ -122,15 +122,21 @@ fun PsiReferenceRegistrar.registerByUsageReferenceProvider(expressionPattern: UE
                                                            priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
   this.registerUastReferenceProvider(usagePattern, provider, priority)
 
-  val patternWithVariableParent = expressionPattern.withUastParent(capture(UVariable::class.java))
-  this.registerUastReferenceProvider(patternWithVariableParent, object : UastReferenceProvider(UExpression::class.java) {
+  this.registerUastReferenceProvider(expressionPattern, object : UastReferenceProvider(UExpression::class.java) {
     override fun acceptsTarget(target: PsiElement): Boolean {
       return !target.project.isDefault && provider.acceptsTarget(target)
     }
 
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
-      val parentVariable = element.uastParent as? UVariable ?: return emptyArray()
-      if (!parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return emptyArray()
+      val parentVariable = when (val uastParent = element.uastParent) {
+        is UVariable -> uastParent
+        is UPolyadicExpression -> uastParent.uastParent as? UVariable // support .withUastParentOrSelf() patterns
+        else -> null
+      }
+
+      if (parentVariable == null || !parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return emptyArray()
+      }
 
       val usage = getDirectVariableUsages(parentVariable).find { usage ->
         val refExpression = usage.toUElementOfType<UReferenceExpression>()
@@ -149,14 +155,15 @@ fun PsiReferenceRegistrar.registerByUsageReferenceProvider(expressionPattern: UE
 }
 
 /**
- * Registers UAST reference providers by usage for [injectionHostUExpression].
+ * Registers UAST reference providers by usage for single inline [injectionHostUExpression] or inside variable declaration.
  *
  * @see registerByUsageReferenceProvider
  */
 fun PsiReferenceRegistrar.registerByUsageReferenceProvider(usagePattern: UElementPattern<*, *>,
                                                            provider: UastReferenceProvider,
                                                            priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  this.registerByUsageReferenceProvider(injectionHostUExpression(), usagePattern, provider, priority)
+  val expressionPattern = injectionHostUExpression().withUastParent(capture(UVariable::class.java))
+  this.registerByUsageReferenceProvider(expressionPattern, usagePattern, provider, priority)
 }
 
 private fun getDirectVariableUsages(uVar: UVariable): List<PsiElement> {
@@ -183,8 +190,8 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): List<PsiElement> 
       val uRef = element.getUastParentOfType<UReferenceExpression>(true)
       val expressionType = uRef?.getExpressionType()
       if (expressionType != null && expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        val named = uRef.tryResolveNamed()
-        if (PsiManager.getInstance(element.project).areElementsEquivalent(named, variablePsi)) {
+        val named = uRef.tryResolve().toUElement()?.sourcePsi
+        if (named != null && PsiManager.getInstance(element.project).areElementsEquivalent(named, variablePsi)) {
           usages.add(uRef.sourcePsi)
         }
       }
