@@ -18,7 +18,6 @@ class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummary> {
   data class ActionSummary(var times: Long = 0, var last: Date = Date())
 
   var data: MutableMap<String, ActionSummary> = HashMap()
-    private set
 
   fun updateActionsSummary(actionId: String) {
     val actionSummary = data[actionId]
