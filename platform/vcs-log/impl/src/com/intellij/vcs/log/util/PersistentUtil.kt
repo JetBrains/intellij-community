@@ -22,12 +22,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.indexing.impl.MapIndexStorage
-import com.intellij.util.io.*
+import com.intellij.util.io.IOUtil
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
 import com.intellij.vcs.log.util.PersistentUtil.deleteWithRenamingAllFilesStartingWith
 import java.io.File
-import java.io.IOException
 import java.nio.file.Path
 
 object PersistentUtil {
@@ -48,14 +47,6 @@ object PersistentUtil {
   private fun calcLogProvidersHash(logProviders: Map<VirtualFile, VcsLogProvider>): Int {
     val sortedRoots = logProviders.keys.sortedBy { it.path }
     return StringUtil.join(sortedRoots, { root -> root.path + "." + logProviders.getValue(root).supportedVcs.name }, ".").hashCode()
-  }
-
-  @Throws(IOException::class)
-  @JvmStatic
-  fun <T> createPersistentEnumerator(keyDescriptor: KeyDescriptor<T>, storageId: StorageId): PersistentEnumeratorBase<T> {
-    val storageFile = storageId.getStorageFile()
-    return IOUtil.openCleanOrResetBroken({ PersistentBTreeEnumerator(storageFile, keyDescriptor, Page.PAGE_SIZE, null, storageId.version) },
-                                         storageFile.toFile())
   }
 
   internal fun deleteWithRenamingAllFilesStartingWith(baseFile: File): Boolean {

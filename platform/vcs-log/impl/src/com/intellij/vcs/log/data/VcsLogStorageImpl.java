@@ -69,13 +69,18 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     List<VirtualFile> roots = StreamEx.ofKeys(logProviders).sortedBy(VirtualFile::getPath).toList();
 
     String logId = PersistentUtil.calcLogId(project, logProviders);
-    MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
 
-    Path storageFile = new StorageId(HASHES_STORAGE, logId, VERSION).getStorageFile();
-    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(storageFile, commitIdKeyDescriptor),
-                                                         storageFile.toFile());
-    myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor),
-                                                                 new StorageId(REFS_STORAGE, logId, VERSION + REFS_VERSION));
+    MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
+    Path hashesStorageFile = new StorageId(HASHES_STORAGE, logId, VERSION).getStorageFile();
+    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageFile, commitIdKeyDescriptor),
+                                                         hashesStorageFile.toFile());
+
+    VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
+    StorageId refsStorageId = new StorageId(REFS_STORAGE, logId, VERSION + REFS_VERSION);
+    myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(refsStorageId.getStorageFile(),
+                                                                                           refsKeyDescriptor, Page.PAGE_SIZE,
+                                                                                           null, refsStorageId.getVersion()),
+                                                     refsStorageId.getStorageFile().toFile());
     Disposer.register(parent, this);
   }
 
