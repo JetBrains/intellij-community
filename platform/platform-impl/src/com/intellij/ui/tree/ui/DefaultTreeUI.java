@@ -215,7 +215,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           boolean expanded = !leaf && cache.getExpandedState(path);
           boolean selected = tree.isRowSelected(row);
           boolean focused = tree.hasFocus();
-          boolean lead = row == getLeadSelectionRow();
+          boolean lead = focused && row == getLeadSelectionRow();
 
           Color background = getBackground(tree, path, row, selected);
           if (background != null) {
@@ -229,7 +229,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             int width = viewportX + viewportWidth - insets.left - offset - vsbWidth;
             if (width > 0) {
               Object value = path.getLastPathComponent();
-              Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead && focused);
+              Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
                 if (width < bounds.width && (expandedRow == row || hsbVisible && !UIUtil.isClientPropertyTrue(component, SHRINK_LONG_RENDERER))) {
                   width = bounds.width; // disable shrinking a long nodes
@@ -238,9 +238,15 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
               }
             }
-            if (!selected && lead && focused && g instanceof Graphics2D) {
-              g.setColor(getBackground(tree, path, row, true));
-              DRAW.paint((Graphics2D)g, viewportX, bounds.y, viewportWidth, bounds.height, 0);
+            if (lead && g instanceof Graphics2D) {
+              if (!selected) {
+                g.setColor(getBackground(tree, path, row, true));
+                DRAW.paint((Graphics2D)g, viewportX, bounds.y, viewportWidth, bounds.height, 0);
+              }
+              else if (1 < tree.getSelectionModel().getSelectionCount()) {
+                g.setColor(UIUtil.getTreeBackground());
+                DRAW.paint((Graphics2D)g, viewportX + 1, bounds.y + 1, viewportWidth - 2, bounds.height - 2, 0);
+              }
             }
           }
           if ((bounds.y + bounds.height) >= maxPaintY) break;

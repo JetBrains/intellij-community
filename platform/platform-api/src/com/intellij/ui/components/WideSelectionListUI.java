@@ -56,20 +56,27 @@ public final class WideSelectionListUI extends BasicListUI {
       }
     }
     super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
-    if (!selected && row == leadSelectionIndex && g instanceof Graphics2D && list.hasFocus()) {
-      g.setColor(UIUtil.getListSelectionBackground(true));
+    if (g instanceof Graphics2D && row == leadSelectionIndex && list.hasFocus()) {
+      int x = rowBounds.x;
+      int width = rowBounds.width;
       if (JList.VERTICAL == list.getLayoutOrientation()) {
-        int viewportX = 0;
-        int viewportWidth = list.getWidth();
+        x = 0;
+        width = list.getWidth();
         Container parent = list.getParent();
         if (parent instanceof JViewport) {
-          viewportX = -list.getX();
-          viewportWidth = parent.getWidth();
+          x = -list.getX();
+          width = parent.getWidth();
         }
-        DRAW.paint((Graphics2D)g, viewportX, rowBounds.y, viewportWidth, rowBounds.height, 0);
       }
-      else {
-        DRAW.paint((Graphics2D)g, rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height, 0);
+      if (!selected) {
+        g.setColor(UIUtil.getListSelectionBackground(true));
+        g.setClip(x, rowBounds.y, width, rowBounds.height);
+        DRAW.paint((Graphics2D)g, x, rowBounds.y, width, rowBounds.height, 0);
+      }
+      else if (list.getSelectionModel().getMinSelectionIndex() < list.getSelectionModel().getMaxSelectionIndex()) {
+        g.setColor(UIUtil.getListBackground());
+        g.setClip(x, rowBounds.y, width, rowBounds.height);
+        DRAW.paint((Graphics2D)g, x + 1, rowBounds.y + 1, width - 2, rowBounds.height - 2, 0);
       }
     }
   }
