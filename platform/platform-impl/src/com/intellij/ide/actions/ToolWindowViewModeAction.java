@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.WindowInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class ToolWindowViewModeAction extends DumbAwareToggleAction {
   public enum ViewMode {
     DockPinned("DockPinnedMode"),
@@ -83,23 +84,14 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
           window.setType(ToolWindowType.WINDOWED, null);
       }
     }
-
-    @Override
-    public String toString() {
-      switch (this) {
-        case DockPinned: return "Dock Pinned";
-        case DockUnpinned: return "Dock Unpinned";
-        default: return name();
-      }
-    }
   }
 
   @NotNull protected final ViewMode myMode;
 
-
   protected ToolWindowViewModeAction(@NotNull ViewMode mode) {
     myMode = mode;
-    getTemplatePresentation().setText(myMode.toString());
+    getTemplatePresentation().setText(ActionsBundle.actionText(myMode.myActionID));
+    getTemplatePresentation().setDescription(ActionsBundle.actionDescription(myMode.myActionID));
   }
 
   @Nullable
