@@ -139,6 +139,9 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       restoreFrameState(frameHelper, frameInfo)
     }
 
+    if (options.sendFrameBack && frame.isAutoRequestFocus) {
+      logger<ProjectFrameAllocator>().error("isAutoRequestFocus must be false")
+    }
     frame.isVisible = true
     frameHelper.init()
     this.frameHelper = frameHelper
@@ -155,10 +158,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     runActivity("create a frame", ActivityCategory.MAIN) {
       var frame = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
       if (frame == null) {
-        frame = createNewProjectFrame()
-        if (options.sendFrameBack) {
-          frame.isAutoRequestFocus = false
-        }
+        frame = createNewProjectFrame(forceDisableAutoRequestFocus = options.sendFrameBack)
       }
       return frame
     }
@@ -232,7 +232,7 @@ private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameI
 }
 
 @ApiStatus.Internal
-fun createNewProjectFrame(): IdeFrameImpl {
+fun createNewProjectFrame(forceDisableAutoRequestFocus: Boolean): IdeFrameImpl {
   val frame = IdeFrameImpl()
   SplashManager.hideBeforeShow(frame)
 
@@ -242,7 +242,7 @@ fun createNewProjectFrame(): IdeFrameImpl {
   frame.size = size
   frame.setLocationRelativeTo(null)
 
-  if (!ApplicationManager.getApplication().isActive && ComponentUtil.isDisableAutoRequestFocus()) {
+  if (forceDisableAutoRequestFocus || (!ApplicationManager.getApplication().isActive && ComponentUtil.isDisableAutoRequestFocus())) {
     frame.isAutoRequestFocus = false
   }
   frame.minimumSize = Dimension(340, frame.minimumSize.height)

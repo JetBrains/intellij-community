@@ -530,12 +530,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
-    return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null));
+    return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(false), null));
   }
 
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project,
-                                                @NotNull Supplier<? extends ProjectFrameHelper> projectFrameHelperSupplier) {
+                                                @NotNull Supplier<@NotNull ? extends ProjectFrameHelper> projectFrameHelperFactory) {
     ProjectFrameHelper frame = getFrameHelper(project);
     if (frame != null) {
       myEventDispatcher.getMulticaster().frameCreated(frame);
@@ -546,7 +546,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = projectFrameHelperSupplier.get();
+      frame = projectFrameHelperFactory.get();
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();

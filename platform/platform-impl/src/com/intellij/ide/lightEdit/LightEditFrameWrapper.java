@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -22,8 +22,7 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
-class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, LightEditFrame {
-
+final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, LightEditFrame {
   private final BooleanSupplier myCloseHandler;
 
   private LightEditPanel myEditPanel;
@@ -134,6 +133,6 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
   static LightEditFrameWrapper allocate(@NotNull BooleanSupplier closeHandler) {
     return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(
       LightEditUtil.getProject(),
-      () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(), closeHandler));
+      () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false), closeHandler));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.CommonBundle;
@@ -359,25 +359,28 @@ public final class ProjectUtil {
            ProjectFileType.DEFAULT_EXTENSION.equals(FileUtilRt.getExtension(projectFile.getName()));
   }
 
-  public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
-    JFrame f = WindowManager.getInstance().getFrame(p);
-    if (f != null) {
-      Component mostRecentFocusOwner = f.getMostRecentFocusOwner();
-      if (executeIfAppInactive) {
-        AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
-        f.toFront();
-        if (!SystemInfo.isMac && !f.isAutoRequestFocus()) {
-          IdeFocusManager.getInstance(p).requestFocus(mostRecentFocusOwner, true);
-        }
+  public static void focusProjectWindow(@Nullable Project project, boolean executeIfAppInactive) {
+    JFrame frame = WindowManager.getInstance().getFrame(project);
+    if (frame == null) {
+      return;
+    }
+
+    Component mostRecentFocusOwner = frame.getMostRecentFocusOwner();
+    if (executeIfAppInactive) {
+      AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(project));
+      frame.toFront();
+      if (!SystemInfo.isMac && !frame.isAutoRequestFocus()) {
+        IdeFocusManager.getInstance(project).requestFocus(mostRecentFocusOwner, true);
+      }
+    }
+    else {
+      if (mostRecentFocusOwner != null) {
+        IdeFocusManager.getInstance(project).requestFocusInProject(mostRecentFocusOwner, project);
       }
       else {
-        if (mostRecentFocusOwner != null) {
-          IdeFocusManager.getInstance(p).requestFocusInProject(mostRecentFocusOwner, p);
-        } else {
-          Component defaultFocusComponentInPanel = FocusUtil.getDefaultComponentInPanel(f.getFocusCycleRootAncestor());
-          if (defaultFocusComponentInPanel != null) {
-            IdeFocusManager.getInstance(p).requestFocusInProject(defaultFocusComponentInPanel, p);
-          }
+        Component defaultFocusComponentInPanel = FocusUtil.getDefaultComponentInPanel(frame.getFocusCycleRootAncestor());
+        if (defaultFocusComponentInPanel != null) {
+          IdeFocusManager.getInstance(project).requestFocusInProject(defaultFocusComponentInPanel, project);
         }
       }
     }
