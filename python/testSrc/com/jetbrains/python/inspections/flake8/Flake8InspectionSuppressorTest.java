@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyComparisonWithNoneInspection;
 import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
@@ -89,6 +90,14 @@ public class Flake8InspectionSuppressorTest extends PyTestCase {
   public void testUnusedImport() {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     doTestByText("import sys  # noqa", PyUnusedLocalInspection.class);
+  }
+
+  // PY-16067
+  public void testComparingWithNoneSuppressedByPycodestyleCode() {
+    doTestByText("def func(p):\n" +
+                 "    if p == None:  # noqa: E713\n" +
+                 "        pass",
+                 PyComparisonWithNoneInspection.class);
   }
 
   private void doTestByText(@NotNull String text, @NotNull Class<? extends LocalInspectionTool>... inspections) {

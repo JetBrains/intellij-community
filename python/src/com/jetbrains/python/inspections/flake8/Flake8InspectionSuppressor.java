@@ -51,6 +51,8 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
       .put("F831", "PyUnusedLocal")
       .put("F841", "PyUnusedLocal")
       .put("C90", "PyUnusedLocal")
+      // pycodestyle.py specific code
+      .put("E713", "PyComparisonWithNone")
       .build()
       .inverse();
 
