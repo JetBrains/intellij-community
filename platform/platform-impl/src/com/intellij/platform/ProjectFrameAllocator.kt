@@ -32,9 +32,9 @@ import java.nio.file.Path
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator {
-  open fun run(task: Runnable): Boolean {
+  open fun run(task: () -> Unit): Boolean {
     runInAutoSaveDisabledMode {
-      task.run()
+      task()
     }
     return true
   }
@@ -62,7 +62,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
   @Volatile
   private var cancelled = false
 
-  override fun run(task: Runnable): Boolean {
+  override fun run(task: () -> Unit): Boolean {
     var completed = false
     runInAutoSaveDisabledMode {
       ApplicationManager.getApplication().invokeAndWait {
@@ -80,7 +80,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
             }
           }
 
-          task.run()
+          task()
         }, IdeUICustomization.getInstance().projectMessage("project.loading.name", projectFile.fileName), true, null, frame.rootPane)
       }
     }
