@@ -14,6 +14,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -301,7 +302,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       VcsFileRevision revision = data.getCurrentLoadingRevision();
       String message = revision != null
                        ? String.format("Loading revision <tt>%s</tt>...", VcsUtil.getShortRevisionString(revision.getRevisionNumber()))
-                       : "Loading...";
+                       : IdeBundle.message("common.text.loading");
       int totalRevisions = data.getRevisions().size();
       if (totalRevisions != 0) {
         message += String.format(" (%s/%s)", data.myBlocks.size(), totalRevisions);

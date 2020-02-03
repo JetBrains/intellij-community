@@ -2,15 +2,12 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -76,7 +73,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   private void initComponents(String initialText) {
     myResultList = new Tree();
     myResultList.setExpandableItemsEnabled(false);
-    myResultList.getEmptyText().setText("Loading...");
+    myResultList.getEmptyText().setText(IdeBundle.message("common.text.loading"));
     myResultList.setRootVisible(false);
     myResultList.setShowsRootHandles(true);
     myResultList.setModel(null);

@@ -10,6 +10,7 @@ import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -103,7 +104,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myMainPanel.setFocusTraversalPolicyProvider(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
-    myViewer = new MessageMergeViewer(myContext, "Loading...");
+    myViewer = new MessageMergeViewer(myContext, IdeBundle.message("common.text.loading"));
   }
 
   //

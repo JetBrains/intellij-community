@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -101,7 +102,7 @@ public class XFramesView extends XDebugView {
         label.setIcon(value.getIcon());
       }
       else if (index >= 0) {
-        label.setText("Loading...");
+        label.setText(IdeBundle.message("common.text.loading"));
       }
     }));
     myThreadComboBox.addItemListener(new ItemListener() {

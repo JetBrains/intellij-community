@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -71,7 +72,7 @@ class ActivityMonitorAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     JTextArea textArea = new JTextArea(12, 100);
-    textArea.setText("Loading...");
+    textArea.setText(IdeBundle.message("common.text.loading"));
     ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
     List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
     CompilationMXBean jitBean = ManagementFactory.getCompilationMXBean();

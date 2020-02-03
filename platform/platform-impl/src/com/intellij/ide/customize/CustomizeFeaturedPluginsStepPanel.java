@@ -3,10 +3,10 @@ package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -49,7 +49,7 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
 
   public CustomizeFeaturedPluginsStepPanel(PluginGroups pluginGroups) {
     setLayout(new GridLayout(1, 1));
-    add(myInProgressLabel = new JLabel("Loading...", SwingConstants.CENTER));
+    add(myInProgressLabel = new JLabel(IdeBundle.message("common.text.loading"), SwingConstants.CENTER));
     myPluginGroups = pluginGroups;
     myPluginGroups.setLoadingCallback(() -> onPluginGroupsLoaded());
   }
