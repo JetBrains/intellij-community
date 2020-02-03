@@ -8,7 +8,7 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.uast.UElementPattern
 import com.intellij.patterns.uast.capture
-import com.intellij.patterns.uast.literalExpression
+import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.impl.search.LowLevelSearchUtil
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
@@ -41,6 +41,8 @@ fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInject
     override fun getReferencesForInjectionHost(uExpression: UExpression,
                                                host: PsiLanguageInjectionHost,
                                                context: ProcessingContext): Array<PsiReference> = provider(uExpression, host)
+
+    override fun toString(): String = "uastInjectionHostReferenceProvider($provider)"
   }
 
 fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
@@ -99,9 +101,7 @@ fun uastByUsageReferenceProvider(provider: (expression: UExpression, targetPsi: 
       return provider(UExpression::class.java.cast(element), context[REQUESTED_PSI_ELEMENT], usagePsi)
     }
 
-    override fun toString(): String {
-      return "uastByUsageReferenceProvider($provider)"
-    }
+    override fun toString(): String = "uastByUsageReferenceProvider($provider)"
   }
 
 /**
@@ -143,21 +143,19 @@ fun PsiReferenceRegistrar.registerByUsageReferenceProvider(expressionPattern: UE
       return provider.getReferencesByElement(element, context)
     }
 
-    override fun toString(): String {
-      return "uastReferenceByUsageAdapter($provider)"
-    }
+    override fun toString(): String = "uastReferenceByUsageAdapter($provider)"
   }, priority)
 }
 
 /**
- * Registers UAST reference providers by usage for [literalExpression].
+ * Registers UAST reference providers by usage for [injectionHostUExpression].
  *
  * @see registerByUsageReferenceProvider
  */
-fun PsiReferenceRegistrar.registerByUsageLiteralReferenceProvider(usagePattern: UElementPattern<*, *>,
-                                                                  provider: UastReferenceProvider,
-                                                                  priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  this.registerByUsageReferenceProvider(literalExpression(), usagePattern, provider, priority)
+fun PsiReferenceRegistrar.registerByUsageReferenceProvider(usagePattern: UElementPattern<*, *>,
+                                                           provider: UastReferenceProvider,
+                                                           priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
+  this.registerByUsageReferenceProvider(injectionHostUExpression(), usagePattern, provider, priority)
 }
 
 private fun getDirectVariableUsages(uVar: UVariable): List<PsiElement> {
