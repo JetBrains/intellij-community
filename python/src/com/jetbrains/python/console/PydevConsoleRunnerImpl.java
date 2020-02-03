@@ -823,6 +823,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Nullable
   private static String getConsoleDisplayName(@NotNull Project project) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
+    if (toolWindow == null) return null;
     ToolWindow window = toolWindow.getToolWindow();
     if (window == null) return null;
     final Content content = window.getContentManager().getSelectedContent();
