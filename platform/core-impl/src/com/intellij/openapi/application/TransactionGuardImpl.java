@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 import java.util.Objects;
 
@@ -40,19 +41,19 @@ public class TransactionGuardImpl extends TransactionGuard {
   public void submitTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId expectedContext, @NotNull Runnable transaction) {
     ModalityState modality = expectedContext == null ? ModalityState.NON_MODAL : ((TransactionIdImpl)expectedContext).myModality;
     Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
+    if (app.isWriteThread() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
       if (!Disposer.isDisposed(parentDisposable)) {
         transaction.run();
       }
     } else {
-      app.invokeLater(transaction, modality, __ -> Disposer.isDisposed(parentDisposable));
+      AppUIExecutor.onWriteThread(modality).expireWith(parentDisposable).submit(transaction);
     }
   }
 
   @Override
   public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
+    if (app.isWriteThread()) {
       if (!myWritingAllowed) {
         String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                          "Please use asynchronous submit*Transaction. " +
@@ -73,7 +74,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (!isWriteSafeModality(state)) {
       LOG.error("Cannot run synchronous submitTransactionAndWait from a background thread created in a write-unsafe context");
     }
-    app.invokeAndWait(runnable, state);
+    WriteThread.invokeAndWait(runnable);
   }
 
   /**
@@ -109,7 +110,12 @@ public class TransactionGuardImpl extends TransactionGuard {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (allowWriting) {
+      LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
+    }
+    else if (!EventQueue.isDispatchThread()) {
+      LOG.error("must be swing thread");
+    }
     final boolean prev = myWritingAllowed;
     myWritingAllowed = allowWriting;
     return new AccessToken() {
@@ -158,12 +164,12 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
     TransactionIdImpl ctx = getContextTransaction();
-    ApplicationManager.getApplication().invokeLater(transaction, ctx == null ? ModalityState.NON_MODAL : ctx.myModality);
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(transaction, ctx == null ? ModalityState.NON_MODAL : ctx.myModality);
   }
 
   @Override
   public TransactionIdImpl getContextTransaction() {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    if (ApplicationManager.getApplication().isWriteThread()) {
       if (!myWritingAllowed) {
         return null;
       }
@@ -185,7 +191,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       return new Runnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().assertIsDispatchThread();
+          LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
           final boolean prev = myWritingAllowed;
           myWritingAllowed = true;
           try {
