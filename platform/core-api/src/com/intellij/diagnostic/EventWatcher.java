@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 @ApiStatus.Experimental
-public interface EventsWatcher {
+public interface EventWatcher {
 
   @NotNull
   NotNullLazyValue<Boolean> IS_ENABLED = NotNullLazyValue.createValue(
@@ -23,14 +23,14 @@ public interface EventsWatcher {
   }
 
   @Nullable
-  static EventsWatcher getInstance() {
+  static EventWatcher getInstance() {
     if (!isEnabled()) return null;
 
     Application application = ApplicationManager.getApplication();
     if (application.isDisposed()) return null;
 
     application.assertIsDispatchThread();
-    return application.getService(EventsWatcher.class);
+    return application.getService(EventWatcher.class);
   }
 
   void runnableStarted(@NotNull Runnable runnable);

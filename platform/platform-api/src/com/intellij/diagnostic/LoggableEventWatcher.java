@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 @ApiStatus.Experimental
-public interface LoggableEventsWatcher extends EventsWatcher {
+public interface LoggableEventWatcher extends EventWatcher {
 
   void logTimeMillis(@NotNull String processId, long startedAt);
 

@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.diagnostic.EventsWatcher;
+import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.LoggableEventsWatcher;
+import com.intellij.diagnostic.LoggableEventWatcher;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
@@ -89,7 +89,7 @@ public final class IdeEventQueue extends EventQueue {
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
   private static PerformanceWatcher ourPerformanceWatcher;
-  private static EventsWatcher ourEventsWatcher;
+  private static EventWatcher ourEventWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -377,13 +377,13 @@ public final class IdeEventQueue extends EventQueue {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
-    EventsWatcher eventsWatcher = obtainEventsWatcher();
+    EventWatcher eventWatcher = obtainEventWatcher();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted();
       }
-      if (eventsWatcher != null) {
-        eventsWatcher.edtEventStarted(e);
+      if (eventWatcher != null) {
+        eventWatcher.edtEventStarted(e);
       }
 
       fixNestedSequenceEvent(e);
@@ -465,8 +465,8 @@ public final class IdeEventQueue extends EventQueue {
           if (finalE1 instanceof KeyEvent) {
             maybeReady();
           }
-          if (eventsWatcher instanceof LoggableEventsWatcher) {
-            ((LoggableEventsWatcher)eventsWatcher).logTimeMillis(finalE1, startedAt);
+          if (eventWatcher instanceof LoggableEventWatcher) {
+            ((LoggableEventWatcher)eventWatcher).logTimeMillis(finalE1, startedAt);
           }
         }
 
@@ -506,8 +506,8 @@ public final class IdeEventQueue extends EventQueue {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
       }
-      if (eventsWatcher != null) {
-        eventsWatcher.edtEventFinished(e, startedAt);
+      if (eventWatcher != null) {
+        eventWatcher.edtEventFinished(e, startedAt);
       }
     }
   }
@@ -617,10 +617,10 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   @Nullable
-  private static EventsWatcher obtainEventsWatcher() {
-    EventsWatcher watcher = ourEventsWatcher;
+  private static EventWatcher obtainEventWatcher() {
+    EventWatcher watcher = ourEventWatcher;
     if (watcher == null) {
-        ourEventsWatcher = watcher = EventsWatcher.getInstance();
+      ourEventWatcher = watcher = EventWatcher.getInstance();
     }
     return watcher;
   }
@@ -1505,9 +1505,9 @@ public final class IdeEventQueue extends EventQueue {
       postDelayedKeyEvents();
     }
 
-    EventsWatcher watcher = obtainEventsWatcher();
-    if (watcher instanceof LoggableEventsWatcher) {
-      ((LoggableEventsWatcher)watcher).logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
+    EventWatcher watcher = obtainEventWatcher();
+    if (watcher instanceof LoggableEventWatcher) {
+      ((LoggableEventWatcher)watcher).logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
     }
   }
 

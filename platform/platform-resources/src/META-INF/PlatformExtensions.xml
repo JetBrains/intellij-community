@@ -346,8 +346,8 @@
 
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
-    <applicationService serviceInterface="com.intellij.diagnostic.EventsWatcher"
-                        serviceImplementation="com.intellij.diagnostic.EventsWatcherImpl" preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.diagnostic.EventWatcher"
+                        serviceImplementation="com.intellij.diagnostic.EventWatcherImpl" preload="notHeadless"/>
     <toolWindow id="Events Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
                 factoryClass="com.intellij.diagnostic.ui.EventsWatcherToolWindowFactory"/>
 

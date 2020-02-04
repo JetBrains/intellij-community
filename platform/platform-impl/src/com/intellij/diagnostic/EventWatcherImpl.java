@@ -36,13 +36,15 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.diagnostic.RunnablesListener.*;
+
 @ApiStatus.Experimental
-public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposable {
+public final class EventWatcherImpl implements LoggableEventWatcher, Disposable {
   private static final int PUBLISHER_INITIAL_DELAY = 100;
   private static final int PUBLISHER_PERIOD = 1000;
 
   @NotNull
-  private static final Logger LOG = Logger.getInstance(EventsWatcherImpl.class);
+  private static final Logger LOG = Logger.getInstance(EventWatcherImpl.class);
   @NotNull
   private static final Pattern DESCRIPTION_BY_EVENT = Pattern.compile(
     "(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)\\[(?<description>\\w+(,runnable=(?<runnable>[^,]+))?[^]]*)].*"
@@ -53,13 +55,13 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
     NotNullLazyValue.createValue(() -> Objects.requireNonNull(findTargetField(InvocationEvent.class)));
 
   @NotNull
-  private final ConcurrentMap<String, RunnablesListener.WrapperDescription> myWrappers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, WrapperDescription> myWrappers = new ConcurrentHashMap<>();
   @NotNull
-  private final ConcurrentMap<String, RunnablesListener.InvocationsInfo> myDurationsByFqn = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, InvocationsInfo> myDurationsByFqn = new ConcurrentHashMap<>();
   @NotNull
-  private final ConcurrentLinkedQueue<RunnablesListener.InvocationDescription> myRunnables = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<InvocationDescription> myRunnables = new ConcurrentLinkedQueue<>();
   @NotNull
-  private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<RunnablesListener.InvocationDescription>> myEventsByClass =
+  private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<InvocationDescription>> myEventsByClass =
     new ConcurrentHashMap<>();
 
   @NotNull
@@ -85,9 +87,9 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
   @Nullable
   private MatchResult myCurrentResult = null;
 
-  public EventsWatcherImpl() {
+  public EventWatcherImpl() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
-    myMessageBus.connect(this).subscribe(RunnablesListener.TOPIC, myWriter);
+    myMessageBus.connect(this).subscribe(TOPIC, myWriter);
   }
 
   @Override
@@ -117,7 +119,7 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
       if (field != null) {
         myWrappers.compute(
           originalClass.getName(),
-          RunnablesListener.WrapperDescription::computeNext
+          WrapperDescription::computeNext
         );
         current = getValue(current, field);
       }
@@ -134,11 +136,11 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
     String fqn = Objects.requireNonNull(myCurrentInstance).getClass().getName();
     myCurrentInstance = null;
 
-    RunnablesListener.InvocationDescription description = new RunnablesListener.InvocationDescription(fqn, startedAt);
+    InvocationDescription description = new InvocationDescription(fqn, startedAt);
     myRunnables.offer(description);
     myDurationsByFqn.compute(
       fqn,
-      (ignored, info) -> RunnablesListener.InvocationsInfo.computeNext(fqn, description.getDuration(), info)
+      (ignored, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info)
     );
 
     new InvocationLogger(description)
@@ -161,7 +163,7 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
     Class<? extends AWTEvent> eventClass = event.getClass();
     myEventsByClass.putIfAbsent(eventClass, new ConcurrentLinkedQueue<>());
     myEventsByClass.get(eventClass)
-      .offer(new RunnablesListener.InvocationDescription(
+      .offer(new InvocationDescription(
         representation != null ? representation : event.toString(),
         startedAt
       ));
@@ -185,7 +187,7 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
   private void dumpDescriptions() {
     if (myMessageBus.isDisposed()) return;
 
-    RunnablesListener publisher = myMessageBus.syncPublisher(RunnablesListener.TOPIC);
+    RunnablesListener publisher = myMessageBus.syncPublisher(TOPIC);
     myEventsByClass.forEach((eventClass, events) ->
                               publisher.eventsProcessed(eventClass, joinPolling(events)));
     publisher.runnablesProcessed(
@@ -244,16 +246,16 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
   private static final class InvocationLogger {
 
     @NotNull
-    private final RunnablesListener.InvocationDescription myDescription;
+    private final InvocationDescription myDescription;
 
-    private InvocationLogger(@NotNull RunnablesListener.InvocationDescription description) {
+    private InvocationLogger(@NotNull InvocationDescription description) {
       LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
       myDescription = description;
     }
 
     private InvocationLogger(@NotNull Object process,
                              long startedAt) {
-      this(new RunnablesListener.InvocationDescription(process.toString(), startedAt));
+      this(new InvocationDescription(process.toString(), startedAt));
     }
 
     public void log(@NotNull Supplier<Runnable> lazyRunnable) {
@@ -264,13 +266,13 @@ public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposabl
       }
 
       Runnable runnable = lazyRunnable.get();
-      RunnablesListener.InvocationDescription description = runnable != null ?
-                                                            new RunnablesListener.InvocationDescription(
-                                                              runnable.toString(),
-                                                              myDescription.getStartedAt(),
-                                                              myDescription.getFinishedAt()
-                                                            ) :
-                                                            myDescription;
+      InvocationDescription description = runnable != null ?
+                                          new InvocationDescription(
+                                            runnable.toString(),
+                                            myDescription.getStartedAt(),
+                                            myDescription.getFinishedAt()
+                                          ) :
+                                          myDescription;
       LOG.warn(description.toString());
 
       if (runnable != null) {
