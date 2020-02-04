@@ -139,6 +139,24 @@ public final class JDOMUtil {
            && areElementContentsEqual(e1, e2, ignoreEmptyAttrValues);
   }
 
+  /**
+   * Returns hash code which is consistent with {@link #areElementsEqual(Element, Element, boolean)}
+   */
+  public static int hashCode(@Nullable Element e, boolean ignoreEmptyAttrValues) {
+    if (e == null) return 0;
+    int hashCode = e.getName().hashCode();
+    for (Attribute attribute : getAttributes(e)) {
+      if (!ignoreEmptyAttrValues || NOT_EMPTY_VALUE_CONDITION.test(attribute)) {
+        hashCode = hashCode * 31 * 31 + attribute.getName().hashCode() * 31 + attribute.getValue().hashCode();
+      }
+    }
+    for (Content content : e.getContent(CONTENT_FILTER)) {
+      int contentHash = content instanceof Element ? hashCode((Element)content, ignoreEmptyAttrValues) : e.getValue().hashCode();
+      hashCode = hashCode * 31 + contentHash;
+    }
+    return hashCode;
+  }
+
   public static boolean areElementContentsEqual(@NotNull Element e1, @NotNull Element e2, boolean ignoreEmptyAttrValues) {
     return contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
   }

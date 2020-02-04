@@ -96,7 +96,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
 
     public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + (myConfig != null ? myConfig.hashCode() : 0);
+      result = 31 * result + JDOMUtil.hashCode(myConfig, false);
       return result;
     }
   }
