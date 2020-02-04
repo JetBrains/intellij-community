@@ -9,7 +9,6 @@ import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -34,7 +33,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   private final static Logger LOG = Logger.getInstance(ResourceBundleEditorShowQuickFixesAction.class);
 
   public ResourceBundleEditorShowQuickFixesAction() {
-    super(PropertiesBundle.message("resource.bundle.editor.show.quick.fixes.action.text"));
+    super(ResourceBundleEditorBundle.message("resource.bundle.editor.show.quick.fixes.action.text"));
   }
 
   @Override

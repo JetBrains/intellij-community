@@ -4,7 +4,6 @@ package com.intellij.lang.properties.editor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
@@ -41,7 +40,7 @@ class NewPropertyAction extends AnAction {
   }
 
   NewPropertyAction(final boolean enabledForce) {
-    super("New Property", null, AllIcons.General.Add);
+    super(ResourceBundleEditorBundle.message("new.property.action.text"), null, AllIcons.General.Add);
     myEnabledForce = enabledForce;
   }
 
@@ -78,7 +77,7 @@ class NewPropertyAction extends AnAction {
     if (status.hasReadonlyFiles()) {
       Messages.showErrorDialog(bundle.getProject(),
                                String.format("Resource bundle '%s' has read-only default properties file", bundle.getBaseName()),
-                               "Can't Create New Property");
+                               ResourceBundleEditorBundle.message("already.exists.dialog.title"));
       return;
     }
 
@@ -116,17 +115,17 @@ class NewPropertyAction extends AnAction {
     IProperty selectedProperty = resourceBundleEditor.getSelectedProperty();
     if (propertiesUpdateManager.isAlphaSorted() || !propertiesUpdateManager.isSorted() || selectedProperty == null) {
       keyToInsert = Messages.showInputDialog(project,
-                                             PropertiesBundle.message("new.property.dialog.name.prompt.text"),
-                                             PropertiesBundle.message("new.property.dialog.title"),
+                                             ResourceBundleEditorBundle.message("new.property.dialog.name.prompt.text"),
+                                             ResourceBundleEditorBundle.message("new.property.dialog.title"),
                                              Messages.getQuestionIcon(),
                                              selectedProperty == null ? getSelectedPrefixText(resourceBundleEditor) : null,
                                              nameValidator);
       anchor = null;
     } else {
       final Pair<String, Boolean> keyNameAndInsertPlaceModification =
-        Messages.showInputDialogWithCheckBox(PropertiesBundle.message("new.property.dialog.name.prompt.text"),
-                                             PropertiesBundle.message("new.property.dialog.title"),
-                                             PropertiesBundle.message("new.property.dialog.checkbox.text"),
+        Messages.showInputDialogWithCheckBox(ResourceBundleEditorBundle.message("new.property.dialog.name.prompt.text"),
+                                             ResourceBundleEditorBundle.message("new.property.dialog.title"),
+                                             ResourceBundleEditorBundle.message("new.property.dialog.checkbox.text"),
                                              PropertiesComponent.getInstance().getBoolean(ADD_NEW_PROPERTY_AFTER_SELECTED_PROP, false),
                                              true,
                                              Messages.getQuestionIcon(),
@@ -206,7 +205,8 @@ class NewPropertyAction extends AnAction {
       for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
         IProperty key = propertiesFile.findPropertyByKey(newPropertyName);
         if (key != null) {
-          Messages.showErrorDialog("Can't add new property. Property with key \'" + newPropertyName + "\' already exists.", "New Property");
+          Messages.showErrorDialog(ResourceBundleEditorBundle.message("already.exists.warning.message", newPropertyName),
+                                   ResourceBundleEditorBundle.message("new.property.action.text"));
           return false;
         }
       }

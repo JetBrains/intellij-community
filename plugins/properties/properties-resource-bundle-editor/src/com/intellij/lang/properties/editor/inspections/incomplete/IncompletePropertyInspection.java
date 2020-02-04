@@ -21,8 +21,11 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.editor.ResourceBundleEditorBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
@@ -78,7 +81,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   public Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
     return properties -> !isPropertyComplete(properties, resourceBundle)
     ? new ResourceBundleEditorProblemDescriptor[]{new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                                            PropertiesBundle.message(
+                                                                                            ResourceBundleEditorBundle.message(
                                                                                               "incomplete.property.inspection.description",
                                                                                               properties[0].getName()),
                                                                                             new IgnoreLocalesQuickFix(properties[0],
@@ -106,7 +109,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
     @NotNull
     @Override
     public String getFamilyName() {
-      return PropertiesBundle.message("incomplete.property.quick.fix.name");
+      return ResourceBundleEditorBundle.message("incomplete.property.quick.fix.name");
     }
 
     @Override

@@ -21,7 +21,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.lang.properties.projectView.ResourceBundleDeleteProvider;
@@ -82,12 +81,12 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   }
 
   private ActionGroup createSettingsActionGroup() {
-    DefaultActionGroup actionGroup = new DefaultActionGroup(PropertiesBundle.message("resource.bundle.editor.settings.action.title"), true);
+    DefaultActionGroup actionGroup = new DefaultActionGroup(ResourceBundleEditorBundle.message("resource.bundle.editor.settings.action.title"), true);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.GearPlain);
     actionGroup.add(new ResourceBundleEditorKeepEmptyValueToggleAction());
 
-    actionGroup.add(new ToggleAction(PropertiesBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
+    actionGroup.add(new ToggleAction(ResourceBundleEditorBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();

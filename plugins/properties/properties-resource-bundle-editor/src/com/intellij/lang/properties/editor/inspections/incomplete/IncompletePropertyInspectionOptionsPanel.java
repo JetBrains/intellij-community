@@ -2,6 +2,7 @@
 package com.intellij.lang.properties.editor.inspections.incomplete;
 
 import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.editor.ResourceBundleEditorBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -11,7 +12,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Locale;
@@ -23,11 +23,11 @@ import java.util.SortedSet;
 public class IncompletePropertyInspectionOptionsPanel {
 
   private final SortedSet<String> mySuffixes;
-  private final JBList myList;
+  private final JBList<String> myList;
 
   public IncompletePropertyInspectionOptionsPanel(SortedSet<String> suffixes) {
     mySuffixes = suffixes;
-    myList = new JBList(new MyListModel());
+    myList = new JBList<>(new MyListModel());
   }
 
   public JPanel buildPanel() {
@@ -39,8 +39,8 @@ public class IncompletePropertyInspectionOptionsPanel {
       @Override
       public void run(AnActionButton button) {
         final String result = Messages.showInputDialog(CommonDataKeys.PROJECT.getData(button.getDataContext()),
-                                                       "Suffixes to ignore (use comma to separate suffixes):",
-                                                       "Add Ignored Suffixes", null);
+                                                       ResourceBundleEditorBundle.message("incomplete.property.add.ignored.suffixes.dialog.message"),
+                                                       ResourceBundleEditorBundle.message("incomplete.property.add.ignored.suffixes.dialog.title"), null);
         if (result != null) {
           mySuffixes.addAll(StringUtil.split(result, ","));
           changed();
@@ -49,8 +49,8 @@ public class IncompletePropertyInspectionOptionsPanel {
     }).setRemoveAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        for (Object v : myList.getSelectedValues()) {
-          mySuffixes.remove(v);
+        for (String s : myList.getSelectedValuesList()) {
+          mySuffixes.remove(s);
         }
         changed();
       }
@@ -77,10 +77,9 @@ public class IncompletePropertyInspectionOptionsPanel {
     return new DialogWrapper(project) {
       {
         init();
-        setTitle("Locales to Ignore");
+        setTitle(ResourceBundleEditorBundle.message("incomplete.property.locales.to.ignore.dialog.title"));
       }
 
-      @Nullable
       @Override
       protected JComponent createCenterPanel() {
         return buildPanel();
@@ -92,14 +91,14 @@ public class IncompletePropertyInspectionOptionsPanel {
     ((MyListModel)myList.getModel()).modified();
   }
 
-  private class MyListModel extends AbstractListModel {
+  private class MyListModel extends AbstractListModel<String> {
     @Override
     public int getSize() {
       return mySuffixes.size();
     }
 
     @Override
-    public Object getElementAt(int index) {
+    public String getElementAt(int index) {
       return ArrayUtilRt.toStringArray(mySuffixes)[index];
     }
 

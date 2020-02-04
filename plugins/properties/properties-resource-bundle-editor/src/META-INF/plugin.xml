@@ -15,7 +15,7 @@
 
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
 
-    <localInspection language="Properties" shortName="IncompleteProperty" unfair="true" bundle="messages.PropertiesBundle"
+    <localInspection language="Properties" shortName="IncompleteProperty" unfair="true" bundle="messages.ResourceBundleEditorBundle"
                      key="incomplete.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection"/>
