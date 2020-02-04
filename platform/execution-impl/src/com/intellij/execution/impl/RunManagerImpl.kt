@@ -167,7 +167,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
                                                                                         isAutoSave = false)
 
   @Suppress("LeakingThis")
-  private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations",
+  private val projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations",
                                                                                       RunConfigurationSchemeManager(this, templateDifferenceHelper,
                                                                                                                     isShared = true,
                                                                                                                     isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
@@ -320,7 +320,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   internal fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
     lock.write {
-      val deletedConfigs = rcInArbitraryFileManager.deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+      val deletedConfigs = rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent()
       removeConfigurations(deletedConfigs)
     }
   }
@@ -330,11 +330,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     lock.write {
       val oldSelectedId = selectedConfigurationId
 
-      val deletedRunConfigs = rcInArbitraryFileManager.deleteRunConfigsFromFiles(deletedFilePaths)
+      val deletedRunConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(deletedFilePaths)
       removeConfigurations(deletedRunConfigs)
 
       for (filePath in updatedFilePaths) {
-        val deletedAndAddedRunConfigs = rcInArbitraryFileManager.reloadRunConfigsFromFile(this, filePath)
+        val deletedAndAddedRunConfigs = rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath)
 
         removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs)
 
@@ -350,10 +350,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
-    doAddConfiguration(settings, isCheckRecentsLimit = true)
+    doAddConfiguration(settings as RunnerAndConfigurationSettingsImpl, isCheckRecentsLimit = true)
   }
 
-  private fun doAddConfiguration(settings: RunnerAndConfigurationSettings, isCheckRecentsLimit: Boolean) {
+  private fun doAddConfiguration(settings: RunnerAndConfigurationSettingsImpl, isCheckRecentsLimit: Boolean) {
     val newId = settings.uniqueID
     var existingId: String? = null
     lock.write {
@@ -378,13 +378,27 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         refreshUsagesList(settings)
       }
       else {
-        (if (settings.isShared) workspaceSchemeManager else projectSchemeManager).removeScheme(
-          settings as RunnerAndConfigurationSettingsImpl)
+        when {
+          settings.isStoreInArbitraryFileInProject() -> {
+            projectSchemeManager.removeScheme(settings)
+            workspaceSchemeManager.removeScheme(settings)
+          }
+          settings.isShared -> {
+            rcInArbitraryFileManager.removeRunConfiguration(settings)
+            workspaceSchemeManager.removeScheme(settings)
+          }
+          else -> {
+            rcInArbitraryFileManager.removeRunConfiguration(settings)
+            projectSchemeManager.removeScheme(settings)
+          }
+        }
       }
 
-      if (!(settings as RunnerAndConfigurationSettingsImpl).isStoreInArbitraryFileInProject()) {
-        // scheme level can be changed (workspace -> project), so, ensure that scheme is added to corresponding scheme manager (if exists, doesn't harm)
-        (if (settings.isShared) projectSchemeManager else workspaceSchemeManager).addScheme(settings)
+      // scheme level can be changed (workspace -> project), so, ensure that scheme is added to corresponding scheme manager (if exists, doesn't harm)
+      when {
+        settings.isStoreInArbitraryFileInProject() -> rcInArbitraryFileManager.addRunConfiguration(settings)
+        settings.isShared -> projectSchemeManager.addScheme(settings)
+        else -> workspaceSchemeManager.addScheme(settings)
       }
     }
 
@@ -1115,8 +1129,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           }
 
           iterator.remove()
-          if (!(settings as RunnerAndConfigurationSettingsImpl).isStoreInArbitraryFileInProject()) {
-            (if (settings.isShared) projectSchemeManager else workspaceSchemeManager).removeScheme(settings)
+
+          settings as RunnerAndConfigurationSettingsImpl
+          when {
+            settings.isStoreInArbitraryFileInProject() -> rcInArbitraryFileManager.removeRunConfiguration(settings)
+            settings.isShared -> projectSchemeManager.removeScheme(settings)
+            else -> workspaceSchemeManager.removeScheme(settings)
           }
 
           recentlyUsedTemporaries.remove(settings)

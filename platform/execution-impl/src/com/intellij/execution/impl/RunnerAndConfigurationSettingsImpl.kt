@@ -47,7 +47,7 @@ internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
 const val SINGLETON = "singleton"
 
 enum class RunConfigurationLevel {
-  WORKSPACE, PROJECT, TEMPORARY, ARBITRARY_FILE_IN_PROJECT
+  WORKSPACE, PROJECT, TEMPORARY
 }
 
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
@@ -88,6 +88,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     override fun createSettings(runner: ProgramRunner<*>) = configuration.createRunnerSettings(InfoProvider(runner))
   }
 
+  internal var pathIfStoredInArbitraryFile: String? = null
+    private set
+
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
   private var wasSingletonSpecifiedExplicitly = false
@@ -116,10 +119,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
   }
 
-  fun isStoreInArbitraryFileInProject() = level == RunConfigurationLevel.ARBITRARY_FILE_IN_PROJECT
+  fun isStoreInArbitraryFileInProject() = level == RunConfigurationLevel.PROJECT && pathIfStoredInArbitraryFile != null
 
-  fun setStoreInArbitraryFileInProject() {
-    level = RunConfigurationLevel.ARBITRARY_FILE_IN_PROJECT
+  fun setStoreInArbitraryFileInProject(filePath:String) {
+    level = RunConfigurationLevel.PROJECT
+    pathIfStoredInArbitraryFile = filePath
   }
 
   override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
