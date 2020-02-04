@@ -4,10 +4,7 @@ package com.intellij.codeInspection.deprecation;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
@@ -150,7 +147,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   }
 
   static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
-    panel.addCheckbox("Ignore in the same outermost class", "IGNORE_IN_SAME_OUTERMOST_CLASS");
+    panel.addCheckbox(InspectionsBundle.message("ignore.in.the.same.outermost.class"), "IGNORE_IN_SAME_OUTERMOST_CLASS");
   }
 
   protected static String getDescription(@NotNull String description, boolean forRemoval, ProblemHighlightType highlightType) {

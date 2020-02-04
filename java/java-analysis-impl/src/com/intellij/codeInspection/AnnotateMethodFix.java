@@ -118,6 +118,6 @@ public class AnnotateMethodFix implements LocalQuickFix {
           }
         });
       }
-    }, "Searching for Overriding Methods", true, method.getProject());
+    }, InspectionsBundle.message("searching.for.overriding.methods"), true, method.getProject());
   }
 }

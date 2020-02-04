@@ -147,7 +147,8 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
           for (int i = method.getParameterList().getParametersCount(); i < args.length; i++) {
             if (PsiPolyExpressionUtil.isPolyExpression(args[i]) && ++ count > 50) {
               myHolder.registerProblem(expression.getMethodExpression(),
-                                       "Vararg method call with 50+ poly arguments may cause compilation and analysis slowdown",
+                                       InspectionsBundle
+                                         .message("vararg.method.call.with.50.poly.arguments"),
                                        new MyAddExplicitTypeArgumentsFix());
               break;
             }
@@ -170,7 +171,8 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
             (TypeConversionUtil.isPrimitiveAndNotNull(ltype) ^ TypeConversionUtil.isPrimitiveAndNotNull(rtype)) &&
             TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), ltype, rtype, false) &&
             TypeConversionUtil.areTypesConvertible(rtype, ltype)) {
-          myHolder.registerProblem(expression.getOperationSign(), "Comparision between Object and primitive is illegal and is accepted in java 7 only", ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          myHolder.registerProblem(expression.getOperationSign(), InspectionsBundle
+            .message("comparision.between.object.and.primitive"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     }
@@ -187,14 +189,14 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     @NotNull
     @Override
     public String getName() {
-      return "Replace ''" + myOperationSign + "'' with ''=''";
+      return InspectionsBundle.message("replace.0.with", myOperationSign);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Operator Assignment with Assignment";
+      return InspectionsBundle.message("replace.operator.assignment.with.assignment");
     }
 
     @Override

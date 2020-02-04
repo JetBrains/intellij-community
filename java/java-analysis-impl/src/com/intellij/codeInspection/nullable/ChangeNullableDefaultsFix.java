@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,7 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Make \"" + (myNotNullName != null ? myNotNullName : myNullableName) + "\" default annotation";
+    return InspectionsBundle.message("make.0.default.annotation", myNotNullName != null ? myNotNullName : myNullableName);
   }
 
   @Override

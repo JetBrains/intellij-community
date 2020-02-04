@@ -91,7 +91,7 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
             if (toHighlight == null) {
               toHighlight = element;
             }
-            h.registerProblem(toHighlight, "@VisibleForTesting makes little sense on @TestOnly code", new RemoveAnnotationQuickFix(vft, (PsiModifierListOwner)element));
+            h.registerProblem(toHighlight, InspectionsBundle.message("visible.for.testing.makes.little.sense.on.test.only.code"), new RemoveAnnotationQuickFix(vft, (PsiModifierListOwner)element));
           }
         }
         super.visitElement(element);

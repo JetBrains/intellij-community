@@ -62,8 +62,9 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
         LanguageLevel dependantLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(dependantModule);
         if (languageLevel.compareTo(dependantLanguageLevel) < 0) {
           final CommonProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
-            "Module " + module.getName() + " with language level " + languageLevel +
-            " depends on module " + dependantModule.getName() +" with language level " + dependantLanguageLevel,
+            InspectionsBundle
+              .message("module.0.with.language.level.1.depends.on.module.2.with.language.level.3", module.getName(), languageLevel,
+                       dependantModule.getName(), dependantLanguageLevel),
             module,
             new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(dependantModule.getName()),
             (QuickFix)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));

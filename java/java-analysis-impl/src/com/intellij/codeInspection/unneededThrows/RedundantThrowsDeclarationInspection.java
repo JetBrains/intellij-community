@@ -39,7 +39,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore exceptions thrown by entry points methods", this, "IGNORE_ENTRY_POINTS");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("ignore.exceptions.thrown.by.entry.points.methods"), this, "IGNORE_ENTRY_POINTS");
   }
 
   @Override

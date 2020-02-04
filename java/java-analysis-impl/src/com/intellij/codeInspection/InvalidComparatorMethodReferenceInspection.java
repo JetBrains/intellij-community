@@ -29,7 +29,8 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
 
         holder
           .registerProblem(expression,
-                           "Method reference mapped to Comparator interface does not fulfill the Comparator contract",
+                           InspectionsBundle
+                             .message("method.reference.mapped.to.comparator"),
                            new ReplaceWithComparatorQuickFix(name.equals("min")));
       }
     };
@@ -69,7 +70,7 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with comparator";
+      return InspectionsBundle.message("replace.with.comparator");
     }
 
     @Override

@@ -54,7 +54,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
           final PsiElement lastChild = parameterList.getLastChild();
           final TextRange range = new TextRange(firstChild != null && firstChild.getNode().getElementType() == JavaTokenType.LT ? 1 : 0,
                                                 parameterList.getTextLength() - (lastChild != null && lastChild.getNode().getElementType() == JavaTokenType.GT ? 1 : 0));
-          holder.registerProblem(parameterList, "Explicit type argument #ref #loc can be replaced with <>", ProblemHighlightType.LIKE_UNUSED_SYMBOL, range, new ReplaceWithDiamondFix());
+          holder.registerProblem(parameterList, InspectionsBundle.message("explicit.type.argument.ref.loc.can.be.replaced.with"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, range, new ReplaceWithDiamondFix());
         }
       }
     };
@@ -64,7 +64,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with <>";
+      return InspectionsBundle.message("replace.with");
     }
 
     @Override

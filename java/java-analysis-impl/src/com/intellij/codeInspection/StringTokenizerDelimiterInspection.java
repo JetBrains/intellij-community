@@ -55,7 +55,7 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
         final Set<Character> chars = new THashSet<>();
         for (char c : delimiters.toCharArray()) {
           if (!chars.add(c)) {
-            holder.registerProblem(delimiterArgument, "Delimiters argument contains duplicated characters",
+            holder.registerProblem(delimiterArgument, InspectionsBundle.message("delimiters.argument.contains.duplicated.characters"),
                                    new ReplaceDelimitersWithUnique(delimiterArgument));
             return;
           }
@@ -78,7 +78,7 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace StringTokenizer delimiters parameter with unique symbols";
+      return InspectionsBundle.message("replace.stringtokenizer.delimiters.parameter.with.unique.symbols");
     }
 
     @Override

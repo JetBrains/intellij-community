@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.fix;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -48,15 +49,15 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
   @Override
   public String getName() {
     return myBranch ?
-           "Remove switch branch '" + myName + "'" :
-           "Remove switch label '" + myName + "'";
+           InspectionsBundle.message("remove.switch.branch.0", myName) :
+           InspectionsBundle.message("remove.switch.label.0", myName);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Remove switch label";
+    return InspectionsBundle.message("remove.switch.label");
   }
 
   @Override

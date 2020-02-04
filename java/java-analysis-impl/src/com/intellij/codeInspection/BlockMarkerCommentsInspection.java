@@ -77,11 +77,11 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
           return;
         }
         if (MARKER_PATTERN.accepts(element)) {
-          holder.registerProblem(element, "Redundant block marker", new LocalQuickFix() {
+          holder.registerProblem(element, InspectionsBundle.message("redundant.block.marker"), new LocalQuickFix() {
             @NotNull
             @Override
             public String getFamilyName() {
-              return "Remove block marker comments";
+              return InspectionsBundle.message("remove.block.marker.comments");
             }
 
             @Override

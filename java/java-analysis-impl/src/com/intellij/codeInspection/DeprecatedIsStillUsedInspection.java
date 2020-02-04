@@ -38,7 +38,7 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(member.getProject());
     String name = member.getName();
     if (name != null && hasUsages(member, name, searchHelper, member.getResolveScope())) {
-      holder.registerProblem(identifier, "Deprecated member '" + name + "' is still used");
+      holder.registerProblem(identifier, InspectionsBundle.message("deprecated.member.0.is.still.used", name));
     }
   }
 

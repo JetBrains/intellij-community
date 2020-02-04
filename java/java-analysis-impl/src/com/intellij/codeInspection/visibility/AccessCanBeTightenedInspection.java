@@ -4,6 +4,7 @@ package com.intellij.codeInspection.visibility;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
@@ -124,7 +125,8 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         // can be null in some strange cases of malbuilt PSI, like in EA-95877
         if (toHighlight != null) {
           String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
-          myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(suggestedModifier), new ChangeModifierFix(suggestedModifier));
+          myHolder.registerProblem(toHighlight,
+                                   InspectionsBundle.message("access.can.be.0", VisibilityUtil.toPresentableText(suggestedModifier)), new ChangeModifierFix(suggestedModifier));
         }
       }
     }

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
@@ -38,7 +39,8 @@ public class NonFinalFieldInImmutableInspection extends AbstractBaseJavaLocalIns
           if (!JCiPUtil.isImmutable(containingClass)) {
             return;
           }
-          holder.registerProblem(field.getNameIdentifier(), "Non-final field <code>#ref</code> in @Immutable class  #loc");
+          holder.registerProblem(field.getNameIdentifier(),
+                                 InspectionsBundle.message("non.final.field.code.ref.code.in.immutable.class.loc"));
         }
       }
     };

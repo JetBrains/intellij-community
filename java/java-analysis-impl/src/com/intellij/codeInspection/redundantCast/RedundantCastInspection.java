@@ -62,7 +62,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox("Ignore casts in suspicious collections method calls", "IGNORE_SUSPICIOUS_METHOD_CALLS");
+    optionsPanel.addCheckbox(InspectionsBundle.message("ignore.casts.in.suspicious.collections.method.calls"), "IGNORE_SUSPICIOUS_METHOD_CALLS");
     return optionsPanel;
   }
 

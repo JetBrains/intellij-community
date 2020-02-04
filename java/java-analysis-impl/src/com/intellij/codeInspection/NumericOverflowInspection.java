@@ -28,7 +28,7 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore '<<' operation which results in negative value", this,
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("ignore.operation.which.results.in.negative.value"), this,
                                           "ignoreLeftShiftWithNegativeResult");
   }
 

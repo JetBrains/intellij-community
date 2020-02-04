@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -44,7 +45,7 @@ public class ReplaceWithConstantValueFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace with constant value";
+    return InspectionsBundle.message("replace.with.constant.value");
   }
 
   @Override

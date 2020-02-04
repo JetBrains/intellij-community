@@ -58,7 +58,8 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
             final PsiElement lBrace = aClass.getLBrace();
             LOG.assertTrue(lBrace != null);
             final TextRange rangeInElement = new TextRange(0, lBrace.getStartOffsetInParent() + aClass.getStartOffsetInParent() - 1);
-            holder.registerProblem(aClass.getParent(), "Anonymous #ref #loc can be replaced with "+alternative.myReplacementMessage,
+            holder.registerProblem(aClass.getParent(),
+                                   InspectionsBundle.message("anonymous.ref.loc.can.be.replaced.with.0", alternative.myReplacementMessage),
                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaAlternativeFix(alternative));
           }
         }
@@ -88,14 +89,14 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     @NotNull
     @Override
     public String getName() {
-      return "Replace with "+myAlternative.myReplacementMessage;
+      return InspectionsBundle.message("replace.with.0", myAlternative.myReplacementMessage);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace anonymous class with lambda alternative";
+      return InspectionsBundle.message("replace.anonymous.class.with.lambda.alternative");
     }
 
     @Override

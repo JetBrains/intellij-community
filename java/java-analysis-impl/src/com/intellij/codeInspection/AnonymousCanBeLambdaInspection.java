@@ -60,7 +60,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Report when interface is not annotated with @FunctionalInterface", this, "reportNotAnnotatedInterfaces");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
   }
 
   @NotNull
@@ -83,7 +83,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
               type = ProblemHighlightType.INFORMATION;
             }
           }
-          holder.registerProblem(parent, "Anonymous #ref #loc can be replaced with lambda",
+          holder.registerProblem(parent, InspectionsBundle.message("anonymous.ref.loc.can.be.replaced.with.lambda"),
                                  type, rangeInElement, new ReplaceWithLambdaFix());
         }
       }
@@ -381,7 +381,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with lambda";
+      return InspectionsBundle.message("replace.with.lambda");
     }
 
     @Override

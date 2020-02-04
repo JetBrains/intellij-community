@@ -63,7 +63,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Don't report unused jars inside used library", this, "IGNORE_LIBRARY_PARTS");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("don.t.report.unused.jars.inside.used.library"), this, "IGNORE_LIBRARY_PARTS");
   }
 
   @Nullable

@@ -59,7 +59,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Annotate as @SafeVarargs";
+      return InspectionsBundle.message("annotate.as.safevarargs");
     }
 
     @Override
@@ -91,7 +91,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make final and annotate as @SafeVarargs";
+      return InspectionsBundle.message("make.final.and.annotate.as.safevarargs");
     }
 
     @Nullable
@@ -158,7 +158,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)aClass).getNameIdentifier();
       if (nameIdentifier != null) {
         final LocalQuickFix quickFix = new AnnotateAsSafeVarargsQuickFix();
-        myHolder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", quickFix);
+        myHolder.registerProblem(nameIdentifier, InspectionsBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
       }
     }
 
@@ -198,7 +198,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
                              OverridingMethodsSearch.search(method).findFirst() == null;
         quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix() : null;
       }
-      myHolder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", quickFix);
+      myHolder.registerProblem(nameIdentifier, InspectionsBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
     }
   }
 }

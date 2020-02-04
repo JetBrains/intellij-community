@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
@@ -159,7 +158,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
           if (psiClass != null && !hasStringConstructor(psiClass)) {
             holder.registerProblem(value,
-                                   "Custom exception class should have a constructor with a single message parameter of String type",
+                                   InspectionsBundle.message(
+                                     "custom.exception.class.should.have.a.constructor"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
 
           }
@@ -205,7 +205,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i])) ==
                   Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArguments[i].getType()) != Nullability.NOT_NULL) {
                 holder.registerProblem(typeArguments[i],
-                                       "Non-null type argument is expected",
+                                       InspectionsBundle.message("non.null.type.argument.is.expected"),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
               }
             }
@@ -280,7 +280,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                       @Nullable PsiType assignedType) {
         if (isNullableNotNullCollectionConflict(expectedType, assignedType, new HashSet<>())) {
           holder.registerProblem(errorElement,
-                                 "Assigning a collection of nullable elements into a collection of non-null elements",
+                                 InspectionsBundle
+                                   .message("assigning.a.collection.of.nullable.elements"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
 
         }
@@ -392,7 +393,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
     else if (isNonAnnotatedOverridingNotNull(targetMethod, superMethod)) {
       holder.registerProblem(refName,
-                             "Not annotated method is used as an override for a method annotated with " + getPresentableAnnoName(superMethod),
+                             InspectionsBundle.message("not.annotated.method.is.used.as.an.override.for.a.method.annotated.with.0",
+                                                       getPresentableAnnoName(superMethod)),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              createFixForNonAnnotatedOverridesNotNull(targetMethod, superMethod));
     }
@@ -540,7 +542,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
     PsiIdentifier nameIdentifier = field.getNameIdentifier();
     if (nameIdentifier.isPhysical()) {
-      holder.registerProblem(nameIdentifier, "@" + getPresentableAnnoName(field) + " field is always initialized not-null",
+      holder.registerProblem(nameIdentifier,
+                             InspectionsBundle.message("0.field.is.always.initialized.not.null", getPresentableAnnoName(field)),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, AddAnnotationPsiFix.createAddNotNullFix(field));
     }
   }
@@ -610,11 +613,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static void checkLoopParameterNullability(ProblemsHolder holder, @Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, Nullability expectedNullability) {
     if (notNull != null && expectedNullability == Nullability.NULLABLE) {
-      holder.registerProblem(notNull, "Parameter can be null",
+      holder.registerProblem(notNull, InspectionsBundle.message("parameter.can.be.null"),
                              new RemoveAnnotationQuickFix(notNull, null));
     }
     else if (nullable != null && expectedNullability == Nullability.NOT_NULL) {
-      holder.registerProblem(nullable, "Parameter is always not-null",
+      holder.registerProblem(nullable, InspectionsBundle.message("parameter.is.always.not.null"),
                              new RemoveAnnotationQuickFix(nullable, null));
     }
   }

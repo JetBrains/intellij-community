@@ -54,7 +54,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
           } else {
             errorElement = body.getFirstChild();
           }
-          holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
+          holder.registerProblem(errorElement, InspectionsBundle.message("statement.lambda.can.be.replaced.with.expression.lambda"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
         }
       }
@@ -100,7 +100,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with expression lambda";
+      return InspectionsBundle.message("replace.with.expression.lambda");
     }
 
     @Override

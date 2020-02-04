@@ -135,7 +135,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Remove dependency";
+      return InspectionsBundle.message("remove.dependency");
     }
 
     @Override
