@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -34,6 +35,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,7 +241,8 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     assert place != null;
-    boolean hasParams = constructor != null ? !constructor.getParameterList().isEmpty() : hasConstructorParameters(psiClass, place);
+    ThreeState hasParams = constructor != null ? ThreeState.fromBoolean(!constructor.getParameterList().isEmpty())
+                                               : hasConstructorParameters(psiClass, place);
 
     RangeMarker refEnd = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
     
@@ -254,17 +258,10 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     return true;
   }
 
-  static boolean hasConstructorParameters(PsiClass psiClass, @NotNull PsiElement place) {
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
-    boolean hasParams = false;
-    for (PsiMethod constructor : psiClass.getConstructors()) {
-      if (!resolveHelper.isAccessible(constructor, place, null)) continue;
-      if (!constructor.getParameterList().isEmpty()) {
-        hasParams = true;
-        break;
-      }
-    }
-    return hasParams;
+  static ThreeState hasConstructorParameters(PsiClass psiClass, @NotNull PsiElement place) {
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
+    return MethodParenthesesHandler.hasParameters(ContainerUtil.filter(psiClass.getConstructors(),
+                                                                       c -> resolveHelper.isAccessible(c, place, null)));
   }
 
   @Nullable

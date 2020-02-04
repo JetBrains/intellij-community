@@ -43,6 +43,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -738,13 +739,13 @@ public class JavaCompletionUtil {
                                        @NotNull LookupElement item,
                                        boolean overloadsMatter,
                                        boolean hasParams) {
-    insertParentheses(context, item, overloadsMatter, hasParams, false);
+    insertParentheses(context, item, overloadsMatter, ThreeState.fromBoolean(hasParams), false);
   }
 
   public static void insertParentheses(@NotNull InsertionContext context,
                                        @NotNull LookupElement item,
                                        boolean overloadsMatter,
-                                       boolean hasParams,
+                                       ThreeState hasParams, // UNSURE if providing no arguments is a valid situation
                                        final boolean forceClosingParenthesis) {
     final Editor editor = context.getEditor();
     final char completionChar = context.getCompletionChar();
@@ -761,24 +762,25 @@ public class JavaCompletionUtil {
     }
 
     if (hasTail) {
-      hasParams = false;
+      hasParams = ThreeState.NO;
     }
     final boolean needRightParenth = forceClosingParenthesis ||
                                      !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET ||
-                                                !hasParams && completionChar != '(');
+                                                hasParams == ThreeState.NO && completionChar != '(');
 
     context.commitDocument();
 
     final CommonCodeStyleSettings styleSettings = CompletionStyleUtil.getCodeStyleSettings(context);
     final PsiElement elementAt = file.findElementAt(context.getStartOffset());
     if (elementAt == null || !(elementAt.getParent() instanceof PsiMethodReferenceExpression)) {
-      final boolean hasParameters = hasParams;
-      final boolean spaceBetweenParentheses = styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams;
+      ThreeState hasParameters = hasParams;
+      boolean spaceBetweenParentheses = hasParams == ThreeState.YES && styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES ||
+                                        hasParams == ThreeState.UNSURE && styleSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES;
       new ParenthesesInsertHandler<LookupElement>(styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES, spaceBetweenParentheses,
                                                   needRightParenth, styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
         @Override
         protected boolean placeCaretInsideParentheses(InsertionContext context1, LookupElement item1) {
-          return hasParameters;
+          return hasParameters != ThreeState.NO;
         }
 
         @Override
@@ -794,7 +796,7 @@ public class JavaCompletionUtil {
       }.handleInsert(context, item);
     }
 
-    if (hasParams) {
+    if (hasParams != ThreeState.NO) {
       // Invoke parameters popup
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }

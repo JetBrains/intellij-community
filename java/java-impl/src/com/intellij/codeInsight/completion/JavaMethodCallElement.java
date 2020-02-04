@@ -37,6 +37,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,9 +161,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     final PsiMethod method = getObject();
 
     final LookupElement[] allItems = context.getElements();
-    final boolean overloadsMatter = allItems.length == 1 && getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) == null;
-    final boolean hasParams = MethodParenthesesHandler.hasParams(this, allItems, overloadsMatter, method);
-    JavaCompletionUtil.insertParentheses(context, this, overloadsMatter, hasParams);
+    ThreeState hasParams = method.getParameterList().isEmpty() ? ThreeState.NO : MethodParenthesesHandler.overloadsHaveParameters(allItems, method);
+    JavaCompletionUtil.insertParentheses(context, this, false, hasParams, false);
 
     final int startOffset = context.getStartOffset();
     final OffsetKey refStart = context.trackOffset(startOffset, true);
