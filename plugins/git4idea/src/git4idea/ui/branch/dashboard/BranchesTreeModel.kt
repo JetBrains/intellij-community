@@ -59,13 +59,13 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   override fun hashCode() = Objects.hash(userObject)
 }
 
-internal fun BranchInfo.toNodeDescriptors(useGrouping: Boolean): List<BranchNodeDescriptor> {
+internal fun BranchInfo.toNodeDescriptors(localRootNodeDescriptor: BranchNodeDescriptor, remoteRootNodeDescriptor: BranchNodeDescriptor, useGrouping: Boolean): List<BranchNodeDescriptor> {
   if (!useGrouping) {
     return listOf(BranchNodeDescriptor(NodeType.BRANCH, this))
   }
 
   val result = arrayListOf<BranchNodeDescriptor>()
-  var curParent: BranchNodeDescriptor? = null
+  var curParent: BranchNodeDescriptor = if (isLocal) localRootNodeDescriptor else remoteRootNodeDescriptor
   val iter = branchName.split("/").iterator()
 
   while (iter.hasNext()) {
@@ -80,9 +80,9 @@ internal fun BranchInfo.toNodeDescriptors(useGrouping: Boolean): List<BranchNode
   return result
 }
 
-internal fun Set<BranchInfo>.toNodeDescriptors(useGrouping: Boolean) =
+internal fun Set<BranchInfo>.toNodeDescriptors(localRootNodeDescriptor: BranchNodeDescriptor, remoteRootNodeDescriptor: BranchNodeDescriptor, useGrouping: Boolean) =
   asSequence()
-    .flatMap { it.toNodeDescriptors(useGrouping).asSequence() }
+    .flatMap { it.toNodeDescriptors(localRootNodeDescriptor, remoteRootNodeDescriptor, useGrouping).asSequence() }
     .distinct()
     .sortedWith(BRANCH_TREE_NODE_COMPARATOR)
     .partition { it.type == NodeType.GROUP_NODE }

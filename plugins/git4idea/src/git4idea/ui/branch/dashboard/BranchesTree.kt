@@ -138,8 +138,10 @@ internal class FilteringBranchesTree(project: Project,
 
   private val expandedPaths = SmartHashSet<TreePath>()
 
-  private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
-  private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
+  private val localRootNodeDescriptor = BranchNodeDescriptor(NodeType.LOCAL_ROOT)
+  private val remoteRootNodeDescriptor = BranchNodeDescriptor(NodeType.REMOTE_ROOT)
+  private val localBranchesNode = BranchTreeNode(localRootNodeDescriptor)
+  private val remoteBranchesNode = BranchTreeNode(remoteRootNodeDescriptor)
 
   private val localGroupBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
   private val remoteGroupBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
@@ -234,10 +236,10 @@ internal class FilteringBranchesTree(project: Project,
   private fun getRemoteRootNodes() =
     if (useDirectoryGrouping) remoteBranchesDescriptors.asSequence().filter(forParent()) else remoteBranchesDescriptors.asSequence()
 
-  private fun getLocalGroupNodes(parent: BranchNodeDescriptor? = null) =
+  private fun getLocalGroupNodes(parent: BranchNodeDescriptor = localRootNodeDescriptor) =
     if (useDirectoryGrouping) localGroupBranchesDescriptors.asSequence().filter(forParent(parent)) else emptySequence()
 
-  private fun getRemoteGroupNodes(parent: BranchNodeDescriptor? = null) =
+  private fun getRemoteGroupNodes(parent: BranchNodeDescriptor = remoteRootNodeDescriptor) =
     if (useDirectoryGrouping) remoteGroupBranchesDescriptors.asSequence().filter(forParent(parent)) else emptySequence()
 
   private fun getAllGroupNodes(parent: BranchNodeDescriptor) =
@@ -296,8 +298,10 @@ internal class FilteringBranchesTree(project: Project,
       localGroupBranchesDescriptors.clear()
       remoteGroupBranchesDescriptors.clear()
 
-      val (localGroupNodes, localBranches) = localBranches.toNodeDescriptors(useDirectoryGrouping)
-      val (remoteGroupNodes, remoteBranches) = remoteBranches.toNodeDescriptors(useDirectoryGrouping)
+      val (localGroupNodes, localBranches) =
+        localBranches.toNodeDescriptors(localRootNodeDescriptor, remoteRootNodeDescriptor, useDirectoryGrouping)
+      val (remoteGroupNodes, remoteBranches) =
+        remoteBranches.toNodeDescriptors(localRootNodeDescriptor, remoteRootNodeDescriptor, useDirectoryGrouping)
       localGroupBranchesDescriptors += localGroupNodes
       remoteGroupBranchesDescriptors += remoteGroupNodes
       localBranchesDescriptors += localBranches
