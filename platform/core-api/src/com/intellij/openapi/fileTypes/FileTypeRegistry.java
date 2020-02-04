@@ -152,6 +152,8 @@ public abstract class FileTypeRegistry {
     /**
      * Returns the file type that this detector is capable of detecting, or null if it can detect
      * multiple file types.
+     * 
+     * @deprecated unused
      */
     @Deprecated
     @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
