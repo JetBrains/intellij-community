@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -20,7 +21,8 @@ class DropJShellStateAction extends AnAction{
   }
 
   private DropJShellStateAction() {
-    super("Drop All Code Snippets", "Invalidate all code snippets in the associated JShell instance", AllIcons.Actions.GC);
+    super(ExecutionBundle.message("drop.all.code.snippets"),
+          ExecutionBundle.message("invalidate.all.code.snippets"), AllIcons.Actions.GC);
   }
 
   @Override

@@ -3,6 +3,7 @@ package com.intellij.execution.jshell;
 
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
@@ -49,14 +50,14 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("JShellSnippetEditor", actions, true);
 
       myJreEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project));
-      myJreEditor.setToolTipText("Alternative JRE to run JShell");
+      myJreEditor.setToolTipText(ExecutionBundle.message("alternative.jre.to.run.jshell"));
       myJreEditor.setPathOrName(null, true);
 
       LabeledComponent<ModulesComboBox> modulePane = new LabeledComponent<>();
       ModulesComboBox modulesCombo = new ModulesComboBox();
       modulePane.setComponent(modulesCombo);
       modulePane.setLabelLocation(BorderLayout.WEST);
-      modulePane.setText("Use classpath of:");
+      modulePane.setText(ExecutionBundle.message("use.classpath.of"));
       myModuleSelector = new ConfigurationModuleSelector(project, modulesCombo, "<whole project>");
 
       JPanel mainPane = new JPanel(new GridBagLayout());

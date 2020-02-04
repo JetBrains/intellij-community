@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer;
 import com.intellij.find.FindUtil;
 import com.intellij.notification.Notification;
@@ -102,7 +103,7 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
 
   private static void nothingToDo() {
     Notifications.Bus.notify(new Notification(FindUnusedTestDataAction.class.getName(),
-                                              "Well done",
+                                              ExecutionBundle.message("well.done"),
                                               "Every file is used",
                                               NotificationType.INFORMATION));
   }

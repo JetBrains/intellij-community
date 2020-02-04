@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -70,7 +71,8 @@ public class JShellHandler {
   private final OSProcessHandler myProcess;
   private final MessageReader<Response> myMessageReader;
   private final MessageWriter<Request> myMessageWriter;
-  private final ExecutorService myTaskQueue = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("JShell Command Queue");
+  private final ExecutorService myTaskQueue = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    ExecutionBundle.message("jshell.command.queue"));
   private final AtomicReference<Collection<String>> myEvalClasspathRef = new AtomicReference<>(null);
 
   private JShellHandler(@NotNull Project project,

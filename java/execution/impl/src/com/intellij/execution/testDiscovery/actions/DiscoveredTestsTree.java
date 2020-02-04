@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.Disposable;
@@ -50,7 +51,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
       return component instanceof PsiMember ? ((PsiMember)component).getName() : null;
     }, true);
     getSelectionModel().setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
-    getEmptyText().setText("No tests captured for " + title);
+    getEmptyText().setText(ExecutionBundle.message("no.tests.captured.for.0", title));
     setPaintBusy(true);
     setRootVisible(false);
     setCellRenderer(new ColoredTreeCellRenderer() {
