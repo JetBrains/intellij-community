@@ -110,7 +110,7 @@ fun uastByUsageReferenceProvider(provider: (expr: UExpression, referencePsi: Psi
 /**
  * Registers a provider that will be called on the expressions that directly satisfy the [usagePattern] or at least one of the expression
  * usages satisfies the pattern if it was assigned to a variable. Search of variable usages performed only for expressions that satisfy
- * [expressionPattern]. There are standard expression patterns for usage search: [uVariableWithInjectionHost] and [uVariableWithExpression].
+ * [expressionPattern]. There are standard expression patterns for usage search: [uInjectionHostInVariable] and [uExpressionInVariable].
  *
  * Consider using [uastByUsageReferenceProvider] if you need to obtain additional context from a usage place.
  */
@@ -152,9 +152,9 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
 }
 
 @ApiStatus.Experimental
-fun uVariableWithInjectionHost() = injectionHostUExpression().withUastParent(capture(UVariable::class.java))
+fun uInjectionHostInVariable() = injectionHostUExpression().withUastParent(capture(UVariable::class.java))
 @ApiStatus.Experimental
-fun uVariableWithExpression() = uExpression().withUastParent(capture(UElement::class.java).withUastParentOrSelf(capture(UVariable::class.java)))
+fun uExpressionInVariable() = uExpression().withUastParent(capture(UElement::class.java).withUastParentOrSelf(capture(UVariable::class.java)))
 
 private fun getDirectVariableUsages(uVar: UVariable): List<PsiElement> {
   val variablePsi = uVar.sourcePsi ?: return emptyList()
