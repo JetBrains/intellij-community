@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.InvocationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,7 +25,6 @@ import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,17 +86,10 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
   }
 
   @Override
-  public void logTimeMillis(@NotNull String processId, long startedAt) {
-    new InvocationLogger(processId, startedAt)
-      .log(() -> null);
-  }
-
-  @Override
-  public void logTimeMillis(@NotNull AWTEvent event, long startedAt) {
-    if ("LaterInvocator.FlushQueue".equals(findGroupByName("runnable"))) return;
-
-    new InvocationLogger(event, startedAt)
-      .log(() -> InvocationUtil.extractRunnable(event));
+  public void logTimeMillis(@NotNull String processId, long startedAt,
+                            @NotNull Class<? extends Runnable> runnableClass) {
+    InvocationDescription description = new InvocationDescription(processId, startedAt);
+    logTimeMillis(description, runnableClass);
   }
 
   @Override
@@ -136,8 +127,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
       (ignored, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info)
     );
 
-    new InvocationLogger(description)
-      .log(() -> runnable);
+    logTimeMillis(description, runnable.getClass());
   }
 
   @Override
@@ -150,16 +140,15 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
 
   @Override
   public void edtEventFinished(@NotNull AWTEvent event, long startedAt) {
-    String representation = findGroupByName("description");
+    String representation = myCurrentResult instanceof Matcher ?
+                            ((Matcher)myCurrentResult).group("description") :
+                            event.toString();
     myCurrentResult = null;
 
     Class<? extends AWTEvent> eventClass = event.getClass();
     myEventsByClass.putIfAbsent(eventClass, new ConcurrentLinkedQueue<>());
     myEventsByClass.get(eventClass)
-      .offer(new InvocationDescription(
-        representation != null ? representation : event.toString(),
-        startedAt
-      ));
+      .offer(new InvocationDescription(representation, startedAt));
   }
 
   @Override
@@ -168,13 +157,6 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
 
     myThread.cancel(true);
     myExecutor.shutdownNow();
-  }
-
-  @Nullable
-  private String findGroupByName(@NotNull String groupName) {
-    return myCurrentResult instanceof Matcher ?
-           ((Matcher)myCurrentResult).group(groupName) :
-           null;
   }
 
   private void dumpDescriptions() {
@@ -212,56 +194,35 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
     return Collections.unmodifiableList(builder);
   }
 
-  private static final class InvocationLogger {
+  private static void logTimeMillis(@NotNull InvocationDescription description,
+                                    @NotNull Class<? extends Runnable> runnableClass) {
+    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
 
-    @NotNull
-    private final InvocationDescription myDescription;
-
-    private InvocationLogger(@NotNull InvocationDescription description) {
-      LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
-      myDescription = description;
+    int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", -1);
+    if (threshold < 0 ||
+        threshold > description.getDuration()) {
+      return; // do not measure a time if the threshold is too small
     }
 
-    private InvocationLogger(@NotNull Object process,
-                             long startedAt) {
-      this(new InvocationDescription(process.toString(), startedAt));
+    LOG.warn(description.toString());
+
+    if (runnableClass != Runnable.class) {
+      addPluginCost(runnableClass, description.getDuration());
     }
+  }
 
-    public void log(@NotNull Supplier<Runnable> lazyRunnable) {
-      int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", -1);
-      if (threshold < 0 ||
-          threshold > myDescription.getDuration()) {
-        return; // do not measure a time if the threshold is too small
-      }
+  private static void addPluginCost(@NotNull Class<? extends Runnable> runnableClass,
+                                    long duration) {
+    ClassLoader loader = runnableClass.getClassLoader();
+    String pluginId = loader instanceof PluginClassLoader ?
+                      ((PluginClassLoader)loader).getPluginIdString() :
+                      PluginManagerCore.CORE_PLUGIN_ID;
 
-      Runnable runnable = lazyRunnable.get();
-      InvocationDescription description = runnable != null ?
-                                          new InvocationDescription(
-                                            runnable.toString(),
-                                            myDescription.getStartedAt(),
-                                            myDescription.getFinishedAt()
-                                          ) :
-                                          myDescription;
-      LOG.warn(description.toString());
-
-      if (runnable != null) {
-        addPluginCost(runnable.getClass(), description.getDuration());
-      }
-    }
-
-    private static void addPluginCost(@NotNull Class<? extends Runnable> runnableClass,
-                                      long duration) {
-      ClassLoader loader = runnableClass.getClassLoader();
-      String pluginId = loader instanceof PluginClassLoader ?
-                        ((PluginClassLoader)loader).getPluginIdString() :
-                        PluginManagerCore.CORE_PLUGIN_ID;
-
-      StartUpMeasurer.addPluginCost(
-        pluginId,
-        "invokeLater",
-        TimeUnit.MILLISECONDS.toNanos(duration)
-      );
-    }
+    StartUpMeasurer.addPluginCost(
+      pluginId,
+      "invokeLater",
+      TimeUnit.MILLISECONDS.toNanos(duration)
+    );
   }
 
   private static final class LogFileWriter implements RunnablesListener, Disposable {

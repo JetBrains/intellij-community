@@ -4,12 +4,13 @@ package com.intellij.diagnostic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
 @ApiStatus.Experimental
 public interface LoggableEventWatcher extends EventWatcher {
 
-  void logTimeMillis(@NotNull String processId, long startedAt);
+  default void logTimeMillis(@NotNull String processId, long startedAt) {
+    logTimeMillis(processId, startedAt, Runnable.class);
+  }
 
-  void logTimeMillis(@NotNull AWTEvent event, long startedAt);
+  void logTimeMillis(@NotNull String processId, long startedAt,
+                     @NotNull Class<? extends Runnable> runnableClass);
 }

@@ -472,8 +472,13 @@ public final class IdeEventQueue extends EventQueue {
           if (finalE1 instanceof KeyEvent) {
             maybeReady();
           }
-          if (eventWatcher instanceof LoggableEventWatcher) {
-            ((LoggableEventWatcher)eventWatcher).logTimeMillis(finalE1, startedAt);
+          if (eventWatcher instanceof LoggableEventWatcher &&
+              runnableClass != FLUSH_NOW_CLASS) {
+            ((LoggableEventWatcher)eventWatcher).logTimeMillis(
+              runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
+              startedAt,
+              runnableClass
+            );
           }
         }
 
