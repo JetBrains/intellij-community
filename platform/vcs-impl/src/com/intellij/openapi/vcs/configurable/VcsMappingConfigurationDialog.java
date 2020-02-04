@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
@@ -55,7 +56,10 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myVcses = uniqueIndex(Arrays.asList(myVcsManager.getAllVcss()), VcsDescriptor::getName);
     myVCSComboBox.setModel(buildVcsWrappersModel(project));
     myDirectoryTextField.addActionListener(
-      new MyBrowseFolderListener("Select Directory", "Select directory to map to a VCS", myDirectoryTextField, project,
+      new MyBrowseFolderListener(VcsBundle.getString("settings.vcs.mapping.browser.select.directory.title"),
+                                 VcsBundle.getString("settings.vcs.mapping.browser.select.directory.description"),
+                                 myDirectoryTextField,
+                                 project,
                                  createSingleFolderDescriptor()));
     setMapping(suggestDefaultMapping(project));
     initProjectMessage();
@@ -123,7 +127,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
         myVcsConfigurable.apply();
       }
       catch(ConfigurationException ex) {
-        Messages.showErrorDialog(myPanel, "Invalid VCS options: " + ex.getMessage());
+        Messages.showErrorDialog(myPanel, VcsBundle.message("settings.vcs.mapping.invalid.vcs.options.error", ex.getMessage()));
       }
     }
     super.doOKAction();
@@ -174,7 +178,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       super.onFileChosen(chosenFile);
       VcsDescriptor wrapper = (VcsDescriptor)myVCSComboBox.getSelectedItem();
       if (oldText.isEmpty() && (wrapper == null || wrapper.isNone())) {
-        new Task.Backgroundable(myProject, "Looking for VCS Administrative Area", false) {
+        new Task.Backgroundable(myProject, VcsBundle.message("settings.vcs.mapping.status.looking.for.vcs.administrative.area"), false) {
           private VcsDescriptor probableVcs = null;
 
           @Override
