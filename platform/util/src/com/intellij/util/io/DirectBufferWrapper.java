@@ -52,6 +52,9 @@ abstract class DirectBufferWrapper extends ByteBufferWrapper {
         if (cause instanceof IOException) {
           throw (IOException)cause;
         }
+        else if (cause instanceof OutOfMemoryError) {
+          throw (OutOfMemoryError)cause; // OutOfMemoryError should be propagated (handled above)
+        }
         else {
           throw new RuntimeException(e);
         }
