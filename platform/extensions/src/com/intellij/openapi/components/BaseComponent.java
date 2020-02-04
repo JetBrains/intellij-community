@@ -4,8 +4,7 @@ package com.intellij.openapi.components;
 /**
  * The base interface class for all components.
  *
- * @deprecated Components are deprecated; please see http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for
- * guidelines on migrating to other APIs.
+ * @deprecated Components are deprecated; please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html">SDK Docs</a> for guidelines on migrating to other APIs.
  */
 @Deprecated
 public interface BaseComponent extends NamedComponent {

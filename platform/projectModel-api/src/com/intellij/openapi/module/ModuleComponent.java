@@ -5,11 +5,13 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.project.Project;
 
 /**
- * @deprecated components are deprecated. If you register a class as a module component it will be loaded, its instance will be created and
+ * @deprecated Components are deprecated. If you register a class as a module component it will be loaded, its instance will be created and
  * {@link #initComponent()}, {@link #moduleAdded()} methods will be called for each module even if user doesn't use
- * any feature of your plugin. Also plugins which declare module components don't support dynamic loading. Please see
- * http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html for guidelines on migrating to other APIs.
+ * any feature of your plugin. Also, plugins declaring module components do not support dynamic loading.
+ * <p/>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html">SDK Docs</a> for guidelines on migrating to other APIs.
  */
+@Deprecated
 public interface ModuleComponent extends BaseComponent {
   /**
    * Invoked when the project corresponding to this component instance is opened.<p>
@@ -36,9 +38,10 @@ public interface ModuleComponent extends BaseComponent {
   /**
    * Invoked when the module corresponding to this component instance has been completely
    * loaded and added to the project.
-   *
-   * Consider to use {@link com.intellij.ProjectTopics#MODULES} ({@link com.intellij.openapi.project.ModuleListener#moduleAdded(Project, Module)})
+   * <p>
+   * @deprecated Consider to use {@link com.intellij.ProjectTopics#MODULES} ({@link com.intellij.openapi.project.ModuleListener#moduleAdded(Project, Module)})
    */
+  @Deprecated
   default void moduleAdded() {
   }
 }
