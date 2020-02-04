@@ -1,8 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.DefaultInferredAnnotationProvider;
+import com.intellij.codeInsight.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -55,9 +54,15 @@ public class JavaMethodContractUtil {
   @NotNull
   public static List<? extends MethodContract> getMethodCallContracts(@NotNull final PsiMethod method,
                                                                       @Nullable PsiCallExpression call) {
-    List<MethodContract> contracts =
+    List<MethodContract> hardcoded =
       HardcodedContracts.getHardcodedContracts(method, ObjectUtils.tryCast(call, PsiMethodCallExpression.class));
-    return !contracts.isEmpty() ? contracts : getMethodContracts(method);
+    if (!hardcoded.isEmpty()) {
+      NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityInfo(method);
+      if (info == null || info.isExternal() || info.getNullability() != Nullability.NOT_NULL) {
+        return hardcoded;
+      }
+    }
+    return getMethodContracts(method);
   }
 
   /**

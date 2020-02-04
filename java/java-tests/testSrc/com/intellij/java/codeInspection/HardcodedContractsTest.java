@@ -154,5 +154,9 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                        "}");
     checkHighlighting();
   }
+  
+  public void testHardcodedContractNotNullOverride() {
+    checkHighlighting();
+  }
 
 }
