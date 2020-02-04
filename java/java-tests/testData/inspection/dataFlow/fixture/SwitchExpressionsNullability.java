@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.*;
 
-public class SwitchExpressionsNullabilityJava12 {
+public class SwitchExpressionsNullability {
   void cons(@NotNull String str) {}
 
   void test(@Nullable String a, @Nullable String b, int i, boolean f) {

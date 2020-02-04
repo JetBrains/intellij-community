@@ -1,4 +1,4 @@
-public class SwitchStatementsJava12 {
+public class SwitchStatements {
   void testMultiLabel(int x) {
     if(x > 0) {
       switch (x) {
