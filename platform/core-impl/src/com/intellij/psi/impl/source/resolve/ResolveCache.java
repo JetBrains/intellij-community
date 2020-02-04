@@ -191,21 +191,16 @@ public class ResolveCache implements Disposable {
     TResult cachedResult = cache.get(ref);
     if (cachedResult != null) {
       if (IdempotenceChecker.areRandomChecksEnabled()) {
-        IdempotenceChecker.applyForRandomCheck(cachedResult, ref, resolver);
+        IdempotenceChecker.applyForRandomCheck(cachedResult, ref, loggingResolver(ref, resolver));
       }
       return cachedResult;
     }
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-    Computable<TResult> doResolve = () -> {
-      if (IdempotenceChecker.isLoggingEnabled()) {
-        IdempotenceChecker.logTrace("Resolving " + ref + " of " + ref.getClass());
-      }
-      return resolver.get();
-    };
+    Computable<TResult> loggingResolver = loggingResolver(ref, resolver);
     TResult result = preventRecursion
-                     ? RecursionManager.doPreventingRecursion(Pair.create(ref, cache), true, doResolve)
-                     : doResolve.get();
+                     ? RecursionManager.doPreventingRecursion(Pair.create(ref, cache), true, loggingResolver)
+                     : loggingResolver.get();
     if (result instanceof ResolveResult) {
       ensureValidPsi((ResolveResult)result);
     }
@@ -216,9 +211,19 @@ public class ResolveCache implements Disposable {
       PsiUtilCore.ensureValid((PsiElement)result);
     }
     if (stamp.mayCacheNow()) {
-      cache(ref, cache, result, doResolve);
+      cache(ref, cache, result, loggingResolver);
     }
     return result;
+  }
+
+  @NotNull
+  private static <R> Computable<R> loggingResolver(@NotNull Object ref, @NotNull Computable<? extends R> resolver) {
+    return () -> {
+      if (IdempotenceChecker.isLoggingEnabled()) {
+        IdempotenceChecker.logTrace("Resolving " + ref + " of " + ref.getClass());
+      }
+      return resolver.get();
+    };
   }
 
   private static void ensureValidResults(ResolveResult[] result) {
