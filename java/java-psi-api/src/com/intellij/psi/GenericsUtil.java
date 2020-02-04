@@ -155,7 +155,7 @@ public class GenericsUtil {
 
       return PsiIntersectionType.createIntersection(conjuncts);
     }
-    if (type2 instanceof PsiArrayType && !(type1 instanceof PsiArrayType)) {
+    if (type2 instanceof PsiArrayType) {
       return getLeastUpperBound(type2, type1, compared, manager);
     }
     if (type1 instanceof PsiArrayType) {
@@ -581,8 +581,8 @@ public class GenericsUtil {
   @NotNull
   public static List<PsiType> getExpectedTypeArguments(PsiElement context,
                                                        PsiClass aClass,
-                                                       Iterable<? extends PsiTypeParameter> typeParams,
-                                                       PsiClassType expectedType) {
+                                                       @NotNull Iterable<? extends PsiTypeParameter> typeParams,
+                                                       @NotNull PsiClassType expectedType) {
     PsiClassType.ClassResolveResult resolve = expectedType.resolveGenerics();
     PsiClass expectedClass = resolve.getElement();
 
@@ -632,9 +632,7 @@ public class GenericsUtil {
     final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
     if (parameterList != null) {
       final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
-      if (typeParameterElements.length > 0) {
-        return true;
-      }
+      return typeParameterElements.length > 0;
     }
     return false;
   }

@@ -47,18 +47,18 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   protected abstract String extractRootPath(@NotNull String path);
 
   @Override
-  @SuppressWarnings("deprecation")
   public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
     VirtualFileListener wrapper = new VirtualFileFilteringListener(listener, this);
+    //noinspection deprecation
     VirtualFileManager.getInstance().addVirtualFileListener(wrapper);
     myListenerWrappers.put(listener, wrapper);
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     VirtualFileListener wrapper = myListenerWrappers.remove(listener);
     if (wrapper != null) {
+      //noinspection deprecation
       VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
     }
   }

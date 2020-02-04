@@ -473,7 +473,7 @@ public class HighlightMethodUtil {
    */
   private static HighlightInfo createIncompatibleCallHighlightInfo(HighlightInfoHolder holder,
                                                                    PsiExpressionList list,
-                                                                   MethodCandidateInfo candidateInfo) {
+                                                                   @NotNull MethodCandidateInfo candidateInfo) {
     PsiMethod resolvedMethod = candidateInfo.getElement();
     PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
     String methodName = HighlightMessageUtil.getSymbolName(resolvedMethod, substitutor);
@@ -520,7 +520,7 @@ public class HighlightMethodUtil {
   }
 
   private static String createOneArgMismatchTooltip(MethodCandidateInfo candidateInfo,
-                                                    List<PsiExpression> mismatchedExpressions,
+                                                    @NotNull List<? extends PsiExpression> mismatchedExpressions,
                                                     PsiExpression[] expressions,
                                                     PsiParameter[] parameters) {
     final PsiExpression wrongArg = mismatchedExpressions.get(0);
@@ -542,10 +542,10 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  public static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiCallExpression methodCall,
-                                                                  @NotNull PsiResolveHelper resolveHelper,
-                                                                  MethodCandidateInfo resolveResult,
-                                                                  TextRange fixRange) {
+  static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiCallExpression methodCall,
+                                                           @NotNull PsiResolveHelper resolveHelper,
+                                                           @NotNull MethodCandidateInfo resolveResult,
+                                                           TextRange fixRange) {
     String errorMessage = resolveResult.getInferenceErrorMessage();
     if (errorMessage == null) return null;
     PsiMethod method = resolveResult.getElement();
@@ -683,9 +683,10 @@ public class HighlightMethodUtil {
     }
   }
 
-  private static List<PsiExpression> mismatchedArgs(PsiExpression[] expressions,
+  @NotNull
+  private static List<PsiExpression> mismatchedArgs(PsiExpression @NotNull [] expressions,
                                                     PsiSubstitutor substitutor,
-                                                    PsiParameter[] parameters,
+                                                    PsiParameter @NotNull [] parameters,
                                                     boolean varargs) {
     if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) && parameters.length != expressions.length) {
       return Collections.emptyList();
@@ -1090,7 +1091,7 @@ public class HighlightMethodUtil {
   }
 
   @NotNull
-  static String mismatchedExpressionType(PsiType parameterType, PsiExpression expression) {
+  private static String mismatchedExpressionType(PsiType parameterType, @NotNull PsiExpression expression) {
     return HighlightUtil.createIncompatibleTypesTooltip(parameterType, expression.getType(), new HighlightUtil.IncompatibleTypesTooltipComposer() {
       @NotNull
       @Override
@@ -1111,7 +1112,7 @@ public class HighlightMethodUtil {
   private static boolean assignmentCompatible(int i,
                                               PsiParameter @NotNull [] parameters,
                                               PsiExpression @NotNull [] expressions,
-                                              @NotNull PsiSubstitutor substitutor, 
+                                              @NotNull PsiSubstitutor substitutor,
                                               boolean varargs) {
     PsiExpression expression = i < expressions.length ? expressions[i] : null;
     if (expression == null) return true;
@@ -1892,7 +1893,6 @@ public class HighlightMethodUtil {
     return expectedType;
   }
 
-  @Contract("null, _, _, _, _ -> param3")
   @NotNull
   private static PsiType lub(@Nullable PsiType currentType,
                              @NotNull PsiType leastValueType,
@@ -1909,7 +1909,7 @@ public class HighlightMethodUtil {
         return r1 >= r2 ? currentType : valueType;
       }
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(currentType);
-      if (unboxedType != null && unboxedType.equals(valueType)) return currentType;
+      if (valueType.equals(unboxedType)) return currentType;
       valueType = ((PsiPrimitiveType)valueType).getBoxedType(method);
     }
 
@@ -1920,7 +1920,7 @@ public class HighlightMethodUtil {
     return Objects.requireNonNull(GenericsUtil.getLeastUpperBound(currentType, valueType, manager));
   }
 
-  public static HighlightInfo checkRecordAccessorDeclaration(PsiMethod method) {
+  static HighlightInfo checkRecordAccessorDeclaration(PsiMethod method) {
     PsiRecordComponent component = JavaPsiRecordUtil.getRecordComponentForAccessor(method);
     if (component == null) return null;
     PsiIdentifier identifier = method.getNameIdentifier();
@@ -1940,7 +1940,7 @@ public class HighlightMethodUtil {
   }
 
   @NotNull
-  public static List<HighlightInfo> checkRecordConstructorDeclaration(PsiMethod method) {
+  static List<HighlightInfo> checkRecordConstructorDeclaration(@NotNull PsiMethod method) {
     if (!method.isConstructor()) return Collections.emptyList();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return Collections.emptyList();

@@ -54,6 +54,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   };
   private static final UnmodifiableHashMap<PsiTypeParameter, PsiType> EMPTY_MAP = UnmodifiableHashMap.empty(PSI_EQUIVALENCE);
 
+  @NotNull
   private final UnmodifiableHashMap<PsiTypeParameter, PsiType> mySubstitutionMap;
   private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor();
 
@@ -299,7 +300,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return new PsiSubstitutorImpl(mySubstitutionMap, typeParameter, mapping);
   }
 
-  private static UnmodifiableHashMap<PsiTypeParameter, PsiType> putAllInternal(UnmodifiableHashMap<PsiTypeParameter, PsiType> originalMap,
+  @NotNull
+  private static UnmodifiableHashMap<PsiTypeParameter, PsiType> putAllInternal(@NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> originalMap,
                                                                                @NotNull PsiClass parentClass,
                                                                                PsiType[] mappings) {
     final PsiTypeParameter[] params = parentClass.getTypeParameters();
