@@ -144,7 +144,7 @@ class DeepComparator(private val project: Project,
 
   private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
                               branchToCompare: String): Map<GitRepository, GitBranch> {
-    return providers.keys.mapNotNull { repositoryManager.getRepositoryForRoot(it) }.filter { repository ->
+    return providers.keys.mapNotNull { repositoryManager.getRepositoryForRootQuick(it) }.filter { repository ->
       repository.currentBranch != null &&
       repository.branches.findBranchByName(branchToCompare) != null
     }.associate { Pair(it, it.currentBranch!!) }

@@ -18,10 +18,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -82,16 +79,13 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   }
 
   @Nullable
+  @CalledInBackground
   public Repository getRepositoryForFile(@NotNull VirtualFile file) {
     return getRepositoryForFile(file, false);
   }
 
-  /**
-   * @deprecated to delete in 2020.3
-   */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @CalledInAny
   public Repository getRepositoryForFileQuick(@NotNull VirtualFile file) {
     return getRepositoryForFile(file, true);
   }
@@ -141,10 +135,10 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
     if (root == null) return null;
 
     Application application = ApplicationManager.getApplication();
-    if (updateIfNeeded && application.isWriteAccessAllowed() &&
+    if (updateIfNeeded && application.isDispatchThread() &&
         !application.isUnitTestMode() && !application.isHeadlessEnvironment()) {
       updateIfNeeded = false;
-      LOG.error("Do not call synchronous root update under write lock");
+      LOG.error("Do not call synchronous repository update in EDT");
     }
 
     REPO_LOCK.readLock().lock();

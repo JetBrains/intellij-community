@@ -13,10 +13,10 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.NonFocusableCheckBox
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.commitProperty
-import git4idea.GitUtil.getRepositoriesFromRoots
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.GitVcs
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
@@ -54,7 +54,8 @@ private class GitSkipHooksConfigurationPanel(
   override fun onChangeListSelected(list: LocalChangeList?) {
     if (runHooks.isEnabled) selectedState = runHooks.isSelected
     val affectedGitRoots = panel.roots.intersect(setOf(*ProjectLevelVcsManager.getInstance(panel.project).getRootsUnderVcs(vcs)))
-    runHooks.isEnabled = getRepositoriesFromRoots(getRepositoryManager(panel.project), affectedGitRoots).any { it.hasCommitHooks() }
+    val repositoryManager = GitRepositoryManager.getInstance(panel.project)
+    runHooks.isEnabled = affectedGitRoots.any { repositoryManager.getRepositoryForRootQuick(it)?.hasCommitHooks() == true }
     runHooks.isSelected = if (runHooks.isEnabled) selectedState else false
   }
 

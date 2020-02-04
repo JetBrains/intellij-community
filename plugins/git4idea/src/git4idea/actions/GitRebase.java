@@ -10,9 +10,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import git4idea.rebase.GitRebaseDialog;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,7 +52,9 @@ public class GitRebase extends DumbAwareAction {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Rebasing...") {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          GitRebaseUtils.rebase(project, singletonList(dialog.getSelectedRepository()), dialog.getSelectedParams(), indicator);
+          GitRepository selectedRepository =
+            ObjectUtils.assertNotNull(GitRepositoryManager.getInstance(project).getRepositoryForRoot(dialog.gitRoot()));
+          GitRebaseUtils.rebase(project, singletonList(selectedRepository), dialog.getSelectedParams(), indicator);
         }
       });
     }

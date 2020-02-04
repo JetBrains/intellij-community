@@ -54,7 +54,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VirtualFile file = assertNotNull(getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
 
-    T repository = assertNotNull(getRepositoryManager(project).getRepositoryForFile(file));
+    T repository = assertNotNull(getRepositoryManager(project).getRepositoryForFileQuick(file));
     assert !repository.isFresh();
     String presentableRevisionName = chooseNotNull(repository.getCurrentBranchName(),
                                                    DvcsUtil.getShortHash(assertNotNull(repository.getCurrentRevision())));

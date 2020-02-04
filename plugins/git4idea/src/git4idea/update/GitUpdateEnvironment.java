@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.PostponableLogRefresher;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
@@ -22,12 +22,12 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import static git4idea.GitUtil.*;
+import static git4idea.GitUtil.isUnderGit;
+import static java.util.Arrays.asList;
 
 public class GitUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
@@ -43,13 +43,14 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   @NotNull
-  public UpdateSession updateDirectories(FilePath @NotNull [] filePaths, UpdatedFiles updatedFiles, ProgressIndicator progressIndicator, @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef) throws ProcessCanceledException {
-    Set<VirtualFile> roots = getRootsForFilePathsIfAny(myProject, Arrays.asList(filePaths));
-    GitRepositoryManager repositoryManager = getRepositoryManager(myProject);
-
-    final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject,
-                                                                   progressIndicator, getRepositoriesFromRoots(repositoryManager, roots),
-                                                                   updatedFiles, true, true);
+  public UpdateSession updateDirectories(FilePath @NotNull [] filePaths,
+                                         UpdatedFiles updatedFiles,
+                                         ProgressIndicator progressIndicator,
+                                         @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
+    throws ProcessCanceledException {
+    GitRepositoryManager manager = GitRepositoryManager.getInstance(myProject);
+    Set<GitRepository> repositories = ContainerUtil.map2SetNotNull(asList(filePaths), manager::getRepositoryForFile);
+    final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject, progressIndicator, repositories, updatedFiles, true, true);
     UpdateMethod method = GitVcsSettings.getInstance(myProject).getUpdateMethod();
     boolean result = gitUpdateProcess.update(method).isSuccess();
 

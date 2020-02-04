@@ -114,6 +114,6 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Override
   public boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots) {
-    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRoot(r) != null);
+    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRootQuick(r) != null);
   }
 }

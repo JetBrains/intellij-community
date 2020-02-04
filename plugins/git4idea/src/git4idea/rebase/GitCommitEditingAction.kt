@@ -29,6 +29,7 @@ import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.findProtectedRemoteBranch
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.CalledInAny
 
 /**
  * Base class for Git action which is going to edit existing commits,
@@ -58,7 +59,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
     val commit = log.selectedShortDetails[0]
     val repositoryManager = getRepositoryManager(project)
-    val repository = repositoryManager.getRepositoryForRoot(commit.root)
+    val repository = repositoryManager.getRepositoryForRootQuick(commit.root)
     if (repository == null || repositoryManager.isExternal(repository)) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -99,7 +100,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
 
     val commit = log.selectedShortDetails[0]
-    val repository = getRepositoryManager(project).getRepositoryForRoot(commit.root)!!
+    val repository = getRepositoryManager(project).getRepositoryForRootQuick(commit.root)!!
 
     val branches = findContainingBranches(data, commit.root, commit.id)
 
@@ -128,7 +129,8 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   protected fun getSelectedCommit(e: AnActionEvent): VcsShortCommitDetails = getLog(e).selectedShortDetails[0]!!
 
-  protected fun getRepository(e: AnActionEvent): GitRepository = getRepositoryManager(e.project!!).getRepositoryForRoot(getSelectedCommit(e).root)!!
+  @CalledInAny
+  protected fun getRepository(e: AnActionEvent): GitRepository = getRepositoryManager(e.project!!).getRepositoryForRootQuick(getSelectedCommit(e).root)!!
 
   protected abstract fun getFailureTitle(): String
 

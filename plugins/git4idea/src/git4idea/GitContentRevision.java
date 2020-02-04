@@ -112,7 +112,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     }
 
     GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
-    GitRepository candidate = repositoryManager.getRepositoryForRoot(file);
+    GitRepository candidate = repositoryManager.getRepositoryForRootQuick(file);
     if (candidate == null) { // not a root
       return null;
     }

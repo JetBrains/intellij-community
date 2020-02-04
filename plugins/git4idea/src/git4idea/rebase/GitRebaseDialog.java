@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static git4idea.branch.GitBranchUtil.sortBranchesByName;
 
 /**
@@ -320,7 +319,7 @@ public class GitRebaseDialog extends DialogWrapper {
     myRemoteBranches.clear();
     myTags.clear();
     final VirtualFile root = gitRoot();
-    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(root);
     if (repository != null) {
       myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
       myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
@@ -356,9 +355,10 @@ public class GitRebaseDialog extends DialogWrapper {
         }, "Loading Branch Configuration...", true, myProject);
         String remote = remoteAndMerge.first;
         String mergeBranch = remoteAndMerge.second;
+        GitRepository repository = GitUtil.getRepositoryForRoot(myProject, root);
 
         if (remote == null || mergeBranch == null) {
-          trackedBranch = myRepositoryManager.getRepositoryForRoot(root).getBranches().findBranchByName("master");
+          trackedBranch = repository.getBranches().findBranchByName("master");
         }
         else {
           mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
@@ -366,7 +366,7 @@ public class GitRebaseDialog extends DialogWrapper {
             trackedBranch = new GitSvnRemoteBranch(mergeBranch);
           }
           else {
-            GitRemote r = GitBranchUtil.findRemoteByNameOrLogError(myProject, root, remote);
+            GitRemote r = GitUtil.findRemoteByName(repository,remote);
             if (r != null) {
               trackedBranch = new GitStandardRemoteBranch(r, mergeBranch);
             }
@@ -391,11 +391,6 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   public VirtualFile gitRoot() {
     return (VirtualFile)myGitRootComboBox.getSelectedItem();
-  }
-
-  @NotNull
-  public GitRepository getSelectedRepository() {
-    return assertNotNull(myRepositoryManager.getRepositoryForRoot(gitRoot()));
   }
 
   @NotNull

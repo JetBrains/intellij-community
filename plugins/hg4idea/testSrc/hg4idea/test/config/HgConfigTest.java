@@ -45,6 +45,7 @@ public class HgConfigTest extends HgPlatformTest {
 
   public void testDefaultPathInClonedRepo() {
     cd(myChildRepo);
+    updateRepoConfig(myProject, myChildRepo);
     final String defaultPath = HgUtil.getRepositoryDefaultPath(myProject, myChildRepo);
     assertNotNull(defaultPath);
     assertEquals(myRepository.getPath(),

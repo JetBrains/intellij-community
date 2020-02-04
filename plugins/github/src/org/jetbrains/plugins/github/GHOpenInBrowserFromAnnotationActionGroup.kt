@@ -24,7 +24,7 @@ class GHOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)
     val virtualFile = annotation.file
 
     val filePath = VcsUtil.getFilePath(virtualFile)
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath) ?: return null
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
 
     val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null

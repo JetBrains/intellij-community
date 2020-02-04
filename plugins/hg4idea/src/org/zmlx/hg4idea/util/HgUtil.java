@@ -42,9 +42,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
@@ -333,6 +331,7 @@ public abstract class HgUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
                                                                                @NotNull Collection<? extends FilePath> files) {
     Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<>();
@@ -487,8 +486,9 @@ public abstract class HgUtil {
   }
 
   @Nullable
+  @CalledInAny
   public static String getRepositoryDefaultPath(@NotNull Project project, @NotNull VirtualFile root) {
-    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRootQuick(root);
     assert hgRepository != null : "Repository can't be null for root " + root.getName();
     return hgRepository.getRepositoryConfig().getDefaultPath();
   }
@@ -511,9 +511,10 @@ public abstract class HgUtil {
   }
 
   @NotNull
+  @CalledInAny
   public static Collection<String> getRepositoryPaths(@NotNull Project project,
                                                       @NotNull VirtualFile root) {
-    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
+    HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRootQuick(root);
     assert hgRepository != null : "Repository can't be null for root " + root.getName();
     return hgRepository.getRepositoryConfig().getPaths();
   }

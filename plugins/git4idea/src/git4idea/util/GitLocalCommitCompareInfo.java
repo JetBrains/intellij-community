@@ -15,12 +15,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchWorker;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,7 +50,6 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
   @Override
   public void copyChangesFromBranch(@NotNull List<? extends Change> changes,
                                     boolean swapSides) throws VcsException {
-    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myProject);
 
     MultiMap<Repository, FilePath> toCheckout = MultiMap.createSet();
     MultiMap<Repository, FilePath> toDelete = MultiMap.createSet();
@@ -59,8 +58,7 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
       FilePath currentPath = swapSides ? ChangesUtil.getAfterPath(change) : ChangesUtil.getBeforePath(change);
       FilePath branchPath = !swapSides ? ChangesUtil.getAfterPath(change) : ChangesUtil.getBeforePath(change);
       assert currentPath != null || branchPath != null;
-
-      Repository repository = repositoryManager.getRepositoryForFile(ObjectUtils.chooseNotNull(currentPath, branchPath));
+      Repository repository = GitUtil.getRepositoryForFile(myProject, ObjectUtils.chooseNotNull(currentPath, branchPath));
       if (currentPath != null && branchPath != null) {
         if (!Comparing.equal(currentPath, branchPath)) {
           toDelete.putValue(repository, currentPath);

@@ -107,7 +107,7 @@ public class GitRefManager implements VcsLogRefManager {
       VirtualFile root = entry.getKey();
       List<VcsRef> refsInRoot = ContainerUtil.sorted(entry.getValue(), myLabelsComparator);
 
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(root);
       if (repository == null) {
         LOG.warn("No repository for root: " + root);
         continue;
@@ -268,7 +268,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @Nullable
   private GitRepository getRepository(@NotNull VcsRef reference) {
-    return myRepositoryManager.getRepositoryForRoot(reference.getRoot());
+    return myRepositoryManager.getRepositoryForRootQuick(reference.getRoot());
   }
 
   @Override

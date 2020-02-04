@@ -159,8 +159,7 @@ public class CloudGitRemoteDetector implements GitRepositoryChangeListener, Proj
       if (contentRoot == null) {
         return;
       }
-
-      GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(contentRoot);
+      GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(contentRoot);
       if (repository == null) {
         return;
       }

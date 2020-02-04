@@ -51,6 +51,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
@@ -179,6 +179,7 @@ public class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
+  @CalledInBackground
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
                                                                        @NotNull Collection<? extends VirtualFile> virtualFiles)
     throws VcsException {
@@ -186,6 +187,7 @@ public class GitUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootIgnoringMissing(@NotNull Project project,
                                                                                       @NotNull Collection<? extends VirtualFile> filePaths) {
     try {
@@ -201,6 +203,7 @@ public class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
+  @CalledInBackground
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Project project,
                                                                         @NotNull Collection<? extends FilePath> filePaths)
     throws VcsException {
@@ -208,6 +211,7 @@ public class GitUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRootIgnoringMissing(@NotNull Project project,
                                                                                        @NotNull Collection<? extends FilePath> filePaths) {
     try {
@@ -220,6 +224,7 @@ public class GitUtil {
   }
 
   @NotNull
+  @CalledInBackground
   private static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
                                                                         @NotNull Collection<? extends VirtualFile> virtualFiles,
                                                                         boolean ignoreNonGit)
@@ -235,6 +240,7 @@ public class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
+  @CalledInBackground
   public static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
                                                                             @NotNull Collection<? extends VirtualFile> filePaths)
     throws VcsException {
@@ -242,6 +248,7 @@ public class GitUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static Map<GitRepository, List<VirtualFile>> sortFilesByRepositoryIgnoringMissing(@NotNull Project project,
                                                                                            @NotNull Collection<? extends VirtualFile> virtualFiles) {
     try {
@@ -254,6 +261,7 @@ public class GitUtil {
   }
 
   @NotNull
+  @CalledInBackground
   private static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
                                                                              @NotNull Collection<? extends VirtualFile> virtualFiles,
                                                                              boolean ignoreNonGit)
@@ -449,16 +457,7 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Set<VirtualFile> getRootsForFilePathsIfAny(@NotNull Project project, @NotNull Collection<? extends FilePath> filePaths) {
-    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
-    return filePaths.stream()
-      .map(path -> manager.getRepositoryForFile(path))
-      .filter(Objects::nonNull)
-      .map(Repository::getRoot)
-      .collect(Collectors.toSet());
-  }
-
-  @NotNull
+  @CalledInBackground
   public static Set<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     Set<GitRepository> result = new HashSet<>();
@@ -590,6 +589,7 @@ public class GitUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static Collection<GitRepository> getRepositoriesFromRoots(@NotNull GitRepositoryManager repositoryManager,
                                                                    @NotNull Collection<? extends VirtualFile> roots) {
     Collection<GitRepository> repositories = new ArrayList<>(roots.size());
@@ -640,6 +640,7 @@ public class GitUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static GitRepository getRepositoryForFile(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
     if (repository == null) throw new GitRepositoryNotFoundException(file);
@@ -647,9 +648,18 @@ public class GitUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static GitRepository getRepositoryForFile(@NotNull Project project, @NotNull FilePath file) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
     if (repository == null) throw new GitRepositoryNotFoundException(file);
+    return repository;
+  }
+
+  @NotNull
+  @CalledInBackground
+  public static GitRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    if (repository == null) throw new GitRepositoryNotFoundException(root);
     return repository;
   }
 

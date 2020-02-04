@@ -21,7 +21,7 @@ abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
     val gitRepositoryManager = GitRepositoryManager.getInstance(project)
 
     val changes = changeList.changes.filter {
-      gitRepositoryManager.getRepositoryForFile(ChangesUtil.getFilePath(it)) == repository
+      gitRepositoryManager.getRepositoryForFileQuick(ChangesUtil.getFilePath(it)) == repository
     }
 
     val executors = repository.vcs.commitExecutors + if (getProhibitedStateMessage(e, "rebase") == null)

@@ -21,17 +21,16 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static git4idea.GitUtil.getRootsFromRepositories;
 
@@ -61,9 +60,10 @@ public class GitMerger {
     GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
 
-    File messageFile = assertNotNull(myRepositoryManager.getRepositoryForRoot(root)).getRepositoryFiles().getMergeMessageFile();
+    GitRepository repository = GitUtil.getRepositoryForRoot(myProject, root);
+    File messageFile = repository.getRepositoryFiles().getMergeMessageFile();
     if (!messageFile.exists()) {
-      final GitBranch branch = GitBranchUtil.getCurrentBranch(myProject, root);
+      final GitBranch branch = repository.getCurrentBranch();
       final String branchName = branch != null ? branch.getName() : "";
       handler.addParameters("-m", "Merge branch '" + branchName + "' of " + root.getPresentableUrl() + " with conflicts.");
     } else {

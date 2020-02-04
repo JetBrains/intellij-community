@@ -22,12 +22,13 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
-import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.history.browser.SHAHash;
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,9 +242,11 @@ public class GitHistoryUtils {
    */
   @Nullable
   public static ItemLatestState getLastRevision(@NotNull Project project, @NotNull FilePath filePath) throws VcsException {
-    VirtualFile root = GitUtil.getRepositoryForFile(project, filePath).getRoot();
-    GitBranch c = GitBranchUtil.getCurrentBranch(project, root);
-    GitBranch t = c == null ? null : GitBranchUtil.tracked(project, root, c.getName());
+    GitRepository repository = GitUtil.getRepositoryForFile(project, filePath);
+    VirtualFile root = repository.getRoot();
+    GitBranch c = repository.getCurrentBranch();
+    GitBranchTrackInfo info = c == null ? null : repository.getBranchTrackInfo(c.getName());
+    GitBranch t = info == null ? null : info.getRemoteBranch();
     if (t == null) {
       return new ItemLatestState(getCurrentRevision(project, filePath, null), true, false);
     }

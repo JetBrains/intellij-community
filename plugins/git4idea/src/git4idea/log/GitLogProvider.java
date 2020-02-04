@@ -45,6 +45,7 @@ import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -561,8 +562,9 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
 
   @Nullable
   @Override
+  @CalledInAny
   public String getCurrentBranch(@NotNull VirtualFile root) {
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(root);
     if (repository == null) return null;
     String currentBranchName = repository.getCurrentBranchName();
     if (currentBranchName == null && repository.getCurrentRevision() != null) {

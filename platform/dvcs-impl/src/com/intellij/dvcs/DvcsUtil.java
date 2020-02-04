@@ -42,10 +42,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -290,12 +287,13 @@ public class DvcsUtil {
   }
 
   @Nullable
+  @CalledInAny
   public static <T extends Repository> T guessRepositoryForFile(@NotNull Project project,
                                                                 @NotNull RepositoryManager<T> manager,
                                                                 @Nullable VirtualFile file,
                                                                 @Nullable String defaultRootPathValue) {
-    T repository = manager.getRepositoryForRoot(guessVcsRoot(project, file));
-    return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
+    T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
+    return repository != null ? repository : manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
   @Nullable
@@ -419,6 +417,7 @@ public class DvcsUtil {
   }
 
   @NotNull
+  @CalledInBackground
   public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
                                                                                               @NotNull List<? extends VcsFullCommitDetails> commits) {
     Map<R, List<VcsFullCommitDetails>> groupedCommits = new HashMap<>();

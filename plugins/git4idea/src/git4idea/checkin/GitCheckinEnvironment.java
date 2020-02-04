@@ -78,7 +78,6 @@ import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
 import static git4idea.checkin.GitCommitOptionsKt.*;
 import static git4idea.checkin.GitSkipHooksCommitHandlerFactoryKt.isSkipHooks;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
-import static java.util.Arrays.asList;
 
 public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
   private static final Logger LOG = Logger.getInstance(GitCheckinEnvironment.class);
@@ -115,19 +114,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   public String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
-    for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
-      GitRepository repository = manager.getRepositoryForRoot(root);
-      if (repository == null) { // unregistered nested submodule found by GitUtil.getGitRoot
-        LOG.warn("Unregistered repository: " + root);
-        continue;
-      }
+    Set<GitRepository> repositories = map2SetNotNull(Arrays.asList(filesToCheckin), manager::getRepositoryForFileQuick);
+    for (GitRepository repository : repositories) {
       File mergeMsg = repository.getRepositoryFiles().getMergeMessageFile();
       File squashMsg = repository.getRepositoryFiles().getSquashMessageFile();
       try {
         if (!mergeMsg.exists() && !squashMsg.exists()) {
           continue;
         }
-        String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
+        String encoding = GitConfigUtil.getCommitEncoding(myProject, repository.getRoot());
         if (mergeMsg.exists()) {
           messages.add(loadMessage(mergeMsg, encoding));
         }

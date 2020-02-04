@@ -40,7 +40,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.action.HgActionUtil;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.command.mq.HgQNewCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
@@ -78,7 +77,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
     reset();
 
-    Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), commitPanel.getRoots());
+    Collection<HgRepository> repos =
+      ContainerUtil.map2SetNotNull(commitPanel.getRoots(), getRepositoryManager(myProject)::getRepositoryForFileQuick);
     boolean hasSubrepos = ContainerUtil.exists(repos, HgRepository::hasSubrepos);
     boolean showAmendOption = isAmendCommitOptionSupported(commitPanel, this);
 

@@ -92,7 +92,7 @@ internal open class GitDefaultMergeDialogCustomizer(
   }
 
   override fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList {
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return DEFAULT_CUSTOMIZER_LIST
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file) ?: return DEFAULT_CUSTOMIZER_LIST
     return when (repository.state) {
       Repository.State.MERGING -> getMergeTitleCustomizerList(repository, file)
       Repository.State.REBASING -> getRebaseTitleCustomizerList(repository, file)

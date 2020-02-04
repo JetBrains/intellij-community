@@ -162,7 +162,7 @@ public class GitRebaseUtils {
 
   @Nullable
   public static File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
-    GitRepository repository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root));
+    GitRepository repository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root));
     File f = repository.getRepositoryFiles().getRebaseApplyDir();
     if (f.exists()) {
       return f;

@@ -27,7 +27,6 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +45,7 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     List<HgRepository> repositories = repositoryManager.getRepositories();
     if (!repositories.isEmpty()) {
       List<HgRepository> selectedRepositories = files != null
-                                                ? HgActionUtil.collectRepositoriesFromFiles(repositoryManager, Arrays.asList(files))
+                                                ? ContainerUtil.mapNotNull(files, repositoryManager::getRepositoryForFileQuick)
                                                 : ContainerUtil.emptyList();
 
       execute(project, repositories,

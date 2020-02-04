@@ -80,7 +80,7 @@ open class GHOpenInBrowserActionGroup
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
     if (fileRevision !is GitFileRevision) return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath)
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath)
     if (repository == null) return null
 
     val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
@@ -97,7 +97,7 @@ open class GHOpenInBrowserActionGroup
 
     val commit = ContainerUtil.getFirstItem(selectedCommits) ?: return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(commit.root)
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(commit.root)
     if (repository == null) return null
 
     val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)

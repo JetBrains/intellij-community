@@ -237,7 +237,7 @@ class GitCommitOptionsUi(
 
   private fun isDefaultAuthor(author: VcsUser): Boolean {
     val repositoryManager = getRepositoryManager(project)
-    val affectedRoots = commitPanel.roots.filter { repositoryManager.getRepositoryForRoot(it) != null }
+    val affectedRoots = commitPanel.roots.filter { repositoryManager.getRepositoryForRootQuick(it) != null }
 
     return affectedRoots.map { userRegistry.getUser(it) }.all { it != null && isSamePerson(author, it) }
   }
