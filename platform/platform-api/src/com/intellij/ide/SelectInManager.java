@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
@@ -16,7 +16,7 @@ public final class SelectInManager  {
   private final Project myProject;
   private final SimpleSmartExtensionPoint<SelectInTarget> myTargets;
   /**
-   * Use {code {@link #getProject()}} instead
+   * @deprecated Use {code {@link #getProject()}} instead
    */
   @Deprecated
   @NonNls public static final String PROJECT = getProject();
