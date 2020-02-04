@@ -53,7 +53,7 @@ public class DocstringQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Fix docstring";
+    return PyBundle.message("QFIX.fix.docstring");
   }
 
   @Override

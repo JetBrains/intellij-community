@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.PySdkExtKt;
@@ -105,7 +106,7 @@ public class PyInterpreterInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Interpreter settings";
+      return PyBundle.message("INSP.interpreter.interpreter.settings");
     }
 
     @Override
@@ -130,7 +131,7 @@ public class PyInterpreterInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Configure Python interpreter";
+      return PyBundle.message("INSP.interpreter.configure.python.interpreter");
     }
 
     @Override

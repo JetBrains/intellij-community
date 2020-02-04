@@ -67,8 +67,8 @@ public class PyMandatoryEncodingInspection extends PyInspection {
         TextRange tr = new TextRange(0,0);
         ProblemsHolder holder = getHolder();
         if (holder != null)
-          holder.registerProblem(node, tr, "No encoding specified for file", new AddEncodingQuickFix(myDefaultEncoding,
-                                                                                                     myEncodingFormatIndex));
+          holder.registerProblem(node, tr, PyBundle.message("INSP.mandatory.encoding.no.encoding.specified.for.file"), new AddEncodingQuickFix(myDefaultEncoding,
+                                                                                                                                               myEncodingFormatIndex));
       }
     }
   }
@@ -128,7 +128,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   @NotNull
   private static JPanel defaultEncodingLabel() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel("Select default encoding: "));
+    panel.add(new JLabel(PyBundle.message("INSP.mandatory.encoding.select.default.encoding")));
     return panel;
   }
 
@@ -151,7 +151,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   @NotNull
   private static JPanel encodingFormatLabel() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel("Encoding comment format:"));
+    panel.add(new JLabel(PyBundle.message("INSP.mandatory.encoding.encoding.comment.format")));
     return panel;
   }
 

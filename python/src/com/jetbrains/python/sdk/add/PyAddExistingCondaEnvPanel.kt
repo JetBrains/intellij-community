@@ -25,6 +25,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.associateWithModule
@@ -52,7 +53,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
     if (path != null) {
       text = path
     }
-    addBrowseFolderListener("Select Path to Conda Executable", null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.conda.path.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
   }
 

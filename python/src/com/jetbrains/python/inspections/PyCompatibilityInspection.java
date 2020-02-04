@@ -132,7 +132,7 @@ public class PyCompatibilityInspection extends PyInspection {
       }
     });
     final JPanel versionPanel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel("Check for compatibility with python versions:");
+    JLabel label = new JLabel(PyBundle.message("INSP.compatibility.check.for.compatibility.with.python.versions"));
     label.setLabelFor(chooser);
     versionPanel.add(label, BorderLayout.PAGE_START);
     versionPanel.add(chooser);
@@ -297,7 +297,7 @@ public class PyCompatibilityInspection extends PyInspection {
             .stream(node.getArguments())
             .filter(PyKeywordArgument.class::isInstance)
             .forEach(expression -> myHolder.registerProblem(expression,
-                                                            "This syntax available only since py3",
+                                                            PyBundle.message("INSP.compatibility.this.syntax.available.only.since.py3"),
                                                             !isPython2
                                                             ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
                                                             : ProblemHighlightType.GENERIC_ERROR));

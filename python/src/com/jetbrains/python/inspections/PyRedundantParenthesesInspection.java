@@ -157,9 +157,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Ignore argument of % operator", "myIgnorePercOperator");
-    panel.addCheckbox("Ignore tuples", "myIgnoreTupleInReturn");
-    panel.addCheckbox("Ignore empty lists of base classes", "myIgnoreEmptyBaseClasses");
+    panel.addCheckbox(PyBundle.message("INSP.redundant.parens.ignore.argument.of.operator"), "myIgnorePercOperator");
+    panel.addCheckbox(PyBundle.message("INSP.redundant.parens.ignore.tuples"), "myIgnoreTupleInReturn");
+    panel.addCheckbox(PyBundle.message("INSP.redundant.parens.ignore.empty.lists.of.base.classes"), "myIgnoreEmptyBaseClasses");
     return panel;
   }
 }

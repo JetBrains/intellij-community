@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
@@ -23,7 +24,7 @@ public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
 
   @Override
   public String getOptionName() {
-    return "Rename inheritors";
+    return PyBundle.message("refactoring.rename.inheritors");
   }
 
   @Override
@@ -50,12 +51,12 @@ public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
 
     @Override
     public String getDialogTitle() {
-      return "Rename Inheritors";
+      return PyBundle.message("refactoring.rename.inheritors.title");
     }
 
     @Override
     public String getDialogDescription() {
-      return "Rename inheritor classes with the following names to:";
+      return PyBundle.message("refactoring.rename.inheritor.classes.with.the.following.names.to");
     }
 
     @Override

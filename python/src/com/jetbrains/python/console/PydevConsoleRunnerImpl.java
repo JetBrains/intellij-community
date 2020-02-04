@@ -242,10 +242,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         throw new ExecutionException(PYTON_INTERPRETER_NULL);
       }
       initAndRun(mySdk);
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
-          indicator.setText("Connecting to console...");
+          indicator.setText(PyBundle.message("connecting.to.console.progress"));
           connect(myStatementsToExecute);
           if (requestEditorFocus) {
             myConsoleView.requestFocus();
@@ -265,10 +265,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     TransactionGuard.submitTransaction(myProject, () -> FileDocumentManager.getInstance().saveAllDocuments());
 
     ApplicationManager.getApplication().executeOnPooledThread(
-      () -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
+      () -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
-          indicator.setText("Connecting to console...");
+          indicator.setText(PyBundle.message("connecting.to.console.progress"));
           try {
             if (mySdk == null) {
               throw new ExecutionException(PYTON_INTERPRETER_NULL);
@@ -839,7 +839,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private void rerun(String displayName) {
-    new Task.Backgroundable(myProject, "Restarting Console", true) {
+    new Task.Backgroundable(myProject, PyBundle.message("console.restarting.console"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProcessHandler != null) {
@@ -885,7 +885,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     private XDebugSession mySession = null;
 
     ConnectDebuggerAction() {
-      super("Attach Debugger", "Enables tracing of code executed in console", AllIcons.Actions.StartDebugger);
+      super(PyBundle.message("console.attach.debugger"), PyBundle.message("console.attach.debugger.description"), AllIcons.Actions.StartDebugger);
     }
 
     @Override
@@ -914,7 +914,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
         catch (Exception e1) {
           LOG.error(e1);
-          Messages.showErrorDialog("Can't connect to debugger", "Error Connecting Debugger");
+          Messages.showErrorDialog(PyBundle.message("console.cannot.connect.to.debugger"),
+                                   PyBundle.message("console.error.connecting.debugger"));
         }
       }
       else {
@@ -926,7 +927,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private static class NewConsoleAction extends AnAction implements DumbAware {
     NewConsoleAction() {
-      super("New Console", "Creates new python console", AllIcons.General.Add);
+      super(PyBundle.message("console.new.console"), PyBundle.message("console.new.console.description"), AllIcons.General.Add);
     }
 
     @Override

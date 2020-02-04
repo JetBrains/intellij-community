@@ -58,7 +58,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Add method to class";
+    return PyBundle.message("QFIX.add.method.to.class");
   }
 
   @Override

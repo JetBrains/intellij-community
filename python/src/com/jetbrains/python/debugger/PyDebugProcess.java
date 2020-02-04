@@ -470,7 +470,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     private final String myText;
 
     WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
-      super("", "Enables watching executed functions return values", null);
+      super("", PyBundle.message("debugger.watch.return.values.description"), null);
       myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
       myProcess = debugProcess;
       myText = "Show Return Values";

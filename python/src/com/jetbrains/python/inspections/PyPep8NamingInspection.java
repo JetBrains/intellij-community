@@ -39,6 +39,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -277,14 +278,14 @@ public class PyPep8NamingInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Ignore method names for descendants of class";
+      return PyBundle.message("INSP.pep8.ignore.method.names.for.descendants.of.class");
     }
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext ->
         JBPopupFactory.getInstance().createPopupChooserBuilder(getBaseClassNames())
-        .setTitle("Ignore base class")
+        .setTitle(PyBundle.message("INSP.pep8.ignore.base.class"))
         .setItemChosenCallback((selectedValue) -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
           PyPep8NamingInspection inspection =
             (PyPep8NamingInspection)it.getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());

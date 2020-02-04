@@ -125,7 +125,8 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     if (function == null) {
       return getFamilyName();
     }
-    final String params = StringUtil.join(createMethodDescriptor(function).getParameters(), info -> info.isNew() ? "<b>" + info.getName() + "</b>" : info.getName(), ", ");
+    final String params = StringUtil.join(createMethodDescriptor(function).getParameters(), info -> info.isNew() ? PyBundle
+      .message("QFIX.bold.html.text", info.getName()) : info.getName(), ", ");
 
     final String message = PyBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")");
     return XmlStringUtil.wrapInHtml(message);

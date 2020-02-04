@@ -108,13 +108,13 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myDocstringFormatComboBox.setRenderer(SimpleListCellRenderer.create("", DocStringFormat::getName));
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myWorkDir.addBrowseFolderListener("Please choose working directory:", null, myProject, fileChooserDescriptor);
+    myWorkDir.addBrowseFolderListener(PyBundle.message("configurable.choose.working.directory"), null, myProject, fileChooserDescriptor);
     ReSTService service = ReSTService.getInstance(myModule);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
-    myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
+    myRequirementsPathField.addBrowseFolderListener(PyBundle.message("configurable.choose.path.to.the.package.requirements.file"), null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
     myPipEnvPathField.addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor());
@@ -310,7 +310,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       else {
         final File executable = PipenvKt.detectPipEnvExecutable();
         if (executable != null) {
-          pipEnvText.getEmptyText().setText("Auto-detected: " + executable.getAbsolutePath());
+          pipEnvText.getEmptyText().setText(PyBundle.message("configurable.pipenv.auto.detected", executable.getAbsolutePath()));
         }
       }
     }

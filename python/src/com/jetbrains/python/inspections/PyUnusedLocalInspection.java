@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,10 +48,10 @@ public class PyUnusedLocalInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Ignore variables used in tuple unpacking", "ignoreTupleUnpacking");
-    panel.addCheckbox("Ignore lambda parameters", "ignoreLambdaParameters");
-    panel.addCheckbox("Ignore range iteration variables", "ignoreLoopIterationVariables");
-    panel.addCheckbox("Ignore variables starting with '_'", "ignoreVariablesStartingWithUnderscore");
+    panel.addCheckbox(PyBundle.message("INSP.unused.locals.ignore.variables.used.in.tuple.unpacking"), "ignoreTupleUnpacking");
+    panel.addCheckbox(PyBundle.message("INSP.unused.locals.ignore.lambda.parameters"), "ignoreLambdaParameters");
+    panel.addCheckbox(PyBundle.message("INSP.unused.locals.ignore.range.iteration.variables"), "ignoreLoopIterationVariables");
+    panel.addCheckbox(PyBundle.message("INSP.unused.locals.ignore.variables.starting.with"), "ignoreVariablesStartingWithUnderscore");
     return panel;
   }
 }

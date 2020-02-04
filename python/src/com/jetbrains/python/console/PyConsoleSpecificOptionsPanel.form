@@ -20,7 +20,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Starting script"/>
+        <border type="none" title-resource-bundle="messages/PyBundle" title-key="form.console.specific.options.starting.script"/>
         <children/>
       </grid>
       <vspacer id="f9751">

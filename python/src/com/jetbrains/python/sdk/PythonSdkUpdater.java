@@ -84,7 +84,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     if (application.isUnitTestMode()) return;
     if (project.isDisposed()) return;
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("python.sdk.updating.python.paths"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (Sdk sdk : getPythonSdks(project)) {
@@ -180,12 +180,12 @@ public class PythonSdkUpdater implements StartupActivity.Background {
                 }
                 final String sdkPresentableName = getSdkPresentableName(sdk);
                 LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
-                indicator.setText("Updating skeletons...");
+                indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
                 try {
                   PySkeletonRefresher.refreshSkeletonsOfSdk(project1, ownerComponent, skeletonsPath, sdkInsideTask);
                   updateRemoteSdkPaths(sdkInsideTask, getProject());
                   indicator.setIndeterminate(true);
-                  indicator.setText("Scanning installed packages...");
+                  indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
                   indicator.setText2("");
                   LOG.info("Performing background scan of packages for SDK " + sdkPresentableName);
                   PyPackageManager.getInstance(sdkInsideTask).refreshAndGetPackages(true);

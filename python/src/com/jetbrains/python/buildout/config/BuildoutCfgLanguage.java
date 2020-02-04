@@ -2,6 +2,7 @@
 package com.jetbrains.python.buildout.config;
 
 import com.intellij.lang.Language;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class BuildoutCfgLanguage extends Language {
@@ -14,6 +15,6 @@ public class BuildoutCfgLanguage extends Language {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Buildout config";
+    return PyBundle.message("buildout.config.language");
   }
 }

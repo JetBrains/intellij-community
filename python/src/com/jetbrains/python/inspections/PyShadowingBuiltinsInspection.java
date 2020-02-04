@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
@@ -130,7 +131,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Ignore shadowed built-in name";
+        return PyBundle.message("INSP.shadowing.builtins.ignore.shadowed.built.in.name");
       }
 
       @Override

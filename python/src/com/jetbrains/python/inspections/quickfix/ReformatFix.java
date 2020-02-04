@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,7 +34,7 @@ public class ReformatFix implements IntentionAction, LocalQuickFix, HighPriority
   @NotNull
   @Override
   public String getText() {
-    return "Reformat file";
+    return PyBundle.message("QFIX.reformat.file");
   }
 
   @NotNull

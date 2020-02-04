@@ -108,7 +108,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Generate binary stubs";
+    return PyBundle.message("QFIX.generate.binary.stubs");
   }
 
   @Override
@@ -134,7 +134,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   public Backgroundable getFixTask(@NotNull final PsiFile fileToRunTaskIn) {
     final Project project = fileToRunTaskIn.getProject();
     final String folder = fileToRunTaskIn.getContainingDirectory().getVirtualFile().getCanonicalPath();
-    return new Task.Backgroundable(project, "Generating skeletons for binary module", false) {
+    return new Task.Backgroundable(project, PyBundle.message("QFIX.generating.skeletons.for.binary.module"), false) {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

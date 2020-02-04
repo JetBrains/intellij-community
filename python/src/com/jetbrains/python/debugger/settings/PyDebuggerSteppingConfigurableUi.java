@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.table.TableModelEditor;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,8 +139,8 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
     @Override
     public void edit(@NotNull PySteppingFilter item, @NotNull Function<PySteppingFilter, PySteppingFilter> mutator, boolean isAdd) {
       String pattern = Messages.showInputDialog(myPanel,
-                                                "Specify glob pattern ('*', '?' and '[seq]' allowed, semicolon ';' as name separator):",
-                                                "Stepping Filter", null, item.getFilter(),
+                                                PyBundle.message("debugger.stepping.filter.specify.pattern"),
+                                                PyBundle.message("debugger.stepping.filter"), null, item.getFilter(),
                                                 new NonEmptyInputValidator());
       if (pattern != null) {
         mutator.fun(item).setFilter(pattern);

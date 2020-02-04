@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,7 @@ public class PyDataViewDialog extends DialogWrapper {
   PyDataViewDialog(@NotNull Project project, @NotNull final PyDebugValue value) {
     super(project, false);
     setModal(false);
-    setCancelButtonText("Close");
+    setCancelButtonText(PyBundle.message("debugger.data.view.close"));
     setCrossClosesWindow(true);
     myMainPanel = new JPanel(new VerticalFlowLayout());
     final PyDataViewerPanel panel = new PyDataViewerPanel(project, value.getFrameAccessor());

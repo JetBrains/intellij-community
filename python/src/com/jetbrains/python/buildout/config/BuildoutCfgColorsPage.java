@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,11 +17,11 @@ import java.util.Map;
 
 public class BuildoutCfgColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[]{
-    new AttributesDescriptor("Section name", BuildoutCfgSyntaxHighlighter.BUILDOUT_SECTION_NAME),
-    new AttributesDescriptor("Key", BuildoutCfgSyntaxHighlighter.BUILDOUT_KEY),
-    new AttributesDescriptor("Value", BuildoutCfgSyntaxHighlighter.BUILDOUT_VALUE),
-    new AttributesDescriptor("Key value separator", BuildoutCfgSyntaxHighlighter.BUILDOUT_KEY_VALUE_SEPARATOR),
-    new AttributesDescriptor("Comment", BuildoutCfgSyntaxHighlighter.BUILDOUT_COMMENT)
+    new AttributesDescriptor(PyBundle.message("buildout.color.section.name"), BuildoutCfgSyntaxHighlighter.BUILDOUT_SECTION_NAME),
+    new AttributesDescriptor(PyBundle.message("buildout.color.key"), BuildoutCfgSyntaxHighlighter.BUILDOUT_KEY),
+    new AttributesDescriptor(PyBundle.message("buildout.color.value"), BuildoutCfgSyntaxHighlighter.BUILDOUT_VALUE),
+    new AttributesDescriptor(PyBundle.message("buildout.color.key.value.separator"), BuildoutCfgSyntaxHighlighter.BUILDOUT_KEY_VALUE_SEPARATOR),
+    new AttributesDescriptor(PyBundle.message("buildout.color.comment"), BuildoutCfgSyntaxHighlighter.BUILDOUT_COMMENT)
   };
 
   @NonNls private static final HashMap<String, TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();
@@ -32,7 +33,7 @@ public class BuildoutCfgColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public String getDisplayName() {
-    return "Buildout config";
+    return PyBundle.message("buildout.config");
   }
 
   @Override

@@ -34,6 +34,7 @@ import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.extensions.ContextAnchor;
 import com.jetbrains.extensions.ModuleBasedContextAnchor;
 import com.jetbrains.extensions.ProjectSdkContextAnchor;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +81,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     final FileChooserDescriptor chooserDescriptor =
       FileChooserDescriptorExtKt
-        .withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Script"), true);
+        .withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle(PyBundle.message("python.run.select.script")), true);
 
     final PyBrowseActionListener listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
 

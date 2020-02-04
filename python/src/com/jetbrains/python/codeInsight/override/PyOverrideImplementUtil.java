@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -111,7 +112,8 @@ public class PyOverrideImplementUtil {
     }
 
     final MemberChooser<PyMethodMember> chooser = new MemberChooser<>(elements.toArray(new PyMethodMember[0]), false, true, project);
-    chooser.setTitle(implement ? "Select Methods to Implement" : "Select Methods to Override");
+    chooser.setTitle(implement ? PyBundle.message("code.insight.select.methods.to.implement")
+                               : PyBundle.message("code.insight.select.methods.to.override"));
     chooser.setCopyJavadocVisible(false);
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) {

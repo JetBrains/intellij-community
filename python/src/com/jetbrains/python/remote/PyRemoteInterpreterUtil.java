@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyExecutionException;
 import com.jetbrains.python.run.PyRemoteProcessStarterManagerUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -28,7 +29,7 @@ public class PyRemoteInterpreterUtil {
     final Ref<String> result = Ref.create(null);
     final Ref<RemoteSdkException> exception = Ref.create(null);
 
-    final Task.Modal task = new Task.Modal(project, "Getting Remote Interpreter Version", true) {
+    final Task.Modal task = new Task.Modal(project, PyBundle.message("python.sdk.getting.remote.interpreter.version"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final PythonSdkFlavor flavor = data.getFlavor();

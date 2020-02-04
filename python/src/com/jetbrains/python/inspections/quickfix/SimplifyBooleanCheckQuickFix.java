@@ -51,7 +51,7 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Simplify boolean expression";
+    return PyBundle.message("QFIX.simplify.boolean.expression");
   }
 
   @Override

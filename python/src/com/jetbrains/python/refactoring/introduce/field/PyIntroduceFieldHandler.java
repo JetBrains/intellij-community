@@ -21,6 +21,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ThreeState;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -92,7 +93,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected boolean checkEnabled(IntroduceOperation operation) {
     if (PyUtil.getContainingClassOrSelf(operation.getElement()) == null) {
-      CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(), "Cannot introduce field: not in class", myDialogTitle,
+      CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(),
+                                          PyBundle.message("refactoring.introduce.field.not.in.class"), myDialogTitle,
                                           getHelpId());
       return false;
     }
@@ -241,7 +243,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected boolean checkIntroduceContext(PsiFile file, Editor editor, PsiElement element) {
     if (element != null && isInStaticMethod(element)) {
-      CommonRefactoringUtil.showErrorHint(file.getProject(), editor, "Introduce Field refactoring cannot be used in static methods",
+      CommonRefactoringUtil.showErrorHint(file.getProject(), editor,
+                                          PyBundle.message("refactoring.introduce.field.cannot.be.used.in.static.methods"),
                                           RefactoringBundle.message("introduce.field.title"),
                                           "refactoring.extractMethod");
       return false;

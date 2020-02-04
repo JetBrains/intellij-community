@@ -35,7 +35,7 @@
             </constraints>
             <properties>
               <labelFor value="e486b"/>
-              <text value="Docstring format:"/>
+              <text resource-bundle="messages/PyBundle" key="form.integrated.tools.docstring.format"/>
             </properties>
           </component>
           <component id="e486b" class="javax.swing.JComboBox" binding="myDocstringFormatComboBox" default-binding="true">
@@ -51,7 +51,7 @@
               <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Analyze Python code in docstrings"/>
+              <text resource-bundle="messages/PyBundle" key="form.integrated.tools.analyze.python.code.in.docstrings"/>
             </properties>
           </component>
           <component id="e3228" class="javax.swing.JCheckBox" binding="renderExternal">
@@ -59,7 +59,7 @@
               <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Render external documentation for stdlib"/>
+              <text resource-bundle="messages/PyBundle" key="form.integrated.tools.render.external.documentation.for.stdlib"/>
             </properties>
           </component>
         </children>
@@ -78,7 +78,7 @@
             </constraints>
             <properties>
               <labelFor value="e486b"/>
-              <text value="Sphinx working directory:"/>
+              <text resource-bundle="messages/PyBundle" key="form.integrated.tools.sphinx.working.directory"/>
             </properties>
           </component>
           <component id="bef7c" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myWorkDir">
@@ -92,7 +92,7 @@
               <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Treat *.txt files as reStructuredText "/>
+              <text resource-bundle="messages/PyBundle" key="form.integrated.tools.treat.txt.files.as.restructuredtext"/>
             </properties>
           </component>
         </children>
@@ -110,7 +110,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Package requirements file:"/>
+              <text resource-bundle="messages/PyBundle" key="form.integrated.tools.package.requirements.file"/>
             </properties>
           </component>
           <component id="4940f" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRequirementsPathField">
@@ -124,7 +124,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Path to Pipenv executable:"/>
+              <text resource-bundle="messages/PyBundle" key="form.integrated.tools.path.to.pipenv.executable"/>
             </properties>
           </component>
           <component id="d137f" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myPipEnvPathField">
@@ -154,7 +154,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Default test runner:"/>
+              <text resource-bundle="messages/PyBundle" key="form.integrated.tools.default.test.runner"/>
             </properties>
           </component>
         </children>

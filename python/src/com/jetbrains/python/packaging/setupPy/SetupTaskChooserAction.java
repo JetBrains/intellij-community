@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonTask;
@@ -30,7 +31,7 @@ import java.util.List;
  */
 public class SetupTaskChooserAction extends AnAction {
   public SetupTaskChooserAction() {
-    super("Run setup.py Task...");
+    super(PyBundle.message("python.packaging.run.setup.py.task"));
   }
 
   @Override
@@ -93,7 +94,7 @@ public class SetupTaskChooserAction extends AnAction {
       task.run(null, null);
     }
     catch (ExecutionException ee) {
-      Messages.showErrorDialog(module.getProject(), "Failed to run task: " + ee.getMessage(), taskName);
+      Messages.showErrorDialog(module.getProject(), PyBundle.message("python.packaging.failed.to.run.task", ee.getMessage()), taskName);
     }
   }
 }

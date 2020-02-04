@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -35,6 +36,7 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.PySdkTypeComparator.Companion.sortBySdkTypes
@@ -68,7 +70,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   private var panels: List<PyAddSdkView> = emptyList()
 
   init {
-    title = "Add Python Interpreter"
+    title = PyBundle.message("python.sdk.add.python.interpreter.title")
   }
 
   override fun createCenterPanel(): JComponent {
@@ -128,7 +130,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   }
 
   @Suppress("SuspiciousPackagePrivateAccess") //todo: remove suppression when everyone update to IDEA where IDEA-210216 is fixed
-  private val nextAction: Action = object : DialogWrapperAction("Next") {
+  private val nextAction: Action = object : DialogWrapperAction(PyBundle.message("python.sdk.next")) {
     override fun doAction(e: ActionEvent) {
       selectedPanel?.let {
         if (it.actions.containsKey(NEXT)) onNext()
@@ -142,7 +144,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   private val nextButton = lazy { createJButtonForAction(nextAction) }
 
   @Suppress("SuspiciousPackagePrivateAccess")
-  private val previousAction = object : DialogWrapperAction("Previous") {
+  private val previousAction = object : DialogWrapperAction(PyBundle.message("python.sdk.previous")) {
     override fun doAction(e: ActionEvent) = onPrevious()
   }
 
@@ -298,7 +300,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     catch (e: Exception) {
       val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
       if (cause == null) {
-        Messages.showErrorDialog(e.localizedMessage, "Error")
+        Messages.showErrorDialog(e.localizedMessage, CommonBundle.message("title.error"))
       }
       else {
         showProcessExecutionErrorDialog(project, cause)
@@ -319,8 +321,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     it.actions.forEach { (action, isEnabled) ->
       val actionButton = when (action) {
         PREVIOUS -> previousButton.value
-        NEXT -> nextButton.value.apply { text = "Next" }
-        FINISH -> nextButton.value.apply { text = "Finish" }
+        NEXT -> nextButton.value.apply { text = PyBundle.message("python.sdk.next") }
+        FINISH -> nextButton.value.apply { text = PyBundle.message("python.sdk.finish") }
         else -> null
       }
       actionButton?.isEnabled = isEnabled

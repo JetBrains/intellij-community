@@ -57,7 +57,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Create function in module";
+    return PyBundle.message("QFIX.create.function.in.module");
   }
 
   @Override

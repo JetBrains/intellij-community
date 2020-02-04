@@ -6,6 +6,7 @@ import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.pyi.PyiFileType;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware {
   public CreatePythonFileAction() {
-    super("Python File", "Creates a Python file from the specified template", PythonFileType.INSTANCE.getIcon());
+    super(PyBundle.message("action.create.python.file.title"), PyBundle.message("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
   }
 
   @Override

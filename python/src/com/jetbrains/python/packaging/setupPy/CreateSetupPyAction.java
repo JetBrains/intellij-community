@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.packaging.PyPackage;
@@ -66,7 +67,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
       PythonFileType.INSTANCE.getIcon(), 
       () -> FileTemplateManager.getDefaultInstance().getInternalTemplate(SETUP_SCRIPT_TEMPLATE_NAME)
     );
-    getTemplatePresentation().setText("Create setup.py");
+    getTemplatePresentation().setText(PyBundle.message("python.packaging.create.setup.py"));
   }
 
   @Override

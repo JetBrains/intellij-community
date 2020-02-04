@@ -20,6 +20,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.psi.LanguageLevel
@@ -52,7 +53,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     path?.let {
       text = it
     }
-    addBrowseFolderListener("Select Path to Conda Executable", null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.conda.path.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
     textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -61,7 +62,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     })
   }
   private val pathField = TextFieldWithBrowseButton().apply {
-    addBrowseFolderListener("Select Location for Conda Environment", null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.conda.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
   private val makeSharedField = JBCheckBox("Make available to all projects")
@@ -98,7 +99,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     val condaPath = condaPathField.text
-    val task = object : Task.WithResult<String, ExecutionException>(project, "Creating Conda Environment", false) {
+    val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.conda.environment.title"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
         return PyCondaPackageManagerImpl.createVirtualEnv(condaPath, pathField.text, selectedLanguageLevel)

@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public class InterpreterDirectoryMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return "The directory containing the Python interpreter selected for the project";
+    return PyBundle.message("python.sdk.directory.macro.description");
   }
 
   @Nullable

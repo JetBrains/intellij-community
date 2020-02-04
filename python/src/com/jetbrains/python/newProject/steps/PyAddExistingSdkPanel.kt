@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PyProjectSynchronizerProvider
@@ -109,7 +110,7 @@ class PyAddExistingSdkPanel(project: Project?,
   private fun validateRemotePathField(): ValidationInfo? {
     val path = remotePath
     return when {
-      path != null && path.isBlank() -> ValidationInfo("Remote path not provided")
+      path != null && path.isBlank() -> ValidationInfo(PyBundle.message("python.new.project.remote.path.not.provided"))
       else -> null
     }
   }

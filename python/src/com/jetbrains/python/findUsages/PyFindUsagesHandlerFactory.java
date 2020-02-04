@@ -20,6 +20,7 @@ import com.intellij.find.findUsages.FindUsagesHandlerFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -64,11 +65,10 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
           final PsiElement next = superMethods.iterator().next();
           // TODO should do this for Jython functions overriding Java methods too
           if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
-            int rc = Messages.showYesNoDialog(element.getProject(), "Method " +
-                                                                          ((PyFunction)element).getName() +
-                                                                          " overrides method of class " +
-                                                                          ((PyFunction)next).getContainingClass().getName() +
-                                                                          ".\nDo you want to find usages of the base method?",  "Find Usages", Messages.getQuestionIcon());
+            int rc = Messages.showYesNoDialog(element.getProject(), PyBundle
+                                                .message("python.find.usages.base.method.question",
+                                                         ((PyFunction)element).getName(), ((PyFunction)next).getContainingClass().getName()),
+                                              PyBundle.message("python.find.usages"), Messages.getQuestionIcon());
             if (rc == Messages.YES) {
               List<PsiElement> allMethods = new ArrayList<>();
               allMethods.add(element);

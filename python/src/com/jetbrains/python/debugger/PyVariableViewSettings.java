@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,7 @@ public class PyVariableViewSettings {
     private volatile boolean mySimplifiedView;
 
     public SimplifiedView(@Nullable PyDebugProcess debugProcess) {
-      super("", "Disables watching classes, functions and modules objects", null);
+      super("", PyBundle.message("debugger.simplified.view.description"), null);
       mySimplifiedView = PyDebuggerSettings.getInstance().isSimplifiedView();
       myProcess = debugProcess;
       myText = "Simplified Variables View";

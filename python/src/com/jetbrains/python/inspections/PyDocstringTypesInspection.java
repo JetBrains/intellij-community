@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
@@ -140,13 +141,13 @@ public class PyDocstringTypesInspection extends PyInspection {
     @NotNull
     @Override
     public String getName() {
-      return "Change " + myParamName + " type from " + myTypeSubstring.getValue() + " to " + myNewType;
+      return PyBundle.message("INSP.docstring.types.change.type", myParamName, myTypeSubstring.getValue(), myNewType);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix docstring";
+      return PyBundle.message("INSP.docstring.types.fix.docstring");
     }
 
     @Override

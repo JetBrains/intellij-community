@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.ArrayUtilRt;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -268,7 +269,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
           return false;
         }
         return true;
-      }), "Cleaning the Cache of Dynamically Collected Types", true, myProject);
+      }), PyBundle.message("debugger.cleaning.signature.cache"), true, myProject);
 
 
     String message;
@@ -278,6 +279,6 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     else {
       message = "Nothing to delete";
     }
-    Messages.showInfoMessage(myProject, message, "Delete Cache");
+    Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
   }
 }

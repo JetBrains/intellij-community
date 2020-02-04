@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <horizontalAlignment value="2"/>
-          <text value="Do not step into scripts:"/>
+          <text resource-bundle="messages/PyBundle" key="form.debugger.stepping.do.not.step.into.scripts"/>
         </properties>
       </component>
       <hspacer id="1eb52">
@@ -37,7 +37,7 @@
         </constraints>
         <properties>
           <horizontalAlignment value="2"/>
-          <text value="Do not step into library scripts"/>
+          <text resource-bundle="messages/PyBundle" key="form.debugger.stepping.checkbox.text.do.not.step.into.library.scripts"/>
         </properties>
       </component>
     </children>

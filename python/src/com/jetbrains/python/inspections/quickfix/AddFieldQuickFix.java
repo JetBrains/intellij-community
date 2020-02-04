@@ -60,7 +60,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Add field to class";
+    return PyBundle.message("QFIX.add.field.to.class");
   }
 
   @NotNull

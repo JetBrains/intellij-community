@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,7 @@ public abstract class PyRootTypeProvider {
       super(tree);
       final Presentation templatePresentation = getTemplatePresentation();
       templatePresentation.setText(getNamePlural());
-      templatePresentation.setDescription(getName() + " Folders");
+      templatePresentation.setDescription(PyBundle.message("python.module.template.folders", getName()));
       templatePresentation.setIcon(getIcon());
       myDisposable = disposable;
       myEditor = editor;

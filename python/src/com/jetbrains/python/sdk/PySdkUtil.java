@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
@@ -132,7 +133,8 @@ public class PySdkUtil {
         final ProgressManager progressManager = ProgressManager.getInstance();
         final Application application = ApplicationManager.getApplication();
         assert application.isUnitTestMode() || application.isHeadlessEnvironment() || !application.isWriteAccessAllowed() : "Background task can't be run under write action";
-        return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout), "Wait...", false, null);
+        return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout),
+                                                                   PyBundle.message("python.sdk.run.wait"), false, null);
       }
       else {
         return processHandler.runProcess();

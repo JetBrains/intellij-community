@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.sdk.*
 import icons.PythonIcons
@@ -60,7 +61,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   }
   private val pathField = TextFieldWithBrowseButton().apply {
     text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
-    addBrowseFolderListener("Select Location for Virtual Environment", null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.virtualenv.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
   private val inheritSitePackagesField = JBCheckBox("Inherit global site-packages")
@@ -90,7 +91,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       .let { if (it is PySdkToInstall) it.install(module) { detectSystemWideSdks(module, existingSdks, context) } else it }
     if (baseSdk == null) return null
 
-    val task = object : Task.WithResult<String, ExecutionException>(project, "Creating Virtual Environment", false) {
+    val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.virtualenv.title"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
         val packageManager = PyPackageManager.getInstance(baseSdk)

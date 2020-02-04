@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache.Companion.StubPackagesForSource
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
@@ -158,11 +159,8 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
         BALLOON_NOTIFICATIONS
           .createNotification(
-            title = "Type hints are not installed",
-            content = "They could make code insight better.<br/>" +
-                      "<a href=\"#yes\">Install ${if (plural) "stub packages" else reqsToString}</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
-                      "<a href=\"#no\">Ignore</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
-                      "<a href=\"#settings\">Settings</a>",
+            title = PyBundle.message("code.insight.type.hints.are.not.installed"),
+            content = PyBundle.message("code.insight.install.type.hints", reqs.size, reqsToString),
             listener = NotificationListener { notification, event ->
               try {
                 val problemDescriptor = ProblemDescriptorImpl(
@@ -305,7 +303,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
     private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, packageManager: PyPackageManager): LocalQuickFix {
       return object : LocalQuickFix {
-        override fun getFamilyName() = "Ignore package" + if (reqs.size > 1) "s" else ""
+        override fun getFamilyName() = PyBundle.message("code.insight.ignore.packages.qfix", reqs.size)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
           this@Visitor.addStubPackagesToIgnore(reqs, reqs.mapTo(mutableSetOf()) { it.name }, project, packageManager)

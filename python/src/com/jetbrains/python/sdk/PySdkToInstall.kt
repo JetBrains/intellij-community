@@ -24,6 +24,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.io.HttpRequests
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.PackagesNotificationPanel
+import com.jetbrains.python.PyBundle
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import java.io.File
@@ -138,7 +139,7 @@ private class PySdkToInstallOnWindows(name: String,
   override fun install(module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk? {
     try {
       return ProgressManager.getInstance().run(
-        object : Task.WithResult<PyDetectedSdk?, Exception>(module?.project, "Installing $name", true) {
+        object : Task.WithResult<PyDetectedSdk?, Exception>(module?.project, PyBundle.message("python.sdk.installing", name), true) {
           override fun compute(indicator: ProgressIndicator): PyDetectedSdk? = install(systemWideSdksDetector, indicator)
         }
       )
@@ -160,14 +161,14 @@ private class PySdkToInstallOnWindows(name: String,
     val targetFile = File(PathManager.getTempPath(), targetFileName)
 
     try {
-      indicator.text = "Downloading $targetFileName"
+      indicator.text = PyBundle.message("python.sdk.downloading", targetFileName)
       if (indicator.isCanceled) return null
       downloadInstaller(targetFile, indicator)
       if (indicator.isCanceled) return null
       checkInstallerConsistency(targetFile)
 
-      indicator.text = "Running $targetFileName"
-      indicator.text2 = "Windows may require your approval to install Python. Please check the taskbar."
+      indicator.text = PyBundle.message("python.sdk.running", targetFileName)
+      indicator.text2 = PyBundle.message("python.sdk.installing.windows.warning")
       indicator.isIndeterminate = true
       if (indicator.isCanceled) return null
       runInstaller(targetFile, indicator)

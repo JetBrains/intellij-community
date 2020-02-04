@@ -56,7 +56,7 @@ public class PyMethodParametersInspection extends PyInspection {
     });
 
     JPanel option = new JPanel(new BorderLayout());
-    option.add(new JLabel("Metaclass method first argument name"), BorderLayout.WEST);
+    option.add(new JLabel(PyBundle.message("INSP.method.parameters.metaclass.method.first.argument.name")), BorderLayout.WEST);
     option.add(comboBox, BorderLayout.EAST);
 
     final JPanel root = new JPanel(new BorderLayout());

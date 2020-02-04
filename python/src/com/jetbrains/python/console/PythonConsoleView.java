@@ -37,6 +37,7 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -196,7 +197,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myInitialized.doWhenDone(
       () -> {
         if (code != null) {
-          ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", true) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(null, PyBundle.message("console.executing.code.in.console"), true) {
             @Override
             public void run(@NotNull final ProgressIndicator indicator) {
               while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {

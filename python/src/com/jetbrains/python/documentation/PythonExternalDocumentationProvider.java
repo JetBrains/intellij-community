@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
@@ -121,9 +122,9 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
   private static void showNoExternalDocumentationDialog(Project project, QualifiedName qName) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final int rc = Messages.showOkCancelDialog(project,
-                                                 "No external documentation URL configured for module " + qName.getComponents().get(0) +
-                                                 ".\nWould you like to configure it now?",
-                                                 "Python External Documentation",
+                                                 PyBundle.message("external.documentation.configure.description",
+                                                                  qName.getComponents().get(0)),
+                                                 PyBundle.message("external.documentation.title"),
                                                  Messages.getQuestionIcon());
       if (rc == Messages.OK) {
         ShowSettingsUtilImpl.showSettingsDialog(project, DOCUMENTATION_CONFIGURABLE_ID , "");

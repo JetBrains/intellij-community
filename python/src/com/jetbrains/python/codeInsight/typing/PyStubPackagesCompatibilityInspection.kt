@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyInterpreterInspection
@@ -102,7 +103,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
 
     private fun createIgnoreStubPackageQuickFix(stubPkgName: String, ignoredStubPkgs: MutableList<String>): LocalQuickFix {
       return object : LocalQuickFix {
-        override fun getFamilyName() = "Ignore '$stubPkgName' compatibility"
+        override fun getFamilyName() = PyBundle.message("INSP.stub.packages.compatibility.ignore", stubPkgName)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
           if (ignoredStubPkgs.add(stubPkgName)) ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()

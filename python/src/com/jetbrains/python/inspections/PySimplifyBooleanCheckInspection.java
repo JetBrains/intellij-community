@@ -55,7 +55,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Ignore comparison to zero", "ignoreComparisonToZero");
+    panel.addCheckbox(PyBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero"), "ignoreComparisonToZero");
     return panel;
   }
 

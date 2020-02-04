@@ -355,7 +355,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                         "Configure a per-project virtual environment as your project interpreter\n" +
                         "to avoid installing packages to a protected area of the file system.";
     final String[] options = {"Configure", "Install Anyway", "Cancel"};
-    return Messages.showIdeaMessageDialog(project, text, "Administrator Privileges Required", options, 0, Messages.getWarningIcon(), null);
+    return Messages.showIdeaMessageDialog(project, text, PyBundle.message("INSP.package.requirements.administrator.privileges.required"), options, 0, Messages.getWarningIcon(), null);
   }
 
   public static class PyInstallRequirementsFix implements LocalQuickFix {
@@ -528,7 +528,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
               AddImportHelper.addImportStatement(element.getContainingFile(), myPackageName, myAsName,
                                                  AddImportHelper.ImportPriority.THIRD_PARTY, element);
-            }), "Add import", "Add import");
+            }), PyBundle.message("INSP.package.requirements.add.import"), "Add import");
           }
         }
       });
@@ -595,9 +595,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
             BALLOON_NOTIFICATIONS
               .createNotification(
                 packagesToIgnore.size() == 1
-                ? "'" + packagesToIgnore.iterator().next() + "' has been ignored"
-                : "Requirements have been ignored",
-                "<a href=\"#undo\">Undo</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#settings\">Settings</a>",
+                ? PyBundle.message("INSP.package.requirements.requirement.has.been.ignored", packagesToIgnore.iterator().next())
+                : PyBundle.message("INSP.package.requirements.requirements.have.been.ignored"),
+                PyBundle.message("INSP.package.requirements.undo.add.requirement"),
                 NotificationType.INFORMATION,
                 (notification, event) -> {
                   try {
@@ -658,7 +658,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Add requirement";
+      return PyBundle.message("INSP.package.requirements.add.requirement");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)

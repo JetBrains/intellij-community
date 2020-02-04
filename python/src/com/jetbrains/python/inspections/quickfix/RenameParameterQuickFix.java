@@ -32,7 +32,7 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Rename parameter";
+    return PyBundle.message("QFIX.rename.parameter");
   }
 
   @Override

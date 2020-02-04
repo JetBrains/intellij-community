@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.pipenv
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
+import com.intellij.CommonBundle
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.execution.ExecutionException
@@ -46,6 +47,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
@@ -142,7 +144,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
                     module?.basePath ?:
                     project?.basePath ?:
                     return null
-  val task = object : Task.WithResult<String, ExecutionException>(project, "Setting Up Pipenv Environment", true) {
+  val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.setting.up.pipenv.title"), true) {
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true
       val pipEnv = setupPipEnv(FileUtil.toSystemDependentName(projectPath), python, installPackages)
@@ -303,7 +305,7 @@ class PipEnvInstallQuickFix : LocalQuickFix {
     }
   }
 
-  override fun getFamilyName() = "Install requirements from Pipfile.lock"
+  override fun getFamilyName() = PyBundle.message("python.sdk.install.requirements.from.pipenv.lock")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
@@ -380,7 +382,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
             catch (e: RunCanceledByUserException) {}
             catch (e: ExecutionException) {
               runInEdt {
-                Messages.showErrorDialog(project, e.toString(), "Error Running Pipenv")
+                Messages.showErrorDialog(project, e.toString(), CommonBundle.message("title.error"))
               }
             }
             finally {

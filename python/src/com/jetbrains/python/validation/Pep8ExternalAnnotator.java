@@ -38,9 +38,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
@@ -50,10 +48,7 @@ import com.jetbrains.python.inspections.quickfix.RemoveTrailingBlankLinesFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -433,7 +428,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     @NotNull
     @Override
     public String getText() {
-      return "Ignore errors like this";
+      return PyBundle.message("ANN.ignore.errors.like.this");
     }
 
     @NotNull

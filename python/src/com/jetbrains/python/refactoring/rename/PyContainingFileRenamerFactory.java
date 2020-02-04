@@ -10,6 +10,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.rename.naming.NameSuggester;
 import com.intellij.usageView.UsageInfo;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyClass;
@@ -39,7 +40,7 @@ public class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
 
   @Override
   public String getOptionName() {
-    return "Rename containing file";
+    return PyBundle.message("refactoring.rename.containing.file");
   }
 
   @Override
@@ -69,12 +70,12 @@ public class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
 
     @Override
     public String getDialogTitle() {
-      return "Rename Containing File";
+      return PyBundle.message("refactoring.rename.containing.file.title");
     }
 
     @Override
     public String getDialogDescription() {
-      return "Rename containing file with the following name to: ";
+      return PyBundle.message("refactoring.rename.containing.file.with.the.following.name.to");
     }
 
     @Override
