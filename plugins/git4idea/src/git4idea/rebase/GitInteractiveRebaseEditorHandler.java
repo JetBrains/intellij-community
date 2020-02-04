@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,8 +18,8 @@ import git4idea.GitVcs;
 import git4idea.commands.GitImplBase;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitLogUtil;
-import git4idea.rebase.interactive.GitInteractiveRebaseDialog;
-import git4idea.rebase.interactive.GitRebaseEntryWithEditedMessage;
+import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog;
+import git4idea.rebase.interactive.dialog.GitRebaseEntryWithEditedMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

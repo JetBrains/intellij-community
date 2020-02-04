@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.rebase.interactive
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.rebase.interactive.dialog
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -8,8 +8,8 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import git4idea.rebase.GitRebaseEntry
-import git4idea.rebase.interactive.GitRebaseEntriesTableModel.Companion.ACTION_COLUMN
-import git4idea.rebase.interactive.GitRebaseEntriesTableModel.Companion.HASH_COLUMN
+import git4idea.rebase.interactive.dialog.GitRebaseEntriesTableModel.Companion.ACTION_COLUMN
+import git4idea.rebase.interactive.dialog.GitRebaseEntriesTableModel.Companion.HASH_COLUMN
 import javax.swing.JComponent
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.TableModel

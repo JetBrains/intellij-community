@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.rebase.interactive
+package git4idea.rebase.interactive.dialog
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -40,10 +40,10 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
-import git4idea.rebase.interactive.CommitsTable.Companion.DEFAULT_CELL_HEIGHT
-import git4idea.rebase.interactive.CommitsTable.Companion.GRAPH_COLOR
-import git4idea.rebase.interactive.CommitsTable.Companion.GRAPH_LINE_WIDTH
-import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
+import git4idea.rebase.interactive.dialog.CommitsTable.Companion.DEFAULT_CELL_HEIGHT
+import git4idea.rebase.interactive.dialog.CommitsTable.Companion.GRAPH_COLOR
+import git4idea.rebase.interactive.dialog.CommitsTable.Companion.GRAPH_LINE_WIDTH
+import git4idea.rebase.interactive.dialog.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.*
 import java.awt.event.ActionEvent
