@@ -2,7 +2,11 @@
 package com.intellij.internal
 
 import com.intellij.concurrency.JobLauncher
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -15,6 +19,8 @@ import com.intellij.util.indexing.provided.SharedIndexChunkLocator
 import java.nio.file.Path
 
 class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
+  private val LOG = logger<SharedJdkIndexChunkLocator>()
+
   override fun locateIndex(project: Project,
                            entries: MutableCollection<out OrderEntry>,
                            descriptorProcessor: Consumer<in SharedIndexChunkLocator.ChunkDescriptor>,
@@ -36,19 +42,40 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
 
     val sharedIndexType = "jdk"
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(jdkToEntries.entries.toList(), indicator) { (sdk, entries) ->
-      val sdkHash = type.computeJdkFingerprint(sdk) ?: return@invokeConcurrentlyUnderProgress true
-      val info = SharedIndexesLoader.getInstance().lookupSharedIndex(
-        SharedIndexRequest(kind = sharedIndexType, hash = sdkHash), indicator)
+      val sdkHash = type.computeJdkFingerprint(sdk)
+      logNotification(project, "Hash for JDK \"${sdk.name}\" is $sdkHash")
+      sdkHash ?: return@invokeConcurrentlyUnderProgress true
+
+      val info = SharedIndexesLoader.getInstance().lookupSharedIndex(SharedIndexRequest(kind = sharedIndexType, hash = sdkHash), indicator)
+      logNotification(project, "Shared Index entry for JDK \"${sdk.name}\" is found with $info\n${info?.url}")
       info ?: return@invokeConcurrentlyUnderProgress true
 
       descriptorProcessor.consume(object: SharedIndexChunkLocator.ChunkDescriptor {
         override fun getChunkUniqueId() = "jdk-$sdkHash-${info.version.weakVersionHash}"
         override fun getOrderEntries() = entries
+
         override fun downloadChunk(targetFile: Path, indicator: ProgressIndicator) {
-          SharedIndexesLoader.getInstance().downloadSharedIndex(info, indicator, targetFile.toFile())
+          logNotification(project, "Downloading Shared Index for JDK \"${sdk.name}\" with $info...")
+          try {
+            SharedIndexesLoader.getInstance().downloadSharedIndex(info, indicator, targetFile.toFile())
+          } finally {
+            logNotification(project, "Completed Downloading Shared Index for JDK \"${sdk.name}\" with $info")
+          }
         }
       })
       true
+    }
+  }
+
+  private val notificationGroup by lazy {
+    NotificationGroup.logOnlyGroup("SharedIndexes")
+  }
+
+  private fun logNotification(project: Project, message: String) {
+    LOG.warn("SharedIndexes: $message")
+    if (ApplicationManager.getApplication().isInternal || Registry.`is`("shared.indexes.eventLogMessages")) {
+      val msg = notificationGroup.createNotification(message, NotificationType.INFORMATION)
+      Notifications.Bus.notify(msg, project)
     }
   }
 }

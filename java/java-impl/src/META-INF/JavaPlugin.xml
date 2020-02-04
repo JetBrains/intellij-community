@@ -1991,6 +1991,10 @@
     <registryKey key="shared.indexes.download"
                  defaultValue="false"
                  description="Automatically download and use Shared JDK indexes?" />
+
+    <registryKey key="shared.indexes.eventLogMessages"
+                 defaultValue="true"
+                 description="Show noisy event log messages of the actual progress" />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

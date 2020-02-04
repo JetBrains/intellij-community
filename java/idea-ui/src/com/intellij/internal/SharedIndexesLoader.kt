@@ -52,7 +52,9 @@ data class SharedIndexResult(
   val url: String,
   val sha256: String,
   val version: IndexInfrastructureVersion
-)
+) {
+  override fun toString(): String = "SharedIndex sha=${sha256.take(8)}, wv=${version.weakVersionHash.take(8)}"
+}
 
 class SharedIndexesLoader {
   private val LOG = logger<SharedIndexesLoader>()
