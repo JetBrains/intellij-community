@@ -3901,7 +3901,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (range != null) {
           final boolean expansion = !range.isExpanded();
 
-          int scrollShift = y - getScrollingModel().getVerticalScrollOffset();
+          int scrollShift = expansion ? 0 : visualLineToY(yToVisualLine(y)) - getScrollingModel().getVerticalScrollOffset();
           getFoldingModel().runBatchFoldingOperation(() -> {
             range.setExpanded(expansion);
             if (e.isAltDown()) {
@@ -3912,8 +3912,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             }
           }, true, false);
-          y = myGutterComponent.getHeadCenterY(range);
-          getScrollingModel().scrollVertically(y - scrollShift);
+          if (!expansion) {
+            int newY = visualLineToY(offsetToVisualLine(range.getStartOffset()));
+            EditorUtil.runWithAnimationDisabled(EditorImpl.this, () -> myScrollingModel.scrollVertically(newY - scrollShift));
+          }
           myGutterComponent.updateSize();
           validateMousePointer(e);
           e.consume();

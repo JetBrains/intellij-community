@@ -1267,10 +1267,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor.visualLineToY(line) + myEditor.getAscent() - width;
   }
 
-  int getHeadCenterY(FoldRegion foldRange) {
-    return getLineCenterY(myEditor.offsetToVisualLine(foldRange.getStartOffset()));
-  }
-
   private void drawFoldingAnchor(double width, @NotNull Rectangle clip, @NotNull Graphics2D g, int visualLine,
                                  @NotNull DisplayedFoldingAnchor.Type type, boolean active) {
     double off = width / 4;
