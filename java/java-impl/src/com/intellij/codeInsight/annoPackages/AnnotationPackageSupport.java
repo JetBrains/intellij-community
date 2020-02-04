@@ -4,7 +4,6 @@ package com.intellij.codeInsight.annoPackages;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,13 +44,9 @@ public interface AnnotationPackageSupport {
    * @return array of available annotation packages
    */
   static AnnotationPackageSupport @NotNull [] getAnnotationPackages(@NotNull NullableNotNullManager manager) {
-    AnnotationPackageSupport[] extensions = {
+    return new AnnotationPackageSupport[]{
       new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
-      new Jsr305Support(manager), new CheckerFrameworkSupport()
+      new Jsr305Support(manager), new CheckerFrameworkSupport(), new CodeAnalysisAnnotationSupport()
     };
-    if (CodeAnalysisAnnotationSupport.IS_AVAILABLE) {
-      return ArrayUtil.append(extensions, new CodeAnalysisAnnotationSupport());
-    }
-    return extensions;
   }
 }

@@ -13,8 +13,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class CodeAnalysisAnnotationSupport implements AnnotationPackageSupport {
-  static final boolean IS_AVAILABLE = Registry.is("java.codeanalysis.annotations.available");
-
   private static final String PACKAGE_NAME = "codeanalysis.experimental.annotations";
   private static final String NULLABLE = PACKAGE_NAME + "." + "Nullable";
   private static final String NOT_NULL = PACKAGE_NAME + "." + "NotNull";
@@ -23,11 +21,16 @@ public class CodeAnalysisAnnotationSupport implements AnnotationPackageSupport {
   private static final String DEFAULT_NOT_NULL = PACKAGE_NAME + "." + "DefaultNotNull";
   private static final String DEFAULT_NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "DefaultNullnessUnknown";
 
+  private static boolean isAvailable() {
+    return Registry.is("java.codeanalysis.annotations.available");
+  }
+
   @Nullable
   @Override
   public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
                                                                        PsiAnnotation.TargetType @NotNull [] types,
                                                                        boolean superPackage) {
+    if (!isAvailable()) return null;
     if (superPackage) return null;
     String name = anno.getQualifiedName();
     if (name == null) return null;
@@ -52,6 +55,9 @@ public class CodeAnalysisAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+    if (!isAvailable()) {
+      return Collections.emptyList();
+    }
     switch (nullability) {
       case NOT_NULL:
         return Collections.singletonList(NOT_NULL);
