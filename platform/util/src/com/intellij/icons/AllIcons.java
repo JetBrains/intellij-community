@@ -443,10 +443,10 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ZoomIn = load("/graph/zoomIn.svg");
     /** 16x16 */ public static final Icon ZoomOut = load("/graph/zoomOut.svg");
 
-    /** @deprecated to be removed in IDEA 2021 - use AllIcons.General.FitContent */
+    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.FitContent */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021")
+    @ScheduledForRemoval(inVersion = "2021.1")
     /** 16x16 */ public static final Icon FitContent = load("/general/fitContent.svg");
 
   }
@@ -555,16 +555,16 @@ public class AllIcons {
     /** 7x10 */ public static final Icon Statusbar_arrows = load("/ide/statusbar_arrows.svg");
     /** 16x16 */ public static final Icon UpDown = load("/ide/upDown.svg");
 
-    /** @deprecated to be removed in IDEA 2021 */
+    /** @deprecated to be removed in IDEA 2021.1 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021")
+    @ScheduledForRemoval(inVersion = "2021.1")
     public static final Icon LookupAlphanumeric = load("/ide/lookupAlphanumeric.svg");
 
-    /** @deprecated to be removed in IDEA 2021 */
+    /** @deprecated to be removed in IDEA 2021.1 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021")
+    @ScheduledForRemoval(inVersion = "2021.1")
     public static final Icon LookupRelevance = load("/ide/lookupRelevance.svg");
 
   }
@@ -763,16 +763,16 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.2")
     public static final Icon Jsr45 = load("/nodes/jsr45.svg");
 
-    /** @deprecated to be removed in IDEA 2021 */
+    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021")
+    @ScheduledForRemoval(inVersion = "2021.1")
     public static final Icon TreeDownArrow = load("/nodes/treeDownArrow.png");
 
-    /** @deprecated to be removed in IDEA 2021 */
+    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval(inVersion = "2021")
+    @ScheduledForRemoval(inVersion = "2021.1")
     public static final Icon TreeRightArrow = load("/nodes/treeRightArrow.png");
 
   }
