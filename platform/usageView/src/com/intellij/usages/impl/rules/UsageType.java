@@ -49,6 +49,9 @@ public final class UsageType {
   private final String myName;
   private final Supplier<String> myNameComputable;
 
+  /**
+   * @deprecated Use {@link #UsageType(Supplier)} for I18n.
+   */
   @Deprecated
   public UsageType(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name) {
     myNameComputable = () -> name;
