@@ -57,7 +57,7 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
             return
         }
         presentation.isVisible = true
-        presentation.isEnabled = (node.parent as XValueNodeImpl).valueContainer is PinToTopParentValue && valueContainer.canBePinned()
+        presentation.isEnabled = (node.parent as? XValueNodeImpl)?.valueContainer is PinToTopParentValue && valueContainer.canBePinned()
         presentation.icon = if (pinToTopManager.isItemPinned(node)) PlatformDebuggerImplIcons.PinToTop.UnpinnedItem else PlatformDebuggerImplIcons.PinToTop.PinnedItem
         presentation.text = if (pinToTopManager.isItemPinned(node)) XDebuggerBundle.message("xdebugger.unpin.action") else XDebuggerBundle.message("xdebugger.pin.to.top.action")
 
