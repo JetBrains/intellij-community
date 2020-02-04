@@ -50,7 +50,6 @@ public abstract class LayoutPassInfo {
   public abstract Rectangle getHeaderRectangle();
 
   @ApiStatus.Experimental
-  @Deprecated
   public List<LineCoordinates> getExtraBorderLines() {
     return null;
   }
