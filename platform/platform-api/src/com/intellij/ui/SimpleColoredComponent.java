@@ -30,8 +30,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -976,6 +975,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
     UISettings.setupAntialiasing(g);
+    if (SystemInfo.isMacOSCatalina) {
+      for (ColoredFragment fragment : myFragments) {
+        if (fragment.attributes.getStyle() == SimpleTextAttributes.STYLE_SEARCH_MATCH) {
+          g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+          break;
+        }
+      }
+    }
   }
 
   @Override
