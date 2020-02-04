@@ -56,19 +56,21 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
 
   protected ShelfStorageConfigurationDialog(@NotNull Project project) {
     super(project);
-    setTitle("Change Shelves Location");
+    setTitle(VcsBundle.getString("change.shelves.location.dialog.title"));
     myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(project);
-    myUseCustomShelfDirectory = new JBRadioButton("Custom directory:");
+    myUseCustomShelfDirectory = new JBRadioButton(VcsBundle.getString("change.shelves.location.dialog.custom.label"));
     if (isUnderWin10LookAndFeel()) {
       myUseCustomShelfDirectory.setBorder(JBUI.Borders.emptyRight(DEFAULT_HGAP));
     }
-    myUseDefaultShelfDirectory = new JBRadioButton("Default directory:", true);
+    myUseDefaultShelfDirectory = new JBRadioButton(VcsBundle.getString("change.shelves.location.dialog.default.label"), true);
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    myShelfDirectoryPath.addBrowseFolderListener("Shelf", "Select a directory to store shelves in", myProject,
+    myShelfDirectoryPath.addBrowseFolderListener(VcsBundle.getString("shelf.tab"),
+                                                 VcsBundle.getString("change.shelves.location.dialog.location.browser.title"),
+                                                 myProject,
                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myMoveShelvesCheckBox = new JBCheckBox(VcsBundle.message("vcs.shelf.move.text"));
-    setOKButtonText("_Change Location");
+    setOKButtonText(VcsBundle.getString("change.shelves.location.dialog.action.button"));
     initComponents();
     updateOkAction();
     getOKAction().putValue(DEFAULT_ACTION, null);
@@ -106,7 +108,7 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
   @Override
   protected JComponent createNorthPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-    JBLabel label = new JBLabel("Store shelves in:");
+    JBLabel label = new JBLabel(VcsBundle.getString("change.shelves.location.dialog.group.title"));
     contentPanel.add(label, BorderLayout.NORTH);
     JPanel buttonPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
     buttonPanel.setBorder(JBUI.Borders.emptyLeft(20));
