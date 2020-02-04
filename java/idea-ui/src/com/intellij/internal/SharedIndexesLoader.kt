@@ -47,6 +47,13 @@ data class SharedIndexInfo(
   val metadata: ObjectNode
 )
 
+data class SharedIndexResult(
+  val request: SharedIndexRequest,
+  val url: String,
+  val sha256: String,
+  val version: IndexInfrastructureVersion
+)
+
 class SharedIndexesLoader {
   private val LOG = logger<SharedIndexesLoader>()
 
@@ -64,33 +71,48 @@ class SharedIndexesLoader {
                                                                    PerformInBackgroundOption.ALWAYS_BACKGROUND) {
       override fun run(indicator: ProgressIndicator) {
         promise.compute {
-          deliverSharedIndexFile(request, indicator)?.toPath()
+          val info  = lookupSharedIndex(request, indicator) ?: return@compute null
+          val version = info.version
+
+          val targetFile = selectIndexFileDestination(request, version)
+          downloadSharedIndex(info, indicator, targetFile)
+          targetFile.toPath()
         }
       }
     })
     return promise
   }
 
-  private fun deliverSharedIndexFile(request: SharedIndexRequest,
-                                     indicator: ProgressIndicator): File? {
+  fun lookupSharedIndex(request: SharedIndexRequest,
+                        indicator: ProgressIndicator): SharedIndexResult? {
     indicator.text = "Looking for Shared Indexes..."
     val entries = downloadIndexesList(request, indicator)
     indicator.checkCanceled()
 
     indicator.text = "Inspecting Shared Indexes..."
-    val (info, version) = selectBestIndex(request, entries) ?: return null
-    val downloadFile = selectDownloadIndexFileDestination(request, version)
-    val targetFile = selectIndexFileDestination(request, version)
+    val ourVersion = IndexInfrastructureVersion.globalVersion()
+    val best = SharedIndexMetadata.selectBestSuitableIndex(ourVersion, entries)
+    if (best == null) {
+      LOG.info("No matching index found $request")
+      return null
+    }
 
+    LOG.info("Selected index ${best.first} for $request")
+    return SharedIndexResult(request, best.first.url, best.first.sha256, best.second)
+  }
+
+  fun downloadSharedIndex(info: SharedIndexResult,
+                          indicator: ProgressIndicator,
+                          targetFile: File) {
+    val downloadFile = selectDownloadIndexFileDestination(info.request, info.version)
     indicator.text = "Downloading Shared Index..."
     indicator.checkCanceled()
     try {
-      downloadSharedIndex(info, downloadFile, indicator)
+      downloadSharedIndexXZ(info, downloadFile, indicator)
 
       indicator.text = "Unpacking Shared Index..."
       indicator.checkCanceled()
       unpackSharedIndexXZ(targetFile, downloadFile)
-      return targetFile
     }
     catch (t: Throwable) {
       FileUtil.delete(targetFile)
@@ -128,9 +150,9 @@ class SharedIndexesLoader {
 
 
   @TestOnly
-  fun downloadSharedIndex(info: SharedIndexInfo,
-                          downloadFile: File,
-                          indicator: ProgressIndicator?) {
+  fun downloadSharedIndexXZ(info: SharedIndexResult,
+                            downloadFile: File,
+                            indicator: ProgressIndicator?) {
     val url = info.url
     indicator?.pushState()
     indicator?.isIndeterminate = false
@@ -161,25 +183,12 @@ class SharedIndexesLoader {
   @TestOnly
   fun unpackSharedIndexXZ(targetFile: File, downloadFile: File) {
     val bufferSize = 1024 * 1024
+    targetFile.parentFile?.mkdirs()
     targetFile.outputStream().use { out ->
       downloadFile.inputStream().buffered(bufferSize).use { input ->
         XZInputStream(input).use { it.copyTo(out, bufferSize) }
       }
     }
-  }
-
-  private fun selectBestIndex(request: SharedIndexRequest,
-                              input: List<SharedIndexInfo>): Pair<SharedIndexInfo, IndexInfrastructureVersion>? {
-    val ourVersion = IndexInfrastructureVersion.globalVersion()
-
-    val best = SharedIndexMetadata.selectBestSuitableIndex(ourVersion, input)
-    if (best == null) {
-      LOG.info("No matching index found $request")
-      return null
-    }
-
-    LOG.info("Selected index ${best.first} for $request")
-    return best
   }
 
   @TestOnly
@@ -221,7 +230,7 @@ class SharedIndexesLoader {
 
     val listVersion = json.get("list_version")?.asText()
     if (listVersion != "1") {
-      LOG.warn("Index data version mismatch. Current version is $listVersion")
+      LOG.warn("Index data version mismatch. The current version is $listVersion")
       return listOf()
     }
 

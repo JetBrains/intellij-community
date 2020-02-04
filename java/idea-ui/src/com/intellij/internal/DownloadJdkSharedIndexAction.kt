@@ -2,21 +2,17 @@
 package com.intellij.internal
 
 import com.intellij.icons.AllIcons
-import com.intellij.notification.Notification
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.JdkPopupAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
-import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.rejectedPromise
-import org.jetbrains.concurrency.resolvedPromise
 import java.nio.file.Path
 
 class DownloadJdkSharedIndexAction : DumbAwareAction() {
