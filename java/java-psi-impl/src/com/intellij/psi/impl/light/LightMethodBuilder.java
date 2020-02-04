@@ -68,7 +68,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
 
   public LightMethodBuilder(PsiManager manager,
                             Language language,
-                            String name,
+                            @NotNull String name,
                             PsiParameterList parameterList,
                             PsiModifierList modifierList,
                             PsiReferenceList throwsList,
