@@ -42,10 +42,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
@@ -265,10 +262,15 @@ public class NonBlockingReadActionImpl<T>
     public boolean setError(@NotNull Throwable error) {
       boolean result = super.setError(error);
       cleanupIfNeeded();
-      if (result) {
+      if (result && shouldLogErrors()) {
         LOG.error(error);
       }
       return result;
+    }
+
+    @Override
+    protected boolean shouldLogErrors() {
+      return super.shouldLogErrors() && backendExecutor != SYNC_DUMMY_EXECUTOR;
     }
 
     private void cleanupIfNeeded() {
@@ -401,7 +403,12 @@ public class NonBlockingReadActionImpl<T>
           throw new ProcessCanceledException();
         }
         if (isDone()) {
-          return get();
+          try {
+            return blockingGet(0, TimeUnit.MILLISECONDS);
+          }
+          catch (TimeoutException e) {
+            throw new RuntimeException(e);
+          }
         }
 
         Semaphore semaphore = new Semaphore(1);

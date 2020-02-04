@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -332,17 +333,10 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }).assertTiming();
   }
 
-  public void testExceptionInsideComputationIsLogged() throws Exception {
+  public void testExceptionInsideAsyncComputationIsLogged() throws Exception {
     BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
 
-    AtomicReference<Throwable> loggedError = new AtomicReference<>();
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
-      @Override
-      public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
-        assertNotNull(t);
-        loggedError.set(t);
-      }
-    });
+    AtomicReference<Throwable> loggedError = watchLoggedExceptions();
 
     Callable<Object> throwUOE = () -> {
       throw new UnsupportedOperationException();
@@ -369,6 +363,39 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     finally {
       LoggedErrorProcessor.restoreDefaultProcessor();
     }
+  }
+
+  public void testDoNotLogSyncExceptions() {
+    AtomicReference<Throwable> loggedError = watchLoggedExceptions();
+
+    try {
+      // unchecked is rethrown
+      assertThrows(UnsupportedOperationException.class, () -> ReadAction.nonBlocking(() -> {
+        throw new UnsupportedOperationException();
+      }).executeSynchronously());
+      assertNull(loggedError.get());
+
+      // checked is wrapped
+      assertThrows(ExecutionException.class, () -> ReadAction.nonBlocking(() -> {
+        throw new IOException();
+      }).executeSynchronously());
+      assertNull(loggedError.get());
+    }
+    finally {
+      LoggedErrorProcessor.restoreDefaultProcessor();
+    }
+  }
+
+  private static AtomicReference<Throwable> watchLoggedExceptions() {
+    AtomicReference<Throwable> loggedError = new AtomicReference<>();
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+        assertNotNull(t);
+        loggedError.set(t);
+      }
+    });
+    return loggedError;
   }
 
   private static void assertLogsAndThrowsUOE(CancellablePromise<Object> promise, AtomicReference<Throwable> loggedError, BoundedTaskExecutor executor) throws Exception {

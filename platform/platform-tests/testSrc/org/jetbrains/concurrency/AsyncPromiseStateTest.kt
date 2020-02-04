@@ -75,7 +75,7 @@ class AsyncPromiseStateTest {
     val promise = promise(State.ERROR, When.NOW)
     assertThatThrownBy {
       assertThat(promise.blockingGet(100)).isNull()
-    }.isInstanceOf(CheckedException::class.java)
+    }.hasCauseExactlyInstanceOf(CheckedException::class.java)
   }
 
   @Test
@@ -83,7 +83,7 @@ class AsyncPromiseStateTest {
     val promise = promise(State.ERROR, When.AFTER)
     assertThatThrownBy {
       promise.blockingGet(100)
-    }.isInstanceOf(CheckedException::class.java)
+    }.hasCauseExactlyInstanceOf(CheckedException::class.java)
   }
 
   @Test
@@ -91,7 +91,7 @@ class AsyncPromiseStateTest {
     val promise = promise(State.ERROR, When.BEFORE)
     assertThatThrownBy {
       promise.blockingGet(100)
-    }.isInstanceOf(CheckedException::class.java)
+    }.hasCauseExactlyInstanceOf(CheckedException::class.java)
   }
 }
 

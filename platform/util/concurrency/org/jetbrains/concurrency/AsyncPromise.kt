@@ -2,6 +2,7 @@
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
@@ -24,7 +25,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
       addExceptionHandler -> {
         f.exceptionally { originalError ->
           val error = (originalError as? CompletionException)?.cause ?: originalError
-          if (!hasErrorHandler.get()) {
+          if (shouldLogErrors()) {
             Logger.getInstance(AsyncPromise::class.java).errorIfNotMessage((error as? CompletionException)?.cause ?: error)
           }
 
@@ -113,9 +114,8 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
       if (cause === InternalPromiseUtil.OBSOLETE_ERROR) {
         return null
       }
-      else {
-        throw cause
-      }
+      ExceptionUtil.rethrowUnchecked(cause)
+      throw e
     }
   }
 
@@ -152,11 +152,13 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
       return false
     }
 
-    if (!hasErrorHandler.get()) {
+    if (shouldLogErrors()) {
       Logger.getInstance(AsyncPromise::class.java).errorIfNotMessage(error)
     }
     return true
   }
+
+  protected open fun shouldLogErrors() = !hasErrorHandler.get()
 
   fun setError(error: String): Boolean = setError(createError(error))
 }
