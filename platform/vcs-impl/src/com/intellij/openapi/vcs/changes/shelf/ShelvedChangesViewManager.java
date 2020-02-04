@@ -81,7 +81,7 @@ import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionPro
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindow;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowRegistryValue;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -693,7 +693,7 @@ public class ShelvedChangesViewManager implements Disposable {
       MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
       Disposer.register(this, changeProcessor);
 
-      boolean isToolbarHorizontal = isCommitToolWindow().asBoolean();
+      boolean isToolbarHorizontal = isCommitToolWindowRegistryValue().asBoolean();
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, isToolbarHorizontal);
 
       myRootPanel = new JPanel(new BorderLayout());

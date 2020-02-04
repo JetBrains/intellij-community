@@ -8,9 +8,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.TOOLWINDOW_ID
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowIdFor
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.ToolWindowImpl
@@ -23,10 +22,6 @@ import javax.swing.JPanel
 private val ToolWindow.project: Project? get() = (this as? ToolWindowImpl)?.toolWindowManager?.project
 private val Project.changesViewContentManager: ChangesViewContentI get() = ChangesViewContentManager.getInstance(this)
 
-private fun getToolWindowIdFor(extension: ChangesViewContentEP): String =
-  if (isCommitToolWindow.asBoolean() && COMMIT_TOOL_WINDOW_CONTENT_FILTER(extension.tabName)) COMMIT_TOOLWINDOW_ID
-  else TOOLWINDOW_ID
-
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
 private val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
 
@@ -35,13 +30,17 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     val project = window.project ?: return
 
     updateState(project, window)
-    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
-      runInEdt {
-        if (project.isDisposed) return@runInEdt
-
-        updateState(project, window)
-      }
-    })
+    with(project.messageBus.connect()) {
+      subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+        runInEdt {
+          if (project.isDisposed) return@runInEdt
+          updateState(project, window)
+        }
+      })
+      subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+        override fun toolWindowMappingChanged() = updateState(project, window)
+      })
+    }
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasAnyMappings()
@@ -88,7 +87,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> =
-    ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(it) == toolWindow.id }
+    ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(project, it.tabName) == toolWindow.id }
 
   private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content =
     ContentFactory.SERVICE.getInstance().createContent(JPanel(null), extension.getTabName(), false).apply {

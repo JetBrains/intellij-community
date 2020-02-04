@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.vcs.changes.ui.isCommitToolWindow
+import com.intellij.openapi.vcs.changes.ui.isCommitToolWindowRegistryValue
 import com.intellij.ui.OnePixelSplitter
 
 private const val VERTICAL_PROPORTION_KEY = "ChangesViewManager.COMMIT_SPLITTER_PROPORTION"
@@ -16,13 +16,14 @@ private const val COMMIT_TOOL_WINDOW_PROPORTION_KEY = "CommitToolWindow.COMMIT_S
 private const val COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION = 0.6f
 
 private fun getVerticalProportionKey() =
-  if (isCommitToolWindow.asBoolean()) COMMIT_TOOL_WINDOW_PROPORTION_KEY else VERTICAL_PROPORTION_KEY
+  if (isCommitToolWindowRegistryValue.asBoolean()) COMMIT_TOOL_WINDOW_PROPORTION_KEY else VERTICAL_PROPORTION_KEY
 
 private fun getDefaultVerticalProportion() =
-  if (isCommitToolWindow.asBoolean()) COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION else DEFAULT_VERTICAL_PROPORTION
+  if (isCommitToolWindowRegistryValue.asBoolean()) COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION else DEFAULT_VERTICAL_PROPORTION
 
 private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", getDefaultVerticalProportion()) {
-  private var isVerticalProportionSet = isCommitToolWindow.asBoolean() || propertiesComponent.isValueSet(getVerticalProportionKey())
+  private var isVerticalProportionSet =
+    isCommitToolWindowRegistryValue.asBoolean() || propertiesComponent.isValueSet(getVerticalProportionKey())
   private var previousHeight = 0
   private var verticalSecondHeight = 0
 
@@ -31,7 +32,7 @@ private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", getDef
   }
 
   override fun doLayout() {
-    if (isCommitToolWindow.asBoolean()) {
+    if (isCommitToolWindowRegistryValue.asBoolean()) {
       super.doLayout()
     }
     else {

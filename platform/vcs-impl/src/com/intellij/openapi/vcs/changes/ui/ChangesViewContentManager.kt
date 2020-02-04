@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.SHELF
 import com.intellij.openapi.wm.ToolWindow
@@ -18,11 +20,15 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
 import java.util.function.Predicate
+import kotlin.properties.Delegates.observable
 
-internal val isCommitToolWindow = Registry.get("vcs.commit.tool.window")
-internal val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF }
+internal val isCommitToolWindowRegistryValue = Registry.get("vcs.commit.tool.window")
+private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF }
 
-class ChangesViewContentManager : ChangesViewContentI, Disposable {
+internal val Project.isCommitToolWindow: Boolean
+  get() = ChangesViewContentManager.getInstanceImpl(this)?.isCommitToolWindow == true
+
+class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
 
   private val toolWindows = mutableSetOf<ToolWindow>()
   private val addedContents = mutableListOf<Content>()
@@ -30,7 +36,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
 
   private fun getToolWindowIdFor(contentName: String): String =
-    if (isCommitToolWindow.asBoolean() && COMMIT_TOOL_WINDOW_CONTENT_FILTER(contentName)) COMMIT_TOOLWINDOW_ID
+    if (isCommitToolWindow && COMMIT_TOOL_WINDOW_CONTENT_FILTER(contentName)) COMMIT_TOOLWINDOW_ID
     else TOOLWINDOW_ID
 
   private fun Content.resolveToolWindowId(): String = getToolWindowIdFor(tabName)
@@ -41,6 +47,27 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   }
 
   private fun Content.resolveContentManager(): ContentManager? = resolveToolWindow()?.contentManager
+
+  var isCommitToolWindow: Boolean by observable(isCommitToolWindowRegistryValue.asBoolean()) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
+
+    remapContents()
+    project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+  }
+
+  init {
+    isCommitToolWindowRegistryValue.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        isCommitToolWindow = isCommitToolWindowRegistryValue.asBoolean()
+      }
+    }, this)
+  }
+
+  private fun remapContents() {
+    val remapped = findContents { it.resolveContentManager() != it.manager }
+    remapped.forEach { removeContent(it, false) }
+    remapped.forEach { addContent(it) }
+  }
 
   override fun attachToolWindow(toolWindow: ToolWindow) {
     toolWindows.add(toolWindow)
@@ -81,14 +108,16 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     }
   }
 
-  override fun removeContent(content: Content) {
+  override fun removeContent(content: Content) = removeContent(content, true)
+
+  private fun removeContent(content: Content, dispose: Boolean) {
     val contentManager = content.manager
     if (contentManager == null || contentManager.isDisposed) {
       addedContents.remove(content)
-      Disposer.dispose(content)
+      if (dispose) Disposer.dispose(content)
     }
     else {
-      contentManager.removeContent(content, true)
+      contentManager.removeContent(content, dispose)
     }
   }
 
@@ -171,9 +200,12 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
       return project.getService(ChangesViewContentI::class.java)
     }
 
+    internal fun getInstanceImpl(project: Project): ChangesViewContentManager? =
+      getInstance(project) as? ChangesViewContentManager
+
     @JvmStatic
     fun getToolWindowIdFor(project: Project, contentName: String): String? =
-      (getInstance(project) as? ChangesViewContentManager)?.getToolWindowIdFor(contentName)
+      getInstanceImpl(project)?.getToolWindowIdFor(contentName)
 
     @JvmStatic
     fun getToolWindowFor(project: Project, contentName: String): ToolWindow? =

@@ -20,7 +20,7 @@ class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
 }
 
 class CommitToolWindowFactory : VcsToolWindowFactory() {
-  override fun isApplicable(project: Project): Boolean = isCommitToolWindow.asBoolean()
+  override fun shouldBeAvailable(project: Project): Boolean = super.shouldBeAvailable(project) && project.isCommitToolWindow
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(HIDE_ID_LABEL, "true")
