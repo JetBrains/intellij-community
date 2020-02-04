@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
 
   @Override
   public String getActionTitle() {
-    return "Rename XML tag";
+    return XmlBundle.message("rename.xml.tag");
   }
 
   private static boolean isInplaceRenameAvailable(final Editor editor) {

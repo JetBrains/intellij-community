@@ -16,6 +16,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +129,7 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
         @NotNull
         @Override
         public String getFamilyName() {
-          return "Change template data language";
+          return XmlBundle.message("change.template.data.language");
         }
       };
     }

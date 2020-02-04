@@ -34,7 +34,7 @@ public class StdErrorReporter extends ErrorReporter {
     myProject = psiFile.getProject();
     myContentName =  XmlBundle.message("xml.validate.tab.content.title", psiFile.getName());
     myErrorsView = new NewErrorTreeViewPanel(myProject, null, true, true, rerunAction);
-    myErrorsView.getEmptyText().setText("No errors found");
+    myErrorsView.getEmptyText().setText(XmlBundle.message("no.errors.found"));
   }
 
   @Override

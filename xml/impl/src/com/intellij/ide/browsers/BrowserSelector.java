@@ -23,6 +23,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,7 @@ public class BrowserSelector {
           baseIcon = value.getIcon();
         }
         label.setIcon(myBrowserComboWithBrowse.isEnabled() ? baseIcon : IconLoader.getDisabledIcon(baseIcon));
-        label.setText(value != null ? value.getName() : "Default");
+        label.setText(value != null ? value.getName() : XmlBundle.message("default"));
       }));
   }
 

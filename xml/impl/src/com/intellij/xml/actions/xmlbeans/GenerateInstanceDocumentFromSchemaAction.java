@@ -143,7 +143,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
       FileEditorManager.getInstance(project).openFile(virtualFile, true);
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, "Could not save generated XML document: " + StringUtil.getMessage(e), XmlBundle.message("error"));
+      Messages.showErrorDialog(project, XmlBundle.message("could.not.save.generated.xml.document.0", StringUtil.getMessage(e)), XmlBundle.message("error"));
     }
   }
 

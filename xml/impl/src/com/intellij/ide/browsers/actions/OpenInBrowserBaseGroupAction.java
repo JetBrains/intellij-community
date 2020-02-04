@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,8 +20,8 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     super(popup);
 
     Presentation p = getTemplatePresentation();
-    p.setText("Open in _Browser");
-    p.setDescription("Open selected file in browser");
+    p.setText(XmlBundle.message("open.in.browser"));
+    p.setDescription(XmlBundle.message("open.selected.file.in.browser"));
     p.setIcon(AllIcons.Nodes.PpWeb);
   }
 
@@ -36,7 +37,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
       if (addDefaultBrowser) {
         if (myDefaultBrowserAction == null) {
           myDefaultBrowserAction = new OpenFileInDefaultBrowserAction();
-          myDefaultBrowserAction.getTemplatePresentation().setText("Default");
+          myDefaultBrowserAction.getTemplatePresentation().setText(XmlBundle.message("default"));
           myDefaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
         }
         actions[0] = myDefaultBrowserAction;
