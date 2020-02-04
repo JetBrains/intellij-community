@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   /**
-   * Use {code {@link #getRefactoringName()}} instead
+   * @deprecated Use {@link #getRefactoringName()} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Push Members Down";

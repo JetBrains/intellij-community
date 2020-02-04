@@ -43,7 +43,7 @@ import java.util.Map;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
   /**
-   * Use {code {@link #getName()}} instead
+   * @deprecated Use {@link #getName()} instead
    */
   @Deprecated
   public static final String NAME = "Dependencies";

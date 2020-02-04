@@ -40,7 +40,7 @@ import java.util.*;
 public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static final Logger LOG = Logger.getInstance(JavaFindUsagesHandler.class);
   /**
-   * Use {code {@link #getActionString()}} instead
+   * @deprecated Use {@link #getActionString()} instead
    */
   @Deprecated
   protected static  final String ACTION_STRING = "to find usages of";

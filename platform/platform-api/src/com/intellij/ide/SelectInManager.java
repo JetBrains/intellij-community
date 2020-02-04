@@ -16,7 +16,7 @@ public final class SelectInManager  {
   private final Project myProject;
   private final SimpleSmartExtensionPoint<SelectInTarget> myTargets;
   /**
-   * @deprecated Use {code {@link #getProject()}} instead
+   * @deprecated Use {@link #getProject()} instead
    */
   @Deprecated
   @NonNls public static final String PROJECT = getProject();

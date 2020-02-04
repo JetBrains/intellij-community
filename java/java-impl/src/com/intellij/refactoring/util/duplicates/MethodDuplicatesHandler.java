@@ -57,7 +57,7 @@ import java.util.*;
  */
 public class MethodDuplicatesHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   /**
-   * Use {code {@link #getRefactoringName()}} instead
+   * @deprecated Use {@link #getRefactoringName()} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Replace Code Duplicates";

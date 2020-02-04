@@ -29,7 +29,7 @@ import java.util.Set;
 
 public class MoveMembersImpl {
   /**
-   * Use {code {@link #getRefactoringName()}} instead
+   * @deprecated Use {@link #getRefactoringName()} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Move Static Members";

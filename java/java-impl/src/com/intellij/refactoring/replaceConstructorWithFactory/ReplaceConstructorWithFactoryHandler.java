@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceConstructorWithFactoryHandler
         implements RefactoringActionHandler {
   /**
-   * Use {code {@link #getRefactoringName()}} instead
+   * @deprecated Use {@link #getRefactoringName()} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Replace Constructor With Factory Method";

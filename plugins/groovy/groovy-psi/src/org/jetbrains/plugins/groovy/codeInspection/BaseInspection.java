@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   /**
-   * Use {code {@link #getProbableBugs()}} instead
+   * @deprecated Use {@link #getProbableBugs()} instead
    */
   @Deprecated public static final String PROBABLE_BUGS = getProbableBugs();
 

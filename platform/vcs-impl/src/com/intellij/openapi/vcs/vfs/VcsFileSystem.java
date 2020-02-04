@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
   /**
-   * Use {code {@link #getCouldNotImplementMessage()}} instead
+   * @deprecated Use {@link #getCouldNotImplementMessage()} instead
    */
   @Deprecated
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = "Could not implement";

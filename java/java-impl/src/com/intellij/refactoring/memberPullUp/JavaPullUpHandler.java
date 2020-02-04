@@ -33,7 +33,7 @@ import java.util.List;
 
 public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler {
   /**
-   * Use {code {@link #getRefactoringName()}} instead
+   * @deprecated Use {@link #getRefactoringName()} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Pull Members Up";
