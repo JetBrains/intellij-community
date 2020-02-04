@@ -72,7 +72,7 @@ public final class EmptySubstitutor implements PsiSubstitutor {
 
   @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  public PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return map.isEmpty() ? EMPTY : PsiSubstitutorFactory.getInstance().createSubstitutor(map);
   }
 

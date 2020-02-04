@@ -13,7 +13,7 @@ public abstract class PsiSubstitutorFactory {
 
   protected abstract @NotNull PsiSubstitutor createSubstitutor(@NotNull PsiClass aClass, PsiType[] mappings);
 
-  protected abstract @NotNull PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map);
+  protected abstract @NotNull PsiSubstitutor createSubstitutor(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map);
 
   static PsiSubstitutorFactory getInstance() {
     return ServiceManager.getService(PsiSubstitutorFactory.class);

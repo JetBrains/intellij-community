@@ -23,7 +23,7 @@ public class PsiSubstitutorFactoryImpl extends PsiSubstitutorFactory {
   
   @NotNull
   @Override
-  protected PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  protected PsiSubstitutor createSubstitutor(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return new PsiSubstitutorImpl(map);
   }
 }

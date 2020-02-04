@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -58,7 +57,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   private final UnmodifiableHashMap<PsiTypeParameter, PsiType> mySubstitutionMap;
   private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor();
 
-  PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  PsiSubstitutorImpl(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     mySubstitutionMap = UnmodifiableHashMap.fromMap(PSI_EQUIVALENCE, map);
   }
 
@@ -126,12 +125,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    return o instanceof PsiSubstitutorImpl && Objects.equals(mySubstitutionMap, ((PsiSubstitutorImpl)o).mySubstitutionMap);
+    return o instanceof PsiSubstitutorImpl && mySubstitutionMap.equals(((PsiSubstitutorImpl)o).mySubstitutionMap);
   }
 
   @Override
   public int hashCode() {
-    return mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0;
+    return mySubstitutionMap.hashCode();
   }
 
   private PsiType rawTypeForTypeParameter(@NotNull PsiTypeParameter typeParameter) {
@@ -158,12 +157,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   private class SubstitutionVisitor extends PsiTypeMapper {
 
     @Override
-    public PsiType visitType(PsiType type) {
+    public PsiType visitType(@NotNull PsiType type) {
       return null;
     }
 
     @Override
-    public PsiType visitWildcardType(PsiWildcardType wildcardType) {
+    public PsiType visitWildcardType(@NotNull PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
       if (bound == null) {
         return wildcardType;
@@ -199,7 +198,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
 
     @Override
-    public PsiType visitClassType(final PsiClassType classType) {
+    public PsiType visitClassType(@NotNull final PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return classType;
@@ -258,17 +257,17 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
     return original.accept(new PsiTypeVisitor<PsiType>() {
       @Override
-      public PsiType visitArrayType(PsiArrayType arrayType) {
+      public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
         return new PsiArrayType(arrayType.getComponentType().accept(this));
       }
 
       @Override
-      public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
+      public PsiType visitEllipsisType(@NotNull PsiEllipsisType ellipsisType) {
         return new PsiEllipsisType(ellipsisType.getComponentType().accept(this));
       }
 
       @Override
-      public PsiType visitClassType(PsiClassType classType) {
+      public PsiType visitClassType(@NotNull PsiClassType classType) {
         PsiClass aClass = classType.resolve();
         if (aClass == null) {
           return classType;
@@ -280,7 +279,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       }
 
       @Override
-      public PsiType visitType(PsiType type) {
+      public PsiType visitType(@NotNull PsiType type) {
         return null;
       }
     });
@@ -343,7 +342,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
   @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  public PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     if (map.isEmpty()) return this;
     return new PsiSubstitutorImpl(mySubstitutionMap.withAll(map));
   }
@@ -409,7 +408,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
    * @deprecated use {@link PsiSubstitutor#createSubstitutor(Map)}
    */
   @Deprecated
-  public static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
+  public static PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return PsiSubstitutor.createSubstitutor(map);
   }
 }

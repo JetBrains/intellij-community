@@ -82,17 +82,18 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * it's already an {@code UnmodifiableHashMap} which uses the same equals/hashCode strategy.
    */
   @NotNull
-  public static <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull TObjectHashingStrategy<K> strategy, @NotNull Map<K, V> map) {
-    if (map instanceof UnmodifiableHashMap &&
-        ((UnmodifiableHashMap<K, V>)map).strategy == strategy) {
+  public static <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull TObjectHashingStrategy<K> strategy, @NotNull Map<? extends K, ? extends V> map) {
+    //noinspection unchecked
+    if (map instanceof UnmodifiableHashMap && ((UnmodifiableHashMap<K, V>)map).strategy == strategy) {
+      //noinspection unchecked
       return (UnmodifiableHashMap<K, V>)map;
     }
     if (map.size() <= 3) {
       K k1 = null, k2 = null, k3 = null;
       V v1 = null, v2 = null, v3 = null;
-      Iterator<Entry<K, V>> iterator = map.entrySet().iterator();
+      Iterator<? extends Entry<? extends K, ? extends V>> iterator = map.entrySet().iterator();
       if (iterator.hasNext()) {
-        Entry<K, V> e = iterator.next();
+        Entry<? extends K, ? extends V> e = iterator.next();
         k1 = e.getKey();
         v1 = e.getValue();
         if (iterator.hasNext()) {
@@ -329,7 +330,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   }
 
   private static <K> int tablePos(TObjectHashingStrategy<K> strategy, Object[] data, K key) {
-    int pos = Math.floorMod(strategy.computeHashCode(key), (data.length / 2)) * 2;
+    int pos = Math.floorMod(strategy.computeHashCode(key), data.length / 2) * 2;
     while (true) {
       @SuppressWarnings("unchecked") K candidate = (K)data[pos];
       if (candidate == null) {
@@ -464,7 +465,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
      */
     int pos;
 
-    protected MyIterator() {
+    MyIterator() {
       if (k1 == null) {
         pos = -1;
         advance();
