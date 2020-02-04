@@ -48,6 +48,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogStorage.class);
   @NotNull private static final String HASHES_STORAGE = "hashes";
   @NotNull private static final String REFS_STORAGE = "refs";
+  @NotNull private static final String STORAGE = "storage";
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 7;
@@ -72,14 +73,14 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
     StorageId hashesStorageId = new StorageId(HASHES_STORAGE, logId, VERSION);
     myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageId, commitIdKeyDescriptor),
-                                                         hashesStorageId.getStorageFile().toFile());
+                                                         hashesStorageId.getStorageFile(STORAGE).toFile());
 
     VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
     StorageId refsStorageId = new StorageId(REFS_STORAGE, logId, VERSION + REFS_VERSION);
-    myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(refsStorageId.getStorageFile(),
+    myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(refsStorageId.getStorageFile(STORAGE),
                                                                                            refsKeyDescriptor, Page.PAGE_SIZE,
                                                                                            null, refsStorageId.getVersion()),
-                                                     refsStorageId.getStorageFile().toFile());
+                                                     refsStorageId.getStorageFile(STORAGE).toFile());
     Disposer.register(parent, this);
   }
 
@@ -320,7 +321,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   private static class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
     MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
-      super(storageId.getStorageFile(), commitIdKeyDescriptor, Page.PAGE_SIZE, null, storageId.getVersion());
+      super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, null, storageId.getVersion());
     }
 
     public boolean contains(@NotNull CommitId id) throws IOException {
