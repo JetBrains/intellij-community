@@ -2,20 +2,18 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.EntryStream;
@@ -99,6 +97,10 @@ public class CodeAnalysisAnnotationsTest extends LightJavaCodeInsightFixtureTest
       for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
         PsiExpression expression = problem.getDereferencedExpression();
         if (expression != null) {
+          if (problem.getKind() == NullabilityProblemKind.nullableReturn) {
+            PsiType returnType = PsiTypesUtil.getMethodReturnType(expression);
+            if (DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) continue;
+          }
           actual.put(expression, "ca-nullable-to-not-null");
         }
       }
