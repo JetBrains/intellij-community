@@ -2,7 +2,14 @@
 package org.jetbrains.idea.maven.tasks;
 
 import com.google.common.collect.Sets;
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.DefaultJavaProgramRunner;
+import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -15,11 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.util.ArrayList;
@@ -127,8 +135,31 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
                                                      explicitProfiles.getDisabledProfiles()));
       }
     }
-    return MavenRunner.getInstance(myProject)
-      .runBatch(parametersList, null, null, TasksBundle.message("maven.tasks.executing"), context.getProgressIndicator(), null);
+
+    return doRunTask(context, parametersList);
+  }
+
+  private boolean doRunTask(CompileContext context, List<MavenRunnerParameters> parametersList) {
+    try {
+      ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
+      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+
+      long executionId = ExecutionEnvironment.getNextUnusedExecutionId();
+      for (MavenRunnerParameters params : parametersList) {
+        RunnerAndConfigurationSettings configuration =
+          MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, context.getProject());
+        ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configuration, context.getProject());
+        environment.setExecutionId(executionId);
+        boolean result = RunConfigurationBeforeRunProvider.doRunTask(executor.getId(), environment, runner);
+        if (!result) return false;
+      }
+
+      return true;
+    }
+    catch (Exception e) {
+      MavenLog.LOG.error("Cannot execute:", e);
+      return false;
+    }
   }
 
   public synchronized boolean isCompileTaskOfPhase(@NotNull MavenCompilerTask task, @NotNull Phase phase) {
