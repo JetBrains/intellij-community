@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -278,7 +279,11 @@ public class InstanceOfUtils {
     return startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(flow, startOffset, endOffset);
   }
 
-  private static PsiInstanceOfExpression findInstanceOf(PsiExpression condition, PsiTypeCastExpression cast, boolean whenTrue) {
+  @Contract("null, _, _ -> null")
+  private static PsiInstanceOfExpression findInstanceOf(@Nullable PsiExpression condition, 
+                                                        @NotNull PsiTypeCastExpression cast, 
+                                                        boolean whenTrue) {
+    if (condition == null) return null;
     if (condition instanceof PsiParenthesizedExpression) {
       return findInstanceOf(((PsiParenthesizedExpression)condition).getExpression(), cast, whenTrue);
     }
