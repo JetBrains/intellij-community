@@ -4,5 +4,6 @@ package com.intellij.openapi.ui.popup;
 /**
  * @deprecated Use {@link JBPopupListener}.
  */
+@Deprecated
 public abstract class JBPopupAdapter implements JBPopupListener {
 }
