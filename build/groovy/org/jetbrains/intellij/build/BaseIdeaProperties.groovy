@@ -65,8 +65,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.sh",
     "intellij.vcs.changeReminder",
     "intellij.filePrediction",
-    "intellij.markdown",
-    "intellij.grazie"
+    "intellij.markdown"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "1.8",
