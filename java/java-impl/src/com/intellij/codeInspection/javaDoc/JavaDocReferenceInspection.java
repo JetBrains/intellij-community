@@ -39,7 +39,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("<html>Report inaccessible symbols<br>(javadoc tool may be unable to create hyperlink)", this, "REPORT_INACCESSIBLE");
+    return new SingleCheckboxOptionsPanel(
+      InspectionsBundle.message("html.report.inaccessible.symbols"), this, "REPORT_INACCESSIBLE");
   }
 
   private static LocalQuickFix createAddQualifierFix(PsiJavaCodeReferenceElement reference) {
@@ -270,7 +271,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Change to ...";
+      return InspectionsBundle.message("change.to");
     }
 
     @Override
@@ -353,13 +354,13 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Remove @" + myTagName + " " + myParamName;
+      return InspectionsBundle.message("remove.0.1", myTagName, myParamName);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove tag";
+      return InspectionsBundle.message("remove.tag");
     }
 
     @Override

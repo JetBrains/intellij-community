@@ -125,8 +125,8 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
   @Override
   public JComponent createOptionsPanel() {
     JTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
-    tabs.add("Members to report", ScrollPaneFactory.createScrollPane(myLocalInspectionBase.createOptionsPanel(), true));
-    tabs.add("Entry points", ScrollPaneFactory.createScrollPane(new OptionsPanel(), true));
+    tabs.add(InspectionsBundle.message("members.to.report"), ScrollPaneFactory.createScrollPane(myLocalInspectionBase.createOptionsPanel(), true));
+    tabs.add(InspectionsBundle.message("entry.points"), ScrollPaneFactory.createScrollPane(new OptionsPanel(), true));
     return tabs;
   }
 

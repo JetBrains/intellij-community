@@ -30,7 +30,7 @@ public class ReplaceTypeInCastFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace cast type";
+    return InspectionsBundle.message("replace.cast.type");
   }
 
   @Override

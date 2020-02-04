@@ -48,7 +48,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         if (this == INFO && !holder.isOnTheFly()) {
           return; //don't register fixes in batch mode
         }
-        holder.registerProblem(condition, "Can be replaced with single expression in functional style",
+        holder.registerProblem(condition, InspectionsBundle.message("can.be.replaced.with.single.expression.in.functional.style"),
                                this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new OptionalIsPresentFix(scenario));
       }
@@ -258,7 +258,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Optional.isPresent() condition with functional style expression";
+      return InspectionsBundle.message("replace.optional.ispresent.condition.with.functional.style.expression");
     }
 
     @Override

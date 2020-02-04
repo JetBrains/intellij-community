@@ -55,7 +55,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
           !ExpressionUtils.isNullLiteral(nullBranch) && NullabilityUtil.getExpressionNullability(notNullBranch, true) != Nullability.NOT_NULL;
         if (!isOnTheFly && mayChangeSemantics) return;
         holder.registerProblem(ternary.getCondition(),
-                               "Can be replaced with Optional.ofNullable()",
+                               InspectionsBundle.message("can.be.replaced.with.optional.of.nullable"),
                                mayChangeSemantics ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceConditionWithOptionalFix(mayChangeSemantics));
       }
@@ -83,14 +83,14 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName() + (myChangesSemantics ? " (may change semantics)" : "");
+      return getFamilyName() + (myChangesSemantics ? InspectionsBundle.message("may.change.semantics") : "");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with Optional.ofNullable() chain";
+      return InspectionsBundle.message("replace.with.optional.of.nullable.chain");
     }
 
     @Override

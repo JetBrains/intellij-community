@@ -59,7 +59,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
               PsiExpression[] args = expressionList.getExpressions();
               if (args.length == 2 && PsiTreeUtil.isAncestor(args[0], call, false) &&
                   TypeUtils.typeEquals("java.nio.charset.Charset", args[1].getType())) {
-                holder.registerProblem(newExpression, "Can be replaced with 'Files.readString()'",
+                holder.registerProblem(newExpression, InspectionsBundle.message("can.be.replaced.with.files.readstring"),
                                        new ReplaceWithReadStringFix());
               }
             }
@@ -110,7 +110,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return myMayNotWork ? getFamilyName() + " (may not work before JDK 11.0.2)" : getFamilyName();
+      return myMayNotWork ? InspectionsBundle.message("0.may.not.work.before.jdk.11.0.2", getFamilyName()) : getFamilyName();
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)

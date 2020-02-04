@@ -59,13 +59,13 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Suggest conversion to Map.computeIfAbsent", "mySuggestMapComputeIfAbsent");
-    panel.addCheckbox("Suggest conversion to Map.getOrDefault", "mySuggestMapGetOrDefault");
-    panel.addCheckbox("Suggest conversion to Map.putIfAbsent", "mySuggestMapPutIfAbsent");
-    panel.addCheckbox("Suggest conversion to Map.merge", "mySuggestMapMerge");
-    panel.addCheckbox("Suggest conversion to Map.replaceAll", "mySuggestMapReplaceAll");
-    panel.addCheckbox("Treat 'get(k) != null' the same as 'containsKey(k)' (may change semantics)", "myTreatGetNullAsContainsKey");
-    panel.addCheckbox("Suggest replacement even if lambda may have side effects", "mySideEffects");
+    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.computeifabsent"), "mySuggestMapComputeIfAbsent");
+    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.getordefault"), "mySuggestMapGetOrDefault");
+    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.putifabsent"), "mySuggestMapPutIfAbsent");
+    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.merge"), "mySuggestMapMerge");
+    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.replaceall"), "mySuggestMapReplaceAll");
+    panel.addCheckbox(InspectionsBundle.message("treat.get.k.null.the.same.as.containskey.k.may.change.semantics"), "myTreatGetNullAsContainsKey");
+    panel.addCheckbox(InspectionsBundle.message("suggest.replacement.even.if.lambda.may.have.side.effects"), "mySideEffects");
     return panel;
   }
 
