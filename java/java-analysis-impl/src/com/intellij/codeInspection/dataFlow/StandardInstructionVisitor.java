@@ -939,7 +939,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     ArrayList<DfaInstructionState> states = new ArrayList<>(2);
     DfType leftType = memState.getDfType(dfaLeft);
     if (condition == DfaCondition.getUnknown()) {
-      if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
+      if (leftType != TOP && dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
         TypeConstraint left = TypeConstraint.fromDfType(leftType);
         TypeConstraint right = TypeConstraint.fromDfType(dfaRight.getDfType());
         useful = !right.isSuperConstraintOf(left);
