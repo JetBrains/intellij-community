@@ -24,6 +24,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.io.IOUtil
 import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
 import java.io.File
 import java.nio.file.Path
@@ -39,13 +40,19 @@ object PersistentUtil {
 
   @JvmStatic
   fun calcLogId(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>): String {
-    val hashcode = calcLogProvidersHash(logProviders)
+    val hashcode = calcHash(logProviders) { it.supportedVcs.name }
     return project.locationHash + "." + Integer.toHexString(hashcode)
   }
 
-  private fun calcLogProvidersHash(logProviders: Map<VirtualFile, VcsLogProvider>): Int {
+  @JvmStatic
+  fun calcIndexId(project: Project, logProviders: Map<VirtualFile, VcsLogIndexer>): String {
+    val hashcode = calcHash(logProviders) { it.supportedVcs.name }
+    return project.locationHash + "." + Integer.toHexString(hashcode)
+  }
+
+  private fun <T> calcHash(logProviders: Map<VirtualFile, T>, mapping: (T) -> String): Int {
     val sortedRoots = logProviders.keys.sortedBy { it.path }
-    return StringUtil.join(sortedRoots, { root -> root.path + "." + logProviders.getValue(root).supportedVcs.name }, ".").hashCode()
+    return StringUtil.join(sortedRoots, { root -> root.path + "." + mapping(logProviders.getValue(root)) }, ".").hashCode()
   }
 }
 

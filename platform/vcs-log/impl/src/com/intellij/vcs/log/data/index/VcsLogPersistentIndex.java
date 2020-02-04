@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
-import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
+import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
 
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
@@ -96,7 +96,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     VcsUserRegistry userRegistry = ServiceManager.getService(myProject, VcsUserRegistry.class);
 
-    myIndexStorage = createIndexStorage(fatalErrorsConsumer, myProject.getName(), calcLogId(myProject, providers), userRegistry);
+    myIndexStorage = createIndexStorage(fatalErrorsConsumer, myProject.getName(), calcIndexId(myProject, myIndexers), userRegistry);
     if (myIndexStorage != null) {
       myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myFatalErrorsConsumer);
     }
