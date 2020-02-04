@@ -13,6 +13,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
 
+import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
 
 /**
@@ -56,7 +57,7 @@ public final class WideSelectionListUI extends BasicListUI {
       }
     }
     super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
-    if (g instanceof Graphics2D && row == leadSelectionIndex && list.hasFocus()) {
+    if (!isMac && g instanceof Graphics2D && row == leadSelectionIndex && list.hasFocus()) {
       int x = rowBounds.x;
       int width = rowBounds.width;
       if (JList.VERTICAL == list.getLayoutOrientation()) {

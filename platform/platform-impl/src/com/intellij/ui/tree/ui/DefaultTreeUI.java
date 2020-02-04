@@ -6,7 +6,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
@@ -33,6 +32,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
@@ -201,7 +201,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             JScrollBar vsb = pane.getVerticalScrollBar();
             if (vsb != null && vsb.isVisible() && !vsb.isOpaque()) {
               Boolean property = ComponentUtil.getClientProperty(vsb, IGNORE_SCROLLBAR_IN_INSETS);
-              if (SystemInfo.isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
+              if (isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
                 vsbWidth = vsb.getWidth(); // to calculate a right margin of a renderer component
               }
             }
@@ -240,7 +240,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
               }
             }
-            if (lead && g instanceof Graphics2D) {
+            if (!isMac && lead && g instanceof Graphics2D) {
               if (!selected) {
                 g.setColor(getBackground(tree, path, row, true));
                 DRAW.paint((Graphics2D)g, viewportX, bounds.y, viewportWidth, bounds.height, 0);
