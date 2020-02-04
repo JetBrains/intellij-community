@@ -17,6 +17,7 @@ import com.intellij.util.Alarm.ThreadToUse.SWING_THREAD
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -95,7 +96,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
 
   private var progressShown = false
 
-  override fun showProgress(text: String): ProgressIndicator {
+  override fun showProgress(@Nls text: String): ProgressIndicator {
     container.removeAll()
 
     val pi = TwoLineProgressIndicator(true).apply {

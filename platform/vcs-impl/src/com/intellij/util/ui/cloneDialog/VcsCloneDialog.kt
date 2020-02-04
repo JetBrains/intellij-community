@@ -7,6 +7,7 @@ import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -45,7 +46,7 @@ class VcsCloneDialog private constructor(private val project: Project,
 
   init {
     init()
-    title = "Get from Version Control"
+    title = VcsBundle.message("get.from.version.control")
     JBUI.size(FlatWelcomeFrame.MAX_DEFAULT_WIDTH, FlatWelcomeFrame.DEFAULT_HEIGHT).let {
       rootPane.minimumSize = it
       rootPane.preferredSize = it

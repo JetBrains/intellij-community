@@ -6,6 +6,7 @@ import com.intellij.dvcs.ui.DvcsCloneDialogComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import org.zmlx.hg4idea.HgRememberedInputs
 import org.zmlx.hg4idea.util.HgUtil
@@ -20,7 +21,8 @@ class HgCloneDialogComponent(project: Project) : DvcsCloneDialogComponent(projec
     val validationInfo = CloneDvcsValidationUtils.createDestination(getDirectory())
     if (validationInfo != null) {
       LOG.error("Unable to create destination directory", validationInfo.message)
-      VcsNotifier.getInstance(project).notifyError("Clone failed", "Unable to create destination directory")
+      VcsNotifier.getInstance(project).notifyError(VcsBundle.message("clone.dialog.clone.failed.error"),
+                                                   VcsBundle.message("clone.dialog.unable.create.destination.error"))
       return
     }
 

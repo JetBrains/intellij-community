@@ -8,13 +8,17 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class VcsCloneComponentStub(private val checkoutProvider: CheckoutProvider,
-                            private val primaryActionText: String = "Clone") : VcsCloneComponent {
+class VcsCloneComponentStub(
+  private val checkoutProvider: CheckoutProvider,
+  @Nls private val primaryActionText: String = VcsBundle.getString("clone.dialog.clone.button")
+) : VcsCloneComponent {
+
   override fun getView(): JComponent {
     val panel = JPanel(BorderLayout()).apply {
       border = JBEmptyBorder(JBUI.insetsLeft(UIUtil.PANEL_REGULAR_INSETS.left))

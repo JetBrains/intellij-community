@@ -2,14 +2,15 @@
 package com.intellij.openapi.vcs.ui.cloneDialog
 
 import com.intellij.ui.SimpleTextAttributes
+import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
 
-data class VcsCloneDialogExtensionStatusLine(val text: String,
+data class VcsCloneDialogExtensionStatusLine(@Nls val text: String,
                                              val attribute: SimpleTextAttributes,
                                              val actionListener: ActionListener? = null) {
 
   companion object {
-    fun greyText(text: String): VcsCloneDialogExtensionStatusLine {
+    fun greyText(@Nls text: String): VcsCloneDialogExtensionStatusLine {
       return VcsCloneDialogExtensionStatusLine(text, SimpleTextAttributes.GRAY_ATTRIBUTES)
     }
   }
