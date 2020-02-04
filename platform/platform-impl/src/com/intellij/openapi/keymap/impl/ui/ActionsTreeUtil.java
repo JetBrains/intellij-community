@@ -38,7 +38,7 @@ public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
   /**
-   * Use {code {@link #getMainMenuTitle()}} instead
+   * @deprecated Use {@link #getMainMenuTitle()} instead
    */
   @Deprecated
   public static final String MAIN_MENU_TITLE = "Main menu";
