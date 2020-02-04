@@ -46,6 +46,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     setShowsRootHandles(true)
     isOpaque = false
     installDoubleClickHandler()
+    SmartExpander.installOn(this)
     initDnD()
   }
 
