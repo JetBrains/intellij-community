@@ -80,7 +80,7 @@ public class ResolverTree {
     final Set<PsiTypeVariable> mySet = new HashSet<>();
 
     @Override
-    public Object visitTypeVariable(final PsiTypeVariable var) {
+    public Object visitTypeVariable(@NotNull final PsiTypeVariable var) {
       mySet.add(var);
 
       return null;

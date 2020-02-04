@@ -479,12 +479,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         final PsiType type = parameter.getType();
         final Boolean accept = type.accept(new PsiTypeVisitor<Boolean>() {
           @Override
-          public Boolean visitArrayType(PsiArrayType arrayType) {
+          public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
             return arrayType.getComponentType().accept(this);
           }
 
           @Override
-          public Boolean visitClassType(PsiClassType classType) {
+          public Boolean visitClassType(@NotNull PsiClassType classType) {
             for (PsiType psiType : classType.getParameters()) {
               if (psiType != null) {
                 final Boolean typeParamFound = psiType.accept(this);
@@ -496,7 +496,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
           }
 
           @Override
-          public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+          public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
             final PsiType bound = wildcardType.getBound();
             if (bound == null) return false;
             return bound.accept(this);
@@ -527,25 +527,25 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
     @Nullable
     @Override
-    public Boolean visitType(PsiType type) {
+    public Boolean visitType(@NotNull PsiType type) {
       return true;
     }
 
     @Nullable
     @Override
-    public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+    public Boolean visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
       return false;
     }
 
     @Nullable
     @Override
-    public Boolean visitIntersectionType(PsiIntersectionType intersectionType) {
+    public Boolean visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
       return false;
     }
 
     @Nullable
     @Override
-    public Boolean visitClassType(PsiClassType classType) {
+    public Boolean visitClassType(@NotNull PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
       if (psiClass != null) {

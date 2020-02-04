@@ -109,8 +109,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
         }
       }
 
-      override fun visitClassType(classType: PsiClassType?) {
-        classType ?: return
+      override fun visitClassType(classType: PsiClassType) {
         val lowerTypeParameter = currentLowerType.typeParameter()
         val upperTypeParameter = classType.typeParameter()
         if (firstVisit) {
@@ -135,8 +134,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
         super.visitClassType(classType)
       }
 
-      override fun visitIntersectionType(intersectionType: PsiIntersectionType?) {
-        intersectionType ?: return
+      override fun visitIntersectionType(intersectionType: PsiIntersectionType) {
         val memorizedFirstVisit = firstVisit
         intersectionType.conjuncts.forEach {
           firstVisit = memorizedFirstVisit
@@ -144,8 +142,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
         }
       }
 
-      override fun visitWildcardType(wildcardType: PsiWildcardType?) {
-        wildcardType ?: return
+      override fun visitWildcardType(wildcardType: PsiWildcardType) {
         val bound = wildcardType.bound as? PsiClassType ?: return
         val lowerTypeParameter = currentLowerType.typeParameter()
         val upperTypeParameter = bound.typeParameter()
@@ -169,8 +166,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
         super.visitWildcardType(wildcardType)
       }
 
-      override fun visitPrimitiveType(primitiveType: PsiPrimitiveType?) {
-        primitiveType?.getBoxedType(context)?.accept(this)
+      override fun visitPrimitiveType(primitiveType: PsiPrimitiveType) {
+        primitiveType.getBoxedType(context)?.accept(this)
       }
     })
   }

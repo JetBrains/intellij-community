@@ -727,24 +727,24 @@ public class AnnotationsHighlightUtil {
   public static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
     public static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
     @Override
-    public Boolean visitType(PsiType type) {
+    public Boolean visitType(@NotNull PsiType type) {
       return Boolean.FALSE;
     }
 
     @Override
-    public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
+    public Boolean visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
       return PsiType.VOID.equals(primitiveType) || PsiType.NULL.equals(primitiveType) ? Boolean.FALSE : Boolean.TRUE;
     }
 
     @Override
-    public Boolean visitArrayType(PsiArrayType arrayType) {
+    public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
       if (arrayType.getArrayDimensions() != 1) return Boolean.FALSE;
       PsiType componentType = arrayType.getComponentType();
       return componentType.accept(this);
     }
 
     @Override
-    public Boolean visitClassType(PsiClassType classType) {
+    public Boolean visitClassType(@NotNull PsiClassType classType) {
       if (classType.getParameters().length > 0) {
         PsiClassType rawType = classType.rawType();
         return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);

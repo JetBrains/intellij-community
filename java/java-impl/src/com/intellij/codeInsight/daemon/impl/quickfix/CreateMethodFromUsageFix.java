@@ -171,7 +171,7 @@ public class CreateMethodFromUsageFix {
 
     final PsiTypeVisitor<Boolean> visitor = new PsiTypeVisitor<Boolean>() {
       @Override
-      public Boolean visitClassType(PsiClassType classType) {
+      public Boolean visitClassType(@NotNull PsiClassType classType) {
         final PsiClass psiClass = classType.resolve();
         if (psiClass instanceof PsiTypeParameter &&
             PsiTreeUtil.isAncestor(((PsiTypeParameter)psiClass).getOwner(), method, true)) {
@@ -187,17 +187,17 @@ public class CreateMethodFromUsageFix {
       }
 
       @Override
-      public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
+      public Boolean visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
         return false;
       }
 
       @Override
-      public Boolean visitArrayType(PsiArrayType arrayType) {
+      public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);
       }
 
       @Override
-      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+      public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
         if (bound != null) {
           return bound.accept(this);

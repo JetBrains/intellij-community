@@ -671,17 +671,17 @@ public abstract class GroovyRefactoringUtil {
         private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 
         @Override
-        public Boolean visitType(final PsiType type) {
+        public Boolean visitType(@NotNull final PsiType type) {
           return false;
         }
 
         @Override
-        public Boolean visitArrayType(final PsiArrayType arrayType) {
+        public Boolean visitArrayType(@NotNull final PsiArrayType arrayType) {
           return arrayType.getComponentType().accept(this);
         }
 
         @Override
-        public Boolean visitClassType(final PsiClassType classType) {
+        public Boolean visitClassType(@NotNull final PsiClassType classType) {
           final PsiClass aClass = classType.resolve();
           if (aClass instanceof PsiTypeParameter) {
             myTypeParams.add((PsiTypeParameter)aClass);
@@ -695,7 +695,7 @@ public abstract class GroovyRefactoringUtil {
         }
 
         @Override
-        public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
+        public Boolean visitWildcardType(@NotNull final PsiWildcardType wildcardType) {
           final PsiType bound = wildcardType.getBound();
           if (bound != null) {
             bound.accept(this);

@@ -353,7 +353,7 @@ public class PsiTypesUtil {
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Nullable
       @Override
-      public Boolean visitClassType(PsiClassType classType) {
+      public Boolean visitClassType(@NotNull PsiClassType classType) {
         PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
         final PsiClass psiClass = resolveResult.getElement();
         if (psiClass == null) {
@@ -371,19 +371,19 @@ public class PsiTypesUtil {
 
       @Nullable
       @Override
-      public Boolean visitArrayType(PsiArrayType arrayType) {
+      public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);
       }
 
       @NotNull
       @Override
-      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+      public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
         return bound != null && bound.accept(this);
       }
 
       @Override
-      public Boolean visitType(PsiType type) {
+      public Boolean visitType(@NotNull PsiType type) {
         return false;
       }
     });
@@ -516,12 +516,12 @@ public class PsiTypesUtil {
     if (type == null) return false;
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
-      public Boolean visitType(PsiType type) {
+      public Boolean visitType(@NotNull PsiType type) {
         return false;
       }
 
       @Override
-      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+      public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
         if (bound != null) {
           return bound.accept(this);
@@ -530,7 +530,7 @@ public class PsiTypesUtil {
       }
 
       @Override
-      public Boolean visitClassType(PsiClassType classType) {
+      public Boolean visitClassType(@NotNull PsiClassType classType) {
         PsiClassType.ClassResolveResult result = classType.resolveGenerics();
         final PsiClass psiClass = result.getElement();
         if (psiClass != null) {
@@ -544,7 +544,7 @@ public class PsiTypesUtil {
       }
 
       @Override
-      public Boolean visitIntersectionType(PsiIntersectionType intersectionType) {
+      public Boolean visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
         for (PsiType conjunct : intersectionType.getConjuncts()) {
           if (conjunct.accept(this)) return true;
         }
@@ -552,17 +552,17 @@ public class PsiTypesUtil {
       }
 
       @Override
-      public Boolean visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
+      public Boolean visitMethodReferenceType(@NotNull PsiMethodReferenceType methodReferenceType) {
         return false;
       }
 
       @Override
-      public Boolean visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
+      public Boolean visitLambdaExpressionType(@NotNull PsiLambdaExpressionType lambdaExpressionType) {
         return false;
       }
 
       @Override
-      public Boolean visitArrayType(PsiArrayType arrayType) {
+      public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);
       }
     });
@@ -577,17 +577,17 @@ public class PsiTypesUtil {
     }
 
     @Override
-    public Boolean visitType(final PsiType type) {
+    public Boolean visitType(@NotNull final PsiType type) {
       return false;
     }
 
     @Override
-    public Boolean visitArrayType(final PsiArrayType arrayType) {
+    public Boolean visitArrayType(@NotNull final PsiArrayType arrayType) {
       return arrayType.getComponentType().accept(this);
     }
 
     @Override
-    public Boolean visitClassType(final PsiClassType classType) {
+    public Boolean visitClassType(@NotNull final PsiClassType classType) {
       PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass instanceof PsiTypeParameter) {
@@ -607,7 +607,7 @@ public class PsiTypesUtil {
     }
 
     @Override
-    public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
+    public Boolean visitWildcardType(@NotNull final PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
       if (bound != null) {
         bound.accept(this);

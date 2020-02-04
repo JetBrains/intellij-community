@@ -145,7 +145,7 @@ public class JavaCompletionUtil {
       private final Set<PsiClassType> myVisited = ContainerUtil.newIdentityTroveSet();
 
       @Override
-      public PsiType visitClassType(final PsiClassType classType) {
+      public PsiType visitClassType(@NotNull final PsiClassType classType) {
         if (!myVisited.add(classType)) return classType;
 
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
@@ -168,7 +168,7 @@ public class JavaCompletionUtil {
 
 
       @Override
-      public PsiType visitType(PsiType type) {
+      public PsiType visitType(@NotNull PsiType type) {
         return type;
       }
     }.mapType(type);

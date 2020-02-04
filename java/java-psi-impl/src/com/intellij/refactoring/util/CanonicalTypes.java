@@ -268,17 +268,17 @@ public class CanonicalTypes {
     private static final Logger LOG = Logger.getInstance(Creator.class);
 
     @Override
-    public Type visitPrimitiveType(PsiPrimitiveType type) {
+    public Type visitPrimitiveType(@NotNull PsiPrimitiveType type) {
       return new Primitive(type);
     }
 
     @Override
-    public Type visitEllipsisType(PsiEllipsisType type) {
+    public Type visitEllipsisType(@NotNull PsiEllipsisType type) {
       return new Ellipsis(type, substituteComponents(type));
     }
 
     @Override
-    public Type visitArrayType(PsiArrayType type) {
+    public Type visitArrayType(@NotNull PsiArrayType type) {
       return new Array(type, substituteComponents(type));
     }
 
@@ -291,13 +291,13 @@ public class CanonicalTypes {
     }
 
     @Override
-    public Type visitWildcardType(PsiWildcardType type) {
+    public Type visitWildcardType(@NotNull PsiWildcardType type) {
       PsiType bound = type.getBound();
       return new WildcardType(type, type.isExtends(), bound == null ? null : bound.accept(this));
     }
 
     @Override
-    public Type visitClassType(PsiClassType type) {
+    public Type visitClassType(@NotNull PsiClassType type) {
       PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
       PsiClass aClass = resolveResult.getElement();
       if (aClass instanceof PsiAnonymousClass) {
@@ -319,14 +319,14 @@ public class CanonicalTypes {
     }
 
     @Override
-    public Type visitDisjunctionType(PsiDisjunctionType type) {
+    public Type visitDisjunctionType(@NotNull PsiDisjunctionType type) {
       List<Type> types = ContainerUtil.map(type.getDisjunctions(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, true);
     }
 
     @Nullable
     @Override
-    public Type visitIntersectionType(PsiIntersectionType type) {
+    public Type visitIntersectionType(@NotNull PsiIntersectionType type) {
       List<Type> types = ContainerUtil.map(type.getConjuncts(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, false);
     }

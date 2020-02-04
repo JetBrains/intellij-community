@@ -45,9 +45,9 @@ class CollectingGroovyInferenceSession(
 
   private fun substituteForeignTypeParameters(type: PsiType?): PsiType? {
     return type?.accept(object : PsiTypeMapper() {
-      override fun visitClassType(classType: PsiClassType?): PsiType? {
+      override fun visitClassType(classType: PsiClassType): PsiType? {
         if (classType.isTypeParameter()) {
-          return myInferenceVariables.find { it.delegate.name == classType?.canonicalText }?.type() ?: classType
+          return myInferenceVariables.find { it.delegate.name == classType.canonicalText }?.type() ?: classType
         }
         else {
           return classType

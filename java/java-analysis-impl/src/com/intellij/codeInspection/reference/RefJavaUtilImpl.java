@@ -68,9 +68,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          type = type.getDeepComponentType();
                          if (type instanceof PsiClassType) {
                            type.accept(new PsiTypeVisitor<Void>() {
-                             @Nullable
                              @Override
-                             public Void visitClassType(PsiClassType classType) {
+                             public Void visitClassType(@NotNull PsiClassType classType) {
                                for (PsiType parameter : classType.getParameters()) {
                                  parameter.accept(this);
                                }

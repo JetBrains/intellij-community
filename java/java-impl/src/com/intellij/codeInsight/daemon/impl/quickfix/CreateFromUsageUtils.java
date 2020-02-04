@@ -762,7 +762,7 @@ public class CreateFromUsageUtils {
       PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
         @Override
         @Nullable
-        public PsiType visitType(PsiType type) {
+        public PsiType visitType(@NotNull PsiType type) {
           if (PsiType.NULL.equals(type) || PsiType.VOID.equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
@@ -790,7 +790,7 @@ public class CreateFromUsageUtils {
         }
 
         @Override
-        public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
           return capturedWildcardType.getUpperBound().accept(this);
         }
       };

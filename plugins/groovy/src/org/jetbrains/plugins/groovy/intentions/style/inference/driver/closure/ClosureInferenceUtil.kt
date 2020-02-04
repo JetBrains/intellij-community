@@ -307,23 +307,23 @@ internal infix fun PsiSubstitutor.compose(right: PsiSubstitutor): PsiSubstitutor
 inline fun PsiType.anyComponent(crossinline predicate: (PsiType) -> Boolean): Boolean {
   var mark = false
   accept(object : PsiTypeVisitor<Unit>() {
-    override fun visitClassType(classType: PsiClassType?) {
-      if (predicate(classType ?: return)) {
+    override fun visitClassType(classType: PsiClassType) {
+      if (predicate(classType)) {
         mark = true
       }
       classType.parameters.forEach { it.accept(this) }
     }
 
-    override fun visitWildcardType(wildcardType: PsiWildcardType?) {
-      wildcardType?.bound?.accept(this)
+    override fun visitWildcardType(wildcardType: PsiWildcardType) {
+      wildcardType.bound?.accept(this)
     }
 
-    override fun visitIntersectionType(intersectionType: PsiIntersectionType?) {
-      intersectionType?.conjuncts?.forEach { it.accept(this) }
+    override fun visitIntersectionType(intersectionType: PsiIntersectionType) {
+      intersectionType.conjuncts?.forEach { it.accept(this) }
     }
 
-    override fun visitArrayType(arrayType: PsiArrayType?) {
-      arrayType?.componentType?.accept(this)
+    override fun visitArrayType(arrayType: PsiArrayType) {
+      arrayType.componentType.accept(this)
     }
   })
   return mark

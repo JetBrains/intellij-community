@@ -26,7 +26,7 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @Override
-  public PsiType visitType(PsiType type) {
+  public PsiType visitType(@NotNull PsiType type) {
     if (LambdaUtil.notInferredType(type)) {
       return type;
     }
@@ -52,7 +52,7 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @Override
-  public PsiType visitClassType(PsiClassType classType) {
+  public PsiType visitClassType(@NotNull PsiClassType classType) {
     if (classType instanceof PsiCorrectedClassType) {
       return myResolveScope.equals(classType.getResolveScope()) ? classType :
              visitClassType(((PsiCorrectedClassType)classType).myDelegate);

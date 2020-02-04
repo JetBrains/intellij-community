@@ -213,13 +213,13 @@ public class GuessTypeParameters {
     }
 
     @Override
-    public PsiType visitType(PsiType type) {
+    public PsiType visitType(@NotNull PsiType type) {
       if (type.equals(PsiType.NULL)) return PsiType.getJavaLangObject(myManager, myResolveScope);
       return type;
     }
 
     @Override
-    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+    public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
       return capturedWildcardType.getUpperBound().accept(this);
     }
   }

@@ -32,6 +32,7 @@ import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -489,7 +490,7 @@ public class BindingFactory {
           class Verifier extends PsiExtendedTypeVisitor<Void> {
             boolean myFlag;
 
-            @Override public Void visitTypeVariable(final PsiTypeVariable var) {
+            @Override public Void visitTypeVariable(@NotNull final PsiTypeVariable var) {
               if (var.getIndex() == index) {
                 myFlag = true;
               }

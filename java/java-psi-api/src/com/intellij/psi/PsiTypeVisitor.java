@@ -15,7 +15,7 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Visitor which can be used to visit Java types.
@@ -23,66 +23,55 @@ import org.jetbrains.annotations.Nullable;
  * @author dsl
  */
 public class PsiTypeVisitor<A> {
-  @Nullable
-  public A visitType(PsiType type) {
+  public A visitType(@NotNull PsiType type) {
     return null;
   }
 
-  @Nullable
-  public A visitPrimitiveType(PsiPrimitiveType primitiveType) {
+  public A visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
     return visitType(primitiveType);
   }
 
-  @Nullable
-  public A visitArrayType(PsiArrayType arrayType) {
+  public A visitArrayType(@NotNull PsiArrayType arrayType) {
     return visitType(arrayType);
   }
 
-  @Nullable
-  public A visitClassType(PsiClassType classType) {
+  public A visitClassType(@NotNull PsiClassType classType) {
     return visitType(classType);
   }
 
-  @Nullable
-  public A visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+  public A visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
     return visitWildcardType(capturedWildcardType.getWildcard());
   }
 
-  @Nullable
-  public A visitWildcardType(PsiWildcardType wildcardType) {
+  public A visitWildcardType(@NotNull PsiWildcardType wildcardType) {
     return visitType(wildcardType);
   }
 
-  @Nullable
-  public A visitEllipsisType(PsiEllipsisType ellipsisType) {
+  public A visitEllipsisType(@NotNull PsiEllipsisType ellipsisType) {
     return visitArrayType(ellipsisType);
   }
 
-  @Nullable
-  public A visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+  public A visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
     return visitType(disjunctionType);
   }
 
-  @Nullable
-  public A visitIntersectionType(PsiIntersectionType intersectionType) {
+  public A visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
     PsiType type = intersectionType.getConjuncts()[0];
     return type.accept(this);
   }
 
-  @Nullable
-  public A visitDiamondType(PsiDiamondType diamondType) {
+  public A visitDiamondType(@NotNull PsiDiamondType diamondType) {
     return visitType(diamondType);
   }
   
-  @Nullable
-  public A visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
+  public A visitLambdaExpressionType(@NotNull PsiLambdaExpressionType lambdaExpressionType) {
     final PsiLambdaExpression lambdaExpression = lambdaExpressionType.getExpression();
     final PsiType interfaceType = lambdaExpression.getFunctionalInterfaceType();
     if (interfaceType != null && LambdaUtil.isFunctionalType(interfaceType)) return interfaceType.accept(this);
     return visitType(lambdaExpressionType);
   }
   
-  public A visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
+  public A visitMethodReferenceType(@NotNull PsiMethodReferenceType methodReferenceType) {
     final PsiMethodReferenceExpression expression = methodReferenceType.getExpression();
     final PsiType interfaceType = expression.getFunctionalInterfaceType();
     if (interfaceType != null && LambdaUtil.isFunctionalType(interfaceType)) return interfaceType.accept(this);

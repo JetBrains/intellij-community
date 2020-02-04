@@ -701,21 +701,21 @@ public class TypesUtil implements TypeConstants {
       parameter.accept(new PsiTypeVisitorEx<Object>() {
         @Nullable
         @Override
-        public Object visitClassType(PsiClassType classType) {
+        public Object visitClassType(@NotNull PsiClassType classType) {
             newParam.set(classType.rawType());
           return null;
         }
 
         @Nullable
         @Override
-        public Object visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        public Object visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
           newParam.set(capturedWildcardType.getWildcard().getBound());
           return null;
         }
 
         @Nullable
         @Override
-        public Object visitWildcardType(PsiWildcardType wildcardType) {
+        public Object visitWildcardType(@NotNull PsiWildcardType wildcardType) {
           newParam.set(wildcardType.getBound());
           return null;
         }
@@ -735,12 +735,12 @@ public class TypesUtil implements TypeConstants {
   public static PsiType rawWildcard(PsiType type, PsiElement context) {
     final PsiTypeMapper visitor = new GrTypeMapper(context) {
       @Override
-      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
 
       @Override
-      public PsiType visitWildcardType(PsiWildcardType capturedWildcardType) {
+      public PsiType visitWildcardType(@NotNull PsiWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
 

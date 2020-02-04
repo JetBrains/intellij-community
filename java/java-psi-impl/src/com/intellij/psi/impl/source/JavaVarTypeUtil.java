@@ -38,12 +38,12 @@ public class JavaVarTypeUtil {
   private static boolean mentionsRestrictedTypeVariables(PsiType type) {
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
-      public Boolean visitType(PsiType type) {
+      public Boolean visitType(@NotNull PsiType type) {
         return false;
       }
 
       @Override
-      public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      public Boolean visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
         return true;
       }
     });
@@ -51,42 +51,42 @@ public class JavaVarTypeUtil {
 
   private static class UpwardProjectionTypeVisitor extends PsiTypeVisitorEx<PsiType> {
     @Override
-    public PsiType visitType(PsiType type) {
+    public PsiType visitType(@NotNull PsiType type) {
       return type;
     }
 
     @Nullable
     @Override
-    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+    public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
       return capturedWildcardType.getUpperBound().accept(this);
     }
 
     @Override
-    public PsiType visitArrayType(PsiArrayType arrayType) {
+    public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
       PsiType componentType = arrayType.getComponentType();
       return componentType.accept(this).createArrayType();
     }
 
     @Nullable
     @Override
-    public PsiType visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
+    public PsiType visitLambdaExpressionType(@NotNull PsiLambdaExpressionType lambdaExpressionType) {
       return lambdaExpressionType;
     }
 
     @Override
-    public PsiType visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
+    public PsiType visitMethodReferenceType(@NotNull PsiMethodReferenceType methodReferenceType) {
       return methodReferenceType;
     }
 
     @Override
-    public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
+    public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
       return PsiIntersectionType.createIntersection(Arrays.stream(intersectionType.getConjuncts())
                                                       .map(conjunct -> conjunct.accept(this))
                                                       .toArray(PsiType[]::new));
     }
 
     @Override
-    public PsiType visitClassType(PsiClassType classType) {
+    public PsiType visitClassType(@NotNull PsiClassType classType) {
       PsiClassType.ClassResolveResult result = classType.resolveGenerics();
       PsiClass aClass = result.getElement();
       if (aClass != null) {
@@ -145,41 +145,41 @@ public class JavaVarTypeUtil {
 
   private static class DownwardProjectionTypeVisitor extends PsiTypeVisitor<PsiType> {
     @Override
-    public PsiType visitType(PsiType type) {
+    public PsiType visitType(@NotNull PsiType type) {
       return type;
     }
 
     @Override
-    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+    public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
       return capturedWildcardType.getLowerBound().accept(this);
     }
 
     @Override
-    public PsiType visitArrayType(PsiArrayType arrayType) {
+    public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
       PsiType projection = arrayType.getComponentType().accept(this);
       if (projection == PsiType.NULL) return PsiType.NULL;
       return projection.createArrayType();
     }
 
     @Override
-    public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
+    public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
       PsiType[] conjuncts = Arrays.stream(intersectionType.getConjuncts()).map(conjunct -> conjunct.accept(this)).toArray(PsiType[]::new);
       if (ArrayUtil.find(conjuncts, PsiType.NULL) > -1) return PsiType.NULL;
       return PsiIntersectionType.createIntersection(conjuncts);
     }
 
     @Override
-    public PsiType visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
+    public PsiType visitLambdaExpressionType(@NotNull PsiLambdaExpressionType lambdaExpressionType) {
       return lambdaExpressionType;
     }
 
     @Override
-    public PsiType visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
+    public PsiType visitMethodReferenceType(@NotNull PsiMethodReferenceType methodReferenceType) {
       return methodReferenceType;
     }
 
     @Override
-    public PsiType visitClassType(PsiClassType classType) {
+    public PsiType visitClassType(@NotNull PsiClassType classType) {
       PsiClassType.ClassResolveResult result = classType.resolveGenerics();
       PsiClass aClass = result.getElement();
       if (aClass != null) {
