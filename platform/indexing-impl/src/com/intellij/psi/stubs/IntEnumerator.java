@@ -4,12 +4,14 @@ package com.intellij.psi.stubs;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntIntHashMap;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.function.IntUnaryOperator;
 
+@ApiStatus.Internal
 class IntEnumerator {
   private final TIntIntHashMap myEnumerates;
   private final TIntArrayList myIds;

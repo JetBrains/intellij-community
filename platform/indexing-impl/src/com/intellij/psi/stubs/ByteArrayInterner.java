@@ -4,10 +4,12 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+@ApiStatus.Internal
 class ByteArrayInterner {
   private static final TObjectHashingStrategy<byte[]> BYTE_ARRAY_STRATEGY = new TObjectHashingStrategy<byte[]>() {
     @Override

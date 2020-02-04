@@ -5,6 +5,7 @@ import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.function.UnaryOperator;
 
+@ApiStatus.Internal
 class FileLocalStringEnumerator implements AbstractStringEnumerator {
   private final TObjectIntHashMap<String> myEnumerates;
   private final ArrayList<String> myStrings = new ArrayList<>();
