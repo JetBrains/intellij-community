@@ -11,6 +11,9 @@ import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
@@ -22,6 +25,7 @@ import org.jetbrains.idea.maven.buildtool.quickfix.OffMavenOfflineModeQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
@@ -47,6 +51,18 @@ class MavenSyncConsole(private val myProject: Project) {
     if (started) {
       return
     }
+    val restartAction: AnAction = object : AnAction() {
+      override fun update(e: AnActionEvent) {
+        e.presentation.isEnabled = !started || finished
+        e.presentation.icon = AllIcons.Actions.Refresh
+      }
+
+      override fun actionPerformed(e: AnActionEvent) {
+        e.project?.let {
+          MavenProjectsManager.getInstance(it).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+        }
+      }
+    }
     started = true
     finished = false
     hasErrors = false
@@ -59,9 +75,10 @@ class MavenSyncConsole(private val myProject: Project) {
     runDescr.isActivateToolWindowWhenAdded = false
     mySyncView.onEvent(mySyncId,
                        StartBuildEventImpl(descriptor, "Sync ${myProject.name}")
-                         .withContentDescriptorSupplier {
+                         .withContentDescriptorSupplier
+                         {
                            runDescr
-                         })
+                         }.withRestartAction(restartAction))
     debugLog("maven sync: started importing $myProject")
   }
 
