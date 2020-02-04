@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
@@ -25,8 +26,11 @@ import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.font.TextAttribute;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.text.AttributedCharacterIterator;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
@@ -442,6 +446,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @Override
   protected void paintSafely(Graphics g) {
     JTextComponent component = getComponent();
+    if (SystemInfo.isMacOSCatalina) {
+      component.setFont(component.getFont().deriveFont(
+        Collections.<AttributedCharacterIterator.Attribute, Integer>singletonMap(TextAttribute.KERNING, null)));
+    }
     if (!component.isOpaque()) paintBackground(g);
     Shape clip = g.getClip();
     super.paintSafely(g);
