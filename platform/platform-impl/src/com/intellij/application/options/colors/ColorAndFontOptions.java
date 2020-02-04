@@ -72,7 +72,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private MyColorScheme mySelectedScheme;
 
   /**
-   * Use {code {@link #getScopesGroup()}} instead
+   * @deprecated Use {@link #getScopesGroup()} instead
    */
   @Deprecated
   public static final String SCOPES_GROUP = "By Scope";
