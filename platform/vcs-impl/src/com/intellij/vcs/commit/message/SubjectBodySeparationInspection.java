@@ -49,7 +49,7 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
 
   protected static class AddBlankLineQuickFix extends BaseCommitMessageQuickFix {
     protected AddBlankLineQuickFix() {
-      super("Add blank line");
+      super(VcsBundle.getString("settings.commit.message.body.add.blank.line.fix"));
     }
 
     @Override
