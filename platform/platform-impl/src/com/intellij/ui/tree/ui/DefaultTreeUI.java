@@ -28,6 +28,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
@@ -164,6 +166,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (tree != null && tree == getTree()) return true;
     LOG.warn(new IllegalStateException(tree != null ? "unexpected tree" : "undefined tree"));
     return false;
+  }
+
+  private void repaintPath(@Nullable TreePath path) {
+    Rectangle bounds = getPathBounds(getTree(), path);
+    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
   }
 
   // ComponentUI
@@ -396,6 +403,26 @@ public final class DefaultTreeUI extends BasicTreeUI {
           }
         }
         return event;
+      }
+    };
+  }
+
+  @Override
+  protected PropertyChangeListener createPropertyChangeListener() {
+    PropertyChangeListener parent = super.createPropertyChangeListener();
+    return new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent event) {
+        String name = event.getPropertyName();
+        if (JTree.ANCHOR_SELECTION_PATH_PROPERTY.equals(name)) return;
+        if (JTree.LEAD_SELECTION_PATH_PROPERTY.equals(name)) {
+          updateLeadSelectionRow();
+          repaintPath((TreePath)event.getOldValue());
+          repaintPath((TreePath)event.getNewValue());
+        }
+        else if (parent != null) {
+          parent.propertyChange(event);
+        }
       }
     };
   }
