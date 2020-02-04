@@ -13,6 +13,12 @@ iml_module(
         "//tools/idea/platform/diff-api:intellij.platform.diff",
     ],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",

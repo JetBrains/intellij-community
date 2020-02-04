@@ -30,6 +30,7 @@ iml_module(
         "//tools/idea/java/plugin:intellij.java.plugin",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
+        "//tools/idea/.idea/libraries:precompiled_jshell-frontend",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -51,8 +52,19 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
+        "//tools/idea/.idea/libraries:Slf4j",
+        "//tools/idea/.idea/libraries:error-prone-annotations",
+        "//tools/idea/.idea/libraries:javax.activation",
+        "//tools/idea/.idea/libraries:jaxb-api",
+        "//tools/idea/.idea/libraries:jaxb-runtime",
+        "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/193.4:jar",
     ],
     # do not sort: must match IML order
     deps = [

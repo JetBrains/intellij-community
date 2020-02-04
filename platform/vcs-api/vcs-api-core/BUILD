@@ -7,6 +7,12 @@ iml_module(
     iml_files = ["intellij.platform.vcs.core.iml"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/core-api:intellij.platform.core[module]",

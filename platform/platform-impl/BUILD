@@ -50,6 +50,10 @@ iml_module(
         "//tools/idea/xml/impl:intellij.xml.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/json:intellij.json",
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+        "//tools/idea/.idea/libraries:javassist",
     ],
     # do not sort: must match IML order
     deps = [

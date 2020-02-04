@@ -8,6 +8,12 @@ iml_module(
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/remote-servers/agent-rt:intellij.platform.remoteServers.agent.rt"],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",

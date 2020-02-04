@@ -17,6 +17,13 @@ iml_module(
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl",
     ],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+        "//tools/idea/.idea/libraries:javassist",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/analysis-impl:intellij.platform.analysis.impl[module]",
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",

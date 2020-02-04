@@ -17,6 +17,12 @@ iml_module(
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel",
     ],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",

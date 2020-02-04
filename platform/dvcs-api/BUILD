@@ -8,6 +8,12 @@ iml_module(
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/vcs-log/graph-api:intellij.platform.vcs.log.graph"],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
         "//tools/idea/platform/vcs-log/graph-api:intellij.platform.vcs.log.graph[module]",

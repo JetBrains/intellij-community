@@ -52,12 +52,18 @@ iml_module(
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
         "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/193.4:jar",
+        "//tools/idea/.idea/libraries:precompiled_jshell-frontend",
     ],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
@@ -68,6 +74,11 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
+        "//tools/idea/.idea/libraries:error-prone-annotations",
+        "//tools/idea/.idea/libraries:javax.activation",
+        "//tools/idea/.idea/libraries:jaxb-api",
+        "//tools/idea/.idea/libraries:jaxb-runtime",
+        "//tools/idea/.idea/libraries:javax.annotation-api",
     ],
     # do not sort: must match IML order
     deps = [

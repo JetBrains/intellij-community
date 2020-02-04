@@ -13,7 +13,12 @@ iml_module(
         "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt",
     ],
     # do not sort: must match IML order
-    runtime_deps = ["//tools/idea/.idea/libraries:javassist"],
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:javassist",
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",

@@ -18,6 +18,12 @@ iml_module(
         "//tools/idea/platform/analysis-api:intellij.platform.analysis",
     ],
     # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
+    ],
+    # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/lvcs-api:intellij.platform.lvcs[module]",

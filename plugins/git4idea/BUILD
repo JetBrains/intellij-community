@@ -31,6 +31,9 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
+        "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
@@ -40,7 +43,14 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
+        "//tools/idea/.idea/libraries:Slf4j",
+        "//tools/idea/.idea/libraries:error-prone-annotations",
+        "//tools/idea/.idea/libraries:javax.activation",
+        "//tools/idea/.idea/libraries:jaxb-api",
+        "//tools/idea/.idea/libraries:jaxb-runtime",
+        "//tools/idea/.idea/libraries:javax.annotation-api",
     ],
     # do not sort: must match IML order
     deps = [
