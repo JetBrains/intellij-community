@@ -95,6 +95,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "google-cloud-tools-core-as",
                                            "google-samples",
                                            "google-services",
+                                           "intellij.android.compose-ide-plugin",
                                            "intellij.android.layoutlib",
                                            "intellij.android.layoutlib-native",
                                            "intellij.android.smali",

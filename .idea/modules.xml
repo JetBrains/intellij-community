@@ -439,6 +439,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" filepath="$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/compose-designer/intellij.android.compose-designer.iml" filepath="$PROJECT_DIR$/../adt/idea/compose-designer/intellij.android.compose-designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/compose-designer/intellij.android.compose-designer.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/compose-designer/intellij.android.compose-designer.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/compose-ide-plugin/intellij.android.compose-ide-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/compose-ide-plugin/intellij.android.compose-ide-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.iml" filepath="$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.iml" />

@@ -147,6 +147,7 @@
     <orderEntry type="module" module-name="intellij.android.kotlin.idea" />
     <orderEntry type="module" module-name="intellij.android.kotlin.extensions" />
     <orderEntry type="module" module-name="intellij.android.kotlin.output.parser" />
+    <orderEntry type="module" module-name="intellij.android.compose-ide-plugin" />
     <orderEntry type="module" module-name="intellij.android.layoutlib-native" />
   </component>
 </module>

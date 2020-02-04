@@ -113,6 +113,7 @@ iml_project(
         "//tools/adt/idea/build-common:intellij.android.buildCommon",
         "//tools/adt/idea/compose-designer:intellij.android.compose-designer",
         "//tools/adt/idea/compose-designer:intellij.android.compose-designer.tests",
+        "//tools/adt/idea/compose-ide-plugin:intellij.android.compose-ide-plugin",
         "//tools/adt/idea/connection-assistant",
         "//tools/adt/idea/connection-assistant:connection-assistant-test",
         "//tools/adt/idea/databinding:intellij.android.databinding",
@@ -1033,6 +1034,7 @@ iml_module(
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.idea[module]",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.extensions[module]",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.output.parser[module]",
+        "//tools/adt/idea/compose-ide-plugin:intellij.android.compose-ide-plugin[module]",
         "//tools/adt/idea/layoutlib-native:intellij.android.layoutlib-native[module]",
     ],
 )

@@ -39,6 +39,9 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Bouncy Castle", libraryName: "bouncycastle", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CDT", libraryName: "org.eclipse.cdt", license: "Eclipse Public License 1.0"),
+    // for compose-compiler-hosted module library in intellij.android.compose-ide-plugin
+    new LibraryLicense(name: "Compose Compiler Hosted", libraryName: "compose-compiler-hosted",
+                       license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     // for eclipse-layout-kernel module library in intellij.android.designer
     new LibraryLicense(name: "Eclipse Layout Kernel", libraryName: "eclipse-layout-kernel", license: "Eclipse Public License 1.0"),
     // for LSP4J module libraries in intellij.c
