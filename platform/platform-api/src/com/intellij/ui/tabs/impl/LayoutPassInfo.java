@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,19 +27,26 @@ public abstract class LayoutPassInfo {
     return i < list.size() - 1 ? list.get(i + 1) : null;
   }
 
-  // TODO: 03/10/2019 +description
+  /**
+   * @deprecated Will be removed in close future. If you suddenly need this,
+   * then your code probably should be realized inside the {@link TabsLayout} implementation.
+   */
   @Deprecated
   public abstract int getRowCount();
 
-  // TODO: 03/10/2019 +description
+
+  /**
+   * @deprecated see {@link #getRowCount()}
+   */
   @Deprecated
   public abstract int getColumnCount(int row);
 
-  // TODO: 03/10/2019 +description
+  /**
+   * @deprecated see {@link #getRowCount()}
+   */
   @Deprecated
   public abstract TabInfo getTabAt(int row, int column);
 
-  // TODO: 03/10/2019 +doc? (it is zone filled by TabLabel-s...?)
   public abstract Rectangle getHeaderRectangle();
 
   @ApiStatus.Experimental
