@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInsight.hint
 import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
 import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
@@ -21,8 +22,9 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
       return false
     }
     if (element is GrParameter && element.typeElement == null && !element.isVarArgs) {
-      val type = GrVariableEnhancer.getEnhancedType(element)
-                 ?: TypeAugmenter.inferAugmentedType(element)
+      val type = (GrVariableEnhancer.getEnhancedType(element)
+                  ?: TypeAugmenter.inferAugmentedType(element))
+                   ?.takeIf { !it.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) }
                  ?: return true
       val typeRepresentation = factory.buildRepresentation(type, " ").run { factory.roundWithBackground(this) }
       sink.addInlineElement(element.textOffset, false, typeRepresentation)
