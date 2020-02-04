@@ -5,6 +5,7 @@
  */
 package com.intellij.ide.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -75,7 +76,7 @@ public final class NewProjectUtil {
       return doCreate(wizard, projectToClose);
     }
     catch (IOException e) {
-      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
+      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(), IdeBundle.message("project.initialization.failed")));
       return null;
     }
   }

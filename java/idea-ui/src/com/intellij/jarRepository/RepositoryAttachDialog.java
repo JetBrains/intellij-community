@@ -2,6 +2,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -94,7 +95,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
   public RepositoryAttachDialog(@NotNull Project project, final @Nullable String initialFilter, @NotNull Mode mode) {
     super(project, true);
     myMode = mode;
-    setTitle(mode == Mode.DOWNLOAD ? "Download Library from Maven Repository" : "Search Library in Maven Repositories");
+    setTitle(mode == Mode.DOWNLOAD ? IdeBundle.message("download.library.from.maven.repository")
+                                   : IdeBundle.message("search.library.in.maven.repositories"));
     myProject = project;
     myProgressIcon.suspend();
     myCaptionLabel.setText(
@@ -340,18 +342,18 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   private void updateInfoLabel() {
-    myInfoLabel.setText("<html>Found: " + myCoordinates.size() + "<br>Showing: " + myCombobox.getModel().getSize() + "</html>");
+    myInfoLabel.setText(IdeBundle.message("html.found.0.br.showing.1.html", myCoordinates.size(), myCombobox.getModel().getSize()));
   }
 
   @Override
   protected ValidationInfo doValidate() {
     if (!isValidCoordinateSelected()) {
-      return new ValidationInfo("Please enter valid coordinate, discover it or select one from the list", myCombobox);
+      return new ValidationInfo(IdeBundle.message("please.enter.valid.coordinate.discover.it.or.select.one.from.the.list"), myCombobox);
     }
     else if (myDownloadToCheckBox.isSelected()) {
       final File dir = new File(myDirectoryField.getText());
       if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
-        return new ValidationInfo("Please enter valid library files path", myDirectoryField.getTextField());
+        return new ValidationInfo(IdeBundle.message("please.enter.valid.library.files.path"), myDirectoryField.getTextField());
       }
     }
     return super.doValidate();

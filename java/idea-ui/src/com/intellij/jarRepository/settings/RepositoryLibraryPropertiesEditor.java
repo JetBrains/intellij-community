@@ -2,6 +2,7 @@
 package com.intellij.jarRepository.settings;
 
 import com.google.common.base.Strings;
+import com.intellij.CommonBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -88,7 +89,7 @@ public class RepositoryLibraryPropertiesEditor {
     myIncludeTransitiveDepsCheckBox = new ThreeStateCheckBox(UIUtil.replaceMnemonicAmpersand("Include &transitive dependencies"));
     myIncludeTransitiveDepsCheckBox.setThirdStateEnabled(false);
     myTransitiveDependenciesPanel.add(myIncludeTransitiveDepsCheckBox);
-    myManageDependenciesLink = new SwingActionLink(new AbstractAction("Configure...") {
+    myManageDependenciesLink = new SwingActionLink(new AbstractAction(CommonBundle.message("configure.ellipsis")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         configureTransitiveDependencies();

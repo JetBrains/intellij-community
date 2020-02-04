@@ -187,7 +187,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
       public void actionPerformed(ActionEvent e) {
         final T value = list.getSelectedValue();
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, "Add" + " " + modificationDialogHint, Messages.getQuestionIcon(), value == null ? "https://" : adapter.toPresentation(value), new URLInputVaslidator()
+          modificationDialogTitle, IdeBundle.message("add.0", modificationDialogHint), Messages.getQuestionIcon(), value == null ? IdeBundle
+            .message("https") : adapter.toPresentation(value), new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
           model.add(adapter.create(text));
@@ -201,7 +202,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         final int index = list.getSelectedIndex();
         final T element = model.getElementAt(index);
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, "Edit" + " " + modificationDialogHint, Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputVaslidator()
+          modificationDialogTitle, IdeBundle.message("edit.0", modificationDialogHint), Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
           model.setElementAt(adapter.change(element, text), index);

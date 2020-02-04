@@ -77,7 +77,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     myPanel.add(myJdkChooser, new GridBagConstraints(1, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.HORIZONTAL, JBUI.insets(2, 10, 10, 5), 0, 0));
 
-    mySetAsDefaultButton = new JButton("Set Default");
+    mySetAsDefaultButton = new JButton(IdeBundle.message("set.default"));
     mySetAsDefaultButton.setMnemonic('D');
     myPanel.add(mySetAsDefaultButton, new GridBagConstraints(1, 2, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
                                                              GridBagConstraints.NONE, JBUI.insets(2, 10, 10, 5), 0, 0));
@@ -182,7 +182,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
       mySdksModel.apply(null, true);
     } catch (ConfigurationException e) {
       //IDEA-98382 We should allow Next step if user has wrong SDK
-      if (Messages.showDialog(e.getMessage() + "\n\nDo you want to proceed?",
+      if (Messages.showDialog(IdeBundle.message("0.n.ndo.you.want.to.proceed", e.getMessage()),
                               e.getTitle(),
                               new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {
         return false;

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
@@ -117,7 +118,8 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
       final int answer = Messages.showYesNoCancelDialog(getComponent(),
                                                         IdeBundle.message("warning.text.0.do.you.want.to.overwrite.these.files",
                                                                           StringUtil.join(errors.keySet(), "\n"), errors.size()),
-                                                        IdeBundle.message("title.file.already.exists"), "Overwrite", "Reuse", "Cancel", Messages.getQuestionIcon());
+                                                        IdeBundle.message("title.file.already.exists"), CommonBundle.message("overwrite"),
+                                                        CommonBundle.message("reuse"), CommonBundle.message("cancel"), Messages.getQuestionIcon());
       if (answer == Messages.CANCEL) {
         return false;
       }

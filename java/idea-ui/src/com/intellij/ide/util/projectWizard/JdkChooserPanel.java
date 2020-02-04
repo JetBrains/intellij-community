@@ -90,7 +90,7 @@ public class JdkChooserPanel extends JPanel {
     };
     panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     myLoadingDecorator = new LoadingDecorator(panel, project, 0, true);
-    myLoadingDecorator.setLoadingText("Looking for JDKs...");
+    myLoadingDecorator.setLoadingText(IdeBundle.message("looking.for.jdks"));
     add(myLoadingDecorator.getComponent(), BorderLayout.CENTER);
     if (myListModel.getSize() > 0) {
       myList.setSelectedIndex(0);

@@ -10,6 +10,7 @@ import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.addSupport.FrameworkVersionListener;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -391,7 +392,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (!compositionSettings.downloadFiles(parentComponent)) {
         int answer = Messages.showYesNoDialog(parentComponent,
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              "Libraries Are Required", Messages.getWarningIcon());
+                                              IdeBundle.message("libraries.are.required"), Messages.getWarningIcon());
         return answer == Messages.YES;
       }
     }

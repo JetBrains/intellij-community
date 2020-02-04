@@ -15,7 +15,9 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.CommonBundle;
 import com.intellij.framework.FrameworkOrGroup;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;

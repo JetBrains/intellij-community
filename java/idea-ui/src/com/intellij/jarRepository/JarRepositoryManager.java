@@ -2,6 +2,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -105,7 +106,7 @@ public class JarRepositoryManager {
       project, libraryDescriptor, artifactKinds, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories()
     );
     if (config == null) {
-      Messages.showErrorDialog(parentComponent, "No files were downloaded for " + libraryDescriptor.getMavenId(), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(parentComponent, IdeBundle.message("no.files.were.downloaded.for.0", libraryDescriptor.getMavenId()), CommonBundle.getErrorTitle());
     }
     return config;
   }
@@ -311,7 +312,7 @@ public class JarRepositoryManager {
     else {
       template = new RepositoryArtifactDescription(new RepositoryLibraryProperties(coord, packaging, true), null);
     }
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, CommonBundle.message("maven"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
@@ -350,7 +351,7 @@ public class JarRepositoryManager {
   public static void searchRepositories(Project project,
                                         Collection<String> serviceUrls,
                                         Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, CommonBundle.message("maven"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.emptyList());

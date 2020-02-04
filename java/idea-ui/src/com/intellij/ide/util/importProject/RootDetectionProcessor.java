@@ -2,6 +2,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.importSources.DetectedContentRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
@@ -212,7 +213,7 @@ public class RootDetectionProcessor {
   private List<DetectedRootData> detectRoots() {
     Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = runDetectors();
     if (myProgressIndicator != null) {
-      myProgressIndicator.setText2("Processing " + roots.values().size() + " project roots...");
+      myProgressIndicator.setText2(IdeBundle.message("processing.0.project.roots", roots.values().size()));
     }
 
     Map<File, DetectedRootData> rootData = new LinkedHashMap<>();

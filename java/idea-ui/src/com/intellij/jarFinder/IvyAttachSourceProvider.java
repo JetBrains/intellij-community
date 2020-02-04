@@ -15,6 +15,7 @@
  */
 package com.intellij.jarFinder;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -106,7 +107,7 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
         }
         catch (IOException e) {
           String message = "Failed to save " + artifactDir.getPath() + "/sources/" + sourceFileName;
-          new Notification(myMessageGroupId, "IO Error", message, NotificationType.ERROR).notify(myProject);
+          new Notification(myMessageGroupId, IdeBundle.message("io.error"), message, NotificationType.ERROR).notify(myProject);
           LOG.warn(e);
         }
       }
