@@ -19,6 +19,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
+import com.intellij.vcs.commit.CommitWorkflowManager
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
 
@@ -57,10 +58,12 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   init {
     isCommitToolWindowRegistryValue.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        isCommitToolWindow = isCommitToolWindowRegistryValue.asBoolean()
-      }
+      override fun afterValueChanged(value: RegistryValue) = updateToolWindowMapping()
     }, this)
+  }
+
+  fun updateToolWindowMapping() {
+    isCommitToolWindow = CommitWorkflowManager.getInstance(project).isNonModal() && isCommitToolWindowRegistryValue.asBoolean()
   }
 
   private fun remapContents() {

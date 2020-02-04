@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.application.subscribe
@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsType
 import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.util.messages.Topic
@@ -37,6 +38,7 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
     if (project.isDisposed) return
 
     ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
+    ChangesViewContentManager.getInstanceImpl(project)?.updateToolWindowMapping()
   }
 
   fun isNonModal(): Boolean {
