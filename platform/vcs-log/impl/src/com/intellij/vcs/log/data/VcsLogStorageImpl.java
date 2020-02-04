@@ -71,12 +71,12 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     String logId = PersistentUtil.calcLogId(project, logProviders);
 
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
-    StorageId hashesStorageId = new StorageId(HASHES_STORAGE, logId, VERSION);
+    StorageId hashesStorageId = new StorageId(project.getName(), HASHES_STORAGE, logId, VERSION);
     myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageId, commitIdKeyDescriptor),
                                                          hashesStorageId.getStorageFile(STORAGE).toFile());
 
     VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
-    StorageId refsStorageId = new StorageId(REFS_STORAGE, logId, VERSION + REFS_VERSION);
+    StorageId refsStorageId = new StorageId(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
     myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(refsStorageId.getStorageFile(STORAGE),
                                                                                            refsKeyDescriptor, Page.PAGE_SIZE,
                                                                                            null, refsStorageId.getVersion()),

@@ -96,7 +96,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     VcsUserRegistry userRegistry = ServiceManager.getService(myProject, VcsUserRegistry.class);
 
-    myIndexStorage = createIndexStorage(fatalErrorsConsumer, calcLogId(myProject, providers), userRegistry);
+    myIndexStorage = createIndexStorage(fatalErrorsConsumer, myProject.getName(), calcLogId(myProject, providers), userRegistry);
     if (myIndexStorage != null) {
       myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myFatalErrorsConsumer);
     }
@@ -121,10 +121,11 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   }
 
   protected IndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler,
-                                            @NotNull String logId, @NotNull VcsUserRegistry registry) {
+                                            @NotNull String projectName, @NotNull String logId, @NotNull VcsUserRegistry registry) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myStorage, registry, fatalErrorHandler, this),
-                                           () -> IndexStorage.cleanup(logId));
+      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(projectName, logId, myStorage, registry,
+                                                                  fatalErrorHandler, this),
+                                           () -> IndexStorage.cleanup(projectName, logId));
     }
     catch (IOException e) {
       myFatalErrorsConsumer.consume(this, e);
@@ -304,7 +305,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     private volatile boolean myIsFresh;
 
-    IndexStorage(@NotNull String logId,
+    IndexStorage(@NotNull String projectName,
+                 @NotNull String logId,
                  @NotNull VcsLogStorage storage,
                  @NotNull VcsUserRegistry userRegistry,
                  @NotNull FatalErrorHandler fatalErrorHandler,
@@ -313,7 +315,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       Disposer.register(parentDisposable, this);
 
       try {
-        StorageId storageId = new StorageId(INDEX, logId, getVersion());
+        StorageId storageId = new StorageId(projectName, INDEX, logId, getVersion());
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);
@@ -321,7 +323,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                           storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
-        Path messagesStorage = new StorageId(INDEX, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION).getStorageFile(MESSAGES);
+        Path messagesStorage = new StorageId(projectName, INDEX, logId,
+                                             VcsLogStorageImpl.VERSION + MESSAGES_VERSION).getStorageFile(MESSAGES);
         messages = new PersistentHashMap<>(messagesStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE,
                                            Page.PAGE_SIZE);
         Disposer.register(this, () -> catchAndWarn(messages::close));
@@ -364,8 +367,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       }
     }
 
-    private static void cleanup(@NotNull String logId) {
-      StorageId storageId = new StorageId(INDEX, logId, getVersion());
+    private static void cleanup(@NotNull String projectName, @NotNull String logId) {
+      StorageId storageId = new StorageId(projectName, INDEX, logId, getVersion());
       if (!storageId.cleanupAllStorageFiles()) {
         LOG.error("Could not clean up storage files in " + storageId.getSubdir());
       }

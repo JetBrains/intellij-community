@@ -49,9 +49,10 @@ object PersistentUtil {
   }
 }
 
-class StorageId(private val subdirName: String, private val logId: String, val version: Int) {
+class StorageId(private val projectName: String, private val subdirName: String, private val logId: String, val version: Int) {
   private val safeLogId = PathUtilRt.suggestFileName(logId, true, true)
-  val subdir by lazy { File(File(LOG_CACHE, subdirName), safeLogId) }
+  private val safeProjectName = PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
+  val subdir by lazy { File(File(LOG_CACHE, subdirName), safeProjectName) }
 
   // do not forget to change cleanupStorageFiles method when editing this one
   @JvmOverloads
@@ -59,7 +60,7 @@ class StorageId(private val subdirName: String, private val logId: String, val v
     val storageFile = if (forMapIndexStorage) getFileForMapIndexStorage(kind) else getFile(kind)
     if (!storageFile.exists()) {
       for (oldVersion in 0 until version) {
-        StorageId(subdirName, logId, oldVersion).cleanupStorageFiles(kind, forMapIndexStorage)
+        StorageId(projectName, subdirName, logId, oldVersion).cleanupStorageFiles(kind, forMapIndexStorage)
       }
       IOUtil.deleteAllFilesStartingWith(File(File(LOG_CACHE, subdirName), "$safeLogId."))
     }
