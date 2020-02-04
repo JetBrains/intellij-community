@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -58,17 +59,17 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
   @NotNull
   public String getText() {
     final PsiSubstitutor substitutor = inferTypeArguments();
-    return "Change type arguments to <" + StringUtil.join(myPsiClass.getTypeParameters(), typeParameter -> {
+    return CodeInsightBundle.message("change.type.arguments.to.0", StringUtil.join(myPsiClass.getTypeParameters(), typeParameter -> {
       final PsiType substituted = substitutor.substitute(typeParameter);
       return substituted != null ? substituted.getPresentableText() : CommonClassNames.JAVA_LANG_OBJECT;
-    }, ", ") + ">";
+    }, ", "));
   }
 
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Change type arguments";
+    return CodeInsightBundle.message("change.type.arguments");
   }
 
   @Override

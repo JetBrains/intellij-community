@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -38,7 +39,7 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Convert '" + myExpression.getText() + "' to float";
+    return CodeInsightBundle.message("convert.0.to.float", myExpression.getText());
   }
 
   @NotNull

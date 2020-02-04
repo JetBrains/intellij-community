@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -138,9 +139,10 @@ public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
             }
           }
           return true;
-        }), "Processing Method Usages...", true, project);
+        }), CodeInsightBundle.message("processing.method.usages"), true, project);
 
-        if (breakSourceCode && Messages.showYesNoDialog(project, "Exception removal will break source code. Proceed anyway?", RefactoringBundle.getCannotRefactorMessage(null), null) == Messages.NO) {
+        if (breakSourceCode && Messages.showYesNoDialog(project, CodeInsightBundle
+          .message("exception.removal.will.break.source.code.proceed.anyway"), RefactoringBundle.getCannotRefactorMessage(null), null) == Messages.NO) {
           return;
         }
       }

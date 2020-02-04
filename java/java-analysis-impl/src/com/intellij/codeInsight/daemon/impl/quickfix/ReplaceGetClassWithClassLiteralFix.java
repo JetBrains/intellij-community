@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -58,7 +59,7 @@ public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentio
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace getClass() with .class literal";
+    return CodeInsightBundle.message("replace.get.class.with.class.literal");
   }
 
   public static void registerFix(PsiMethodCallExpression callExpression, HighlightInfo errorResult) {

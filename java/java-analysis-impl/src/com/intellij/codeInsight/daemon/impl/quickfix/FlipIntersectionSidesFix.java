@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -49,13 +50,13 @@ public class FlipIntersectionSidesFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Move '" + myClassName + "' to the beginning";
+    return CodeInsightBundle.message("move.0.to.the.beginning", myClassName);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Move to front";
+    return CodeInsightBundle.message("move.to.front");
   }
 
   @Override

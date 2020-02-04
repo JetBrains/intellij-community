@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -40,13 +41,13 @@ public class DeleteRepeatedInterfaceFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Delete repeated '" + myConjunct.getText() + "'";
+    return CodeInsightBundle.message("delete.repeated.0", myConjunct.getText());
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Delete repeated interface";
+    return CodeInsightBundle.message("delete.repeated.interface");
   }
 
   @Override
