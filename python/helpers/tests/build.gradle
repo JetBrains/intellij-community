@@ -32,8 +32,8 @@ envs {
 
   testHelpers("py27_64", "2.7.16")
   testHelpers("py36_64", "3.6.8")
-  testHelpers("py37_64", "3.7.5")
-  testHelpers("py38_64", "3.8.0")
+  testHelpers("py37_64", "3.7.6")
+  testHelpers("py38_64", "3.8.1")
 }
 
 task ("all_tests") {
