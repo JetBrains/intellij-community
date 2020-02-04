@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 public class DfaAssist implements DebuggerContextListener {
   private final @NotNull Project myProject;
@@ -107,7 +108,7 @@ public class DfaAssist implements DebuggerContextListener {
     SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
     debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(newContext.getSuspendContext()) {
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         StackFrameProxyImpl proxy = suspendContext.getFrameProxy();
         if (proxy == null) {
           cleanUp();
@@ -125,15 +126,17 @@ public class DfaAssist implements DebuggerContextListener {
       }
 
       @Nullable
-      private DebuggerDfaRunner createRunner(StackFrameProxyImpl proxy) throws EvaluateException {
-        try {
-          StackFrame frame = proxy.getStackFrame();
-          return ReadAction.nonBlocking(() -> createDfaRunner(frame, pointer.getElement()))
-              .withDocumentsCommitted(myProject).executeSynchronously();
-        }
-        catch (VMDisconnectedException | VMOutOfMemoryException | InternalException ignore) {
-        }
-        return null;
+      private DebuggerDfaRunner createRunner(StackFrameProxyImpl proxy) {
+        Callable<DebuggerDfaRunner> action = () -> {
+          try {
+            StackFrame frame = proxy.getStackFrame();
+            return createDfaRunner(frame, pointer.getElement());
+          }
+          catch (VMDisconnectedException | VMOutOfMemoryException | InternalException | EvaluateException ignore) {
+            return null;
+          }
+        };
+        return ReadAction.nonBlocking(action).withDocumentsCommitted(myProject).executeSynchronously();
       }
     });
   }
