@@ -342,7 +342,8 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       }, this);
 
-      myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
+      myCommitPanelSplitter = new ChangesViewCommitPanelSplitter(myProject);
+      Disposer.register(this, myCommitPanelSplitter);
       myCommitPanelSplitter.setFirstComponent(myChangesPanel);
 
       BorderLayoutPanel contentPanel = new BorderLayoutPanel() {

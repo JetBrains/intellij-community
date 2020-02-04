@@ -22,7 +22,7 @@ import com.intellij.util.ObjectUtils.tryCast
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
 
-internal val isCommitToolWindowRegistryValue = Registry.get("vcs.commit.tool.window")
+private val isCommitToolWindowRegistryValue = Registry.get("vcs.commit.tool.window")
 private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF }
 
 internal val Project.isCommitToolWindow: Boolean
