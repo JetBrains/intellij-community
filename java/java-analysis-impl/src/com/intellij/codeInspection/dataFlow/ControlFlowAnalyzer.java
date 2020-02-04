@@ -391,8 +391,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitYieldStatement(PsiYieldStatement statement) {
     startElement(statement);
     PsiSwitchExpression enclosing = statement.findEnclosingExpression();
+    PsiExpression expression = statement.getExpression();
     if (enclosing != null && myExpressionBlockContext != null && myExpressionBlockContext.myCodeBlock == enclosing.getBody()) {
-      myExpressionBlockContext.generateReturn(statement.getExpression(), this);
+      myExpressionBlockContext.generateReturn(expression, this);
+    } else {
+      // yield in incorrect location or only part of switch is analyzed
+      if (expression != null) {
+        expression.accept(this);
+        addInstruction(new PopInstruction());
+      }
+      jumpOut(enclosing);
     }
     finishElement(statement);
   }

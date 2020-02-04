@@ -256,7 +256,10 @@ public class DfaAssist implements DebuggerContextListener {
         if (parent instanceof PsiMethod || parent instanceof PsiLambdaExpression || parent instanceof PsiClassInitializer ||
             // We cannot properly restore context if we started from finally, so let's analyze just finally block
             parent instanceof PsiTryStatement && ((PsiTryStatement)parent).getFinallyBlock() == e ||
-            parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiLoopStatement) {
+            parent instanceof PsiBlockStatement && 
+            (parent.getParent() instanceof PsiLoopStatement || 
+             parent.getParent() instanceof PsiSwitchLabeledRuleStatement && 
+             ((PsiSwitchLabeledRuleStatement)parent.getParent()).getEnclosingSwitchBlock() instanceof PsiSwitchExpression)) {
           if (parent.getParent() instanceof PsiDoWhileStatement) {
             return parent.getParent();
           }
