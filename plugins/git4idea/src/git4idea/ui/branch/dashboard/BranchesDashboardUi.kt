@@ -23,6 +23,7 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.StatusText.getDefaultEmptyText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
@@ -147,6 +148,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     branchesTreeWithToolbarPanel.addToCenter(branchesTreePanel)
     branchViewSplitter.firstComponent = branchesTreeWithToolbarPanel
     branchesTreeWithLogPanel.addToCenter(branchViewSplitter)
+    mainPanel.isFocusCycleRoot = true
+    mainPanel.focusTraversalPolicy = BRANCHES_UI_FOCUS_TRAVERSAL_POLICY
     startLoadingBranches()
     toggleBranchesPanelVisibility()
   }
@@ -174,6 +177,12 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       }
       return null
     }
+  }
+
+  private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
+    override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
+                                                                  logUi.mainFrame.changesBrowser.preferredFocusedComponent,
+                                                                  logUi.mainFrame.filterUi.textFilterComponent.textEditor)
   }
 
   fun getMainComponent(): JComponent {
@@ -225,9 +234,12 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
     BranchesDashboardUi(logData.project, this)
       .also { branchesUi -> Disposer.register(this, branchesUi) }
 
-  override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties, filterUi: VcsLogFilterUiEx): MainFrame {
-    return MainFrame(logData, this, uiProperties, filterUi, false)
-  }
+  override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties, filterUi: VcsLogFilterUiEx) =
+    MainFrame(logData, this, uiProperties, filterUi, false)
+      .apply {
+        isFocusCycleRoot = false
+        focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree
+      }
 
   override fun getMainComponent() = branchesUi.getMainComponent()
 
