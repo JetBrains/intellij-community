@@ -63,6 +63,7 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testTwoArraysDiff() { doTest(); }
   public void testModRange() { doTest(); }
   public void testBackPropagationMod() { doTest(); }
+  public void testModPlus() { doTest(); }
   public void testArithmeticNoOp() { doTest(); }
   public void testStringConcat() { doTest(); }
   public void testUnaryPlusMinus() { doTest(); }
