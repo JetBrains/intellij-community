@@ -81,7 +81,7 @@ import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionPro
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowRegistryValue;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindow;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -633,12 +633,13 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  private static class ShelfToolWindowPanel implements Disposable {
+  private static class ShelfToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
     private final Project myProject;
     private final ShelveChangesManager myShelveChangesManager;
     private final VcsConfiguration myVcsConfiguration;
 
     private final ShelfTree myTree;
+    private final ActionToolbar myToolbar;
     private final JPanel myRootPanel;
 
     private final ChangesViewPreview myDiffPreview;
@@ -693,11 +694,10 @@ public class ShelvedChangesViewManager implements Disposable {
       MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
       Disposer.register(this, changeProcessor);
 
-      boolean isToolbarHorizontal = isCommitToolWindowRegistryValue().asBoolean();
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, isToolbarHorizontal);
-
+      myToolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
       myRootPanel = new JPanel(new BorderLayout());
-      myRootPanel.add(toolbar.getComponent(), isToolbarHorizontal ? BorderLayout.NORTH : BorderLayout.WEST);
+      addToolbar(isCommitToolWindow(myProject));
+      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
 
       if (Registry.is("show.diff.preview.as.editor.tab")) {
         EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
@@ -747,6 +747,22 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void dispose() {
+    }
+
+    @Override
+    public void toolWindowMappingChanged() {
+      addToolbar(isCommitToolWindow(myProject));
+    }
+
+    private void addToolbar(boolean isHorizontal) {
+      if (isHorizontal) {
+        myToolbar.setOrientation(SwingConstants.HORIZONTAL);
+        myRootPanel.add(myToolbar.getComponent(), BorderLayout.NORTH);
+      }
+      else {
+        myToolbar.setOrientation(SwingConstants.VERTICAL);
+        myRootPanel.add(myToolbar.getComponent(), BorderLayout.WEST);
+      }
     }
 
     @Nullable
