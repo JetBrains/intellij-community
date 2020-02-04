@@ -180,7 +180,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
             result.add(new UnresolvableCollisionUsageInfo(methodInBaseClass, methodToRename) {
               @Override
               public String getDescription() {
-                return "Renaming method will override final \"" + RefactoringUIUtil.getDescription(methodInBaseClass, true) + "\"";
+                return RefactoringBundle
+                  .message("renaming.method.will.override.final.0", RefactoringUIUtil.getDescription(methodInBaseClass, true));
               }
             });
           }
@@ -223,8 +224,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                 result.add(new UnresolvableCollisionUsageInfo(element, methodToRename) {
                   @Override
                   public String getDescription() {
-                    return "Method call would be linked to \"" + RefactoringUIUtil.getDescription(resolveResultElement, true)  +
-                           "\" after rename";
+                    return RefactoringBundle.message("method.call.would.be.linked.to.0.after.rename",
+                                                     RefactoringUIUtil.getDescription(resolveResultElement, true));
                   }
                 });
                 break;

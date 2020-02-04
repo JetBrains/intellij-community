@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
@@ -216,7 +217,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       DialogWrapper dlg = new DialogWrapper(myProject, false) {
         {
           init();
-          setTitle("Move Methods Used in Extracted Block Only");
+          setTitle(RefactoringBundle.message("move.methods.used.in.extracted.block.only"));
         }
 
 

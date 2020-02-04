@@ -175,7 +175,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ApplicationManager.getApplication().runReadAction(
         () -> checkMethodConflicts(conflicts)
-      ), "Checking Conflicts...", true, myProject)) {
+      ), RefactoringBundle.message("checking.conflicts"), true, myProject)) {
       return;
     }
 
