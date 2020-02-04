@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -46,25 +46,25 @@ public class Messages {
   public static final int CANCEL = 2;
 
   /**
-   * Use {code {@link #getOkButton()}} instead
+   * @deprecated Use {@link #getOkButton()} instead
    */
   @Deprecated
   public static final String OK_BUTTON = "OK";
 
   /**
-   * Use {code {@link #getYesButton()}} instead
+   * @deprecated Use {@link #getYesButton()} instead
    */
   @Deprecated
   public static final String YES_BUTTON = "&Yes";
 
   /**
-   * Use {code {@link #getNoButton()}} instead
+   * @deprecated Use {@link #getNoButton()} instead
    */
   @Deprecated
   public static final String NO_BUTTON = "&No";
 
   /**
-   * Use {code {@link #getCancelButton()}} instead
+   * @deprecated Use {@link #getCancelButton()} instead
    */
   @Deprecated
   public static final String CANCEL_BUTTON = "Cancel";
