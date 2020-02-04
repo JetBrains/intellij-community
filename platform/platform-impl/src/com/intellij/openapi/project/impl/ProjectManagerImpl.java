@@ -290,7 +290,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  private static void initProject(@NotNull Path file,
+  @ApiStatus.Internal
+  public static void initProject(@NotNull Path file,
                                   @NotNull ProjectImpl project,
                                   boolean isRefreshVfsNeeded,
                                   @Nullable Project template,
@@ -323,7 +324,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  private static ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
+  @ApiStatus.Internal
+  public static ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
     Activity activity = StartUpMeasurer.startMainActivity("project instantiation");
     ProjectImpl project = new ProjectImpl(filePath, projectName);
     activity.end();
@@ -489,10 +491,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return myOpenProjectByHash.get(locationHash);
   }
 
-  private static boolean canCancelProjectLoading() {
-    return !ProgressManager.getInstance().isInNonCancelableSection();
-  }
-
   @Override
   public Project loadAndOpenProject(@NotNull String originalFilePath) {
     return loadAndOpenProject(Paths.get(FileUtilRt.toSystemIndependentName(toCanonicalName(originalFilePath))));
@@ -561,45 +559,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       Messages.showErrorDialog(component, IdeBundle.message("error.cannot.convert.project", e.getMessage()),
                                IdeBundle.message("title.cannot.convert.project"));
     });
-  }
-
-  /**
-   * Converts and loads the project at the specified path.
-   *
-   * @param path the path to open the project.
-   * @return the project, or null if the user has cancelled opening the project.
-   */
-  @Nullable
-  @ApiStatus.Internal
-  public static Project convertAndLoadProject(@NotNull Path path) throws CannotConvertException {
-    Activity activity = StartUpMeasurer.startMainActivity("project conversion");
-    ConversionResult conversionResult = ConversionService.getInstance().convert(path);
-    activity.end();
-    if (conversionResult.openingIsCanceled()) {
-      return null;
-    }
-
-    ProjectImpl project = doCreateProject(null, path);
-    try {
-      ProgressManager progressManager = ProgressManager.getInstance();
-      if (!ApplicationManager.getApplication().isDispatchThread() && progressManager.getProgressIndicator() != null) {
-        initProject(path, project, /* isRefreshVfsNeeded = */ true, null, progressManager.getProgressIndicator());
-      }
-      else {
-        //noinspection CodeBlock2Expr
-        progressManager.runProcessWithProgressSynchronously(() -> {
-          initProject(path, project, /* isRefreshVfsNeeded = */ true, null, progressManager.getProgressIndicator());
-        }, IdeUICustomization.getInstance().projectMessage("project.load.progress"), canCancelProjectLoading(), project);
-      }
-    }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-
-    if (!conversionResult.conversionNotNeeded()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
-    }
-    return project;
   }
 
   private static void notifyProjectOpenFailed() {

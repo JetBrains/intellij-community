@@ -2,7 +2,10 @@
 package com.intellij.platform
 
 import com.intellij.conversion.CannotConvertException
+import com.intellij.conversion.ConversionService
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
@@ -303,7 +306,7 @@ private fun prepareProject(file: Path, options: OpenProjectTask, baseDir: Path):
   else {
     val indicator = ProgressManager.getInstance().progressIndicator
     indicator?.text = IdeUICustomization.getInstance().projectMessage("project.checking.configuration")
-    project = ProjectManagerImpl.convertAndLoadProject(baseDir)
+    project = convertAndLoadProject(baseDir, options)
     indicator?.text = ""
   }
 
@@ -390,3 +393,35 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
       navigatable.navigate(true)
     }, ModalityState.NON_MODAL, project.disposed)
   }
+
+private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project? {
+  val conversionResult = runActivity("project conversion", category = ActivityCategory.MAIN) {
+    ConversionService.getInstance().convert(path)
+  }
+  if (conversionResult.openingIsCanceled()) {
+    return null
+  }
+
+  val project = ProjectManagerImpl.doCreateProject(options.projectName, path)
+  try {
+    val progressManager = ProgressManager.getInstance()
+    if (!ApplicationManager.getApplication().isDispatchThread && progressManager.progressIndicator != null) {
+      ProjectManagerImpl.initProject(path, project, /* isRefreshVfsNeeded = */ true, null, progressManager.progressIndicator)
+    }
+    else {
+      progressManager.runProcessWithProgressSynchronously({
+        ProjectManagerImpl.initProject(path, project,  /* isRefreshVfsNeeded = */ true, null, progressManager.progressIndicator)
+      }, IdeUICustomization.getInstance().projectMessage("project.load.progress"), !ProgressManager.getInstance().isInNonCancelableSection, project)
+    }
+  }
+  catch (e: ProcessCanceledException) {
+    return null
+  }
+
+  if (!conversionResult.conversionNotNeeded()) {
+    StartupManager.getInstance(project).registerPostStartupActivity {
+      conversionResult.postStartupActivity(project)
+    }
+  }
+  return project
+}
