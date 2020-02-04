@@ -14,6 +14,11 @@ inline fun using(disposable: Disposable, block: () -> Unit): Unit = disposable.u
 
 fun Disposable.defineNestedLifetime(): LifetimeDefinition {
   val lifetimeDefinition = Lifetime.Eternal.createNested()
+  if (Disposer.isDisposing(this) || Disposer.isDisposed(this)) {
+    lifetimeDefinition.terminate()
+    return lifetimeDefinition
+  }
+
   this.attach { if (lifetimeDefinition.lifetime.isAlive) lifetimeDefinition.terminate() }
   return lifetimeDefinition
 }
