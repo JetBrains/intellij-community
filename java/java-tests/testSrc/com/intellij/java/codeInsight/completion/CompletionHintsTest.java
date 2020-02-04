@@ -1758,16 +1758,10 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   private void setParameterHintsLimit(int limit) {
-    RegistryValue registryValue = Registry.get("editor.completion.hints.per.call.limit");
-    int storedValue = registryValue.asInteger();
-    registryValue.setValue(limit);
-    Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(storedValue));
+    Registry.get("editor.completion.hints.per.call.limit").setValue(limit, getTestRootDisposable());
   }
 
   private void disableVirtualComma() {
-    RegistryValue registryValue = Registry.get("editor.completion.hints.virtual.comma");
-    boolean storedValue = registryValue.asBoolean();
-    registryValue.setValue(false);
-    Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(storedValue));
+    Registry.get("editor.completion.hints.virtual.comma").setValue(false, getTestRootDisposable());
   }
 }

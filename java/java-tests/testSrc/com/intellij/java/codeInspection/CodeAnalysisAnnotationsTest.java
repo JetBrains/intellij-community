@@ -51,10 +51,7 @@ public class CodeAnalysisAnnotationsTest extends LightJavaCodeInsightFixtureTest
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    RegistryValue registryValue = Registry.get("java.codeanalysis.annotations.available");
-    boolean previousValue = registryValue.asBoolean();
-    registryValue.setValue(true);
-    Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(previousValue));
+    Registry.get("java.codeanalysis.annotations.available").setValue(true, getTestRootDisposable());
     mockAnnotations();
   }
 
