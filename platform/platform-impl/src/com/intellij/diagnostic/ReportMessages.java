@@ -24,7 +24,7 @@ import com.intellij.notification.NotificationGroup;
 
 public class ReportMessages {
   /**
-   * Use {code {@link #getErrorReport()}} instead
+   * @deprecated Use {@link #getErrorReport()} instead
    */
   @Deprecated
   public static final String ERROR_REPORT = "Error Report";
