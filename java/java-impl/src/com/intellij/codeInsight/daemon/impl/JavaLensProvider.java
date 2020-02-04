@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
@@ -229,7 +230,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
   @NotNull
   @Override
   public String getName() {
-    return "Lenses";
+    return CommonBundle.message("lenses");
   }
 
   @NotNull

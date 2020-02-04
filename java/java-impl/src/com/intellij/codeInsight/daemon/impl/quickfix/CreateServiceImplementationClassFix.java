@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -167,9 +169,9 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       super(project);
       setTitle(QuickFixBundle.message("create.service.implementation"));
 
-      mySubclassButton.setText("Subclass of '" + superClassName + "'");
+      mySubclassButton.setText(CodeInsightBundle.message("subclass.of.0", superClassName));
       mySubclassButton.setSelected(true);
-      myProviderButton.setText("With 'provider()' method");
+      myProviderButton.setText(CodeInsightBundle.message("with.provider.method"));
 
       ButtonGroup group = new ButtonGroup();
       group.add(mySubclassButton);
@@ -195,10 +197,10 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     @Override
     protected JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel("Implementation:"))
+      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(CodeInsightBundle.message("implementation")))
              .add(UI.PanelFactory.panel(myProviderButton));
       if (myRootDirCombo.getModel().getSize() > 1) {
-        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("source.root") + ":"));
       }
       return builder.createPanel();
     }

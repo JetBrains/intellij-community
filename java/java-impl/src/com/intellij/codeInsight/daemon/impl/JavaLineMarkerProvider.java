@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.concurrency.JobLauncher;
@@ -35,7 +36,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
-  public static final Option LAMBDA_OPTION = new Option("java.lambda", "Lambda", AllIcons.Gutter.ImplementingFunctionalInterface) {
+  public static final Option LAMBDA_OPTION = new Option("java.lambda", CommonBundle.message("lambda"), AllIcons.Gutter.ImplementingFunctionalInterface) {
     @Override
     public boolean isEnabledByDefault() {
       return false;
@@ -325,7 +326,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public String getName() {
-    return "Java line markers";
+    return CodeInsightBundle.message("java.line.markers");
   }
 
   @Override

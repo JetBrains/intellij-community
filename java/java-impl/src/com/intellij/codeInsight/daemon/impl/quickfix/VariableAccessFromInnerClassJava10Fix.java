@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -47,7 +48,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Variable accessFromInnerClass";
+    return CodeInsightBundle.message("variable.access.from.inner.class");
   }
 
   @Override

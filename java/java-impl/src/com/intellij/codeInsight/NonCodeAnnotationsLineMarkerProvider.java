@@ -186,7 +186,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       for (PsiParameter parameter: method.getParameterList().getParameters()) {
         MakeInferredAnnotationExplicit intention = new MakeInferredAnnotationExplicit();
         if (intention.isAvailable(project, file, parameter)) {
-          actions.add(new AnAction(intention.getText() + " on parameter '" + parameter.getName() + "'") {
+          actions.add(new AnAction(CodeInsightBundle.message("0.on.parameter.1", intention.getText(), parameter.getName())) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
               PsiDocumentManager.getInstance(project).commitAllDocuments();

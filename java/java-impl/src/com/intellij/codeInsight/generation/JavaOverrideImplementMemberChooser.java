@@ -229,7 +229,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
 
   private class MyMergeAction extends ToggleAction {
     private MyMergeAction() {
-      super("Show methods to implement", "Show methods to implement", AllIcons.General.Show_to_implement);
+      super(CodeInsightBundle.message("show.methods.to.implement"), CodeInsightBundle.message("show.methods.to.implement"), AllIcons.General.Show_to_implement);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.ALT_MASK)), myTree);
       registerCustomShortcutSet(getActiveKeymapShortcuts("OverrideMethods"), myTree);
     }

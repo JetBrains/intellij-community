@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
@@ -49,7 +50,7 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
   @Override
   public String getFamilyName() {
     //noinspection DialogTitleCapitalization
-    return "Add Javadoc";
+    return CodeInsightBundle.message("add.javadoc");
   }
 
   @NotNull

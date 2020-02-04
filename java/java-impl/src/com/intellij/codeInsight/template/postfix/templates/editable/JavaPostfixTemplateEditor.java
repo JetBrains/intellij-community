@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateEditorBase;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
@@ -112,7 +113,8 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     private final Project myProject;
 
     protected ChooseClassAction(@Nullable Project project) {
-      super((project != null && !project.isDefault() ? "choose class in " + project.getName() + "..." : "enter class name..."));
+      super((project != null && !project.isDefault() ? CodeInsightBundle.message("choose.class.in.0", project.getName())
+                                                     : CodeInsightBundle.message("enter.class.name")));
       myProject = project;
     }
 
@@ -127,7 +129,8 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     private String getFqn() {
       String title = "Choose Class";
       if (myProject == null || myProject.isDefault()) {
-        return Messages.showInputDialog(myPanel, "Enter fully qualified class name", "Choose Class", null);
+        return Messages.showInputDialog(myPanel, CodeInsightBundle.message("enter.fully.qualified.class.name"),
+                                        CodeInsightBundle.message("choose.class"), null);
       }
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(title);
       chooser.showDialog();

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.lists;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,7 +41,7 @@ public class JavaChopParametersAction extends AbstractJavaChopListAction<PsiPara
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Put parameters on separate lines";
+    return CodeInsightBundle.message("put.parameters.on.separate.lines");
   }
 
   @NotNull

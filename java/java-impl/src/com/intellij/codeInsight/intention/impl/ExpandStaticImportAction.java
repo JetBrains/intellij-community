@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -39,7 +40,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Expand static import";
+    return CodeInsightBundle.message("expand.static.import");
   }
 
   @Override
@@ -54,7 +55,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
     if (resolveScope instanceof PsiImportStaticStatement) {
       final PsiClass targetClass = ((PsiImportStaticStatement)resolveScope).resolveTargetClass();
       if (targetClass == null) return false;
-      setText("Replace static import with qualified access to " + targetClass.getName());
+      setText(CodeInsightBundle.message("replace.static.import.with.qualified.access.to.0", targetClass.getName()));
       return true;
     }
     return false;

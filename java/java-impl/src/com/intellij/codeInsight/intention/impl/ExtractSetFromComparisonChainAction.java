@@ -130,7 +130,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
                    Messages.showYesNoDialog(project,
                                             CodeInsightBundle.message("intention.extract.set.from.comparison.chain.duplicates",
                                                                       ApplicationNamesInfo.getInstance().getProductName(),
-                                                                      copies.size()), "Process Duplicates",
+                                                                      copies.size()), CodeInsightBundle.message("process.duplicates"),
                                             Messages.getQuestionIcon());
       if (answer == Messages.YES) {
         WriteAction.run(() -> {

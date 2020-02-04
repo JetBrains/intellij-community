@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.lists;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
@@ -40,7 +41,7 @@ public class JavaJoinArgumentsAction extends AbstractJavaJoinListAction<PsiExpre
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Put arguments on one line";
+    return CodeInsightBundle.message("put.arguments.on.one.line");
   }
 
   @NotNull

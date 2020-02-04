@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
@@ -54,7 +55,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @NotNull
   @Override
   public String getErrorHint() {
-    return "No expression found";
+    return CodeInsightBundle.message("no.expression.found");
   }
 
   @NotNull

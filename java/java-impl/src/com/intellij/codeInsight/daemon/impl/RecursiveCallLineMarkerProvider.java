@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.icons.AllIcons;
@@ -81,7 +82,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
   @NotNull
   @Override
   public String getName() {
-    return "Recursive call";
+    return CodeInsightBundle.message("recursive.call");
   }
 
   @Nullable

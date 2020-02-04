@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -182,10 +183,14 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       JTextField nameTextField = new JTextField(myInterfaceName);
       nameTextField.setEditable(false);
       PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(nameTextField).withLabel("Name:"));
-      if (myModuleCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Module:"));
-      if (myRootDirCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
-      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"));
+      builder.add(UI.PanelFactory.panel(nameTextField).withLabel(CommonBundle.message("name") + ":"));
+      if (myModuleCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel(CommonBundle.message("module") + ":"));
+      }
+      if (myRootDirCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("source.root") + ":"));
+      }
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("kind") + ":"));
       return builder.createPanel();
     }
 

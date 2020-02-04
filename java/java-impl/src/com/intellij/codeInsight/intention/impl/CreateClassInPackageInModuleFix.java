@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase;
@@ -57,14 +59,14 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Create a class in '" + myPackageName + "'";
+    return CodeInsightBundle.message("create.a.class.in.0", myPackageName);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Create a class in package";
+    return CodeInsightBundle.message("create.a.class.in.package");
   }
 
   @Override
@@ -140,7 +142,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
-      setTitle("Create Class in Package");
+      setTitle(CodeInsightBundle.message("create.class.in.package"));
 
       myRootDirCombo.setRenderer(new CreateServiceClassFixBase.PsiDirectoryListCellRenderer());
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(rootDirs));
@@ -173,9 +175,12 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     protected JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
       builder.add(UI.PanelFactory.panel(myNameTextField)
-                                 .withLabel("Name:").withComment("The class will be created in the package '" + myPackageName + "'"));
-      if (myRootDirCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
-      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"));
+                    .withLabel(CommonBundle.message("name") + ":")
+                    .withComment(CodeInsightBundle.message("the.class.will.be.created.in.the.package.0", myPackageName)));
+      if (myRootDirCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("source.root") + ":"));
+      }
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("kind") + ":"));
       return builder.createPanel();
     }
 
@@ -189,7 +194,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       if (PsiNameHelper.getInstance(myProject).isIdentifier(name, level)) {
         return null;
       }
-      return new ValidationInfo("This is not a valid Java class name", myNameTextField);
+      return new ValidationInfo(CodeInsightBundle.message("this.is.not.a.valid.java.class.name"), myNameTextField);
     }
 
     @NotNull

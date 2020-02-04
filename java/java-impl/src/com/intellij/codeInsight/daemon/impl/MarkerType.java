@@ -251,7 +251,7 @@ public class MarkerType {
   private static void navigateToOverriddenMethod(MouseEvent e, @NotNull final PsiMethod method) {
     if (DumbService.isDumb(method.getProject())) {
       DumbService.getInstance(method.getProject()).showDumbModeNotification(
-        "Navigation to overriding classes is not possible during index update");
+        CodeInsightBundle.message("navigation.to.overriding.classes"));
       return;
     }
 
@@ -329,7 +329,8 @@ public class MarkerType {
                                                @NotNull final PsiClass aClass,
                                                PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
     if (DumbService.isDumb(aClass.getProject())) {
-      DumbService.getInstance(aClass.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
+      DumbService.getInstance(aClass.getProject()).showDumbModeNotification(
+        CodeInsightBundle.message("navigation.to.overriding.methods"));
       return;
     }
 

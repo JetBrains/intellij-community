@@ -45,7 +45,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Make External Annotations Explicit";
+    return CodeInsightBundle.message("make.external.annotations.explicit");
   }
 
   @Override
@@ -62,7 +62,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
           final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
           return "@" + name + annotation.getParameterList().getText();
         }, " ");
-        setText("Insert '" + annos + "'");
+        setText(CodeInsightBundle.message("insert.0", annos));
         return true;
       }
     }

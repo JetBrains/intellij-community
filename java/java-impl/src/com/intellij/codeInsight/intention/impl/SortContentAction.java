@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.google.common.collect.Comparators;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
@@ -49,7 +50,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Sort content";
+    return CodeInsightBundle.message("sort.content");
   }
 
   @NotNull
