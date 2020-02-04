@@ -599,7 +599,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
     if ((notNull != null || nullable != null) && type != null && TypeConversionUtil.isPrimitive(type.getCanonicalText())) {
       PsiAnnotation annotation = notNull == null ? nullable : notNull;
-      reportPrimitiveType(holder, annotation, listOwner);
+      if (listOwner == null || !annotation.isPhysical() || annotation.getOwner() == listOwner.getModifierList()) {
+        reportPrimitiveType(holder, annotation, listOwner);
+      }
     }
     if (listOwner instanceof PsiParameter) {
       checkLoopParameterNullability(holder, notNull, nullable, DfaPsiUtil.inferParameterNullability((PsiParameter)listOwner));
