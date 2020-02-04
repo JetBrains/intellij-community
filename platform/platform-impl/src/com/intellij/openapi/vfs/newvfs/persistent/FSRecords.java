@@ -271,7 +271,7 @@ public class FSRecords {
         };
 
         // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile.toPath()) : null;
+        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile.toPath(), storageLockContext) : null;
 
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         if (!aligned) LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + RECORD_SIZE);
