@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="emulator-proto">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../bazel-bin/prebuilts/android-emulator/grpc/emulator_java_proto.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
