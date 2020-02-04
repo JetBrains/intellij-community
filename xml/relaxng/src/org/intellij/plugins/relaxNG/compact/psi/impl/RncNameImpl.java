@@ -43,6 +43,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
@@ -212,7 +213,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     @Override
     @NotNull
     public String getName() {
-      return "Create " + StringUtil.toLowerCase(myReference.getKind().name()) + " declaration '" + myReference.getPrefix() + "'";
+      return XmlBundle.message("create.0.declaration.1", StringUtil.toLowerCase(myReference.getKind().name()), myReference.getPrefix());
     }
 
     @Override

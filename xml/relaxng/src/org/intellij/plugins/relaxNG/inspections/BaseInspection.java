@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlBundle;
 import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -179,7 +180,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Suppress for " + myLocation;
+      return XmlBundle.message("suppress.for.0", myLocation);
     }
 
     @Override

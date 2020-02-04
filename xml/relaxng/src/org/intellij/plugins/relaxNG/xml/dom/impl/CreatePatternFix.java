@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
 import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
@@ -45,13 +46,13 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
   @Override
   @NotNull
   public String getText() {
-    return "Create Pattern '" + myReference.getCanonicalText() + "'";
+    return XmlBundle.message("create.pattern.0", myReference.getCanonicalText());
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Create Pattern";
+    return XmlBundle.message("create.pattern");
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.convert;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -83,7 +84,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
       }
     });
     myNamespaceMap.setModel(new NamespaceMapModel());
-    myNamespaceMap.getColumnModel().getColumn(0).setMaxWidth((int)(new JLabel("Prefix").getPreferredSize().width * 1.2));
+    myNamespaceMap.getColumnModel().getColumn(0).setMaxWidth((int)(new JLabel(CommonBundle.message("prefix")).getPreferredSize().width * 1.2));
 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AnAction(Presentation.NULL_STRING, XmlBundle.lazyMessage("action.AdvancedDtdOptions.Anonymous.text.remove.entry"),

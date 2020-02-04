@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlBundle;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.*;
@@ -162,13 +163,13 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     @NotNull
     @Override
     public String getName() {
-      return "Create Pattern '" + myReference.getCanonicalText() + "'";
+      return XmlBundle.message("create.pattern.0", myReference.getCanonicalText());
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Create Pattern";
+      return XmlBundle.message("create.pattern");
     }
 
     @Override
