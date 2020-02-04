@@ -794,7 +794,7 @@ private class ShowGitRebaseEditorLikeEntriesAction(private val project: Project,
   private fun getEntries(): List<GitRebaseEntry> = table.model.entries.map { it.entry }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val dialog = GitRebaseEditorLikeEntriesDialog(project, getEntries())
+    val dialog = GitRebaseCommandsDialog(project, getEntries())
     dialog.show()
   }
 }

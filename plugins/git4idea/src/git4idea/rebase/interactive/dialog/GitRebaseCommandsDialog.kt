@@ -7,21 +7,22 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
-import git4idea.rebase.interactive.dialog.GitRebaseEntriesTableModel.Companion.ACTION_COLUMN
-import git4idea.rebase.interactive.dialog.GitRebaseEntriesTableModel.Companion.HASH_COLUMN
+import git4idea.rebase.interactive.dialog.GitRebaseCommandsTableModel.Companion.ACTION_COLUMN
+import git4idea.rebase.interactive.dialog.GitRebaseCommandsTableModel.Companion.HASH_COLUMN
 import javax.swing.JComponent
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.TableModel
 
-internal class GitRebaseEditorLikeEntriesDialog(
+internal class GitRebaseCommandsDialog(
   project: Project,
   entries: List<GitRebaseEntry>
 ) : DialogWrapper(project, false) {
-  private val table = GitRebaseEntriesTable(entries)
+  private val table = GitRebaseCommandsTable(entries)
 
   init {
-    title = "Interactive Rebase Entries"
+    title = GitBundle.getString("rebase.interactive.dialog.git.commands")
     init()
   }
 
@@ -34,7 +35,7 @@ internal class GitRebaseEditorLikeEntriesDialog(
   override fun getDimensionServiceKey() = "Git.Interactive.Rebase.Editor.Like.Entries.Dialog"
 }
 
-private class GitRebaseEntriesTable(entries: List<GitRebaseEntry>) : JBTable(GitRebaseEntriesTableModel(entries)) {
+private class GitRebaseCommandsTable(entries: List<GitRebaseEntry>) : JBTable(GitRebaseCommandsTableModel(entries)) {
   init {
     adjustColumnWidth(ACTION_COLUMN)
     adjustColumnWidth(HASH_COLUMN)
@@ -48,7 +49,7 @@ private class GitRebaseEntriesTable(entries: List<GitRebaseEntry>) : JBTable(Git
   }
 }
 
-private class GitRebaseEntriesTableModel(private val entries: List<GitRebaseEntry>) : AbstractTableModel(), TableModel {
+private class GitRebaseCommandsTableModel(private val entries: List<GitRebaseEntry>) : AbstractTableModel(), TableModel {
   companion object {
     const val ACTION_COLUMN = 0
     const val HASH_COLUMN = 1
