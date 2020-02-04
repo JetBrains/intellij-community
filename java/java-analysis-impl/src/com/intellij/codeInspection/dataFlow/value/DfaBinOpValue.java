@@ -179,8 +179,9 @@ public class DfaBinOpValue extends DfaValue {
           return doCreate((DfaVariableValue)left, right, isLong, BinOp.PLUS);
         }
       }
-      if (left instanceof DfaBinOpValue && ((DfaBinOpValue)left).myOp != BinOp.REM) {
+      if (left instanceof DfaBinOpValue) {
         DfaBinOpValue sumValue = (DfaBinOpValue)left;
+        if (sumValue.getOperation() != BinOp.PLUS && sumValue.getOperation() != BinOp.MINUS) return null;
         if (rightConst != null) {
           if (sumValue.getRight() instanceof DfaTypeValue) {
             long value1 = extractLong((DfaTypeValue)sumValue.getRight());
