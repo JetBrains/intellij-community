@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.InvalidDataException;
@@ -23,6 +24,7 @@ import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import sun.rmi.runtime.Log;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +35,8 @@ import java.util.List;
 public abstract class CustomCodeStyleSettings implements Cloneable {
   private CodeStyleSettings myContainer;
   private final String myTagName;
+
+  private final static Logger LOG  = Logger.getInstance(CustomCodeStyleSettings.class);
 
   protected CustomCodeStyleSettings(@NonNls @NotNull String tagName, CodeStyleSettings container) {
     myTagName = tagName;
@@ -60,6 +64,7 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     Element child = parentElement.getChild(myTagName);
     if (child != null) {
       DefaultJDOMExternalizer.readExternal(this, child);
+      LOG.info("Loaded " + getClass().getName());
     }
   }
 
