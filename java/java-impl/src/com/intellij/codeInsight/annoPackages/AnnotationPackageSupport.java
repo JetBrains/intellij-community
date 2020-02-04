@@ -49,7 +49,7 @@ public interface AnnotationPackageSupport {
       new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
       new Jsr305Support(manager), new CheckerFrameworkSupport()
     };
-    if (CodeAnalysisAnnotationSupport.IS_AVAILABLE || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (CodeAnalysisAnnotationSupport.IS_AVAILABLE) {
       return ArrayUtil.append(extensions, new CodeAnalysisAnnotationSupport());
     }
     return extensions;

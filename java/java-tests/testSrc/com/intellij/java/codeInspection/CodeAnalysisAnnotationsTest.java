@@ -7,6 +7,9 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -27,7 +30,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
@@ -45,6 +51,10 @@ public class CodeAnalysisAnnotationsTest extends LightJavaCodeInsightFixtureTest
   @Before
   public void setUp() throws Exception {
     super.setUp();
+    RegistryValue registryValue = Registry.get("java.codeanalysis.annotations.available");
+    boolean previousValue = registryValue.asBoolean();
+    registryValue.setValue(true);
+    Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(previousValue));
     mockAnnotations();
   }
 
