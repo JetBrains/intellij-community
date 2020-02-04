@@ -52,8 +52,7 @@ class InProcessGroovyc implements GroovycFlavor {
   InProcessGroovyc(Collection<String> outputs, boolean hasStubExcludes) {
     myOutputs = outputs;
     myHasStubExcludes = hasStubExcludes;
-    String sharedPool = System.getProperty("groovyc.in.process.shared.pool");
-    mySharedPool = sharedPool == null || Boolean.valueOf(sharedPool);
+    mySharedPool = SystemProperties.getBooleanProperty("groovyc.in.process.shared.pool", true);
   }
 
   @Override
