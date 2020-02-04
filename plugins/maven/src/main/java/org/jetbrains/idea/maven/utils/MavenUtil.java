@@ -781,29 +781,35 @@ public class MavenUtil {
     }
   }
 
-  public static String getMirroredUrl(final File settingsFile, String url, String id) throws JDOMException, IOException {
-    Element mirrorParent = getElementWithRegardToNamespace(JDOMUtil.load(settingsFile), "mirrors");
-    if (mirrorParent == null) {
-      return url;
-    }
-    List<Element> mirrors = getElementsWithRegardToNamespace(mirrorParent, "mirror");
-    for (Element el : mirrors) {
-      Element mirrorOfElement = getElementWithRegardToNamespace(el, "mirrorOf");
-      Element mirrorUrlElement = getElementWithRegardToNamespace(el, "url");
-      if (mirrorOfElement == null) continue;
-      if (mirrorUrlElement == null) continue;
-
-      String mirrorOf = mirrorOfElement.getTextTrim();
-      String mirrorUrl = mirrorUrlElement.getTextTrim();
-
-      if (StringUtil.isEmptyOrSpaces(mirrorOf) || StringUtil.isEmptyOrSpaces(mirrorUrl)) {
-        continue;
+  public static String getMirroredUrl(final File settingsFile, String url, String id) {
+    try {
+      Element mirrorParent = getElementWithRegardToNamespace(JDOMUtil.load(settingsFile), "mirrors");
+      if (mirrorParent == null) {
+        return url;
       }
+      List<Element> mirrors = getElementsWithRegardToNamespace(mirrorParent, "mirror");
+      for (Element el : mirrors) {
+        Element mirrorOfElement = getElementWithRegardToNamespace(el, "mirrorOf");
+        Element mirrorUrlElement = getElementWithRegardToNamespace(el, "url");
+        if (mirrorOfElement == null) continue;
+        if (mirrorUrlElement == null) continue;
 
-      if (isMirrorApplicable(mirrorOf, url, id)) {
-        return mirrorUrl;
+        String mirrorOf = mirrorOfElement.getTextTrim();
+        String mirrorUrl = mirrorUrlElement.getTextTrim();
+
+        if (StringUtil.isEmptyOrSpaces(mirrorOf) || StringUtil.isEmptyOrSpaces(mirrorUrl)) {
+          continue;
+        }
+
+        if (isMirrorApplicable(mirrorOf, url, id)) {
+          return mirrorUrl;
+        }
       }
     }
+    catch (Exception ignore) {
+
+    }
+
     return url;
   }
 
