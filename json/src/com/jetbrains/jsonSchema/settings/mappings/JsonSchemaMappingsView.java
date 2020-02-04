@@ -162,7 +162,8 @@ public class JsonSchemaMappingsView implements Disposable {
     JPanel panel = decorator.createPanel();
     panel.setBorder(BorderFactory.createCompoundBorder(JBUI.Borders.empty(0, 8), panel.getBorder()));
     builder.addComponentFillVertically(panel, 5);
-    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent("Path to file or directory relative to project root, or file name pattern like *.config.json", false);
+    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent(
+      JsonBundle.message("path.to.file.or.directory.relative.to.project.root.or.file.name"), false);
     commentComponent.setBorder(JBUI.Borders.empty(0, 8, 5, 0));
     builder.addComponent(commentComponent);
 

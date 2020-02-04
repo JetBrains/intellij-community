@@ -30,13 +30,13 @@ public class JsonFileType extends LanguageFileType{
   @NotNull
   @Override
   public String getName() {
-    return "JSON";
+    return JsonBundle.message("json");
   }
 
   @NotNull
   @Override
   public String getDescription() {
-    return "JSON";
+    return JsonBundle.message("json");
   }
 
   @NotNull
