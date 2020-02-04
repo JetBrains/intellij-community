@@ -115,7 +115,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
         myBindingsMap.remove(scope);
       }
     }
-    myBindingCache.remove(scope);
+    myBindingCache.clear();
   }
 
   private void registerNamedReferenceProvider(String @NotNull [] names,
