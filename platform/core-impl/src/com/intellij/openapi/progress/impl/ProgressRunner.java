@@ -15,7 +15,6 @@ import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -204,6 +203,9 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
     6. (opt) Poll tasks on WT
     */
 
+    boolean forceSyncExec = ApplicationManager.getApplication().isDispatchThread()
+                            && ApplicationManager.getApplication().isWriteAccessAllowed();
+
     CompletableFuture<? extends ProgressIndicator> progressFuture;
     if (myProgressIndicatorFuture == null) {
       progressFuture = CompletableFuture.completedFuture(new EmptyProgressIndicator());
@@ -221,14 +223,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
       });
     }
 
-    // 1. If we are on EDT, "the old" rules apply: we have IW lock, and possible writes will only come from a sub-queue which will happen  under new modality
-    // 2. If we are on WT, in sync case there will be no possibility to any write to happen because IW lock will be held by this thread
-    // 3. If we are on WT, in async case it's possible that write will happen after this task is finished, but _before_ modality was grabbed, so we must wait for it explicitly
-    // 4. If we are on Pooled Thread, there were no guarantees anyway.
-    boolean shouldWaitForModality = myBlockEdtRunnable != null;
-    //                                !SwingUtilities.isEventDispatchThread() &&
-    //                                ApplicationManager.getApplication().isDispatchThread() &&
-    //                                isAsync;
+    boolean shouldWaitForModality = myBlockEdtRunnable != null && !forceSyncExec;
 
     final Semaphore modalityEntered = new Semaphore(1);
 
@@ -252,7 +247,16 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
     };
 
     final CompletableFuture<R> resultFuture;
-    if (SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isDispatchThread()) {
+    if (forceSyncExec) {
+      resultFuture = new CompletableFuture<>();
+      try {
+        resultFuture.complete(onThreadCallable.get());
+      }
+      catch (Throwable t) {
+        resultFuture.completeExceptionally(t);
+      }
+    }
+    else if (ApplicationManager.getApplication().isDispatchThread()) {
       resultFuture = legacyExec(progressFuture, modalityEntered, onThreadCallable);
     }
     else {
