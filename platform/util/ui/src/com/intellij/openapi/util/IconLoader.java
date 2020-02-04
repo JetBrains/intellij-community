@@ -41,6 +41,14 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
 import static com.intellij.ui.scale.ScaleType.*;
 
+/**
+ * Provides access to icons used in the UI.
+ * <p/>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/work_with_icons_and_images.html">Working with Icons and Images</a>
+ * about supported formats, organization, and accessing icons in plugins.
+ *
+ * @see IconUtil
+ */
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance(IconLoader.class);
 
