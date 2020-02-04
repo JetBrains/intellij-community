@@ -69,7 +69,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
         icoPathForEAP = "$projectHome/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
-        fileAssociations = ["java", "groovy", "kt"]
+        fileAssociations = ["java", "groovy", "kt", "kts"]
       }
 
       @Override
@@ -119,7 +119,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         icnsPath = "$projectHome/build/conf/ideaCE/mac/images/idea.icns"
         urlSchemes = ["idea"]
         associateIpr = true
-        fileAssociations = ["java", "groovy", "kt"]
+        fileAssociations = ["java", "groovy", "kt", "kts"]
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
         icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"
