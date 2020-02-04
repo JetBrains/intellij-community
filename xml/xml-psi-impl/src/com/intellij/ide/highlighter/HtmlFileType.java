@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
@@ -49,7 +50,7 @@ public class HtmlFileType extends XmlLikeFileType {
   @Override
   @NotNull
   public String getName() {
-    return "HTML";
+    return CommonBundle.message("html");
   }
 
   @Override

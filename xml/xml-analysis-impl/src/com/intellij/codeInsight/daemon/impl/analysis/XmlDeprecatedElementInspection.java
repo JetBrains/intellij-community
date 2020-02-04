@@ -11,6 +11,7 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
         if (checkDeprecated(tag.getDescriptor(), pattern)) {
           ASTNode nameNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode());
           if (nameNode != null) {
-            holder.registerProblem(nameNode.getPsi(), "The tag is marked as deprecated", ProblemHighlightType.LIKE_DEPRECATED);
+            holder.registerProblem(nameNode.getPsi(), XmlBundle.message("the.tag.is.marked.as.deprecated"), ProblemHighlightType.LIKE_DEPRECATED);
           }
         }
       }
@@ -42,7 +43,7 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
         if (checkDeprecated(attribute.getDescriptor(), pattern)) {
-          holder.registerProblem(attribute.getNameElement(), "The attribute is marked as deprecated", ProblemHighlightType.LIKE_DEPRECATED);
+          holder.registerProblem(attribute.getNameElement(), XmlBundle.message("the.attribute.is.marked.as.deprecated"), ProblemHighlightType.LIKE_DEPRECATED);
         }
       }
     };

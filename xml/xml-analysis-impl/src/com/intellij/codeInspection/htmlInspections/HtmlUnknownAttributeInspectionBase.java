@@ -133,14 +133,14 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Rename attribute";
+      return XmlBundle.message("rename.attribute");
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return "Rename attribute to " + name;
+      return XmlBundle.message("rename.attribute.to.0", name);
     }
 
     @Override

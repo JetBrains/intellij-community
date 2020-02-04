@@ -16,6 +16,7 @@
 
 package com.intellij.util.xml.tree.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -52,7 +53,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
       
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
 
-      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?", "Remove",
+      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?", CommonBundle.message("remove"),
                                                   Messages.getQuestionIcon());
       if (ret == Messages.OK) {
         WriteCommandAction.writeCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)).run(() -> domElement.undefine());

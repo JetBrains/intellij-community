@@ -30,6 +30,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlTagRuleProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -229,7 +230,8 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
         }
       }
 
-      holder.registerProblem(tagNameElement, "Tag should have one of following attributes: " + StringUtil.join(myAttributeNames, ", "),
+      holder.registerProblem(tagNameElement,
+                             XmlBundle.message("tag.should.have.one.of.following.attributes.0", StringUtil.join(myAttributeNames, ", ")),
                              myProblemHighlightType,
                              fixes);
     }

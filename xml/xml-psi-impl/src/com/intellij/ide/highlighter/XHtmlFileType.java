@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -32,7 +33,7 @@ public class XHtmlFileType extends HtmlFileType {
   @Override
   @NotNull
   public String getName() {
-    return "XHTML";
+    return CommonBundle.message("xhtml");
   }
 
   @Override
