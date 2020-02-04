@@ -30,6 +30,11 @@ plugins {
  */
 
 envs {
+  String python27version = "2.7.16"
+  String python35version = "3.5.7"
+  String python36version = "3.6.8"
+  String python37version = "3.7.6"
+
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
 
@@ -83,59 +88,59 @@ envs {
   }
 
 
-  createPython("django_latest", "3.5.4", ["django", "behave-django", "behave", "pytest", "untangle"],
+  createPython("django_latest", python35version, ["django", "behave-django", "behave", "pytest", "untangle"],
                "python3.5\ndjango\ndjango20\nbehave\nbehave-django\ndjango2\npytest\nuntangle", true)
    if (djangoTrunkOnly) {
      return
    }
 
   createPython("py2_django11_full",
-               "2.7.15",
+               python27version,
                ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose", "untangle"]
                 + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
                "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
   createPython("py35_django22_full",
-               "3.5.4",
+               python35version,
                ["ipython==2.1", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django", "pytest-xdist", "untangle"],
                "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\n" +
                "xdist\nuntangle",
                true)
 
   createPython("py36_django2_1",
-               "3.6.8",
+               python36version,
                ["django==2.1", "jinja2", "pandas", "pytest", "untangle"],
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas\npytest\nuntangle",
                 true)
 
   // For tox
   createPython("py36",
-               "3.6.8",
+               python36version,
                [],
                "python3.6",
                true)
 
   createPython("py37",
-               "3.7.2",
+               python37version,
                [],
                "python3.7",
                true)
 
   // For TensorFlow
   createPython("py37_tensorflow1",
-               "3.7.3",
+               python37version,
                ["tensorflow < 2"],
                "python3.7\npython3\ntensorflow1",
                true)
   createPython("py37_tensorflow2",
-               "3.7.3",
+               python37version,
                ["tensorflow ~= 2.0.0b1"],
                "python3.7\npython3\ntensorflow2",
                true)
 
   if (Os.isFamily(Os.FAMILY_UNIX)) {
-    createPython("qt_env", "3.7.2", ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
+    createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
   }
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
