@@ -5,13 +5,15 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 
-internal class LegacyBridgeModuleStoreImpl(private val pathMacroManager: PathMacroManager, module: Module) : ModuleStoreBase() {
+internal class LegacyBridgeModuleStoreImpl(module: Module) : ModuleStoreBase() {
   private val enabled: Boolean
 
   init {
     val moduleManager = LegacyBridgeModuleManagerComponent.getInstance(module.project)
     enabled = JpsProjectModelSynchronizer.enabled && !module.moduleFilePath.startsWith(moduleManager.outOfTreeModulesPath)
   }
+
+  private val pathMacroManager = PathMacroManager.getInstance(module)
 
   override val storageManager: StateStorageManagerImpl =
     if (enabled)
