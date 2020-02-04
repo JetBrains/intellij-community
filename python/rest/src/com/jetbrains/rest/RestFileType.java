@@ -25,13 +25,13 @@ public class RestFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getName() {
-    return "ReST";
+    return RestBundle.message("rest");
   }
 
   @Override
   @NotNull
   public String getDescription() {
-    return "reStructuredText";
+    return RestBundle.message("restructured.text");
   }
 
   @Override
