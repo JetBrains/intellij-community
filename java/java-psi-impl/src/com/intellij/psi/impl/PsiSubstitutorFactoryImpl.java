@@ -3,23 +3,27 @@ package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 @ApiStatus.Internal
 public class PsiSubstitutorFactoryImpl extends PsiSubstitutorFactory {
+  @NotNull
   @Override
-  protected PsiSubstitutor createSubstitutor(PsiTypeParameter typeParameter, PsiType mapping) {
+  protected PsiSubstitutor createSubstitutor(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     return new PsiSubstitutorImpl(typeParameter, mapping);
   }
 
+  @NotNull
   @Override
-  protected PsiSubstitutor createSubstitutor(PsiClass aClass, PsiType[] mappings) {
+  protected PsiSubstitutor createSubstitutor(@NotNull PsiClass aClass, PsiType[] mappings) {
     return new PsiSubstitutorImpl(aClass, mappings);
   }
-
+  
+  @NotNull
   @Override
-  protected PsiSubstitutor createSubstitutor(Map<PsiTypeParameter, PsiType> map) {
+  protected PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map) {
     return new PsiSubstitutorImpl(map);
   }
 }
