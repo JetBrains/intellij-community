@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   private final VirtualFile myChild;
-  public VcsVirtualFolder(String name, VirtualFile child, VirtualFileSystem fileSystem) {
+  public VcsVirtualFolder(String name, VirtualFile child, @NotNull VirtualFileSystem fileSystem) {
     super(name == null ? "" : name, fileSystem);
     myChild = child;
   }

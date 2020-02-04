@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class VirtualFileFilteringListener implements VirtualFileListener {
   private final VirtualFileListener myDelegate;
+  @NotNull
   private final VirtualFileSystem myFilter;
 
   public VirtualFileFilteringListener(@NotNull VirtualFileListener delegate, @NotNull VirtualFileSystem filter) {

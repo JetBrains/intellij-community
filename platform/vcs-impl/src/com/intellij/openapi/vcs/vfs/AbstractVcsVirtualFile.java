@@ -39,9 +39,10 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   protected String myRevision;
   private final VirtualFile myParent;
   protected int myModificationStamp = 0;
+  @NotNull
   private final VirtualFileSystem myFileSystem;
 
-  protected AbstractVcsVirtualFile(String path, VirtualFileSystem fileSystem) {
+  protected AbstractVcsVirtualFile(String path, @NotNull VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
     myPath = path;
     File file = new File(myPath);
@@ -54,7 +55,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     OutsidersPsiFileSupport.markFile(this);
   }
 
-  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, VirtualFileSystem fileSystem) {
+  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @NotNull VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
     myPath = parent != null && !StringUtil.isEmpty(parent.getPath()) ? parent.getPath() + "/" + name : name;
     myName = name;

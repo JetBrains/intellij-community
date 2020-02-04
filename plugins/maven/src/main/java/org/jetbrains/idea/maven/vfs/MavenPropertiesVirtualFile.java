@@ -18,10 +18,11 @@ import java.util.TreeSet;
 
 public class MavenPropertiesVirtualFile extends VirtualFile {
   private final String myPath;
+  @NotNull
   private final VirtualFileSystem myFS;
   private final byte[] myContent;
 
-  public MavenPropertiesVirtualFile(String path, Properties properties, VirtualFileSystem FS) {
+  public MavenPropertiesVirtualFile(String path, Properties properties, @NotNull VirtualFileSystem FS) {
     myPath = path;
     myFS = FS;
 

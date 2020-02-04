@@ -63,6 +63,7 @@ public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
   protected final MockApplication myApplication;
   private final CoreLocalFileSystem myLocalFileSystem;
+  @NotNull
   protected final VirtualFileSystem myJarFileSystem;
   private final VirtualFileSystem myJrtFileSystem;
   @NotNull private final Disposable myParentDisposable;
