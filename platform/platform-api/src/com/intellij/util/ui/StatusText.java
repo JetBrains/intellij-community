@@ -22,7 +22,7 @@ import java.util.List;
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
   /**
-   * Use {code {@link #getDefaultEmptyText()}} instead
+   * @deprecated Use {@link #getDefaultEmptyText()} instead
    */
   @Deprecated
   public static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
