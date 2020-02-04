@@ -10,8 +10,6 @@ import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapi.vfs.newvfs.FileAttribute
-import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
@@ -21,7 +19,6 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
-import com.intellij.util.hash.ContentHashEnumerator
 import com.intellij.util.indexing.hash.FileContentHashIndex
 import com.intellij.util.indexing.hash.FileContentHashIndexExtension
 import com.intellij.util.indexing.hash.HashBasedMapReduceIndex
@@ -54,7 +51,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
         return FileContentHashIndexExtension.getHashId(internalHashId, indexId)
       }
 
-      override fun locateIndexes(project: Project, entry: MutableSet<OrderEntry>, indicator: ProgressIndicator) {
+      override fun locateIndexes(project: Project, entries: MutableSet<OrderEntry>, indicator: ProgressIndicator) {
         throw AssertionFailedError()
       }
 
@@ -67,7 +64,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
         throw AssertionFailedError()
       }
 
-      override fun closeEnumerator(enumerator: ContentHashEnumerator?, chunkId: Int) {
+      override fun disposeIndexChunkData(indexId: ID<*, *>, chunkId: Int) {
         throw AssertionFailedError()
       }
     })
