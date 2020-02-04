@@ -238,10 +238,13 @@ internal open class UpdateIdeFromSourcesAction
             SET /A time_to_wait=%time_to_wait%+1000
             ECHO %count% attempts remain
             GOTO DELETE_DIR
-          ) 
+          )
+          ECHO Failed to delete "$workHomePath", IDE wasn't updated. You may delete it manually and copy files from "${File(builtDistPath).absolutePath}" by hand  
+          GOTO CLEANUP_AND_EXIT 
         )
         
         XCOPY "${File(builtDistPath).absolutePath}" "$workHomePath"\ /Q /E /Y
+        :CLEANUP_AND_EXIT
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
       """.trimIndent())
       // 'Runner' class specified as a parameter which is actually not used by the script; this is needed to use a copy of restarter (see com.intellij.util.Restarter.runRestarter)
