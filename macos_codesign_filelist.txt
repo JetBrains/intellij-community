@@ -12,6 +12,5 @@
 @@bundle@@/Contents/plugins/Kotlin/lib/jps/kotlin-jps-plugin.jar
 @@bundle@@/Contents/plugins/Kotlin/lib/gradle-api-5.2.1-sp1.jar
 @@bundle@@/Contents/plugins/svn4idea/lib/sqlite-jdbc-3.20.1.jar
-@@bundle@@/Contents/lib/dbus-java-3.0.2.jar
 @@bundle@@/Contents/lib/sqlite-jdbc-3.21.0.1.jar
 @@bundle@@/Contents/lib/pty4j-0.9.6.jar
