@@ -1560,6 +1560,7 @@ public abstract class DialogWrapper {
 
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {
+      logClickOnHelpDialogEvent();
       String helpId = getHelpId();
       if (helpId != null) {
         HelpManager.getInstance().invokeHelp(helpId);
@@ -1805,6 +1806,14 @@ public abstract class DialogWrapper {
       if (StringUtil.isNotEmpty(dialogId)) {
         FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
       }
+    }
+  }
+
+  private void logClickOnHelpDialogEvent() {
+    if (!canRecordDialogId()) return;
+    final String dialogId = getClass().getName();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(dialogId, getClass());
     }
   }
 
