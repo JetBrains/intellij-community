@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -32,7 +33,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
   private final ClasspathPanel myPanel;
 
   AnalyzeModuleDependencyAction(final ClasspathPanel panel) {
-    super("Analyze This Dependency");
+    super(ProjectBundle.message("analyze.this.dependency"));
     myPanel = panel;
   }
 
@@ -67,8 +68,8 @@ class AnalyzeModuleDependencyAction extends AnAction {
         Set<GlobalSearchScope> usedScopes = findUsedScopes(builders, scopes);
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
-                                   "Dependencies were successfully collected in \"" +
-                                   ToolWindowId.DEPENDENCIES + "\" toolwindow",
+                                   ProjectBundle
+                                     .message("dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.DEPENDENCIES),
                                    getTemplateText());
           return true;
         }

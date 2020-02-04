@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -216,7 +217,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         super.updateButton(e);
         Presentation presentation = e.getPresentation();
         if (ContainerUtil.and(getSelectedElements(), new FilteringIterator.InstanceOf<>(ExcludedRootElement.class))) {
-          presentation.setText("Cancel Exclusion");
+          presentation.setText(ProjectBundle.message("cancel.exclusion"));
         }
         else {
           presentation.setText(getTemplatePresentation().getText());
@@ -544,14 +545,15 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private class AddExcludedRootActionButton extends AnActionButton {
     AddExcludedRootActionButton() {
-      super("Exclude", null, AllIcons.Modules.AddExcludedRoot);
+      super(CommonBundle.message("exclude"), null, AllIcons.Modules.AddExcludedRoot);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-      descriptor.setTitle("Exclude from Library");
-      descriptor.setDescription("Select directories which should be excluded from the library content. Content of excluded directories won't be processed by IDE.");
+      descriptor.setTitle(ProjectBundle.message("exclude.from.library"));
+      descriptor.setDescription(ProjectBundle.message(
+        "select.directories.which.should.be.excluded.from.the.library.content.content.of.excluded.directories.won.t.be.processed.by.ide"));
       Set<VirtualFile> roots = getNotExcludedRoots();
       descriptor.setRoots(roots.toArray(VirtualFile.EMPTY_ARRAY));
       if (roots.size() < 2) {

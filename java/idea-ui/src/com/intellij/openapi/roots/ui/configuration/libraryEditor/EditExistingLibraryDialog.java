@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
@@ -60,7 +61,7 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
                                     boolean commitChanges,
                                     LibraryTablePresentation presentation, StructureConfigurableContext context) {
     super(parent, new LibraryRootsComponent(project, libraryEditor));
-    setTitle("Configure " + presentation.getDisplayName(false));
+    setTitle(ProjectBundle.message("configure.0", presentation.getDisplayName(false)));
     myTableModifiableModel = tableModifiableModel;
     myLibraryEditor = libraryEditor;
     myCommitChanges = commitChanges;

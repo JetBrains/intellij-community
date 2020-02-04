@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
@@ -29,7 +30,7 @@ public class MovePackagingElementAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     final boolean b = isEnabled();
     e.getPresentation().setEnabled(b);
-    e.getPresentation().setText(getTemplatePresentation().getText() + " (disabled if elements are sorted)");
+    e.getPresentation().setText(ProjectBundle.message("0.disabled.if.elements.are.sorted", getTemplatePresentation().getText()));
   }
 
   private boolean isEnabled() {

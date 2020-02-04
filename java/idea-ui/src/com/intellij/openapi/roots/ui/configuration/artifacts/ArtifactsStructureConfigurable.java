@@ -283,7 +283,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void apply() throws ConfigurationException {
     myPackagingEditorContext.saveEditorSettings();
-    checkForEmptyAndDuplicatedNames("Artifact", CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
+    checkForEmptyAndDuplicatedNames(CommonBundle.message("artifact"), CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
     super.apply();
 
     myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
@@ -386,8 +386,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
         final Artifact selected = (Artifact)o;
         ModifiableArtifactModel artifactModel = myPackagingEditorContext.getOrCreateModifiableArtifactModel();
         String suggestedName = ArtifactUtil.generateUniqueArtifactName(selected.getName(), artifactModel);
-        final String newName = Messages.showInputDialog("Enter artifact name:",
-                                                        "Copy Artifact",
+        final String newName = Messages.showInputDialog(ProjectBundle.message("enter.artifact.name"),
+                                                        ProjectBundle.message("copy.artifact"),
                                                         COPY_ICON,
                                                         suggestedName,
                                                         new NonEmptyInputValidator());
