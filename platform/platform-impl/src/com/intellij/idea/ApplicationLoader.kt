@@ -187,7 +187,7 @@ private fun startApp(app: ApplicationImpl,
     }
   }
 
-  val edtExecutor = Executor { EventQueue.invokeLater(it) }
+  val edtExecutor = Executor { ApplicationManager.getApplication().invokeLater(it) }
 
   CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
     .thenCompose {
