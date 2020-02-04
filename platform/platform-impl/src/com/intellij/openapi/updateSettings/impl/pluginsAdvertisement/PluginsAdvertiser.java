@@ -7,13 +7,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -64,7 +60,7 @@ public final class PluginsAdvertiser {
   public static List<Plugin> retrieve(UnknownFeature unknownFeature) throws IOException {
     final String featureType = unknownFeature.getFeatureType();
     final String implementationName = unknownFeature.getImplementationName();
-    final String buildNumber = ApplicationInfo.getInstance().getApiVersion();
+    final String buildNumber = PluginRepositoryRequests.getBuildForPluginRepositoryRequests();
     return processFeatureRequest(
       ImmutableMap.of("featureType", featureType, "implementationName", implementationName, "build", buildNumber),
       request -> {

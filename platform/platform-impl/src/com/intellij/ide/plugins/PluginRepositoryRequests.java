@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonToken;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
@@ -27,11 +28,20 @@ import java.util.Map;
  * @author yole
  */
 public class PluginRepositoryRequests {
+  public static String getBuildForPluginRepositoryRequests() {
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    String compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild();
+    if (compatibleBuild != null) {
+      return BuildNumber.fromStringWithProductCode(compatibleBuild, instance.getBuild().getProductCode()).asString();
+    }
+    return instance.getApiVersion();
+  }
+
   @NotNull
   public static Url createSearchUrl(@NotNull String query, int count) {
     ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
     return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/search?" + query +
-                               "&build=" + URLUtil.encodeURIComponent(instance.getApiVersion()) +
+                               "&build=" + URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests()) +
                                "&max=" + count);
   }
 

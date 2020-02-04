@@ -120,7 +120,7 @@ public final class PluginManagerCore {
 
     @NotNull
     private static BuildNumber calcBuildNumber() {
-      BuildNumber ourBuildNumber = BuildNumber.fromString(System.getProperty("idea.plugins.compatible.build"));
+      BuildNumber ourBuildNumber = BuildNumber.fromString(getPluginsCompatibleBuild());
       if (ourBuildNumber == null) {
         ourBuildNumber = BUILD_NUMBER == null ? null : BuildNumber.fromString(BUILD_NUMBER);
         if (ourBuildNumber == null) {
@@ -129,6 +129,10 @@ public final class PluginManagerCore {
       }
       return ourBuildNumber;
     }
+  }
+
+  public static String getPluginsCompatibleBuild() {
+    return System.getProperty("idea.plugins.compatible.build");
   }
 
   @Nullable

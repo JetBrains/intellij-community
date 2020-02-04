@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -364,11 +363,7 @@ public final class PluginDownloader {
 
   @NotNull
   public static String getBuildNumberForDownload(@Nullable BuildNumber buildNumber) {
-    Application app = ApplicationManager.getApplication();
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    return buildNumber != null ? buildNumber.asString() :
-           app != null ? ApplicationInfo.getInstance().getApiVersion() :
-           appInfo.getBuild().asString();
+    return buildNumber != null ? buildNumber.asString() : PluginRepositoryRequests.getBuildForPluginRepositoryRequests();
   }
 
   @NotNull

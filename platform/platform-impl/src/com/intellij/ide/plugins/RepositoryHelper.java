@@ -103,7 +103,7 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(singletonMap("build", build != null ? build.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+      url = url.addParameters(singletonMap("build", build != null ? build.asString() : PluginRepositoryRequests.getBuildForPluginRepositoryRequests()));
     }
 
     if (indicator != null) {
