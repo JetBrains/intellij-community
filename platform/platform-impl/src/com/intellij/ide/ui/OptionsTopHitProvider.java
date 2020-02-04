@@ -23,6 +23,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Collection;
 import java.util.List;
@@ -110,11 +111,11 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   @NotNull
   public abstract String getId();
 
-  public static String messageApp(String property) {
+  public static String messageApp(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(ApplicationBundle.message(property), false);
   }
 
-  public static String messageIde(String property) {
+  public static String messageIde(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(IdeBundle.message(property), false);
   }
 
