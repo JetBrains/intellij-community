@@ -27,7 +27,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
@@ -83,8 +82,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     final Project project = myContext.getProject();
     if (suitableParents.isEmpty()) {
       final String parentType = FacetTypeRegistry.getInstance().findFacetType(underlyingType).getPresentableName();
-      Messages.showErrorDialog(project, ProjectBundle.message("no.suitable.parent.0.facets.found", parentType),
-                               ProjectBundle.message("cannot.create.0.facet", type.getPresentableName()));
+      Messages.showErrorDialog(project, "No suitable parent " + parentType + " facets found", "Cannot Create " + type.getPresentableName() + " Facet");
       return;
     }
 
@@ -110,8 +108,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     }
     final Project project = myContext.getProject();
     if (suitableModules.isEmpty()) {
-      Messages.showErrorDialog(project, ProjectBundle.message("no.suitable.modules.for.0.facet.found", type.getPresentableName()),
-                               ProjectBundle.message("cannot.create.facet"));
+      Messages.showErrorDialog(project, "No suitable modules for " + type.getPresentableName() + " facet found.", "Cannot Create Facet");
       return;
     }
 

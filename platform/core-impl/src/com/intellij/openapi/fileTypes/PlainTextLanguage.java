@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +33,6 @@ public class PlainTextLanguage extends Language {
   @NotNull
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("plain.text");
+    return "Plain text";
   }
 }

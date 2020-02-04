@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -25,7 +24,7 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
   public JavaFxApplicationIconsDialog(JComponent parent, JavaFxApplicationIcons icons, Project project) {
     super(parent, true);
     myProject = project;
-    setTitle(IdeBundle.message("choose.application.icons"));
+    setTitle("Choose Application Icons");
     init();
 
     if (icons != null) {
@@ -70,19 +69,19 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
     if (StringUtil.isEmptyOrSpaces(text)) return true;
     final VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(text.trim()), false);
     if (virtualFile == null || !virtualFile.exists() || virtualFile.isDirectory()) {
-      Messages.showErrorDialog(myPanel.myWholePanel, IdeBundle.message("0.icon.file.should.exist", osName));
+      Messages.showErrorDialog(myPanel.myWholePanel, osName + " icon file should exist");
       return false;
     }
     if (!index.isInContent(virtualFile)) {
-      Messages.showErrorDialog(myPanel.myWholePanel, IdeBundle.message("0.icon.file.should.be.inside.the.project.content", osName));
+      Messages.showErrorDialog(myPanel.myWholePanel, osName + " icon file should be inside the project content");
       return false;
     }
     return true;
   }
 
   private static void addBrowseListener(TextFieldWithBrowseButton withBrowseButton, String extension, Project project) {
-    withBrowseButton.addBrowseFolderListener(IdeBundle.message("choose.icon.file"),
-                                             IdeBundle.message("select.icon.file.0.for.the.resulting.application", extension), project,
+    withBrowseButton.addBrowseFolderListener("Choose Icon File",
+                                             "Select icon file (*." + extension + ") for the resulting application", project,
                                              FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
                                                .withFileFilter(file -> extension.equalsIgnoreCase(file.getExtension())));
   }

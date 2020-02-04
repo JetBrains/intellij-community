@@ -4,7 +4,6 @@ package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -23,7 +22,7 @@ public class JavaFxEntryPoint extends EntryPoint {
   @Override
   @NotNull
   public String getDisplayName() {
-    return IdeBundle.message("javafx.applications");
+    return "JavaFX Applications";
   }
 
   @Override

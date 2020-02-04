@@ -53,7 +53,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   @Override
   @NotNull
   public String getText() {
-    return MavenDomBundle.message("add.maven.dependency");
+    return "Add Maven Dependency...";
   }
 
   @Override

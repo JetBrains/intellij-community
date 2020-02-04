@@ -17,7 +17,6 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -74,12 +73,12 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
       if (target.endsWith(".*")) {
         if (!usedNames.contains(StringUtil.trimEnd(target, ".*"))) {
           problems.add(inspectionManager
-                         .createProblemDescriptor(instruction, IdeBundle.message("unused.import"), new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
+                         .createProblemDescriptor(instruction, "Unused import", new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
         }
       }
       else if (!usedNames.contains(target) || targetProcessingInstructions.containsKey(StringUtil.getPackageName(target) + ".*")) {
         problems.add(inspectionManager
-                       .createProblemDescriptor(instruction, IdeBundle.message("unused.import"), new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
+                       .createProblemDescriptor(instruction, "Unused import", new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
       }
     }
     return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);

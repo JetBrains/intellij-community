@@ -729,7 +729,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                   return result;
                 }
               })
-              .setTitle(message("choose.file.to.open"))
+              .setTitle("Choose file to open ")
               .setItemChosenCallback((value) -> {
                 final Navigatable navigatable = getNavigatable(value);
                 if (navigatable != null) navigatable.navigate(requestFocus);

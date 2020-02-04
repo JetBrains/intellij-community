@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +34,7 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
         }
         paths.add(StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/"));
       }
-      presentation.setText(ProjectBundle.message("put.into.0", getTargetLocationText(paths)));
+      presentation.setText("Put into " + getTargetLocationText(paths));
     }
     presentation.setEnabledAndVisible(enabled);
   }

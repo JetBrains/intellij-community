@@ -55,7 +55,7 @@ public class InterruptThreadAction extends DebuggerAction{
             if (unsupported) {
               final Project project = debugProcess.getProject();
               XDebuggerManagerImpl.NOTIFICATION_GROUP
-                .createNotification(DebuggerBundle.message("thread.operation.interrupt.is.not.supported.by.vm"), MessageType.INFO).notify(project);
+                .createNotification("Thread operation 'interrupt' is not supported by VM", MessageType.INFO).notify(project);
             }
           }
         });

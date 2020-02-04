@@ -589,7 +589,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.lambda.with.method.reference");
+      return "Replace lambda with method reference";
     }
 
     @Override

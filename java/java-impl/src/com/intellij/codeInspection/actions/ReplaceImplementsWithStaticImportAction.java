@@ -19,7 +19,6 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -47,7 +46,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
   @Override
   @NotNull
   public String getText() {
-    return InspectionsBundle.message("replace.implements.with.static.import");
+    return "Replace implements with static import";
   }
 
   @Override
@@ -165,7 +164,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
         if (collectExtendsImplements(targetClass, psiClass.getExtendsList(), refs2Unimplement)) continue;
         collectExtendsImplements(targetClass, psiClass.getImplementsList(), refs2Unimplement);
       }
-    }), InspectionsBundle.message("find.references.in.implement.extends.lists"), true, project)) {
+    }), "Find References in Implement/Extends Lists...", true, project)) {
       return;
     }
 
@@ -199,7 +198,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
           }
         }
       }
-    }), InspectionsBundle.message("optimize.imports"), true, project)) return;
+    }), "Optimize Imports...", true, project)) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
       for (PsiJavaFile file1 : redundant.keySet()) {
         final PsiImportList importList = redundant.get(file1);

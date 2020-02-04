@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -339,23 +340,23 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     actionMap.put(TableActions.Down.ID, new MySelectNextRowAction());
 
-    actionMap.put(UIDesignerBundle.message("start.editing"), new MyStartEditingAction());
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2,0), UIDesignerBundle.message("start.editing"));
+    actionMap.put("startEditing",new MyStartEditingAction());
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2,0),"startEditing");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_F2,0));
 
-    actionMap.put(UIDesignerBundle.message("smart.enter"), new MyEnterAction());
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0), UIDesignerBundle.message("smart.enter"));
+    actionMap.put("smartEnter",new MyEnterAction());
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0),"smartEnter");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0));
 
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0), UIDesignerBundle.message("cancel"));
-    ancestorInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0), UIDesignerBundle.message("cancel"));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0),"cancel");
+    ancestorInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0),"cancel");
 
-    actionMap.put(UIDesignerBundle.message("expand.current"), new MyExpandCurrentAction(true));
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD,0), UIDesignerBundle.message("expand.current"));
+    actionMap.put("expandCurrent", new MyExpandCurrentAction(true));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD,0),"expandCurrent");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_ADD,0));
 
-    actionMap.put(UIDesignerBundle.message("collapse.current"), new MyExpandCurrentAction(false));
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT,0), UIDesignerBundle.message("collapse.current"));
+    actionMap.put("collapseCurrent", new MyExpandCurrentAction(false));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT,0),"collapseCurrent");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT,0));
   }
 
@@ -1205,7 +1206,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         //noinspection unchecked
         final JComponent c = myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
         if (c instanceof JComboBox) {
-          c.putClientProperty(UIDesignerBundle.message("jcombobox.is.table.cell.editor"), Boolean.TRUE);
+          c.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         }
 
         return c;

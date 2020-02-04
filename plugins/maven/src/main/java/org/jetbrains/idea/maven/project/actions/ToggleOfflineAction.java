@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
@@ -37,7 +36,7 @@ public class ToggleOfflineAction extends MavenToggleAction {
       String name = p.getText();
       String prefix = "Toggle ";
       if (name != null && LOG.assertTrue(name.startsWith(prefix))) {
-        p.setText(MavenProjectBundle.message("0.maven.1", prefix, name.substring(prefix.length())));
+        p.setText(prefix + "Maven " + name.substring(prefix.length()));
       }
     }
   }

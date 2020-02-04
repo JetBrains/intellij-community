@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -45,7 +44,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     new DialogWrapper(myProject) {
       {
         init();
-        setTitle(InspectionsBundle.message("configure.annotations"));
+        setTitle("Configure Annotations");
       }
 
       @Override
@@ -71,7 +70,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureAnnotationsButton() {
-    final JButton configureAnnotations = new JButton(InspectionsBundle.message("annotations"));
+    final JButton configureAnnotations = new JButton("Annotations...");
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -82,7 +81,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureClassPatternsButton() {
-    final JButton configureClassPatterns = new JButton(InspectionsBundle.message("code.patterns"));
+    final JButton configureClassPatterns = new JButton("Code patterns...");
     configureClassPatterns.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -97,7 +96,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
           {
             init();
-            setTitle(InspectionsBundle.message("configure.code.patterns"));
+            setTitle("Configure Code Patterns");
           }
 
           @Override

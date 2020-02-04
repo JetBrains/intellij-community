@@ -17,7 +17,6 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -40,13 +39,13 @@ public class UnwrapTagFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return IdeBundle.message("unwrap.0", myTagName);
+    return "Unwrap '" + myTagName + "'";
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return IdeBundle.message("unwrap.tag");
+    return "Unwrap tag";
   }
 
   @Override

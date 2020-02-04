@@ -4,7 +4,6 @@ package com.intellij.refactoring.typeMigration.inspections;
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.core.JavaCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -57,7 +56,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaCoreBundle.message("statically.import.matcher.s.methods"), this, "myStaticallyImportMatchers");
+    return new SingleCheckboxOptionsPanel("Statically import matcher's methods", this, "myStaticallyImportMatchers");
   }
 
   @NotNull
@@ -87,7 +86,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
 
         holder
           .registerProblem(expression.getMethodExpression(),
-                           JavaCoreBundle.message("assert.expression.code.ref.code.can.be.replaced"),
+                           "Assert expression <code>#ref</code> can be replaced with 'assertThat' call #loc",
                            new MyQuickFix(matchersClass != null ? MATCHERS_CLASS_NAME : CORE_MATCHERS_CLASS_NAME));
       }
     };

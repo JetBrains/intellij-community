@@ -1,7 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java18StreamApi;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -82,7 +85,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
         final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.getTemplate().validate(methodCallExpression);
         if (validationInfo != null) {
           holder.registerProblem(methodCallExpression.getMethodExpression(),
-                                 InspectionsBundle.message("pseudo.functional.style.code"),
+                                 "Pseudo functional style code",
                                  new ReplacePseudoLambdaWithLambda(suitableHandler));
         }
       }
@@ -99,7 +102,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.with.java.stream.api.pipeline");
+      return "Replace with Java Stream API pipeline";
     }
 
     @Override

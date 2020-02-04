@@ -192,10 +192,10 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     final PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
     if (projectDirectories.length > 1) {
       int ret = Messages
-        .showYesNoCancelDialog(project, RefactoringBundle.message("0.or.all.directories.in.project", prompt), RefactoringBundle.message("warning.title"),
-                               RefactoringBundle.message("move.current.directory"),
-                               RefactoringBundle.message("move.directories"),
-                               CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
+        .showYesNoCancelDialog(project, prompt + " or all directories in project?", RefactoringBundle.message("warning.title"),
+                      RefactoringBundle.message("move.current.directory"),
+                      RefactoringBundle.message("move.directories"),
+                      CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
       if (ret == Messages.YES) {
         moveAsDirectory(project, targetContainer, callback, directories);
       }

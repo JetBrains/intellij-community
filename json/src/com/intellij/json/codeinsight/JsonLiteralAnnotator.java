@@ -75,7 +75,7 @@ public class JsonLiteralAnnotator implements Annotator {
   private static void highlightPropertyKey(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (JsonPsiUtil.isPropertyKey(element)) {
       if (Holder.DEBUG) {
-        holder.newAnnotation(HighlightSeverity.INFORMATION, JsonBundle.message("property.key")).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();
+        holder.newAnnotation(HighlightSeverity.INFORMATION, "property key").textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();
       }
       else {
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();

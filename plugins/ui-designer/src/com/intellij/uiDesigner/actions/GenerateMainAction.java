@@ -62,7 +62,7 @@ public class GenerateMainAction extends AnAction {
       rootContainer = Utils.getRootContainer(boundForms.get(0).getText(), null);
     }
     catch (AlienFormFileException ex) {
-      Messages.showMessageDialog(project, UIDesignerBundle.message("the.form.bound.to.the.class.is.not.a.valid.intellij.idea.form"),
+      Messages.showMessageDialog(project, "The form bound to the class is not a valid IntelliJ IDEA form",
                                  UIDesignerBundle.message("generate.main.title"), Messages.getErrorIcon());
       return;
     }

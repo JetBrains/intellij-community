@@ -19,7 +19,7 @@ public class MavenDirectoryCompletionContributor implements CreateDirectoryCompl
   @NotNull
   @Override
   public String getDescription() {
-    return MavenProjectBundle.message("maven.source.directories");
+    return "Maven Source Directories";
   }
 
   @NotNull

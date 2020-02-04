@@ -25,7 +25,7 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
       public void visitParameterList(PsiParameterList parameterList) {
         super.visitParameterList(parameterList);
         if (isApplicable(parameterList)) {
-          holder.registerProblem(parameterList, InspectionsBundle.message("lambda.parameter.type.is.redundant"), new LambdaParametersFix());
+          holder.registerProblem(parameterList, "Lambda parameter type is redundant", new LambdaParametersFix());
         }
       }
     };
@@ -110,7 +110,7 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("remove.redundant.parameter.types");
+      return "Remove redundant parameter types";
     }
 
     @Override

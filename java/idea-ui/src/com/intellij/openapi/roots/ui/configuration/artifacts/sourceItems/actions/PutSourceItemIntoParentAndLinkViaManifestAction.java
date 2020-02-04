@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
@@ -37,7 +36,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
 
     final ParentElementsInfo parentInfo = findParentAndGrandParent(artifact);
     if (parentInfo != null) {
-      presentation.setText(ProjectBundle.message("put.into.0.and.link.via.manifest", parentInfo.getGrandparentArtifact().getName()));
+      presentation.setText("Put Into '" + parentInfo.getGrandparentArtifact().getName() + "' and link via manifest");
     }
 
     boolean enable = parentInfo != null;

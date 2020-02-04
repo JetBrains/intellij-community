@@ -26,7 +26,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)element).getDefaultValue();
         if (defaultValue == null) return;
         if (AnnotationUtil.equal(value, defaultValue)) {
-          holder.registerProblem(value, InspectionsBundle.message("redundant.default.parameter.value.assignment"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+          holder.registerProblem(value, "Redundant default parameter value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  createRemoveParameterFix());
         }
       }
@@ -40,7 +40,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
       @NotNull
       @Override
       public String getFamilyName() {
-        return InspectionsBundle.message("remove.redundant.parameter");
+        return "Remove redundant parameter";
       }
 
       @Override

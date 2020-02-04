@@ -46,7 +46,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
+    return new SingleCheckboxOptionsPanel("Report when interface is not annotated with @FunctionalInterface", this, "reportNotAnnotatedInterfaces");
   }
 
   @NotNull
@@ -87,7 +87,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
                     type = ProblemHighlightType.INFORMATION;
                   }
                   holder.registerProblem(parent,
-                                         InspectionsBundle.message("anonymous.ref.loc.can.be.replaced.with.method.reference"),
+                                         "Anonymous #ref #loc can be replaced with method reference",
                                          type, rangeInElement, new ReplaceWithMethodRefFix());
                 }
               }
@@ -102,7 +102,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
       @NotNull
       @Override
       public String getFamilyName() {
-        return InspectionsBundle.message("replace.with.method.reference");
+        return "Replace with method reference";
       }
 
     @Override

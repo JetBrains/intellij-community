@@ -251,7 +251,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
     double value = size.getValue();
     ConstantSize.Unit unit = size.getUnit();
     if (unit.equals(ConstantSize.DIALOG_UNITS_X) || unit.equals(ConstantSize.DIALOG_UNITS_Y)) {
-      unitsCombo.setSelectedItem(UIDesignerBundle.message("dlu"));
+      unitsCombo.setSelectedItem("dlu");
     }
     else {
       unitsCombo.setSelectedItem(unit.abbreviation());

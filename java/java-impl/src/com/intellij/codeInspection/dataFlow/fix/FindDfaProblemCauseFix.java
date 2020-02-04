@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
@@ -64,7 +63,7 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("find.cause");
+    return "Find cause";
   }
 
   @Override
@@ -75,7 +74,7 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
       return TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
     };
     TrackingRunner.CauseItem item = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(causeFinder), InspectionsBundle.message("finding.cause"), true, project);
+      () -> ReadAction.compute(causeFinder), "Finding Cause", true, project);
     PsiFile file = myAnchor.getContainingFile();
     if (item != null && file != null) {
       displayProblemCause(file, item);

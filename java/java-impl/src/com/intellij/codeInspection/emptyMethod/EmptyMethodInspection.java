@@ -270,7 +270,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
 
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
-    panel.add(new SingleCheckboxOptionsPanel(InspectionsBundle.message("comments.and.javadoc.count.as.content"), this, "commentsAreContent"), BorderLayout.NORTH);
+    panel.add(new SingleCheckboxOptionsPanel("Comments and javadoc count as content", this, "commentsAreContent"), BorderLayout.NORTH);
     panel.add(listPanel, BorderLayout.CENTER);
     return panel;
   }

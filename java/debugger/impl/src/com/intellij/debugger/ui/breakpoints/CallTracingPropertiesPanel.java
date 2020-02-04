@@ -2,7 +2,6 @@
 
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.settings.TraceSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -33,7 +32,7 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
   public JComponent getComponent() {
     myStartTracing = new JBCheckBox("Start");
     myEndTracing = new JBCheckBox("Stop");
-    JButton filters = new JButton(DebuggerBundle.message("filters"));
+    JButton filters = new JButton("Filters...");
     //DialogUtil.registerMnemonic(myStartTracing);
     //DialogUtil.registerMnemonic(myEndTracing);
 
@@ -68,7 +67,7 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
       EditClassFiltersDialog dialog = new EditClassFiltersDialog(myProject);
       TraceSettings traceSettings = TraceSettings.getInstance();
       dialog.setFilters(traceSettings.getClassFilters(), traceSettings.getClassExclusionFilters());
-      dialog.setTitle(DebuggerBundle.message("tracing.class.filters"));
+      dialog.setTitle("Tracing Class Filters");
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
         traceSettings.setClassFilters(dialog.getFilters());

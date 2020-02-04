@@ -49,7 +49,7 @@ public class ExtractArtifactDialog extends DialogWrapper implements IExtractArti
   protected void doOKAction() {
     final String artifactName = getArtifactName();
     if (myContext.getArtifactModel().findArtifact(artifactName) != null) {
-      Messages.showErrorDialog(myContext.getProject(), ProjectBundle.message("artifact.0.already.exists", artifactName), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(myContext.getProject(), "Artifact '" + artifactName + "' already exists!", CommonBundle.getErrorTitle());
       return;
     }
     super.doOKAction();

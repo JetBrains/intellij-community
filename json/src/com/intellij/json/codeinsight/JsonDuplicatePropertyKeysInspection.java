@@ -88,7 +88,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getText() {
-      return JsonBundle.message("navigate.to.duplicates");
+      return "Navigate to duplicates";
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)

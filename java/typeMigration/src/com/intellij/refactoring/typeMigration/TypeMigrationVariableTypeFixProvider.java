@@ -5,7 +5,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
-import com.intellij.core.JavaCoreBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +42,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       @NotNull
       @Override
       public String getText() {
-        return JavaCoreBundle.message("migrate.0.type.to.1", myName, getReturnType().getPresentableText());
+        return "Migrate \'" + myName + "\' type to \'" + getReturnType().getPresentableText() + "\'";
       }
 
       @Override

@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
@@ -187,7 +186,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     SwingUtilities.invokeLater(() -> {
       if (!myDialog.isVisible()) return;
 
-      myResultList.getEmptyText().setText(MavenProjectBundle.message("no.results"));
+      myResultList.getEmptyText().setText("No results");
       myResultList.setModel(model);
       myResultList.setSelectionRow(0);
       myResultList.setPaintBusy(false);

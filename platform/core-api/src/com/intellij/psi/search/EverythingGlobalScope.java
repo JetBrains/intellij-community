@@ -19,7 +19,6 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
@@ -44,7 +43,7 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   @NotNull
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("all.places");
+    return "All Places";
   }
 
   @Override

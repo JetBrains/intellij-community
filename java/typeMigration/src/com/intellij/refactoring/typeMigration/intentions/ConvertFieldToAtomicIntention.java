@@ -4,7 +4,6 @@ package com.intellij.refactoring.typeMigration.intentions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.core.JavaCoreBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +48,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   @NotNull
   @Override
   public String getText() {
-    return JavaCoreBundle.message("convert.to.atomic");
+    return "Convert to atomic";
   }
 
   @NotNull

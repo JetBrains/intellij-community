@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 /**
@@ -22,8 +21,7 @@ public class RemoveMavenRunConfigurationAction extends AnAction {
 
     assert settings != null && project != null;
 
-    int res = Messages.showYesNoDialog(project, MavenProjectBundle.message("delete.0", settings.getName()),
-                                       MavenProjectBundle.message("confirmation"), Messages.getQuestionIcon());
+    int res = Messages.showYesNoDialog(project, "Delete \"" + settings.getName() + "\"?", "Confirmation", Messages.getQuestionIcon());
     if (res == Messages.YES) {
       RunManager.getInstance(project).removeConfiguration(settings);
     }

@@ -419,8 +419,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
         }
       }
     }
-    Messages.showErrorDialog(myProject, RefactoringBundle.message("can.t.restore.context.for.method.extraction"),
-                             RefactoringBundle.message("failed.to.re.run.refactoring"));
+    Messages.showErrorDialog(myProject, "Can't restore context for method extraction", "Failed to Re-Run Refactoring");
   }
 
   private PsiElement @NotNull [] getPatternElements() {

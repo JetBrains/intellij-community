@@ -39,7 +39,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
@@ -163,7 +162,7 @@ public class RemoveManagedFilesAction extends MavenAction {
 
   private static void notifyUser(DataContext context, MavenProject mavenProject, MavenProject aggregator) {
     String aggregatorDescription = " (" + aggregator.getMavenId().getDisplayString() + ')';
-    Notification notification = new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("failed.to.remove.project"),
+    Notification notification = new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "Failed to remove project",
                                                  "You can not remove " + mavenProject.getDisplayName() + " because it's " +
                                                  "imported as a module of another project" +
                                                  aggregatorDescription

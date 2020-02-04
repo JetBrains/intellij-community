@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.util.ListTableWithButtons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -62,12 +61,9 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties = properties;
     JavaFxApplicationClassBrowser.appClassBrowser(project, artifact).setField(myAppClass);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.PROPERTIES);
-    myHtmlParams.addBrowseFolderListener(IdeBundle.message("choose.properties.file"),
-                                         IdeBundle.message("parameters.for.the.resulting.application.to.run.standalone"), project, descriptor);
-    myParams.addBrowseFolderListener(IdeBundle.message("choose.properties.file"),
-                                     IdeBundle.message("parameters.for.the.resulting.application.to.run.in.the.browser"), project, descriptor);
-    myHtmlTemplate.addBrowseFolderListener(IdeBundle.message("choose.html.file"),
-                                           IdeBundle.message("html.template.for.application.entry.point.to.run.in.browser"), project,
+    myHtmlParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run standalone.", project, descriptor);
+    myParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run in the browser.", project, descriptor);
+    myHtmlTemplate.addBrowseFolderListener("Choose HTML File", "HTML template for application entry point to run in browser", project,
                                            FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.HTML));
     myEditSignCertificateButton.addActionListener(new ActionListener() {
       @Override
@@ -264,7 +260,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       myTable = new AttributesTable();
       myTable.setValues(attrs);
       myWholePanel.add(myTable.getComponent(), BorderLayout.CENTER);
-      setTitle(IdeBundle.message("edit.custom.manifest.attributes"));
+      setTitle("Edit Custom Manifest Attributes");
       init();
     }
 

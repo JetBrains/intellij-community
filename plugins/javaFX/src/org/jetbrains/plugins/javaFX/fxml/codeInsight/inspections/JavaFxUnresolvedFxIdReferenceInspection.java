@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper;
 import com.intellij.codeInspection.*;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -54,8 +53,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
                 if (fieldClass != null) {
                   final String text = reference.getCanonicalText();
                   boolean validName = LanguageNamesValidation.isIdentifier(fieldClass.getLanguage(), text, fieldClass.getProject());
-                  holder.registerProblem(reference.getElement(), reference.getRangeInElement(),
-                                         IdeBundle.message("unresolved.fx.id.reference"),
+                  holder.registerProblem(reference.getElement(), reference.getRangeInElement(), "Unresolved fx:id reference",
                                          isOnTheFly && validName ? new LocalQuickFix[]{new CreateFieldFromUsageQuickFix(text)} : LocalQuickFix.EMPTY_ARRAY);
                 }
               }

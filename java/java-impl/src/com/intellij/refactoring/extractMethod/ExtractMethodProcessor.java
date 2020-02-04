@@ -881,8 +881,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       collectOverloads.run();
       extract.run();
     } else {
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(collectOverloads,
-                                                                             RefactoringBundle.message("collect.overloads"), true, myProject)) return;
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(collectOverloads, "Collect overloads...", true, myProject)) return;
       ApplicationManager.getApplication().runWriteAction(extract);
     }
 

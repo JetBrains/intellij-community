@@ -29,7 +29,7 @@ public class ArchiveFileType implements FileType {
   @Override
   @NotNull
   public String getName() {
-    return IdeBundle.message("archive");
+    return "ARCHIVE";
   }
 
   @Override

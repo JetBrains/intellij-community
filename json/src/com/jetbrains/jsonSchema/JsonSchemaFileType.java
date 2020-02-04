@@ -16,7 +16,6 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
@@ -40,13 +39,13 @@ public class JsonSchemaFileType extends LanguageFileType implements FileTypeIden
   @NotNull
   @Override
   public String getName() {
-    return JsonBundle.message("json.schema");
+    return "JSON Schema";
   }
 
   @NotNull
   @Override
   public String getDescription() {
-    return JsonBundle.message("json.schema");
+    return "JSON Schema";
   }
 
   @NotNull

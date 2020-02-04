@@ -3,7 +3,6 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -119,7 +118,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   @NotNull
   @Override
   public String getFamilyName() {
-    return IdeBundle.message("specify.page.language");
+    return "Specify page language";
   }
 
   @Override

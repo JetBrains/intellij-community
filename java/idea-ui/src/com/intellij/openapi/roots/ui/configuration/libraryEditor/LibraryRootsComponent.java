@@ -216,7 +216,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         super.updateButton(e);
         Presentation presentation = e.getPresentation();
         if (ContainerUtil.and(getSelectedElements(), new FilteringIterator.InstanceOf<>(ExcludedRootElement.class))) {
-          presentation.setText(ProjectBundle.message("cancel.exclusion"));
+          presentation.setText("Cancel Exclusion");
         }
         else {
           presentation.setText(getTemplatePresentation().getText());
@@ -544,15 +544,14 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private class AddExcludedRootActionButton extends AnActionButton {
     AddExcludedRootActionButton() {
-      super(ProjectBundle.message("exclude"), null, AllIcons.Modules.AddExcludedRoot);
+      super("Exclude", null, AllIcons.Modules.AddExcludedRoot);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-      descriptor.setTitle(ProjectBundle.message("exclude.from.library"));
-      descriptor.setDescription(ProjectBundle.message(
-        "select.directories.which.should.be.excluded"));
+      descriptor.setTitle("Exclude from Library");
+      descriptor.setDescription("Select directories which should be excluded from the library content. Content of excluded directories won't be processed by IDE.");
       Set<VirtualFile> roots = getNotExcludedRoots();
       descriptor.setRoots(roots.toArray(VirtualFile.EMPTY_ARRAY));
       if (roots.size() < 2) {

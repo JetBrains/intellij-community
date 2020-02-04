@@ -41,13 +41,13 @@ class MigrateToStreamFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return InspectionsBundle.message("replace.with.0", myMigration.getReplacement());
+    return "Replace with "+myMigration.getReplacement();
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("replace.with.stream.api.equivalent");
+    return "Replace with Stream API equivalent";
   }
 
   @Override

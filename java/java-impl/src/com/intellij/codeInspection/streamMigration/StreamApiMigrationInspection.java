@@ -5,7 +5,10 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -55,8 +58,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("warn.if.only.foreach.replacement.is.available"), "SUGGEST_FOREACH");
-    panel.addCheckbox(InspectionsBundle.message("warn.if.the.loop.is.trivial"), "REPLACE_TRIVIAL_FOREACH");
+    panel.addCheckbox("Warn if only 'forEach' replacement is available", "SUGGEST_FOREACH");
+    panel.addCheckbox("Warn if the loop is trivial", "REPLACE_TRIVIAL_FOREACH");
     return panel;
   }
 

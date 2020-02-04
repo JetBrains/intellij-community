@@ -44,8 +44,7 @@ public class ChromeSettingsConfigurable implements Configurable {
 
   public ChromeSettingsConfigurable(@NotNull ChromeSettings settings) {
     mySettings = settings;
-    myUserDataDirField.addBrowseFolderListener(IdeBundle.message("select.user.data.directory"),
-                                               IdeBundle.message("specifies.the.directory.that.user.data.your.profile.is.kept.in"), null,
+    myUserDataDirField.addBrowseFolderListener("Select User Data Directory", "Specifies the directory that user data (your \"profile\") is kept in", null,
                                                FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myUseCustomProfileCheckBox.addActionListener(new ActionListener() {
       @Override

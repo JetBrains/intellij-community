@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.memory.ui;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -30,7 +29,7 @@ public class StackFramePopup {
     StackFrameList list = new StackFrameList(debugProcess);
     list.setFrameItems(stack, () -> DebuggerUIUtil.invokeLater(() -> {
       JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-        .setTitle(DebuggerBundle.message("select.stack.frame"))
+        .setTitle("Select stack frame")
         .setAutoSelectIfEmpty(true)
         .setResizable(false)
         .setItemChoosenCallback(() -> list.navigateToSelectedValue(true))

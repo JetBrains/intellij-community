@@ -60,8 +60,7 @@ public class JsonSortPropertiesIntention implements IntentionAction, LowPriority
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, JsonBundle.message("file.is.readonly"),
-                                          JsonBundle.message("cannot.sort.properties"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, "File is readonly", "Cannot sort properties", null);
       return;
     }
     PsiElement parentObject = findParentObject(editor, file);

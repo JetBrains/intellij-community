@@ -4,7 +4,6 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
-import com.intellij.ide.IdeBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -70,7 +69,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
           try {
             double value = Double.parseDouble(propertyValue);
             if (value < 0.0 || value > 1.0) {
-              holder.registerProblem(location, IdeBundle.message("color.component.has.to.be.a.number.between.0.0.and.1.0.inclusively"));
+              holder.registerProblem(location, "Color component has to be a number between 0.0 and 1.0, inclusively");
             }
           }
           catch (NumberFormatException ignored) {

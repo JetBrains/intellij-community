@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -306,7 +305,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return IdeBundle.message("directory.0", myDirectory.getName());
+      return "Directory '" + myDirectory.getName() + "'";
     }
   }
 
@@ -422,10 +421,10 @@ public class GlobalSearchScopesCore {
       if (myDirectories.size() + myDirectoriesWithSubdirectories.size() == 1) {
         Set<VirtualFile> dirs = myDirectories.size() == 1 ? myDirectories : myDirectoriesWithSubdirectories;
         VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(dirs));
-        return IdeBundle.message("directory.0", root.getName());
+        return "Directory '" + root.getName() + "'";
       }
       Iterable<VirtualFile> allDirs = ContainerUtil.concat(myDirectories, myDirectoriesWithSubdirectories);
-      return IdeBundle.message("directories.0", StringUtil.join(allDirs, file -> "'" + file.getName() + "'", ", "));
+      return "Directories " + StringUtil.join(allDirs, file -> "'" + file.getName() + "'", ", ");
     }
 
   }

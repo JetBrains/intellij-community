@@ -2,7 +2,6 @@
 package com.intellij.json.liveTemplates;
 
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.psi.PsiFile;
@@ -12,7 +11,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class JsonInLiteralsContextType extends TemplateContextType {
   protected JsonInLiteralsContextType() {
-    super("JSON_STRING_VALUES", JsonBundle.message("json.string.values"), JsonContextType.class);
+    super("JSON_STRING_VALUES", "JSON String Values", JsonContextType.class);
   }
 
   @Override

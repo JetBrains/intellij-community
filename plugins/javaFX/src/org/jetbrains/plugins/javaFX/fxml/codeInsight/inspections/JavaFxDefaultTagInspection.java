@@ -18,7 +18,6 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -52,7 +51,7 @@ public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
             if (Comparing.strEqual(tagName, propertyName) && !isCollectionAssignment(parentTagClass, propertyName, tag)) {
               final TextRange startTagRange = XmlTagUtil.getStartTagRange(tag);
               final TextRange rangeInElement = startTagRange != null ? startTagRange.shiftRight(-tag.getTextOffset()) : null;
-              holder.registerProblem(tag, rangeInElement, IdeBundle.message("default.property.tag.could.be.removed"), new UnwrapTagFix(tagName));
+              holder.registerProblem(tag, rangeInElement, "Default property tag could be removed", new UnwrapTagFix(tagName));
             }
           }
         }

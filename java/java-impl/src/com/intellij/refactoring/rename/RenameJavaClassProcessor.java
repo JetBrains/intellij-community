@@ -190,8 +190,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
             result.add(new UnresolvableCollisionUsageInfo(aClass, typeParameter) {
               @Override
               public String getDescription() {
-                return RefactoringBundle
-                  .message("there.is.already.type.parameter.in.0.with.name.1", RefactoringUIUtil.getDescription(aClass, false), newName);
+                return "There is already type parameter in " + RefactoringUIUtil.getDescription(aClass, false) + " with name " + newName;
               }
             });
           }

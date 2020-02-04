@@ -57,7 +57,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           String qualifiedName = Objects.requireNonNull(StringUtil.substringBefore(replacementText, "("));
           String methodName = StringUtil.getShortName(qualifiedName);
           holder
-            .registerProblem(lambda, InspectionsBundle.message("can.be.replaced.with.comparator.0", methodName),
+            .registerProblem(lambda, "Can be replaced with Comparator." + methodName,
                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator." + methodName));
           return;
         }
@@ -69,7 +69,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           if (chainCombinator == null) return;
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, chainCombinator)) return;
           holder
-            .registerProblem(lambda, InspectionsBundle.message("can.be.replaced.with.comparator.chain"),
+            .registerProblem(lambda, "Can be replaced with Comparator chain",
                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator chain"));
         }
       }
@@ -527,14 +527,14 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("replace.with.0", myMessage);
+      return "Replace with " + myMessage;
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("simplify.comparator.using.comparator.static.methods");
+      return "Simplify comparator using Comparator static methods";
     }
 
     @Override

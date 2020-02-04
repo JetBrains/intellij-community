@@ -213,7 +213,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("simplify.foreach.lambda");
+      return "Simplify forEach lambda";
     }
 
     @Override
@@ -240,7 +240,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       }
       else {
         myContext = context;
-        setText(InspectionsBundle.message("avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement()));
+        setText("Avoid mutation using Stream API '" + simplifyContext.myMigration.getReplacement() + "' operation");
       }
     }
 
@@ -280,7 +280,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("avoid.mutation.using.stream.api");
+      return "Avoid mutation using Stream API";
     }
   }
 }

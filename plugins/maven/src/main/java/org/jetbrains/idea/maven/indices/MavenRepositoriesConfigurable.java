@@ -13,7 +13,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -87,7 +86,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myIndicesTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
                                       new MyIconCellRenderer());
 
-    myIndicesTable.getEmptyText().setText(MavenProjectBundle.message("no.remote.repositories"));
+    myIndicesTable.getEmptyText().setText("No remote repositories");
 
     updateButtonsState();
   }

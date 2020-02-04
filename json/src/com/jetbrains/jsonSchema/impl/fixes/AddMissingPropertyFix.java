@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.impl.EmptyNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInspection.*;
-import com.intellij.json.JsonBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -52,14 +51,14 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
   @NotNull
   @Override
   public String getFamilyName() {
-    return JsonBundle.message("add.missing.properties");
+    return "Add missing properties";
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getName() {
-    return JsonBundle.message("add.missing.0", myData.getMessage(true));
+    return "Add missing " + myData.getMessage(true);
   }
 
   @Override

@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
@@ -49,7 +48,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     myProject = project;
     myTargetTableLevel = targetTableLevel;
     myCopy = copy;
-    getTemplatePresentation().setText(ProjectBundle.message("0.to.1", getActionName(), targetTableName));
+    getTemplatePresentation().setText(getActionName() + " to " + targetTableName + "...");
   }
 
   protected abstract LibraryTableModifiableModelProvider getModifiableTableModelProvider();
@@ -98,7 +97,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
                                     @NotNull final String targetDirPath,
                                     final Map<String, String> copiedFiles) {
     final Ref<Boolean> finished = Ref.create(false);
-    new Task.Modal(myProject, ProjectBundle.message("0.library.files", myCopy ? "Copying" : "Moving"), true) {
+    new Task.Modal(myProject, (myCopy ? "Copying" : "Moving") + " Library Files", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final File targetDir = new File(FileUtil.toSystemDependentName(targetDirPath));
@@ -127,7 +126,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
           catch (IOException e) {
             final String actionName = getActionName();
             final String message = "Cannot " + StringUtil.toLowerCase(actionName) + " file " + from.getAbsolutePath() + ": " + e.getMessage();
-            Messages.showErrorDialog(ChangeLibraryLevelActionBase.this.myProject, message, ProjectBundle.message("cannot.0", actionName));
+            Messages.showErrorDialog(ChangeLibraryLevelActionBase.this.myProject, message, "Cannot " + actionName);
             LOG.info(e);
             return;
           }

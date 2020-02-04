@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,7 +68,7 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
           tag.getDescriptor() instanceof JavaFxPropertyTagDescriptor &&
           parentTag.getDescriptor() instanceof JavaFxClassTagDescriptorBase) {
 
-        setText(IdeBundle.message("collapse.tag.0.to.attribute", tag.getName()));
+        setText("Collapse tag '" + tag.getName() + "' to attribute");
         return true;
       }
     }
@@ -79,6 +78,6 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
   @NotNull
   @Override
   public String getFamilyName() {
-    return IdeBundle.message("collapse.tag.to.attribute");
+    return "Collapse tag to attribute";
   }
 }

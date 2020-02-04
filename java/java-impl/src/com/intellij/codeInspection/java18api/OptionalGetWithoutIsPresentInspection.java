@@ -109,7 +109,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("use.flatmap");
+      return "Use 'flatMap'";
     }
 
     @Override

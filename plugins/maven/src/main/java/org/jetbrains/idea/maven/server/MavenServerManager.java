@@ -243,7 +243,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
-        ProgressManager.getInstance().run(new Task.Modal(null, MavenProjectBundle.message("maven.server.shutdown"), false) {
+        ProgressManager.getInstance().run(new Task.Modal(null, "Maven Server Shutdown", false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             shutdown(true);

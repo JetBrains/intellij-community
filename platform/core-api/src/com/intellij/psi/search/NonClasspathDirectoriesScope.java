@@ -16,7 +16,6 @@
 
 package com.intellij.psi.search;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -84,8 +83,8 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
   public String getDisplayName() {
     if (myRoots.size() == 1) {
       VirtualFile root = myRoots.iterator().next();
-      return IdeBundle.message("directory.0", root.getName());
+      return "Directory '" + root.getName() + "'";
     }
-    return IdeBundle.message("directories.0", StringUtil.join(myRoots, file -> "'" + file.getName() + "'", ", "));
+    return "Directories " + StringUtil.join(myRoots, file -> "'" + file.getName() + "'", ", ");
   }
 }

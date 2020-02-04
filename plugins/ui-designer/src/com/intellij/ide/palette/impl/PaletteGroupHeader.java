@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -109,16 +108,16 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
 
   private void initActions() {
     @NonNls InputMap inputMap = getInputMap(WHEN_FOCUSED);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false), UIDesignerBundle.message("move.focus.down"));
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false), UIDesignerBundle.message("move.focus.up"));
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0, false), UIDesignerBundle.message("collapse"));
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0, false), UIDesignerBundle.message("expand"));
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false), "moveFocusDown");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false), "moveFocusUp");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0, false), "collapse");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0, false), "expand");
 
     @NonNls ActionMap actionMap = getActionMap();
-    actionMap.put(UIDesignerBundle.message("move.focus.down"), new MoveFocusAction(true));
-    actionMap.put(UIDesignerBundle.message("move.focus.up"), new MoveFocusAction(false));
-    actionMap.put(UIDesignerBundle.message("collapse"), new ExpandAction(false));
-    actionMap.put(UIDesignerBundle.message("expand"), new ExpandAction(true));
+    actionMap.put("moveFocusDown", new MoveFocusAction(true));
+    actionMap.put("moveFocusUp", new MoveFocusAction(false));
+    actionMap.put("collapse", new ExpandAction(false));
+    actionMap.put("expand", new ExpandAction(true));
   }
 
   @Override public Color getBackground() {

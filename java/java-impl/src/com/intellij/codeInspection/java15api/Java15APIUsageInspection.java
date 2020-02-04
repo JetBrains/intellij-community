@@ -94,11 +94,11 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
   @Override
   public JComponent createOptionsPanel() {
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
-    panel.add(new JLabel(InspectionsBundle.message("forbid.api.usages")));
+    panel.add(new JLabel("Forbid API usages:"));
 
-    JRadioButton projectRb = new JRadioButton(InspectionsBundle.message("respecting.to.project.language.level.settings"));
+    JRadioButton projectRb = new JRadioButton("Respecting to project language level settings");
     panel.add(projectRb);
-    JRadioButton customRb = new JRadioButton(InspectionsBundle.message("higher.than"));
+    JRadioButton customRb = new JRadioButton("Higher than:");
     panel.add(customRb);
     ButtonGroup gr = new ButtonGroup();
     gr.add(projectRb);

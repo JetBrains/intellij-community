@@ -67,7 +67,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.with.qualifier");
+      return "Replace with qualifier";
     }
 
     @Override

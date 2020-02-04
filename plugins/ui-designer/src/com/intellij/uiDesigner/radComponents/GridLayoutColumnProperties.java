@@ -2,7 +2,6 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -66,13 +65,12 @@ public class GridLayoutColumnProperties implements CustomPropertiesPanel {
     myContainer = container;
     myRow = isRow;
     if (selectedIndices.length != 1) {
-      myTitleLabel.setText(selectedIndices.length + (isRow ? UIDesignerBundle.message("rows.selected")
-                                                           : UIDesignerBundle.message("columns.selected")));
+      myTitleLabel.setText(selectedIndices.length + (isRow ? " rows selected" : " columns selected"));
       myWantGrowCheckBox.setEnabled(false);
     }
     else {
       mySelectedIndex = selectedIndices [0];
-      myTitleLabel.setText((isRow ? UIDesignerBundle.message("row") : UIDesignerBundle.message("column")) + selectedIndices [0]);
+      myTitleLabel.setText((isRow ? "Row " : "Column ") + selectedIndices [0]);
       myWantGrowCheckBox.setEnabled(true);
 
       GridLayoutManager layout = (GridLayoutManager) container.getLayout();

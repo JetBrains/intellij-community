@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema.impl.fixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +25,7 @@ public class RemoveProhibitedPropertyFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return JsonBundle.message("remove.prohibited.property");
+    return "Remove prohibited property";
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

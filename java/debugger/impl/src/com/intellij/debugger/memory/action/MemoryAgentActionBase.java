@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.action;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -37,7 +36,7 @@ public abstract class MemoryAgentActionBase extends DebuggerTreeAction {
           perform(evaluationContext, reference, node);
         }
         catch (EvaluateException ex) {
-          XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("action.failed"), NotificationType.ERROR);
+          XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("Action failed", NotificationType.ERROR);
         }
       }
 

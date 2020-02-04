@@ -21,13 +21,12 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
-import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesArtifactIdConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesGroupIdConverter;
 import org.jetbrains.idea.maven.dom.model.presentation.MavenArtifactCoordinatesPresentationProvider;
 
 
-@Presentation(typeName = MavenDomBundle.message("dependency"), icon = "AllIcons.Nodes.PpLib", provider = MavenArtifactCoordinatesPresentationProvider.class)
+@Presentation(typeName = "Dependency", icon = "AllIcons.Nodes.PpLib", provider = MavenArtifactCoordinatesPresentationProvider.class)
 public interface MavenDomShortArtifactCoordinates extends DomElement {
   @Required
   @NoSpellchecking

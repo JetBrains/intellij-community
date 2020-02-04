@@ -3,7 +3,6 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -54,9 +53,8 @@ public class JavaFxAnnotator implements Annotator {
               final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
               AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, symbolPresentation +
                                                                                         (resolve instanceof PsiClass
-                                                                                         ? IdeBundle.message("should.be.public")
-                                                                                         : IdeBundle.message(
-                                                                                           "should.be.public.or.annotated.with.fxml")));
+                                                                                         ? " should be public"
+                                                                                         : " should be public or annotated with @FXML"));
               if (!(resolve instanceof PsiClass)) {
                 AddAnnotationFix fix = new AddAnnotationFix(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve,
                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
@@ -75,7 +73,7 @@ public class JavaFxAnnotator implements Annotator {
       if (!FxmlConstants.FX_BUILT_IN_ATTRIBUTES.contains(attributeName) &&
           !attribute.isNamespaceDeclaration() &&
           JavaFxPsiUtil.isReadOnly(attributeName, attribute.getParent())) {
-        holder.newAnnotation(HighlightSeverity.ERROR, IdeBundle.message("property.0.is.read.only", attributeName)).range(element.getNavigationElement()).create();
+        holder.newAnnotation(HighlightSeverity.ERROR, "Property '" + attributeName + "' is read-only").range(element.getNavigationElement()).create();
       }
       if (FxmlConstants.SOURCE.equals(attributeName)) {
         final XmlAttributeValue valueElement = attribute.getValueElement();
@@ -85,9 +83,9 @@ public class JavaFxAnnotator implements Annotator {
             final XmlTag referencedTag = JavaFxBuiltInTagDescriptor.getReferencedTag(xmlTag);
             if (referencedTag != null) {
               if (referencedTag.getTextOffset() > xmlTag.getTextOffset()) {
-                holder.newAnnotation(HighlightSeverity.ERROR, IdeBundle.message("0.not.found", valueElement.getValue())).range(valueElement.getValueTextRange()).create();
+                holder.newAnnotation(HighlightSeverity.ERROR, valueElement.getValue() + " not found").range(valueElement.getValueTextRange()).create();
               } else if (xmlTag.getParentTag() == referencedTag.getParentTag()) {
-                holder.newAnnotation(HighlightSeverity.ERROR, IdeBundle.message("duplicate.child.added")).range(valueElement.getValueTextRange())
+                holder.newAnnotation(HighlightSeverity.ERROR, "Duplicate child added").range(valueElement.getValueTextRange())
                 .withFix(new JavaFxWrapWithDefineIntention(referencedTag, valueElement.getValue())).create();
               }
             }
@@ -103,7 +101,7 @@ public class JavaFxAnnotator implements Annotator {
           if (langs.isEmpty()) {
             final ASTNode openTag = element.getNode().findChildByType(XmlTokenType.XML_NAME);
 
-              holder.newAnnotation(HighlightSeverity.ERROR, IdeBundle.message("page.language.not.specified")).range(openTag != null ? openTag.getPsi() : element)
+              holder.newAnnotation(HighlightSeverity.ERROR, "Page language not specified.").range(openTag != null ? openTag.getPsi() : element)
             .withFix(new JavaFxInjectPageLanguageIntention()).create();
           }
         }

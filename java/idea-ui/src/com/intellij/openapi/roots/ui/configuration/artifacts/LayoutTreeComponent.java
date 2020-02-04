@@ -6,7 +6,6 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactRootNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingNodeSource;
@@ -227,16 +226,13 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
     if (nodeSources.size() > 1) {
       Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
-                               ProjectBundle.message(
-                                 "the.selected.node.consist.of.several.elements"));
+                               "The selected node consist of several elements so it cannot be edited.\nSwitch off 'Show content of elements' checkbox to edit the output layout.");
     }
     else {
     final PackagingNodeSource source = ContainerUtil.getFirstItem(nodeSources, null);
       if (source != null) {
         Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
-                                 ProjectBundle.message(
-                                   "the.selected.node.belongs.to.X.element",
-                                   source.getPresentableName()));
+                                 "The selected node belongs to '" + source.getPresentableName() + "' element so it cannot be edited.\nSwitch off 'Show content of elements' checkbox to edit the output layout.");
       }
     }
     return false;
@@ -273,7 +269,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       else {
         message = "The selected node belongs to " + nodes.size() + " elements. Do you want to remove all these elements from the artifact?";
       }
-      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, ProjectBundle.message("remove.elements"), null);
+      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, "Remove Elements", null);
       if (answer != Messages.YES) return false;
     }
     return true;

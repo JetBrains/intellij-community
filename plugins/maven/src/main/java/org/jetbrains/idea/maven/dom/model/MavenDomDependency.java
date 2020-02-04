@@ -25,7 +25,6 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyScopeConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencySystemPathConverter;
@@ -39,7 +38,7 @@ import org.jetbrains.idea.maven.dom.model.presentation.MavenArtifactCoordinatesP
  * 3.0.0+
  * </pre>
  */
-@Presentation(typeName = MavenDomBundle.message("dependency"), icon = "AllIcons.Nodes.PpLib", provider = MavenArtifactCoordinatesPresentationProvider.class)
+@Presentation(typeName = "Dependency", icon = "AllIcons.Nodes.PpLib", provider = MavenArtifactCoordinatesPresentationProvider.class)
 public interface MavenDomDependency extends MavenDomElement, MavenDomArtifactCoordinates {
   @Override
   @Required(value = false, nonEmpty = true)

@@ -22,7 +22,7 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
 
   public MavenAddArchetypeDialog(Component parent) {
     super(parent, false);
-    setTitle(MavenWizardBundle.message("add.archetype"));
+    setTitle("Add Archetype");
 
     init();
 

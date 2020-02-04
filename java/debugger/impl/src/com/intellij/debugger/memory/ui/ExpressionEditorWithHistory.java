@@ -2,7 +2,6 @@
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -37,7 +36,7 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
     super(project, debuggerEditorsProvider, HISTORY_ID_PREFIX + className, null,
           XExpressionImpl.EMPTY_EXPRESSION, false, true, true);
 
-    new AnAction(DebuggerBundle.message("instances.window.show.history")) {
+    new AnAction("InstancesWindow.ShowHistory") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         showHistory();

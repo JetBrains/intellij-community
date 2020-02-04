@@ -7,7 +7,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
@@ -70,7 +69,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (defaultValue == null) return;
 
         if (isEqualValue(tagClass, attributeValue, defaultValue, descriptor.getDeclaration())) {
-          holder.registerProblem(attribute, IdeBundle.message("attribute.is.redundant.because.it.contains.default.value"),
+          holder.registerProblem(attribute, "Attribute is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveAttributeIntentionFix(attributeName));
         }
@@ -98,7 +97,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (defaultValue == null) return;
 
         if (isEqualValue(tagClass, tagText, defaultValue, descriptor.getDeclaration())) {
-          holder.registerProblem(tag, IdeBundle.message("tag.is.redundant.because.it.contains.default.value"),
+          holder.registerProblem(tag, "Tag is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveTagIntentionFix(tag.getName(), tag));
         }

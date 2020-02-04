@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -41,7 +40,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     myClasspathPanel = classpathPanel;
     myContext = context;
     myAcceptedLibraries = acceptedLibraries;
-    setOKButtonText(ProjectBundle.message("add.selected"));
+    setOKButtonText("Add Selected");
     init();
   }
 
@@ -145,7 +144,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
   private class CreateNewLibraryAction extends DialogWrapperAction {
     private CreateNewLibraryAction() {
-      super(ProjectBundle.message("new.library"));
+      super("New Library...");
       putValue(MNEMONIC_KEY, KeyEvent.VK_N);
     }
 

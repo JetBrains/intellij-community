@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
@@ -37,8 +36,8 @@ public class ChangeLibraryLevelDialog extends DialogWrapper {
     super(parent, true);
     myAllowEmptyName = allowEmptyName;
     final String actionName = copy ? "Copy" : "Move";
-    setTitle(ProjectBundle.message("0.library", actionName));
-    myCopyFilesCheckBox.setText(ProjectBundle.message("0.library.files.to", actionName));
+    setTitle(actionName + " Library");
+    myCopyFilesCheckBox.setText(actionName + " library files to:");
     myCopyFilesCheckBox.setMnemonic(copy ? 'C' : 'M');
     myCopyFilesCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -48,7 +47,7 @@ public class ChangeLibraryLevelDialog extends DialogWrapper {
     });
     myModifiableModel = provider.getModifiableModel();
     myNameField.setText(libraryName);
-    myDirectoryForFilesField.addBrowseFolderListener(ProjectBundle.message("directory.for.library.files"), null, project,
+    myDirectoryForFilesField.addBrowseFolderListener("Directory for Library Files", null, project,
                                                      FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myDirectoryForFilesField.setText(FileUtil.toSystemDependentName(path));
     myNameField.selectAll();
@@ -67,12 +66,12 @@ public class ChangeLibraryLevelDialog extends DialogWrapper {
     final String name = getLibraryName();
     if (name.isEmpty()) {
       if (!myAllowEmptyName) {
-        setErrorText(ProjectBundle.message("library.name.is.not.specified"), myNameField);
+        setErrorText("Library name is not specified", myNameField);
       }
       return;
     }
     if (LibraryEditingUtil.libraryAlreadyExists(myModifiableModel, name)) {
-      setErrorText(ProjectBundle.message("library.0.already.exists", name), myNameField);
+      setErrorText("Library '" + name + "' already exists", myNameField);
       return;
     }
     setErrorText(null);

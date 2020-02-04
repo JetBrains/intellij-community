@@ -22,7 +22,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
 
   public EditMavenPropertyDialog(@Nullable Pair<String, String> value, Map<String, String> availableProperties) {
     super(false);
-    setTitle(value == null ? MavenRunnerBundle.message("add.maven.property") : MavenRunnerBundle.message("edit.maven.property"));
+    setTitle(value == null ? "Add Maven Property" : "Edit Maven Property");
 
     myAvailableProperties = availableProperties;
 

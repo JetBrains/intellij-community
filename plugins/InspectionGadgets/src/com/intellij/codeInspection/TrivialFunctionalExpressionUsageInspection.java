@@ -137,7 +137,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         if (!suitableMethod) return;
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
         if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
-          holder.registerProblem(referenceNameElement, InspectionsBundle.message("method.call.can.be.simplified"), fix);
+          holder.registerProblem(referenceNameElement, "Method call can be simplified", fix);
         }
       }
     };
@@ -286,7 +286,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.method.call.on.lambda.with.lambda.body");
+      return "Replace method call on lambda with lambda body";
     }
 
     @Override
@@ -305,7 +305,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.method.call.on.method.reference.with.corresponding.method.call");
+      return "Replace method call on method reference with corresponding method call";
     }
 
     @Override
@@ -329,7 +329,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.call.with.method.body");
+      return "Replace call with method body";
     }
 
     @Override

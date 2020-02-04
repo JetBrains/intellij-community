@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -47,7 +46,7 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
     final String pathForClasses = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES);
     final Presentation presentation = e.getPresentation();
     if (onlyJarsSelected() && pathForClasses != null) {
-      presentation.setText(ProjectBundle.message("extract.into.0", getTargetLocationText(Collections.singleton(pathForClasses))));
+      presentation.setText("Extract Into " + getTargetLocationText(Collections.singleton(pathForClasses)));
       presentation.setVisible(true);
     }
     else {

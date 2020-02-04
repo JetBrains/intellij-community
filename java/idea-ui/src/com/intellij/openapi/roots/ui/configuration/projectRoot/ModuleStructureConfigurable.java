@@ -847,12 +847,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                     final AnActionEvent e) {
 
         AnAction addModuleAction = new AddModuleAction(false);
-        addModuleAction.getTemplatePresentation().setText(ProjectBundle.message("new.module"));
+        addModuleAction.getTemplatePresentation().setText("New Module");
         List<AnAction> result = new ArrayList<>();
         result.add(addModuleAction);
 
         AnAction importModuleAction = new AddModuleAction(true);
-        importModuleAction.getTemplatePresentation().setText(ProjectBundle.message("import.module"));
+        importModuleAction.getTemplatePresentation().setText("Import Module");
         importModuleAction.getTemplatePresentation().setIcon(AllIcons.ToolbarDecorator.Import);
         result.add(importModuleAction);
 

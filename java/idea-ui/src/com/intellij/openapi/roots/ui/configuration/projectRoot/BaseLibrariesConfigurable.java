@@ -84,7 +84,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   public void checkCanApply() throws ConfigurationException {
     super.checkCanApply();
-    checkForEmptyAndDuplicatedNames(ProjectBundle.message("library"), CommonBundle.getErrorTitle(), LibraryConfigurable.class);
+    checkForEmptyAndDuplicatedNames("Library", CommonBundle.getErrorTitle(), LibraryConfigurable.class);
     for (LibraryConfigurable configurable : getLibraryConfigurables()) {
       if (configurable.getDisplayName().isEmpty()) {
         ((LibraryProjectStructureElement)configurable.getProjectStructureElement()).navigate();
@@ -359,7 +359,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       final Object o = getSelectedObject();
       if (o instanceof LibraryEx) {
         final LibraryEx selected = (LibraryEx)o;
-        final String newName = Messages.showInputDialog(ProjectBundle.message("enter.library.name"), ProjectBundle.message("copy.library"), null, selected.getName() + "2", new NonEmptyInputValidator());
+        final String newName = Messages.showInputDialog("Enter library name:", "Copy Library", null, selected.getName() + "2", new NonEmptyInputValidator());
         if (newName == null) return;
 
         BaseLibrariesConfigurable configurable = BaseLibrariesConfigurable.this;

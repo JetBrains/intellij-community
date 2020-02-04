@@ -347,7 +347,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
-    content.setDescription(DebuggerBundle.message("thread.dump"));
+    content.setDescription("Thread Dump");
     ui.addContent(content);
     ui.selectAndFocus(content, true, true);
     myThreadDumpsCount++;
