@@ -38,7 +38,7 @@ public final class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[
   }
 
   @Override
-  public int enumerate(byte[] value) throws IOException {
+  public int enumerate(@NotNull byte[] value) throws IOException {
     LOG.assertTrue(SIGNATURE_LENGTH == value.length);
     return super.enumerate(value);
   }
