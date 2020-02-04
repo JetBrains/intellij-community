@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
@@ -48,7 +49,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
   }
 
   static JComponent createIconViewer(@Nullable Icon icon) {
-    if (icon == null) return new JLabel("No data", SwingConstants.CENTER);
+    if (icon == null) return new JLabel(CommonBundle.message("no.data"), SwingConstants.CENTER);
     final int w = icon.getIconWidth();
     final int h = icon.getIconHeight();
     final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()

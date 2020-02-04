@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.overhead;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.Disposable;
@@ -87,7 +88,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
                                 }
       , process);
 
-    new DumbAwareAction("Toggle") {
+    new DumbAwareAction(CommonBundle.message("toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myTable.getSelectedRowCount() == 1);

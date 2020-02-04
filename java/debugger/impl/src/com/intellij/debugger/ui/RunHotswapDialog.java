@@ -97,7 +97,7 @@ public class RunHotswapDialog extends OptionsDialog {
     label.setIcon(icon);
     label.setIconTextGap(7);
     if (myDisplayHangWarning) {
-      final JLabel warningLabel = new JLabel("WARNING! " + DebuggerBundle.message("hotswap.dialog.hang.warning"));
+      final JLabel warningLabel = new JLabel(DebuggerBundle.message("warning.0", DebuggerBundle.message("hotswap.dialog.hang.warning")));
       warningLabel.setUI(new MultiLineLabelUI());
       panel.add(warningLabel, BorderLayout.SOUTH);
     }
