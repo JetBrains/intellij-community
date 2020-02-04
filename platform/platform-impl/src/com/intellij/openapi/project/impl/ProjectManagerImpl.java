@@ -589,7 +589,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         //noinspection CodeBlock2Expr
         progressManager.runProcessWithProgressSynchronously(() -> {
           initProject(path, project, /* isRefreshVfsNeeded = */ true, null, progressManager.getProgressIndicator());
-        }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
+        }, IdeUICustomization.getInstance().projectMessage("project.load.progress"), canCancelProjectLoading(), project);
       }
     }
     catch (ProcessCanceledException e) {
