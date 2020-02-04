@@ -40,7 +40,8 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
 
   fun extractClosuresFromOuterCalls(method: GrMethod,
                                     virtualMethod: GrMethod,
-                                    scope: SearchScope): List<GrParameter> {
+                                    scope: SearchScope?): List<GrParameter> {
+    if (scope == null) return emptyList()
     val visitedParameters = mutableListOf<GrParameter>()
     for ((parameter, calls) in collectClosureArguments(method, virtualMethod, scope)) {
       // todo: default-valued parameters

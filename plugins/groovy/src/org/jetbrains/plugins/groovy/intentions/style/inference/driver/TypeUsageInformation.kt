@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceContext
 import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -11,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInfe
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
-class TypeUsageInformationBuilder(method: GrMethod) {
+class TypeUsageInformationBuilder(method: GrMethod, val signatureInferenceContext: SignatureInferenceContext) {
   private val requiredClassTypes: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>> = mutableMapOf()
   private val constraints: MutableList<ConstraintFormula> = mutableListOf()
   private val dependentTypes: MutableSet<PsiTypeParameter> = mutableSetOf()
@@ -20,9 +24,9 @@ class TypeUsageInformationBuilder(method: GrMethod) {
   private val expressions: MutableList<GrExpression> = mutableListOf()
 
   fun generateRequiredTypes(typeParameter: PsiTypeParameter, type: PsiType, marker: BoundConstraint.ContainMarker) {
-    val boxedType = if (type is PsiPrimitiveType) type.getBoxedType(typeParameter) ?: type else type
-    if (boxedType == javaLangObject && marker == BoundConstraint.ContainMarker.UPPER) return
-    val bindingTypes = expandWildcards(boxedType, typeParameter)
+    val filteredType = signatureInferenceContext.filterType(type, typeParameter)
+    if (filteredType == javaLangObject && marker == BoundConstraint.ContainMarker.UPPER) return
+    val bindingTypes = expandWildcards(filteredType, typeParameter)
     bindingTypes.forEach { addRequiredType(typeParameter, BoundConstraint(it, marker)) }
   }
 

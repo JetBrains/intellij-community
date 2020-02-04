@@ -6,9 +6,9 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeMapper
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
-import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
+import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceOptions
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.UPPER
@@ -19,12 +19,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 class ClosureDriver private constructor(private val closureParameters: Map<GrParameter, ParameterizedClosure>,
-                                        private val method: GrMethod) : InferenceDriver {
+                                        private val method: GrMethod,
+                                        private val options: SignatureInferenceOptions) : InferenceDriver {
 
   companion object {
-    fun createFromMethod(method: GrMethod, virtualMethod: GrMethod, generator: NameGenerator, scope: SearchScope): InferenceDriver {
+    fun createFromMethod(method: GrMethod,
+                         virtualMethod: GrMethod,
+                         generator: NameGenerator,
+                         options: SignatureInferenceOptions): InferenceDriver {
       val builder = ClosureParametersStorageBuilder(generator, virtualMethod)
-      val visitedParameters = builder.extractClosuresFromOuterCalls(method, virtualMethod, scope)
+      val visitedParameters = builder.extractClosuresFromOuterCalls(method, virtualMethod, options.searchScope)
       virtualMethod.forEachParameterUsage { parameter, instructions ->
         if (!parameter.type.isClosureTypeDeep() || parameter in visitedParameters) {
           return@forEachParameterUsage
@@ -35,7 +39,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
         }
       }
       val closureParameters = builder.build()
-      return if (closureParameters.isEmpty()) EmptyDriver else ClosureDriver(closureParameters, virtualMethod)
+      return if (closureParameters.isEmpty()) EmptyDriver else ClosureDriver(closureParameters, virtualMethod, options)
     }
   }
 
@@ -69,7 +73,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       newClosureParameter.typeParameters.forEach { typeParameterList.add(it) }
       newClosureParameters[newClosureParameter.parameter] = newClosureParameter
     }
-    return ClosureDriver(newClosureParameters, targetMethod)
+    return ClosureDriver(newClosureParameters, targetMethod, options)
   }
 
   override fun typeParameters(): Collection<PsiTypeParameter> {
@@ -107,7 +111,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
   }
 
   private fun collectClosureInvocationConstraints(): TypeUsageInformation {
-    val builder = TypeUsageInformationBuilder(method)
+    val builder = TypeUsageInformationBuilder(method, options.signatureInferenceContext)
     method.forEachParameterUsage { parameter, instructions ->
       if (parameter in closureParameters.keys) {
         analyzeClosureUsages(closureParameters.getValue(parameter), instructions, builder)
@@ -144,7 +148,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       val newParameterizedClosure = ParameterizedClosure(newParameter, closure.typeParameters, closure.closureArguments, newTypes, closure.delegatesToCombiner)
       parameterizedClosureCollector.add(newParameter to newParameterizedClosure)
     }
-    return ClosureDriver(parameterizedClosureCollector.toMap(), resultMethod)
+    return ClosureDriver(parameterizedClosureCollector.toMap(), resultMethod, options)
   }
 
 }

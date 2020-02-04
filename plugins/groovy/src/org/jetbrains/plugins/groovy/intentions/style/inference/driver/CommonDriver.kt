@@ -32,9 +32,11 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
                                        private val closureDriver: InferenceDriver,
                                        private val originalMethod: GrMethod,
                                        private val typeParameters: Collection<PsiTypeParameter>,
-                                       searchScope: SearchScope? = null) : InferenceDriver {
+                                       private val options: SignatureInferenceOptions) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
-  private val scope: SearchScope = searchScope ?: with(originalMethod) { GlobalSearchScope.fileScope(project, containingFile.virtualFile) }
+  private val scope: SearchScope = options.searchScope ?: with(originalMethod) {
+    GlobalSearchScope.fileScope(project, containingFile.virtualFile)
+  }
   private val calls = lazy { ReferencesSearch.search(originalMethod, scope).findAll().sortedBy { it.element.textOffset } }
 
   companion object {
@@ -44,14 +46,15 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
         return EmptyDriver
       }
       else {
-        return CommonDriver(method.parameters.toSet(), null, EmptyDriver, method, method.typeParameters.asList())
+        return CommonDriver(method.parameters.toSet(), null, EmptyDriver, method, method.typeParameters.asList(),
+                            SignatureInferenceOptions(null))
       }
     }
 
     fun createFromMethod(method: GrMethod,
                          virtualMethod: GrMethod,
                          generator: NameGenerator,
-                         scope: SearchScope): InferenceDriver {
+                         options: SignatureInferenceOptions): InferenceDriver {
       val elementFactory = GroovyPsiElementFactory.getInstance(virtualMethod.project)
       val targetParameters = setUpParameterMapping(method, virtualMethod)
         .filter { it.key.eligibleForExtendedInference() }
@@ -70,7 +73,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
         return EmptyDriver
       }
       else {
-        return CommonDriver(targetParameters, varargParameter, EmptyDriver, method, typeParameters, scope)
+        return CommonDriver(targetParameters, varargParameter, EmptyDriver, method, typeParameters, options)
       }
     }
 
@@ -126,7 +129,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       }
     }
     val copiedVirtualMethod = createVirtualMethod(targetMethod) ?: return EmptyDriver
-    val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator, scope)
+    val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator, options)
     val signatureSubstitutor = closureDriver.collectSignatureSubstitutor()
     val virtualToActualSubstitutor = createVirtualToActualSubstitutor(copiedVirtualMethod, targetMethod)
     val erasureSubstitutor = RecursiveMethodAnalyzer.methodTypeParametersErasureSubstitutor(targetMethod)
@@ -135,7 +138,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     return CommonDriver(targetParameters.map { parameterMapping.getValue(it) }.toSet(),
                         parameterMapping[varargParameter],
                         newClosureDriver,
-                        originalMethod, typeParameters, scope)
+                        originalMethod, typeParameters, options)
   }
 
   override fun collectOuterConstraints(): Collection<ConstraintFormula> {
@@ -213,7 +216,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
 
   override fun collectInnerConstraints(): TypeUsageInformation {
     val typeUsageInformation = closureDriver.collectInnerConstraints()
-    val analyzer = RecursiveMethodAnalyzer(method)
+    val analyzer = RecursiveMethodAnalyzer(method, options.signatureInferenceContext)
     analyzer.runAnalyzer(method)
     analyzer.visitOuterCalls(originalMethod, calls.value)
     return analyzer.buildUsageInformation() + typeUsageInformation
@@ -248,6 +251,6 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     val newClosureDriver = closureDriver.acceptTypeVisitor(visitor, resultMethod)
     val newTypeParameters = typeParameters.mapNotNull { param -> resultMethod.typeParameters.find { it.name == param.name } }
     val newTargetParameters = targetParameters.map { mapping.getValue(it) }.toSet()
-    return CommonDriver(newTargetParameters, mapping[varargParameter], newClosureDriver, originalMethod, newTypeParameters)
+    return CommonDriver(newTargetParameters, mapping[varargParameter], newClosureDriver, originalMethod, newTypeParameters, options)
   }
 }

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.search.SearchScope
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
@@ -19,13 +18,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
  * 2. Inferring new parameters signature cause of possible generic types. Creating new type parameters.
  * 3. Inferring dependencies between new type parameters and instantiating them.
  */
-fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
+fun runInferenceProcess(method: GrMethod, options: SignatureInferenceOptions): GrMethod {
   val originalMethod = getOriginalMethod(method)
   val overridableMethod = findOverridableMethod(originalMethod)
   if (overridableMethod != null) {
     return convertToGroovyMethod(overridableMethod)
   }
-  val driver = createDriver(originalMethod, scope)
+  val driver = createDriver(originalMethod, options)
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
   val virtualMethod = createVirtualMethod(method) ?: return method
   val parameterizedDriver = driver.createParameterizedDriver(ParameterizationManager(method), virtualMethod, signatureSubstitutor)
@@ -42,11 +41,10 @@ private val forbiddenAnnotations =
 internal fun GrParameter.eligibleForExtendedInference(): Boolean =
   typeElement == null || (type.isClosureType() && (annotations.map { it.qualifiedName } intersect forbiddenAnnotations).isEmpty())
 
-private fun createDriver(method: GrMethod,
-                         scope: SearchScope): InferenceDriver {
+private fun createDriver(method: GrMethod, options: SignatureInferenceOptions): InferenceDriver {
   val virtualMethod = createVirtualMethod(method) ?: return EmptyDriver
   val generator = NameGenerator("_START" + method.hashCode(), context = method)
-  return CommonDriver.createFromMethod(method, virtualMethod, generator, scope)
+  return CommonDriver.createFromMethod(method, virtualMethod, generator, options)
 }
 
 private fun setUpGraph(virtualMethod: GrMethod,

@@ -6,10 +6,10 @@ import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.getBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer
 
 class GroovyParameterTypeHintsCollector(editor: Editor,
@@ -21,11 +21,9 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
       return false
     }
     if (element is GrParameter && element.typeElement == null && !element.isVarArgs) {
-      val type = if (getBlock(element) == null) {
-        MethodParameterAugmenter().inferType(element)
-      } else {
-        GrVariableEnhancer.getEnhancedType(element)
-      }?: return true
+      val type = GrVariableEnhancer.getEnhancedType(element)
+                 ?: TypeAugmenter.inferAugmentedType(element)
+                 ?: return true
       val typeRepresentation = factory.buildRepresentation(type, " ").run { factory.roundWithBackground(this) }
       sink.addInlineElement(element.textOffset, false, typeRepresentation)
     }

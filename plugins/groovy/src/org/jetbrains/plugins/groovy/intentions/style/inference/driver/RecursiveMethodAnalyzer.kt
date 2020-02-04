@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.properResolve
@@ -35,8 +36,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyRefer
 import kotlin.LazyThreadSafetyMode.NONE
 
 
-internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveElementVisitor() {
-  val builder = TypeUsageInformationBuilder(method)
+internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceContext : SignatureInferenceContext) : GroovyRecursiveElementVisitor() {
+  val builder = TypeUsageInformationBuilder(method, signatureInferenceContext)
 
   private fun processMethod(result: GroovyResolveResult, arguments: Arguments = emptyList()) {
     val methodResult = result as? GroovyMethodResult ?: return
@@ -90,7 +91,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
    * Visits every parameter of [lowerType] (which is probably parameterized with type parameters) and sets restrictions found in [upperType]
    * We need to distinguish containing and subtyping relations, so this is why there are [UPPER] and [EQUAL] bounds
    */
-  private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType) {
+  private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType) = with(builder.signatureInferenceContext) {
     var currentLowerType = lowerType as? PsiClassType ?: return
     var firstVisit = true
     val context = lowerType.resolve()?.context ?: return
@@ -103,8 +104,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
           TypesUtil.canAssign(currentUpperType.rawType(), lowerType.rawType(), context, METHOD_PARAMETER) == OK
         } ?: return
         for (classParameterIndex in currentUpperType.parameters.indices) {
-          currentLowerType = matchedLowerBound.parameters.getOrNull(classParameterIndex) as? PsiClassType ?: continue
-          currentUpperType.parameters[classParameterIndex].accept(this)
+          currentLowerType = matchedLowerBound.getTypeArguments().getOrNull(classParameterIndex) as? PsiClassType ?: continue
+          currentUpperType.getTypeArguments()[classParameterIndex]?.accept(this)
         }
       }
 
@@ -290,7 +291,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
                               rightType: PsiType,
                               builder: TypeUsageInformationBuilder,
                               method: GrMethod,
-                              targetMarker: ContainMarker) {
+                              targetMarker: ContainMarker) : Unit = with(builder.signatureInferenceContext) {
       val variableParameters = method.typeParameters.toSet()
       val leftTypeParameter = leftType.typeParameter()
       val rightTypeParameter = rightType.typeParameter()
@@ -309,8 +310,8 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       }
       val leftBound = leftTypeParameter?.upperBound() ?: leftType
       val rightBound = rightTypeParameter?.upperBound() ?: rightType
-      val leftTypeArguments = (leftBound as? PsiClassType)?.parameters ?: return
-      val rightTypeArguments = (rightBound as? PsiClassType)?.parameters ?: return
+      val leftTypeArguments = (leftBound as? PsiClassType)?.getTypeArguments() ?: return
+      val rightTypeArguments = (rightBound as? PsiClassType)?.getTypeArguments() ?: return
       val rangedRightTypeArguments = rightTypeArguments.map {
         val typeParameter = it.typeParameter()
         when {

@@ -156,7 +156,6 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   void testDeeplyNestedClosuresInGenericCalls() {
-    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
