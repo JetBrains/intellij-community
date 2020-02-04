@@ -2,12 +2,14 @@
 package com.intellij.internal
 
 import com.intellij.concurrency.JobLauncher
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Consumer
 import com.intellij.util.indexing.provided.SharedIndexChunkLocator
 import java.nio.file.Path
@@ -17,6 +19,9 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
                            entries: MutableCollection<out OrderEntry>,
                            descriptorProcessor: Consumer<in SharedIndexChunkLocator.ChunkDescriptor>,
                            indicator: ProgressIndicator) {
+    if (ApplicationManager.getApplication().isUnitTestMode) return
+    if (!Registry.`is`("shared.indexes.download")) return
+
     //TODO: it should cache the known objects to return them offline first
     //TODO: what if I have a fresh index update for an already downloaded chunk?
 

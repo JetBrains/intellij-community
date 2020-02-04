@@ -1987,6 +1987,10 @@
     <registryKey key="shared.indexes.url"
                  defaultValue="https://idea-indexes-cdn.s3-eu-west-1.amazonaws.com/"
                  description="Shared Indexes download URL" />
+
+    <registryKey key="shared.indexes.download"
+                 defaultValue="false"
+                 description="Automatically download and use Shared JDK indexes?" />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
