@@ -19,9 +19,7 @@ import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.snapshot.IndexedHashesSupport
 import com.intellij.util.indexing.snapshot.OneRecordValueContainer
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystem
-import com.intellij.util.indexing.zipFs.UncompressedZipFileSystemProvider
 import junit.framework.AssertionFailedError
-import junit.framework.TestCase
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
@@ -54,7 +52,7 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
     })
 
     var readFileId: Int? = null
-    UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider()).use { zipFs ->
+    UncompressedZipFileSystem.create(indexZipPath).use { zipFs ->
       return ContentHashEnumerator(zipFs.getPath(CHUNK_NAME, "hashes")).use { hashEnumerator ->
         val idIndexChunk = SharedIndexChunk(zipFs.getPath(CHUNK_NAME), IdIndex.NAME, chunkId, hashEnumerator, 0)
         val findExtension = SharedIndexExtensions.findExtension(IdIndex.NAME.getExtension())
@@ -73,7 +71,7 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testSharedIndexHashes() {
     val indexZipPath = generateTestSharedIndex()
-    val indexFs = UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider())
+    val indexFs = UncompressedZipFileSystem.create(indexZipPath)
 
     val hashEnumerator = indexFs.getPath(CHUNK_NAME, "hashes")
 
@@ -88,7 +86,7 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testSharedIndexLayout() {
     val indexZipPath = generateTestSharedIndex()
-    val actualFiles = UncompressedZipFileSystem(indexZipPath, UncompressedZipFileSystemProvider()).use {
+    val actualFiles = UncompressedZipFileSystem.create(indexZipPath).use {
       val root = it.rootDirectories.first()
       Files.walk(root).map { p -> p.toString() }.sorted().collect(Collectors.joining("\n")).trimStart()
     }

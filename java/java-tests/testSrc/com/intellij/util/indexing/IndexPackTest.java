@@ -14,7 +14,6 @@ import com.intellij.util.indexing.impl.ReadOnlyIndexPack;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystem;
-import com.intellij.util.indexing.zipFs.UncompressedZipFileSystemProvider;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -74,7 +73,7 @@ public class IndexPackTest extends TestCase {
     indexMap2.putValue("key", Pair.create("value2", 3));
     indexMap2.putValue("key2", Pair.create("value2", 2));
 
-    try (UncompressedZipFileSystem fs = new UncompressedZipFileSystem(pack.toPath(), new UncompressedZipFileSystemProvider())) {
+    try (UncompressedZipFileSystem fs = UncompressedZipFileSystem.create(pack.toPath())) {
       MapReduceIndex<String, String, String> mm1 = createSplitStringIndex(fs.getPath("index1").resolve("index"), true);
       MapReduceIndex<String, String, String> mm2 = createSplitStringIndex(fs.getPath("index2").resolve("index"), true);
 
@@ -147,7 +146,7 @@ public class IndexPackTest extends TestCase {
       }
     }
 
-    try (UncompressedZipFileSystem fs = new UncompressedZipFileSystem(pack.toPath(), new UncompressedZipFileSystemProvider())) {
+    try (UncompressedZipFileSystem fs = UncompressedZipFileSystem.create(pack.toPath())) {
       PlatformTestUtil.startPerformanceTest("read", 2000, () -> {
         InvertedIndex<String, String, String> readIndex = createStringLengthIndex(fs.getPath("index", "index"), true);
         LongAdder recordCount = new LongAdder();
@@ -193,7 +192,7 @@ public class IndexPackTest extends TestCase {
       });
     }
 
-    try (UncompressedZipFileSystem fs = new UncompressedZipFileSystem(pack.toPath(), new UncompressedZipFileSystemProvider())) {
+    try (UncompressedZipFileSystem fs = UncompressedZipFileSystem.create(pack.toPath())) {
       PlatformTestUtil.startPerformanceTest("read", 6000, () -> {
 
         ReadOnlyIndexPack<String, String, String, InvertedIndex<String, String, String>> indexPack
