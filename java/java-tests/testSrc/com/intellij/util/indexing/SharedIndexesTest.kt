@@ -23,12 +23,12 @@ import com.intellij.util.indexing.hash.FileContentHashIndex
 import com.intellij.util.indexing.hash.FileContentHashIndexExtension
 import com.intellij.util.indexing.hash.HashBasedMapReduceIndex
 import com.intellij.util.indexing.hash.SharedIndexChunkConfiguration
-import com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.indexing.impl.ValueContainerImpl
+import com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
@@ -38,7 +38,10 @@ import java.nio.file.Path
 @SkipSlowTestLocally
 class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private val tempDirPath: Path by lazy { FileUtil.createTempDirectory("shared-indexes-test", "").toPath() }
+  private val indexZip: Path by lazy {
+    val tempDir = FileUtil.createTempDirectory("shared-indexes-test", "").toPath()
+    tempDir.resolve("index.zip")
+  }
 
   fun testSharedFileContentHashIndex() {
     val internalHashId = 123
@@ -109,8 +112,6 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
         }
       }
     """.trimIndent()).virtualFile
-
-      val indexZip = tempDirPath.resolve(tempDirPath.fileName.toString() + ".zip")
 
       val chunks = arrayListOf<IndexChunk>()
       chunks += IndexChunk(setOf(virtualFile), "test-shared-index.ijx")
