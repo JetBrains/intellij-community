@@ -6,6 +6,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +31,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return "Generate missed test methods";
+    return IdeBundle.message("generate.missed.test.methods");
   }
 
   @Override
@@ -77,7 +78,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
       .createPopupChooserBuilder(new ArrayList<>(testClasses))
       .setRenderer(new PsiClassListCellRenderer())
       .setItemChosenCallback((selectedClass) -> generateMissedTests((PsiClass)selectedClass, srcClass, editor))
-      .setTitle("Choose Test")
+      .setTitle(IdeBundle.message("choose.test"))
       .createPopup()
       .showInBestPositionFor(editor);
   }

@@ -34,7 +34,7 @@ public class UsageContextDataflowFromPanel extends UsageContextDataflowToPanel {
     @NotNull
     @Override
     public String getTabTitle() {
-      return "Dataflow from Here";
+      return UsageViewBundle.message("dataflow.from.here");
     }
   }
 

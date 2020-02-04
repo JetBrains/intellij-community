@@ -64,7 +64,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     @NotNull
     @Override
     public String getTabTitle() {
-      return "Dataflow to Here";
+      return UsageViewBundle.message("dataflow.to.here");
     }
   }
 

@@ -405,7 +405,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
         if (!resolveProcess.isDone()) return;
         log("Started to resolve " + files.size() + " files");
 
-        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Resolving files...", false) {
+        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, PsiBundle.message("resolving.files"), false) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             if (!ApplicationManagerEx.getApplicationEx().isDisposed()) {
@@ -445,7 +445,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
         if (!file.isDirectory() && toResolve(file, myProject)) {
           int fileId = getAbsId(file);
           int i = totalSize - toProcess.size();
-          indicator.setText(i + "/" + totalSize + ": Resolving " + file.getPresentableUrl());
+          indicator.setText(PsiBundle.message("0.1.resolving.2", i, totalSize, file.getPresentableUrl()));
           int[] forwardIds = processFile(file, fileId, indicator);
           if (forwardIds == null) {
             //queueUpdate(file);

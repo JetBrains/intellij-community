@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -492,7 +493,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     if (errorMessage != null) {
       final int result = Messages
-        .showOkCancelDialog(myProject, errorMessage + ". Update existing class?", CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        .showOkCancelDialog(myProject, IdeBundle.message("0.update.existing.class", errorMessage), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       if (result == Messages.CANCEL) {
         return;
       }

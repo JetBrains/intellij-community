@@ -17,6 +17,7 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,7 +56,7 @@ public class MissedTestsDialog extends DialogWrapper {
     mySourceClass = sourceClass;
     myTestClass = testClass;
     myDescriptor = descriptor;
-    setTitle("Create Missed Tests");
+    setTitle(IdeBundle.message("create.missed.tests"));
     init();
   }
 

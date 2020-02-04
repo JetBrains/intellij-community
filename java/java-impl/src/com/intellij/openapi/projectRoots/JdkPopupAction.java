@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.FileChooserAction;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,7 +34,7 @@ public class JdkPopupAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(JdkPopupAction.class);
 
   public JdkPopupAction() {
-    super("Show Quick list", "", AllIcons.General.AddJdk);
+    super(ProjectBundle.message("show.quick.list"), "", AllIcons.General.AddJdk);
   }
 
   @Override
@@ -74,7 +75,7 @@ public class JdkPopupAction extends AnAction {
       }
 
       ApplicationManager.getApplication().invokeLater(() -> showPopupMenu(e, jdkLocations, showInMiddle, component));
-    }, "Looking for JDK locations...", false, e.getProject(), component);
+    }, ProjectBundle.message("looking.for.jdk.locations"), false, e.getProject(), component);
   }
 
   private static boolean isEnabledInCurrentOS() {

@@ -185,8 +185,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static boolean askShouldSearchAccessors(@NotNull String fieldName) {
     return Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
                                        FindBundle.message("find.field.accessors.title"),
-                                       "&Include accessors",
-                                       "&Exclude accessors", Messages.getQuestionIcon()) == Messages.OK;
+                                       FindBundle.message("include.accessors"),
+                                       FindBundle.message("exclude.accessors"), Messages.getQuestionIcon()) == Messages.OK;
   }
 
   @Override

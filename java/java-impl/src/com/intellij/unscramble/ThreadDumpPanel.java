@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.*;
@@ -95,7 +97,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     });
 
     myFilterPanel = new JPanel(new BorderLayout());
-    myFilterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+    myFilterPanel.add(new JLabel(CommonBundle.message("filter") + ":"), BorderLayout.WEST);
     myFilterPanel.add(myFilterField);
     myFilterPanel.setVisible(false);
 
@@ -333,7 +335,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     private final Project myProject;
 
     private CopyToClipboardAction(List<? extends ThreadState> threadDump, Project project) {
-      super("Copy to Clipboard", "Copy whole thread dump to clipboard", PlatformIcons.COPY_ICON);
+      super(IdeBundle.message("copy.to.clipboard"), IdeBundle.message("copy.whole.thread.dump.to.clipboard"), PlatformIcons.COPY_ICON);
       myThreadDump = threadDump;
       myProject = project;
     }
@@ -347,14 +349,14 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       }
       CopyPasteManager.getInstance().setContents(new StringSelection(buf.toString()));
 
-      GROUP.createNotification("Full thread dump was successfully copied to clipboard", MessageType.INFO).notify(myProject);
+      GROUP.createNotification(IdeBundle.message("full.thread.dump.was.successfully.copied.to.clipboard"), MessageType.INFO).notify(myProject);
     }
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
-      super("Filter", "Show only threads containing a specific string", AllIcons.General.Filter);
+      super(CommonBundle.message("filter"), IdeBundle.message("show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
     }
 
     @Override
@@ -375,7 +377,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   private class MergeStacktracesAction extends ToggleAction implements DumbAware {
     private MergeStacktracesAction() {
-      super("Merge Identical Stacktraces", "Group threads with identical stacktraces", AllIcons.Actions.Collapseall);
+      super(IdeBundle.message("merge.identical.stacktraces"), IdeBundle.message("group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -53,7 +54,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       final List<TestFramework> frameworks = TestIntegrationUtils.findSuitableFrameworks(targetClass);
       final TestIntegrationUtils.MethodKind methodKind = ((MyHandler)getHandler()).myMethodKind;
       if (!frameworks.isEmpty()) {
-        return new AnAction("Edit Template") {
+        return new AnAction(IdeBundle.message("edit.template")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             chooseAndPerform(editor, frameworks, framework -> {
@@ -141,7 +142,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       .createPopupChooserBuilder(frameworks)
       .setRenderer(cellRenderer)
       .setNamerForFiltering(o -> o.getName())
-      .setTitle("Choose Framework")
+      .setTitle(IdeBundle.message("choose.framework"))
       .setItemChosenCallback(consumer)
       .setMovable(true)
       .createPopup().showInBestPositionFor(editor);
