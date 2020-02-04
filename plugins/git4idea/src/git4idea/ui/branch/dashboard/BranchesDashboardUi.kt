@@ -17,7 +17,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.StatusText.getDefaultEmptyText
@@ -67,7 +67,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val branchesTreeWithLogPanel = simplePanel()
   private val mainPanel = simplePanel().apply { DataManager.registerDataProvider(this, uiController) }
   private val branchesSearchFieldPanel = simplePanel()
-  private val branchesSearchField = Wrapper(tree.installSearchField(JBUI.Borders.emptyLeft(5)))
+  private val branchesSearchField = NonOpaquePanel(tree.installSearchField(JBUI.Borders.emptyLeft(5))).apply(UIUtil::setNotOpaqueRecursively)
 
   private val treeSelectionListener = TreeSelectionListener {
     if (!branchesTreeWithToolbarPanel.isVisible) return@TreeSelectionListener
