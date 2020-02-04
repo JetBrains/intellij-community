@@ -33,7 +33,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   fun addRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl) {
     val filePath = runConfig.pathIfStoredInArbitraryFile
     if (!runConfig.isStoreInArbitraryFileInProject() || filePath == null) {
-      LOG.error("Unexpected run configuration. Level: ${runConfig.level}, path: $filePath")
+      LOG.error("Unexpected run configuration, path: $filePath")
       return
     }
 

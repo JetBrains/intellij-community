@@ -54,7 +54,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   val manager: RunManagerImpl,
   private var _configuration: RunConfiguration? = null,
   private var isTemplate: Boolean = false,
-  var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE
+  private var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE
 ) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
 
   @Deprecated("isSingleton parameter removed", level = DeprecationLevel.ERROR)
