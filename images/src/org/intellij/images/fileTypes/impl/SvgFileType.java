@@ -15,6 +15,7 @@
  */
 package org.intellij.images.fileTypes.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
 import icons.ImagesIcons;
@@ -36,13 +37,13 @@ public final class SvgFileType extends XmlLikeFileType implements UIBasedFileTyp
   @NotNull
   @Override
   public String getName() {
-    return "SVG";
+    return IdeBundle.message("svg");
   }
 
   @NotNull
   @Override
   public String getDescription() {
-    return "Scalable Vector Graphics";
+    return IdeBundle.message("scalable.vector.graphics");
   }
 
   @NotNull

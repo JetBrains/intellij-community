@@ -15,6 +15,7 @@
  */
 package org.intellij.images.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.ui.ImageComponentDecorator;
@@ -46,6 +47,6 @@ public final class ToggleTransparencyChessboardAction extends ToggleAction {
     super.update(e);
     ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
     e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
-    e.getPresentation().setText(isSelected(e) ? "Hide Chessboard" : "Show Chessboard");
+    e.getPresentation().setText(isSelected(e) ? IdeBundle.message("hide.chessboard") : IdeBundle.message("show.chessboard"));
   }
 }

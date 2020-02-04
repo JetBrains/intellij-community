@@ -4,6 +4,7 @@ package org.intellij.images.editor.actions;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -91,7 +92,7 @@ public class BackgroundImageDialog extends DialogWrapper {
   public BackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
     super(project, true);
     myProject = project;
-    setTitle("Background Image");
+    setTitle(IdeBundle.message("background.image"));
     myEditorPreview = createEditorPreview();
     myIdePreview = createFramePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
@@ -111,7 +112,7 @@ public class BackgroundImageDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    return ArrayUtil.append(super.createActions(), new AbstractAction("Clear and Close") {
+    return ArrayUtil.append(super.createActions(), new AbstractAction(IdeBundle.message("clear.and.close")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         doClearAction();
@@ -459,8 +460,8 @@ public class BackgroundImageDialog extends DialogWrapper {
   }
 
   private static void initFlipPanel(@NotNull JPanel p, @NotNull JBCheckBox flipHorCb, @NotNull JBCheckBox flipVerCb) {
-    flipHorCb.setToolTipText("Flip vertically");
-    flipVerCb.setToolTipText("Flip horizontally");
+    flipHorCb.setToolTipText(IdeBundle.message("flip.vertically"));
+    flipVerCb.setToolTipText(IdeBundle.message("flip.horizontally"));
     p.setLayout(new GridLayout(1, 2, 1, 1));
     Color color = getSelectionBackground();
     JBPanelWithEmptyText h = addClickablePanel(p, flipHorCb, color);

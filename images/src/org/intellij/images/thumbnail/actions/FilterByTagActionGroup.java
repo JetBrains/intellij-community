@@ -16,6 +16,7 @@
 
 package org.intellij.images.thumbnail.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -49,7 +50,8 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         ImageTagManager tagManager = ImageTagManager.getInstance(project);
         e.getPresentation().setVisible(view != null && !tagManager.getAllTags().isEmpty());
         TagFilter[] filters = view != null ? view.getTagFilters() : null;
-        e.getPresentation().setText(filters == null ? "All" : StringUtil.join(filters, filter -> filter.getDisplayName(), ","));
+        e.getPresentation().setText(filters == null ? CommonBundle.message("all")
+                                                    : StringUtil.join(filters, filter -> filter.getDisplayName(), ","));
         e.getPresentation().setIcon(AllIcons.Duplicates.SendToTheRight);
     }
 
