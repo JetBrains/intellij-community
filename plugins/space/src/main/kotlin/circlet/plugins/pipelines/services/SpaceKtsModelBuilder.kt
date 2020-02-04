@@ -137,7 +137,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                         allowNotReadyDsl = false)
 
                     val scriptResolveResult = ScriptResolveResult.readFromFileOrEmpty(resolveResultPath)
-                    val config = DslScriptExecutor().evaluateModel(targetJar, scriptResolveResult.classpath, "", "")
+                    val config = DslScriptExecutor().evaluateModel(targetJar, scriptResolveResult.classpath)
 
                     _error.value = null
                     _config.value = config

@@ -93,9 +93,7 @@ class SmokeTest : HeavyPlatformTestCase() {
     }
 }
 
-class TestProjectExecutor(override val listener: ProjectElementListener) : ProjectExecutor {
-    override val vcsBranch: String = "test"
-}
+class TestProjectExecutor(override val listener: ProjectElementListener) : ProjectExecutor
 
 private const val myTask = """job("myTask") {
     this.parallel {
