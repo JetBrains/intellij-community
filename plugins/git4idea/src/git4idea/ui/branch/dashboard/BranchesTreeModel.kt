@@ -23,11 +23,11 @@ internal data class BranchNodeDescriptor(val type: NodeType,
                                          val displayName: String? = branchInfo?.branchName,
                                          val parent: BranchNodeDescriptor? = null) {
   override fun toString(): String {
-    val suffix = getText()
+    val suffix = branchInfo?.branchName ?: displayName
     return if (suffix != null) "$type:$suffix" else "$type"
   }
 
-  fun getText() = displayName ?: branchInfo?.branchName
+  fun getDisplayText() = displayName ?: branchInfo?.branchName
 }
 
 internal enum class NodeType {
@@ -42,7 +42,7 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
       NodeType.ROOT -> "root"
       NodeType.LOCAL_ROOT -> "Local"
       NodeType.REMOTE_ROOT -> "Remote"
-      else -> nodeDescriptor.getText() ?: super.toString()
+      else -> nodeDescriptor.getDisplayText() ?: super.toString()
     }
   }
 
