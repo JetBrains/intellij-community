@@ -38,7 +38,7 @@ public interface TargetEnvironmentRequest {
   Volume createUploadRoot(@Nullable String remoteRootPath, boolean temporary);
 
   @NotNull
-  DownloadableVolume createDownloadRoot(@NotNull String remoteRootPath);
+  DownloadableVolume createDownloadRoot(@Nullable String remoteRootPath);
 
   //Iterable<? extends Volume> getVolumes();
 

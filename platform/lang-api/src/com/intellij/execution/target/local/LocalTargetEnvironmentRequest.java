@@ -47,8 +47,12 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
 
   @Override
   @NotNull
-  public DownloadableVolume createDownloadRoot(@NotNull String remoteRootPath) {
-    return myDownloadRoots.computeIfAbsent(remoteRootPath, path -> new LocalDownloadVolume(this, path));
+  public DownloadableVolume createDownloadRoot(@Nullable String remoteRootPath) {
+    String id = nextSyntheticId();
+    if (remoteRootPath == null) {
+      remoteRootPath = id;
+    }
+    return myDownloadRoots.computeIfAbsent(remoteRootPath, path -> new LocalDownloadVolume(this, id, path));
   }
 
   @NotNull
@@ -101,8 +105,8 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
   private static class LocalDownloadVolume extends LocalUploadVolume implements TargetEnvironmentRequest.DownloadableVolume {
     private final String myRootPath;
 
-    LocalDownloadVolume(@NotNull LocalTargetEnvironmentRequest request, @NotNull String rootPath) {
-      super(request, LocalDownloadVolume.class.getSimpleName() + ":" + rootPath);
+    LocalDownloadVolume(@NotNull LocalTargetEnvironmentRequest request, @NotNull String volumeId, @NotNull String rootPath) {
+      super(request, volumeId);
       myRootPath = rootPath;
     }
 
