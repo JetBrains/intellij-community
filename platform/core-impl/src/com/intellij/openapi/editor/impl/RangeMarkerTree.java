@@ -158,7 +158,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
           reTargetMarkersOnChange(e);
         }
         IntervalNode<T> root = getRoot();
-        assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength();
+        assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength() : "Root: "+root+"; root.maxEnd="+root.maxEnd+"; root.delta="+root.delta+"; e.getDocument().getTextLength()="+e.getDocument().getTextLength()+"; event: "+e;
       }
     }
     finally {
