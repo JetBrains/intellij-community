@@ -501,7 +501,11 @@ public class JavaCompletionSorting {
       type = callItem.getSubstitutor().substitute(type);
     }
 
-    return type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeParameter;
+    if (type instanceof PsiClassType) {
+      PsiClass target = ((PsiClassType)type).resolve();
+      return target instanceof PsiTypeParameter && ((PsiTypeParameter)target).getOwner() instanceof PsiMethod;
+    }
+    return false;
   }
 
   private static class PreferSimple extends LookupElementWeigher {
