@@ -133,19 +133,6 @@ public class JavaValuePresentation extends XValueExtendedPresentation implements
     public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
       if (!fragment.isEmpty()) isEmpty = false;
     }
-
-    @Override
-    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-      append(fragment, attributes);
-    }
-
-    @Override
-    public void setIcon(@Nullable Icon icon) {
-    }
-
-    @Override
-    public void setToolTipText(@Nullable String text) {
-    }
   }
 
   private static String truncateToMaxLength(@NotNull String value) {
