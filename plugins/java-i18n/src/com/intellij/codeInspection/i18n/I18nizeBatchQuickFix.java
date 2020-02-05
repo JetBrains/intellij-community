@@ -4,9 +4,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInspection.BatchQuickFix;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -28,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -36,6 +36,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.ItemRemovable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
               bean.getExpressions().add(literalExpression);
             }
             else {
-              String key = I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null);
+              String key = ObjectUtils.notNull(suggestKeyByPlace(literalExpression),
+                                               I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
               ArrayList<PsiElement> elements = new ArrayList<>();
               elements.add(psiElement);
               List<UExpression> uExpressions = new ArrayList<>();
@@ -92,7 +94,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         else if (distinct.add(concatenation)) {
           ArrayList<PsiExpression> args = new ArrayList<>();
           String value = I18nizeConcatenationQuickFix.getValueString(concatenation, args);
-          String key = I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null);
+          String key = ObjectUtils.notNull(suggestKeyByPlace(literalExpression),
+                                           I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
           keyValuePairs.put(value + concatenation.hashCode(),
                             new ReplacementBean(key,
                                                 value,
@@ -168,6 +171,65 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     }
   }
 
+  /**
+   * If expression is passed to ProblemsHolder#registerProblem, suggest inspection.class.name.description key
+   * If expression is returned from getName/getFamilyName of the LocalQuickFix, suggest quick.fix.text/family.name
+   */
+  @Nullable
+  private static String suggestKeyByPlace(@NotNull UExpression expression) {
+    UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
+    if (parent instanceof UPolyadicExpression) {
+      parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
+    }
+    if (parent == null) return null;
+    UCallExpression callExpression = UastUtils.getUCallExpression(parent);
+    if (callExpression != null) {
+      PsiMethod method = callExpression.resolve();
+      if (method != null) {
+        if ("registerProblem".equals(method.getName()) &&
+            InheritanceUtil.isInheritor(method.getContainingClass(), ProblemsHolder.class.getName())) {
+          PsiClass containingClass = PsiTreeUtil.getParentOfType(callExpression.getSourcePsi(), PsiClass.class);
+          while (containingClass != null) {
+            if (InheritanceUtil.isInheritor(containingClass, InspectionProfileEntry.class.getName())) {
+              String containingClassName = containingClass.getName();
+              return containingClassName == null
+                     ? null
+                     : "inspection." + toPropertyName(InspectionProfileEntry.getShortName(containingClassName)) + ".description";
+            }
+            containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
+          }
+        }
+      }
+      return null;
+    }
+
+    final UElement returnStmt =
+      UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
+    if (returnStmt instanceof UReturnExpression) {
+      UMethod uMethod = UastUtils.getParentOfType(expression, UMethod.class);
+      if (uMethod != null) {
+        UElement uClass = uMethod.getUastParent();
+        if (uClass instanceof UClass && InheritanceUtil.isInheritor(((UClass)uClass), LocalQuickFix.class.getName())) {
+          String name = ((UClass)uClass).getName();
+          if (name != null) {
+            if ("getName".equals(uMethod.getName())) {
+              return toPropertyName(name) + ".text";
+            }
+            if ("getFamilyName".equals(uMethod.getName())) {
+              return toPropertyName(name) + ".family.name";
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private static String toPropertyName(String name) {
+    return StringUtil.join(NameUtilCore.splitNameIntoWords(name), s -> StringUtil.decapitalize(s), ".");
+  }
+
   private static class I18NBatchDialog extends DialogWrapper {
     private static final @NonNls String LAST_USED_PROPERTIES_FILE = "LAST_USED_PROPERTIES_FILE";
 
@@ -205,7 +267,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             for (int i = 0; i < myKeyValuePairs.size(); i++) {
               ReplacementBean keyValuePair = myKeyValuePairs.get(i);
               ReplacementBean updated =
-                new ReplacementBean(I18nizeQuickFixDialog.suggestUniquePropertyKey(keyValuePair.myValue, keyValuePair.myKey, propertiesFile),
+                new ReplacementBean(ObjectUtils.notNull(suggestKeyByPlace(keyValuePair.getExpressions().get(0)),
+                                                        I18nizeQuickFixDialog.suggestUniquePropertyKey(keyValuePair.myValue, keyValuePair.myKey, propertiesFile)),
                                     keyValuePair.myValue,
                                     keyValuePair.myExpressions,
                                     keyValuePair.myPsiElements,
