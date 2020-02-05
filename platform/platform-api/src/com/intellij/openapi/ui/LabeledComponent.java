@@ -61,7 +61,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     return StringUtil.endsWithChar(text, ':') ? text.substring(0, text.length() - 1) : text;
   }
 
-  public void setComponentClass(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+  public void setComponentClass(@NonNls String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     if (className != null) {
       @SuppressWarnings("unchecked") Class<Comp> aClass = (Class<Comp>)getClass().getClassLoader().loadClass(className);
       setComponent(aClass.newInstance());
@@ -85,6 +85,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     }
   }
 
+  @NonNls
   public String getComponentClass() {
     return myComponent == null ? null : getComponent().getClass().getName();
   }
