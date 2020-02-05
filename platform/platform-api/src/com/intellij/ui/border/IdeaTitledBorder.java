@@ -6,6 +6,7 @@ import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -21,7 +22,7 @@ public class IdeaTitledBorder extends TitledBorder {
   private final Insets outsideInsets;
   private boolean myShowLine = true;
 
-  public IdeaTitledBorder(String title, int indent, Insets insets) {
+  public IdeaTitledBorder(@Nls(capitalization = Nls.Capitalization.Title) String title, int indent, Insets insets) {
     super(title);
     titledSeparator = new TitledSeparator(title);
     titledSeparator.setText(title);
@@ -32,7 +33,7 @@ public class IdeaTitledBorder extends TitledBorder {
   }
 
   @Override
-  public void setTitle(String title) {
+  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     super.setTitle(title);
     titledSeparator.setText(title);
   }

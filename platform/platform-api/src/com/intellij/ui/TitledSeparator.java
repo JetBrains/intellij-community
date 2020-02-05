@@ -5,6 +5,7 @@ package com.intellij.ui;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +38,11 @@ public class TitledSeparator extends JPanel {
     this("");
   }
 
-  public TitledSeparator(String text) {
+  public TitledSeparator(@Nls(capitalization = Nls.Capitalization.Title) String text) {
     this(text, null);
   }
 
-  public TitledSeparator(String text, @Nullable JComponent labelFor) {
+  public TitledSeparator(@Nls(capitalization = Nls.Capitalization.Title) String text, @Nullable JComponent labelFor) {
     mySeparator.setForeground(ENABLED_SEPARATOR_FOREGROUND);
 
     setLayout(new GridBagLayout());
