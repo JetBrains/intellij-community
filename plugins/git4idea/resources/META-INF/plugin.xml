@@ -291,9 +291,6 @@
     <registryKey key="git.commit.completion.fixup.squash" defaultValue="false"
                  description="Provide completion for fixup and squash prefixes in commit message field" restartRequired="false"/>
 
-    <registryKey key="git.interactive.rebase.new.dialog" defaultValue="true"
-                 description="Show new Interactive Rebase Dialog" restartRequired="false"/>
-
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
                  description="Use Log to collect Rebase Entries"/>
 

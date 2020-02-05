@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +37,7 @@ import static git4idea.DialogManager.showOkCancelDialog;
 import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
 
 /**
- * The handler for rebase editor request. The handler shows the {@link GitRebaseEditor}
+ * The handler for rebase editor request. The handler shows the {@link GitInteractiveRebaseDialog}
  * dialog with the specified file. If user accepts the changes, it saves file and returns 0,
  * otherwise it just returns error code.
  */
@@ -66,21 +65,15 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   public int editCommits(@NotNull String path) {
     try {
       if (myRebaseEditorShown) {
-        if (useNewInteractiveRebaseDialog()) {
-          String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
-          String originalMessage = FileUtil.loadFile(new File(path), encoding);
-          Pair<String, String> messageMapping = myMessagesMapping.poll();
-          if (messageMapping == null || !originalMessage.startsWith(messageMapping.first)) {
-            myUnstructuredEditorCancelled = !handleUnstructuredEditor(path);
-            return myUnstructuredEditorCancelled ? ERROR_EXIT_CODE : 0;
-          }
-          FileUtil.writeToFile(new File(path), messageMapping.second.getBytes(Charset.forName(encoding)));
-          return 0;
-        }
-        else {
+        String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
+        String originalMessage = FileUtil.loadFile(new File(path), encoding);
+        Pair<String, String> messageMapping = myMessagesMapping.poll();
+        if (messageMapping == null || !originalMessage.startsWith(messageMapping.first)) {
           myUnstructuredEditorCancelled = !handleUnstructuredEditor(path);
           return myUnstructuredEditorCancelled ? ERROR_EXIT_CODE : 0;
         }
+        FileUtil.writeToFile(new File(path), messageMapping.second.getBytes(Charset.forName(encoding)));
+        return 0;
       }
       else {
         setRebaseEditorShown();
@@ -127,32 +120,19 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     }
   }
 
-  protected List<? extends GitRebaseEntry> collectNewEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
-    return showInteractiveRebaseEditor(entries);
-  }
-
   @Nullable
-  private List<? extends GitRebaseEntry> showInteractiveRebaseEditor(@NotNull List<GitRebaseEntry> entries) throws VcsException {
+  protected List<? extends GitRebaseEntry> collectNewEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
     Ref<List<? extends GitRebaseEntry>> newText = Ref.create();
     List<GitRebaseEntryWithDetails> entriesWithDetails = loadDetailsForEntries(entries);
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (useNewInteractiveRebaseDialog()) {
-        newText.set(showNewInteractiveRebaseDialog(entriesWithDetails));
-      }
-      else {
-        GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entriesWithDetails);
-        DialogManager.show(editor);
-        if (editor.isOK()) {
-          newText.set(editor.getEntries());
-        }
-      }
+      newText.set(showInteractiveRebaseDialog(entriesWithDetails));
     });
     return newText.get();
   }
 
   @Nullable
-  private List<? extends GitRebaseEntry> showNewInteractiveRebaseDialog(List<GitRebaseEntryWithDetails> entriesWithDetails) {
+  private List<? extends GitRebaseEntry> showInteractiveRebaseDialog(List<GitRebaseEntryWithDetails> entriesWithDetails) {
     GitInteractiveRebaseDialog editor = new GitInteractiveRebaseDialog(myProject, myRoot, entriesWithDetails);
     DialogManager.show(editor);
     if (editor.isOK()) {
@@ -169,10 +149,6 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
         myMessagesMapping.add(new Pair<>(newEntry.getEntry().getCommitDetails().getFullMessage(), newEntry.getNewMessage()));
       }
     }
-  }
-
-  private static boolean useNewInteractiveRebaseDialog() {
-    return Registry.is("git.interactive.rebase.new.dialog");
   }
 
   @NotNull
