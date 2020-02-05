@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -60,7 +60,8 @@ public class EditorFactoryImpl extends EditorFactory {
         Disposer.register(project, () -> {
           Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
           boolean isLastProjectClosed = openProjects.length == 0;
-          validateEditorsAreReleased(project, isLastProjectClosed);
+          // EditorTextField.releaseEditorLater defer releasing its editor; invokeLater to avoid false positives about such editors.
+          ApplicationManager.getApplication().invokeLater(() -> validateEditorsAreReleased(project, isLastProjectClosed));
         });
       }
     });
