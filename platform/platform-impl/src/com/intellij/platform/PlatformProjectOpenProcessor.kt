@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform
 
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.ActivityCategory
@@ -169,50 +170,52 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       }
 
-      val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, file)
       var result: PrepareProjectResult? = null
-      val isCompleted = frameAllocator.run {
-        var project = options.project
-        if (project == null) {
-          var cannotConvertException: CannotConvertException? = null
-          try {
-            activity.end()
-            result = prepareProject(file, options, projectDir!!)
-          }
-          catch (e: ProcessCanceledException) {
-            throw e
-          }
-          catch (e: CannotConvertException) {
-            LOG.info(e)
-            cannotConvertException = e
-            result = null
-          }
-          catch (e: Exception) {
-            result = null
-            LOG.error(e)
-          }
-
-          project = result?.project
+      runInAutoSaveDisabledMode {
+        val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, file)
+        val isCompleted = frameAllocator.run {
+          var project = options.project
           if (project == null) {
-            frameAllocator.projectNotLoaded(cannotConvertException)
-            return@run
+            var cannotConvertException: CannotConvertException? = null
+            try {
+              activity.end()
+              result = prepareProject(file, options, projectDir!!)
+            }
+            catch (e: ProcessCanceledException) {
+              throw e
+            }
+            catch (e: CannotConvertException) {
+              LOG.info(e)
+              cannotConvertException = e
+              result = null
+            }
+            catch (e: Exception) {
+              result = null
+              LOG.error(e)
+            }
+
+            project = result?.project
+            if (project == null) {
+              frameAllocator.projectNotLoaded(cannotConvertException)
+              return@run
+            }
+          }
+          else {
+            result = PrepareProjectResult(project, null)
+          }
+
+          frameAllocator.projectLoaded(project)
+          if (ProjectManagerEx.getInstanceEx().openProject(project)) {
+            frameAllocator.projectOpened(project)
+          }
+          else {
+            result = null
           }
         }
-        else {
-          result = PrepareProjectResult(project, null)
-        }
 
-        frameAllocator.projectLoaded(project)
-        if (ProjectManagerEx.getInstanceEx().openProject(project)) {
-          frameAllocator.projectOpened(project)
-        }
-        else {
+        if (!isCompleted) {
           result = null
         }
-      }
-
-      if (!isCompleted) {
-        result = null
       }
 
       val project = result?.project
@@ -378,7 +381,7 @@ private fun checkExistingProjectOnOpen(projectToClose: Project, callback: Projec
   return false
 }
 
-private fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) =
+private fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) {
   StartupManager.getInstance(project).registerPostStartupDumbAwareActivity {
     ApplicationManager.getApplication().invokeLater(Runnable {
       if (project.isDisposed || !Files.exists(file)) {
@@ -386,12 +389,16 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
       }
 
       val virtualFile = ProjectUtil.getFileAndRefresh(file) ?: return@Runnable
-      val navigatable = if (line > 0) OpenFileDescriptor(project, virtualFile, line - 1,
-        Math.max(column, 0))
-      else PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
+      val navigatable = if (line > 0) {
+        OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0))
+      }
+      else {
+        PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
+      }
       navigatable.navigate(true)
     }, ModalityState.NON_MODAL, project.disposed)
   }
+}
 
 private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project? {
   val conversionResult = runActivity("project conversion", category = ActivityCategory.MAIN) {
