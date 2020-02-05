@@ -42,7 +42,9 @@ public class BackwardReferenceIndexUtil {
       for (JavacDef def : defs) {
         if (def instanceof JavacDef.JavacClassDef) {
           JavacRef.JavacClass sym = (JavacRef.JavacClass)def.getDefinedElement();
-
+          if (sym.isPackageInfo()) {
+            continue; // skip special 'package-info' class
+          }
           final CompilerRef.CompilerClassHierarchyElementDef aClass;
           if (sym.isAnonymous()) {
             final JavacRef[] classes = ((JavacDef.JavacClassDef)def).getSuperClasses();
