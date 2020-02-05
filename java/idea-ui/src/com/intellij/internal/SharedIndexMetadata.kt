@@ -42,14 +42,14 @@ object SharedIndexMetadata {
       root.put("metadata_version", METADATA_VERSION)
 
       root.putObject("sources").also { sources ->
-        sources.put("os", IndexInfrastructureVersion.getOs().osName)
+        sources.put("os", IndexInfrastructureVersion.Os.getOs().osName)
         sources.put("hash", sourcesHash)
         sources.put("kind", indexKind)
         sources.put("name", indexName)
       }
 
       root.putObject("sources").also { build ->
-        build.put("os", IndexInfrastructureVersion.getOs().osName)
+        build.put("os", IndexInfrastructureVersion.Os.getOs().osName)
         build.put("os_name", SystemInfo.getOsNameAndVersion())
         build.put("intellij_version", ApplicationInfo.getInstance().fullVersion)
         build.put("intellij_build", ApplicationInfo.getInstance().build.toString())

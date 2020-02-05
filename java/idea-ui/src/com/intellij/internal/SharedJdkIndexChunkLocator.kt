@@ -52,6 +52,8 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
 
       descriptorProcessor.consume(object: SharedIndexChunkLocator.ChunkDescriptor {
         override fun getChunkUniqueId() = "jdk-$sdkHash-${info.version.weakVersionHash}"
+        override fun getSupportedInfrastructureVersion() = info.version
+
         override fun getOrderEntries() = entries
 
         override fun downloadChunk(targetFile: Path, indicator: ProgressIndicator) {

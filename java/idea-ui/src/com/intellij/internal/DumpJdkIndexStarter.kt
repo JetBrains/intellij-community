@@ -97,7 +97,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val indexingStartTime = System.currentTimeMillis()
 
     LOG.info("Collecting SDK roots...")
-    val os = IndexInfrastructureVersion.getOs()
+    val os = IndexInfrastructureVersion.Os.getOs()
 
     //it is up to SdkType to decide on the best SDK contents fingerprint/hash
     val hash = runAndCatchNotNull("compute JDK fingerprint") {
