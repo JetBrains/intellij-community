@@ -10,10 +10,11 @@ import java.io.InputStream;
 /**
  * This implementation is <em>not</em> thread safe.
  */
+@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public class CountingInputStream extends FilterInputStream {
 
-  private long myBytesRead = 0;
-  private long myMark = 1;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private long myBytesRead = 0;
+  private long myMark = -1;
 
   public CountingInputStream(@NotNull InputStream inputStream) {
     super(inputStream);
