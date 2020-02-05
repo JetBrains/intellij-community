@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,8 +33,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.IntUnaryOperator;
 
 public class ShowFontsUsedByEditorAction extends EditorAction {
@@ -72,7 +76,8 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
       Set<String> result = new TreeSet<>();
       Document document = editor.getDocument();
       CharSequence text = document.getImmutableCharSequence();
-      IterationState it = new IterationState(editor, 0, document.getTextLength(), null, false, true, false, false);
+      int textLength = document.getTextLength();
+      IterationState it = new IterationState(editor, 0, textLength, null, false, true, false, false);
       FontFallbackIterator ffi = new FontFallbackIterator().setPreferredFonts(editor.getColorsScheme().getFontPreferences());
       while (!it.atEnd()) {
         ffi.setFontStyle(it.getMergedAttributes().getFontType());
@@ -85,6 +90,7 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
           }
         }
         collectFontNames(result, text, start, end, ffi);
+        setProgress((double)end / textLength);
         it.advance();
       }
       return result;
@@ -98,6 +104,7 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
       if (startOffset >= endOffset) return;
       ffi.start(text, startOffset, endOffset);
       while (!ffi.atEnd()) {
+        ProgressManager.checkCanceled();
         Font font = ffi.getFont();
         List<String> components = null;
         try {
@@ -113,6 +120,13 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
           result.addAll(components);
         }
         ffi.advance();
+      }
+    }
+
+    private static void setProgress(double progress) {
+      ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      if (indicator != null) {
+        indicator.setFraction(progress);
       }
     }
 
