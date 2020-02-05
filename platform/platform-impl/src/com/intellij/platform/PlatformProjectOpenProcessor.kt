@@ -54,6 +54,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   }
 
   companion object {
+    @JvmField
     val PROJECT_OPENED_BY_PLATFORM_PROCESSOR = Key.create<Boolean>("PROJECT_OPENED_BY_PLATFORM_PROCESSOR")
 
     @JvmStatic
@@ -135,8 +136,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         if (project != null && file !== baseDir && !Files.isDirectory(file)) {
           openFileFromCommandLine(project, file, options.line, options.column)
         }
-
-        project?.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, java.lang.Boolean.TRUE)
         return project
       }
     }

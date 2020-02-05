@@ -54,6 +54,8 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
+import static com.intellij.platform.PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR;
+
 public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
@@ -166,6 +168,10 @@ public final class ProjectUtil {
     Project project = provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
     if (project == null) {
       return null;
+    }
+
+    if (provider instanceof PlatformProjectOpenProcessor) {
+      project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
     }
 
     StartupManager.getInstance(project).runAfterOpened(() -> {
