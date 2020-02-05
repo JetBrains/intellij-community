@@ -42,7 +42,6 @@ import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -95,13 +94,13 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertTrue(dir.isValid());
     assertEquals(0, dir.getChildren().length);
 
-    VirtualFile child = runInEdtAndGet(() -> WriteAction.compute(() -> dir.createChildData(this, "child.txt")));
+    VirtualFile child = WriteAction.computeAndWait(() -> dir.createChildData(this, "child.txt"));
     assertTrue(child.isValid());
     assertTrue(new File(child.getPath()).exists());
     assertEquals(1, dir.getChildren().length);
     assertEquals(child, dir.getChildren()[0]);
 
-    runInEdtAndWait(() -> WriteAction.run(() -> child.delete(this)));
+    WriteAction.runAndWait(() -> child.delete(this));
     assertFalse(child.isValid());
     assertFalse(new File(child.getPath()).exists());
     assertEquals(0, dir.getChildren().length);
@@ -346,13 +345,13 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       uncRootFile.refresh(false, false);
       assertThat(testFile1.contentsToByteArray(false)).isEqualTo(data);
 
-      VirtualFile testFile2 = runInEdtAndGet(() -> WriteAction.compute(() -> uncRootFile.createChildData(this, "test2.txt")));
+      VirtualFile testFile2 = WriteAction.computeAndWait(() -> uncRootFile.createChildData(this, "test2.txt"));
       Path testLocalPath2 = tempDir.getRoot().toPath().resolve(testFile2.getName());
       assertThat(testLocalPath2).isRegularFile();
       uncRootFile.refresh(false, false);
       assertTrue("invalid: " + testFile1, testFile1.isValid());
       assertTrue("invalid: " + testFile2, testFile2.isValid());
-      runInEdtAndWait(() -> WriteAction.run(() -> testFile2.delete(this)));
+      WriteAction.runAndWait(() -> testFile2.delete(this));
       assertTrue("invalid: " + testFile1, testFile1.isValid());
       assertFalse("still valid: " + testFile2, testFile2.isValid());
       assertThat(testLocalPath2).doesNotExist();
@@ -401,7 +400,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
       VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      runInEdtAndWait(() -> WriteAction.run(() -> file.setBinaryContent(testData, 0, 0, requestor)));
+      WriteAction.runAndWait(() -> file.setBinaryContent(testData, 0, 0, requestor));
       assertTrue(file.getLength() > 0);
 
       if (SystemInfo.isWindows) {
@@ -547,7 +546,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
-    runInEdtAndWait(() -> WriteAction.run(() -> vFile.rename(LocalFileSystemTest.class, "FILE.txt")));
+    WriteAction.runAndWait(() -> vFile.rename(LocalFileSystemTest.class, "FILE.txt"));
 
     assertEquals("FILE.txt", vFile.getName());
     assertThat(home.list()).containsExactly("FILE.txt");
