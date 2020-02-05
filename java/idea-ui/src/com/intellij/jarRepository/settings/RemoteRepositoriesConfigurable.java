@@ -20,6 +20,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -186,9 +187,11 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
       @Override
       public void actionPerformed(ActionEvent e) {
         final T value = list.getSelectedValue();
+        @NonNls String defaultValue = "https://";
+        String initialValue = value == null ? defaultValue : adapter.toPresentation(value);
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, IdeBundle.message("add.0", modificationDialogHint), Messages.getQuestionIcon(), value == null ? IdeBundle
-            .message("https") : adapter.toPresentation(value), new URLInputVaslidator()
+          modificationDialogTitle, IdeBundle.message("add.0", modificationDialogHint), Messages.getQuestionIcon(),
+          initialValue, new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
           model.add(adapter.create(text));
