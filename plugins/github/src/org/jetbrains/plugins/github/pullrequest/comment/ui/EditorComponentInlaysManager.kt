@@ -45,6 +45,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
     return EditorEmbeddedComponentManager.getInstance()
       .addComponent(editor, wrappedComponent,
                     EditorEmbeddedComponentManager.Properties(EditorEmbeddedComponentManager.ResizePolicy.none(),
+                                                              null,
                                                               true,
                                                               false,
                                                               0,
