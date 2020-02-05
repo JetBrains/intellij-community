@@ -25,7 +25,7 @@ public class MavenCentralSourceSearcher extends SourceSearcher {
                                  @NotNull String version,
                                  @NotNull VirtualFile classesJar) throws SourceSearchException {
     try {
-      indicator.setText(IdeBundle.message("connecting.to.https.search.maven.org"));
+      indicator.setText(IdeBundle.message("progress.message.connecting.to", "https://search.maven.org"));
 
       indicator.checkCanceled();
 

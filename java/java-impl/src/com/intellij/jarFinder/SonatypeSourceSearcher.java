@@ -27,7 +27,7 @@ public class SonatypeSourceSearcher extends SourceSearcher {
     throws SourceSearchException {
     try {
       indicator.setIndeterminate(true);
-      indicator.setText(IdeBundle.message("connecting.to.https.oss.sonatype.org"));
+      indicator.setText(IdeBundle.message("progress.message.connecting.to", "https://oss.sonatype.org"));
 
       indicator.checkCanceled();
 
