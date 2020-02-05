@@ -32,7 +32,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public String getSummaryForNode(AbstractTreeNode node) {
-    if (!myCoverageViewManager.isReady()) return CommonBundle.message("tree.node.loading");
+    if (!myCoverageViewManager.isReady()) return CommonBundle.getLoadingTreeNodeText();
     if (myCoverageDataManager.isSubCoverageActive()) {
       return showSubCoverageNotification();
     }
@@ -56,7 +56,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null,
                                                                                        myCoverageDataManager);
     if (coverageInformationString == null) {
-      if (!myCoverageViewManager.isReady()) return CommonBundle.message("tree.node.loading");
+      if (!myCoverageViewManager.isReady()) return CommonBundle.getLoadingTreeNodeText();
       PackageAnnotator.SummaryCoverageInfo info = new PackageAnnotator.PackageCoverageInfo();
       final Collection children = childNode.getChildren();
       for (Object child : children) {
