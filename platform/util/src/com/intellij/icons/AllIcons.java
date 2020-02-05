@@ -67,6 +67,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon GroupByTestProduction = load("/actions/groupByTestProduction.svg");
     /** 16x16 */ public static final Icon Help = load("/actions/help.svg");
     /** 16x16 */ public static final Icon Highlighting = load("/actions/highlighting.svg");
+    /** 16x16 */ public static final Icon InplaceRefactoringBulb = load("/actions/inplaceRefactoringBulb.svg");
     /** 16x16 */ public static final Icon InSelection = load("/actions/inSelection.svg");
     /** 16x16 */ public static final Icon Install = load("/actions/install.svg");
     /** 16x16 */ public static final Icon IntentionBulb = load("/actions/intentionBulb.svg");
@@ -457,6 +458,8 @@ public class AllIcons {
     /** 12x12 */ public static final Icon ImplementedMethod = load("/gutter/implementedMethod.svg");
     /** 12x12 */ public static final Icon ImplementingFunctionalInterface = load("/gutter/implementingFunctionalInterface.svg");
     /** 12x12 */ public static final Icon ImplementingMethod = load("/gutter/implementingMethod.svg");
+    /** 12x12 */ public static final Icon InplaceRefactoringBulbGutter = load("/gutter/inplaceRefactoringBulbGutter.svg");
+    /** 13x12 */ public static final Icon InplaceRefactoringBulbGutterDisabled = load("/gutter/inplaceRefactoringBulbGutterDisabled.svg");
     /** 12x12 */ public static final Icon Java9Service = load("/gutter/java9Service.svg");
     /** 12x12 */ public static final Icon OverridenMethod = load("/gutter/overridenMethod.svg");
     /** 12x12 */ public static final Icon OverridingMethod = load("/gutter/overridingMethod.svg");
