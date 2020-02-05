@@ -49,7 +49,7 @@ fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
   val plugin = PluginManagerCore.getPlugin(pluginId)
   if (plugin == null) {
     // we can't load plugin descriptor for a not installed plugin but we can check if it's from JB repo
-    return if (isPluginFromOfficialJbPluginRepo(pluginId)) PluginInfo(PluginType.LISTED, pluginId.idString) else unknownPlugin
+    return if (isPluginFromOfficialJbPluginRepo(pluginId)) PluginInfo(PluginType.LISTED, pluginId.idString, null) else unknownPlugin
   }
   return getPluginInfoByDescriptor(plugin)
 }
@@ -64,15 +64,16 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
   }
 
   val id = plugin.pluginId.idString
+  val version = plugin.version
   if (PluginManager.isDevelopedByJetBrains(plugin)) {
-    return if (plugin.isBundled) PluginInfo(PluginType.JB_BUNDLED, id) else PluginInfo(PluginType.JB_NOT_BUNDLED, id)
+    return if (plugin.isBundled) PluginInfo(PluginType.JB_BUNDLED, id, version) else PluginInfo(PluginType.JB_NOT_BUNDLED, id, version)
   }
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
   // they are also considered bundled) would be reported
   val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
   return if (listed) {
-    PluginInfo(PluginType.LISTED, id)
+    PluginInfo(PluginType.LISTED, id, version)
   }
   else {
     notListedPlugin
@@ -104,7 +105,7 @@ fun findPluginTypeByValue(value: String): PluginType? {
   return null
 }
 
-class PluginInfo(val type: PluginType, val id: String?) {
+class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
 
   /**
    * @return true if code is from IntelliJ platform or JB plugin.
@@ -121,9 +122,9 @@ class PluginInfo(val type: PluginType, val id: String?) {
   }
 }
 
-val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null)
-val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null)
-val notListedPlugin: PluginInfo = PluginInfo(PluginType.NOT_LISTED, null)
+val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
+val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null, null)
+val notListedPlugin: PluginInfo = PluginInfo(PluginType.NOT_LISTED, null, null)
 
 // Mock plugin info used when we can't detect plugin by class loader because IDE is built from sources
-val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null)
+val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null, null)

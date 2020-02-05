@@ -16,7 +16,6 @@ import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.TimeoutCachedValue
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.io.IOException
@@ -29,8 +28,14 @@ fun getProjectId(project: Project): String {
 
 fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {
   data["plugin_type"] = info.type.name
-  if (info.type.isSafeToReport() && info.id != null && StringUtil.isNotEmpty(info.id)) {
-    data["plugin"] = info.id
+  if (!info.type.isSafeToReport()) return
+  val id = info.id
+  if (!id.isNullOrEmpty()) {
+    data["plugin"] = id
+  }
+  val version = info.version
+  if (!version.isNullOrEmpty()) {
+    data["plugin_version"] = version
   }
 }
 

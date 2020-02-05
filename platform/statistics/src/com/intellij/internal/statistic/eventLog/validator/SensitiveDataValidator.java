@@ -165,7 +165,10 @@ public class SensitiveDataValidator {
       validatedData.put(key, resultType == ACCEPTED ? entryValue : resultType.getDescription());
     }
 
-    if (context.pluginInfo != null && !(validatedData.containsKey("plugin") || validatedData.containsKey("plugin_type"))) {
+    boolean containsPluginInfo = validatedData.containsKey("plugin") ||
+                                 validatedData.containsKey("plugin_type") ||
+                                 validatedData.containsKey("plugin_version");
+    if (context.pluginInfo != null && !containsPluginInfo) {
       addPluginInfoTo(context.pluginInfo, validatedData);
     }
     return validatedData;
