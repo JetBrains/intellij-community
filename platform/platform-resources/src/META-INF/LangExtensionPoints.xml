@@ -235,7 +235,6 @@
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter" dynamic="true"/>
     <extensionPoint name="indexImporterFactory" interface="com.intellij.index.IndexImporterFactory"/>
     <extensionPoint name="sharedIndexChunkLocator" interface="com.intellij.util.indexing.provided.SharedIndexChunkLocator"/>
-    <extensionPoint name="sharedIndexLoader" interface="com.intellij.util.indexing.provided.SharedIndexLoader"/>
 
     <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider" dynamic="true"/>
 
