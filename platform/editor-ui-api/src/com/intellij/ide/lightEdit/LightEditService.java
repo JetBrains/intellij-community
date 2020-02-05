@@ -2,7 +2,6 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +26,9 @@ public interface LightEditService {
 
   Project getOrCreateProject();
 
-  void openFile(@NotNull VirtualFile file);
+  boolean owns(@Nullable Project project);
+
+  boolean openFile(@NotNull VirtualFile file);
 
   boolean isAutosaveMode();
 

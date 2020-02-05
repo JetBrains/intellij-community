@@ -3,7 +3,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate;
 
-import com.intellij.ide.lightEdit.LightEditUtil;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorLinePainter;
 import com.intellij.openapi.editor.LineExtensionInfo;
@@ -48,7 +48,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
   @Override
   public Collection<LineExtensionInfo> getLineExtensions(@NotNull Project project, @NotNull VirtualFile file, int lineNumber) {
-    if (LightEditUtil.isLightEditProject(project)) return null;
+    if (LightEdit.owns(project)) return null;
     if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline()) {
       return null;
     }

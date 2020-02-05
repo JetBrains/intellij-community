@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.action;
 
 import com.intellij.ide.actions.RevealFileAction;
-import com.intellij.ide.lightEdit.LightEditUtil;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -23,7 +23,7 @@ public class RevealFileInTerminalAction extends DumbAwareAction {
 
   private static boolean isAvailable(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    return project != null && !LightEditUtil.isLightEditProject(project) && getSelectedFile(e) != null;
+    return project != null && !LightEdit.owns(project) && getSelectedFile(e) != null;
   }
 
   @Nullable

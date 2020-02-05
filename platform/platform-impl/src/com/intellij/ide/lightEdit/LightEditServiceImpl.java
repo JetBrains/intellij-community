@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
@@ -46,6 +47,8 @@ public class LightEditServiceImpl implements LightEditService,
                                              AppLifecycleListener,
                                              PersistentStateComponent<LightEditConfiguration> {
   private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
+
+  private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
 
   private LightEditFrameWrapper myFrameWrapper;
   private final LightEditorManagerImpl myEditorManager;
@@ -106,10 +109,19 @@ public class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public void openFile(@NotNull VirtualFile file) {
-    doWhenActionManagerInitialized(() -> {
-      doOpenFile(file);
-    });
+  public boolean owns(@Nullable Project project) {
+    return LightEditProjectManager.isLightEditProject(project);
+  }
+
+  @Override
+  public boolean openFile(@NotNull VirtualFile file) {
+    if (Registry.is(ENABLED_FILE_OPEN_KEY)) {
+      doWhenActionManagerInitialized(() -> {
+        doOpenFile(file);
+      });
+      return true;
+    }
+    return false;
   }
 
   private static void doWhenActionManagerInitialized(@NotNull Runnable callback) {

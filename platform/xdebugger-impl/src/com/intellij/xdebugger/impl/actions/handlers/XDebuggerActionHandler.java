@@ -15,7 +15,7 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
-import com.intellij.ide.lightEdit.LightEditUtil;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
 
   @Override
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
-    if (LightEditUtil.isLightEditProject(project)) return false;
+    if (LightEdit.owns(project)) return false;
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     return session != null && isEnabled(session, event.getDataContext());
   }
