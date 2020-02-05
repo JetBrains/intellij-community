@@ -53,8 +53,8 @@ public class AdvancedOptionsDialog extends DialogWrapper {
     JComponent root;
     if (myInputOptions != null && myOutputOptions != null) {
       root = new JBTabbedPane();
-      ((JTabbedPane)root).addTab(CommonBundle.message("input"), myInputOptions.getRoot());
-      ((JTabbedPane)root).addTab(CommonBundle.message("output"), myOutputOptions.getRoot());
+      ((JTabbedPane)root).addTab(CommonBundle.message("title.input"), myInputOptions.getRoot());
+      ((JTabbedPane)root).addTab(CommonBundle.message("title.output"), myOutputOptions.getRoot());
     } else if (myInputOptions != null) {
       root = myInputOptions.getRoot();
     } else {

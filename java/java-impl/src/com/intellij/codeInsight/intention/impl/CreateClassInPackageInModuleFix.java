@@ -175,12 +175,12 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     protected JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
       builder.add(UI.PanelFactory.panel(myNameTextField)
-                    .withLabel(CommonBundle.message("name") + ":")
+                    .withLabel(CommonBundle.message("label.name") + ":")
                     .withComment(CodeInsightBundle.message("the.class.will.be.created.in.the.package.0", myPackageName)));
       if (myRootDirCombo.getModel().getSize() > 1) {
-        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("source.root") + ":"));
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
       }
-      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("kind") + ":"));
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("label.kind") + ":"));
       return builder.createPanel();
     }
 

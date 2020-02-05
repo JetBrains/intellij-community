@@ -200,7 +200,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(CodeInsightBundle.message("implementation")))
              .add(UI.PanelFactory.panel(myProviderButton));
       if (myRootDirCombo.getModel().getSize() > 1) {
-        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("source.root") + ":"));
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
       }
       return builder.createPanel();
     }

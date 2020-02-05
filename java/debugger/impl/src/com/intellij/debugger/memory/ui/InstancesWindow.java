@@ -47,6 +47,6 @@ public class InstancesWindow extends InstancesWindowBase {
 
   @Override
   protected Action @NotNull [] createActions() {
-    return new Action[]{new DialogWrapperExitAction(CommonBundle.message("close"), CLOSE_EXIT_CODE)};
+    return new Action[]{new DialogWrapperExitAction(CommonBundle.message("action.text.close"), CLOSE_EXIT_CODE)};
   }
 }

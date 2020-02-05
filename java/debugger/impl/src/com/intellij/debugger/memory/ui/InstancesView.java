@@ -70,7 +70,7 @@ class InstancesView extends InstancesViewBase {
   private final MyNodeManager myNodeManager;
   private final Consumer<? super String> myWarningMessageConsumer;
 
-  private final JButton myFilterButton = new JButton(CommonBundle.message("filter"));
+  private final JButton myFilterButton = new JButton(CommonBundle.message("button.filter"));
   private final FilteringProgressView myProgress = new FilteringProgressView();
 
   private final Object myFilteringTaskLock = new Object();

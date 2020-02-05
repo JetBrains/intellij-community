@@ -190,7 +190,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    new DumbAwareAction(CommonBundle.message("toggle")) {
+    new DumbAwareAction(CommonBundle.message("action.text.toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(table.getSelectedRowCount() == 1 && !table.isEditing());

@@ -40,7 +40,7 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
             .allMatch(filter -> project != null && filter.isApplicableToProject(project));
         e.getPresentation().setVisible(view != null && hasApplicableExtension);
         ThemeFilter filter = view != null ? view.getFilter() : null;
-        e.getPresentation().setText(filter == null ? CommonBundle.message("all") : filter.getDisplayName());
+        e.getPresentation().setText(filter == null ? CommonBundle.message("action.text.all") : filter.getDisplayName());
     }
 
     @NotNull

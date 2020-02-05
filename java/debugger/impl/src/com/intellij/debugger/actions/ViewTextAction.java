@@ -94,8 +94,8 @@ public class ViewTextAction extends XFetchValueActionBase {
       super(project, false);
       myStringNode = stringNode;
       setModal(false);
-      setCancelButtonText(CommonBundle.message("close"));
-      setOKButtonText(CommonBundle.message("set"));
+      setCancelButtonText(CommonBundle.message("button.without.mnemonic.close"));
+      setOKButtonText(CommonBundle.message("button.set"));
       getOKAction().setEnabled(false);
       setCrossClosesWindow(true);
 

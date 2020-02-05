@@ -89,7 +89,7 @@ public class RepositoryLibraryPropertiesEditor {
     myIncludeTransitiveDepsCheckBox = new ThreeStateCheckBox(UIUtil.replaceMnemonicAmpersand("Include &transitive dependencies"));
     myIncludeTransitiveDepsCheckBox.setThirdStateEnabled(false);
     myTransitiveDependenciesPanel.add(myIncludeTransitiveDepsCheckBox);
-    myManageDependenciesLink = new SwingActionLink(new AbstractAction(CommonBundle.message("configure.ellipsis")) {
+    myManageDependenciesLink = new SwingActionLink(new AbstractAction(CommonBundle.message("action.text.configure.ellipsis")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         configureTransitiveDependencies();

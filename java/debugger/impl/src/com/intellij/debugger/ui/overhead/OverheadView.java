@@ -88,7 +88,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
                                 }
       , process);
 
-    new DumbAwareAction(CommonBundle.message("toggle")) {
+    new DumbAwareAction(CommonBundle.message("action.text.toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myTable.getSelectedRowCount() == 1);

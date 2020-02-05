@@ -36,7 +36,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
-  public static final Option LAMBDA_OPTION = new Option("java.lambda", CommonBundle.message("lambda"), AllIcons.Gutter.ImplementingFunctionalInterface) {
+  public static final Option LAMBDA_OPTION = new Option("java.lambda", CommonBundle.message("title.lambda"), AllIcons.Gutter.ImplementingFunctionalInterface) {
     @Override
     public boolean isEnabledByDefault() {
       return false;

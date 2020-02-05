@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -84,7 +85,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   public void checkCanApply() throws ConfigurationException {
     super.checkCanApply();
-    checkForEmptyAndDuplicatedNames(CommonBundle.message("library"), CommonBundle.getErrorTitle(), LibraryConfigurable.class);
+    checkForEmptyAndDuplicatedNames(UIBundle.message("configurable.library.prefix"), CommonBundle.getErrorTitle(), LibraryConfigurable.class);
     for (LibraryConfigurable configurable : getLibraryConfigurables()) {
       if (configurable.getDisplayName().isEmpty()) {
         ((LibraryProjectStructureElement)configurable.getProjectStructureElement()).navigate();

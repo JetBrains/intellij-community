@@ -183,14 +183,14 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       JTextField nameTextField = new JTextField(myInterfaceName);
       nameTextField.setEditable(false);
       PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(nameTextField).withLabel(CommonBundle.message("name") + ":"));
+      builder.add(UI.PanelFactory.panel(nameTextField).withLabel(CommonBundle.message("label.name") + ":"));
       if (myModuleCombo.getModel().getSize() > 1) {
-        builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel(CommonBundle.message("module") + ":"));
+        builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel(CommonBundle.message("label.module") + ":"));
       }
       if (myRootDirCombo.getModel().getSize() > 1) {
-        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("source.root") + ":"));
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
       }
-      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("kind") + ":"));
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("label.kind") + ":"));
       return builder.createPanel();
     }
 

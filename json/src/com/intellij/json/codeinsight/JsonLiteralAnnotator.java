@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.codeinsight;
 
-import com.intellij.CommonBundle;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory;
 import com.intellij.json.psi.JsonNumberLiteral;
@@ -76,7 +75,7 @@ public class JsonLiteralAnnotator implements Annotator {
   private static void highlightPropertyKey(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (JsonPsiUtil.isPropertyKey(element)) {
       if (Holder.DEBUG) {
-        holder.newAnnotation(HighlightSeverity.INFORMATION, CommonBundle.message("property.key")).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();
+        holder.newAnnotation(HighlightSeverity.INFORMATION, JsonBundle.message("annotation.property.key")).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();
       }
       else {
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();

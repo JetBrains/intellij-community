@@ -53,8 +53,8 @@ public class DeleteDomElement extends BaseDomTreeAction {
       
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
 
-      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?", CommonBundle.message("remove"),
-                                                  Messages.getQuestionIcon());
+      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?",
+                                                  CommonBundle.message("dialog.title.remove"), Messages.getQuestionIcon());
       if (ret == Messages.OK) {
         WriteCommandAction.writeCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)).run(() -> domElement.undefine());
       }

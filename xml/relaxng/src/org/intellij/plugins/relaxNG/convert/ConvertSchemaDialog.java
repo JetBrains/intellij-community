@@ -41,7 +41,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
     mySettings.addPropertyChangeListener(ConvertSchemaSettingsImpl.OUTPUT_TYPE, this);
     mySettings.addPropertyChangeListener(ConvertSchemaSettingsImpl.OUTPUT_PATH, this);
 
-    myAdvancedAction = new AbstractAction(CommonBundle.message("advanced.ellipsis")) {
+    myAdvancedAction = new AbstractAction(CommonBundle.message("action.text.advanced.ellipsis")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         mySettings.showAdvancedSettings();

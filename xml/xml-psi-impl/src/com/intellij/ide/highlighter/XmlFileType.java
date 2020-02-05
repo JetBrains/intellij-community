@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
@@ -36,7 +35,7 @@ public class XmlFileType extends XmlLikeFileType implements DomSupportEnabled {
   @Override
   @NotNull
   public String getName() {
-    return CommonBundle.message("xml");
+    return "XML";
   }
 
   @Override

@@ -50,7 +50,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         ImageTagManager tagManager = ImageTagManager.getInstance(project);
         e.getPresentation().setVisible(view != null && !tagManager.getAllTags().isEmpty());
         TagFilter[] filters = view != null ? view.getTagFilters() : null;
-        e.getPresentation().setText(filters == null ? CommonBundle.message("all")
+        e.getPresentation().setText(filters == null ? CommonBundle.message("action.text.all")
                                                     : StringUtil.join(filters, filter -> filter.getDisplayName(), ","));
         e.getPresentation().setIcon(AllIcons.Duplicates.SendToTheRight);
     }

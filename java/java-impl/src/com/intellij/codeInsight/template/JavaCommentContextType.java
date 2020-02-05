@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.CommonBundle;
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaCommentContextType extends TemplateContextType {
   public JavaCommentContextType() {
-    super("JAVA_COMMENT", CommonBundle.message("comment"), JavaCodeContextType.Generic.class);
+    super("JAVA_COMMENT", JavaCoreBundle.message("context.type.java.comment"), JavaCodeContextType.Generic.class);
   }
 
   @Override

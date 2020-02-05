@@ -230,7 +230,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
   @NotNull
   @Override
   public String getName() {
-    return CommonBundle.message("lenses");
+    return CommonBundle.message("title.lenses");
   }
 
   @NotNull

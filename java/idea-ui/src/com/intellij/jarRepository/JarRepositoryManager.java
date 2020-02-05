@@ -2,6 +2,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
 import com.intellij.notification.Notification;
@@ -312,7 +313,7 @@ public class JarRepositoryManager {
     else {
       template = new RepositoryArtifactDescription(new RepositoryLibraryProperties(coord, packaging, true), null);
     }
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, CommonBundle.message("maven"), false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaCoreBundle.message("task.background.title.maven"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
@@ -351,7 +352,7 @@ public class JarRepositoryManager {
   public static void searchRepositories(Project project,
                                         Collection<String> serviceUrls,
                                         Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, CommonBundle.message("maven"), false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaCoreBundle.message("task.background.title.maven"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.emptyList());

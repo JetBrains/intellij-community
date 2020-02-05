@@ -34,6 +34,7 @@ import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.LibraryElementType;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
+import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -283,7 +284,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void apply() throws ConfigurationException {
     myPackagingEditorContext.saveEditorSettings();
-    checkForEmptyAndDuplicatedNames(CommonBundle.message("artifact"), CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
+    checkForEmptyAndDuplicatedNames(UIBundle.message("configurable.artifact.prefix"), CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
     super.apply();
 
     myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();

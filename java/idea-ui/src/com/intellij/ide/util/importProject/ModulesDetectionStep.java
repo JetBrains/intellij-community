@@ -118,8 +118,10 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
       final int answer = Messages.showYesNoCancelDialog(getComponent(),
                                                         IdeBundle.message("warning.text.0.do.you.want.to.overwrite.these.files",
                                                                           StringUtil.join(errors.keySet(), "\n"), errors.size()),
-                                                        IdeBundle.message("title.file.already.exists"), CommonBundle.message("overwrite"),
-                                                        CommonBundle.message("reuse"), CommonBundle.message("cancel"), Messages.getQuestionIcon());
+                                                        IdeBundle.message("title.file.already.exists"),
+                                                        CommonBundle.message("button.overwrite"),
+                                                        CommonBundle.message("button.reuse"),
+                                                        CommonBundle.message("button.without.mnemonics.cancel"), Messages.getQuestionIcon());
       if (answer == Messages.CANCEL) {
         return false;
       }

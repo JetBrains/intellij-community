@@ -317,7 +317,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class MergeAction extends AnAction {
     private MergeAction() {
-      super(CommonBundle.message("merge"), "", AllIcons.Vcs.Merge); // todo
+      super(CommonBundle.message("action.text.merge"), "", AllIcons.Vcs.Merge); // todo
     }
 
     @Override
@@ -327,7 +327,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         final String newName = Messages.showInputDialog(
           ProjectLayoutPanel.this,
           IdeBundle.message("enter.new.name.for.merge.result"),
-          CommonBundle.message("merge"),
+          CommonBundle.message("dialog.title.merge"),
           Messages.getQuestionIcon(), getElementName(elements.get(0)), getValidator());
         if (newName != null) {
           final T merged = merge(elements);
@@ -351,7 +351,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class SplitAction extends AnAction {
     private SplitAction() {
-      super(CommonBundle.message("split"), "", AllIcons.Modules.Split); // todo
+      super(CommonBundle.message("action.text.split"), "", AllIcons.Modules.Split); // todo
     }
 
     @Override
@@ -388,7 +388,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class RenameAction extends AnAction {
     private RenameAction() {
-      super(CommonBundle.message("rename"), "", IconUtil.getEditIcon()); // todo
+      super(CommonBundle.message("action.text.rename"), "", IconUtil.getEditIcon()); // todo
     }
 
     @Override

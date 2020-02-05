@@ -15,7 +15,7 @@ public final class ImageFileType extends UserBinaryFileType {
   @NotNull
   @Override
   public String getName() {
-    return CommonBundle.message("image");
+    return CommonBundle.message("file.type.image");
   }
 
   @NotNull

@@ -57,7 +57,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   @NotNull
   public String getFamilyName() {
-    return CommonBundle.message("pull.up");
+    return CommonBundle.message("title.pull.up");
   }
 
   @Override

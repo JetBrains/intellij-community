@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.dtd.DTDLanguage;
@@ -34,7 +33,7 @@ public class DTDFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getName() {
-    return CommonBundle.message("dtd");
+    return "DTD";
   }
 
   @Override

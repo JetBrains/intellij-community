@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -20,10 +19,10 @@ import java.util.Map;
  */
 public class RestColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[]{
-    new AttributesDescriptor(CommonBundle.message("comment"), RestSyntaxHighlighter.REST_COMMENT),
-    new AttributesDescriptor(CommonBundle.message("title"), RestSyntaxHighlighter.REST_SECTION_HEADER),
+    new AttributesDescriptor(RestBundle.message("colors.page.attributes.descriptor.comment"), RestSyntaxHighlighter.REST_COMMENT),
+    new AttributesDescriptor(RestBundle.message("colors.page.attributes.descriptor.title"), RestSyntaxHighlighter.REST_SECTION_HEADER),
     new AttributesDescriptor(RestBundle.message("explicit.markup"), RestSyntaxHighlighter.REST_EXPLICIT),
-    new AttributesDescriptor(CommonBundle.message("fields"), RestSyntaxHighlighter.REST_FIELD),
+    new AttributesDescriptor(RestBundle.message("colors.page.attributes.descriptor.fields"), RestSyntaxHighlighter.REST_FIELD),
     new AttributesDescriptor(RestBundle.message("reference.name"), RestSyntaxHighlighter.REST_REF_NAME),
     new AttributesDescriptor(RestBundle.message("inline.literals"), RestSyntaxHighlighter.REST_FIXED),
     new AttributesDescriptor(RestBundle.message("bold.text"), RestSyntaxHighlighter.REST_BOLD),

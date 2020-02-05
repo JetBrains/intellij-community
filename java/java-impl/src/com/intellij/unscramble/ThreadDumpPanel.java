@@ -97,7 +97,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     });
 
     myFilterPanel = new JPanel(new BorderLayout());
-    myFilterPanel.add(new JLabel(CommonBundle.message("filter") + ":"), BorderLayout.WEST);
+    myFilterPanel.add(new JLabel(CommonBundle.message("label.filter") + ":"), BorderLayout.WEST);
     myFilterPanel.add(myFilterField);
     myFilterPanel.setVisible(false);
 
@@ -356,7 +356,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private class FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
-      super(CommonBundle.message("filter"), IdeBundle.message("show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
+      super(CommonBundle.message("action.text.filter"), IdeBundle.message("show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
     }
 
     @Override
