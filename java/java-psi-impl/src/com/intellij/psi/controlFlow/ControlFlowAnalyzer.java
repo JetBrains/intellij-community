@@ -609,8 +609,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     for (PsiParameter catchParameter : myCatchParameters) {
       ProgressManager.checkCanceled();
       PsiType type = catchParameter.getType();
-      if (type instanceof PsiClassType) {
-        generateThrow((PsiClassType)type, statement);
+      List<PsiType> types =
+        type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
+      for (PsiType subType : types) {
+        if (subType instanceof PsiClassType) {
+          generateThrow((PsiClassType)subType, statement);
+        }
       }
     }
     finishElement(statement);

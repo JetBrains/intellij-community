@@ -1134,3 +1134,20 @@ class Implicit {
     triggeringPolicyUpdater.set(this, newValue);
   }
 }
+class TryCatchFinal {
+  private String value;
+
+  public TryCatchFinal() {
+    try {
+      value = create();
+    } catch (ClassNotFoundException | IllegalAccessException e) {
+      value = "";
+    }
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public static native <T> T create() throws ClassNotFoundException, IllegalAccessException;
+}
