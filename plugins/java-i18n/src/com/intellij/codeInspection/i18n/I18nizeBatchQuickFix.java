@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,6 +30,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,6 +46,8 @@ import org.jetbrains.uast.generate.UastElementFactory;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 /**
@@ -145,6 +152,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     @NotNull private final Project myProject;
     private final List<ReplacementBean> myKeyValuePairs;
     private JComboBox<String> myPropertiesFile;
+    private UsagePreviewPanel myUsagePreviewPanel;
 
     protected I18NBatchDialog(@NotNull Project project, List<ReplacementBean> keyValuePairs) {
       super(project, true);
@@ -167,6 +175,24 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
       component.setText("Property file:");
       component.setComponent(myPropertiesFile);
+      myPropertiesFile.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          PropertiesFile propertiesFile = getPropertiesFile();
+          if (propertiesFile != null) {
+            for (int i = 0; i < myKeyValuePairs.size(); i++) {
+              ReplacementBean keyValuePair = myKeyValuePairs.get(i);
+              ReplacementBean updated =
+                new ReplacementBean(I18nizeQuickFixDialog.suggestUniquePropertyKey(keyValuePair.myValue, keyValuePair.myKey, propertiesFile),
+                                    keyValuePair.myValue,
+                                    keyValuePair.myExpression,
+                                    keyValuePair.myPsiElement,
+                                    keyValuePair.myArgs);
+              myKeyValuePairs.set(i, updated);
+            }
+          }
+        }
+      });
 
       return component;
     }
@@ -184,20 +210,42 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
+      Splitter splitter = new JBSplitter(true);
+      myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
       JBTable table = new JBTable(new MyKeyValueModel());
-      return ToolbarDecorator.createDecorator(table).setRemoveAction(new AnActionButtonRunnable() {
+      table.getSelectionModel().addListSelectionListener(e -> {
+        int index = table.getSelectionModel().getLeadSelectionIndex();
+        if (index != -1) {
+          PsiElement element = myKeyValuePairs.get(index).getPsiElement();
+          UsageInfo usageInfo = new UsageInfo(element.getParent());
+          myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+        }
+        else {
+          myUsagePreviewPanel.updateLayout(null);
+        }
+      });
+
+      splitter.setFirstComponent(ToolbarDecorator.createDecorator(table).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           TableUtil.removeSelectedItems(table);
           table.repaint();
         }
-      }).createPanel();
+      }).createPanel());
+      splitter.setSecondComponent(myUsagePreviewPanel);
+      return splitter;
     }
 
     @Override
     protected void doOKAction() {
       PropertiesComponent.getInstance(myProject).setValue(LAST_USED_PROPERTIES_FILE, (String)myPropertiesFile.getSelectedItem());
       super.doOKAction();
+    }
+
+    @Override
+    protected void dispose() {
+      Disposer.dispose(myUsagePreviewPanel);
+      super.dispose();
     }
 
     private class MyKeyValueModel extends AbstractTableModel implements ItemRemovable {
