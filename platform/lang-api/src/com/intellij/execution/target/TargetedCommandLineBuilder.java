@@ -22,10 +22,11 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
 
   @NotNull private final TargetEnvironmentRequest myRequest;
 
-  public TargetedCommandLineBuilder(TargetEnvironmentRequest request) {
+  public TargetedCommandLineBuilder(@NotNull TargetEnvironmentRequest request) {
     myRequest = request;
   }
 
+  @NotNull
   public TargetEnvironmentRequest getRequest() {
     return myRequest;
   }
