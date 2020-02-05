@@ -102,7 +102,7 @@ public class IncrementDecrementUsedAsExpressionInspection
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Extract to separate statement";
+      return InspectionGadgetsBundle.message("increment.decrement.used.as.expression.fix.family.name");
     }
 
     @Override

@@ -199,7 +199,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with proper array";
+      return InspectionGadgetsBundle.message("suspicious.to.array.call.fix.family.name");
     }
   }
 }

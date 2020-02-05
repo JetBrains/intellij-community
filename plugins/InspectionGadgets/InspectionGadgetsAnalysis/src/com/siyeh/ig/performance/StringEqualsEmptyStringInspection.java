@@ -118,7 +118,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify empty string check";
+      return InspectionGadgetsBundle.message("string.equals.empty.string.fix.family.name");
     }
 
     @Override

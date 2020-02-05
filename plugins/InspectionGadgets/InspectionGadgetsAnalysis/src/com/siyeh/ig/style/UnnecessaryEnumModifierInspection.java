@@ -74,7 +74,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection implements
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove unnecessary modifiers";
+      return InspectionGadgetsBundle.message("unnecessary.interface.modifiers.fix.family.name");
     }
 
     @Override

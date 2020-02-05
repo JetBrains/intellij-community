@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.GenerateToStringActionHandler;
 
@@ -40,13 +41,13 @@ public class GenerateToStringQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return "Generate toString()";
+    return InspectionGadgetsBundle.message("generate.to.string.quick.fix.text");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Generate";
+    return InspectionGadgetsBundle.message("generate.to.string.quick.fix.family.name");
   }
 
   @Override

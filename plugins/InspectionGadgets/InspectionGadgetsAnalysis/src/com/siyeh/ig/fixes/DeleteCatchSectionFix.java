@@ -39,7 +39,7 @@ public class DeleteCatchSectionFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Delete catch statement";
+    return InspectionGadgetsBundle.message("delete.catch.section.fix.family.name");
   }
 
   @Override

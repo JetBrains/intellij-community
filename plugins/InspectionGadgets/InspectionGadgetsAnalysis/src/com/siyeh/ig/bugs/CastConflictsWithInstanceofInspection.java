@@ -208,7 +208,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace cast type";
+      return InspectionGadgetsBundle.message("replace.cast.fix.family.name");
     }
 
     @Override
@@ -230,7 +230,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace instanceOf type";
+      return InspectionGadgetsBundle.message("replace.instanceof.fix.family.name");
     }
 
     @Override

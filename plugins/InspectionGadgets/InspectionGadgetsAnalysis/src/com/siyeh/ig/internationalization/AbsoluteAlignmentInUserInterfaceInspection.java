@@ -100,7 +100,7 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with constant";
+      return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.fix.family.name");
     }
 
     @Override

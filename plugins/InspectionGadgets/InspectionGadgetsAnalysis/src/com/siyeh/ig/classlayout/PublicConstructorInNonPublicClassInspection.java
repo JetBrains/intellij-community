@@ -68,7 +68,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix constructor modifier";
+      return InspectionGadgetsBundle.message("set.constructor.modifier.fix.family.name");
     }
 
     @Override

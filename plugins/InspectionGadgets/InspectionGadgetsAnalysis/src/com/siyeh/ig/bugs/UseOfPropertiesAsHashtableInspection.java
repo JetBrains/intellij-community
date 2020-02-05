@@ -82,7 +82,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix property access";
+      return InspectionGadgetsBundle.message("use.of.properties.as.hashtable.fix.family.name");
     }
 
     @Override

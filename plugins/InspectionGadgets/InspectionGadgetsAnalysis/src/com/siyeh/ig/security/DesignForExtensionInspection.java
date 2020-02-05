@@ -65,7 +65,7 @@ public class DesignForExtensionInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make method 'final'";
+      return InspectionGadgetsBundle.message("make.method.final.fix.family.name");
     }
 
     @Override

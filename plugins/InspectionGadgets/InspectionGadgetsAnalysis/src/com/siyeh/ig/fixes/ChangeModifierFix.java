@@ -45,7 +45,7 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Change modifier";
+    return InspectionGadgetsBundle.message("change.modifier.fix.family.name");
   }
 
   @Override

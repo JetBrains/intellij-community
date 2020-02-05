@@ -54,7 +54,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace inheritance with qualified reference";
+    return InspectionGadgetsBundle.message("static.inheritance.fix.family.name");
   }
 
   @Override

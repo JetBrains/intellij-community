@@ -115,7 +115,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Insert cast";
+      return InspectionGadgetsBundle.message("char.used.in.arithmetic.content.cast.fix.family.name");
     }
 
     @Override

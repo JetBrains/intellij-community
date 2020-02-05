@@ -62,7 +62,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection extends Bas
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Collections.EMPTY_* with call";
+      return InspectionGadgetsBundle.message("collections.field.access.replaceable.by.method.call.fix.family.name");
     }
 
     @Override

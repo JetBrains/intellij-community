@@ -101,7 +101,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make package-private";
+      return InspectionGadgetsBundle.message("make.package.private.fix.family.name");
     }
 
     @Override

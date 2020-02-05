@@ -104,7 +104,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection imple
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove unnecessary modifiers";
+      return InspectionGadgetsBundle.message("unnecessary.interface.modifiers.fix.family.name");
     }
 
     @Override

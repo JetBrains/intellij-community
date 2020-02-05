@@ -116,7 +116,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Qualify static access";
+      return InspectionGadgetsBundle.message("unqualified.static.access.fix.family.name");
     }
 
     @Override

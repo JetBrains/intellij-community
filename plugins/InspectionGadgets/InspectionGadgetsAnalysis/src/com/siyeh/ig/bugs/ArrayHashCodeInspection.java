@@ -69,7 +69,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with implicit 'hashCode'";
+      return InspectionGadgetsBundle.message("array.hash.code.fix.family.name");
     }
 
     @Override

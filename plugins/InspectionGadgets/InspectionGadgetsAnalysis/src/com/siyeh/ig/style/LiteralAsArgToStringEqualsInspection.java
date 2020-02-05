@@ -71,7 +71,7 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Flip method call";
+      return InspectionGadgetsBundle.message("swap.equals.fix.family.name");
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,9 @@ public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJ
         Pair<PsiElement, PsiClass> pair = findSubClassReference(scope, containingClass);
         if (pair != null) {
           holder.registerProblem(pair.first,
-                                 "Referencing subclass " + pair.second.getName() + " from superclass " + containingClass.getName() + " initializer might lead to class loading deadlock");
+                                 InspectionGadgetsBundle
+                                   .message("referencing.subclass.0.from.superclass.1.initializer.might.lead.to.class.loading.deadlock",
+                                            pair.second.getName(), containingClass.getName()));
         }
       }
     };
