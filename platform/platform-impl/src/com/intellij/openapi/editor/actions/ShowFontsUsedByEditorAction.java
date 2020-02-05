@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,6 +36,8 @@ import java.util.*;
 import java.util.function.IntUnaryOperator;
 
 public class ShowFontsUsedByEditorAction extends EditorAction {
+  private static final Logger LOG = Logger.getInstance(ShowFontsUsedByEditorAction.class);
+
   public ShowFontsUsedByEditorAction() {
     super(new Handler());
   }
@@ -100,9 +103,11 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
         try {
           components = AccessingInternalJdkFontApi.getRelevantComponents(font, text, ffi.getStart(), ffi.getEnd());
         }
-        catch (Throwable ignored) {}
+        catch (Throwable e) {
+          LOG.debug(e);
+        }
         if (components == null) {
-          result.add(font.getFontName());
+          result.add(font.getFontName() + " (*)");
         }
         else {
           result.addAll(components);
@@ -140,39 +145,37 @@ class AccessingInternalJdkFontApi {
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
 
   @SuppressWarnings("InstanceofIncompatibleInterface")
-  static List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset) {
-    try {
-      if (GET_FONT_2D_METHOD != null) {
-        Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
-        if (font2D != null) {
-          CompositeFont compositeFont = null;
-          IntUnaryOperator charToGlyphMapper = null;
-          if (font2D instanceof CompositeFont) {
-            compositeFont = (CompositeFont)font2D;
-            charToGlyphMapper = c -> font2D.charToGlyph(c);
-          }
-          else if (font2D instanceof FontSubstitution) {
-            compositeFont = ((FontSubstitution)font2D).getCompositeFont2D();
-            charToGlyphMapper = c -> font.createGlyphVector(DUMMY_CONTEXT, new String(new int[]{c}, 0, 1)).getGlyphCode(0);
-          }
-          List<Font2D> components = new ArrayList<>();
-          if (compositeFont == null) {
-            components.add(font2D);
-          }
-          else {
-            for (int i = startOffset; i < endOffset; ) {
-              int codePoint = Character.codePointAt(text, i);
-              int glyph = charToGlyphMapper.applyAsInt(codePoint);
-              int slot = glyph >>> 24;
-              components.add(compositeFont.getSlotFont(slot));
-              i += Character.charCount(codePoint);
-            }
-          }
-          return ContainerUtil.map(components, f -> f.getFontName(null));
+  static List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset)
+    throws Exception {
+    if (GET_FONT_2D_METHOD != null) {
+      Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
+      if (font2D != null) {
+        CompositeFont compositeFont = null;
+        IntUnaryOperator charToGlyphMapper = null;
+        if (font2D instanceof CompositeFont) {
+          compositeFont = (CompositeFont)font2D;
+          charToGlyphMapper = c -> font2D.charToGlyph(c);
         }
+        else if (font2D instanceof FontSubstitution) {
+          compositeFont = ((FontSubstitution)font2D).getCompositeFont2D();
+          charToGlyphMapper = c -> font.createGlyphVector(DUMMY_CONTEXT, new String(new int[]{c}, 0, 1)).getGlyphCode(0);
+        }
+        List<Font2D> components = new ArrayList<>();
+        if (compositeFont == null) {
+          components.add(font2D);
+        }
+        else {
+          for (int i = startOffset; i < endOffset; ) {
+            int codePoint = Character.codePointAt(text, i);
+            int glyph = charToGlyphMapper.applyAsInt(codePoint);
+            int slot = glyph >>> 24;
+            components.add(compositeFont.getSlotFont(slot));
+            i += Character.charCount(codePoint);
+          }
+        }
+        return ContainerUtil.map(components, f -> f.getFontName(null));
       }
     }
-    catch (Throwable ignored) {}
     return null;
   }
 }
