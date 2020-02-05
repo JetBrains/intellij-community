@@ -349,6 +349,9 @@ SKIP_VALUE_IN_MODULE = {
     "posix": (
         "environ",
     ),
+    "nt": (
+        "environ",
+    ),
     "zipimport": (
         "_zip_directory_cache",
     ),
