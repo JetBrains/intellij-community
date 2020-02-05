@@ -220,7 +220,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
   @Override
   public void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @VirtualFile.PropName @NotNull String property, Object oldValue, Object newValue) {
     Application app = ApplicationManager.getApplication();
-    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).expireWith(app).submit(() -> {
+    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().expireWith(app).submit(() -> {
       if (virtualFile.isValid()) {
         WriteAction.run(() -> {
           List<VFileEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));

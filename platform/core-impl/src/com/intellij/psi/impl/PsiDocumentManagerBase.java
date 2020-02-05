@@ -232,7 +232,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final int semaphoreTimeoutInMs = 50;
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
-      AppUIExecutor.onWriteThread().submit(() -> {
+      AppUIExecutor.onWriteThread().later().submit(() -> {
         PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
           semaphore.up();
         });

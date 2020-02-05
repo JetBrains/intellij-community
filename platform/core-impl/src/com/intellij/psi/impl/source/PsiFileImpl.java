@@ -966,7 +966,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   final void rebuildStub() {
-    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).submit(() -> {
+    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit(() -> {
       if (!myManager.isDisposed()) {
         myManager.dropPsiCaches();
       }

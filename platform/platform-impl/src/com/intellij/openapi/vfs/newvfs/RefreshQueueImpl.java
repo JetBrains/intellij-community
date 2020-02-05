@@ -73,7 +73,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
           scheduleAsynchronousPreprocessing(session, modality);
         }
         else {
-          AppUIExecutor.onWriteThread(modality).submit(() -> session.fireEvents(session.getEvents(), null));
+          AppUIExecutor.onWriteThread(modality).later().submit(() -> session.fireEvents(session.getEvents(), null));
         }
       }
     });
