@@ -1,22 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.signatureHelp;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public final class SignatureHelpResult {
 
-  private final int myActiveParameter;
-  private final SignatureInfo[] mySignatures;
+  private final List<SignatureInfo> mySignatures;
 
-  public SignatureHelpResult(int activeParameter,
-                             SignatureInfo[] signatures) {
-    myActiveParameter = activeParameter;
-    mySignatures = signatures;
+  public SignatureHelpResult(List<SignatureInfo> signatures) {
+    mySignatures = Collections.unmodifiableList(new ArrayList<>(signatures));
   }
 
-  public int getActiveParameter() {
-    return myActiveParameter;
-  }
-
-  public SignatureInfo[] getSignatures() {
+  public List<SignatureInfo> getSignatures() {
     return mySignatures;
   }
 }

@@ -3,19 +3,23 @@ package com.intellij.codeInsight.signatureHelp;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public final class SignatureInfo {
 
   @Nullable
   private final String myDocumentation;
   private final String myLabel;
-  private final ParameterInfo[] myParameterInfos;
+  private final List<ParameterInfo> myParameterInfos;
+  private final int myHighlightedParam;
 
-  public SignatureInfo(@Nullable String documentation,
-                       String label,
-                       ParameterInfo[] infos) {
+  public SignatureInfo(@Nullable String documentation, String label, List<ParameterInfo> infos, int highlightedParamIndex) {
     myDocumentation = documentation;
     myLabel = label;
-    myParameterInfos = infos;
+    myParameterInfos = Collections.unmodifiableList(new ArrayList<>(infos));
+    myHighlightedParam = highlightedParamIndex;
   }
 
   @Nullable
@@ -27,7 +31,21 @@ public final class SignatureInfo {
     return myLabel;
   }
 
-  public ParameterInfo[] getParameterInformation() {
+  public List<ParameterInfo> getParameterInformation() {
     return myParameterInfos;
+  }
+
+  public int getHighlightedParam() {
+    return myHighlightedParam;
+  }
+
+  @Override
+  public String toString() {
+    return "SignatureInfo{" +
+           "doc='" + myDocumentation + '\'' +
+           ", label='" + myLabel + '\'' +
+           ", paramInfo=" + myParameterInfos +
+           ", highlighted=" + myHighlightedParam +
+           '}';
   }
 }

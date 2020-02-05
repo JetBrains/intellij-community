@@ -22,4 +22,12 @@ public final class ParameterInfo {
   public String getLabel() {
     return myLabel;
   }
+
+  @Override
+  public String toString() {
+    return "Param{" +
+           "doc='" + myDocumentation + '\'' +
+           ", label='" + myLabel + '\'' +
+           '}';
+  }
 }
