@@ -91,7 +91,7 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       Files.walk(root).map { p -> p.toString() }.sorted().collect(Collectors.joining("\n")).trimStart()
     }
 
-    assertEquals(actualFiles, """
+    assertEquals("""
       source
       source/IdIndex
       source/IdIndex/IdIndex.forward
@@ -138,12 +138,13 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       source/Stubs/java.method.name/java.method.name.storage.values.at
       source/Stubs/java.method.name/java.method.name.storage_i
       source/Stubs/java.method.name/java.method.name.storage_i.len
-      source/Stubs/rep.names
-      source/Stubs/rep.names.keystream
-      source/Stubs/rep.names.keystream.len
-      source/Stubs/rep.names.len
-      source/Stubs/rep.names_i
-      source/Stubs/rep.names_i.len
+      source/Stubs/serializerNames
+      source/Stubs/serializerNames/names
+      source/Stubs/serializerNames/names.keystream
+      source/Stubs/serializerNames/names.keystream.len
+      source/Stubs/serializerNames/names.len
+      source/Stubs/serializerNames/names_i
+      source/Stubs/serializerNames/names_i.len
       source/Trigram.Index
       source/Trigram.Index/Trigram.Index.forward
       source/Trigram.Index/Trigram.Index.forward.len
@@ -182,7 +183,7 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       source/java.simple.property/java.simple.property.storage.values.at
       source/java.simple.property/java.simple.property.storage_i
       source/java.simple.property/java.simple.property.storage_i.len
-    """.trimIndent())
+    """.trimIndent(), actualFiles)
   }
 
   @Suppress("UNCHECKED_CAST")
