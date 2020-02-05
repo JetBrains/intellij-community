@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,15 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
         .ifPresent(asyncNode -> getHolder().newAnnotation(HighlightSeverity.ERROR,
                                                           PyBundle.message("ANN.function.cannot.be.async", node.getName())).range(asyncNode).create());
     }
+  }
+
+  @Override
+  public void visitPyNumericLiteralExpression(PyNumericLiteralExpression node) {
+    String suffix = node.getIntegerLiteralSuffix();
+    if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
+    if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
+    getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("INSP.python.trailing.suffix.not.support", suffix))
+      .range(node).create();
   }
 
   @Override

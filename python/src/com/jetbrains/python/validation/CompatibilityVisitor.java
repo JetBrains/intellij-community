@@ -216,11 +216,12 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     final String text = node.getText();
 
     if (node.isIntegerLiteral()) {
-      if (text.endsWith("l") || text.endsWith("L")) {
+      String suffix = node.getIntegerLiteralSuffix();
+      if ("l".equalsIgnoreCase(suffix)) {
         registerForAllMatchingVersions(level -> level.isPy3K() && registerForLanguageLevel(level),
-                                       " not support a trailing \'l\' or \'L\'.",
+                                       " not support a trailing '" + suffix + "'.",
                                        node,
-                                       new RemoveTrailingLQuickFix());
+                                       new RemoveTrailingSuffixQuickFix());
       }
 
       if (text.length() > 1 && text.charAt(0) == '0') {
