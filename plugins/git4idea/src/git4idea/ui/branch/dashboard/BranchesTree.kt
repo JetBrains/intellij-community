@@ -138,23 +138,16 @@ internal class FilteringBranchesTree(project: Project,
 
   private val expandedPaths = SmartHashSet<TreePath>()
 
-  private val localRootNodeDescriptor = BranchNodeDescriptor(NodeType.LOCAL_ROOT)
-  private val remoteRootNodeDescriptor = BranchNodeDescriptor(NodeType.REMOTE_ROOT)
-  private val localBranchesNode = BranchTreeNode(localRootNodeDescriptor)
-  private val remoteBranchesNode = BranchTreeNode(remoteRootNodeDescriptor)
+  private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
+  private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
+  private val nodeDescriptorFilter: (BranchNodeDescriptor) -> Boolean =
+    { descriptor -> descriptor.type == NodeType.GROUP_NODE || !uiController.showOnlyMy || descriptor.branchInfo?.isMy == ThreeState.YES }
+  private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
+                                                          remoteBranchesNode.getNodeDescriptor(),
+                                                          nodeDescriptorFilter)
 
-  private val localGroupBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
-  private val remoteGroupBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
-  private val localBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
-  private val remoteBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
-  private val nodeDescriptorsToNodes = hashMapOf<BranchNodeDescriptor, BranchTreeNode>()
-
-  private val baseNodeDescriptorsToNodes =
-    mapOf(
-      rootNode.getNodeDescriptor() to rootNode,
-      localBranchesNode.getNodeDescriptor() to localBranchesNode,
-      remoteBranchesNode.getNodeDescriptor() to remoteBranchesNode
-    )
+  private var localNodeExist = false
+  private var remoteNodeExist = false
 
   private var useDirectoryGrouping = GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY)
 
@@ -219,42 +212,23 @@ internal class FilteringBranchesTree(project: Project,
 
   override fun getNodeClass() = BranchTreeNode::class.java
 
-  override fun createNode(nodeDescriptor: BranchNodeDescriptor) = nodeDescriptorsToNodes[nodeDescriptor] ?: BranchTreeNode(nodeDescriptor)
+  override fun createNode(nodeDescriptor: BranchNodeDescriptor) =
+    when (nodeDescriptor.type) {
+      NodeType.LOCAL_ROOT -> localBranchesNode
+      NodeType.REMOTE_ROOT -> remoteBranchesNode
+      else -> BranchTreeNode(nodeDescriptor)
+    }
 
   override fun getChildren(nodeDescriptor: BranchNodeDescriptor) =
     when (nodeDescriptor.type) {
-      NodeType.ROOT -> getRootNodeDescriptors(localBranchesDescriptors.isNotEmpty(), remoteBranchesDescriptors.isNotEmpty())
-      NodeType.LOCAL_ROOT -> (getLocalGroupNodes() + getLocalRootNodes().filterByMyBranches()).toList()
-      NodeType.REMOTE_ROOT -> (getRemoteGroupNodes() + getRemoteRootNodes().filterByMyBranches()).toList()
-      NodeType.GROUP_NODE -> (getAllGroupNodes(nodeDescriptor) + getAllBranchNodes(nodeDescriptor).filterByMyBranches()).toList()
+      NodeType.ROOT -> getRootNodeDescriptors()
+      NodeType.LOCAL_ROOT -> localBranchesNode.getNodeDescriptor().getDirectChildren()
+      NodeType.REMOTE_ROOT -> remoteBranchesNode.getNodeDescriptor().getDirectChildren()
+      NodeType.GROUP_NODE -> nodeDescriptor.getDirectChildren()
       else -> emptyList() //leaf branch node
     }
 
-  private fun getLocalRootNodes() =
-    if (useDirectoryGrouping) localBranchesDescriptors.asSequence().filter(forParent(localRootNodeDescriptor))
-    else localBranchesDescriptors.asSequence()
-
-  private fun getRemoteRootNodes() =
-    if (useDirectoryGrouping) remoteBranchesDescriptors.asSequence().filter(forParent(remoteRootNodeDescriptor))
-    else remoteBranchesDescriptors.asSequence()
-
-  private fun getLocalGroupNodes(parent: BranchNodeDescriptor = localRootNodeDescriptor) =
-    if (useDirectoryGrouping) localGroupBranchesDescriptors.asSequence().filter(forParent(parent)) else emptySequence()
-
-  private fun getRemoteGroupNodes(parent: BranchNodeDescriptor = remoteRootNodeDescriptor) =
-    if (useDirectoryGrouping) remoteGroupBranchesDescriptors.asSequence().filter(forParent(parent)) else emptySequence()
-
-  private fun getAllGroupNodes(parent: BranchNodeDescriptor) =
-    if (useDirectoryGrouping) (getLocalGroupNodes(parent) + getRemoteGroupNodes(parent)) else emptySequence()
-
-  private fun getAllBranchNodes(parent: BranchNodeDescriptor) =
-    if (useDirectoryGrouping) (localBranchesDescriptors.asSequence() + remoteBranchesDescriptors.asSequence()).filter(forParent(parent))
-    else emptySequence()
-
-  private fun forParent(parent: BranchNodeDescriptor? = null): (BranchNodeDescriptor) -> Boolean = { it.parent == parent }
-
-  private fun Sequence<BranchNodeDescriptor>.filterByMyBranches() =
-    filter { !uiController.showOnlyMy || it.branchInfo?.isMy == ThreeState.YES }
+  private fun BranchNodeDescriptor.getDirectChildren() = nodeDescriptorsModel.getChildrenForParent(this)
 
   override fun rebuildTree(initial: Boolean): Boolean {
     val rebuilded = buildTreeNodesIfNeeded()
@@ -276,7 +250,7 @@ internal class FilteringBranchesTree(project: Project,
   fun refreshTree() {
     val treeState = project.service<BranchesTreeStateHolder>()
     treeState.createNewState()
-    refreshTreeNodesFromModel()
+    refreshNodeDescriptorsModel()
     searchModel.updateStructure()
     treeState.applyStateToTree()
   }
@@ -286,39 +260,26 @@ internal class FilteringBranchesTree(project: Project,
       val changed = checkForBranchesUpdate()
       if (!changed) return false
 
-      refreshTreeNodesFromModel()
+      refreshNodeDescriptorsModel()
 
       return changed
     }
   }
 
-  private fun refreshTreeNodesFromModel() {
+  private fun refreshNodeDescriptorsModel() {
     with(uiController) {
-      nodeDescriptorsToNodes.clear()
-      localBranchesDescriptors.clear()
-      remoteBranchesDescriptors.clear()
-      localGroupBranchesDescriptors.clear()
-      remoteGroupBranchesDescriptors.clear()
+      nodeDescriptorsModel.clear()
 
-      val (localGroupNodes, localBranches) =
-        localBranches.toNodeDescriptors(localRootNodeDescriptor, remoteRootNodeDescriptor, useDirectoryGrouping)
-      val (remoteGroupNodes, remoteBranches) =
-        remoteBranches.toNodeDescriptors(localRootNodeDescriptor, remoteRootNodeDescriptor, useDirectoryGrouping)
-      localGroupBranchesDescriptors += localGroupNodes
-      remoteGroupBranchesDescriptors += remoteGroupNodes
-      localBranchesDescriptors += localBranches
-      remoteBranchesDescriptors += remoteBranches
-      nodeDescriptorsToNodes += baseNodeDescriptorsToNodes
-      nodeDescriptorsToNodes += localBranchesDescriptors.associateWith(::BranchTreeNode)
-      nodeDescriptorsToNodes += remoteBranchesDescriptors.associateWith(::BranchTreeNode)
-      nodeDescriptorsToNodes += localGroupBranchesDescriptors.associateWith(::BranchTreeNode)
-      nodeDescriptorsToNodes += remoteGroupBranchesDescriptors.associateWith(::BranchTreeNode)
+      localNodeExist = localBranches.isNotEmpty()
+      remoteNodeExist = remoteBranches.isNotEmpty()
+
+      nodeDescriptorsModel.populateFrom(localBranches.asSequence() + remoteBranches.asSequence(), useDirectoryGrouping)
     }
   }
 
   override fun getText(nodeDescriptor: BranchNodeDescriptor?) = nodeDescriptor?.getDisplayText()
 
-  private fun getRootNodeDescriptors(localNodeExist: Boolean, remoteNodeExist: Boolean) =
+  private fun getRootNodeDescriptors() =
     mutableListOf<BranchNodeDescriptor>().apply {
       if (localNodeExist) add(localBranchesNode.getNodeDescriptor())
       if (remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
