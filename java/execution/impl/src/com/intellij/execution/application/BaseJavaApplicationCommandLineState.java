@@ -135,9 +135,11 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   @Override
-  public TargetEnvironment prepareEnvironment(final ProgressIndicator progressIndicator) {
+  @NotNull
+  public TargetEnvironment prepareEnvironment(@NotNull ProgressIndicator progressIndicator) {
     TargetEnvironmentFactory factory = getTargetEnvironmentFactory(getEnvironment());
-    return myPreparedRemoteEnvironment = factory.prepareRemoteEnvironment(factory.createRequest(), progressIndicator);
+    myPreparedRemoteEnvironment = factory.prepareRemoteEnvironment(factory.createRequest(), progressIndicator);
+    return myPreparedRemoteEnvironment;
   }
 
   protected TargetEnvironment getPreparedRemoteEnvironment() {

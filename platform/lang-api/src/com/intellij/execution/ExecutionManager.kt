@@ -80,6 +80,5 @@ abstract class ExecutionManager {
   abstract fun isStarting(executorId: String, runnerId: String): Boolean
 
   @ApiStatus.Experimental
-  abstract fun executePreparationTasks(environment: ExecutionEnvironment,
-                                       currentState: RunProfileState): Promise<TargetEnvironment?>
+  abstract fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<TargetEnvironment?>
 }

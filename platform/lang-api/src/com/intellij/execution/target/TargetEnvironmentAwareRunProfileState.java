@@ -4,8 +4,10 @@ package com.intellij.execution.target;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
 public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
-  TargetEnvironment prepareEnvironment(final ProgressIndicator progressIndicator);
+  @NotNull
+  TargetEnvironment prepareEnvironment(@NotNull ProgressIndicator progressIndicator);
 }

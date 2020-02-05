@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -39,7 +39,6 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
       return false;
     }
   }
-
 
   @NotNull
   protected static Promise<String> getTextToEvaluate(DataContext dataContext, XDebugSession session) {

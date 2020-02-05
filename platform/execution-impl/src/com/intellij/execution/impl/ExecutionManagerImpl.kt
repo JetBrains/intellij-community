@@ -32,7 +32,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.DialogWrapper
@@ -514,27 +513,25 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     }, 50)
   }
 
-  override fun executePreparationTasks(environment: ExecutionEnvironment,
-                                       currentState: RunProfileState): Promise<TargetEnvironment?> {
+  private class MyProcessHandler : ProcessHandler() {
+    override fun destroyProcessImpl() {}
+    override fun detachProcessImpl() {}
+    override fun detachIsDefault(): Boolean {
+      return false
+    }
+
+    override fun getProcessInput(): OutputStream? = null
+
+    public override fun notifyProcessTerminated(exitCode: Int) {
+      super.notifyProcessTerminated(exitCode)
+    }
+  }
+
+  override fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<TargetEnvironment?> {
     if (!(currentState is TargetEnvironmentAwareRunProfileState &&
           environment.runProfile is TargetEnvironmentAwareRunProfile &&
           Experiments.getInstance().isFeatureEnabled("runtime.environments"))) {
       return resolvedPromise()
-    }
-    class MyProcessHandler : ProcessHandler() {
-      override fun destroyProcessImpl() {}
-      override fun detachProcessImpl() {}
-      override fun detachIsDefault(): Boolean {
-        return false
-      }
-
-      override fun getProcessInput(): OutputStream? {
-        return null
-      }
-
-      public override fun notifyProcessTerminated(exitCode: Int) {
-        super.notifyProcessTerminated(exitCode)
-      }
     }
 
     val processHandler = MyProcessHandler()
@@ -545,15 +542,15 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val descriptor = RunContentDescriptor(executionResult.executionConsole, executionResult.processHandler,
                                           executionResult.executionConsole.component,
                                           "Prepare " + environment.executionTarget.displayName)
-    val promise = AsyncPromise<TargetEnvironment>()
+    val promise = AsyncPromise<TargetEnvironment?>()
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         executionResult.processHandler.startNotify()
-        val progressIndicator: ProgressIndicator = object : ProgressIndicatorBase() {
+        val progressIndicator = object : ProgressIndicatorBase() {
           override fun setText(text: String) {
             processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
           }
-  
+
           override fun setText2(text: String) {
             processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
           }
@@ -572,7 +569,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     RunContentManager.getInstance(environment.project).showRunContent(environment.executor, descriptor)
     return promise
   }
-  
+
   @ApiStatus.Internal
   fun executeConfiguration(environment: ExecutionEnvironment, showSettings: Boolean, assignNewId: Boolean = true) {
     val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
