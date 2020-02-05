@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -202,6 +203,13 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           }
         }
       });
+
+      ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      if (indicator != null) {
+        indicator.setIndeterminate(true);
+        indicator.setText("Post-processing results...");
+      }
+
       inferrer.collect(usages);
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
