@@ -27,6 +27,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,10 +52,18 @@ public interface RunnerLayoutUi {
   Content addContent(@NotNull Content content, int defaultTabId, @NotNull PlaceInGrid defaultPlace, boolean defaultIsMinimized);
 
   @NotNull
-  Content createContent(@NotNull @NonNls String contentId, @NotNull JComponent component, @NotNull String displayName, @Nullable Icon icon, @Nullable JComponent toFocus);
+  Content createContent(@NotNull @NonNls String contentId,
+                        @NotNull JComponent component,
+                        @NotNull @Nls String displayName,
+                        @Nullable Icon icon,
+                        @Nullable JComponent toFocus);
 
   @NotNull
-  Content createContent(@NotNull @NonNls String contentId, @NotNull ComponentWithActions contentWithActions, @NotNull String displayName, @Nullable Icon icon, @Nullable JComponent toFocus);
+  Content createContent(@NotNull @NonNls String contentId,
+                        @NotNull ComponentWithActions contentWithActions,
+                        @NotNull @Nls String displayName,
+                        @Nullable Icon icon,
+                        @Nullable JComponent toFocus);
 
   boolean removeContent(@Nullable Content content, boolean dispose);
 
