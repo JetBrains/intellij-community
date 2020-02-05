@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.internal.SharedIndexMetadata.writeIndexMetadata
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.indexing.IndexInfrastructureVersion
-import com.intellij.util.indexing.IndexInfrastructureVersion.globalVersion
+import com.intellij.util.indexing.IndexInfrastructureVersion.getIdeVersion
 import org.junit.Assert
 import org.junit.Test
 
@@ -47,7 +47,7 @@ class SharedIndexMetadataTest : BasePlatformTestCase() {
   @Test
   fun testSelfSerializationIsStable() {
     val (a,b) = List(2) {
-      val selfVersion = globalVersion()
+      val selfVersion = getIdeVersion()
       writeIndexMetadata("mock1", "jdk", "123", selfVersion)
     }
 
@@ -56,7 +56,7 @@ class SharedIndexMetadataTest : BasePlatformTestCase() {
 
   private fun doMatchTest(shouldBeEqual: Boolean,
                           tuneSelfVersion: IndexInfrastructureVersion.() -> IndexInfrastructureVersion) {
-    val version = globalVersion()
+    val version = getIdeVersion()
     Assert.assertEquals(version, version.copy())
 
     val json = writeIndexMetadata("mock1", "jdk", "123", version.copy().tuneSelfVersion())

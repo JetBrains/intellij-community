@@ -92,7 +92,7 @@ class SharedIndexesLoader {
     indicator.checkCanceled()
 
     indicator.text = "Inspecting Shared Indexes..."
-    val ourVersion = IndexInfrastructureVersion.globalVersion()
+    val ourVersion = IndexInfrastructureVersion.getIdeVersion()
     val best = SharedIndexMetadata.selectBestSuitableIndex(ourVersion, entries)
     if (best == null) {
       LOG.info("No matching index found $request")
