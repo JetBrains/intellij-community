@@ -329,7 +329,8 @@ public class InstanceOfUtils {
     if (castType instanceof PsiClassType) {
       PsiClassType rawType = ((PsiClassType)castType).rawType();
       if (instanceOfType.equals(rawType)) {
-        return !JavaGenericsUtil.isUncheckedCast(castType, castOperand.getType());
+        PsiType type = castOperand.getType();
+        return type != null && !JavaGenericsUtil.isUncheckedCast(castType, type);
       }
     }
     return false;
