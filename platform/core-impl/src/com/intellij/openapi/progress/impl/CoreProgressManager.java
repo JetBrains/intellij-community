@@ -502,13 +502,28 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public void runProcessWithProgressInCurrentThread(@NotNull final Task task,
                                                     @NotNull final ProgressIndicator progressIndicator,
                                                     @NotNull final ModalityState modalityState) {
-    ProgressResult<?> result = new ProgressRunner<>(task)
-      .onThread(ProgressRunner.ThreadToUse.POOLED)
-      .sync()
-      .withProgress(progressIndicator)
-      .submitAndGet();
+    if (progressIndicator instanceof Disposable) {
+      Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
+    }
 
-    ApplicationUtil.invokeAndWaitSomewhere(() -> finishTask(task, result.isCanceled(), result.getThrowable()),
+    final Runnable process = createTaskRunnable(task, progressIndicator, null);
+
+    boolean processCanceled = false;
+    Throwable exception = null;
+    try {
+      runProcess(process, progressIndicator);
+    }
+    catch (ProcessCanceledException e) {
+      processCanceled = true;
+    }
+    catch (Throwable e) {
+      exception = e;
+    }
+
+    final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
+    final Throwable finalException = exception;
+
+    ApplicationUtil.invokeAndWaitSomewhere(() -> finishTask(task, finalCanceled, finalException),
                                            task.whereToRunCallbacks(),
                                            modalityState);
   }
