@@ -15,7 +15,7 @@ public class JUnit5MalformedParameterizedArgumentsTest extends LightJavaCodeInsi
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    SetEnvJunit5MalformedParameterized.setupCommonEnvironment(myFixture);
+    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
     myFixture.enableInspections(new JUnit5MalformedParameterizedInspection());
   }
 

@@ -3,29 +3,25 @@ package com.intellij.execution.junit.codeInsight;
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 
-public class SetEnvJunit5MalformedParameterized {
-
-  public static JavaCodeInsightTestFixture setupCommonEnvironment(JavaCodeInsightTestFixture myFixture) {
-    myFixture.addClass( "package org.junit.jupiter.params.provider;\n" +
+public class JUnit5TestFrameworkSetupUtil {
+  public static JavaCodeInsightTestFixture setupJUnit5Library(JavaCodeInsightTestFixture fixture) {
+    fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface MethodSource {String[] value();}");
-    myFixture.addClass( "package org.junit.jupiter.params;\n" +
+    fixture.addClass( "package org.junit.jupiter.params;\n" +
                         "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface ParameterizedTest {}");
-    myFixture.addClass( "package org.junit.jupiter.params.provider;\n" +
+    fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public interface Arguments {static Arguments of(Object... arguments){}}\n");
-    return myFixture;
-  }
-  public static JavaCodeInsightTestFixture setupEnvironment(JavaCodeInsightTestFixture myFixture) {
-    myFixture.addClass("package org.junit.platform.commons.annotation;\n" +
+    fixture.addClass("package org.junit.platform.commons.annotation;\n" +
                        "public @interface Testable {}");
-    myFixture.addClass( "package org.junit.jupiter.api;\n" +
+    fixture.addClass( "package org.junit.jupiter.api;\n" +
                         "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface Test {}");
-    myFixture.addClass( "package org.junit.jupiter.api;\n" +
+    fixture.addClass( "package org.junit.jupiter.api;\n" +
                         "public interface TestInfo {}");
-    myFixture.addClass( "package org.junit.jupiter.api;\n" +
+    fixture.addClass( "package org.junit.jupiter.api;\n" +
                         "public interface TestReporter {}");
-    myFixture.addClass( "package org.junit.jupiter.params.provider;" +
+    fixture.addClass( "package org.junit.jupiter.params.provider;" +
                         "public @interface EnumSource {" +
                         " Class<? extends Enum<?>> value();" +
                         " String[] names() default {};" +
@@ -36,7 +32,7 @@ public class SetEnvJunit5MalformedParameterized {
                         "  MATCH_ALL," +
                         "  MATCH_ANY }" +
                         "}");
-    myFixture.addClass( "package org.junit.jupiter.params.provider;\n" +
+    fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "@ArgumentsSource(ValueArgumentsProvider.class)\n" +
                         "public @interface ValueSource {\n" +
                         "String[] strings() default {};\n" +
@@ -44,22 +40,33 @@ public class SetEnvJunit5MalformedParameterized {
                         "long[] longs() default {};\n" +
                         "double[] doubles() default {};\n" +
                         "}\n");
-    myFixture.addClass( "package org.junit.jupiter.api.extension;\n" +
+    fixture.addClass( "package org.junit.jupiter.api.extension;\n" +
                         "public @interface ExtendWith {\n" +
                         "  Class[] value();\n" +
                         "}\n");
-    myFixture.addClass( "package org.junit.jupiter.params.provider;\n" +
+    fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface CsvSource {String[] value();}");
-    myFixture.addClass( "package org.junit.jupiter.params.provider;\n" +
+    fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface ArgumentsSource {}");
-    myFixture.addClass("package org.junit.jupiter.params.provider;\n" +
+    fixture.addClass("package org.junit.jupiter.params.provider;\n" +
                        "public @interface ArgumentsSources {\n" +
                        " ArgumentsSource[] value();\n" +
                        "}\n");
-    myFixture.addClass("package org.junit.jupiter.api;\n" +
+    fixture.addClass("package org.junit.jupiter.api;\n" +
                        "public @interface TestInstance {\n" +
                        "enum Lifecycle {PER_CLASS, PER_METHOD;}\n" +
                        "Lifecycle value();}");
-    return myFixture;
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                        "@org.junit.platform.commons.annotation.Testable\n" +
+                        "public @interface RepeatedTest {int value(); String name() default \"\";}");
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                        "public @interface AfterEach {}");
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                        "public @interface BeforeAll {}");
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                        "public @interface BeforeEach {}");
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                        "public interface RepetitionInfo {}");
+    return fixture;
   }
 }
