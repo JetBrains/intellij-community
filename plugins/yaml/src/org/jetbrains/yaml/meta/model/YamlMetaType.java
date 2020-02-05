@@ -7,10 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLScalar;
@@ -29,7 +26,7 @@ public abstract class YamlMetaType {
   @NotNull
   private String myDisplayName;
 
-  protected YamlMetaType(@NotNull String typeName) {
+  protected YamlMetaType(@NonNls @NotNull String typeName) {
     myTypeName = typeName;
     myDisplayName = typeName;
   }
@@ -52,7 +49,7 @@ public abstract class YamlMetaType {
     return AllIcons.Json.Object;
   }
 
-  public void setDisplayName(@NotNull final String displayName) {
+  public void setDisplayName(@NonNls @NotNull final String displayName) {
     myDisplayName = displayName;
   }
 
