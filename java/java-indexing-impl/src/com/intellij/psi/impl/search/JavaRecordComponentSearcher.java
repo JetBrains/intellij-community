@@ -24,7 +24,7 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
         SearchRequestCollector optimizer = queryParameters.getOptimizer();
         optimizer.searchWord(info.myName,
                              queryParameters.getEffectiveSearchScope(),
-                             false,
+                             true,
                              info.myLightMethod);
 
         optimizer.searchWord(info.myName,
