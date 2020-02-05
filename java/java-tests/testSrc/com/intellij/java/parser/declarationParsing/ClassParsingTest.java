@@ -53,6 +53,7 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testRecordWithModifiers() { doTest(true); }
   public void testRecordInCodeBlock() { doTest(true); }
   public void testLocalRecord() { doTest(true); }
+  public void testLocalRecordWithTypeParams() { doTest(true); }
   public void testLocalRecordWithoutParens() { doTest(true); }
   public void testCompactConstructor0() { doTest(true); }
   public void testCompactConstructor1() { doTest(true); }

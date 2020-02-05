@@ -590,8 +590,89 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+  }
+
+  public void testLocalRecordLikeIncompleteCode() {
+    doTest("class A {\n" +
+           "  void foo(){\n" +
+           "    record turn getTitle();\n" +
+           "  }\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[foo:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+  }
+
+
+  public void testLocalRecordLikeIncompleteCodeWithTypeParameters() {
+    doTest("class A {\n" +
+           "  void foo(){\n" +
+           "    record turn<A>" +
+           "  }\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[foo:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROW" +
-           "S_LIST:]\n");
+           "S_LIST:]\n" +
+           "      CLASS:PsiClassStub[record name=turn fqn=null]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "          TYPE_PARAMETER:PsiTypeParameter[A]\n" +
+           "            EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
+           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+
+  public void testLocalRecordWithTypeParameters() {
+    doTest("class A {\n" +
+           "  void foo(){\n" +
+           "    record R<String>(){}\n" +
+           "  " +
+           "}\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[foo:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROW" +
+           "S_LIST:]\n" +
+           "      CLASS:PsiClassStub[record name=R fqn=null]\n" +
+           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "          TYPE_PARAMETER:PsiTypeParameter[String]\n" +
+           "            EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
+           "        RECORD_HEADER:PsiRecordHeaderStub\n" +
+           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
   }
 
   public void testSOEProof() {

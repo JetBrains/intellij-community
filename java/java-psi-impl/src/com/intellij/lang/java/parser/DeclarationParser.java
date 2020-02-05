@@ -64,15 +64,25 @@ public class DeclarationParser {
   @Nullable
   private PsiBuilder.Marker parseClassFromKeyword(PsiBuilder builder, PsiBuilder.Marker declaration, boolean isAnnotation, Context context) {
     IElementType keywordTokenType = builder.getTokenType();
-    boolean isRecord = isRecordToken(builder, keywordTokenType);
+    final boolean isRecord = isRecordToken(builder, keywordTokenType);
     if (isRecord) {
-      if (builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
-        builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
-        keywordTokenType = JavaTokenType.RECORD_KEYWORD;
-      } else {
+      if (builder.lookAhead(1) != JavaTokenType.IDENTIFIER) {
         declaration.drop();
         return null;
       }
+      final IElementType afterIdent = builder.lookAhead(2);
+      // No parser recovery for local records without < or ( to support for light stubs
+      // (look at com.intellij.psi.impl.source.JavaLightStubBuilder.CodeBlockVisitor.visit)
+      if (context == Context.CODE_BLOCK && afterIdent != JavaTokenType.LPARENTH && afterIdent != JavaTokenType.LT) {
+        // skipping record kw and identifier
+        builder.advanceLexer();
+        builder.advanceLexer();
+        error(builder, JavaErrorBundle.message("expected.lt.or.lparen"));
+        declaration.drop();
+        return null;
+      }
+      builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
+      keywordTokenType = JavaTokenType.RECORD_KEYWORD;
     }
     assert ElementType.CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
     builder.advanceLexer();
@@ -89,11 +99,6 @@ public class DeclarationParser {
 
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
       parseElementList(builder, ListType.RECORD_COMPONENTS);
-    }
-    else if (isRecord && context == Context.CODE_BLOCK) {
-      error(builder, JavaErrorBundle.message("expected.lparen"));
-      declaration.drop();
-      return null;
     }
 
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
