@@ -20,6 +20,7 @@ import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ public class GitPushTagPanel extends VcsPushOptionsPanel {
   private final JBCheckBox myCheckBox;
 
   public GitPushTagPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported) {
-    String checkboxText = "Push Tags";
+    String checkboxText = GitBundle.getString("push.dialog.push.tags");
     if (followTagsSupported) {
       checkboxText += ": ";
     }

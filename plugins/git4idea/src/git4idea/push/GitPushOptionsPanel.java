@@ -25,7 +25,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
   @NotNull private final JBCheckBox myRunHooks;
 
   public GitPushOptionsPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported, boolean showSkipHookOption) {
-    String checkboxText = "Push tags";
+    String checkboxText = GitBundle.getString("push.dialog.push.tags");
     if (followTagsSupported) {
       checkboxText += ": ";
     }
