@@ -677,11 +677,9 @@ public final class PluginManagerCore {
       }
 
       target.append(descriptor.getName());
-      if (!descriptor.isBundled()) {
-        String version = descriptor.getVersion();
-        if (version != null) {
-          target.append(" (").append(version).append(')');
-        }
+      String version = descriptor.getVersion();
+      if (version != null) {
+        target.append(" (").append(version).append(')');
       }
     }
 
