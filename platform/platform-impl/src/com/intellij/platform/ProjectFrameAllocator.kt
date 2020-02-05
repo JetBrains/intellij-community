@@ -81,7 +81,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
           }
 
           task()
-        }, IdeUICustomization.getInstance().projectMessage("project.loading.name", projectFile.fileName), true, null, frame.rootPane)
+        }, IdeUICustomization.getInstance().projectMessage("project.loading.name", options.projectName ?: projectFile.fileName), true, null, frame.rootPane)
       }
     }
     return completed
