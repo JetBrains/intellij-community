@@ -40,6 +40,11 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,6 +59,7 @@ import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author dsl
@@ -899,5 +905,50 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(FileUtil.createIfDoesntExist(new File(vDir.getPath() + rel)));
     vDir.refresh(false, true);
     assertTrue(pointer.isValid());
+  }
+
+  @Test
+  public void testUnc() throws IOException {
+    assumeWindows();
+    Path uncRootPath = Paths.get("\\\\127.0.0.1\\" + tempDir.getRoot().getPath().replaceAll("^([A-Z]):", "$1\\$"));
+    assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
+
+    VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByPath(uncRootPath.toString());
+    assertNotNull("not found: " + uncRootPath, vTemp);
+    Path jarParent = Files.createDirectory(uncRootPath.resolve("jarParent"));
+    Path jar = jarParent.resolve("x.jar");
+    Path originalJar = Paths.get(PathManagerEx.getTestDataPath(), "psi/generics22/collect-2.2.jar");
+    Files.copy(originalJar, jar);
+    assertNotNull(getVirtualFile(jar.toFile()));  // make sure we receive events when jar changes
+
+    VirtualFilePointerListener listener = new LoggingListener();
+    VirtualFilePointer jarParentPointer = createPointerByFile(jarParent.toFile(), listener);
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.toString()) + JarFileSystem.JAR_SEPARATOR);
+    VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
+    VirtualFilePointer[] pointersToWatch = {jarParentPointer, jarPointer};
+    assertTrue("invalid: " + jarParentPointer, jarParentPointer.isValid());
+    assertTrue("invalid: " + jarPointer, jarPointer.isValid());
+
+    Files.delete(jar);
+    Files.delete(jarParent);
+    vTemp.refresh(false, true);
+    verifyPointersInCorrectState(pointersToWatch);
+    assertFalse("still valid: " + jarParentPointer, jarParentPointer.isValid());
+    assertFalse("still valid: " + jarPointer, jarPointer.isValid());
+
+    Files.createDirectory(jarParent);
+    Files.copy(originalJar, jar);
+    Files.setLastModifiedTime(jar, FileTime.from(Instant.now()));
+    vTemp.refresh(false, true);
+    verifyPointersInCorrectState(pointersToWatch);
+    assertTrue("invalid: " + jarParentPointer, jarParentPointer.isValid());
+    assertTrue("invalid: " + jarPointer, jarPointer.isValid());
+
+    Files.delete(jar);
+    Files.delete(jarParent);
+    vTemp.refresh(false, true);
+    verifyPointersInCorrectState(pointersToWatch);
+    assertFalse("still valid: " + jarParentPointer, jarParentPointer.isValid());
+    assertFalse("still valid: " + jarPointer, jarPointer.isValid());
   }
 }
