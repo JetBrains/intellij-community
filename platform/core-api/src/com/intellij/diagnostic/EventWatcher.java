@@ -33,7 +33,7 @@ public interface EventWatcher {
     return application.getService(EventWatcher.class);
   }
 
-  void runnableStarted(@NotNull Runnable runnable);
+  void runnableStarted(@NotNull Runnable runnable, long startedAt);
 
   void runnableFinished(@NotNull Runnable runnable, long startedAt);
 

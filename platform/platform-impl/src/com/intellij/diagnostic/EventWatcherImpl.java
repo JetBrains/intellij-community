@@ -56,6 +56,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
   @NotNull
   private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<InvocationDescription>> myEventsByClass =
     new ConcurrentHashMap<>();
+  private final @NotNull ConcurrentMap<Long, Class<?>> myRunnablesOrCallablesInProgress = new ConcurrentHashMap<>();
 
   @NotNull
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService(
@@ -76,8 +77,6 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
   private final MessageBus myMessageBus;
 
   @Nullable
-  private Object myCurrentInstance = null;
-  @Nullable
   private MatchResult myCurrentResult = null;
 
   public EventWatcherImpl() {
@@ -93,7 +92,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
   }
 
   @Override
-  public void runnableStarted(@NotNull Runnable runnable) {
+  public void runnableStarted(@NotNull Runnable runnable, long startedAt) {
     Object current = runnable;
 
     while (current != null) {
@@ -112,13 +111,16 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
       }
     }
 
-    myCurrentInstance = current != null ? current : runnable;
+    myRunnablesOrCallablesInProgress.put(
+      startedAt,
+      (current != null ? current : runnable).getClass()
+    );
   }
 
   @Override
   public void runnableFinished(@NotNull Runnable runnable, long startedAt) {
-    String fqn = Objects.requireNonNull(myCurrentInstance).getClass().getName();
-    myCurrentInstance = null;
+    Class<?> runnableOrCallableClass = Objects.requireNonNull(myRunnablesOrCallablesInProgress.remove(startedAt));
+    String fqn = runnableOrCallableClass.getName();
 
     InvocationDescription description = new InvocationDescription(fqn, startedAt);
     myRunnables.offer(description);
@@ -127,7 +129,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
       (ignored, info) -> InvocationsInfo.computeNext(fqn, description.getDuration(), info)
     );
 
-    logTimeMillis(description, runnable.getClass());
+    logTimeMillis(description, runnableOrCallableClass);
   }
 
   @Override
@@ -195,7 +197,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
   }
 
   private static void logTimeMillis(@NotNull InvocationDescription description,
-                                    @NotNull Class<? extends Runnable> runnableClass) {
+                                    @NotNull Class<?> runnableClass) {
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
 
     int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", -1);
@@ -211,7 +213,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
     }
   }
 
-  private static void addPluginCost(@NotNull Class<? extends Runnable> runnableClass,
+  private static void addPluginCost(@NotNull Class<?> runnableClass,
                                     long duration) {
     ClassLoader loader = runnableClass.getClassLoader();
     String pluginId = loader instanceof PluginClassLoader ?

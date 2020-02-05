@@ -121,7 +121,7 @@ class FlushQueue {
       EventWatcher watcher = EventWatcher.getInstance();
       Runnable runnable = lastInfo.runnable;
       if (watcher != null) {
-        watcher.runnableStarted(runnable);
+        watcher.runnableStarted(runnable, startedAt);
       }
 
       try {
