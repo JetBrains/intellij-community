@@ -75,21 +75,16 @@ internal class PromiseValue<T> private constructor(val result: T?, val error: Th
   }
 }
 
-internal abstract class BasePromise<T> : Promise<T>, Future<T>, PromiseImpl<T>, CancellablePromise<T> {
-  protected abstract val value: PromiseValue<T>?
-
+internal class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, Future<T>, PromiseImpl<T>, CancellablePromise<T> {
   /**
    * The same as @{link Future[Future.isDone]}.
    * Completion may be due to normal termination, an exception, or cancellation -- in all of these cases, this method will return true.
    */
-  override fun isDone() = value != null
+  override fun isDone() = true
 
-  override fun getState() = value?.state ?: Promise.State.PENDING
+  override fun getState() = value.state
 
-  override fun isCancelled(): Boolean {
-    val value = value
-    return value != null && value.isCancelled
-  }
+  override fun isCancelled() = this.value.isCancelled
 
   override fun get() = blockingGet(-1)
 
@@ -104,10 +99,8 @@ internal abstract class BasePromise<T> : Promise<T>, Future<T>, PromiseImpl<T>, 
       return false
     }
   }
-}
 
-internal class DonePromise<T>(override val value: PromiseValue<T>) : BasePromise<T>() {
-  override fun onSuccess(handler: Consumer<in T?>): DonePromise<T> {
+  override fun onSuccess(handler: Consumer<in T?>): CancellablePromise<T> {
     if (value.error != null) {
       return this
     }
@@ -129,7 +122,7 @@ internal class DonePromise<T>(override val value: PromiseValue<T>) : BasePromise
     return this
   }
 
-  override fun onProcessed(handler: Consumer<in T?>): DonePromise<T> {
+  override fun onProcessed(handler: Consumer<in T?>): CancellablePromise<T> {
     if (value.error == null) {
       onSuccess(handler)
     }
@@ -139,7 +132,7 @@ internal class DonePromise<T>(override val value: PromiseValue<T>) : BasePromise
     return this
   }
 
-  override fun onError(handler: Consumer<in Throwable?>): DonePromise<T> {
+  override fun onError(handler: Consumer<in Throwable?>): CancellablePromise<T> {
     if (value.error != null && !isHandlerObsolete(handler)) {
       handler.accept(value.error)
     }
