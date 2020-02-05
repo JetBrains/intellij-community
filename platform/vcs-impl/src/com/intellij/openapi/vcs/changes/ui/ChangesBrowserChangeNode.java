@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -66,17 +67,30 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
       appendCount(renderer);
     }
 
-    Icon additionalIcon = change.getAdditionalIcon();
-    if (additionalIcon != null) {
-      renderer.setIcon(additionalIcon);
-    }
-    else {
-      renderer.setIcon(filePath.getFileType(), filePath.isDirectory() || !isLeaf());
-    }
+    setIcon(change, filePath, renderer);
 
     if (myDecorator != null) {
       myDecorator.decorate(change, renderer, renderer.isShowFlatten());
     }
+  }
+
+  private void setIcon(@NotNull Change change, @NotNull FilePath filePath, @NotNull ChangesBrowserNodeRenderer renderer) {
+    Icon additionalIcon = change.getAdditionalIcon();
+    if (additionalIcon != null) {
+      renderer.setIcon(additionalIcon);
+      return;
+    }
+    VirtualFile file = filePath.getVirtualFile();
+    if (file != null) {
+      for (FileIconProvider provider : FileIconProvider.EP_NAME.getExtensionList()) {
+        Icon icon = provider.getIcon(file, 0, myProject);
+        if (icon != null) {
+          renderer.setIcon(icon);
+          return;
+        }
+      }
+    }
+    renderer.setIcon(filePath.getFileType(), filePath.isDirectory() || !isLeaf());
   }
 
   private void appendSwitched(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile file) {
