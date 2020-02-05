@@ -11,83 +11,83 @@ import org.jetbrains.annotations.NotNull;
 public class VirtualFileFilteringListener implements VirtualFileListener {
   private final VirtualFileListener myDelegate;
   @NotNull
-  private final VirtualFileSystem myFilter;
+  private final VirtualFileSystem myFileSystem;
 
-  public VirtualFileFilteringListener(@NotNull VirtualFileListener delegate, @NotNull VirtualFileSystem filter) {
+  public VirtualFileFilteringListener(@NotNull VirtualFileListener delegate, @NotNull VirtualFileSystem fileSystem) {
     myDelegate = delegate;
-    myFilter = filter;
+    myFileSystem = fileSystem;
   }
 
-  private boolean isGood(VirtualFileEvent event) {
-    return event.getFile().getFileSystem() == myFilter;
+  private boolean isFromMySystem(@NotNull VirtualFileEvent event) {
+    return event.getFile().getFileSystem() == myFileSystem;
   }
 
   @Override
-  public void beforeContentsChange(@NotNull final VirtualFileEvent event) {
-    if (isGood(event)) {
+  public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.beforeContentsChange(event);
     }
   }
 
   @Override
-  public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
-    if (isGood(event)) {
+  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.beforeFileDeletion(event);
     }
   }
 
   @Override
-  public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
-    if (isGood(event)) {
+  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.beforeFileMovement(event);
     }
   }
 
   @Override
-  public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
-    if (isGood(event)) {
+  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.beforePropertyChange(event);
     }
   }
 
   @Override
-  public void contentsChanged(@NotNull final VirtualFileEvent event) {
-    if (isGood(event)) {
+  public void contentsChanged(@NotNull VirtualFileEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.contentsChanged(event);
     }
   }
 
   @Override
-  public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
-    if (isGood(event)) {
+  public void fileCopied(@NotNull VirtualFileCopyEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.fileCopied(event);
     }
   }
 
   @Override
-  public void fileCreated(@NotNull final VirtualFileEvent event) {
-    if (isGood(event)) {
+  public void fileCreated(@NotNull VirtualFileEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.fileCreated(event);
     }
   }
 
   @Override
-  public void fileDeleted(@NotNull final VirtualFileEvent event) {
-    if (isGood(event)) {
+  public void fileDeleted(@NotNull VirtualFileEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.fileDeleted(event);
     }
   }
 
   @Override
-  public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
-    if (isGood(event)) {
+  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.fileMoved(event);
     }
   }
 
   @Override
-  public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
-    if (isGood(event)) {
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+    if (isFromMySystem(event)) {
       myDelegate.propertyChanged(event);
     }
   }
