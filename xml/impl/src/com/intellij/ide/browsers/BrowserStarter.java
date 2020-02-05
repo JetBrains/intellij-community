@@ -6,6 +6,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -122,17 +123,13 @@ public class BrowserStarter {
   }
 
   private void showBrowserOpenTimeoutNotification() {
-    NotificationGroup group = NotificationGroup.balloonGroup("URL does not respond notification");
+    NotificationGroup group = NotificationGroup.balloonGroup(IdeBundle.message("browser.notification.timeout.group"));
     NotificationType type = NotificationType.ERROR;
 
-    String title = "URL does not respond";
+    String title = IdeBundle.message("browser.notification.timeout.title");
     String url = Objects.requireNonNull(mySettings.getUrl());
     String openUrlDescription = "open_url";
-    String content = String.format(
-      "Unable to open <a href=\"%s\">%s</a> in the browser because the URL does not respond.",
-      openUrlDescription,
-      url
-    );
+    String content = IdeBundle.message("browser.notification.timeout.text", url, openUrlDescription);
 
     Notification openBrowserNotification = group.createNotification(title, content, type, (notification, event) -> {
       if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;

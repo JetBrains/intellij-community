@@ -63,7 +63,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
 
   override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, fix: (() -> Unit)?) {
     AppUIExecutor.onUiThread().expireWith(project ?: Disposable {}).submit {
-      if (showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: "Unknown error", project,
+      if (showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: IdeBundle.message("unknown.error"), project,
                          okText = IdeBundle.message("button.fix"),
                          noText = Messages.getOkButton())) {
         val browserSettings = BrowserSettings()

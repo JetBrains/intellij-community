@@ -106,7 +106,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
 
         if (HtmlUtil.isHtmlFile(result.file)) {
           append(if (shortcut != null) ", " else "")
-          append("hold Shift to open URL of local file")
+          append(IdeBundle.message("browser.shortcut"))
         }
       }
       if (shortcutInfo.isNotEmpty()) {
@@ -167,7 +167,7 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
       label.icon = AllIcons.Nodes.Servlet
       label.text = (value as Url).toDecodedForm()
     })
-    .setTitle("Choose Url")
+    .setTitle(IdeBundle.message("browser.url.popup"))
     .setItemChosenCallback { value ->
       result.setResult(value)
     }

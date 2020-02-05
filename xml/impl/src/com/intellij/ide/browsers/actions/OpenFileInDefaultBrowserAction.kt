@@ -2,6 +2,7 @@
 package com.intellij.ide.browsers.actions
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncherAppless
 import com.intellij.ide.browsers.DefaultBrowserPolicy
 import com.intellij.ide.browsers.WebBrowser
@@ -17,7 +18,7 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
 
     var description = templatePresentation.description
     if (HtmlUtil.isHtmlFile(result.file)) {
-      description += " (hold Shift to open URL of local file)"
+      description += " (" + IdeBundle.message("browser.shortcut")+ ")"
     }
 
     val presentation = e.presentation
