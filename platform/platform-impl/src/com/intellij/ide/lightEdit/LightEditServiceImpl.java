@@ -13,19 +13,12 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
-import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
-import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -49,8 +42,6 @@ public class LightEditServiceImpl implements LightEditService,
                                              AppLifecycleListener,
                                              PersistentStateComponent<LightEditConfiguration> {
   private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
-
-  private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
 
   private LightEditFrameWrapper myFrameWrapper;
   private final LightEditorManagerImpl myEditorManager;
@@ -112,7 +103,7 @@ public class LightEditServiceImpl implements LightEditService,
 
   @Override
   public boolean openFile(@NotNull VirtualFile file) {
-    if (Registry.is(ENABLED_FILE_OPEN_KEY)) {
+    if (LightEditUtil.isLightEditEnabled()) {
       doWhenActionManagerInitialized(() -> {
         doOpenFile(file);
       });
@@ -322,29 +313,6 @@ public class LightEditServiceImpl implements LightEditService,
   public void disposeCurrentSession() {
     myEditorManager.releaseEditors();
     myLightEditProjectManager.close();
-  }
-
-  @Override
-  @Nullable
-  public FileType getExplicitFileType(@NotNull VirtualFile virtualFile) {
-    if (virtualFile instanceof StubVirtualFile) return null;
-    final String url = virtualFile.getPresentableUrl();
-    if (myConfiguration.pathToExtensionMap.containsKey(url)) {
-      String name = virtualFile.getNameWithoutExtension();
-      return FileTypeManager.getInstance().getFileTypeByFileName(name + "." + myConfiguration.pathToExtensionMap.get(url));
-    }
-    return null;
-  }
-
-  void overrideUnknownFileType(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.getFileType() instanceof UnknownFileType) {
-      registerFileType(virtualFile, PlainTextFileType.INSTANCE);
-      CachedFileType.clearCache();
-    }
-  }
-
-  void registerFileType(@NotNull VirtualFile virtualFile, @NotNull FileType fileType) {
-    myConfiguration.pathToExtensionMap.put(virtualFile.getPresentableUrl(), fileType.getDefaultExtension());
   }
 
   @Override

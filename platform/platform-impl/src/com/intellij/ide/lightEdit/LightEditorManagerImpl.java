@@ -93,7 +93,7 @@ public class LightEditorManagerImpl implements LightEditorManager, Disposable {
   @Override
   @Nullable
   public LightEditorInfo createEditor(@NotNull VirtualFile file) {
-    myLightEditService.overrideUnknownFileType(file);
+    LightEditFileTypeOverrider.markUnknownFileTypeAsPlainText(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       document.putUserData(NO_IMPLICIT_SAVE, true);

@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LightEditUtil {
+  private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
 
   private LightEditUtil() {
   }
@@ -94,5 +96,18 @@ public class LightEditUtil {
 
   private static String getCloseCancel() {
     return ApplicationBundle.message("light.edit.close.cancel");
+  }
+
+  public static void markUnknownFileTypeAsPlainTextIfNeeded(@Nullable Project project, @NotNull VirtualFile file) {
+    if (project != null && !project.isDefault() && !LightEdit.owns(project)) {
+      return;
+    }
+    if (isLightEditEnabled()) {
+      LightEditFileTypeOverrider.markUnknownFileTypeAsPlainText(file);
+    }
+  }
+
+  static boolean isLightEditEnabled() {
+    return Registry.is(ENABLED_FILE_OPEN_KEY);
   }
 }
