@@ -230,6 +230,7 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
   }
 
 fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
+  if (sourcePsi == null) return null
   val annotation : UAnnotation = getParentOfType(UAnnotation::class.java, true)!!
   val fqn = annotation.qualifiedName ?: return null
   val psiClass = JavaPsiFacade.getInstance(sourcePsi!!.project).findClass(fqn, sourcePsi!!.resolveScope)
