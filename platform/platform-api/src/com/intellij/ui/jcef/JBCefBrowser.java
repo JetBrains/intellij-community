@@ -32,44 +32,33 @@ public class JBCefBrowser implements JBCefDisposable {
 
   private final boolean myIsDefaultClient;
   private volatile boolean myIsCefBrowserCreated;
-  @Nullable private volatile DeferLoader myDeferLoader;
+  @Nullable private volatile URLLoadDeferrer myLoadDeferrer;
 
-  // CEF demands async loading
-  private enum DeferLoader {
-    URL {
-      @Override
-      public void load(@NotNull CefBrowser browser) {
-        EventQueue.invokeLater(() -> browser.loadURL(url));
-      }
+  private static class URLLoadDeferrer {
+    @NotNull protected final String myUrl;
 
-      @NotNull
-      @Override
-      public DeferLoader with(@NotNull String value) {
-        this.url = value;
-        return this;
-      }
-    },
-    HTML {
-      @Override
-      public void load(@NotNull CefBrowser browser) {
-        EventQueue.invokeLater(() -> browser.loadString(html, "about:blank"));
-      }
+    URLLoadDeferrer(@NotNull String url) {
+      myUrl = url;
+    }
 
-      @NotNull
-      @Override
-      public DeferLoader with(@NotNull String value) {
-        this.html = value;
-        return this;
-      }
-    };
+    public void load(@NotNull CefBrowser browser) {
+      // JCEF demands async loading.
+      EventQueue.invokeLater(() -> browser.loadURL(myUrl));
+    }
+  }
 
-    @NotNull protected String html = "";
-    @NotNull protected String url = "about:blank";
+  private static class HTMLLoadDeferrer extends URLLoadDeferrer {
+    @NotNull protected final String myHtml;
 
-    @NotNull
-    public abstract DeferLoader with(@NotNull String value);
+    HTMLLoadDeferrer(@NotNull String html, @NotNull String url) {
+      super(url);
+      myHtml = html;
+    }
 
-    public abstract void load(@NotNull CefBrowser browser);
+    @Override
+    public void load(@NotNull CefBrowser browser) {
+      EventQueue.invokeLater(() -> browser.loadString(myHtml, myUrl));
+    }
   }
 
   /**
@@ -97,10 +86,10 @@ public class JBCefBrowser implements JBCefDisposable {
       @Override
       public void onAfterCreated(CefBrowser browser) {
         myIsCefBrowserCreated = true;
-        DeferLoader loader = myDeferLoader;
+        URLLoadDeferrer loader = myLoadDeferrer;
         if (loader != null) {
           loader.load(browser);
-          myDeferLoader = null;
+          myLoadDeferrer = null;
         }
       }
     }, myCefBrowser).
@@ -118,22 +107,38 @@ public class JBCefBrowser implements JBCefDisposable {
     }, myCefBrowser);
   }
 
+  /**
+   * Loads URL.
+   */
   public void loadURL(@NotNull String url) {
     if (myIsCefBrowserCreated) {
       myCefBrowser.loadURL(url);
     }
     else {
-      myDeferLoader = DeferLoader.URL.with(url);
+      myLoadDeferrer = new URLLoadDeferrer(url);
     }
   }
 
-  public void loadHTML(@NotNull String html) {
+  /**
+   * Loads html content.
+   *
+   * @param html content to load
+   * @param url a dummy URL that may affect restriction policy applied to the content
+   */
+  public void loadHTML(@NotNull String html, @NotNull String url) {
     if (myIsCefBrowserCreated) {
-      myCefBrowser.loadString(html, "about:blank");
+      myCefBrowser.loadString(html, url);
     }
     else {
-      myDeferLoader = DeferLoader.HTML.with(html);
+      myLoadDeferrer = new HTMLLoadDeferrer(html, url);
     }
+  }
+
+  /**
+   * Loads html content.
+   */
+  public void loadHTML(@NotNull String html) {
+    loadHTML(html, "about:blank");
   }
 
   /**

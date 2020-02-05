@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JCEFHtmlPanel extends JBCefBrowser {
   private static final JBCefClient ourCefClient = JBCefApp.getInstance().createClient();
+
+  @NotNull
+  private final String myUrl;
 
   static {
     Disposer.register(ApplicationManager.getApplication(), () -> {
@@ -22,17 +26,20 @@ public class JCEFHtmlPanel extends JBCefBrowser {
   }
 
   public JCEFHtmlPanel(String url) {
-    super(ourCefClient, url);
+    this(ourCefClient, url);
   }
 
   public JCEFHtmlPanel(JBCefClient client, String url) {
-    super(client, url);
-    Disposer.register(this, client);
+    super(client, null); // should no pass url to ctor
+    myUrl = ObjectUtils.notNull(url, "about:blank");
+    if (client != ourCefClient) {
+      Disposer.register(this, client);
+    }
   }
 
   public void setHtml(@NotNull String html) {
     final String htmlToRender = prepareHtml(html);
-    loadHTML(htmlToRender);
+    loadHTML(htmlToRender, myUrl);
   }
 
   @NotNull
