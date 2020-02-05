@@ -536,7 +536,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     catch (IOException e) {
       FSRecords.handleError(e);
     }
-    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override
@@ -828,8 +828,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
                                @NotNull Set<? super String> middleDirsInvolved) {
     Set<VFileEvent> toIgnore = new THashSet<>(ContainerUtil.identityStrategy()); // VFileEvents override equals()
-    int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved, new THashSet<>(FileUtil.PATH_HASHING_STRATEGY), new THashSet<>(FileUtil.PATH_HASHING_STRATEGY),
-                               toIgnore);
+    int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved, new THashSet<>(FileUtil.PATH_HASHING_STRATEGY),
+                               new THashSet<>(FileUtil.PATH_HASHING_STRATEGY), toIgnore);
     assert endIndex > startIndex : events.get(startIndex) +"; files: "+filesInvolved+"; middleDirs: "+middleDirsInvolved;
     // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
     groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents, toIgnore);
@@ -1158,14 +1158,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     // avoid creating zillion of roots which are not actual roots
-    String parentPath = fs instanceof LocalFileSystem ? PathUtilRt.getParentPath(rootPath) : "";
+    String parentPath = fs instanceof LocalFileSystem ? PathUtil.getParentPath(rootPath) : "";
     if (!parentPath.isEmpty()) {
       FileAttributes parentAttributes = fs.getAttributes(new StubVirtualFile() {
         @NotNull @Override public String getPath() { return parentPath; }
         @Nullable @Override public VirtualFile getParent() { return null; }
       });
       if (parentAttributes != null) {
-        throw new IllegalArgumentException("Must pass FS root path, but got: '"+path+"' , which has a parent '"+parentPath+"'). Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
+        throw new IllegalArgumentException("Must pass FS root path, but got: '" + path + "', which has a parent '" + parentPath + "')." +
+                                           " Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
       }
     }
 
@@ -1189,7 +1190,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             throw new RuntimeException(message, e);
           }
         }
-        throw new RuntimeException("No root duplication, rootName='"+rootName + "'; rootNameId="+rootNameId+"; rootId="+rootId+"; path='"+path+"'; fs="+fs+"; rootUrl='"+rootUrl+"'", e);
+        throw new RuntimeException("No root duplication, rootName='" + rootName + "'; rootNameId=" + rootNameId + "; rootId=" + rootId + ";" +
+                                   " path='" + path + "'; fs=" + fs + "; rootUrl='" + rootUrl + "'", e);
       }
       incStructuralModificationCount();
       mark = writeAttributesToRecord(rootId, 0, rootName, fs, attributes, null);
