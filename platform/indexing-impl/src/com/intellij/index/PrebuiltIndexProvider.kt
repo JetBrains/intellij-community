@@ -39,42 +39,42 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   }
 
   internal fun init() : Boolean {
-    var indexesRoot = findPrebuiltIndicesRoot()
-    try {
-      if (indexesRoot != null && indexesRoot.exists()) {
-        // we should copy prebuilt indexes to a writable folder
-        indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
-        // otherwise we can get access denied error, because persistent hash map opens file for read and write
+    if (Registry.`is`("use.prebuilt.indices")) {
+      var indexesRoot = findPrebuiltIndicesRoot()
+      try {
+        if (indexesRoot != null && indexesRoot.exists()) {
+          // we should copy prebuilt indexes to a writable folder
+          indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
+          // otherwise we can get access denied error, because persistent hash map opens file for read and write
 
-        myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
+          myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
 
-        LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.toAbsolutePath())
+          LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.toAbsolutePath())
+        }
+        else {
+          LOG.info("Prebuilt $indexName indices are missing for $dirName")
+        }
       }
-      else {
-        LOG.info("Prebuilt $indexName indices are missing for $dirName")
+      catch (e: ProcessCanceledException) {
+        throw e
       }
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Exception) {
-      myPrebuiltIndexStorage = null
-      LOG.warn("Prebuilt indices can't be loaded at " + indexesRoot!!, e)
+      catch (e: Exception) {
+        myPrebuiltIndexStorage = null
+        LOG.warn("Prebuilt indices can't be loaded at " + indexesRoot!!, e)
+      }
     }
     return myPrebuiltIndexStorage != null
   }
 
   fun get(fileContent: FileContent): Value? {
-    if (Registry.`is`("use.prebuilt.indices")) {
-      if (myPrebuiltIndexStorage != null) {
-        val hashCode = myFileContentHashing.hashString(fileContent)
-        try {
-          return myPrebuiltIndexStorage!!.get(hashCode)
-        }
-        catch (e: Exception) {
-          LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile, e)
-          myPrebuiltIndexStorage = null
-        }
+    if (myPrebuiltIndexStorage != null) {
+      val hashCode = myFileContentHashing.hashString(fileContent)
+      try {
+        return myPrebuiltIndexStorage!!.get(hashCode)
+      }
+      catch (e: Exception) {
+        LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile, e)
+        myPrebuiltIndexStorage = null
       }
     }
     return null
