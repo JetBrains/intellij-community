@@ -10,11 +10,6 @@ internal fun isHandlerObsolete(handler: Any): Boolean {
   return handler is Obsolescent && handler.isObsolete
 }
 
-internal interface PromiseImpl<T> {
-  @Suppress("FunctionName")
-  fun _setValue(value: PromiseValue<T>)
-}
-
 internal interface CompletablePromise<T> : Promise<T> {
   fun setResult(t: T?)
   fun setError(error: Throwable): Boolean

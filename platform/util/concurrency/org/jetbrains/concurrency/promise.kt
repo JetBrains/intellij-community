@@ -311,7 +311,7 @@ fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   return totalPromise
 }
 
-private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, Future<T>, PromiseImpl<T>, CancellablePromise<T> {
+private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, Future<T>, CancellablePromise<T> {
   /**
    * The same as @{link Future[Future.isDone]}.
    * Completion may be due to normal termination, an exception, or cancellation -- in all of these cases, this method will return true.
@@ -349,10 +349,7 @@ private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, F
 
   @Suppress("UNCHECKED_CAST")
   override fun processed(child: Promise<in T?>): Promise<T> {
-    if (child is PromiseImpl<*>) {
-      (child as PromiseImpl<T>)._setValue(value)
-    }
-    else if (child is CompletablePromise<*>) {
+    if (child is CompletablePromise<*>) {
       (child as CompletablePromise<T>).setResult(value.result)
     }
     return this
@@ -395,8 +392,6 @@ private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, F
   }
 
   override fun blockingGet(timeout: Int, timeUnit: TimeUnit) = value.getResultOrThrowError()
-
-  override fun _setValue(value: PromiseValue<T>) {}
 
   override fun cancel() {}
 }
