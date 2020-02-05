@@ -369,8 +369,7 @@ class LegacyBridgeModifiableRootModel(
     LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries.addAll(moduleLibraryTable.librariesToAdd)
     // Do not clear `librariesToAdd`. Otherwise `getLibraries()` will return an empty list after the commit
 
-    disposeSkippingLibraries()
-
+    disposeWithoutLibraries()
     return diff
   }
 
@@ -389,23 +388,18 @@ class LegacyBridgeModifiableRootModel(
   }
 
   override fun dispose() {
+    disposeWithoutLibraries()
+    if (isDisposed) return
+    moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
+    moduleLibraryTable.librariesToRemove.clear()
+  }
+
+  private fun disposeWithoutLibraries() {
     if (!modelIsCommittedOrDisposed) {
       Disposer.dispose(extensionsDisposable)
 
       listenerDisposables.values().forEach { Disposer.dispose(it) }
       listenerDisposables.clear()
-
-      moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
-      moduleLibraryTable.librariesToRemove.clear()
-    }
-
-    // No assertions here since it is ok to call dispose twice or more
-    modelIsCommittedOrDisposed = true
-  }
-
-  private fun disposeSkippingLibraries() {
-    if (!modelIsCommittedOrDisposed) {
-      Disposer.dispose(extensionsDisposable)
     }
 
     // No assertions here since it is ok to call dispose twice or more
