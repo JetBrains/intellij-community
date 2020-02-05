@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities;
@@ -25,7 +26,7 @@ import java.util.Collection;
 public class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B, XBreakpointTypeGroup> {
 
   public XBreakpointGroupingByTypeRule() {
-    super("XBreakpointGroupingByTypeRule", "Type");
+    super("XBreakpointGroupingByTypeRule", XDebuggerBundle.message("breakpoints.group.by.type.label"));
   }
 
   @Override

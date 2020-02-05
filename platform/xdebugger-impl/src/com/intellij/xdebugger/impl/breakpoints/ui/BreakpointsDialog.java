@@ -104,10 +104,10 @@ public class BreakpointsDialog extends DialogWrapper {
 
     collectItems();
 
-    setTitle("Breakpoints");
+    setTitle(XDebuggerBundle.message("xbreakpoints.dialog.title"));
     setModal(false);
     init();
-    setOKButtonText("Done");
+    setOKButtonText(XDebuggerBundle.message("done.action.text"));
   }
 
   private String getSplitterProportionKey() {
@@ -258,11 +258,11 @@ public class BreakpointsDialog extends DialogWrapper {
     PopupHandler.installPopupHandler(tree, new ActionGroup() {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        ActionGroup group = new ActionGroup("Move to group", true) {
+        ActionGroup group = new ActionGroup(XDebuggerBundle.message("move.to.group"), true) {
           @Override
           public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
             Set<String> groups = getBreakpointManager().getAllGroups();
-            AnAction[] res = new AnAction[groups.size()+3];
+            AnAction[] res = new AnAction[groups.size() + 3];
             int i = 0;
             res[i++] = new MoveToGroupAction(null);
             for (String group : groups) {
@@ -458,13 +458,13 @@ public class BreakpointsDialog extends DialogWrapper {
     private final boolean myNewGroup;
 
     private MoveToGroupAction(String group) {
-      super(group == null ? "<no group>" : group);
+      super(group == null ? XDebuggerBundle.message("breakpoints.dialog.no.group") : group);
       myGroup = group;
       myNewGroup = false;
     }
 
     private MoveToGroupAction() {
-      super("Create new...");
+      super(XDebuggerBundle.message("breakpoints.dialog.create.new.group"));
       myNewGroup = true;
       myGroup = null;
     }
@@ -473,7 +473,8 @@ public class BreakpointsDialog extends DialogWrapper {
     public void actionPerformed(@NotNull AnActionEvent e) {
       String groupName = myGroup;
       if (myNewGroup) {
-        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.Folder);
+        groupName = Messages.showInputDialog(XDebuggerBundle.message("breakpoints.dialog.new.group.name"),
+                                             XDebuggerBundle.message("breakpoints.dialog.new.group"), AllIcons.Nodes.Folder);
         if (groupName == null) {
           return;
         }
@@ -492,7 +493,9 @@ public class BreakpointsDialog extends DialogWrapper {
     private final String myName;
 
     private SetAsDefaultGroupAction(XBreakpointCustomGroup group) {
-      super(group.isDefault() ? "Unset as default" : "Set as default");
+      super(group.isDefault()
+            ? XDebuggerBundle.message("breakpoints.dialog.unset.as.default")
+            : XDebuggerBundle.message("breakpoints.dialog.set.as.default"));
       myName = group.isDefault() ? null : group.getName();
     }
 
@@ -507,13 +510,14 @@ public class BreakpointsDialog extends DialogWrapper {
     private final XBreakpointBase myBreakpoint;
 
     private EditDescriptionAction(XBreakpointBase breakpoint) {
-      super("Edit description");
+      super(XDebuggerBundle.message("breakpoints.dialog.edit.description"));
       myBreakpoint = breakpoint;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String description = Messages.showInputDialog("", "Edit Description", null, myBreakpoint.getUserDescription(), null);
+      String description = Messages.showInputDialog(
+        "", XDebuggerBundle.message("breakpoints.dialog.edit.description"), null, myBreakpoint.getUserDescription(), null);
       if (description == null) {
         return;
       }

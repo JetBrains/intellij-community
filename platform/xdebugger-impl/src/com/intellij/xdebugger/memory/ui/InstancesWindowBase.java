@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,6 @@ public abstract class InstancesWindowBase extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    return new Action[]{new DialogWrapperExitAction("Close", CLOSE_EXIT_CODE)};
+    return new Action[]{new DialogWrapperExitAction(XDebuggerBundle.message("memory.instances.close.text"), CLOSE_EXIT_CODE)};
   }
 }

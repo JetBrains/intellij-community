@@ -6,6 +6,7 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import java.awt.Component
 import java.awt.Point
@@ -50,7 +51,7 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
             }
         }
 
-        emptyText.text = "Threads are not available"
+        emptyText.text = XDebuggerBundle.message("threads.list.threads.not.available")
     }
 
     private fun onThreadChanged(stack: StackInfo?) {

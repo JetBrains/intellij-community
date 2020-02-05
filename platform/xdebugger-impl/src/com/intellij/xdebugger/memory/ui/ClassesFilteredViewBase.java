@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -34,6 +35,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -194,8 +196,8 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     if (ref != null && debugSession != null && debugSession.isSuspended()) {
       if (!ref.canGetInstanceInfo()) {
         XDebuggerManagerImpl.NOTIFICATION_GROUP
-          .createNotification("Unable to get instances of class " + ref.name(),
-            NotificationType.INFORMATION).notify(debugSession.getProject());
+          .createNotification(XDebuggerBundle.message("memory.unable.to.get.instances.of.class", ref.name()),
+                              NotificationType.INFORMATION).notify(debugSession.getProject());
         return;
       }
 
