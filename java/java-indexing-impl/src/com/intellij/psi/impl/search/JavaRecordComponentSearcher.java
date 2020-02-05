@@ -28,7 +28,7 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
                              info.myLightMethod);
 
         optimizer.searchWord(info.myName,
-                             new LocalSearchScope(info.myClass),
+                             info.myLightField.getUseScope(),
                              true,
                              info.myLightField);
 
@@ -60,7 +60,7 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
       PsiParameter parameter = compactConstructor != null 
                                ? ContainerUtil.find(compactConstructor.getParameterList().getParameters(), p -> name.equals(p.getName())) 
                                : null;
-      return new RecordNavigationInfo(methods[0], field, parameter, name, recordComponent.getContainingClass());
+      return new RecordNavigationInfo(methods[0], field, parameter, name);
     });
   }
 
@@ -69,18 +69,15 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
     @NotNull final PsiField myLightField;
     @Nullable final PsiParameter myLightCompactConstructorParameter;
     @NotNull final String myName;
-    @NotNull final PsiClass myClass;
 
     private RecordNavigationInfo(@NotNull PsiMethod lightMethod,
                                  @NotNull PsiField lightField,
-                                 @Nullable PsiParameter parameter, 
-                                 @NotNull String name,
-                                 @NotNull PsiClass aClass) {
+                                 @Nullable PsiParameter parameter,
+                                 @NotNull String name) {
       myLightMethod = lightMethod;
       myLightField = lightField;
       myLightCompactConstructorParameter = parameter;
       myName = name;
-      myClass = aClass;
     }
   }
 }

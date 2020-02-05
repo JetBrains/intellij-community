@@ -3,6 +3,8 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
@@ -12,6 +14,7 @@ import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class LightRecordField extends LightField implements LightRecordMember {
   private final @NotNull PsiRecordComponent myRecordComponent;
@@ -66,5 +69,10 @@ public class LightRecordField extends LightField implements LightRecordMember {
   @Override
   public PsiElement getContext() {
     return getContainingClass();
+  }
+
+  @Override
+  public @NotNull SearchScope getUseScope() {
+    return new LocalSearchScope(Objects.requireNonNull(getContainingClass()));
   }
 }
