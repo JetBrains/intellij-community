@@ -2,11 +2,13 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.ui.MainVcsLogUi
-import git4idea.repo.GitRepositoryManager
+import git4idea.GitVcs
 
 class BranchesInGitLogUiFactoryProvider(private val project: Project) : CustomVcsLogUiFactoryProvider {
 
@@ -18,10 +20,11 @@ class BranchesInGitLogUiFactoryProvider(private val project: Project) : CustomVc
     BranchesVcsLogUiFactory(vcsLogManager, logId, filters)
 
   private fun hasGitRoots(project: Project, logManager: VcsLogManager) =
-    with(GitRepositoryManager.getInstance(project)) {
-      logManager.dataManager.roots.asSequence()
-        .mapNotNull(::getRepositoryForRootQuick)
-        .filterNot(::isExternal)
+    logManager.dataManager.roots.let { logRoots ->
+      ProjectLevelVcsManager.getInstance(project).allVcsRoots.asSequence()
+        .filter { it.vcs?.keyInstanceMethod == GitVcs.getKey() }
+        .map(VcsRoot::getPath)
+        .filter(logRoots::contains)
         .any()
     }
 }
